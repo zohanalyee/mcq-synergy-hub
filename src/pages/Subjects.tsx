@@ -1,5 +1,5 @@
 
-import { Book, Code, Flask, Brain, Atom, Calculator } from "lucide-react";
+import { Book, Code, Beaker, Brain, Atom, Calculator } from "lucide-react";
 import { useState, useEffect } from "react";
 import SubjectCard from "@/components/SubjectCard";
 import { motion } from "framer-motion";
@@ -28,7 +28,7 @@ const subjects = [
   },
   {
     title: "Chemistry",
-    icon: <Flask className="h-6 w-6 text-red-500" />,
+    icon: <Beaker className="h-6 w-6 text-red-500" />,
     description: "Organic, inorganic, physical chemistry and biochemistry topics.",
     topicCount: 7,
     color: "#ef4444",
