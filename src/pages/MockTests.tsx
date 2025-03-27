@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Clock, Award, BarChart2, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 
 const mockTests = [
   {
@@ -94,10 +95,17 @@ const MockTests = () => {
     visible: { y: 0, opacity: 1 }
   };
 
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "Mock Tests", href: "/mock-tests", isCurrent: true },
+  ];
+
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
+        <PageBreadcrumb items={breadcrumbItems} />
+        
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

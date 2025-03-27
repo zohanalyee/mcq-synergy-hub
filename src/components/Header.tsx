@@ -4,6 +4,15 @@ import { Laptop, Menu, Moon, Sun, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
 
 interface HeaderProps {
   theme?: string;
@@ -13,6 +22,7 @@ interface HeaderProps {
 const Header = ({ theme, setTheme }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const location = useLocation();
   
   // Use try-catch to handle the case when Header is used outside Router context
   let navigate;
@@ -54,6 +64,10 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
     { title: 'Leaderboard', path: '/leaderboard' },
   ];
 
+  const isActive = (path: string) => {
+    return location.pathname === path;
+  };
+
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
@@ -74,17 +88,21 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-8">
-            {navItems.map((item) => (
-              <button
-                key={item.title}
-                onClick={() => handleNavigation(item.path)}
-                className="text-foreground/80 hover:text-foreground transition-colors relative after:absolute after:bottom-0 after:left-0 after:bg-primary after:h-0.5 after:w-0 hover:after:w-full after:transition-all after:duration-300"
-              >
-                {item.title}
-              </button>
-            ))}
-          </nav>
+          <NavigationMenu className="hidden md:flex">
+            <NavigationMenuList>
+              {navItems.map((item) => (
+                <NavigationMenuItem key={item.title}>
+                  <NavigationMenuLink
+                    className={navigationMenuTriggerStyle()}
+                    active={isActive(item.path)}
+                    onClick={() => handleNavigation(item.path)}
+                  >
+                    {item.title}
+                  </NavigationMenuLink>
+                </NavigationMenuItem>
+              ))}
+            </NavigationMenuList>
+          </NavigationMenu>
 
           <div className="flex items-center space-x-4">
             <Button 
@@ -136,7 +154,7 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
                 <button
                   key={item.title}
                   onClick={() => handleNavigation(item.path)}
-                  className="text-left py-2 text-foreground/80 hover:text-foreground transition-colors"
+                  className={`text-left py-2 ${isActive(item.path) ? 'text-primary font-medium' : 'text-foreground/80 hover:text-foreground'} transition-colors`}
                 >
                   {item.title}
                 </button>
