@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Laptop, Menu, Moon, Sun, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 interface HeaderProps {
   theme?: string;
@@ -13,7 +13,14 @@ interface HeaderProps {
 const Header = ({ theme, setTheme }: HeaderProps) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const navigate = useNavigate();
+  
+  // Use try-catch to handle the case when Header is used outside Router context
+  let navigate;
+  try {
+    navigate = useNavigate();
+  } catch (error) {
+    console.log('Header is used outside of Router context');
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -26,7 +33,11 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
 
   const handleNavigation = (path: string) => {
     setIsMobileMenuOpen(false);
-    navigate(path);
+    if (navigate) {
+      navigate(path);
+    } else {
+      window.location.href = path;
+    }
   };
 
   const toggleTheme = () => {
