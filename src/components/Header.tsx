@@ -57,7 +57,9 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
   return (
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled ? 'py-3 glass' : 'py-5 bg-transparent'
+        scrolled 
+          ? 'py-3 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
+          : 'py-5 bg-transparent'
       }`}
     >
       <div className="container px-4 mx-auto">
@@ -85,7 +87,12 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
           </nav>
 
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleTheme} 
+              className="rounded-full hover:bg-background/80"
+            >
               {theme === 'dark' ? (
                 <Sun className="h-5 w-5" />
               ) : theme === 'light' ? (
@@ -95,14 +102,17 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
               )}
             </Button>
 
-            <Button className="hidden md:flex" onClick={() => handleNavigation('/get-started')}>
+            <Button 
+              className="hidden md:flex backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
+              onClick={() => handleNavigation('/get-started')}
+            >
               Get Started
             </Button>
 
             <Button 
               variant="ghost" 
               size="icon" 
-              className="md:hidden rounded-full"
+              className="md:hidden rounded-full hover:bg-background/80"
               onClick={() => setIsMobileMenuOpen(true)}
             >
               <Menu className="h-6 w-6" />
@@ -113,9 +123,9 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
 
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm animate-fade-in">
-          <Card className="fixed right-0 top-0 h-full w-[300px] rounded-l-2xl rounded-r-none shadow-lg animate-slide-right overflow-auto">
-            <div className="flex items-center justify-between p-4 border-b">
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-md animate-fade-in">
+          <Card className="fixed right-0 top-0 h-full w-[300px] rounded-l-2xl rounded-r-none shadow-lg animate-slide-right overflow-auto bg-card/80 backdrop-blur-sm border border-border/50">
+            <div className="flex items-center justify-between p-4 border-b border-border/40">
               <div className="text-xl font-bold text-gradient">MCQs Point</div>
               <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                 <X className="h-5 w-5" />
@@ -131,8 +141,11 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
                   {item.title}
                 </button>
               ))}
-              <div className="pt-4 border-t">
-                <Button className="w-full" onClick={() => handleNavigation('/get-started')}>
+              <div className="pt-4 border-t border-border/40">
+                <Button 
+                  className="w-full backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
+                  onClick={() => handleNavigation('/get-started')}
+                >
                   Get Started
                 </Button>
               </div>
