@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -6,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Award, Medal, Trophy, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 
 const weeklyLeaders = [
   { id: 1, name: "Alex Johnson", score: 956, rank: 1, subject: "Computer Science" },
@@ -73,10 +73,17 @@ const Leaderboard = () => {
     visible: { y: 0, opacity: 1 }
   };
 
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "Leaderboard", href: "/leaderboard", isCurrent: true },
+  ];
+
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
+        <PageBreadcrumb items={breadcrumbItems} />
+        
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

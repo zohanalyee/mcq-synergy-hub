@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
@@ -20,6 +19,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 
 const data = [
   { name: "Mathematics", value: 78, color: "#3b82f6" },
@@ -62,10 +62,17 @@ const Dashboard = () => {
     }
   };
 
+  const breadcrumbItems = [
+    { title: "Home", href: "/" },
+    { title: "Dashboard", href: "/dashboard", isCurrent: true },
+  ];
+
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
+        <PageBreadcrumb items={breadcrumbItems} />
+        
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
