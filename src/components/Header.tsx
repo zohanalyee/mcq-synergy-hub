@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Laptop, Menu, Moon, Sun, X, LogIn, UserPlus } from 'lucide-react';
+import { Laptop, Menu, Moon, Sun, X, LogIn, UserPlus, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -78,17 +78,24 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
     >
       <div className="container px-4 mx-auto">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div 
-              className="text-2xl font-bold tracking-tight cursor-pointer flex items-center" 
-              onClick={() => handleNavigation('/')}
-            >
-              <span className="text-gradient">MCQs Point</span>
+          {/* Logo Section with better spacing */}
+          <div 
+            className="flex-shrink-0 cursor-pointer mr-6" 
+            onClick={() => handleNavigation('/')}
+          >
+            <div className="flex items-center gap-2">
+              <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1.5 text-white">
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <span className="text-xl font-bold text-gradient whitespace-nowrap">MCQs Point</span>
             </div>
           </div>
 
-          {/* Desktop Navigation */}
-          <NavigationMenu className="hidden md:flex">
+          {/* Spacer to push nav items to center */}
+          <div className="flex-grow"></div>
+
+          {/* Desktop Navigation with better centered positioning */}
+          <NavigationMenu className="hidden md:flex mx-4">
             <NavigationMenuList>
               {navItems.map((item) => (
                 <NavigationMenuItem key={item.title}>
@@ -104,7 +111,11 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
             </NavigationMenuList>
           </NavigationMenu>
 
-          <div className="flex items-center space-x-2">
+          {/* Spacer to push actions to right */}
+          <div className="flex-grow"></div>
+
+          {/* Action buttons with consistent spacing */}
+          <div className="flex items-center gap-3 flex-shrink-0">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -127,7 +138,7 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
               className="hidden md:flex items-center gap-1"
               onClick={() => handleNavigation('/sign-in')}
             >
-              <LogIn className="h-4 w-4" />
+              <LogIn className="h-4 w-4 mr-1" />
               Sign In
             </Button>
 
@@ -137,7 +148,7 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
               size="sm"
               onClick={() => handleNavigation('/sign-up')}
             >
-              <UserPlus className="h-4 w-4" />
+              <UserPlus className="h-4 w-4 mr-1" />
               Sign Up
             </Button>
 
@@ -165,7 +176,12 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
         <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-md animate-fade-in">
           <Card className="fixed right-0 top-0 h-full w-[300px] rounded-l-2xl rounded-r-none shadow-lg animate-slide-right overflow-auto bg-card/80 backdrop-blur-sm border border-border/50">
             <div className="flex items-center justify-between p-4 border-b border-border/40">
-              <div className="text-xl font-bold text-gradient">MCQs Point</div>
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1.5 text-white">
+                  <BookOpen className="h-5 w-5" />
+                </div>
+                <span className="text-xl font-bold text-gradient">MCQs Point</span>
+              </div>
               <Button variant="ghost" size="icon" onClick={() => setIsMobileMenuOpen(false)}>
                 <X className="h-5 w-5" />
               </Button>
