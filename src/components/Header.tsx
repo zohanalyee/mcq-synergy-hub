@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Laptop, Menu, Moon, Sun, X } from 'lucide-react';
+import { Laptop, Menu, Moon, Sun, X, LogIn, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -104,7 +104,7 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
             </NavigationMenuList>
           </NavigationMenu>
 
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
             <Button 
               variant="ghost" 
               size="icon" 
@@ -118,6 +118,27 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
               ) : (
                 <Laptop className="h-5 w-5" />
               )}
+            </Button>
+
+            {/* Sign In Button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="hidden md:flex items-center gap-1"
+              onClick={() => handleNavigation('/sign-in')}
+            >
+              <LogIn className="h-4 w-4" />
+              Sign In
+            </Button>
+
+            {/* Sign Up Button */}
+            <Button 
+              className="hidden md:flex items-center gap-1 backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
+              size="sm"
+              onClick={() => handleNavigation('/sign-up')}
+            >
+              <UserPlus className="h-4 w-4" />
+              Sign Up
             </Button>
 
             <Button 
@@ -159,6 +180,25 @@ const Header = ({ theme, setTheme }: HeaderProps) => {
                   {item.title}
                 </button>
               ))}
+              {/* Mobile sign in and sign up buttons */}
+              <div className="flex flex-col gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation('/sign-in')}
+                >
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Sign In
+                </Button>
+                <Button
+                  variant="default"
+                  className="w-full justify-start"
+                  onClick={() => handleNavigation('/sign-up')}
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Sign Up
+                </Button>
+              </div>
               <div className="pt-4 border-t border-border/40">
                 <Button 
                   className="w-full backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
