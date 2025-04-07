@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
-import ThemeSwitcher from '@/components/ThemeSwitcher';
+import useTheme from '@/components/ThemeSwitcher';
 import { Button } from '@/components/ui/button';
 import { motion } from "framer-motion";
 import SubjectCard from '@/components/SubjectCard';
@@ -33,7 +32,7 @@ import {
 } from 'lucide-react';
 
 const Home = () => {
-  const { theme, setTheme } = ThemeSwitcher();
+  const { theme, setTheme } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
 

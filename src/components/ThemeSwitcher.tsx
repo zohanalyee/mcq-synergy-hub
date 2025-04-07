@@ -1,9 +1,11 @@
 
 import { useEffect, useState } from "react";
 
-const ThemeSwitcher = () => {
+export const useTheme = () => {
   const [theme, setTheme] = useState<string>(() => {
     // Check for stored theme or default to system preference
+    if (typeof window === 'undefined') return 'light';
+    
     const storedTheme = localStorage.getItem("theme");
     if (storedTheme) {
       return storedTheme;
@@ -29,4 +31,4 @@ const ThemeSwitcher = () => {
   return { theme, setTheme };
 };
 
-export default ThemeSwitcher;
+export default useTheme;
