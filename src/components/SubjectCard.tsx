@@ -32,11 +32,9 @@ const SubjectCard = ({
       onMouseLeave={() => setIsHovered(false)}
       className="cursor-pointer"
     >
-      <Card className={cn(
-        "overflow-hidden transition-all duration-300 border-t-4",
-        `border-t-[${color}]`,
-        isHovered ? "shadow-lg" : "shadow-md"
-      )}>
+      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg"
+        style={{ borderTopColor: color }}
+      >
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -44,10 +42,7 @@ const SubjectCard = ({
         >
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
-              <div className={cn(
-                "p-3 rounded-lg",
-                `bg-[${color}]/10`
-              )}>
+              <div className="p-3 rounded-lg" style={{ backgroundColor: `${color}20` }}>
                 {icon}
               </div>
               <span className="text-sm font-medium text-muted-foreground">
