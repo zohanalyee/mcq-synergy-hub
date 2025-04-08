@@ -48,12 +48,23 @@ const SignUp = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1000));
       
+      // Mock user data - in a real app this would come from your backend
+      const userData = {
+        name: values.name,
+        email: values.email,
+        role: "Free User",
+        avatarUrl: "", // Add a URL here for a real avatar image
+      };
+      
+      // Store user session in localStorage (in a real app, use a more secure method)
+      localStorage.setItem('userSession', JSON.stringify({ user: userData }));
+      
       toast({
         title: "Account created successfully!",
-        description: "Welcome to MCQs Point. You can now sign in with your credentials.",
+        description: `Welcome to MCQs Point, ${values.name}!`,
       });
       
-      navigate("/sign-in");
+      navigate("/dashboard");
     } catch (error) {
       console.error("Sign up error:", error);
       toast({
