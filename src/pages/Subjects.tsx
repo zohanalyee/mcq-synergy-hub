@@ -1,4 +1,4 @@
-import { Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, FileCheck, Zap, Building, Wrench, Flask, Cpu, Stethoscope, Microscope } from "lucide-react";
+import { Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, FileCheck, Zap, Building, Wrench, Cpu, Stethoscope, Microscope } from "lucide-react";
 import { useState, useEffect } from "react";
 import SubjectCard from "@/components/SubjectCard";
 import { motion } from "framer-motion";
@@ -212,7 +212,7 @@ const subjects = [
   },
   {
     title: "Chemical Engineering",
-    icon: <Flask className="h-6 w-6 text-red-500" />,
+    icon: <Beaker className="h-6 w-6 text-red-500" />,
     description: "Chemical processes, reactor design, and thermodynamics.",
     topicCount: 7,
     color: "#ef4444",
@@ -293,7 +293,7 @@ const subjects = [
   },
   {
     title: "Pharmacology",
-    icon: <Flask className="h-6 w-6 text-green-600" />,
+    icon: <Beaker className="h-6 w-6 text-green-600" />,
     description: "Drug actions, interactions, and therapeutic applications.",
     topicCount: 8,
     color: "#16a34a",
