@@ -14,6 +14,9 @@ import Leaderboard from "./pages/Leaderboard";
 import GetStarted from "./pages/GetStarted";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
+import PastPapers from "./pages/PastPapers";
+import Jobs from "./pages/Jobs";
+import Scholarships from "./pages/Scholarships";
 import NotFound from "./pages/NotFound";
 import NoticeBoard from "./components/NoticeBoard";
 
@@ -37,6 +40,9 @@ const App = () => {
             <Route path="/get-started" element={<GetStarted />} />
             <Route path="/sign-in" element={<SignIn />} />
             <Route path="/sign-up" element={<SignUp />} />
+            <Route path="/past-papers" element={<PastPapers />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/scholarships" element={<Scholarships />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
