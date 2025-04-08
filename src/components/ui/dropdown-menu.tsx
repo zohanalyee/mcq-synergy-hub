@@ -1,48 +1,19 @@
+
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-const DropdownMenu = React.forwardRef<
-  React.ElementRef<typeof DropdownMenuPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Root>
->(({ ...props }, ref) => (
-  <DropdownMenuPrimitive.Root {...props} ref={ref} />
-))
-DropdownMenu.displayName = DropdownMenuPrimitive.Root.displayName
+const DropdownMenu = DropdownMenuPrimitive.Root
 
-const DropdownMenuTrigger = React.forwardRef<
-  React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.Trigger
-    ref={ref}
-    className={cn("focus-visible:outline-none", className)}
-    {...props}
-  />
-))
-DropdownMenuTrigger.displayName = DropdownMenuPrimitive.Trigger.displayName
+const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger
 
-const DropdownMenuGroup = React.forwardRef<
-  React.ElementRef<typeof DropdownMenuPrimitive.Group>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Group>
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.Group
-    ref={ref}
-    className={cn("", className)}
-    {...props}
-  />
-))
-DropdownMenuGroup.displayName = DropdownMenuPrimitive.Group.displayName
+const DropdownMenuGroup = DropdownMenuPrimitive.Group
 
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal
 
-const DropdownMenuSub = React.forwardRef<
-  React.ElementRef<typeof DropdownMenuPrimitive.Sub>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Sub>
->(({ ...props }, ref) => <DropdownMenuPrimitive.Sub {...props} ref={ref} />)
-DropdownMenuSub.displayName = DropdownMenuPrimitive.Sub.displayName
+const DropdownMenuSub = DropdownMenuPrimitive.Sub
 
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,

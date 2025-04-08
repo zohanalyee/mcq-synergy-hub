@@ -15,6 +15,7 @@ import GetStarted from "./pages/GetStarted";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import NotFound from "./pages/NotFound";
+import NoticeBoard from "./components/NoticeBoard";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -25,6 +26,7 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <NoticeBoard />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/subjects" element={<Subjects />} />
