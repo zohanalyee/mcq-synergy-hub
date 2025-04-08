@@ -3,17 +3,25 @@ import { useState } from 'react';
 import Header from '@/components/Header';
 import useTheme from '@/components/ThemeSwitcher';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
-import { FileText, Search } from 'lucide-react';
+import { FileText, Search, Filter } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
 
 const PastPapers = () => {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
   
-  // Sample past papers data - replace with your actual data
+  // Updated past papers data with the new sources
   const pastPapers = [
     {
       id: 1,
@@ -54,14 +62,178 @@ const PastPapers = () => {
       category: "MDCAT",
       subject: "Biology",
       downloadUrl: "#"
+    },
+    {
+      id: 6,
+      title: "SPSC Civil Service Past Paper 2023",
+      date: "October 10, 2023",
+      category: "SPSC",
+      subject: "Civil Service",
+      downloadUrl: "#"
+    },
+    {
+      id: 7,
+      title: "KPPSC Assistant Director Past Paper",
+      date: "November 5, 2023",
+      category: "KPPSC",
+      subject: "Administration",
+      downloadUrl: "#"
+    },
+    {
+      id: 8,
+      title: "BPPSC Lecturer Past Paper",
+      date: "September 20, 2023",
+      category: "BPPSC",
+      subject: "Education",
+      downloadUrl: "#"
+    },
+    {
+      id: 9,
+      title: "Motorway Police Inspector Past Paper",
+      date: "August 15, 2023",
+      category: "Motorway Police",
+      subject: "Law Enforcement",
+      downloadUrl: "#"
+    },
+    {
+      id: 10,
+      title: "AJKPSC Assistant Commissioner Past Paper",
+      date: "July 12, 2023",
+      category: "AJKPSC",
+      subject: "Administration",
+      downloadUrl: "#"
+    },
+    {
+      id: 11,
+      title: "Pakistan Rangers Recruitment Test",
+      date: "August 28, 2023",
+      category: "Pakistan Rangers",
+      subject: "General Ability",
+      downloadUrl: "#"
+    },
+    {
+      id: 12,
+      title: "Intelligence Bureau (IB) Assistant Director Test",
+      date: "June 18, 2023",
+      category: "IB",
+      subject: "Intelligence Services",
+      downloadUrl: "#"
+    },
+    {
+      id: 13,
+      title: "GHQ Civilian Staff Recruitment Paper",
+      date: "July 25, 2023",
+      category: "GHQ",
+      subject: "Military Administration",
+      downloadUrl: "#"
+    },
+    {
+      id: 14,
+      title: "NTDC Assistant Engineer Paper",
+      date: "May 10, 2023",
+      category: "NTDC",
+      subject: "Electrical Engineering",
+      downloadUrl: "#"
+    },
+    {
+      id: 15,
+      title: "ETEA Engineering College Test",
+      date: "April 30, 2023",
+      category: "ETEA",
+      subject: "Engineering",
+      downloadUrl: "#"
+    },
+    {
+      id: 16,
+      title: "Airport Security Force (ASF) Constable Test",
+      date: "June 5, 2023",
+      category: "ASF",
+      subject: "Security Services",
+      downloadUrl: "#"
+    },
+    {
+      id: 17,
+      title: "Federal Investigation Agency (FIA) Inspector Test",
+      date: "March 22, 2023",
+      category: "FIA",
+      subject: "Criminal Investigation",
+      downloadUrl: "#"
+    },
+    {
+      id: 18,
+      title: "Islamabad Police Sub-Inspector Test",
+      date: "February 15, 2023",
+      category: "Islamabad Police",
+      subject: "Law Enforcement",
+      downloadUrl: "#"
+    },
+    {
+      id: 19,
+      title: "HEC Scholarship Aptitude Test",
+      date: "April 12, 2023",
+      category: "HEC",
+      subject: "Aptitude Test",
+      downloadUrl: "#"
+    },
+    {
+      id: 20,
+      title: "Pakistan Army Captain Commission Test",
+      date: "May 18, 2023",
+      category: "Pakistan Army",
+      subject: "Military Selection",
+      downloadUrl: "#"
+    },
+    {
+      id: 21,
+      title: "Pakistan Navy Officer Test",
+      date: "June 20, 2023",
+      category: "Pakistan Navy",
+      subject: "Naval Selection",
+      downloadUrl: "#"
+    },
+    {
+      id: 22,
+      title: "Pakistan Air Force Pilot Aptitude Test",
+      date: "July 5, 2023",
+      category: "Pakistan Air Force",
+      subject: "Aviation Aptitude",
+      downloadUrl: "#"
+    },
+    {
+      id: 23,
+      title: "Lecturer in Economics Test Paper",
+      date: "August 10, 2023",
+      category: "Lecturers",
+      subject: "Economics",
+      downloadUrl: "#"
+    },
+    {
+      id: 24,
+      title: "CSS Compulsory Subjects MCQs Collection",
+      date: "January 15, 2023",
+      category: "CSS",
+      subject: "Compulsory Subjects",
+      downloadUrl: "#"
+    },
+    {
+      id: 25,
+      title: "STS (Siba Testing Service) General Knowledge",
+      date: "March 25, 2023",
+      category: "STS",
+      subject: "General Knowledge",
+      downloadUrl: "#"
     }
   ];
 
-  // Filter papers based on search query
+  // Get unique categories for the filter dropdown
+  const categories = [...new Set(pastPapers.map(paper => paper.category))].sort();
+
+  // Filter papers based on search query and category
   const filteredPapers = pastPapers.filter(paper => 
-    paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     paper.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    paper.subject.toLowerCase().includes(searchQuery.toLowerCase())
+    paper.subject.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (categoryFilter === "" || paper.category === categoryFilter)
   );
 
   return (
@@ -71,8 +243,8 @@ const PastPapers = () => {
       <div className="container px-4 mx-auto pt-28 pb-16">
         <PageBreadcrumb 
           items={[
-            { label: 'Home', path: '/' },
-            { label: 'Past Papers', path: '/past-papers' },
+            { title: 'Home', href: '/' },
+            { title: 'Past Papers', href: '/past-papers', isCurrent: true },
           ]} 
         />
         
@@ -83,6 +255,7 @@ const PastPapers = () => {
             transition={{ duration: 0.5 }}
             className="text-3xl font-bold"
           >
+            <FileText className="inline-block h-8 w-8 mr-2 text-primary" />
             Past Papers
           </motion.h1>
           <motion.p
@@ -94,7 +267,7 @@ const PastPapers = () => {
             Download past papers from various examinations to boost your preparation
           </motion.p>
           
-          <div className="mt-8 flex gap-4 max-w-xl">
+          <div className="mt-8 flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <Input
                 placeholder="Search papers by title, category, or subject..."
@@ -103,7 +276,22 @@ const PastPapers = () => {
                 className="w-full"
               />
             </div>
-            <Button>
+            <div className="w-full md:w-[200px]">
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">All Categories</SelectItem>
+                  {categories.map(category => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button className="md:w-auto whitespace-nowrap">
               <Search className="h-4 w-4 mr-2" />
               Search
             </Button>
@@ -117,7 +305,7 @@ const PastPapers = () => {
                 key={paper.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
+                transition={{ duration: 0.3, delay: index * 0.05 }}
               >
                 <Card>
                   <CardContent className="p-0">
