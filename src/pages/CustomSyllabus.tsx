@@ -5,7 +5,8 @@ import {
   Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, 
   Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, 
   FileCheck, Zap, Building, Wrench, Cpu, Stethoscope, Microscope,
-  ChevronDown, ChevronRight, Check, Plus, ListChecks
+  ChevronDown, ChevronRight, Check, Plus, ListChecks, Timer, BookOpen, 
+  FileQuestion, Settings
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
@@ -23,6 +24,15 @@ import {
 } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/use-toast";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Import subjects data
 import { subjects } from "./Subjects";
@@ -40,8 +50,14 @@ interface CustomSubject {
   topics: Topic[];
   expanded: boolean;
   selected: boolean;
-  color: string; // Added color property to the interface
+  color: string;
   topicCount: number;
+}
+
+interface QuizSettings {
+  timeLimit: number; // in minutes
+  questionsCount: number;
+  difficulty: "easy" | "medium" | "hard" | "mixed";
 }
 
 const CustomSyllabus = () => {
@@ -52,6 +68,12 @@ const CustomSyllabus = () => {
   const [syllabusName, setSyllabusName] = useState("My Custom Syllabus");
   const [selectedTopicsCount, setSelectedTopicsCount] = useState(0);
   const [selectedSubjectsCount, setSelectedSubjectsCount] = useState(0);
+  const [activeTab, setActiveTab] = useState("topics");
+  const [quizSettings, setQuizSettings] = useState<QuizSettings>({
+    timeLimit: 30,
+    questionsCount: 20,
+    difficulty: "medium"
+  });
   
   const navigate = useNavigate();
   
@@ -89,13 +111,64 @@ const CustomSyllabus = () => {
     setSelectedSubjectsCount(subjectsCount);
   }, [customSubjects]);
 
-  // Helper function to generate random topics for a subject
+  // Helper function to generate topics for a subject based on the subject area
   const generateTopicsForSubject = (subjectTitle: string, count: number): Topic[] => {
-    return Array.from({ length: count }, (_, i) => ({
-      id: `${subjectTitle.toLowerCase().replace(/\s+/g, '-')}-topic-${i + 1}`,
-      name: `${subjectTitle} Topic ${i + 1}`,
-      selected: false
-    }));
+    // Custom topics for different subject areas
+    const subjectTopicMap: Record<string, string[]> = {
+      "Mathematics": [
+        "Algebra", "Calculus", "Geometry", "Trigonometry", "Statistics", 
+        "Linear Algebra", "Number Theory", "Discrete Mathematics", 
+        "Mathematical Logic", "Differential Equations", "Complex Analysis",
+        "Probability Theory"
+      ],
+      "Computer Science": [
+        "Data Structures", "Algorithms", "Object-Oriented Programming", 
+        "Database Systems", "Computer Networks", "Operating Systems", 
+        "Software Engineering", "Web Development", "Machine Learning", 
+        "Computer Architecture"
+      ],
+      "Physics": [
+        "Mechanics", "Electromagnetism", "Thermodynamics", "Quantum Mechanics", 
+        "Relativity", "Optics", "Nuclear Physics", "Fluid Mechanics"
+      ],
+      "Chemistry": [
+        "Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", 
+        "Biochemistry", "Analytical Chemistry", "Environmental Chemistry", 
+        "Polymer Chemistry"
+      ],
+      "Biology": [
+        "Cell Biology", "Genetics", "Ecology", "Evolution", "Molecular Biology", 
+        "Microbiology", "Physiology", "Zoology", "Botany"
+      ],
+      "English": [
+        "Grammar", "Vocabulary", "Reading Comprehension", "Writing", 
+        "Literature Analysis", "Critical Reading"
+      ],
+      "Psychology": [
+        "Clinical Psychology", "Cognitive Psychology", "Developmental Psychology", 
+        "Social Psychology", "Abnormal Psychology", "Neuropsychology", 
+        "Personality Psychology", "Behavioral Psychology"
+      ]
+    };
+    
+    // Get specific topics if available for the subject, otherwise generate generic ones
+    const specificTopics = subjectTopicMap[subjectTitle] || [];
+    
+    if (specificTopics.length >= count) {
+      // Use the specific topics if we have enough
+      return specificTopics.slice(0, count).map((topic, i) => ({
+        id: `${subjectTitle.toLowerCase().replace(/\s+/g, '-')}-topic-${i + 1}`,
+        name: topic,
+        selected: false
+      }));
+    } else {
+      // Fall back to generic topic names if we don't have enough specific ones
+      return Array.from({ length: count }, (_, i) => ({
+        id: `${subjectTitle.toLowerCase().replace(/\s+/g, '-')}-topic-${i + 1}`,
+        name: specificTopics[i] || `${subjectTitle} Topic ${i + 1}`,
+        selected: false
+      }));
+    }
   };
 
   const getCategories = () => {
@@ -158,6 +231,14 @@ const CustomSyllabus = () => {
     }));
   };
 
+  // Update quiz settings
+  const updateQuizSettings = (setting: keyof QuizSettings, value: any) => {
+    setQuizSettings(prev => ({
+      ...prev,
+      [setting]: value
+    }));
+  };
+
   // Create custom syllabus
   const createSyllabus = () => {
     // Validate that at least one topic is selected
@@ -178,6 +259,41 @@ const CustomSyllabus = () => {
     
     // For demo purposes, just navigate to the mock tests page
     // In a real app, you'd save the syllabus and use it to generate a test
+    navigate('/mock-tests');
+  };
+
+  // Create custom quiz
+  const createQuiz = () => {
+    // Validate that at least one topic is selected
+    if (selectedTopicsCount === 0) {
+      toast({
+        title: "Selection Required",
+        description: "Please select at least one topic for your custom quiz.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const selectedSyllabusData = {
+      name: syllabusName,
+      topics: customSubjects
+        .filter(subject => subject.topics.some(topic => topic.selected))
+        .map(subject => ({
+          subject: subject.title,
+          topics: subject.topics.filter(topic => topic.selected).map(t => t.name)
+        })),
+      settings: quizSettings
+    };
+
+    // For now, just log the data that would be used to create the quiz
+    console.log("Creating quiz with data:", selectedSyllabusData);
+
+    toast({
+      title: "Quiz Created!",
+      description: `Your custom quiz "${syllabusName}" with ${selectedTopicsCount} topics and ${quizSettings.questionsCount} questions is ready.`,
+    });
+
+    // Navigate to mock tests - in a real app, you'd navigate to the custom quiz page
     navigate('/mock-tests');
   };
 
@@ -343,69 +459,137 @@ const CustomSyllabus = () => {
               </motion.div>
             </div>
             
-            {/* Right side: Syllabus Configuration */}
+            {/* Right side: Syllabus & Quiz Configuration */}
             <div ref={selectedTopicsRef}>
               <div className="sticky top-28 space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Your Custom Syllabus</CardTitle>
-                    <CardDescription>Configure your syllabus details</CardDescription>
+                    <CardTitle>Your Custom Quiz</CardTitle>
+                    <CardDescription>Configure your quiz details</CardDescription>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="topics">Topics</TabsTrigger>
+                        <TabsTrigger value="settings">Settings</TabsTrigger>
+                      </TabsList>
+                    </Tabs>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    <div>
-                      <label htmlFor="syllabus-name" className="text-sm font-medium mb-1.5 block">Syllabus Name</label>
-                      <Input 
-                        id="syllabus-name"
-                        value={syllabusName} 
-                        onChange={(e) => setSyllabusName(e.target.value)}
-                        placeholder="Enter a name for your syllabus"
-                      />
-                    </div>
-                    
-                    <div>
-                      <h3 className="text-sm font-medium mb-1.5">Selected Content</h3>
-                      <div className="bg-muted/50 rounded-lg p-4 h-[200px] overflow-y-auto">
-                        {selectedSubjectsCount > 0 ? (
-                          customSubjects.filter(subject => subject.topics.some(topic => topic.selected)).map(subject => (
-                            <div key={subject.title} className="mb-3">
-                              <div className="flex items-center gap-2 mb-1.5">
-                                <div className="p-1 rounded-md" style={{ backgroundColor: `${subject.color}20` }}>
-                                  {subject.icon && React.isValidElement(subject.icon) ? React.cloneElement(subject.icon, { size: 16 }) : null}
-                                </div>
-                                <span className="font-medium text-sm">{subject.title}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  ({subject.topics.filter(t => t.selected).length} topics)
-                                </span>
-                              </div>
-                              <div className="pl-7 space-y-1">
-                                {subject.topics.filter(topic => topic.selected).map(topic => (
-                                  <div key={topic.id} className="flex items-center text-xs text-muted-foreground">
-                                    <Check size={12} className="mr-1" />
-                                    {topic.name}
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="h-full flex flex-col items-center justify-center text-center">
-                            <ListChecks className="h-10 w-10 text-muted-foreground mb-2" />
-                            <p className="text-muted-foreground mb-2">No topics selected yet</p>
-                            <Button variant="outline" size="sm" onClick={() => setSelectedCategory("All")}>
-                              <Plus className="h-4 w-4 mr-1" /> Select Topics
-                            </Button>
-                          </div>
-                        )}
+                    <TabsContent value="topics" className="mt-0">
+                      <div>
+                        <label htmlFor="syllabus-name" className="text-sm font-medium mb-1.5 block">Quiz Name</label>
+                        <Input 
+                          id="syllabus-name"
+                          value={syllabusName} 
+                          onChange={(e) => setSyllabusName(e.target.value)}
+                          placeholder="Enter a name for your quiz"
+                        />
                       </div>
-                    </div>
+                      
+                      <div className="mt-4">
+                        <h3 className="text-sm font-medium mb-1.5">Selected Content</h3>
+                        <div className="bg-muted/50 rounded-lg p-4 h-[200px] overflow-y-auto">
+                          {selectedSubjectsCount > 0 ? (
+                            customSubjects.filter(subject => subject.topics.some(topic => topic.selected)).map(subject => (
+                              <div key={subject.title} className="mb-3">
+                                <div className="flex items-center gap-2 mb-1.5">
+                                  <div className="p-1 rounded-md" style={{ backgroundColor: `${subject.color}20` }}>
+                                    {React.isValidElement(subject.icon) ? React.cloneElement(subject.icon, { size: 16 }) : null}
+                                  </div>
+                                  <span className="font-medium text-sm">{subject.title}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({subject.topics.filter(t => t.selected).length} topics)
+                                  </span>
+                                </div>
+                                <div className="pl-7 space-y-1">
+                                  {subject.topics.filter(topic => topic.selected).map(topic => (
+                                    <div key={topic.id} className="flex items-center text-xs text-muted-foreground">
+                                      <Check size={12} className="mr-1" />
+                                      {topic.name}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="h-full flex flex-col items-center justify-center text-center">
+                              <ListChecks className="h-10 w-10 text-muted-foreground mb-2" />
+                              <p className="text-muted-foreground mb-2">No topics selected yet</p>
+                              <Button variant="outline" size="sm" onClick={() => setSelectedCategory("All")}>
+                                <Plus className="h-4 w-4 mr-1" /> Select Topics
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="settings" className="mt-0">
+                      <div className="space-y-6">
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-medium">Time Limit (minutes)</label>
+                            <span className="text-sm text-muted-foreground">{quizSettings.timeLimit} min</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <Timer size={18} className="text-muted-foreground" />
+                            <Slider
+                              value={[quizSettings.timeLimit]}
+                              min={5}
+                              max={120}
+                              step={5}
+                              onValueChange={(value) => updateQuizSettings('timeLimit', value[0])}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <div className="flex items-center justify-between mb-2">
+                            <label className="text-sm font-medium">Number of Questions</label>
+                            <span className="text-sm text-muted-foreground">{quizSettings.questionsCount}</span>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            <FileQuestion size={18} className="text-muted-foreground" />
+                            <Slider
+                              value={[quizSettings.questionsCount]}
+                              min={5}
+                              max={50}
+                              step={5}
+                              onValueChange={(value) => updateQuizSettings('questionsCount', value[0])}
+                              className="flex-1"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <label className="text-sm font-medium block mb-2">Difficulty Level</label>
+                          <Select
+                            value={quizSettings.difficulty}
+                            onValueChange={(value) => 
+                              updateQuizSettings('difficulty', value as QuizSettings['difficulty'])
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select difficulty" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="easy">Easy</SelectItem>
+                              <SelectItem value="medium">Medium</SelectItem>
+                              <SelectItem value="hard">Hard</SelectItem>
+                              <SelectItem value="mixed">Mixed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    </TabsContent>
                   </CardContent>
                   <CardFooter className="flex flex-col gap-3">
                     <Button 
                       className="w-full" 
                       disabled={selectedTopicsCount === 0}
-                      onClick={createSyllabus}
+                      onClick={createQuiz}
                     >
-                      Create Syllabus & Start Test
+                      Create Quiz & Start Test
                     </Button>
                     <Button 
                       variant="outline" 
