@@ -199,6 +199,27 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
+              className="mb-12"
+            >
+              <h2 className="text-2xl font-bold mb-6">Prepare Your Way</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {testCategories.map((category, index) => (
+                  <TestCategoryCard
+                    key={category.title}
+                    title={category.title}
+                    description={category.description}
+                    icon={category.icon}
+                    bgClass={category.bgClass}
+                    onClick={() => navigate('/mock-tests')}
+                  />
+                ))}
+              </div>
+            </motion.div>
+            
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
               className="flex flex-col sm:flex-row gap-4 justify-center"
             >
               <Button size="lg" onClick={() => navigate('/get-started')}>
@@ -278,47 +299,8 @@ const Home = () => {
         </div>
       </section>
       
-      {/* Test Categories Section */}
-      <section className="py-20 bg-muted/50">
-        <div className="container px-4 mx-auto">
-          <div className="text-center mb-12">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="text-3xl font-bold mb-4"
-            >
-              Prepare Your Way
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground max-w-2xl mx-auto"
-            >
-              Choose from different test formats tailored to your preparation needs
-            </motion.p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {testCategories.map((category, index) => (
-              <TestCategoryCard
-                key={category.title}
-                title={category.title}
-                description={category.description}
-                icon={category.icon}
-                bgClass={category.bgClass}
-                onClick={() => navigate('/mock-tests')}
-              />
-            ))}
-          </div>
-        </div>
-      </section>
-      
       {/* Features Section */}
-      <section className="py-20">
+      <section className="py-20 bg-muted/50">
         <div className="container px-4 mx-auto">
           <div className="text-center mb-12">
             <motion.h2
