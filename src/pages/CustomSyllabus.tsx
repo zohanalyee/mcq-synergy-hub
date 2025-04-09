@@ -1,5 +1,6 @@
 
 import { useState, useRef, useEffect } from "react";
+import * as React from "react";
 import { 
   Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, 
   Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, 
@@ -39,6 +40,8 @@ interface CustomSubject {
   topics: Topic[];
   expanded: boolean;
   selected: boolean;
+  color: string; // Added color property to the interface
+  topicCount: number;
 }
 
 const CustomSyllabus = () => {
@@ -367,7 +370,7 @@ const CustomSyllabus = () => {
                             <div key={subject.title} className="mb-3">
                               <div className="flex items-center gap-2 mb-1.5">
                                 <div className="p-1 rounded-md" style={{ backgroundColor: `${subject.color}20` }}>
-                                  {subject.icon ? React.cloneElement(subject.icon as React.ReactElement, { size: 16 }) : null}
+                                  {subject.icon && React.isValidElement(subject.icon) ? React.cloneElement(subject.icon, { size: 16 }) : null}
                                 </div>
                                 <span className="font-medium text-sm">{subject.title}</span>
                                 <span className="text-xs text-muted-foreground">
