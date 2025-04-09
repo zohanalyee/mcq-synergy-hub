@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 
-const subjects = [
+export const subjects = [
   {
     title: "Mathematics",
     icon: <Calculator className="h-6 w-6 text-blue-500" />,

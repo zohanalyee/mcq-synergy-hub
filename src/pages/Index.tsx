@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import useTheme from '@/components/ThemeSwitcher';
@@ -90,25 +89,29 @@ const Home = () => {
       title: "Timed Mock Tests",
       description: "Simulate real exam conditions with time constraints",
       icon: <Timer size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-blue-600 to-blue-400 text-white"
+      bgClass: "bg-gradient-to-br from-blue-600 to-blue-400 text-white",
+      route: "/mock-tests"
     },
     {
       title: "Subject-wise Practice",
       description: "Focus on specific subjects to strengthen your knowledge",
       icon: <BookOpen size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-purple-600 to-purple-400 text-white"
+      bgClass: "bg-gradient-to-br from-purple-600 to-purple-400 text-white",
+      route: "/subjects"
     },
     {
       title: "Custom Quizzes",
       description: "Create your own quizzes with topics that matter to you",
       icon: <Dices size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-emerald-600 to-emerald-400 text-white"
+      bgClass: "bg-gradient-to-br from-emerald-600 to-emerald-400 text-white",
+      route: "/mock-tests"
     },
     {
       title: "Custom Syllabus Builder",
       description: "Create your own syllabus by selecting from multiple subjects and topics",
       icon: <ListChecks size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-amber-600 to-amber-400 text-white"
+      bgClass: "bg-gradient-to-br from-amber-600 to-amber-400 text-white",
+      route: "/custom-syllabus"
     }
   ];
 
@@ -218,7 +221,7 @@ const Home = () => {
                     description={category.description}
                     icon={category.icon}
                     bgClass={category.bgClass}
-                    onClick={() => navigate('/mock-tests')}
+                    onClick={() => navigate(category.route)}
                   />
                 ))}
               </div>
@@ -233,7 +236,7 @@ const Home = () => {
               <Button size="lg" onClick={() => navigate('/get-started')}>
                 Get Started
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/explore')}>
+              <Button size="lg" variant="outline" onClick={() => navigate('/subjects')}>
                 Explore Subjects
               </Button>
             </motion.div>

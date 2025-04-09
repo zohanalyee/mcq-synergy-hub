@@ -17,6 +17,7 @@ import SignUp from "./pages/SignUp";
 import PastPapers from "./pages/PastPapers";
 import Jobs from "./pages/Jobs";
 import Scholarships from "./pages/Scholarships";
+import CustomSyllabus from "./pages/CustomSyllabus";
 import NotFound from "./pages/NotFound";
 import NoticeBoard from "./components/NoticeBoard";
 
@@ -43,6 +44,7 @@ const App = () => {
             <Route path="/past-papers" element={<PastPapers />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/scholarships" element={<Scholarships />} />
+            <Route path="/custom-syllabus" element={<CustomSyllabus />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
