@@ -44,38 +44,39 @@ const QuizPanel = ({
       <CardHeader>
         <CardTitle>Your Custom Quiz</CardTitle>
         <CardDescription>Configure your quiz details</CardDescription>
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4">
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="topics">Topics</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
-        </Tabs>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <TabsContent value="topics" className="mt-0">
-          <div>
-            <label htmlFor="syllabus-name" className="text-sm font-medium mb-1.5 block">Quiz Name</label>
-            <Input 
-              id="syllabus-name"
-              value={syllabusName} 
-              onChange={(e) => setSyllabusName(e.target.value)}
-              placeholder="Enter a name for your quiz"
-            />
-          </div>
           
-          <SelectedTopics 
-            customSubjects={customSubjects} 
-            selectedSubjectsCount={selectedSubjectsCount}
-            setSelectedCategory={setSelectedCategory}
-          />
-        </TabsContent>
-        
-        <TabsContent value="settings" className="mt-0">
-          <QuizSettingsComponent 
-            quizSettings={quizSettings}
-            updateQuizSettings={updateQuizSettings}
-          />
-        </TabsContent>
+          <TabsContent value="topics" className="mt-4">
+            <div>
+              <label htmlFor="syllabus-name" className="text-sm font-medium mb-1.5 block">Quiz Name</label>
+              <Input 
+                id="syllabus-name"
+                value={syllabusName} 
+                onChange={(e) => setSyllabusName(e.target.value)}
+                placeholder="Enter a name for your quiz"
+              />
+            </div>
+            
+            <SelectedTopics 
+              customSubjects={customSubjects} 
+              selectedSubjectsCount={selectedSubjectsCount}
+              setSelectedCategory={setSelectedCategory}
+            />
+          </TabsContent>
+          
+          <TabsContent value="settings" className="mt-4">
+            <QuizSettingsComponent 
+              quizSettings={quizSettings}
+              updateQuizSettings={updateQuizSettings}
+            />
+          </TabsContent>
+        </Tabs>
       </CardContent>
       <CardFooter className="flex flex-col gap-3">
         <Button 
