@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import * as React from "react";
 import { 
@@ -77,13 +76,11 @@ const CustomSyllabus = () => {
   
   const navigate = useNavigate();
   
-  // Ref for the selected topics section
   const selectedTopicsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setIsLoaded(true);
     
-    // Initialize the custom subjects from the subjects data
     const initialCustomSubjects: CustomSubject[] = subjects.map(subject => ({
       ...subject,
       expanded: false,
@@ -95,7 +92,6 @@ const CustomSyllabus = () => {
   }, []);
 
   useEffect(() => {
-    // Count selected topics and subjects
     let topicsCount = 0;
     let subjectsCount = 0;
     
@@ -111,9 +107,7 @@ const CustomSyllabus = () => {
     setSelectedSubjectsCount(subjectsCount);
   }, [customSubjects]);
 
-  // Helper function to generate topics for a subject based on the subject area
   const generateTopicsForSubject = (subjectTitle: string, count: number): Topic[] => {
-    // Custom topics for different subject areas
     const subjectTopicMap: Record<string, string[]> = {
       "Mathematics": [
         "Algebra", "Calculus", "Geometry", "Trigonometry", "Statistics", 
@@ -151,18 +145,15 @@ const CustomSyllabus = () => {
       ]
     };
     
-    // Get specific topics if available for the subject, otherwise generate generic ones
     const specificTopics = subjectTopicMap[subjectTitle] || [];
     
     if (specificTopics.length >= count) {
-      // Use the specific topics if we have enough
       return specificTopics.slice(0, count).map((topic, i) => ({
         id: `${subjectTitle.toLowerCase().replace(/\s+/g, '-')}-topic-${i + 1}`,
         name: topic,
         selected: false
       }));
     } else {
-      // Fall back to generic topic names if we don't have enough specific ones
       return Array.from({ length: count }, (_, i) => ({
         id: `${subjectTitle.toLowerCase().replace(/\s+/g, '-')}-topic-${i + 1}`,
         name: specificTopics[i] || `${subjectTitle} Topic ${i + 1}`,
@@ -176,7 +167,6 @@ const CustomSyllabus = () => {
     return ["All", ...Array.from(new Set(categories))];
   };
 
-  // Filter subjects based on category and search query
   const filteredSubjects = customSubjects.filter(subject => {
     const categoryMatch = selectedCategory === "All" || subject.category === selectedCategory;
     const searchMatch = subject.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -184,7 +174,6 @@ const CustomSyllabus = () => {
     return categoryMatch && searchMatch;
   });
 
-  // Toggle subject selection
   const toggleSubjectSelection = (subjectTitle: string) => {
     setCustomSubjects(prev => prev.map(subject => {
       if (subject.title === subjectTitle) {
@@ -202,7 +191,6 @@ const CustomSyllabus = () => {
     }));
   };
 
-  // Toggle topic selection
   const toggleTopicSelection = (subjectTitle: string, topicId: string) => {
     setCustomSubjects(prev => prev.map(subject => {
       if (subject.title === subjectTitle) {
@@ -221,7 +209,6 @@ const CustomSyllabus = () => {
     }));
   };
 
-  // Toggle subject expansion
   const toggleSubjectExpansion = (subjectTitle: string) => {
     setCustomSubjects(prev => prev.map(subject => {
       if (subject.title === subjectTitle) {
@@ -231,7 +218,6 @@ const CustomSyllabus = () => {
     }));
   };
 
-  // Update quiz settings
   const updateQuizSettings = (setting: keyof QuizSettings, value: any) => {
     setQuizSettings(prev => ({
       ...prev,
@@ -239,9 +225,7 @@ const CustomSyllabus = () => {
     }));
   };
 
-  // Create custom syllabus
   const createSyllabus = () => {
-    // Validate that at least one topic is selected
     if (selectedTopicsCount === 0) {
       toast({
         title: "Selection Required",
@@ -251,20 +235,15 @@ const CustomSyllabus = () => {
       return;
     }
 
-    // Here you would typically save the syllabus or navigate to test creation
     toast({
       title: "Syllabus Created!",
       description: `Your custom syllabus "${syllabusName}" with ${selectedTopicsCount} topics has been created.`,
     });
     
-    // For demo purposes, just navigate to the mock tests page
-    // In a real app, you'd save the syllabus and use it to generate a test
     navigate('/mock-tests');
   };
 
-  // Create custom quiz
   const createQuiz = () => {
-    // Validate that at least one topic is selected
     if (selectedTopicsCount === 0) {
       toast({
         title: "Selection Required",
@@ -285,7 +264,6 @@ const CustomSyllabus = () => {
       settings: quizSettings
     };
 
-    // For now, just log the data that would be used to create the quiz
     console.log("Creating quiz with data:", selectedSyllabusData);
 
     toast({
@@ -293,11 +271,9 @@ const CustomSyllabus = () => {
       description: `Your custom quiz "${syllabusName}" with ${selectedTopicsCount} topics and ${quizSettings.questionsCount} questions is ready.`,
     });
 
-    // Navigate to mock tests - in a real app, you'd navigate to the custom quiz page
     navigate('/mock-tests');
   };
 
-  // Scroll to the selected topics section
   const scrollToSelectedTopics = () => {
     selectedTopicsRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -353,9 +329,7 @@ const CustomSyllabus = () => {
           </div>
           
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            {/* Left side: Subject and Topic Selection */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Search and Filter Section */}
               <Card>
                 <CardContent className="pt-6">
                   <div className="flex flex-col sm:flex-row gap-4">
@@ -384,7 +358,6 @@ const CustomSyllabus = () => {
                 </CardContent>
               </Card>
 
-              {/* Subject and Topic List */}
               <motion.div
                 variants={container}
                 initial="hidden"
@@ -459,7 +432,6 @@ const CustomSyllabus = () => {
               </motion.div>
             </div>
             
-            {/* Right side: Syllabus & Quiz Configuration */}
             <div ref={selectedTopicsRef}>
               <div className="sticky top-28 space-y-6">
                 <Card>
@@ -503,7 +475,7 @@ const CustomSyllabus = () => {
                                 <div className="pl-7 space-y-1">
                                   {subject.topics.filter(topic => topic.selected).map(topic => (
                                     <div key={topic.id} className="flex items-center text-xs text-muted-foreground">
-                                      <Check size={12} className="mr-1" />
+                                      <Check className="mr-1 h-3 w-3" />
                                       {topic.name}
                                     </div>
                                   ))}
@@ -531,7 +503,7 @@ const CustomSyllabus = () => {
                             <span className="text-sm text-muted-foreground">{quizSettings.timeLimit} min</span>
                           </div>
                           <div className="flex items-center gap-4">
-                            <Timer size={18} className="text-muted-foreground" />
+                            <Timer className="text-muted-foreground h-4 w-4" />
                             <Slider
                               value={[quizSettings.timeLimit]}
                               min={5}
@@ -549,7 +521,7 @@ const CustomSyllabus = () => {
                             <span className="text-sm text-muted-foreground">{quizSettings.questionsCount}</span>
                           </div>
                           <div className="flex items-center gap-4">
-                            <FileQuestion size={18} className="text-muted-foreground" />
+                            <FileQuestion className="text-muted-foreground h-4 w-4" />
                             <Slider
                               value={[quizSettings.questionsCount]}
                               min={5}
