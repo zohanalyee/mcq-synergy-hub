@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import Header from '@/components/Header';
 import useTheme from '@/components/ThemeSwitcher';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
-import { Briefcase, Search, Filter, CalendarDays } from 'lucide-react';
+import { Briefcase, Search, CalendarDays } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -77,8 +76,8 @@ const Jobs = () => {
       <div className="container px-4 mx-auto pt-28 pb-16">
         <PageBreadcrumb 
           items={[
-            { label: 'Home', path: '/' },
-            { label: 'Jobs', path: '/jobs' },
+            { title: 'Home', href: '/' },
+            { title: 'Jobs', href: '/jobs', isCurrent: true },
           ]} 
         />
         

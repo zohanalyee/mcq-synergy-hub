@@ -1,9 +1,8 @@
-
 import { useState } from 'react';
 import Header from '@/components/Header';
 import useTheme from '@/components/ThemeSwitcher';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
-import { FileText, Search, Filter } from 'lucide-react';
+import { FileText, Search } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,9 +18,8 @@ import {
 const PastPapers = () => {
   const { theme, setTheme } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   
-  // Updated past papers data with the new sources
   const pastPapers = [
     {
       id: 1,
@@ -225,15 +223,13 @@ const PastPapers = () => {
     }
   ];
 
-  // Get unique categories for the filter dropdown
   const categories = [...new Set(pastPapers.map(paper => paper.category))].sort();
 
-  // Filter papers based on search query and category
   const filteredPapers = pastPapers.filter(paper => 
     (paper.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     paper.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
     paper.subject.toLowerCase().includes(searchQuery.toLowerCase())) &&
-    (categoryFilter === "" || paper.category === categoryFilter)
+    (categoryFilter === "all" || paper.category === categoryFilter)
   );
 
   return (
@@ -282,7 +278,7 @@ const PastPapers = () => {
                   <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
+                  <SelectItem value="all">All Categories</SelectItem>
                   {categories.map(category => (
                     <SelectItem key={category} value={category}>
                       {category}
