@@ -7,6 +7,8 @@ import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { subjects } from "@/pages/Subjects";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 // Mock tests data with multiple subject categories
 const mockTests = [
@@ -104,6 +106,7 @@ const MockTests = () => {
   const [filter, setFilter] = useState("all");
   const [allMockTests, setAllMockTests] = useState<typeof mockTests>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Generate mock tests for all subjects
@@ -128,6 +131,14 @@ const MockTests = () => {
   const getCategories = () => {
     const categories = allMockTests.map(test => test.category);
     return ["all", ...Array.from(new Set(categories))];
+  };
+
+  const handleStartTest = (test: any) => {
+    toast.success(`Starting ${test.title}`, {
+      description: `${test.questions} questions • ${test.duration} minutes`
+    });
+    // For now just show a success message, in a real app we would navigate to the test page
+    console.log(`Starting test: ${test.title}`);
   };
 
   const container = {
@@ -186,11 +197,12 @@ const MockTests = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={container}
           initial="hidden"
-          animate={isLoaded ? "show" : "hidden"}
+          animate={isLoaded ? "visible" : "hidden"}
         >
           {filteredTests.map((test) => (
             <motion.div key={test.id} variants={item}>
-              <Card className="h-full hover:shadow-md transition-shadow duration-300">
+              <Card className="h-full hover:shadow-md transition-shadow duration-300 cursor-pointer" 
+                onClick={() => handleStartTest(test)}>
                 <CardContent className="p-6">
                   <div className="flex justify-between items-start mb-4">
                     <h3 className="text-xl font-semibold">{test.title}</h3>
@@ -220,7 +232,15 @@ const MockTests = () => {
                     </div>
                   </div>
                   
-                  <Button className="w-full">Start Test</Button>
+                  <Button 
+                    className="w-full"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleStartTest(test);
+                    }}
+                  >
+                    Start Test
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
