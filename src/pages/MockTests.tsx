@@ -1,12 +1,14 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, Award, BarChart2, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
+import { subjects } from "@/pages/Subjects";
 
+// Mock tests data with multiple subject categories
 const mockTests = [
   {
     id: 1,
@@ -64,8 +66,50 @@ const mockTests = [
   }
 ];
 
+// Generate more mock tests based on all available subjects
+const generateAllMockTests = () => {
+  // Start with existing mock tests
+  const allTests = [...mockTests];
+  
+  // Find subjects that don't have a mock test yet
+  const existingCategories = mockTests.map(test => test.category);
+  const subjectsWithoutTests = subjects.filter(
+    subject => !existingCategories.includes(subject.title)
+  );
+  
+  // Create mock tests for remaining subjects
+  let nextId = mockTests.length + 1;
+  const difficulties = ["Easy", "Medium", "Hard"];
+  
+  const newTests = subjectsWithoutTests.map(subject => {
+    const randomDuration = Math.floor(Math.random() * 30) + 30; // 30-60 mins
+    const randomQuestions = Math.floor(Math.random() * 20) + 30; // 30-50 questions
+    const randomDifficulty = difficulties[Math.floor(Math.random() * difficulties.length)];
+    
+    return {
+      id: nextId++,
+      title: `${subject.title} Assessment`,
+      description: `Comprehensive test covering core concepts in ${subject.title}`,
+      duration: randomDuration,
+      questions: randomQuestions,
+      difficulty: randomDifficulty,
+      category: subject.title
+    };
+  });
+  
+  return [...allTests, ...newTests];
+};
+
 const MockTests = () => {
   const [filter, setFilter] = useState("all");
+  const [allMockTests, setAllMockTests] = useState<typeof mockTests>([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+  
+  useEffect(() => {
+    // Generate mock tests for all subjects
+    setAllMockTests(generateAllMockTests());
+    setIsLoaded(true);
+  }, []);
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -77,8 +121,14 @@ const MockTests = () => {
   };
 
   const filteredTests = filter === "all" 
-    ? mockTests 
-    : mockTests.filter(test => test.category.toLowerCase() === filter.toLowerCase());
+    ? allMockTests 
+    : allMockTests.filter(test => test.category.toLowerCase() === filter.toLowerCase());
+
+  // Get unique categories from all mock tests
+  const getCategories = () => {
+    const categories = allMockTests.map(test => test.category);
+    return ["all", ...Array.from(new Set(categories))];
+  };
 
   const container = {
     hidden: { opacity: 0 },
@@ -116,63 +166,27 @@ const MockTests = () => {
           <p className="text-muted-foreground">Practice with our collection of subject-specific mock tests</p>
         </motion.div>
 
-        <div className="mb-8 flex flex-wrap gap-2">
-          <Button 
-            variant={filter === "all" ? "default" : "outline"} 
-            onClick={() => setFilter("all")}
-            size="sm"
-          >
-            All
-          </Button>
-          <Button 
-            variant={filter === "mathematics" ? "default" : "outline"} 
-            onClick={() => setFilter("mathematics")}
-            size="sm"
-          >
-            Mathematics
-          </Button>
-          <Button 
-            variant={filter === "computer science" ? "default" : "outline"} 
-            onClick={() => setFilter("computer science")}
-            size="sm"
-          >
-            Computer Science
-          </Button>
-          <Button 
-            variant={filter === "physics" ? "default" : "outline"} 
-            onClick={() => setFilter("physics")}
-            size="sm"
-          >
-            Physics
-          </Button>
-          <Button 
-            variant={filter === "chemistry" ? "default" : "outline"} 
-            onClick={() => setFilter("chemistry")}
-            size="sm"
-          >
-            Chemistry
-          </Button>
-          <Button 
-            variant={filter === "biology" ? "default" : "outline"} 
-            onClick={() => setFilter("biology")}
-            size="sm"
-          >
-            Biology
-          </Button>
-          <Button 
-            variant={filter === "english" ? "default" : "outline"} 
-            onClick={() => setFilter("english")}
-            size="sm"
-          >
-            English
-          </Button>
+        <div className="mb-8 overflow-x-auto pb-2">
+          <div className="flex space-x-2 min-w-max">
+            {isLoaded && getCategories().map((category) => (
+              <Button 
+                key={category}
+                variant={filter === category ? "default" : "outline"} 
+                onClick={() => setFilter(category)}
+                size="sm"
+                className="capitalize"
+              >
+                {category === "all" ? "All" : category}
+              </Button>
+            ))}
+          </div>
         </div>
 
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           variants={container}
           initial="hidden"
-          animate="visible"
+          animate={isLoaded ? "show" : "hidden"}
         >
           {filteredTests.map((test) => (
             <motion.div key={test.id} variants={item}>
