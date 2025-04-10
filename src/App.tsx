@@ -1,4 +1,5 @@
 
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -18,7 +19,6 @@ import PastPapers from "./pages/PastPapers";
 import Jobs from "./pages/Jobs";
 import Scholarships from "./pages/Scholarships";
 import CustomSyllabus from "./pages/CustomSyllabus";
-import CustomQuizzes from "./pages/CustomQuizzes";
 import NotFound from "./pages/NotFound";
 import NoticeBoard from "./components/NoticeBoard";
 
@@ -46,7 +46,7 @@ const App = () => {
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/scholarships" element={<Scholarships />} />
             <Route path="/custom-syllabus" element={<CustomSyllabus />} />
-            <Route path="/custom-quizzes" element={<CustomQuizzes />} />
+            {/* Custom Quizzes route removed */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -57,3 +57,4 @@ const App = () => {
 };
 
 export default App;
+

@@ -100,13 +100,6 @@ const Home = () => {
       route: "/subjects"
     },
     {
-      title: "Custom Quizzes",
-      description: "Create your own quizzes with topics that matter to you",
-      icon: <Dices size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-emerald-600 to-emerald-400 text-white",
-      route: "/mock-tests"
-    },
-    {
       title: "Custom Syllabus Builder",
       description: "Create your own syllabus by selecting from multiple subjects and topics",
       icon: <ListChecks size={32} className="text-white" />,
@@ -213,7 +206,7 @@ const Home = () => {
               className="mb-12"
             >
               <h2 className="text-2xl font-bold mb-6">Prepare Your Way</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {testCategories.map((category, index) => (
                   <TestCategoryCard
                     key={category.title}
