@@ -9,6 +9,7 @@ import { toast } from "@/components/ui/use-toast";
 import { CustomSubject, QuizSettings } from "./interfaces";
 import QuizSettingsComponent from "./QuizSettings";
 import SelectedTopics from "./SelectedTopics";
+import { Badge } from "@/components/ui/badge";
 
 interface QuizPanelProps {
   syllabusName: string;
@@ -38,6 +39,12 @@ const QuizPanel = ({
   setSelectedCategory
 }: QuizPanelProps) => {
   const navigate = useNavigate();
+  
+  // Get unique categories from customSubjects
+  const categories = React.useMemo(() => {
+    const cats = customSubjects.map(subject => subject.category);
+    return Array.from(new Set(cats));
+  }, [customSubjects]);
 
   return (
     <Card>
@@ -61,6 +68,32 @@ const QuizPanel = ({
                 onChange={(e) => setSyllabusName(e.target.value)}
                 placeholder="Enter a name for your quiz"
               />
+            </div>
+            
+            <div className="mt-4">
+              <label className="text-sm font-medium mb-1.5 block">Quiz Categories</label>
+              <div className="flex flex-wrap gap-2 mb-3">
+                <Badge 
+                  className="cursor-pointer hover:bg-primary/80" 
+                  variant="outline" 
+                  onClick={() => setSelectedCategory("All")}
+                >
+                  All
+                </Badge>
+                {categories.map((category) => (
+                  <Badge 
+                    key={category}
+                    className="cursor-pointer hover:bg-primary/80" 
+                    variant="outline"
+                    onClick={() => setSelectedCategory(category)}
+                  >
+                    {category}
+                  </Badge>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Click on a category to filter subjects. Each category serves a different quiz function.
+              </p>
             </div>
             
             <SelectedTopics 
