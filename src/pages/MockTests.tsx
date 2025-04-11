@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { 
   Clock, Award, BarChart2, BookOpen, 
-  ArrowDown, ArrowUp, SlidersHorizontal 
+  ArrowDown, ArrowUp, SlidersHorizontal, Check
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
@@ -35,6 +35,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Mock tests data with multiple subject categories
 const mockTests = [
@@ -149,12 +150,13 @@ const MockTests = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [expandedTest, setExpandedTest] = useState<number | null>(null);
   const [customizeTest, setCustomizeTest] = useState<number | null>(null);
+  const [selectedTopics, setSelectedTopics] = useState<Record<number, string[]>>({});
   const navigate = useNavigate();
   
   const form = useForm({
     resolver: zodResolver(testCustomizationSchema),
     defaultValues: {
-      difficulty: "Medium",
+      difficulty: "Medium" as const,
       questionCount: 30,
       duration: 45,
     },
@@ -191,13 +193,18 @@ const MockTests = () => {
       questionCount: test.questions,
       duration: test.duration
     };
+
+    // Get the topics to include in the test
+    const testTopics = selectedTopics[test.id] && selectedTopics[test.id].length > 0
+      ? selectedTopics[test.id]
+      : test.topics;
     
     toast.success(`Starting ${test.title}`, {
       description: `${settings.questionCount} questions • ${settings.duration} minutes • ${settings.difficulty} difficulty`
     });
     
     // For now just show a success message, in a real app we would navigate to the test page
-    console.log(`Starting test: ${test.title}`, settings);
+    console.log(`Starting test: ${test.title}`, {...settings, topics: testTopics});
   };
 
   const toggleExpandTest = (testId: number) => {
@@ -206,6 +213,15 @@ const MockTests = () => {
     } else {
       setExpandedTest(testId);
       setCustomizeTest(null); // Close any open customize panel
+      
+      // Initialize selected topics for this test if not already done
+      const test = allMockTests.find(t => t.id === testId);
+      if (test && !selectedTopics[testId]) {
+        setSelectedTopics(prev => ({
+          ...prev,
+          [testId]: [...test.topics]
+        }));
+      }
     }
   };
 
@@ -217,6 +233,32 @@ const MockTests = () => {
       setCustomizeTest(testId);
       setExpandedTest(null); // Close any open topic panel
     }
+  };
+
+  const handleTopicToggle = (testId: number, topic: string) => {
+    setSelectedTopics(prev => {
+      const currentTopics = prev[testId] || [];
+      
+      if (currentTopics.includes(topic)) {
+        // Don't allow removing the last topic
+        if (currentTopics.length === 1) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [testId]: currentTopics.filter(t => t !== topic)
+        };
+      } else {
+        return {
+          ...prev,
+          [testId]: [...currentTopics, topic]
+        };
+      }
+    });
+  };
+
+  const isTopicSelected = (testId: number, topic: string) => {
+    return (selectedTopics[testId] || []).includes(topic);
   };
 
   const handleSubmitCustomization = (testId: number, data: z.infer<typeof testCustomizationSchema>) => {
@@ -339,7 +381,7 @@ const MockTests = () => {
                       </Button>
                     </div>
                     
-                    {/* Topics Display */}
+                    {/* Topics Display with Selection */}
                     {expandedTest === test.id && (
                       <motion.div 
                         className="border rounded-lg p-3 bg-secondary/20"
@@ -347,12 +389,28 @@ const MockTests = () => {
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
                       >
-                        <h4 className="text-sm font-medium mb-2">Topics:</h4>
-                        <ul className="list-disc list-inside space-y-1">
+                        <h4 className="text-sm font-medium mb-2">Select topics to include:</h4>
+                        <div className="space-y-2">
                           {test.topics.map((topic, index) => (
-                            <li key={index} className="text-sm">{topic}</li>
+                            <div key={index} className="flex items-center space-x-2">
+                              <Checkbox 
+                                id={`topic-${test.id}-${index}`} 
+                                checked={isTopicSelected(test.id, topic)}
+                                onCheckedChange={() => handleTopicToggle(test.id, topic)}
+                                disabled={isTopicSelected(test.id, topic) && (selectedTopics[test.id]?.length || 0) <= 1}
+                              />
+                              <label 
+                                htmlFor={`topic-${test.id}-${index}`}
+                                className="text-sm cursor-pointer"
+                              >
+                                {topic}
+                              </label>
+                            </div>
                           ))}
-                        </ul>
+                        </div>
+                        <div className="mt-3">
+                          <p className="text-xs text-muted-foreground">At least one topic must be selected.</p>
+                        </div>
                       </motion.div>
                     )}
                     
