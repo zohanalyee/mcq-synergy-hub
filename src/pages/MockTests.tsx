@@ -19,17 +19,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { jobTests, SyllabusItem } from "@/data/jobTestsData";
-
 const mockTests = [
   // ... keep existing code (mockTests array content)
 ];
-
 const testCustomizationSchema = z.object({
   difficulty: z.enum(["Easy", "Medium", "Hard"]),
   questionCount: z.coerce.number().min(5).max(100),
   duration: z.coerce.number().min(5).max(180)
 });
-
 const generateAllMockTests = () => {
   // Implement the mock test generation logic
   return subjects.map((subject, index) => ({
@@ -43,7 +40,6 @@ const generateAllMockTests = () => {
     topics: getRandomTopics(subject.name, 5)
   }));
 };
-
 const MockTests = () => {
   const [filter, setFilter] = useState("all");
   const [allMockTests, setAllMockTests] = useState<any[]>([]);
@@ -55,7 +51,6 @@ const MockTests = () => {
   const [selectedTopics, setSelectedTopics] = useState<Record<number, string[]>>({});
   const [activeTab, setActiveTab] = useState("subjects");
   const navigate = useNavigate();
-
   const form = useForm({
     resolver: zodResolver(testCustomizationSchema),
     defaultValues: {
@@ -64,7 +59,6 @@ const MockTests = () => {
       duration: 45
     }
   });
-
   const jobTestForm = useForm({
     resolver: zodResolver(testCustomizationSchema),
     defaultValues: {
@@ -73,14 +67,12 @@ const MockTests = () => {
       duration: 90
     }
   });
-
   useEffect(() => {
     // Generate mock tests for all subjects
     const generatedTests = generateAllMockTests();
     setAllMockTests(generatedTests);
     setIsLoaded(true);
   }, []);
-
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
       case "Easy":
@@ -93,53 +85,43 @@ const MockTests = () => {
         return "text-gray-500";
     }
   };
-
   const filteredTests = filter === "all" ? allMockTests : allMockTests.filter(test => test.category.toLowerCase() === filter.toLowerCase());
-
   const getCategories = () => {
     // Add a guard clause to ensure allMockTests is not undefined before calling map()
     if (!allMockTests || allMockTests.length === 0) {
       return ["all"];
     }
-    
     const categories = allMockTests.map(test => test.category);
     return ["all", ...Array.from(new Set(categories))];
   };
-
   const handleStartTest = (test: any, customSettings?: any) => {
     const settings = customSettings || {
       difficulty: test.difficulty,
       questionCount: test.questions,
       duration: test.duration
     };
-
     toast.success(`Starting ${test.title}`, {
       description: `${settings.questionCount} questions • ${settings.duration} minutes • ${settings.difficulty} difficulty`
     });
-
     console.log(`Starting test: ${test.title}`, {
       ...settings,
       topics: test.topics
     });
   };
-
   const handleStartJobTest = (test: any, customSettings?: any) => {
     const settings = customSettings || {
       difficulty: test.difficulty || "Medium",
       questionCount: test.questions,
       duration: test.duration
     };
-    
     toast.success(`Starting ${test.title}`, {
       description: `${settings.questionCount} questions • ${settings.duration} minutes • Official Test`
     });
-
     console.log(`Starting job test: ${test.title}`, {
       ...settings,
       syllabus: test.syllabus
     });
   };
-
   const toggleExpandTest = (testId: number) => {
     if (expandedTest === testId) {
       setExpandedTest(null);
@@ -156,7 +138,6 @@ const MockTests = () => {
       }
     }
   };
-
   const toggleExpandJobTest = (testId: number) => {
     if (expandedJobTest === testId) {
       setExpandedJobTest(null);
@@ -165,7 +146,6 @@ const MockTests = () => {
       setCustomizeJobTest(null); // Close any open customize panel
     }
   };
-
   const toggleCustomizeTest = (testId: number, event: React.MouseEvent) => {
     event.stopPropagation();
     if (customizeTest === testId) {
@@ -175,7 +155,6 @@ const MockTests = () => {
       setExpandedTest(null); // Close any open topic panel
     }
   };
-
   const toggleCustomizeJobTest = (testId: number, event: React.MouseEvent) => {
     event.stopPropagation();
     if (customizeJobTest === testId) {
@@ -185,7 +164,6 @@ const MockTests = () => {
       setExpandedJobTest(null); // Close any open syllabus panel
     }
   };
-
   const handleTopicToggle = (testId: number, topic: string) => {
     setSelectedTopics(prev => {
       const currentTopics = prev[testId] || [];
@@ -205,11 +183,9 @@ const MockTests = () => {
       }
     });
   };
-
   const isTopicSelected = (testId: number, topic: string) => {
     return (selectedTopics[testId] || []).includes(topic);
   };
-
   const handleSubmitCustomization = (testId: number, data: z.infer<typeof testCustomizationSchema>) => {
     const test = allMockTests.find(test => test.id === testId);
     if (test) {
@@ -217,7 +193,6 @@ const MockTests = () => {
     }
     setCustomizeTest(null);
   };
-
   const handleSubmitJobCustomization = (testId: number, data: z.infer<typeof testCustomizationSchema>) => {
     const test = jobTests.find(test => test.id === testId);
     if (test) {
@@ -225,7 +200,6 @@ const MockTests = () => {
     }
     setCustomizeJobTest(null);
   };
-
   const container = {
     hidden: {
       opacity: 0
@@ -237,7 +211,6 @@ const MockTests = () => {
       }
     }
   };
-
   const item = {
     hidden: {
       y: 20,
@@ -248,30 +221,34 @@ const MockTests = () => {
       opacity: 1
     }
   };
-
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Mock Tests", href: "/mock-tests", isCurrent: true }
-  ];
-
-  return (
-    <>
+  const breadcrumbItems = [{
+    title: "Home",
+    href: "/"
+  }, {
+    title: "Mock Tests",
+    href: "/mock-tests",
+    isCurrent: true
+  }];
+  return <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
         <PageBreadcrumb items={breadcrumbItems} />
         
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }} 
-          animate={{ opacity: 1, y: 0 }} 
-          transition={{ duration: 0.5 }} 
-          className="mb-8"
-        >
+        <motion.div initial={{
+        opacity: 0,
+        y: -20
+      }} animate={{
+        opacity: 1,
+        y: 0
+      }} transition={{
+        duration: 0.5
+      }} className="mb-8">
           <h1 className="text-3xl font-bold">Mock Tests</h1>
           <p className="text-muted-foreground">Practice with our collection of subject-specific and official job tests</p>
         </motion.div>
 
-        <Tabs defaultValue="subjects" className="mb-8" onValueChange={(value) => setActiveTab(value)}>
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
+        <Tabs defaultValue="subjects" className="mb-8" onValueChange={value => setActiveTab(value)}>
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-blue-200">
             <TabsTrigger value="subjects">Subject-wise Tests</TabsTrigger>
             <TabsTrigger value="jobs">Job/Post Tests</TabsTrigger>
           </TabsList>
@@ -279,28 +256,14 @@ const MockTests = () => {
           <TabsContent value="subjects">
             <div className="mb-8 overflow-x-auto pb-2">
               <div className="flex space-x-2 min-w-max">
-                {isLoaded && getCategories().map((category, index) => (
-                  <Button 
-                    key={index} 
-                    variant={filter === category ? "default" : "outline"} 
-                    onClick={() => setFilter(category)} 
-                    size="sm" 
-                    className="capitalize"
-                  >
+                {isLoaded && getCategories().map((category, index) => <Button key={index} variant={filter === category ? "default" : "outline"} onClick={() => setFilter(category)} size="sm" className="capitalize">
                     {category === "all" ? "All" : category}
-                  </Button>
-                ))}
+                  </Button>)}
               </div>
             </div>
 
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-              variants={container} 
-              initial="hidden" 
-              animate={isLoaded ? "visible" : "hidden"}
-            >
-              {filteredTests.map(test => (
-                <motion.div key={test.id} variants={item}>
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={container} initial="hidden" animate={isLoaded ? "visible" : "hidden"}>
+              {filteredTests.map(test => <motion.div key={test.id} variants={item}>
                   <Card className="h-full hover:shadow-md transition-shadow duration-300">
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-4">
@@ -331,66 +294,54 @@ const MockTests = () => {
                       <div className="flex flex-col space-y-3">
                         <div className="flex items-center justify-between">
                           <Button variant="outline" className="flex items-center w-1/2 justify-center" onClick={() => toggleExpandTest(test.id)}>
-                            {expandedTest === test.id ? (
-                              <>Hide Topics <ArrowUp className="ml-2 h-4 w-4" /></>
-                            ) : (
-                              <>Show Topics <ArrowDown className="ml-2 h-4 w-4" /></>
-                            )}
+                            {expandedTest === test.id ? <>Hide Topics <ArrowUp className="ml-2 h-4 w-4" /></> : <>Show Topics <ArrowDown className="ml-2 h-4 w-4" /></>}
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center w-1/2 ml-2 justify-center" 
-                            onClick={(e) => toggleCustomizeTest(test.id, e)}
-                          >
+                          <Button variant="outline" className="flex items-center w-1/2 ml-2 justify-center" onClick={e => toggleCustomizeTest(test.id, e)}>
                             <SlidersHorizontal className="mr-2 h-4 w-4" /> Customize
                           </Button>
                         </div>
                         
                         {/* Topics Display with Selection */}
-                        {expandedTest === test.id && (
-                          <motion.div
-                            className="border rounded-lg p-3 bg-secondary/20"
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                          >
+                        {expandedTest === test.id && <motion.div className="border rounded-lg p-3 bg-secondary/20" initial={{
+                      opacity: 0,
+                      height: 0
+                    }} animate={{
+                      opacity: 1,
+                      height: "auto"
+                    }} exit={{
+                      opacity: 0,
+                      height: 0
+                    }}>
                             <h4 className="text-sm font-medium mb-2">Select topics to include:</h4>
                             <div className="space-y-2">
-                              {test.topics.map((topic, index) => (
-                                <div key={index} className="flex items-center space-x-2">
-                                  <Checkbox 
-                                    id={`topic-${test.id}-${index}`} 
-                                    checked={isTopicSelected(test.id, topic)} 
-                                    onCheckedChange={() => handleTopicToggle(test.id, topic)} 
-                                    disabled={isTopicSelected(test.id, topic) && (selectedTopics[test.id]?.length || 0) <= 1} 
-                                  />
+                              {test.topics.map((topic, index) => <div key={index} className="flex items-center space-x-2">
+                                  <Checkbox id={`topic-${test.id}-${index}`} checked={isTopicSelected(test.id, topic)} onCheckedChange={() => handleTopicToggle(test.id, topic)} disabled={isTopicSelected(test.id, topic) && (selectedTopics[test.id]?.length || 0) <= 1} />
                                   <label htmlFor={`topic-${test.id}-${index}`} className="text-sm cursor-pointer">
                                     {topic}
                                   </label>
-                                </div>
-                              ))}
+                                </div>)}
                             </div>
                             <div className="mt-3">
                               <p className="text-xs text-muted-foreground">At least one topic must be selected.</p>
                             </div>
-                          </motion.div>
-                        )}
+                          </motion.div>}
                         
                         {/* Customize Test Form */}
-                        {customizeTest === test.id && (
-                          <motion.div
-                            className="border rounded-lg p-3"
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                          >
+                        {customizeTest === test.id && <motion.div className="border rounded-lg p-3" initial={{
+                      opacity: 0,
+                      height: 0
+                    }} animate={{
+                      opacity: 1,
+                      height: "auto"
+                    }} exit={{
+                      opacity: 0,
+                      height: 0
+                    }}>
                             <Form {...form}>
                               <form onSubmit={form.handleSubmit(data => handleSubmitCustomization(test.id, data))} className="space-y-3">
-                                <FormField 
-                                  control={form.control} 
-                                  name="difficulty" 
-                                  render={({ field }) => (
-                                    <FormItem className="space-y-1">
+                                <FormField control={form.control} name="difficulty" render={({
+                            field
+                          }) => <FormItem className="space-y-1">
                                       <FormLabel className="text-sm">Difficulty</FormLabel>
                                       <FormControl>
                                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
@@ -408,66 +359,46 @@ const MockTests = () => {
                                           </div>
                                         </RadioGroup>
                                       </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
+                                    </FormItem>} />
                                 <div className="grid grid-cols-2 gap-3">
-                                  <FormField 
-                                    control={form.control} 
-                                    name="questionCount" 
-                                    render={({ field }) => (
-                                      <FormItem className="space-y-1">
+                                  <FormField control={form.control} name="questionCount" render={({
+                              field
+                            }) => <FormItem className="space-y-1">
                                         <FormLabel className="text-sm">Questions</FormLabel>
                                         <FormControl>
                                           <Input type="number" min={5} max={100} {...field} />
                                         </FormControl>
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <FormField 
-                                    control={form.control} 
-                                    name="duration" 
-                                    render={({ field }) => (
-                                      <FormItem className="space-y-1">
+                                      </FormItem>} />
+                                  <FormField control={form.control} name="duration" render={({
+                              field
+                            }) => <FormItem className="space-y-1">
                                         <FormLabel className="text-sm">Duration (mins)</FormLabel>
                                         <FormControl>
                                           <Input type="number" min={5} max={180} {...field} />
                                         </FormControl>
-                                      </FormItem>
-                                    )}
-                                  />
+                                      </FormItem>} />
                                 </div>
                                 <Button type="submit" size="sm" className="w-full">
                                   Start Custom Test
                                 </Button>
                               </form>
                             </Form>
-                          </motion.div>
-                        )}
+                          </motion.div>}
                         
                         {/* Start Test Button */}
-                        {!customizeTest && (
-                          <Button className="w-full" onClick={() => handleStartTest(test)}>
+                        {!customizeTest && <Button className="w-full" onClick={() => handleStartTest(test)}>
                             Start Test
-                          </Button>
-                        )}
+                          </Button>}
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
-              ))}
+                </motion.div>)}
             </motion.div>
           </TabsContent>
           
           <TabsContent value="jobs">
-            <motion.div 
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" 
-              variants={container} 
-              initial="hidden" 
-              animate={isLoaded ? "visible" : "hidden"}
-            >
-              {jobTests.map(test => (
-                <motion.div key={test.id} variants={item}>
+            <motion.div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" variants={container} initial="hidden" animate={isLoaded ? "visible" : "hidden"}>
+              {jobTests.map(test => <motion.div key={test.id} variants={item}>
                   <Card className="h-full hover:shadow-md transition-shadow duration-300">
                     <CardContent className="p-6">
                       <div className="flex justify-between items-start mb-2">
@@ -503,59 +434,52 @@ const MockTests = () => {
                       <div className="flex flex-col space-y-3">
                         <div className="flex items-center justify-between">
                           <Button variant="outline" className="flex items-center w-1/2 justify-center" onClick={() => toggleExpandJobTest(test.id)}>
-                            {expandedJobTest === test.id ? (
-                              <>Hide Syllabus <ArrowUp className="ml-2 h-4 w-4" /></>
-                            ) : (
-                              <>Show Syllabus <ArrowDown className="ml-2 h-4 w-4" /></>
-                            )}
+                            {expandedJobTest === test.id ? <>Hide Syllabus <ArrowUp className="ml-2 h-4 w-4" /></> : <>Show Syllabus <ArrowDown className="ml-2 h-4 w-4" /></>}
                           </Button>
-                          <Button 
-                            variant="outline" 
-                            className="flex items-center w-1/2 ml-2 justify-center" 
-                            onClick={(e) => toggleCustomizeJobTest(test.id, e)}
-                          >
+                          <Button variant="outline" className="flex items-center w-1/2 ml-2 justify-center" onClick={e => toggleCustomizeJobTest(test.id, e)}>
                             <SlidersHorizontal className="mr-2 h-4 w-4" /> Customize
                           </Button>
                         </div>
                         
                         {/* Syllabus Display */}
-                        {expandedJobTest === test.id && (
-                          <motion.div
-                            className="border rounded-lg p-3 bg-secondary/20"
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                          >
+                        {expandedJobTest === test.id && <motion.div className="border rounded-lg p-3 bg-secondary/20" initial={{
+                      opacity: 0,
+                      height: 0
+                    }} animate={{
+                      opacity: 1,
+                      height: "auto"
+                    }} exit={{
+                      opacity: 0,
+                      height: 0
+                    }}>
                             <h4 className="text-sm font-medium mb-2">Official Test Syllabus:</h4>
                             <div className="space-y-2">
-                              {test.syllabus.map((item: SyllabusItem, index: number) => (
-                                <div key={index} className="flex items-center justify-between text-sm">
+                              {test.syllabus.map((item: SyllabusItem, index: number) => <div key={index} className="flex items-center justify-between text-sm">
                                   <span>{item.topic}</span>
                                   <span className="font-medium">{item.percentage}%</span>
-                                </div>
-                              ))}
+                                </div>)}
                             </div>
                             <div className="mt-3">
                               <p className="text-xs text-muted-foreground">Percentages indicate exam weightage.</p>
                             </div>
-                          </motion.div>
-                        )}
+                          </motion.div>}
                         
                         {/* Customize Job Test Form */}
-                        {customizeJobTest === test.id && (
-                          <motion.div
-                            className="border rounded-lg p-3"
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                          >
+                        {customizeJobTest === test.id && <motion.div className="border rounded-lg p-3" initial={{
+                      opacity: 0,
+                      height: 0
+                    }} animate={{
+                      opacity: 1,
+                      height: "auto"
+                    }} exit={{
+                      opacity: 0,
+                      height: 0
+                    }}>
                             <Form {...jobTestForm}>
                               <form onSubmit={jobTestForm.handleSubmit(data => handleSubmitJobCustomization(test.id, data))} className="space-y-3">
-                                <FormField 
-                                  control={jobTestForm.control} 
-                                  name="difficulty" 
-                                  render={({ field }) => (
-                                    <FormItem className="space-y-1">
+                                <FormField control={jobTestForm.control} name="difficulty" render={({
+                            field
+                          }) => <FormItem className="space-y-1">
                                       <FormLabel className="text-sm">Difficulty</FormLabel>
                                       <FormControl>
                                         <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
@@ -573,60 +497,44 @@ const MockTests = () => {
                                           </div>
                                         </RadioGroup>
                                       </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
+                                    </FormItem>} />
                                 <div className="grid grid-cols-2 gap-3">
-                                  <FormField 
-                                    control={jobTestForm.control} 
-                                    name="questionCount" 
-                                    render={({ field }) => (
-                                      <FormItem className="space-y-1">
+                                  <FormField control={jobTestForm.control} name="questionCount" render={({
+                              field
+                            }) => <FormItem className="space-y-1">
                                         <FormLabel className="text-sm">Questions</FormLabel>
                                         <FormControl>
                                           <Input type="number" min={5} max={200} {...field} />
                                         </FormControl>
-                                      </FormItem>
-                                    )}
-                                  />
-                                  <FormField 
-                                    control={jobTestForm.control} 
-                                    name="duration" 
-                                    render={({ field }) => (
-                                      <FormItem className="space-y-1">
+                                      </FormItem>} />
+                                  <FormField control={jobTestForm.control} name="duration" render={({
+                              field
+                            }) => <FormItem className="space-y-1">
                                         <FormLabel className="text-sm">Duration (mins)</FormLabel>
                                         <FormControl>
                                           <Input type="number" min={5} max={240} {...field} />
                                         </FormControl>
-                                      </FormItem>
-                                    )}
-                                  />
+                                      </FormItem>} />
                                 </div>
                                 <Button type="submit" size="sm" className="w-full">
                                   Start Custom Test
                                 </Button>
                               </form>
                             </Form>
-                          </motion.div>
-                        )}
+                          </motion.div>}
                         
                         {/* Start Test Button */}
-                        {!customizeJobTest && (
-                          <Button className="w-full" onClick={() => handleStartJobTest(test)}>
+                        {!customizeJobTest && <Button className="w-full" onClick={() => handleStartJobTest(test)}>
                             Start Test
-                          </Button>
-                        )}
+                          </Button>}
                       </div>
                     </CardContent>
                   </Card>
-                </motion.div>
-              ))}
+                </motion.div>)}
             </motion.div>
           </TabsContent>
         </Tabs>
       </div>
-    </>
-  );
+    </>;
 };
-
 export default MockTests;
