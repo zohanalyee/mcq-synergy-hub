@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,12 +31,22 @@ const testCustomizationSchema = z.object({
 });
 
 const generateAllMockTests = () => {
-  // ... keep existing code (generateAllMockTests function content)
+  // Implement the mock test generation logic
+  return subjects.map((subject, index) => ({
+    id: index + 1,
+    title: subject.name,
+    description: `Practice test for ${subject.name} covering all essential topics`,
+    category: subject.category,
+    difficulty: "Medium",
+    duration: 45,
+    questions: 30,
+    topics: getRandomTopics(subject.name, 5)
+  }));
 };
 
 const MockTests = () => {
   const [filter, setFilter] = useState("all");
-  const [allMockTests, setAllMockTests] = useState<typeof mockTests>([]);
+  const [allMockTests, setAllMockTests] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [expandedTest, setExpandedTest] = useState<number | null>(null);
   const [expandedJobTest, setExpandedJobTest] = useState<number | null>(null);
