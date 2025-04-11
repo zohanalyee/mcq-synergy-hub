@@ -1,9 +1,10 @@
-import { Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, FileCheck, Zap, Building, Wrench, Cpu, Stethoscope, Microscope } from "lucide-react";
+import { Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, FileCheck, Zap, Building, Wrench, Cpu, Stethoscope, Microscope, Search, X } from "lucide-react";
 import { useState, useEffect } from "react";
 import SubjectCard from "@/components/SubjectCard";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
+import { Input } from "@/components/ui/input";
 
 export const subjects = [
   {
@@ -312,6 +313,7 @@ export const subjects = [
 const Subjects = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   
   useEffect(() => {
     setIsLoaded(true);
@@ -322,9 +324,14 @@ const Subjects = () => {
     return ["All", ...Array.from(new Set(categories))];
   };
 
-  const filteredSubjects = selectedCategory === "All" 
-    ? subjects 
-    : subjects.filter(subject => subject.category === selectedCategory);
+  const filteredSubjects = subjects.filter(subject => {
+    const categoryMatch = selectedCategory === "All" || subject.category === selectedCategory;
+    
+    const searchMatch = subject.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                       subject.description.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    return categoryMatch && searchMatch;
+  });
 
   const container = {
     hidden: { opacity: 0 },
@@ -371,6 +378,26 @@ const Subjects = () => {
           </motion.p>
         </div>
         
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search subjects..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 pr-10"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+        
         <div className="mb-8 overflow-x-auto pb-2">
           <div className="flex space-x-2 min-w-max">
             {getCategories().map((category) => (
@@ -391,25 +418,42 @@ const Subjects = () => {
           </div>
         </div>
 
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          variants={container}
-          initial="hidden"
-          animate={isLoaded ? "show" : "hidden"}
-        >
-          {filteredSubjects.map((subject, index) => (
-            <motion.div key={subject.title} variants={item}>
-              <SubjectCard
-                title={subject.title}
-                icon={subject.icon}
-                description={subject.description}
-                topicCount={subject.topicCount}
-                color={subject.color}
-                onClick={() => console.log(`Selected subject: ${subject.title}`)}
-              />
-            </motion.div>
-          ))}
-        </motion.div>
+        {filteredSubjects.length > 0 ? (
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={container}
+            initial="hidden"
+            animate={isLoaded ? "show" : "hidden"}
+          >
+            {filteredSubjects.map((subject, index) => (
+              <motion.div key={subject.title} variants={item}>
+                <SubjectCard
+                  title={subject.title}
+                  icon={subject.icon}
+                  description={subject.description}
+                  topicCount={subject.topicCount}
+                  color={subject.color}
+                  onClick={() => console.log(`Selected subject: ${subject.title}`)}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        ) : (
+          <div className="text-center py-16">
+            <p className="text-muted-foreground mb-4">No subjects match your search criteria.</p>
+            <motion.button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("All");
+              }}
+              className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              Clear Filters
+            </motion.button>
+          </div>
+        )}
       </div>
     </>
   );
