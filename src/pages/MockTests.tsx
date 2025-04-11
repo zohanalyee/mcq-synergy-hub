@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -66,7 +67,8 @@ const MockTests = () => {
 
   useEffect(() => {
     // Generate mock tests for all subjects
-    setAllMockTests(generateAllMockTests());
+    const generatedTests = generateAllMockTests();
+    setAllMockTests(generatedTests);
     setIsLoaded(true);
   }, []);
 
@@ -86,6 +88,11 @@ const MockTests = () => {
   const filteredTests = filter === "all" ? allMockTests : allMockTests.filter(test => test.category.toLowerCase() === filter.toLowerCase());
 
   const getCategories = () => {
+    // Add a guard clause to ensure allMockTests is not undefined before calling map()
+    if (!allMockTests || allMockTests.length === 0) {
+      return ["all"];
+    }
+    
     const categories = allMockTests.map(test => test.category);
     return ["all", ...Array.from(new Set(categories))];
   };
@@ -263,9 +270,9 @@ const MockTests = () => {
           <TabsContent value="subjects">
             <div className="mb-8 overflow-x-auto pb-2">
               <div className="flex space-x-2 min-w-max">
-                {isLoaded && getCategories().map(category => (
+                {isLoaded && getCategories().map((category, index) => (
                   <Button 
-                    key={category} 
+                    key={index} 
                     variant={filter === category ? "default" : "outline"} 
                     onClick={() => setFilter(category)} 
                     size="sm" 
