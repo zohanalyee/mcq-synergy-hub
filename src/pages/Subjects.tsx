@@ -1,10 +1,15 @@
-import { Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, FileCheck, Zap, Building, Wrench, Cpu, Stethoscope, Microscope, Search, X } from "lucide-react";
+
+import { Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, FileCheck, Zap, Building, Wrench, Cpu, Stethoscope, Microscope, Search, X, FileText, CheckSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import SubjectCard from "@/components/SubjectCard";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+
+// Enhanced subject type with purpose property
+type SubjectPurpose = "reading" | "mcqs";
 
 export const subjects = [
   {
@@ -14,6 +19,7 @@ export const subjects = [
     topicCount: 12,
     color: "#3b82f6",
     category: "Core Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Computer Science",
@@ -22,6 +28,7 @@ export const subjects = [
     topicCount: 10,
     color: "#10b981",
     category: "Core Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Physics",
@@ -30,6 +37,7 @@ export const subjects = [
     topicCount: 8,
     color: "#8b5cf6",
     category: "Core Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Chemistry",
@@ -38,6 +46,7 @@ export const subjects = [
     topicCount: 7,
     color: "#ef4444",
     category: "Core Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Biology",
@@ -46,6 +55,7 @@ export const subjects = [
     topicCount: 9,
     color: "#22c55e",
     category: "Core Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "English",
@@ -54,6 +64,7 @@ export const subjects = [
     topicCount: 6,
     color: "#f97316",
     category: "Core Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   
   {
@@ -63,6 +74,7 @@ export const subjects = [
     topicCount: 8,
     color: "#ec4899",
     category: "Social Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Economics",
@@ -71,6 +83,7 @@ export const subjects = [
     topicCount: 7,
     color: "#1d4ed8",
     category: "Social Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Sociology",
@@ -79,6 +92,7 @@ export const subjects = [
     topicCount: 6,
     color: "#0891b2",
     category: "Social Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Political Science",
@@ -87,6 +101,7 @@ export const subjects = [
     topicCount: 7,
     color: "#ca8a04",
     category: "Social Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Statistics",
@@ -95,6 +110,7 @@ export const subjects = [
     topicCount: 8,
     color: "#4f46e5",
     category: "Social Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "English Literature",
@@ -103,6 +119,7 @@ export const subjects = [
     topicCount: 6,
     color: "#d97706",
     category: "Social Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Judiciary and Law",
@@ -111,6 +128,7 @@ export const subjects = [
     topicCount: 9,
     color: "#4b5563",
     category: "Social Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "International Relations",
@@ -119,6 +137,7 @@ export const subjects = [
     topicCount: 7,
     color: "#2563eb",
     category: "Social Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Physical Education",
@@ -127,6 +146,7 @@ export const subjects = [
     topicCount: 5,
     color: "#e11d48",
     category: "Social Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   
   {
@@ -136,6 +156,7 @@ export const subjects = [
     topicCount: 8,
     color: "#16a34a",
     category: "Agriculture & Environment",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Forestry",
@@ -144,6 +165,7 @@ export const subjects = [
     topicCount: 6,
     color: "#047857",
     category: "Agriculture & Environment",
+    purpose: "reading" as SubjectPurpose,
   },
   
   {
@@ -153,6 +175,7 @@ export const subjects = [
     topicCount: 8,
     color: "#22c55e",
     category: "Management Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Human Resource Management",
@@ -161,6 +184,7 @@ export const subjects = [
     topicCount: 7,
     color: "#3b82f6",
     category: "Management Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Marketing",
@@ -169,6 +193,7 @@ export const subjects = [
     topicCount: 6,
     color: "#f97316",
     category: "Management Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Accounting",
@@ -177,6 +202,7 @@ export const subjects = [
     topicCount: 9,
     color: "#64748b",
     category: "Management Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Auditing",
@@ -185,6 +211,7 @@ export const subjects = [
     topicCount: 7,
     color: "#8b5cf6",
     category: "Management Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   
   {
@@ -194,6 +221,7 @@ export const subjects = [
     topicCount: 10,
     color: "#eab308",
     category: "Engineering",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Civil Engineering",
@@ -202,6 +230,7 @@ export const subjects = [
     topicCount: 9,
     color: "#64748b",
     category: "Engineering",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Mechanical Engineering",
@@ -210,6 +239,7 @@ export const subjects = [
     topicCount: 8,
     color: "#52525b",
     category: "Engineering",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Chemical Engineering",
@@ -218,6 +248,7 @@ export const subjects = [
     topicCount: 7,
     color: "#ef4444",
     category: "Engineering",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Software Engineering",
@@ -226,6 +257,7 @@ export const subjects = [
     topicCount: 8,
     color: "#14b8a6",
     category: "Engineering",
+    purpose: "mcqs" as SubjectPurpose,
   },
   
   {
@@ -235,6 +267,7 @@ export const subjects = [
     topicCount: 8,
     color: "#10b981",
     category: "Medical Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Biochemistry",
@@ -243,6 +276,7 @@ export const subjects = [
     topicCount: 9,
     color: "#8b5cf6",
     category: "Medical Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Oral Anatomy",
@@ -251,6 +285,7 @@ export const subjects = [
     topicCount: 6,
     color: "#f87171",
     category: "Medical Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "General Anatomy",
@@ -259,6 +294,7 @@ export const subjects = [
     topicCount: 10,
     color: "#ec4899",
     category: "Medical Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Oral Pathology and Medicine",
@@ -267,6 +303,7 @@ export const subjects = [
     topicCount: 7,
     color: "#e11d48",
     category: "Medical Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Oral Histology",
@@ -275,6 +312,7 @@ export const subjects = [
     topicCount: 5,
     color: "#6366f1",
     category: "Medical Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Pathology",
@@ -283,6 +321,7 @@ export const subjects = [
     topicCount: 9,
     color: "#d97706",
     category: "Medical Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Dental Materials",
@@ -291,6 +330,7 @@ export const subjects = [
     topicCount: 6,
     color: "#0ea5e9",
     category: "Medical Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
   {
     title: "Pharmacology",
@@ -299,6 +339,7 @@ export const subjects = [
     topicCount: 8,
     color: "#16a34a",
     category: "Medical Sciences",
+    purpose: "reading" as SubjectPurpose,
   },
   {
     title: "Physiology",
@@ -307,6 +348,7 @@ export const subjects = [
     topicCount: 10,
     color: "#3b82f6",
     category: "Medical Sciences",
+    purpose: "mcqs" as SubjectPurpose,
   },
 ];
 
@@ -314,6 +356,7 @@ const Subjects = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [selectedPurpose, setSelectedPurpose] = useState<string>("All");
   
   useEffect(() => {
     setIsLoaded(true);
@@ -326,11 +369,12 @@ const Subjects = () => {
 
   const filteredSubjects = subjects.filter(subject => {
     const categoryMatch = selectedCategory === "All" || subject.category === selectedCategory;
+    const purposeMatch = selectedPurpose === "All" || subject.purpose === selectedPurpose.toLowerCase();
     
     const searchMatch = subject.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                        subject.description.toLowerCase().includes(searchQuery.toLowerCase());
     
-    return categoryMatch && searchMatch;
+    return categoryMatch && purposeMatch && searchMatch;
   });
 
   const container = {
@@ -352,6 +396,8 @@ const Subjects = () => {
     { title: "Home", href: "/" },
     { title: "Subjects", href: "/subjects", isCurrent: true },
   ];
+
+  const purposeOptions = ["All", "Reading", "MCQs"];
 
   return (
     <>
@@ -398,24 +444,70 @@ const Subjects = () => {
           </div>
         </div>
         
-        <div className="mb-8 overflow-x-auto pb-2">
-          <div className="flex space-x-2 min-w-max">
-            {getCategories().map((category) => (
-              <motion.button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedCategory === category
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                {category}
-              </motion.button>
-            ))}
+        <div className="mb-8">
+          <div className="flex flex-col gap-4 sm:flex-row justify-between">
+            <div className="overflow-x-auto pb-2">
+              <div className="flex space-x-2 min-w-max">
+                {getCategories().map((category) => (
+                  <motion.button
+                    key={category}
+                    onClick={() => setSelectedCategory(category)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      selectedCategory === category
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    {category}
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="flex space-x-2">
+              {purposeOptions.map((purpose) => (
+                <motion.button
+                  key={purpose}
+                  onClick={() => setSelectedPurpose(purpose)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all flex items-center gap-2 ${
+                    selectedPurpose === purpose
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  }`}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  {purpose === "Reading" && <FileText className="h-4 w-4" />}
+                  {purpose === "MCQs" && <CheckSquare className="h-4 w-4" />}
+                  {purpose}
+                </motion.button>
+              ))}
+            </div>
           </div>
+        </div>
+
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-medium">
+            {filteredSubjects.length} {filteredSubjects.length === 1 ? "Subject" : "Subjects"} Found
+          </h2>
+          
+          {(searchQuery || selectedCategory !== "All" || selectedPurpose !== "All") && (
+            <motion.button
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedCategory("All");
+                setSelectedPurpose("All");
+              }}
+              className="px-3 py-1 rounded text-sm font-medium bg-muted hover:bg-muted/70 flex items-center gap-1"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <X className="h-3.5 w-3.5" />
+              Clear Filters
+            </motion.button>
+          )}
         </div>
 
         {filteredSubjects.length > 0 ? (
@@ -433,6 +525,7 @@ const Subjects = () => {
                   description={subject.description}
                   topicCount={subject.topicCount}
                   color={subject.color}
+                  purpose={subject.purpose}
                   onClick={() => console.log(`Selected subject: ${subject.title}`)}
                 />
               </motion.div>
@@ -445,6 +538,7 @@ const Subjects = () => {
               onClick={() => {
                 setSearchQuery("");
                 setSelectedCategory("All");
+                setSelectedPurpose("All");
               }}
               className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
               whileHover={{ scale: 1.05 }}
