@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { FileText, CheckSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useNavigate } from "react-router-dom";
 
 interface SubjectCardProps {
   title: string;
@@ -26,12 +27,41 @@ const SubjectCard = ({
   onClick 
 }: SubjectCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
+  const navigate = useNavigate();
+  
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+      return;
+    }
+    
+    // Navigate to the appropriate page based on purpose
+    if (purpose === "reading") {
+      navigate(`/subject-content/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"))}`, { 
+        state: { 
+          title,
+          purpose,
+          color,
+          icon,
+          topicCount
+        } 
+      });
+    } else {
+      // For MCQs, we'll navigate to the custom syllabus page with the subject preselected
+      navigate(`/custom-syllabus`, { 
+        state: { 
+          preselectedSubject: title,
+          purpose
+        } 
+      });
+    }
+  };
   
   return (
     <motion.div
       whileHover={{ y: -8 }}
       transition={{ type: "spring", stiffness: 400, damping: 10 }}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       className="cursor-pointer"
