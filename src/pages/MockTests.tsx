@@ -30,6 +30,10 @@ const MockTests = () => {
     href: "/mock-tests",
     isCurrent: true
   }];
+
+  const handleClearSearch = () => {
+    setSearchQuery("");
+  };
   
   return (
     <>

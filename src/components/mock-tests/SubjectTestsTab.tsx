@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -151,7 +150,6 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
           <p className="text-muted-foreground mb-4">No tests match your search criteria.</p>
           <Button
             onClick={() => {
-              setSearchQuery("");
               setFilter("all");
             }}
           >
