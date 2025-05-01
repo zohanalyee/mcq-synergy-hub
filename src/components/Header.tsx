@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Laptop, Menu, Moon, Sun, X, BookOpen, FileText, Briefcase, Award } from 'lucide-react';
+import { Laptop, Menu, Moon, Sun, X, BookOpen, FileText, Briefcase, Award, Shield, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -13,11 +13,13 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { useUserRole } from '@/contexts/UserRoleContext';
 
 const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string) => void }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { userRole, setUserRole, isAdmin } = useUserRole();
   
   // Use try-catch to handle the case when Header is used outside Router context
   let navigate;
@@ -51,15 +53,29 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     }
   };
 
+  // For demo purposes - toggle between user roles
+  const toggleRole = () => {
+    if (userRole === 'admin') {
+      setUserRole('user');
+    } else if (userRole === 'user') {
+      setUserRole('guest');
+    } else {
+      setUserRole('admin');
+    }
+  };
+
   const navItems = [
     { title: 'Home', path: '/' },
     { title: 'Subjects', path: '/subjects' },
+    { title: 'Scholarships', path: '/scholarships' },
+    { title: 'Jobs', path: '/jobs' },
     { title: 'Mock Tests', path: '/mock-tests' },
+  ];
+
+  const secondaryNavItems = [
     { title: 'Analytics', path: '/analytics' },
     { title: 'Leaderboard', path: '/leaderboard' },
     { title: 'Past Papers', path: '/past-papers' },
-    { title: 'Jobs', path: '/jobs' },
-    { title: 'Scholarships', path: '/scholarships' },
   ];
 
   const isActive = (path: string) => {
@@ -106,6 +122,24 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                   </NavigationMenuLink>
                 </NavigationMenuItem>
               ))}
+
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>More</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <div className="grid grid-cols-1 gap-1 p-2 w-48">
+                    {secondaryNavItems.map((item) => (
+                      <Button
+                        key={item.title}
+                        variant="ghost"
+                        className={`justify-start ${isActive(item.path) ? 'bg-accent' : ''}`}
+                        onClick={() => handleNavigation(item.path)}
+                      >
+                        {item.title}
+                      </Button>
+                    ))}
+                  </div>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
             </NavigationMenuList>
           </NavigationMenu>
 
@@ -114,6 +148,42 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
 
           {/* Action buttons with consistent spacing */}
           <div className="flex items-center gap-3 flex-shrink-0">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="hidden md:flex gap-1"
+              onClick={() => handleNavigation('/submit-content')}
+            >
+              <Upload className="h-4 w-4" />
+              Submit
+            </Button>
+
+            {isAdmin && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hidden md:flex gap-1 border-primary/50"
+                onClick={() => handleNavigation('/admin')}
+              >
+                <Shield className="h-4 w-4 text-primary" />
+                Admin
+              </Button>
+            )}
+
+            {/* Demo only - role switcher */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={toggleRole} 
+              title={`Current role: ${userRole} (click to change)`}
+              className="rounded-full hover:bg-background/80 hidden md:flex"
+            >
+              <span className={`h-3 w-3 rounded-full ${
+                userRole === 'admin' ? 'bg-red-500' : 
+                userRole === 'user' ? 'bg-green-500' : 'bg-blue-500'
+              }`}></span>
+            </Button>
+
             <Button 
               variant="ghost" 
               size="icon" 
@@ -177,6 +247,47 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                 </button>
               ))}
               
+              <div className="border-t border-border/40 pt-4">
+                <p className="text-xs font-medium text-muted-foreground mb-2">More Options</p>
+                {secondaryNavItems.map((item) => (
+                  <button
+                    key={item.title}
+                    onClick={() => handleNavigation(item.path)}
+                    className={`text-left py-2 ${isActive(item.path) ? 'text-primary font-medium' : 'text-foreground/80 hover:text-foreground'} transition-colors block w-full`}
+                  >
+                    {item.title}
+                  </button>
+                ))}
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full mt-4 flex items-center justify-center gap-2"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  handleNavigation('/submit-content');
+                }}
+              >
+                <Upload className="h-4 w-4" />
+                Submit Content
+              </Button>
+
+              {isAdmin && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full flex items-center justify-center gap-2 border-primary/50"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleNavigation('/admin');
+                  }}
+                >
+                  <Shield className="h-4 w-4 text-primary" />
+                  Admin Panel
+                </Button>
+              )}
+              
               <div className="pt-4 border-t border-border/40">
                 <Button 
                   className="w-full backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
@@ -184,6 +295,23 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                 >
                   Get Started
                 </Button>
+                
+                {/* Role switcher (Demo only) */}
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">Current role:</span>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleRole}
+                    className="flex items-center gap-2"
+                  >
+                    <span className={`h-2 w-2 rounded-full ${
+                      userRole === 'admin' ? 'bg-red-500' : 
+                      userRole === 'user' ? 'bg-green-500' : 'bg-blue-500'
+                    }`}></span>
+                    <span className="capitalize">{userRole}</span>
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>
