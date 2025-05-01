@@ -1,5 +1,5 @@
 
-import { subjects } from "@/pages/Subjects";
+import { subjects } from "@/data/subjectsData";
 import { getRandomTopics } from "@/utils/mockTestUtils";
 
 export const generateAllMockTests = () => {

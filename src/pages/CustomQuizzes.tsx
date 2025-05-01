@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
-import { subjects } from "./Subjects";
+import { subjects } from "@/data/subjectsData";
 import { CustomSubject, QuizSettings } from "@/components/custom-quizzes/interfaces";
 import SubjectList from "@/components/custom-quizzes/SubjectList";
 import QuizConfigPanel from "@/components/custom-quizzes/QuizConfigPanel";

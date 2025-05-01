@@ -1,5 +1,4 @@
-
-import { subjects } from "@/pages/Subjects";
+import { subjects } from "@/data/subjectsData";
 
 // Map of subject titles to their associated topics
 export const subjectTopicsMap: Record<string, string[]> = {

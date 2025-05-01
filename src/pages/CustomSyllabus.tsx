@@ -1,4 +1,3 @@
-
 import { useState, useRef, useEffect } from "react";
 import { 
   Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, 
@@ -15,7 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 
 // Import subjects data
-import { subjects } from "./Subjects";
+import { subjects } from "@/data/subjectsData";
 
 // Import custom components
 import { CustomSubject, QuizSettings } from "@/components/custom-syllabus/interfaces";
