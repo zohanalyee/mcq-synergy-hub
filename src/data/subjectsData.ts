@@ -1,3 +1,4 @@
+
 import { Book, Code, Beaker, Brain, Atom, Calculator, Scale, Landmark, Globe, Dumbbell, BarChart, DollarSign, Users, ShoppingCart, ScrollText, FileCheck, Zap, Building, Wrench, Cpu, Stethoscope, Microscope } from "lucide-react";
 import { ReactNode } from "react";
 
@@ -22,7 +23,7 @@ export const subjects: Subject[] = [
     topicCount: 12,
     color: "#3b82f6",
     category: "Core Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Computer Science",
@@ -31,7 +32,7 @@ export const subjects: Subject[] = [
     topicCount: 10,
     color: "#10b981",
     category: "Core Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Physics",
@@ -40,7 +41,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#8b5cf6",
     category: "Core Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Chemistry",
@@ -49,7 +50,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#ef4444",
     category: "Core Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Biology",
@@ -58,7 +59,7 @@ export const subjects: Subject[] = [
     topicCount: 9,
     color: "#22c55e",
     category: "Core Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "English",
@@ -67,7 +68,7 @@ export const subjects: Subject[] = [
     topicCount: 6,
     color: "#f97316",
     category: "Core Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   
   {
@@ -77,7 +78,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#ec4899",
     category: "Social Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Economics",
@@ -86,7 +87,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#1d4ed8",
     category: "Social Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Sociology",
@@ -95,7 +96,7 @@ export const subjects: Subject[] = [
     topicCount: 6,
     color: "#0891b2",
     category: "Social Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Political Science",
@@ -104,7 +105,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#ca8a04",
     category: "Social Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Statistics",
@@ -113,7 +114,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#4f46e5",
     category: "Social Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "English Literature",
@@ -122,7 +123,7 @@ export const subjects: Subject[] = [
     topicCount: 6,
     color: "#d97706",
     category: "Social Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Judiciary and Law",
@@ -131,7 +132,7 @@ export const subjects: Subject[] = [
     topicCount: 9,
     color: "#4b5563",
     category: "Social Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "International Relations",
@@ -140,7 +141,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#2563eb",
     category: "Social Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Physical Education",
@@ -149,7 +150,7 @@ export const subjects: Subject[] = [
     topicCount: 5,
     color: "#e11d48",
     category: "Social Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   
   {
@@ -159,7 +160,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#16a34a",
     category: "Agriculture & Environment",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Forestry",
@@ -168,7 +169,7 @@ export const subjects: Subject[] = [
     topicCount: 6,
     color: "#047857",
     category: "Agriculture & Environment",
-    purpose: "reading",
+    purpose: "reading"
   },
   
   {
@@ -178,7 +179,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#22c55e",
     category: "Management Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Human Resource Management",
@@ -187,7 +188,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#3b82f6",
     category: "Management Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Marketing",
@@ -196,7 +197,7 @@ export const subjects: Subject[] = [
     topicCount: 6,
     color: "#f97316",
     category: "Management Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Accounting",
@@ -205,7 +206,7 @@ export const subjects: Subject[] = [
     topicCount: 9,
     color: "#64748b",
     category: "Management Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Auditing",
@@ -214,7 +215,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#8b5cf6",
     category: "Management Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   
   {
@@ -224,7 +225,7 @@ export const subjects: Subject[] = [
     topicCount: 10,
     color: "#eab308",
     category: "Engineering",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Civil Engineering",
@@ -233,7 +234,7 @@ export const subjects: Subject[] = [
     topicCount: 9,
     color: "#64748b",
     category: "Engineering",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Mechanical Engineering",
@@ -242,7 +243,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#52525b",
     category: "Engineering",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Chemical Engineering",
@@ -251,7 +252,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#ef4444",
     category: "Engineering",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Software Engineering",
@@ -260,7 +261,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#14b8a6",
     category: "Engineering",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   
   {
@@ -270,7 +271,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#10b981",
     category: "Medical Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Biochemistry",
@@ -279,7 +280,7 @@ export const subjects: Subject[] = [
     topicCount: 9,
     color: "#8b5cf6",
     category: "Medical Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Oral Anatomy",
@@ -288,7 +289,7 @@ export const subjects: Subject[] = [
     topicCount: 6,
     color: "#f87171",
     category: "Medical Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "General Anatomy",
@@ -297,7 +298,7 @@ export const subjects: Subject[] = [
     topicCount: 10,
     color: "#ec4899",
     category: "Medical Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Oral Pathology and Medicine",
@@ -306,7 +307,7 @@ export const subjects: Subject[] = [
     topicCount: 7,
     color: "#e11d48",
     category: "Medical Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Oral Histology",
@@ -315,7 +316,7 @@ export const subjects: Subject[] = [
     topicCount: 5,
     color: "#6366f1",
     category: "Medical Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Pathology",
@@ -324,7 +325,7 @@ export const subjects: Subject[] = [
     topicCount: 9,
     color: "#d97706",
     category: "Medical Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Dental Materials",
@@ -333,7 +334,7 @@ export const subjects: Subject[] = [
     topicCount: 6,
     color: "#0ea5e9",
     category: "Medical Sciences",
-    purpose: "mcqs",
+    purpose: "mcqs"
   },
   {
     title: "Pharmacology",
@@ -342,7 +343,7 @@ export const subjects: Subject[] = [
     topicCount: 8,
     color: "#16a34a",
     category: "Medical Sciences",
-    purpose: "reading",
+    purpose: "reading"
   },
   {
     title: "Physiology",
@@ -351,6 +352,6 @@ export const subjects: Subject[] = [
     topicCount: 10,
     color: "#3b82f6",
     category: "Medical Sciences",
-    purpose: "mcqs",
-  },
+    purpose: "mcqs"
+  }
 ];
