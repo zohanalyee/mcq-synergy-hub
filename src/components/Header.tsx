@@ -29,7 +29,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
-  const { userRole, setUserRole, isAdmin } = useUserRole();
+  const { userRole, isAdmin } = useUserRole();
   const { user, profile, signOut } = useAuth();
   
   // Use try-catch to handle the case when Header is used outside Router context
@@ -61,17 +61,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
   const toggleTheme = () => {
     if (setTheme) {
       setTheme(theme === 'dark' ? 'light' : theme === 'light' ? 'system' : 'dark');
-    }
-  };
-
-  // For demo purposes - toggle between user roles
-  const toggleRole = () => {
-    if (userRole === 'admin') {
-      setUserRole('user');
-    } else if (userRole === 'user') {
-      setUserRole('guest');
-    } else {
-      setUserRole('admin');
     }
   };
 
@@ -165,17 +154,19 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
 
           {/* Action buttons with consistent spacing */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="hidden md:flex gap-1"
-              onClick={() => handleNavigation('/submit-content')}
-            >
-              <Upload className="h-4 w-4" />
-              Submit
-            </Button>
+            {user && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="hidden md:flex gap-1"
+                onClick={() => handleNavigation('/submit-content')}
+              >
+                <Upload className="h-4 w-4" />
+                Submit
+              </Button>
+            )}
 
-            {isAdmin && (
+            {user && isAdmin && (
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -186,20 +177,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                 Admin
               </Button>
             )}
-
-            {/* Demo only - role switcher */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={toggleRole} 
-              title={`Current role: ${userRole} (click to change)`}
-              className="rounded-full hover:bg-background/80 hidden md:flex"
-            >
-              <span className={`h-3 w-3 rounded-full ${
-                userRole === 'admin' ? 'bg-red-500' : 
-                userRole === 'user' ? 'bg-green-500' : 'bg-blue-500'
-              }`}></span>
-            </Button>
 
             <Button 
               variant="ghost" 
@@ -333,20 +310,22 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                 ))}
               </div>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full mt-4 flex items-center justify-center gap-2"
-                onClick={() => {
-                  setIsMobileMenuOpen(false);
-                  handleNavigation('/submit-content');
-                }}
-              >
-                <Upload className="h-4 w-4" />
-                Submit Content
-              </Button>
+              {user && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-4 flex items-center justify-center gap-2"
+                  onClick={() => {
+                    setIsMobileMenuOpen(false);
+                    handleNavigation('/submit-content');
+                  }}
+                >
+                  <Upload className="h-4 w-4" />
+                  Submit Content
+                </Button>
+              )}
 
-              {isAdmin && (
+              {user && isAdmin && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -393,23 +372,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                     Sign In
                   </Button>
                 )}
-                
-                {/* Role switcher (Demo only) */}
-                <div className="mt-4 flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Current role:</span>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={toggleRole}
-                    className="flex items-center gap-2"
-                  >
-                    <span className={`h-2 w-2 rounded-full ${
-                      userRole === 'admin' ? 'bg-red-500' : 
-                      userRole === 'user' ? 'bg-green-500' : 'bg-blue-500'
-                    }`}></span>
-                    <span className="capitalize">{userRole}</span>
-                  </Button>
-                </div>
               </div>
             </div>
           </Card>

@@ -19,11 +19,15 @@ import {
 import { ContentItem } from "@/interfaces/content";
 import { getContentByCategory } from "@/services/contentService";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/contexts/UserRoleContext';
 
 const PastPapers = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
+  const { isAdmin } = useUserRole();
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [pastPapers, setPastPapers] = useState<ContentItem[]>([]);
@@ -121,10 +125,12 @@ const PastPapers = () => {
                 </Select>
               </div>
             )}
-            <Button onClick={() => navigate("/submit-content")} className="flex gap-2">
-              <Upload className="h-4 w-4" />
-              Submit Paper
-            </Button>
+            {user && (
+              <Button onClick={() => navigate("/submit-content")} className="flex gap-2">
+                <Upload className="h-4 w-4" />
+                Submit Paper
+              </Button>
+            )}
           </div>
         </div>
         
@@ -203,12 +209,14 @@ const PastPapers = () => {
               <p className="mt-2 text-muted-foreground">
                 {searchQuery || categoryFilter !== "all"
                   ? "Try adjusting your search query or filter"
-                  : "Be the first to submit a past paper"
+                  : user ? "Be the first to submit a past paper" : "Sign in to submit past papers"
                 }
               </p>
-              <Button onClick={() => navigate('/submit-content')} className="mt-4">
-                Submit Paper
-              </Button>
+              {user && (
+                <Button onClick={() => navigate('/submit-content')} className="mt-4">
+                  Submit Paper
+                </Button>
+              )}
             </div>
           )}
         </div>
