@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, X, Edit, Trash, Shield, FileEdit, Eye } from "lucide-react";
+import { Check, X, Edit, Trash, Shield, FileEdit, Eye, Calendar, Briefcase, GraduationCap, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import Header from "@/components/Header";
@@ -184,6 +184,85 @@ const AdminPanel = () => {
     }
   };
 
+  // Get category badge with icon
+  const getCategoryBadge = (category: string) => {
+    switch (category) {
+      case "scholarship":
+        return (
+          <Badge className="flex items-center space-x-1">
+            <GraduationCap className="h-3 w-3" />
+            <span>Scholarship</span>
+          </Badge>
+        );
+      case "job":
+        return (
+          <Badge className="flex items-center space-x-1">
+            <Briefcase className="h-3 w-3" />
+            <span>Job</span>
+          </Badge>
+        );
+      case "mcq":
+        return <Badge>MCQ</Badge>;
+      case "past_paper":
+        return (
+          <Badge className="flex items-center space-x-1">
+            <FileText className="h-3 w-3" />
+            <span>Past Paper</span>
+          </Badge>
+        );
+      default:
+        return <Badge>{category}</Badge>;
+    }
+  };
+
+  // Get additional details for item
+  const getItemDetails = (item: ContentItem) => {
+    const details = [];
+    
+    if (item.deadline) {
+      details.push(
+        <div key="deadline" className="flex items-center text-sm text-muted-foreground">
+          <Calendar className="h-3 w-3 mr-1" />
+          <span>Deadline: {item.deadline}</span>
+        </div>
+      );
+    }
+    
+    switch (item.category) {
+      case 'job':
+        if (item.cadre) {
+          details.push(<div key="cadre" className="text-sm text-muted-foreground mt-0.5">Cadre: {item.cadre}</div>);
+        }
+        if (item.department) {
+          details.push(<div key="dept" className="text-sm text-muted-foreground mt-0.5">Department: {item.department}</div>);
+        }
+        if (item.governmentLevel) {
+          details.push(<div key="level" className="text-sm text-muted-foreground mt-0.5">Level: {item.governmentLevel}</div>);
+        }
+        break;
+        
+      case 'scholarship':
+        if (item.scholarshipType) {
+          details.push(<div key="type" className="text-sm text-muted-foreground mt-0.5">Type: {item.scholarshipType}</div>);
+        }
+        if (item.institution) {
+          details.push(<div key="inst" className="text-sm text-muted-foreground mt-0.5">Institution: {item.institution}</div>);
+        }
+        break;
+        
+      case 'past_paper':
+        if (item.examType) {
+          details.push(<div key="examType" className="text-sm text-muted-foreground mt-0.5">Type: {item.examType}</div>);
+        }
+        if (item.examYear) {
+          details.push(<div key="examYear" className="text-sm text-muted-foreground mt-0.5">Year: {item.examYear}</div>);
+        }
+        break;
+    }
+    
+    return details.length > 0 ? <div className="mt-1">{details}</div> : null;
+  };
+
   const breadcrumbItems = [
     { title: "Home", href: "/" },
     { title: "Admin Panel", href: "/admin", isCurrent: true },
@@ -273,14 +352,15 @@ const AdminPanel = () => {
                                       ? `${item.description.substring(0, 50)}...` 
                                       : item.description}
                                   </div>
+                                  {getItemDetails(item)}
                                   <div className="md:hidden">
-                                    <Badge>{item.category}</Badge>
+                                    {getCategoryBadge(item.category)}
                                     <div className="mt-1">{getStatusBadge(item.status)}</div>
                                   </div>
                                 </div>
                               </TableCell>
                               <TableCell className="hidden md:table-cell">
-                                <Badge>{item.category}</Badge>
+                                {getCategoryBadge(item.category)}
                               </TableCell>
                               <TableCell className="hidden md:table-cell">
                                 {formatDate(item.createdAt)}
@@ -386,6 +466,18 @@ const AdminPanel = () => {
                     alt="Content" 
                     className="max-h-40 mx-auto object-contain" 
                   />
+                </div>
+              </div>
+            )}
+            
+            {currentItem?.fileUrl && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Attached Document</label>
+                <div className="border rounded-md p-2 flex items-center justify-center gap-2">
+                  <FileText className="h-5 w-5 text-primary" />
+                  <a href={currentItem.fileUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                    View Document
+                  </a>
                 </div>
               </div>
             )}

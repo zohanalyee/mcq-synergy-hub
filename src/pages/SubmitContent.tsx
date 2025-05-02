@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
-import { PlusCircle, X, FileText, Image, Check } from "lucide-react";
+import { PlusCircle, X, FileText, Image, Check, Calendar, List, Briefcase, GraduationCap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import Header from "@/components/Header";
@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContentSubmission, ContentCategory } from "@/interfaces/content";
 import { submitContent } from "@/services/contentService";
 import { useUserRole } from "@/contexts/UserRoleContext";
@@ -37,6 +38,8 @@ const SubmitContent = () => {
       tags: [],
     }
   });
+
+  const selectedCategory = form.watch("category") as ContentCategory;
 
   // Handle tag input
   const handleAddTag = () => {
@@ -110,6 +113,197 @@ const SubmitContent = () => {
     { title: "Submit Content", href: "/submit-content", isCurrent: true },
   ];
 
+  // Render category-specific fields
+  const renderCategoryFields = () => {
+    switch (selectedCategory) {
+      case 'job':
+        return (
+          <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="cadre"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Job Cadre/Grade</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select job cadre/grade" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="grade-1">Grade 1</SelectItem>
+                      <SelectItem value="grade-2">Grade 2</SelectItem>
+                      <SelectItem value="grade-3">Grade 3</SelectItem>
+                      <SelectItem value="grade-4">Grade 4</SelectItem>
+                      <SelectItem value="grade-5">Grade 5</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="department"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Department</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter department name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="governmentLevel"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Government Level</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select government level" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="federal">Federal</SelectItem>
+                      <SelectItem value="provincial">Provincial</SelectItem>
+                      <SelectItem value="local">Local</SelectItem>
+                      <SelectItem value="private">Private</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="deadline"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Application Deadline</FormLabel>
+                  <div className="flex items-center">
+                    <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+      
+      case 'scholarship':
+        return (
+          <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="scholarshipType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Scholarship Type</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select scholarship type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="undergraduate">Undergraduate</SelectItem>
+                      <SelectItem value="graduate">Graduate</SelectItem>
+                      <SelectItem value="phd">PhD</SelectItem>
+                      <SelectItem value="research">Research</SelectItem>
+                      <SelectItem value="merit">Merit-based</SelectItem>
+                      <SelectItem value="need">Need-based</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="institution"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Institution</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter institution name" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="deadline"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Application Deadline</FormLabel>
+                  <div className="flex items-center">
+                    <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+      
+      case 'past_paper':
+        return (
+          <div className="space-y-6">
+            <FormField
+              control={form.control}
+              name="examType"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Exam Type</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter exam type (e.g., Final, Midterm)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="examYear"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Year</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter year (e.g., 2023)" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        );
+      
+      default:
+        return null;
+    }
+  };
+
   return (
     <>
       <Header />
@@ -125,7 +319,7 @@ const SubmitContent = () => {
           <div className="mb-8">
             <h1 className="text-3xl font-bold mb-2">Submit Content</h1>
             <p className="text-muted-foreground">
-              Share scholarships, job opportunities, or MCQs with the community. 
+              Share scholarships, job opportunities, past papers, or MCQs with the community. 
               All submissions will be reviewed before being published.
             </p>
           </div>
@@ -150,19 +344,34 @@ const SubmitContent = () => {
                             <FormControl>
                               <RadioGroupItem value="scholarship" />
                             </FormControl>
-                            <FormLabel className="font-normal">Scholarship</FormLabel>
+                            <FormLabel className="font-normal flex items-center">
+                              <GraduationCap className="h-4 w-4 mr-1" />
+                              Scholarship
+                            </FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
                               <RadioGroupItem value="job" />
                             </FormControl>
-                            <FormLabel className="font-normal">Job</FormLabel>
+                            <FormLabel className="font-normal flex items-center">
+                              <Briefcase className="h-4 w-4 mr-1" />
+                              Job
+                            </FormLabel>
                           </FormItem>
                           <FormItem className="flex items-center space-x-3 space-y-0">
                             <FormControl>
                               <RadioGroupItem value="mcq" />
                             </FormControl>
                             <FormLabel className="font-normal">MCQ</FormLabel>
+                          </FormItem>
+                          <FormItem className="flex items-center space-x-3 space-y-0">
+                            <FormControl>
+                              <RadioGroupItem value="past_paper" />
+                            </FormControl>
+                            <FormLabel className="font-normal flex items-center">
+                              <FileText className="h-4 w-4 mr-1" />
+                              Past Paper
+                            </FormLabel>
                           </FormItem>
                         </RadioGroup>
                       </FormControl>
@@ -206,6 +415,9 @@ const SubmitContent = () => {
                     </FormItem>
                   )}
                 />
+
+                {/* Category-specific fields */}
+                {renderCategoryFields()}
 
                 {/* Tags */}
                 <div className="space-y-2">

@@ -36,12 +36,6 @@ export type Database = {
         }
         Relationships: []
       }
-      Feedback: {
-        Row: {}
-        Insert: {}
-        Update: {}
-        Relationships: []
-      }
       profiles: {
         Row: {
           avatar_url: string | null

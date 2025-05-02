@@ -26,6 +26,9 @@ const initializeData = () => {
           updatedAt: new Date().toISOString(),
           status: "approved",
           createdBy: "system",
+          scholarshipType: "undergraduate",
+          institution: "Sample University",
+          deadline: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         },
         {
           id: uuidv4(),
@@ -37,6 +40,10 @@ const initializeData = () => {
           updatedAt: new Date().toISOString(),
           status: "approved",
           createdBy: "system",
+          cadre: "grade-3",
+          department: "Information Technology",
+          governmentLevel: "federal",
+          deadline: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         }
       ];
       saveToStorage();
