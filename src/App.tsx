@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { useState } from "react";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
+import { AuthProvider } from "./contexts/AuthContext";
 import Index from "./pages/Index";
 import Subjects from "./pages/Subjects";
 import Dashboard from "./pages/Dashboard";
@@ -25,41 +26,47 @@ import SubmitContent from "./pages/SubmitContent";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import NoticeBoard from "./components/NoticeBoard";
+import Profile from "./pages/Profile";
+import Feedback from "./pages/Feedback";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
     <QueryClientProvider client={queryClient}>
-      <UserRoleProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <NoticeBoard />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/subjects" element={<Subjects />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/mock-tests" element={<MockTests />} />
-              <Route path="/analytics" element={<Analytics />} />
-              <Route path="/leaderboard" element={<Leaderboard />} />
-              <Route path="/get-started" element={<GetStarted />} />
-              <Route path="/sign-in" element={<SignIn />} />
-              <Route path="/sign-up" element={<SignUp />} />
-              <Route path="/past-papers" element={<PastPapers />} />
-              <Route path="/jobs" element={<Jobs />} />
-              <Route path="/scholarships" element={<Scholarships />} />
-              <Route path="/custom-syllabus" element={<CustomSyllabus />} />
-              <Route path="/subject-content/:subjectSlug" element={<SubjectContent />} />
-              <Route path="/custom-quizzes" element={<CustomQuizzes />} />
-              <Route path="/submit-content" element={<SubmitContent />} />
-              <Route path="/admin" element={<AdminPanel />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </UserRoleProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <UserRoleProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <NoticeBoard />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/subjects" element={<Subjects />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/mock-tests" element={<MockTests />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/leaderboard" element={<Leaderboard />} />
+                <Route path="/get-started" element={<GetStarted />} />
+                <Route path="/sign-in" element={<SignIn />} />
+                <Route path="/sign-up" element={<SignUp />} />
+                <Route path="/past-papers" element={<PastPapers />} />
+                <Route path="/jobs" element={<Jobs />} />
+                <Route path="/scholarships" element={<Scholarships />} />
+                <Route path="/custom-syllabus" element={<CustomSyllabus />} />
+                <Route path="/subject-content/:subjectSlug" element={<SubjectContent />} />
+                <Route path="/custom-quizzes" element={<CustomQuizzes />} />
+                <Route path="/submit-content" element={<SubmitContent />} />
+                <Route path="/admin" element={<AdminPanel />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/feedback" element={<Feedback />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </TooltipProvider>
+          </UserRoleProvider>
+        </AuthProvider>
+      </BrowserRouter>
     </QueryClientProvider>
   );
 };

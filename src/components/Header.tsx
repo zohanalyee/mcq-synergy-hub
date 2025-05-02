@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { Laptop, Menu, Moon, Sun, X, BookOpen, FileText, Briefcase, Award, Shield, Upload } from 'lucide-react';
+import { Laptop, Menu, Moon, Sun, X, BookOpen, FileText, Briefcase, Award, Shield, Upload, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -14,12 +14,23 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string) => void }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { userRole, setUserRole, isAdmin } = useUserRole();
+  const { user, profile, signOut } = useAuth();
   
   // Use try-catch to handle the case when Header is used outside Router context
   let navigate;
@@ -76,10 +87,16 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     { title: 'Analytics', path: '/analytics' },
     { title: 'Leaderboard', path: '/leaderboard' },
     { title: 'Past Papers', path: '/past-papers' },
+    { title: 'Feedback', path: '/feedback' },
   ];
 
   const isActive = (path: string) => {
     return location.pathname === path;
+  };
+
+  const getInitials = (email?: string) => {
+    if (!email) return 'U';
+    return email.charAt(0).toUpperCase();
   };
 
   return (
@@ -199,12 +216,44 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
               )}
             </Button>
 
-            <Button 
-              className="hidden md:flex backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
-              onClick={() => handleNavigation('/get-started')}
-            >
-              Get Started
-            </Button>
+            {/* User menu or sign in button */}
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="rounded-full overflow-hidden">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={profile?.avatar_url || ''} />
+                      <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleNavigation('/dashboard')}>
+                    Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
+                    Profile
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/feedback')}>
+                    Feedback
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => signOut()}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Sign Out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                className="hidden md:flex backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
+                onClick={() => handleNavigation('/sign-in')}
+              >
+                Sign In
+              </Button>
+            )}
 
             <Button 
               variant="ghost" 
@@ -236,6 +285,30 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
             
             {/* Mobile Menu Content */}
             <div className="flex flex-col p-4 space-y-4">
+              {/* User Profile (if logged in) */}
+              {user && (
+                <div className="flex items-center space-x-3 mb-4 pb-4 border-b border-border/40">
+                  <Avatar className="h-10 w-10">
+                    <AvatarImage src={profile?.avatar_url || ''} />
+                    <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-medium">{profile?.username || user.email}</p>
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="p-0 h-auto font-normal text-muted-foreground"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        handleNavigation('/profile');
+                      }}
+                    >
+                      View Profile
+                    </Button>
+                  </div>
+                </div>
+              )}
+
               {/* Navigation Items */}
               {navItems.map((item) => (
                 <button
@@ -289,12 +362,37 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
               )}
               
               <div className="pt-4 border-t border-border/40">
-                <Button 
-                  className="w-full backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
-                  onClick={() => handleNavigation('/get-started')}
-                >
-                  Get Started
-                </Button>
+                {user ? (
+                  <div className="space-y-2">
+                    <Button 
+                      variant="outline"
+                      className="w-full flex items-center justify-center gap-2"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        handleNavigation('/dashboard');
+                      }}
+                    >
+                      Dashboard
+                    </Button>
+                    <Button 
+                      variant="destructive" 
+                      className="w-full"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        signOut();
+                      }}
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    className="w-full backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
+                    onClick={() => handleNavigation('/sign-in')}
+                  >
+                    Sign In
+                  </Button>
+                )}
                 
                 {/* Role switcher (Demo only) */}
                 <div className="mt-4 flex items-center justify-between">

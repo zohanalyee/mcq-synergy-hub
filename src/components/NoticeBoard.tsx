@@ -14,14 +14,27 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
+import { submitFeedback } from "@/services/feedbackService";
+import { useNavigate } from "react-router-dom";
 
 const NoticeBoard = () => {
   const [isOpen, setIsOpen] = useState(true);
   const [showFeedbackForm, setShowFeedbackForm] = useState(false);
   const [name, setName] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [feedbackType, setFeedbackType] = useState<string>("suggestion");
   const [rating, setRating] = useState(0);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   
   useEffect(() => {
     // Check if we've shown the notice before in this session
@@ -37,32 +50,58 @@ const NoticeBoard = () => {
     setIsOpen(false);
   };
   
-  const handleFeedbackSubmit = (e: React.FormEvent) => {
+  const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!name.trim() || !feedback.trim() || rating === 0) {
+    if (!feedback.trim() || rating === 0) {
       toast({
         title: "Incomplete feedback",
-        description: "Please fill all fields and provide a rating.",
+        description: "Please provide feedback and a rating.",
         variant: "destructive",
       });
       return;
     }
-    
-    // In a real app, we'd send this to the backend
-    console.log("Feedback submitted:", { name, feedback, rating });
-    
-    toast({
-      title: "Thank you for your feedback!",
-      description: "We appreciate your input and will use it to improve MCQs Point.",
-    });
-    
-    // Clear form
-    setName("");
-    setFeedback("");
-    setRating(0);
-    setShowFeedbackForm(false);
-    setIsOpen(false);
+
+    try {
+      // If not authenticated, we need to sign in first
+      if (!user) {
+        toast({
+          title: "Authentication required",
+          description: "Please sign in to submit feedback.",
+        });
+        setIsOpen(false);
+        navigate("/sign-in");
+        return;
+      }
+
+      const result = await submitFeedback({
+        message: `${feedback} (Rating: ${rating}/5)`,
+        type: feedbackType as any,
+      });
+
+      if (result) {
+        toast({
+          title: "Thank you for your feedback!",
+          description: "We appreciate your input and will use it to improve MCQs Point.",
+        });
+        
+        // Clear form
+        setFeedback("");
+        setRating(0);
+        setFeedbackType("suggestion");
+        setShowFeedbackForm(false);
+        setIsOpen(false);
+      } else {
+        throw new Error("Failed to submit feedback");
+      }
+    } catch (error) {
+      console.error("Error submitting feedback:", error);
+      toast({
+        title: "Submission failed",
+        description: "There was an error submitting your feedback. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
   
   const StarRating = () => {
@@ -137,14 +176,15 @@ const NoticeBoard = () => {
                       
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">
-                          MCQs Point is now available for <span className="font-semibold text-primary">free</span> access to all users! No login required to:
+                          MCQs Point now has user accounts! <span className="font-semibold text-primary">Sign up</span> to:
                         </p>
                         
                         <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                          <li>Practice with thousands of MCQs across subjects</li>
-                          <li>Take timed mock tests</li>
-                          <li>Access subject materials and references</li>
-                          <li>Track your progress and view analytics</li>
+                          <li>Save your progress and track performance</li>
+                          <li>Customize your learning experience</li>
+                          <li>Upload and manage your avatar</li>
+                          <li>Submit feedback and suggestions</li>
+                          <li>Access premium features</li>
                         </ul>
                       </div>
                     </div>
@@ -156,16 +196,38 @@ const NoticeBoard = () => {
                     onSubmit={handleFeedbackSubmit}
                     className="space-y-4"
                   >
+                    {!user && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Your Name
+                        </label>
+                        <Input
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="John Doe"
+                          required
+                        />
+                      </div>
+                    )}
+                    
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
-                        Your Name
+                        Feedback Type
                       </label>
-                      <Input
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="John Doe"
-                        required
-                      />
+                      <Select
+                        value={feedbackType}
+                        onValueChange={setFeedbackType}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a feedback type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="suggestion">Suggestion</SelectItem>
+                          <SelectItem value="bug">Bug Report</SelectItem>
+                          <SelectItem value="question">Question</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     
                     <div className="space-y-2">
@@ -213,12 +275,24 @@ const NoticeBoard = () => {
                   >
                     Continue to Site
                   </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowFeedbackForm(true)}
-                  >
-                    Share Your Experience
-                  </Button>
+                  {user ? (
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowFeedbackForm(true)}
+                    >
+                      Share Your Experience
+                    </Button>
+                  ) : (
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsOpen(false);
+                        navigate("/sign-in");
+                      }}
+                    >
+                      Sign In
+                    </Button>
+                  )}
                 </CardFooter>
               )}
             </Card>
