@@ -1,73 +1,65 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import useTheme from '@/components/ThemeSwitcher';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
-import { Briefcase, Search, CalendarDays } from 'lucide-react';
+import { Briefcase, Search, CalendarDays, Upload, AlertCircle } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
+import { ContentItem } from "@/interfaces/content";
+import { getContentByCategory } from "@/services/contentService";
+import { useNavigate } from 'react-router-dom';
+import { useToast } from "@/hooks/use-toast";
 
 const Jobs = () => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [jobs, setJobs] = useState<ContentItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
-  // Sample jobs data - replace with your actual data
-  const jobs = [
-    {
-      id: 1,
-      title: "Subject Specialist (Mathematics)",
-      organization: "PPSC",
-      location: "Punjab",
-      deadline: "April 15, 2025",
-      postedDate: "March 10, 2025",
-      type: "Government",
-      url: "#",
-      featured: true
-    },
-    {
-      id: 2,
-      title: "Assistant Professor (Physics)",
-      organization: "University of Punjab",
-      location: "Lahore",
-      deadline: "April 20, 2025",
-      postedDate: "March 18, 2025",
-      type: "Education",
-      url: "#",
-      featured: false
-    },
-    {
-      id: 3,
-      title: "Data Scientist",
-      organization: "Tech Solutions Inc.",
-      location: "Islamabad",
-      deadline: "April 30, 2025",
-      postedDate: "March 15, 2025",
-      type: "Private",
-      url: "#",
-      featured: true
-    },
-    {
-      id: 4,
-      title: "Medical Officer",
-      organization: "Health Department",
-      location: "Karachi",
-      deadline: "May 10, 2025",
-      postedDate: "March 20, 2025",
-      type: "Government",
-      url: "#",
-      featured: false
-    }
-  ];
+  useEffect(() => {
+    const fetchJobs = () => {
+      try {
+        const items = getContentByCategory('job');
+        setJobs(items);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load jobs. Please try again."
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchJobs();
+  }, []);
 
   // Filter jobs based on search query
   const filteredJobs = jobs.filter(job => 
     job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.organization.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    job.type.toLowerCase().includes(searchQuery.toLowerCase())
+    (job.department && job.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (job.governmentLevel && job.governmentLevel.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (job.cadre && job.cadre.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    job.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "No deadline";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -99,24 +91,48 @@ const Jobs = () => {
             Browse latest job opportunities from various organizations across the country
           </motion.p>
           
-          <div className="mt-8 flex gap-4 max-w-xl">
-            <div className="flex-1">
+          <div className="mt-8 flex flex-col sm:flex-row gap-4">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search jobs by title, organization, location..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full"
+                className="w-full pl-10"
               />
             </div>
-            <Button>
-              <Search className="h-4 w-4 mr-2" />
-              Search
+            <Button onClick={() => navigate("/submit-content")} className="flex gap-2">
+              <Upload className="h-4 w-4" />
+              Submit Job
             </Button>
           </div>
         </div>
         
         <div className="grid grid-cols-1 gap-4 mt-8">
-          {filteredJobs.length > 0 ? (
+          {isLoading ? (
+            // Loading skeleton
+            Array.from({ length: 3 }).map((_, index) => (
+              <Card key={index} className="animate-pulse">
+                <CardContent className="p-0">
+                  <div className="p-6">
+                    <div className="h-6 bg-muted rounded-md w-3/4 mb-3"></div>
+                    <div className="h-4 bg-muted rounded-md w-1/4 mb-4"></div>
+                    <div className="h-4 bg-muted rounded-md w-full mb-2"></div>
+                    <div className="h-4 bg-muted rounded-md w-full mb-2"></div>
+                    <div className="h-4 bg-muted rounded-md w-2/3 mb-4"></div>
+                    <div className="flex gap-2 mb-4">
+                      <div className="h-6 bg-muted rounded-full w-16"></div>
+                      <div className="h-6 bg-muted rounded-full w-20"></div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="h-4 bg-muted rounded-md w-1/3"></div>
+                      <div className="h-10 bg-muted rounded-md w-24"></div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          ) : filteredJobs.length > 0 ? (
             filteredJobs.map((job, index) => (
               <motion.div
                 key={job.id}
@@ -124,39 +140,61 @@ const Jobs = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <Card className={job.featured ? "border-primary/50 shadow-md" : ""}>
+                <Card className="border-primary/20 shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-0">
                     <div className="p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <div>
                             <h3 className="font-semibold text-lg">{job.title}</h3>
-                            <p className="text-primary">{job.organization}</p>
+                            <p className="text-primary">{job.department || 'Department not specified'}</p>
                           </div>
-                          {job.featured && (
-                            <Badge variant="default" className="bg-amber-500 hover:bg-amber-600">
-                              Featured
-                            </Badge>
-                          )}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2 text-sm text-muted-foreground">
-                          <span>{job.location}</span>
-                          <span className="mx-2">•</span>
+                          {job.governmentLevel && (
+                            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
+                              {job.governmentLevel}
+                            </span>
+                          )}
+                          {job.cadre && (
+                            <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-full text-xs">
+                              {job.cadre}
+                            </span>
+                          )}
                           <span className="flex items-center">
                             <CalendarDays className="h-3 w-3 mr-1" />
-                            Deadline: {job.deadline}
-                          </span>
-                          <span className="mx-2">•</span>
-                          <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
-                            {job.type}
+                            Deadline: {formatDate(job.deadline)}
                           </span>
                         </div>
+                        
+                        {job.description && (
+                          <p className="mt-3 text-muted-foreground line-clamp-2">{job.description}</p>
+                        )}
+                        
+                        {job.tags && job.tags.length > 0 && (
+                          <div className="mt-2 flex flex-wrap gap-1">
+                            {job.tags.map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
                       </div>
-                      <Button size="sm" asChild>
-                        <a href={job.url} target="_blank" rel="noopener noreferrer">
-                          View Details
-                        </a>
-                      </Button>
+                      
+                      <div className="flex flex-col gap-2 self-end">
+                        {job.fileUrl ? (
+                          <Button size="sm" asChild>
+                            <a href={job.fileUrl} target="_blank" rel="noopener noreferrer">
+                              View Details
+                            </a>
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline" disabled={!job.description}>
+                            {job.description ? "See Above" : "No Details"}
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -164,11 +202,16 @@ const Jobs = () => {
             ))
           ) : (
             <div className="text-center py-12">
-              <Briefcase className="h-16 w-16 mx-auto text-muted-foreground/40" />
+              <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground/40" />
               <h3 className="mt-4 text-lg font-medium">No job announcements found</h3>
               <p className="mt-2 text-muted-foreground">
-                Try adjusting your search query or check back later for more opportunities
+                {searchQuery 
+                  ? "Try adjusting your search query or check back later for more opportunities"
+                  : "Be the first to submit a job announcement"}
               </p>
+              <Button onClick={() => navigate('/submit-content')} className="mt-4">
+                Submit Job
+              </Button>
             </div>
           )}
         </div>

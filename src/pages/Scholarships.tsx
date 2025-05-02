@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Award, Calendar, ExternalLink, Upload } from "lucide-react";
+import { Search, Award, Calendar, ExternalLink, Upload, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
@@ -24,6 +24,7 @@ const Scholarships = () => {
     const fetchScholarships = () => {
       try {
         const items = getContentByCategory('scholarship');
+        console.log("Fetched scholarships:", items);
         setScholarships(items);
       } catch (error) {
         console.error("Error fetching scholarships:", error);
@@ -42,7 +43,9 @@ const Scholarships = () => {
   
   const filteredScholarships = scholarships.filter(item => 
     item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (item.institution && item.institution.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (item.scholarshipType && item.scholarshipType.toLowerCase().includes(searchQuery.toLowerCase())) ||
     item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -51,7 +54,8 @@ const Scholarships = () => {
     { title: "Scholarships", href: "/scholarships", isCurrent: true },
   ];
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "No deadline";
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
       year: "numeric",
@@ -127,26 +131,42 @@ const Scholarships = () => {
               </Card>
             ))
           ) : filteredScholarships.length > 0 ? (
-            filteredScholarships.map((scholarship) => (
+            filteredScholarships.map((scholarship, index) => (
               <motion.div
                 key={scholarship.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
               >
-                <Card>
+                <Card className="border-primary/20 shadow-sm hover:shadow-md transition-shadow">
                   <CardContent className="p-6">
                     <h2 className="text-xl font-semibold mb-1">{scholarship.title}</h2>
-                    <div className="flex items-center text-muted-foreground text-sm mb-4">
-                      <Calendar className="h-4 w-4 mr-1" />
-                      Posted on {formatDate(scholarship.createdAt)}
+                    
+                    <div className="flex flex-wrap items-center text-muted-foreground text-sm mb-3 gap-3">
+                      <span className="flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        Deadline: {formatDate(scholarship.deadline)}
+                      </span>
+                      
+                      {scholarship.institution && (
+                        <span className="bg-accent/10 text-accent px-2 py-0.5 rounded-full text-xs">
+                          {scholarship.institution}
+                        </span>
+                      )}
+                      
+                      {scholarship.scholarshipType && (
+                        <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs">
+                          {scholarship.scholarshipType}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-muted-foreground mb-6 whitespace-pre-wrap">
+                    
+                    <p className="text-muted-foreground mb-5 whitespace-pre-wrap line-clamp-3">
                       {scholarship.description}
                     </p>
                     
                     {scholarship.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-6">
+                      <div className="flex flex-wrap gap-2 mb-5">
                         {scholarship.tags.map((tag) => (
                           <Badge key={tag} variant="secondary" className="px-2 py-1 text-xs">
                             {tag}
@@ -155,7 +175,7 @@ const Scholarships = () => {
                       </div>
                     )}
                     
-                    <div className="flex flex-wrap items-center gap-4">
+                    <div className="flex flex-wrap items-center gap-4 justify-between">
                       {scholarship.imageUrl && (
                         <img 
                           src={scholarship.imageUrl} 
@@ -173,7 +193,7 @@ const Scholarships = () => {
                             </a>
                           </Button>
                         ) : (
-                          <Button disabled>No Details Available</Button>
+                          <Button variant="outline">View Details</Button>
                         )}
                       </div>
                     </div>
@@ -183,12 +203,12 @@ const Scholarships = () => {
             ))
           ) : (
             <div className="text-center py-16">
-              <Award className="h-16 w-16 mx-auto text-muted-foreground/40" />
+              <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground/40" />
               <h3 className="mt-4 text-lg font-medium">No scholarships found</h3>
               <p className="mt-2 text-muted-foreground">
                 {searchQuery 
                   ? "No scholarships match your search criteria. Try adjusting your search."
-                  : "There are currently no scholarships available."}
+                  : "Be the first to submit a scholarship!"}
               </p>
               <Button onClick={() => navigate("/submit-content")} className="mt-6">
                 Submit a Scholarship
