@@ -186,6 +186,11 @@ const PastPapers = () => {
                         {paper.description && (
                           <p className="mt-2 text-muted-foreground line-clamp-2">{paper.description}</p>
                         )}
+                        {paper.metaTitle && (
+                          <div className="mt-2 text-xs text-muted-foreground/70">
+                            <span className="font-medium">SEO:</span> {paper.metaTitle}
+                          </div>
+                        )}
                       </div>
                       <Button variant="outline" size="sm" asChild disabled={!paper.fileUrl}>
                         {paper.fileUrl ? (
