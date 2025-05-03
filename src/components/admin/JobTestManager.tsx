@@ -30,9 +30,13 @@ const JobTestManager = () => {
     setSyllabusItems(syllabusItems.filter((_, i) => i !== index));
   };
 
-  const handleSyllabusItemChange = (index: number, field: 'topic' | 'percentage', value: string | number) => {
+  const handleSyllabusItemChange = (index: number, field: keyof SyllabusItem, value: string | number) => {
     const newItems = [...syllabusItems];
-    newItems[index][field] = value;
+    if (field === 'topic') {
+      newItems[index].topic = value as string;
+    } else if (field === 'percentage') {
+      newItems[index].percentage = value as number;
+    }
     setSyllabusItems(newItems);
   };
 
