@@ -9,15 +9,22 @@ import CategoryFilter from "@/components/subjects/CategoryFilter";
 import PurposeFilter from "@/components/subjects/PurposeFilter";
 import FilterSummary from "@/components/subjects/FilterSummary";
 import SubjectGrid from "@/components/subjects/SubjectGrid";
-import { subjects } from "@/data/subjectsData";
+import { subjects as initialSubjects } from "@/data/subjectsData";
+import { getSubjects } from "@/services/adminService";
 
 const Subjects = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [selectedPurpose, setSelectedPurpose] = useState<string>("All");
+  const [subjects, setSubjects] = useState(initialSubjects);
   
   useEffect(() => {
+    // Load subjects from localStorage if available, otherwise use initial data
+    const managedSubjects = getSubjects();
+    if (managedSubjects.length > 0) {
+      setSubjects(managedSubjects);
+    }
     setIsLoaded(true);
   }, []);
 

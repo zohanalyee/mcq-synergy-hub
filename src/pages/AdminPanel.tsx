@@ -9,8 +9,7 @@ import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +17,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ContentItem, ContentStatus } from "@/interfaces/content";
 import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
 import { useUserRole } from "@/contexts/UserRoleContext";
+import AdminTabs from "@/components/admin/AdminTabs";
+import { subjects } from "@/data/subjectsData";
+import { mockTopics } from "@/data/topicsData";
+import { jobTests } from "@/data/jobTestsData";
+import { initializeAdminData } from "@/services/adminService";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -30,6 +34,11 @@ const AdminPanel = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
+
+  // Initialize admin data when the component loads
+  useEffect(() => {
+    initializeAdminData(subjects, mockTopics, jobTests);
+  }, []);
 
   // Redirect non-admin users
   useEffect(() => {
@@ -63,6 +72,7 @@ const AdminPanel = () => {
   // Filter content based on tab and search term
   const filteredContent = content
     .filter(item => {
+      if (activeTab !== "pending" && activeTab !== "approved" && activeTab !== "rejected" && activeTab !== "all") return true;
       if (activeTab === "all") return true;
       return item.status === activeTab;
     })
@@ -263,6 +273,118 @@ const AdminPanel = () => {
     return details.length > 0 ? <div className="mt-1">{details}</div> : null;
   };
 
+  const renderContentTable = () => {
+    return (
+      <>
+        {activeTab === "pending" || activeTab === "approved" || activeTab === "rejected" || activeTab === "all" ? (
+          <>
+            <div className="flex justify-between items-center pb-4">
+              <Input
+                placeholder="Search content..."
+                className="max-w-sm"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            
+            {filteredContent.length > 0 ? (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead className="hidden md:table-cell">Category</TableHead>
+                      <TableHead className="hidden md:table-cell">Date</TableHead>
+                      <TableHead className="hidden md:table-cell">Status</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredContent.map((item) => (
+                      <TableRow key={item.id}>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">{item.title}</div>
+                            <div className="text-sm text-muted-foreground hidden md:block">
+                              {item.description.length > 50 
+                                ? `${item.description.substring(0, 50)}...` 
+                                : item.description}
+                            </div>
+                            {getItemDetails(item)}
+                            <div className="md:hidden">
+                              {getCategoryBadge(item.category)}
+                              <div className="mt-1">{getStatusBadge(item.status)}</div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {getCategoryBadge(item.category)}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {formatDate(item.createdAt)}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                          {getStatusBadge(item.status)}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            {item.status === "pending" && (
+                              <>
+                                <Button 
+                                  size="icon" 
+                                  variant="default" 
+                                  className="bg-green-600 hover:bg-green-700"
+                                  onClick={() => handleUpdateStatus(item.id, "approved")}
+                                >
+                                  <Check className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="icon" 
+                                  variant="destructive"
+                                  onClick={() => handleUpdateStatus(item.id, "rejected")}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                            <Button 
+                              size="icon" 
+                              variant="outline"
+                              onClick={() => handleEditClick(item)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button 
+                              size="icon" 
+                              variant="outline"
+                              onClick={() => handleDelete(item.id)}
+                            >
+                              <Trash className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <FileEdit className="h-16 w-16 mx-auto text-muted-foreground/40" />
+                <h3 className="mt-4 text-lg font-medium">No content found</h3>
+                <p className="mt-2 text-muted-foreground">
+                  {activeTab === "pending" 
+                    ? "There are no pending submissions waiting for approval." 
+                    : `There are no ${activeTab} content items${searchTerm ? " matching your search" : ""}.`}
+                </p>
+              </div>
+            )}
+          </>
+        ) : null}
+      </>
+    );
+  };
+
   const breadcrumbItems = [
     { title: "Home", href: "/" },
     { title: "Admin Panel", href: "/admin", isCurrent: true },
@@ -290,7 +412,7 @@ const AdminPanel = () => {
                 Admin Panel
               </h1>
               <p className="text-muted-foreground">
-                Review, approve, edit or reject user submissions.
+                Manage content, subjects, topics, and job tests.
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -309,120 +431,11 @@ const AdminPanel = () => {
           
           <Card>
             <CardHeader className="pb-3">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <CardTitle>Content Management</CardTitle>
-                <Input
-                  placeholder="Search content..."
-                  className="max-w-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
+              <CardTitle>Content Management</CardTitle>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="pending" value={activeTab} onValueChange={setActiveTab}>
-                <TabsList className="mb-6">
-                  <TabsTrigger value="pending">Pending</TabsTrigger>
-                  <TabsTrigger value="approved">Approved</TabsTrigger>
-                  <TabsTrigger value="rejected">Rejected</TabsTrigger>
-                  <TabsTrigger value="all">All</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value={activeTab}>
-                  {filteredContent.length > 0 ? (
-                    <div className="rounded-md border">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Title</TableHead>
-                            <TableHead className="hidden md:table-cell">Category</TableHead>
-                            <TableHead className="hidden md:table-cell">Date</TableHead>
-                            <TableHead className="hidden md:table-cell">Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {filteredContent.map((item) => (
-                            <TableRow key={item.id}>
-                              <TableCell>
-                                <div>
-                                  <div className="font-medium">{item.title}</div>
-                                  <div className="text-sm text-muted-foreground hidden md:block">
-                                    {item.description.length > 50 
-                                      ? `${item.description.substring(0, 50)}...` 
-                                      : item.description}
-                                  </div>
-                                  {getItemDetails(item)}
-                                  <div className="md:hidden">
-                                    {getCategoryBadge(item.category)}
-                                    <div className="mt-1">{getStatusBadge(item.status)}</div>
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                {getCategoryBadge(item.category)}
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                {formatDate(item.createdAt)}
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell">
-                                {getStatusBadge(item.status)}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <div className="flex justify-end gap-2">
-                                  {item.status === "pending" && (
-                                    <>
-                                      <Button 
-                                        size="icon" 
-                                        variant="default" 
-                                        className="bg-green-600 hover:bg-green-700"
-                                        onClick={() => handleUpdateStatus(item.id, "approved")}
-                                      >
-                                        <Check className="h-4 w-4" />
-                                      </Button>
-                                      <Button 
-                                        size="icon" 
-                                        variant="destructive"
-                                        onClick={() => handleUpdateStatus(item.id, "rejected")}
-                                      >
-                                        <X className="h-4 w-4" />
-                                      </Button>
-                                    </>
-                                  )}
-                                  <Button 
-                                    size="icon" 
-                                    variant="outline"
-                                    onClick={() => handleEditClick(item)}
-                                  >
-                                    <Edit className="h-4 w-4" />
-                                  </Button>
-                                  <Button 
-                                    size="icon" 
-                                    variant="outline"
-                                    onClick={() => handleDelete(item.id)}
-                                  >
-                                    <Trash className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ) : (
-                    <div className="text-center py-12">
-                      <FileEdit className="h-16 w-16 mx-auto text-muted-foreground/40" />
-                      <h3 className="mt-4 text-lg font-medium">No content found</h3>
-                      <p className="mt-2 text-muted-foreground">
-                        {activeTab === "pending" 
-                          ? "There are no pending submissions waiting for approval." 
-                          : `There are no ${activeTab} content items${searchTerm ? " matching your search" : ""}.`}
-                      </p>
-                    </div>
-                  )}
-                </TabsContent>
-              </Tabs>
+              <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+              {renderContentTable()}
             </CardContent>
           </Card>
         </motion.div>

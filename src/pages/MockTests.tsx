@@ -4,21 +4,30 @@ import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
-import { jobTests } from "@/data/jobTestsData";
+import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { SearchBox } from "@/components/mock-tests/SearchBox";
 import { SubjectTestsTab } from "@/components/mock-tests/SubjectTestsTab";
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { generateAllMockTests } from "@/components/mock-tests/MockTestUtils";
+import { getJobTests } from "@/services/adminService";
 
 const MockTests = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [allMockTests, setAllMockTests] = useState<any[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [activeTab, setActiveTab] = useState("subjects");
+  const [jobTests, setJobTests] = useState(initialJobTests);
   
   useEffect(() => {
     const generatedTests = generateAllMockTests();
     setAllMockTests(generatedTests);
+    
+    // Load job tests from localStorage if available, otherwise use initial data
+    const managedJobTests = getJobTests();
+    if (managedJobTests.length > 0) {
+      setJobTests(managedJobTests);
+    }
+    
     setIsLoaded(true);
   }, []);
   
