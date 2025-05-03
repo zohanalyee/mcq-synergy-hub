@@ -27,7 +27,7 @@ const Feedback = () => {
                 Please sign in to submit feedback
               </p>
               <Button asChild>
-                <Link to="/sign-in">Sign In</Link>
+                <Link to="/signin">Sign In</Link>
               </Button>
             </div>
           )}
