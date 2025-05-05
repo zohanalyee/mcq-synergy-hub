@@ -9,7 +9,7 @@ export interface Topic {
 
 export interface CustomSubject {
   title: string;
-  icon: ReactNode;
+  icon: ReactNode; // Now required, matching the Subject interface
   category: string;
   topics: Topic[];
   expanded: boolean;

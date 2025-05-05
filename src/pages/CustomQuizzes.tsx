@@ -27,12 +27,13 @@ const CustomQuizzes = () => {
   useEffect(() => {
     setIsLoaded(true);
     
-    // Initialize custom subjects with topics
+    // Initialize custom subjects with topics and ensure each has an icon
     const initialCustomSubjects: CustomSubject[] = subjects.map(subject => ({
       ...subject,
       expanded: false,
       selected: false,
-      topics: generateTopicsForSubject(subject.title, subject.topicCount)
+      topics: generateTopicsForSubject(subject.title, subject.topicCount || 0),
+      topicCount: subject.topicCount || 0
     }));
     
     setCustomSubjects(initialCustomSubjects);
@@ -105,8 +106,7 @@ const CustomQuizzes = () => {
     }));
   };
 
-  // For the Type error on getCategories function
-  // Fix the categories computation
+  // Fix the categories computation to ensure it returns string array
   const categories = (() => {
     const cats = subjects.map(subject => subject.category);
     return ["All", ...Array.from(new Set(cats))];

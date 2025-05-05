@@ -7,7 +7,7 @@ export interface Subject {
   description: string;
   category: string;
   purpose: 'reading' | 'mcqs';
-  icon?: ReactNode;
+  icon: ReactNode; // Changed from optional to required
   color: string;
   topicCount?: number;
 }
@@ -19,7 +19,8 @@ export const subjects: Subject[] = [
     category: "Core Sciences",
     color: "#3b82f6", // blue-500
     purpose: "mcqs",
-    topicCount: 3
+    topicCount: 3,
+    icon: <Calculator className="h-6 w-6" /> // Added icon
   },
   {
     title: "physics",
@@ -27,7 +28,8 @@ export const subjects: Subject[] = [
     category: "Core Sciences",
     color: "#8b5cf6", // violet-500
     purpose: "mcqs",
-    topicCount: 2
+    topicCount: 2,
+    icon: <Atom className="h-6 w-6" /> // Added icon
   },
   {
     title: "chemistry",
@@ -35,7 +37,8 @@ export const subjects: Subject[] = [
     category: "Core Sciences",
     color: "#10b981", // emerald-500
     purpose: "mcqs",
-    topicCount: 0
+    topicCount: 0,
+    icon: <FlaskConical className="h-6 w-6" /> // Added icon
   },
   // ... Additional subjects would go here
 ];

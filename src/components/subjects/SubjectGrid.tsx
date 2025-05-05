@@ -53,7 +53,7 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
             title={subject.title}
             icon={subject.icon}
             description={subject.description}
-            topicCount={subject.topicCount}
+            topicCount={subject.topicCount || 0}
             color={subject.color}
             purpose={subject.purpose}
           />
