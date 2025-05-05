@@ -1,276 +1,203 @@
 
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from "framer-motion";
-import { FileUp, Search, Clock, CheckSquare, Award, Upload } from 'lucide-react';
-import Header from '@/components/Header';
-import useTheme from '@/components/ThemeSwitcher';
-import PageBreadcrumb from '@/components/PageBreadcrumb';
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { ContentItem, MCQItem } from "@/interfaces/content";
-import { getContentByCategory, getSubjectsAndTopics } from "@/services/contentService";
-import { useToast } from "@/hooks/use-toast";
-import { useAuth } from '@/contexts/AuthContext';
+import { Quiz } from "@/services/quizService";
+import { getQuizzes, getQuizzesBySubject, getQuizzesByTopic } from "@/services/adminService";
+import { getSubjects } from "@/services/adminService";
+import { getTopics } from "@/services/adminService";
+import { Search } from "lucide-react";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 
 const Quizzes = () => {
-  const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [subjectFilter, setSubjectFilter] = useState("all");
-  const [topicFilter, setTopicFilter] = useState("all");
-  const [quizContent, setQuizContent] = useState<ContentItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [subjects, setSubjects] = useState<string[]>([]);
-  const [topics, setTopics] = useState<string[]>([]);
-  
+  const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [filteredQuizzes, setFilteredQuizzes] = useState<Quiz[]>([]);
+  const [subjects, setSubjects] = useState<{ title: string }[]>([]);
+  const [topics, setTopics] = useState<{ title: string }[]>([]);
+  const [selectedSubject, setSelectedSubject] = useState<string>("");
+  const [selectedTopic, setSelectedTopic] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
   useEffect(() => {
-    const fetchQuizzes = () => {
-      try {
-        const items = getContentByCategory('quiz');
-        console.log("Fetched quizzes:", items);
-        setQuizContent(items);
-        
-        const { subjects, topicsBySubject } = getSubjectsAndTopics();
-        setSubjects(subjects);
-        
-        if (subjects.length > 0 && subjectFilter !== "all") {
-          setTopics(topicsBySubject[subjectFilter] || []);
-        }
-      } catch (error) {
-        console.error("Error fetching quizzes:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load quizzes. Please try again."
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // Load all quizzes
+    const loadedQuizzes = getQuizzes();
+    setQuizzes(loadedQuizzes);
+    setFilteredQuizzes(loadedQuizzes);
     
-    fetchQuizzes();
+    // Load subjects
+    const loadedSubjects = getSubjects();
+    setSubjects(loadedSubjects);
   }, []);
 
-  // Update topics when subject changes
   useEffect(() => {
-    if (subjectFilter !== "all") {
-      const { topicsBySubject } = getSubjectsAndTopics();
-      setTopics(topicsBySubject[subjectFilter] || []);
-      setTopicFilter("all"); // Reset topic when subject changes
+    // When subject changes, load topics for that subject
+    if (selectedSubject) {
+      const topicsData = getTopics();
+      const subjectTopics = topicsData[selectedSubject] || [];
+      setTopics(subjectTopics);
+      setSelectedTopic("");
+    } else {
+      setTopics([]);
     }
-  }, [subjectFilter]);
+  }, [selectedSubject]);
 
-  // Filter quizzes
-  const filteredQuizzes = quizContent.filter(quiz => {
-    const matchesQuery = 
-      quiz.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      quiz.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (quiz.subject && quiz.subject.toLowerCase().includes(searchQuery.toLowerCase())) ||
-      (quiz.topic && quiz.topic.toLowerCase().includes(searchQuery.toLowerCase()));
+  useEffect(() => {
+    // Apply filters whenever they change
+    let filtered = quizzes;
     
-    const matchesSubject = subjectFilter === "all" || quiz.subject === subjectFilter;
-    const matchesTopic = topicFilter === "all" || quiz.topic === topicFilter;
+    // Filter by subject
+    if (selectedSubject) {
+      filtered = getQuizzesBySubject(selectedSubject);
+      
+      // Further filter by topic if selected
+      if (selectedTopic) {
+        filtered = getQuizzesByTopic(selectedSubject, selectedTopic);
+      }
+    }
     
-    return matchesQuery && matchesSubject && matchesTopic;
-  });
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(quiz => 
+        quiz.title.toLowerCase().includes(query) || 
+        quiz.description.toLowerCase().includes(query)
+      );
+    }
+    
+    setFilteredQuizzes(filtered);
+  }, [selectedSubject, selectedTopic, searchQuery, quizzes]);
 
-  // Start quiz
-  const handleStartQuiz = (quizId: string) => {
-    // This would navigate to a quiz session page in a real application
-    toast({
-      title: "Quiz Started",
-      description: "Quiz functionality is under development.",
-    });
-    // Example navigation: navigate(`/quiz-session/${quizId}`);
+  const handleStartQuiz = (quiz: Quiz) => {
+    // In a real app, this would navigate to the quiz page
+    alert(`Starting quiz: ${quiz.title}`);
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header theme={theme} setTheme={setTheme} />
+    <div className="container mx-auto py-8">
+      <PageBreadcrumb 
+        items={[
+          { title: "Home", href: "/" },
+          { title: "Quizzes" }
+        ]} 
+      />
       
-      <div className="container px-4 mx-auto pt-28 pb-16">
-        <PageBreadcrumb 
-          items={[
-            { title: 'Home', href: '/' },
-            { title: 'Quizzes', href: '/quizzes', isCurrent: true },
-          ]} 
-        />
-        
-        <div className="mt-6 mb-12">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-3xl font-bold"
-          >
-            <FileUp className="inline-block h-8 w-8 mr-2 text-primary" />
-            Quizzes
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-muted-foreground mt-2"
-          >
-            Test your knowledge with timed quizzes on various subjects
-          </motion.p>
-          
-          <div className="mt-8 flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search quizzes by title, subject, or topic..."
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold mb-2">Quizzes</h1>
+        <p className="text-muted-foreground">
+          Explore our collection of quizzes to test your knowledge on various subjects
+        </p>
+      </div>
+      
+      <div className="bg-muted/40 p-4 rounded-lg mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <Label htmlFor="search">Search Quizzes</Label>
+            <div className="flex items-center mt-2">
+              <Search className="h-4 w-4 mr-2 text-muted-foreground" />
+              <Input 
+                id="search"
+                placeholder="Search by title or description" 
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10"
               />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 w-full md:w-auto">
-              {subjects.length > 0 && (
-                <Select value={subjectFilter} onValueChange={setSubjectFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Subject" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Subjects</SelectItem>
-                    {subjects.map((subject) => (
-                      <SelectItem key={subject} value={subject}>
-                        {subject}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {topics.length > 0 && subjectFilter !== "all" && (
-                <Select value={topicFilter} onValueChange={setTopicFilter}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Topic" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Topics</SelectItem>
-                    {topics.map((topic) => (
-                      <SelectItem key={topic} value={topic}>
-                        {topic}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-            {user && (
-              <Button onClick={() => navigate("/submit-content")} className="flex gap-2">
-                <Upload className="h-4 w-4" />
-                Submit Quiz
-              </Button>
-            )}
+          </div>
+          
+          <div>
+            <Label htmlFor="subject">Filter by Subject</Label>
+            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="All Subjects" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Subjects</SelectItem>
+                {subjects.map((subject) => (
+                  <SelectItem key={subject.title} value={subject.title}>
+                    {subject.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <div>
+            <Label htmlFor="topic">Filter by Topic</Label>
+            <Select 
+              value={selectedTopic} 
+              onValueChange={setSelectedTopic}
+              disabled={!selectedSubject}
+            >
+              <SelectTrigger className="mt-2">
+                <SelectValue placeholder="All Topics" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">All Topics</SelectItem>
+                {topics.map((topic) => (
+                  <SelectItem key={topic.title} value={topic.title}>
+                    {topic.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {isLoading ? (
-            // Loading skeleton
-            Array.from({ length: 6 }).map((_, index) => (
-              <Card key={index} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-6 bg-muted rounded-md w-3/4 mb-2"></div>
-                  <div className="h-4 bg-muted rounded-md w-1/4"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-4 bg-muted rounded-md w-full mb-4"></div>
-                  <div className="h-4 bg-muted rounded-md w-1/2"></div>
-                </CardContent>
-                <CardFooter>
-                  <div className="h-10 bg-muted rounded-md w-full"></div>
-                </CardFooter>
-              </Card>
-            ))
-          ) : filteredQuizzes.length > 0 ? (
-            filteredQuizzes.map((quiz) => (
-              <motion.div
-                key={quiz.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <Card className="h-full flex flex-col">
-                  <CardHeader>
-                    <div className="flex flex-wrap gap-2 mb-2">
-                      {quiz.subject && (
-                        <Badge variant="outline">
-                          {quiz.subject}
-                        </Badge>
-                      )}
-                      {quiz.topic && (
-                        <Badge variant="outline">
-                          {quiz.topic}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardTitle className="text-xl">{quiz.title}</CardTitle>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      <Clock className="h-4 w-4 mr-1" />
-                      <span>{quiz.timeLimit || 30} sec per question</span>
-                      <span className="px-1">•</span>
-                      <CheckSquare className="h-4 w-4 mr-1" />
-                      <span>{quiz.questions?.length || 0} questions</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-1">
-                    <p className="text-muted-foreground mb-4">
-                      {quiz.description || `Test your knowledge on ${quiz.subject} topics.`}
-                    </p>
-                    
-                    <div className="mt-4">
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Difficulty</span>
-                        <span className="font-medium">Medium</span>
-                      </div>
-                      <Progress value={60} className="h-2" />
-                    </div>
-                  </CardContent>
-                  <CardFooter>
-                    <Button 
-                      className="w-full" 
-                      onClick={() => handleStartQuiz(quiz.id)}
-                    >
-                      Start Quiz
-                    </Button>
-                  </CardFooter>
-                </Card>
-              </motion.div>
-            ))
-          ) : (
-            <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-20">
-              <FileUp className="h-16 w-16 mx-auto text-muted-foreground/40" />
-              <h3 className="mt-4 text-lg font-medium">No quizzes found</h3>
-              <p className="mt-2 text-muted-foreground">
-                {searchQuery || subjectFilter !== "all" || topicFilter !== "all"
-                  ? "Try adjusting your filters"
-                  : user ? "Be the first to submit a quiz" : "Sign in to submit quizzes"
-                }
-              </p>
-              {user && (
-                <Button onClick={() => navigate('/submit-content')} className="mt-4">
-                  Submit Quiz
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
       </div>
+      
+      {filteredQuizzes.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredQuizzes.map((quiz) => (
+            <Card key={quiz.id} className="overflow-hidden">
+              <CardHeader className="bg-primary/10">
+                <CardTitle className="text-xl">{quiz.title}</CardTitle>
+                <CardDescription className="line-clamp-2">
+                  {quiz.description}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="mb-4 space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Subject:</span>
+                    <span className="text-sm font-medium">{quiz.subject}</span>
+                  </div>
+                  {quiz.topic && (
+                    <div className="flex justify-between">
+                      <span className="text-sm text-muted-foreground">Topic:</span>
+                      <span className="text-sm font-medium">{quiz.topic}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Questions:</span>
+                    <span className="text-sm font-medium">{quiz.questions?.length || 0}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Time per question:</span>
+                    <span className="text-sm font-medium">{quiz.timeLimit} seconds</span>
+                  </div>
+                </div>
+                <Button 
+                  className="w-full mt-2" 
+                  onClick={() => handleStartQuiz(quiz)}
+                  disabled={!quiz.questions || quiz.questions.length === 0}
+                >
+                  Start Quiz
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <h3 className="text-xl font-medium mb-2">No quizzes found</h3>
+          <p className="text-muted-foreground">
+            {selectedSubject || searchQuery ? 
+              "Try changing your filters or search query" : 
+              "There are no quizzes available at the moment"}
+          </p>
+        </div>
+      )}
     </div>
   );
 };

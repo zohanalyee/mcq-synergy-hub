@@ -1,10 +1,12 @@
-
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContentCategory } from "@/interfaces/content";
 import { Calendar } from "lucide-react";
 import CSVUploader from "@/components/CSVUploader";
+import { useEffect, useState } from "react";
+import { getSubjects } from "@/services/adminService";
+import { getTopics } from "@/services/adminService";
 
 interface CategoryFieldsProps {
   category: ContentCategory;
@@ -12,6 +14,37 @@ interface CategoryFieldsProps {
 }
 
 const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
+  const [subjects, setSubjects] = useState<{ title: string }[]>([]);
+  const [topics, setTopics] = useState<{ title: string }[]>([]);
+  const selectedSubject = form.watch('subject') || '';
+
+  useEffect(() => {
+    const loadSubjects = () => {
+      const subjects = getSubjects();
+      setSubjects(subjects);
+    };
+    
+    if (category === 'mcq' || category === 'quiz') {
+      loadSubjects();
+    }
+  }, [category]);
+
+  useEffect(() => {
+    const loadTopics = () => {
+      if (selectedSubject) {
+        const topicsData = getTopics();
+        const subjectTopics = topicsData[selectedSubject] || [];
+        setTopics(subjectTopics);
+      } else {
+        setTopics([]);
+      }
+    };
+
+    if ((category === 'mcq' || category === 'quiz') && selectedSubject) {
+      loadTopics();
+    }
+  }, [category, selectedSubject]);
+
   const handleCSVChange = (file: File | undefined) => {
     form.setValue('csvFile', file);
   };
@@ -124,8 +157,9 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
                     <SelectItem value="graduate">Graduate</SelectItem>
                     <SelectItem value="phd">PhD</SelectItem>
                     <SelectItem value="research">Research</SelectItem>
-                    <SelectItem value="merit">Merit-based</SelectItem>
-                    <SelectItem value="need">Need-based</SelectItem>
+                    <SelectItem value="merit">Merit Based</SelectItem>
+                    <SelectItem value="need">Need Based</SelectItem>
+                    <SelectItem value="international">International</SelectItem>
                     <SelectItem value="other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -166,8 +200,141 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
           />
         </div>
       );
-    
-    case 'past_paper':
+      
+    case 'mcq':
+    case 'quiz':
+      return (
+        <div className="space-y-6">
+          <FormField
+            control={form.control}
+            name="subject"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Subject</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a subject" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {subjects.map((sub) => (
+                      <SelectItem key={sub.title} value={sub.title}>
+                        {sub.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Select the subject for these {category === 'mcq' ? 'MCQs' : 'quizzes'}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="topic"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Topic</FormLabel>
+                <Select 
+                  onValueChange={field.onChange} 
+                  defaultValue={field.value}
+                  disabled={!selectedSubject}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a topic" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {topics.map((topic) => (
+                      <SelectItem key={topic.title} value={topic.title}>
+                        {topic.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  Select the specific topic within the subject
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          <FormField
+            control={form.control}
+            name="csvFile"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Upload CSV</FormLabel>
+                <FormControl>
+                  <CSVUploader 
+                    onFileChange={handleCSVChange} 
+                    category={category === 'mcq' ? 'mcq' : 'quiz'} 
+                  />
+                </FormControl>
+                <FormDescription>
+                  Upload a CSV file containing your {category === 'mcq' ? 'multiple choice questions' : 'quiz questions'}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          
+          {category === 'quiz' && (
+            <>
+              <FormField
+                control={form.control}
+                name="timeLimit"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Time Limit (seconds per question)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 30)} 
+                        min={10}
+                        max={300}
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      How much time students have to answer each question
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="marks"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Marks per Question</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        {...field}
+                        onChange={(e) => field.onChange(parseInt(e.target.value) || 1)} 
+                        min={1}
+                        max={10}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </>
+          )}
+        </div>
+      );
+      
+    default:
       return (
         <div className="space-y-6">
           <FormField
@@ -177,7 +344,7 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
               <FormItem>
                 <FormLabel>Exam Type</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter exam type (e.g., Final, Midterm)" {...field} />
+                  <Input placeholder="Enter exam type" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -189,9 +356,9 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
             name="examYear"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Year</FormLabel>
+                <FormLabel>Exam Year</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter year (e.g., 2023)" {...field} />
+                  <Input placeholder="Enter exam year" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -199,31 +366,6 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
           />
         </div>
       );
-
-    case 'mcq':
-      return (
-        <div className="space-y-6">
-          <p className="text-sm text-muted-foreground">
-            Upload a CSV file with MCQs or enter the details manually.
-            Each MCQ should include a question, options, correct answer, subject, and topic.
-          </p>
-          <CSVUploader onFileChange={handleCSVChange} category="mcq" />
-        </div>
-      );
-        
-    case 'quiz':
-      return (
-        <div className="space-y-6">
-          <p className="text-sm text-muted-foreground">
-            Upload a CSV file with quiz questions or enter the details manually.
-            Each quiz should include a title, questions, options, correct answers, subject, topic, and time limit.
-          </p>
-          <CSVUploader onFileChange={handleCSVChange} category="quiz" />
-        </div>
-      );
-    
-    default:
-      return null;
   }
 };
 

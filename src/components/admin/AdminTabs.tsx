@@ -3,6 +3,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
 import JobTestManager from "./JobTestManager";
+import QuizManager from "./QuizManager";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -17,6 +18,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="subjects">Subjects</TabsTrigger>
         <TabsTrigger value="topics">Topics</TabsTrigger>
         <TabsTrigger value="job-tests">Job Tests</TabsTrigger>
+        <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
       </TabsList>
       
       <TabsContent value="pending">
@@ -33,6 +35,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       
       <TabsContent value="job-tests">
         <JobTestManager />
+      </TabsContent>
+      
+      <TabsContent value="quizzes">
+        <QuizManager />
       </TabsContent>
     </Tabs>
   );
