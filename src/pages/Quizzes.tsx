@@ -80,7 +80,7 @@ const Quizzes = () => {
       <PageBreadcrumb 
         items={[
           { title: "Home", href: "/" },
-          { title: "Quizzes" }
+          { title: "Quizzes", href: "/quizzes", isCurrent: true }
         ]} 
       />
       
