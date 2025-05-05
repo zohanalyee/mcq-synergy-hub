@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
@@ -106,7 +105,8 @@ const CustomQuizzes = () => {
     }));
   };
 
-  // Get categories from subjects
+  // For the Type error on getCategories function
+  // Fix the categories computation
   const categories = (() => {
     const cats = subjects.map(subject => subject.category);
     return ["All", ...Array.from(new Set(cats))];

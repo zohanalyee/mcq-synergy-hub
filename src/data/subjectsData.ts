@@ -1,5 +1,5 @@
 
-import { Plus, BookOpen, Calculator, FlaskConical, Globe, Binary, ServerIcon, Dna, Leaf, Network, BookIcon, LineChart, Microscope, Atom } from "lucide-react";
+import { BookOpen, Calculator, FlaskConical, Globe, Binary, ServerIcon, Dna, Leaf, Network, BookIcon, LineChart, Microscope, Atom } from "lucide-react";
 import { ReactNode } from 'react';
 
 export interface Subject {
@@ -12,7 +12,7 @@ export interface Subject {
   topicCount?: number;
 }
 
-export const mockSubjects: Subject[] = [
+export const subjects: Subject[] = [
   {
     title: "mathematics",
     description: "Mathematics is the study of numbers, quantities, and shapes, fundamental for quantitative reasoning.",
@@ -39,3 +39,6 @@ export const mockSubjects: Subject[] = [
   },
   // ... Additional subjects would go here
 ];
+
+// For backward compatibility
+export const mockSubjects = subjects;
