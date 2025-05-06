@@ -1,7 +1,8 @@
 
-import { subjects, Subject, SubjectPurpose } from "./subjectsData.tsx";
+import { subjects, Subject } from "./subjectsData.tsx";
 
-export { subjects, Subject, SubjectPurpose };
+export { subjects };
+export type { Subject, SubjectPurpose } from "@/types/subject.types";
 
 // For backward compatibility
 export const mockSubjects = subjects;
