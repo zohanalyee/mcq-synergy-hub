@@ -1,6 +1,6 @@
 
 import { motion } from "framer-motion";
-import { Subject } from "@/data/subjectsData";
+import { Subject } from "@/types/subject.types";
 import SubjectCard from "@/components/SubjectCard";
 
 interface SubjectGridProps {
