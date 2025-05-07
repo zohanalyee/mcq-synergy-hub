@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,19 +10,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import AdminTabs from "@/components/admin/AdminTabs";
-import { subjects } from "@/data/subjectsData";
-import { mockTopics } from "@/data/topicsData";
-import { jobTests } from "@/data/jobTestsData";
 import { initializeAdminData } from "@/services/adminService";
 import ContentTable from "@/components/admin/content/ContentTable";
 import EditContentDialog from "@/components/admin/content/EditContentDialog";
 import { useContentManagement } from "@/hooks/useContentManagement";
-import { getTopics } from "@/services/topicService";
-import { getQuizzes, getQuizzesBySubject, getQuizzesByTopic } from "@/services/quizService";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
-  const { isAdmin } = useUserRole();
+  const { isAdmin, userRole } = useUserRole();
   const [activeTab, setActiveTab] = useState("pending");
 
   const {
@@ -38,7 +34,6 @@ const AdminPanel = () => {
 
   // Initialize admin data when the component loads
   useEffect(() => {
-    // Call initializeAdminData without parameters as it doesn't need them
     initializeAdminData();
   }, []);
 

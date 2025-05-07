@@ -20,6 +20,10 @@ export const UserRoleProvider = ({ children }: { children: React.ReactNode }) =>
     const savedRole = localStorage.getItem('userRole') as Role | null;
     if (savedRole && ['admin', 'user', 'guest'].includes(savedRole)) {
       setUserRole(savedRole);
+    } else {
+      // Default to admin for development/testing
+      setUserRole('admin');
+      localStorage.setItem('userRole', 'admin');
     }
   }, []);
 
