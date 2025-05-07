@@ -39,6 +39,11 @@ const SubjectContent = () => {
     { title: title || "Subject Content", href: "#", isCurrent: true },
   ];
 
+  // Make sure we're properly handling the icon prop which might be a React element
+  const displayIcon = typeof icon === 'string' ? 
+    <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} /> : 
+    icon || <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+
   return (
     <>
       <Header />
@@ -56,7 +61,7 @@ const SubjectContent = () => {
             title={title || ""}
             purpose={purpose || "reading"}
             color={color || "#3b82f6"}
-            icon={icon || <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />}
+            icon={displayIcon}
             topicCount={topicCount || topics.length}
           />
           
