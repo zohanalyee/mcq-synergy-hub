@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -17,6 +16,8 @@ import { initializeAdminData } from "@/services/adminService";
 import ContentTable from "@/components/admin/content/ContentTable";
 import EditContentDialog from "@/components/admin/content/EditContentDialog";
 import { useContentManagement } from "@/hooks/useContentManagement";
+import { getTopics } from "@/services/topicService";
+import { getQuizzes, getQuizzesBySubject, getQuizzesByTopic } from "@/services/quizService";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
