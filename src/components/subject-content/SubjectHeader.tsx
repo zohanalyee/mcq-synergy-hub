@@ -1,16 +1,20 @@
 
 import { motion } from "framer-motion";
 import { FileText } from "lucide-react";
+import { ReactNode } from "react";
 
 interface SubjectHeaderProps {
   title: string;
   purpose: string;
   color: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   topicCount: number;
 }
 
 const SubjectHeader = ({ title, purpose, color, icon, topicCount }: SubjectHeaderProps) => {
+  // Create a default icon if none is provided
+  const displayIcon = icon || <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -20,7 +24,7 @@ const SubjectHeader = ({ title, purpose, color, icon, topicCount }: SubjectHeade
     >
       <div className="flex items-center gap-4 mb-6">
         <div className="p-3 rounded-lg" style={{ backgroundColor: color ? `${color}20` : '#3b82f620' }}>
-          {icon || <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />}
+          {displayIcon}
         </div>
         <div>
           <h1 className="text-4xl font-bold">{title}</h1>
