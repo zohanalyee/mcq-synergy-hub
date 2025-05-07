@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { ContentItem, ContentStatus } from "@/interfaces/content";
-import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
+import { getAllContent, updateContentStatus, deleteContent } from "@/services/baseContentService";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 
