@@ -29,6 +29,7 @@ export function useSubjects() {
 
     const newSubject = {
       ...data,
+      // Create icon programmatically instead of using JSX
       icon: React.createElement(Plus, {
         className: "h-6 w-6",
         style: { color: data.color }

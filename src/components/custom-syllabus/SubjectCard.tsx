@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { CustomSubject, Topic } from "./interfaces";
+import { FileText } from "lucide-react";
 
 interface SubjectCardProps {
   subject: CustomSubject;
@@ -20,8 +21,8 @@ const SubjectCard = ({
   toggleTopicSelection,
   toggleSubjectExpansion,
 }: SubjectCardProps) => {
-  // Ensure icon is a valid React element
-  const displayIcon = subject.icon || null;
+  // Create a default icon if none is provided or if icon is invalid
+  const displayIcon = subject.icon || <FileText className="h-6 w-6" style={{ color: subject.color || '#3b82f6' }} />;
   
   return (
     <Card>

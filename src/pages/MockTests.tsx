@@ -64,11 +64,12 @@ const MockTests = () => {
           <SearchBox 
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
+            onClearSearch={handleClearSearch}
           />
         </div>
 
         <Tabs defaultValue="subjects" className="mb-8" onValueChange={value => setActiveTab(value)}>
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6 bg-blue-200">
+          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
             <TabsTrigger value="subjects">Subject-wise Tests</TabsTrigger>
             <TabsTrigger value="jobs">Job/Post Tests</TabsTrigger>
           </TabsList>

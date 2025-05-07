@@ -38,7 +38,8 @@ const AdminPanel = () => {
 
   // Initialize admin data when the component loads
   useEffect(() => {
-    initializeAdminData(subjects, mockTopics, jobTests);
+    // Call initializeAdminData without parameters as it doesn't need them
+    initializeAdminData();
   }, []);
 
   // Redirect non-admin users

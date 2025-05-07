@@ -30,7 +30,7 @@ const SubjectCard = ({
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   
-  // Ensure icon is a valid React element or provide default
+  // Create a default icon if none is provided
   const displayIcon = icon || <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
   
   const handleClick = () => {
