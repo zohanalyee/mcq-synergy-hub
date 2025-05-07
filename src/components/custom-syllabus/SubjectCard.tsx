@@ -20,6 +20,9 @@ const SubjectCard = ({
   toggleTopicSelection,
   toggleSubjectExpansion,
 }: SubjectCardProps) => {
+  // Ensure icon is a valid React element
+  const displayIcon = subject.icon || null;
+  
   return (
     <Card>
       <CardHeader className="p-4 pb-0">
@@ -31,7 +34,7 @@ const SubjectCard = ({
               onCheckedChange={() => toggleSubjectSelection(subject.title)}
             />
             <div className="p-2 rounded-lg" style={{ backgroundColor: `${subject.color}20` }}>
-              {subject.icon}
+              {displayIcon}
             </div>
             <div className="text-xl font-semibold">{subject.title}</div>
           </div>

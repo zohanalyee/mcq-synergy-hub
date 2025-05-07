@@ -6,10 +6,11 @@ import { cn } from "@/lib/utils";
 import { FileText, CheckSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
+import { ReactNode } from "react";
 
 interface SubjectCardProps {
   title: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   description: string;
   topicCount: number;
   color: string;
@@ -29,6 +30,9 @@ const SubjectCard = ({
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   
+  // Ensure icon is a valid React element or provide default
+  const displayIcon = icon || <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+  
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -42,7 +46,7 @@ const SubjectCard = ({
           title,
           purpose,
           color,
-          icon,
+          icon: null, // Don't pass React elements directly in navigation state
           topicCount
         } 
       });
@@ -77,7 +81,7 @@ const SubjectCard = ({
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: `${color}20` }}>
-                {icon}
+                {displayIcon}
               </div>
               <div className="flex flex-col gap-2 items-end">
                 <span className="text-sm font-medium text-muted-foreground">

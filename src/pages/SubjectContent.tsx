@@ -2,7 +2,7 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Book } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import SubjectHeader from "@/components/subject-content/SubjectHeader";
@@ -15,13 +15,16 @@ const SubjectContent = () => {
   const navigate = useNavigate();
   const [isLoaded, setIsLoaded] = useState(false);
   
-  const { title, purpose, color, icon, topicCount } = location.state || {};
+  const { title, purpose, color, topicCount } = location.state || {};
   
   // Normalize the title for lookup in our mock data
   const normalizedTitle = title ? title.toLowerCase() : "";
   
   // Get topics for this subject or use empty array if not found
   const topics = mockTopics[normalizedTitle] || [];
+  
+  // Create a default icon or generic icon for the subject
+  const defaultIcon = <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
   
   useEffect(() => {
     // If no title was passed in state, redirect to subjects page
@@ -38,11 +41,6 @@ const SubjectContent = () => {
     { title: "Subjects", href: "/subjects" },
     { title: title || "Subject Content", href: "#", isCurrent: true },
   ];
-
-  // Make sure we're properly handling the icon prop which might be a React element
-  const displayIcon = typeof icon === 'string' ? 
-    <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} /> : 
-    icon || <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
 
   return (
     <>
@@ -61,7 +59,7 @@ const SubjectContent = () => {
             title={title || ""}
             purpose={purpose || "reading"}
             color={color || "#3b82f6"}
-            icon={displayIcon}
+            icon={defaultIcon}
             topicCount={topicCount || topics.length}
           />
           
