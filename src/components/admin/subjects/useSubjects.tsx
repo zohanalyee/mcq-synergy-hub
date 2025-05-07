@@ -4,6 +4,7 @@ import { Subject } from "@/types/subject.types";
 import { getSubjects, addSubject, removeSubject } from "@/services/adminService";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
+import React from 'react';
 
 export interface SubjectFormData {
   title: string;
@@ -28,7 +29,10 @@ export function useSubjects() {
 
     const newSubject = {
       ...data,
-      icon: <Plus className="h-6 w-6" style={{ color: data.color }} />,
+      icon: React.createElement(Plus, {
+        className: "h-6 w-6",
+        style: { color: data.color }
+      }),
     };
 
     const added = addSubject(newSubject);

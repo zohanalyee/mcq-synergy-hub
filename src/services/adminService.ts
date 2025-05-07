@@ -28,6 +28,15 @@ const cloneDeep = (obj: any): any => {
   return cloned;
 };
 
+// Helper function to create icon without JSX
+const createIconElement = (color: string) => {
+  // Create the element programmatically instead of using JSX
+  return React.createElement(Plus, {
+    className: "h-6 w-6",
+    style: { color: color || '#3b82f6' }
+  });
+};
+
 // Get subjects from localStorage or return default subjects
 export const getSubjects = (): Subject[] => {
   try {
@@ -52,7 +61,8 @@ export const getSubjects = (): Subject[] => {
         // Add default icons for any that were serialized
         return parsed.map(subject => ({
           ...subject,
-          icon: subject.icon || <Plus className="h-6 w-6" style={{ color: subject.color }} />
+          // Create icon programmatically instead of using JSX
+          icon: subject.icon || createIconElement(subject.color)
         }));
       }
     }
