@@ -9,7 +9,7 @@ import { SearchBox } from "@/components/mock-tests/SearchBox";
 import { SubjectTestsTab } from "@/components/mock-tests/SubjectTestsTab";
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { generateAllMockTests } from "@/components/mock-tests/MockTestUtils";
-import { getJobTests } from "@/services/adminService";
+import { getJobTests } from "@/services/jobTestService";
 
 const MockTests = () => {
   const [searchQuery, setSearchQuery] = useState("");
