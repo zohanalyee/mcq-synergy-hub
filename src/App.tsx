@@ -46,9 +46,9 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<SignIn />} />
-                <Route path="/sign-in" element={<SignIn />} /> {/* Add this line to support both URL formats */}
+                <Route path="/sign-in" element={<SignIn />} />
                 <Route path="/signup" element={<SignUp />} />
-                <Route path="/sign-up" element={<SignUp />} /> {/* Add this line to support both URL formats */}
+                <Route path="/sign-up" element={<SignUp />} />
                 <Route path="/get-started" element={<GetStarted />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/subjects" element={<Subjects />} />
@@ -61,6 +61,7 @@ const App = () => {
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/feedback" element={<Feedback />} />
                 <Route path="/subject/:id" element={<SubjectContent />} />
+                <Route path="/subject-content/:id" element={<SubjectContent />} />
                 <Route path="/jobs" element={<Jobs />} />
                 <Route path="/scholarships" element={<Scholarships />} />
                 <Route path="/past-papers" element={<PastPapers />} />

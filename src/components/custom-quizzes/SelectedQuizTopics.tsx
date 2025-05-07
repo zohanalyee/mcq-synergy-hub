@@ -43,7 +43,8 @@ const SelectedQuizTopics = ({
     if (!icon) return null;
     
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon, { 
+      // Use type assertion to handle TypeScript constraints
+      return React.cloneElement(icon as React.ReactElement<any>, { 
         className: "h-4 w-4" 
       });
     }

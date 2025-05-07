@@ -39,7 +39,8 @@ const SubjectCard = ({
     
     // If it's a valid React element
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon, { 
+      // Need to use type assertion to handle TypeScript constraints on cloneElement
+      return React.cloneElement(icon as React.ReactElement<any>, { 
         className: "h-6 w-6",
         style: { color: color || '#3b82f6' } 
       });
