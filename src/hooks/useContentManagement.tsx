@@ -17,6 +17,7 @@ export const useContentManagement = () => {
       try {
         const allContent = getAllContent();
         setContent(allContent);
+        console.log("Loaded content items:", allContent.length);
       } catch (error) {
         console.error("Error loading content:", error);
         hookToast({
@@ -114,6 +115,9 @@ export const useContentManagement = () => {
   // Filter content based on status
   const filterContentByStatus = (status: string) => {
     if (status === 'all') return content;
+    if (status === 'subjects' || status === 'topics' || status === 'job-tests' || status === 'quizzes') {
+      return content;
+    }
     return content.filter(item => item.status === status);
   };
 

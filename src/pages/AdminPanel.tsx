@@ -53,10 +53,7 @@ const AdminPanel = () => {
   ];
 
   // Get content for the current active tab
-  const currentContent = filterContentByStatus(activeTab !== "subjects" && 
-                                             activeTab !== "topics" && 
-                                             activeTab !== "job-tests" && 
-                                             activeTab !== "quizzes" ? activeTab : "all");
+  const currentContent = filterContentByStatus(activeTab);
 
   if (!isAdmin) {
     return null; // Don't render anything while redirecting
@@ -112,7 +109,7 @@ const AdminPanel = () => {
                   onUpdateStatus={handleUpdateStatus}
                   onDelete={handleDelete}
                 />
-              ) : null}
+               ) : null}
             </CardContent>
           </Card>
         </motion.div>
