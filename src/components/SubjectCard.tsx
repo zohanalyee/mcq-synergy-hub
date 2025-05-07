@@ -1,6 +1,6 @@
 
+import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { FileText, CheckSquare } from "lucide-react";
