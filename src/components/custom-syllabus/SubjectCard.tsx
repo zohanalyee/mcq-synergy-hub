@@ -22,7 +22,22 @@ const SubjectCard = ({
   toggleSubjectExpansion,
 }: SubjectCardProps) => {
   // Create a default icon if none is provided or if icon is invalid
-  const displayIcon = subject.icon || <FileText className="h-6 w-6" style={{ color: subject.color || '#3b82f6' }} />;
+  const displayIcon = () => {
+    if (!subject.icon) {
+      return <FileText className="h-6 w-6" style={{ color: subject.color || '#3b82f6' }} />;
+    }
+    
+    // If it's already a valid React element, use it directly
+    if (React.isValidElement(subject.icon)) {
+      return React.cloneElement(subject.icon, {
+        className: "h-6 w-6",
+        style: { color: subject.color || '#3b82f6' }
+      });
+    }
+    
+    // Fallback to default icon if unable to render
+    return <FileText className="h-6 w-6" style={{ color: subject.color || '#3b82f6' }} />;
+  };
   
   return (
     <Card>
@@ -35,7 +50,7 @@ const SubjectCard = ({
               onCheckedChange={() => toggleSubjectSelection(subject.title)}
             />
             <div className="p-2 rounded-lg" style={{ backgroundColor: `${subject.color}20` }}>
-              {displayIcon}
+              {displayIcon()}
             </div>
             <div className="text-xl font-semibold">{subject.title}</div>
           </div>
