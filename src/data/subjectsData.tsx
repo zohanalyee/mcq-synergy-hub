@@ -19,6 +19,3 @@ export const subjects: Subject[] = [
 
 // For backward compatibility
 export const mockSubjects = subjects;
-
-// Re-export Subject type for convenience
-export type { Subject, SubjectPurpose } from "@/types/subject.types";

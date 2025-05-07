@@ -1,63 +1,134 @@
 
-import { Subject } from "@/data/subjectsData";
-import { TopicsData } from "@/data/topicsData";
-import { JobTest } from "@/data/jobTestsData";
-import { Quiz } from "@/services/quizService";
-import { saveSubjects } from "./subjectService";
-import { saveTopics } from "./topicService";
-import { saveJobTests } from "./jobTestService";
-import { saveQuizzes } from "./quizService";
+import { Subject } from "@/types/subject.types";
+import { subjects as defaultSubjects } from "@/data/subjectsData";
+import { Plus } from "lucide-react";
+import React from 'react';
 
-// Re-export all the domain-specific services
-export { 
-  getSubjects, 
-  addSubject, 
-  updateSubject, 
-  removeSubject 
-} from "./subjectService";
+// Clone function with special handling for React elements
+const cloneDeep = (obj: any): any => {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
 
-export { 
-  getTopics, 
-  addTopic, 
-  removeTopic 
-} from "./topicService";
+  // Don't try to clone React elements
+  if (React.isValidElement(obj)) {
+    return obj;
+  }
 
-export { 
-  getJobTests, 
-  addJobTest, 
-  updateJobTest, 
-  removeJobTest 
-} from "./jobTestService";
+  if (Array.isArray(obj)) {
+    return obj.map(item => cloneDeep(item));
+  }
 
-export {
-  getQuizzes,
-  addQuiz,
-  updateQuiz,
-  removeQuiz,
-  getQuizzesBySubject,
-  getQuizzesByTopic
-} from "./quizService";
+  const cloned: any = {};
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      cloned[key] = cloneDeep(obj[key]);
+    }
+  }
+  return cloned;
+};
 
-// Initialize localStorage with data from the data files if it doesn't exist
-export const initializeAdminData = (
-  initialSubjects: Subject[], 
-  initialTopics: TopicsData,
-  initialJobTests: JobTest[],
-  initialQuizzes: Quiz[] = []
-) => {
-  if (!localStorage.getItem('subjects')) {
-    saveSubjects(initialSubjects);
+// Get subjects from localStorage or return default subjects
+export const getSubjects = (): Subject[] => {
+  try {
+    const savedSubjects = localStorage.getItem('subjects');
+    if (savedSubjects) {
+      // Parse saved subjects and recreate any React elements
+      const parsed = JSON.parse(savedSubjects, (key, value) => {
+        // Skip objects that look like serialized React elements
+        if (
+          value && 
+          typeof value === 'object' && 
+          value.iconType && 
+          value.iconProps
+        ) {
+          // Return null instead of trying to reconstruct the icon
+          return null;
+        }
+        return value;
+      });
+
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        // Add default icons for any that were serialized
+        return parsed.map(subject => ({
+          ...subject,
+          icon: subject.icon || <Plus className="h-6 w-6" style={{ color: subject.color }} />
+        }));
+      }
+    }
+  } catch (error) {
+    console.error("Error loading subjects:", error);
   }
   
-  if (!localStorage.getItem('topics')) {
-    saveTopics(initialTopics);
+  // Return default subjects if we can't load from localStorage
+  return cloneDeep(defaultSubjects);
+};
+
+// Add a subject
+export const addSubject = (subject: any): boolean => {
+  try {
+    const subjects = getSubjects();
+    
+    // Check if a subject with the same title already exists
+    const exists = subjects.some(s => s.title === subject.title);
+    if (exists) {
+      console.error("Subject with this title already exists");
+      return false;
+    }
+    
+    // Create a new subject with the provided data
+    const newSubject: Subject = {
+      ...subject,
+      topicCount: 0, // New subjects start with 0 topics
+    };
+    
+    const updatedSubjects = [...subjects, newSubject];
+    saveSubjects(updatedSubjects);
+    
+    return true;
+  } catch (error) {
+    console.error("Error adding subject:", error);
+    return false;
   }
-  
-  if (!localStorage.getItem('jobTests')) {
-    saveJobTests(initialJobTests);
+};
+
+// Remove a subject
+export const removeSubject = (title: string): boolean => {
+  try {
+    const subjects = getSubjects();
+    const updatedSubjects = subjects.filter(subject => subject.title !== title);
+    
+    if (subjects.length === updatedSubjects.length) {
+      console.error("Subject not found");
+      return false;
+    }
+    
+    saveSubjects(updatedSubjects);
+    return true;
+  } catch (error) {
+    console.error("Error removing subject:", error);
+    return false;
   }
-  
-  if (!localStorage.getItem('quizzes') && initialQuizzes.length > 0) {
-    saveQuizzes(initialQuizzes);
+};
+
+// Save subjects to localStorage
+const saveSubjects = (subjects: Subject[]): boolean => {
+  try {
+    // Before saving, we need to remove React elements which can't be serialized
+    const serializableSubjects = subjects.map(subject => {
+      // Create a new object without the icon property
+      const { icon, ...rest } = subject;
+      return {
+        ...rest,
+        // Add a placeholder instead
+        iconType: icon ? 'reactElement' : null,
+      };
+    });
+    
+    localStorage.setItem('subjects', JSON.stringify(serializableSubjects));
+    return true;
+  } catch (error) {
+    console.error("Error saving subjects:", error);
+    return false;
   }
 };
