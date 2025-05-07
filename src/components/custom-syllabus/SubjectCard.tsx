@@ -29,6 +29,7 @@ const SubjectCard = ({
     
     // If it's already a valid React element, use it directly
     if (React.isValidElement(subject.icon)) {
+      // Make TypeScript happy by checking element type
       return React.cloneElement(subject.icon, {
         className: "h-6 w-6",
         style: { color: subject.color || '#3b82f6' }

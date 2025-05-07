@@ -30,8 +30,24 @@ const SubjectCard = ({
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   
-  // Create a default icon if none is provided
-  const displayIcon = icon || <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+  // Safely render the icon
+  const renderDisplayIcon = () => {
+    // If no icon provided, use default
+    if (!icon) {
+      return <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+    }
+    
+    // If it's a valid React element
+    if (React.isValidElement(icon)) {
+      return React.cloneElement(icon, { 
+        className: "h-6 w-6",
+        style: { color: color || '#3b82f6' } 
+      });
+    }
+    
+    // Fallback
+    return <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+  };
   
   const handleClick = () => {
     if (onClick) {
@@ -81,7 +97,7 @@ const SubjectCard = ({
           <CardContent className="p-6">
             <div className="flex items-start justify-between mb-4">
               <div className="p-3 rounded-lg" style={{ backgroundColor: `${color}20` }}>
-                {displayIcon}
+                {renderDisplayIcon()}
               </div>
               <div className="flex flex-col gap-2 items-end">
                 <span className="text-sm font-medium text-muted-foreground">

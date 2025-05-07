@@ -38,12 +38,16 @@ const SelectedQuizTopics = ({
     }, 0);
   }, [customSubjects]);
   
-  // Helper function to render icon properly
-  const renderIcon = (icon: React.ReactElement | null) => {
+  // Helper function to safely render an icon
+  const renderIcon = (icon: React.ReactNode) => {
     if (!icon) return null;
+    
     if (React.isValidElement(icon)) {
-      return React.cloneElement(icon, { className: "h-4 w-4" });
+      return React.cloneElement(icon, { 
+        className: "h-4 w-4" 
+      });
     }
+    
     return null;
   };
   
@@ -74,8 +78,7 @@ const SelectedQuizTopics = ({
                   <div key={subject.title} className="mb-3 pl-2">
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className="p-1 rounded-md" style={{ backgroundColor: `${subject.color}20` }}>
-                        {React.isValidElement(subject.icon) ? 
-                          React.cloneElement(subject.icon as React.ReactElement, { className: "h-4 w-4" }) : null}
+                        {subject.icon && renderIcon(subject.icon)}
                       </div>
                       <span className="font-medium text-sm">{subject.title}</span>
                       <span className="text-xs text-muted-foreground">
