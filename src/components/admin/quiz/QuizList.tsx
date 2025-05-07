@@ -1,7 +1,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { trash2 as Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Quiz } from "@/services/quizService";
 
 interface QuizListProps {
