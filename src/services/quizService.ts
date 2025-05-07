@@ -83,8 +83,14 @@ export const removeQuiz = (id: string) => {
   }
 };
 
-export const getQuizzesBySubject = (subject: string): Quiz[] => {
+export const getQuizzesBySubject = (subject: string = ""): Quiz[] => {
   const quizzes = getQuizzes();
+  if (!subject) {
+    // Group quizzes by subject if no specific subject is provided
+    // This creates a simple structure where each subject has its quizzes
+    const groupedBySubject: Quiz[] = [...quizzes];
+    return groupedBySubject;
+  }
   return quizzes.filter(quiz => quiz.subject === subject);
 };
 

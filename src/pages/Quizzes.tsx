@@ -7,7 +7,7 @@ import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { SearchBox } from "@/components/quizzes/SearchBox";
 import { SubjectQuizzesTab } from "@/components/quizzes/SubjectQuizzesTab";
 import { TopicQuizzesTab } from "@/components/quizzes/TopicQuizzesTab";
-import { getQuizzes, getQuizzesBySubject } from "@/services/quizService";
+import { getQuizzes, getQuizzesBySubject as getSubjectQuizzes } from "@/services/quizService";
 
 const Quizzes = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -21,8 +21,8 @@ const Quizzes = () => {
     const quizzes = getQuizzes();
     setAllQuizzes(quizzes);
     
-    // Load subject quizzes
-    const bySubject = getQuizzesBySubject();
+    // Load subject quizzes - passing an empty string to get all subjects
+    const bySubject = getSubjectQuizzes("");
     setSubjectQuizzes(bySubject);
     
     setIsLoaded(true);
