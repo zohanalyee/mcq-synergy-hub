@@ -62,13 +62,22 @@ export const useContentManagement = () => {
   };
 
   // Save edited content
-  const handleSaveEdit = (title: string, description: string) => {
+  const handleSaveEdit = (
+    title: string, 
+    description: string, 
+    visibility?: {
+      showInSubjects?: boolean;
+      showInSyllabus?: boolean;
+      showInMockTests?: boolean;
+    }
+  ) => {
     if (!currentItem) return;
     
     try {
       const updatedItem = updateContentStatus(currentItem.id, currentItem.status, {
         title,
-        description
+        description,
+        ...visibility
       });
       
       if (updatedItem) {

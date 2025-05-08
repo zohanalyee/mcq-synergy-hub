@@ -13,7 +13,7 @@ export const submitContent = (submission: ContentSubmission, userId: string = 'a
 
   let questions: MCQItem[] = [];
   
-  // Create new content item
+  // Create new content item with visibility settings
   const newItem: ContentItem = {
     id: uuidv4(),
     ...submission,
@@ -23,7 +23,11 @@ export const submitContent = (submission: ContentSubmission, userId: string = 'a
     createdBy: userId,
     imageUrl,
     fileUrl,
-    questions
+    questions,
+    // Set default visibility if admin hasn't specified
+    showInSubjects: submission.showInSubjects ?? true,
+    showInSyllabus: submission.showInSyllabus ?? false,
+    showInMockTests: submission.showInMockTests ?? false
   };
 
   // Process CSV file for MCQs or Quizzes if present

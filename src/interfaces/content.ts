@@ -42,6 +42,10 @@ export interface ContentItem {
   timeLimit?: number;
   marks?: number;
   questions?: MCQItem[];
+  // Visibility settings
+  showInSubjects?: boolean;
+  showInSyllabus?: boolean;
+  showInMockTests?: boolean;
 }
 
 export interface MCQItem {
@@ -87,4 +91,8 @@ export interface ContentSubmission {
   metaKeywords?: string;
   // MCQ and Quiz CSV
   csvFile?: File;
+  // Visibility settings
+  showInSubjects?: boolean;
+  showInSyllabus?: boolean;
+  showInMockTests?: boolean;
 }

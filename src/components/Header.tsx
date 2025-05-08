@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Laptop, Menu, Moon, Sun, X, BookOpen, FileText, Briefcase, Award, Shield, Upload, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -154,7 +153,8 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
 
           {/* Action buttons with consistent spacing */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            {user && (
+            {/* Changed: Submit button only visible to admin */}
+            {user && isAdmin && (
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -310,7 +310,8 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                 ))}
               </div>
 
-              {user && (
+              {/* Changed: Submit content button only visible to admin in mobile menu */}
+              {user && isAdmin && (
                 <Button
                   variant="outline"
                   size="sm"
