@@ -2,6 +2,9 @@
 import { v4 as uuidv4 } from 'uuid';
 import { ContentItem } from '@/interfaces/content';
 
+// Key for storing content items in localStorage
+export const CONTENT_ITEMS_KEY = 'mcqs_point_content_items';
+
 export const getSampleContent = (): ContentItem[] => {
   return [
     {

@@ -1,4 +1,3 @@
-
 import { MCQItem } from "@/interfaces/content";
 import { getContentByCategory, getContentBySubjectAndTopic } from "./baseContentService";
 
@@ -36,7 +35,10 @@ export const parseCSVForMCQs = (csvContent: string): MCQItem[] => {
 
 // Get MCQs by subject and optionally by topic
 export const getMCQsBySubject = (subject?: string, topic?: string) => {
-  return getContentBySubjectAndTopic('mcq', subject, topic);
+  if (subject) {
+    return getContentBySubjectAndTopic(subject, topic);
+  }
+  return getAllMCQs();
 };
 
 // Get all MCQs
