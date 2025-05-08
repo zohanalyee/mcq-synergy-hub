@@ -4,6 +4,7 @@ import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
 import JobTestManager from "./JobTestManager";
 import QuizManager from "./QuizManager";
+import { GraduationCap, FileText, List } from "lucide-react";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -13,15 +14,49 @@ type AdminTabsProps = {
 const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="mb-6">
+      <TabsList className="mb-6 flex flex-wrap">
         <TabsTrigger value="pending">Submissions</TabsTrigger>
-        <TabsTrigger value="subjects">Subjects</TabsTrigger>
-        <TabsTrigger value="topics">Topics</TabsTrigger>
+        <TabsTrigger value="approved">Approved</TabsTrigger>
+        <TabsTrigger value="rejected">Rejected</TabsTrigger>
+        <TabsTrigger value="scholarship">Scholarships</TabsTrigger>
+        <TabsTrigger value="mcq">MCQs</TabsTrigger>
+        <TabsTrigger value="quiz">Quizzes</TabsTrigger>
+        <TabsTrigger value="job">Jobs</TabsTrigger>
+        <TabsTrigger value="past_paper">Past Papers</TabsTrigger>
+        <TabsTrigger value="subjects">Subject Manager</TabsTrigger>
+        <TabsTrigger value="topics">Topic Manager</TabsTrigger>
         <TabsTrigger value="job-tests">Job Tests</TabsTrigger>
-        <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
       </TabsList>
       
       <TabsContent value="pending">
+        {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="approved">
+        {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="rejected">
+        {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="scholarship">
+        {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="mcq">
+        {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="quiz">
+        {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="job">
+        {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="past_paper">
         {/* Content management is in the main AdminPanel component */}
       </TabsContent>
       

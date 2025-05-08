@@ -32,7 +32,8 @@ const AdminPanel = () => {
     handleUpdateStatus,
     handleSaveEdit,
     handleDelete,
-    filterContentByStatus
+    filterContentByStatus,
+    filterContentByCategory
   } = useContentManagement();
 
   // Initialize admin data when the component loads
@@ -72,7 +73,33 @@ const AdminPanel = () => {
   ];
 
   // Get content for the current active tab
-  const currentContent = filterContentByStatus(activeTab);
+  const getCurrentContent = () => {
+    if (activeTab === 'pending' || activeTab === 'approved' || activeTab === 'rejected') {
+      return filterContentByStatus(activeTab);
+    } else if (activeTab === 'scholarship') {
+      return filterContentByCategory('scholarship');
+    } else if (activeTab === 'job') {
+      return filterContentByCategory('job'); 
+    } else if (activeTab === 'mcq') {
+      return filterContentByCategory('mcq');
+    } else if (activeTab === 'past_paper') {
+      return filterContentByCategory('past_paper');
+    } else if (activeTab === 'quiz') {
+      return filterContentByCategory('quiz');
+    }
+    
+    return content; // Default to all content
+  };
+
+  const currentContent = getCurrentContent();
+
+  // Calculate pending count
+  const pendingCount = content.filter(item => item.status === 'pending').length;
+  
+  // Calculate counts by category
+  const scholarshipCount = content.filter(item => item.category === 'scholarship').length;
+  const mcqCount = content.filter(item => item.category === 'mcq').length;
+  const quizCount = content.filter(item => item.category === 'quiz').length;
 
   if (isLoading) {
     return (
@@ -111,14 +138,29 @@ const AdminPanel = () => {
                 Admin Panel
               </h1>
               <p className="text-muted-foreground">
-                Manage content, subjects, topics, and job tests.
+                Manage content, subjects, topics, quizzes, MCQs, and job tests.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <Badge variant="outline" className="px-3 py-1.5">
                 <span className="text-primary font-semibold text-lg mr-1.5">
-                  {content.filter(item => item.status === 'pending').length}
+                  {pendingCount}
                 </span> Pending
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1.5">
+                <span className="text-primary font-semibold text-lg mr-1.5">
+                  {scholarshipCount}
+                </span> Scholarships
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1.5">
+                <span className="text-primary font-semibold text-lg mr-1.5">
+                  {mcqCount}
+                </span> MCQs
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1.5">
+                <span className="text-primary font-semibold text-lg mr-1.5">
+                  {quizCount}
+                </span> Quizzes
               </Badge>
               <Badge variant="outline" className="px-3 py-1.5">
                 <span className="text-primary font-semibold text-lg mr-1.5">
@@ -136,14 +178,25 @@ const AdminPanel = () => {
               <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
               
               {activeTab === "pending" || activeTab === "approved" || 
-               activeTab === "rejected" || activeTab === "all" ? (
-                <ContentTable 
-                  content={currentContent}
-                  onEditClick={handleEditClick}
-                  onUpdateStatus={handleUpdateStatus}
-                  onDelete={handleDelete}
-                />
-               ) : null}
+               activeTab === "rejected" || activeTab === "subjects" ||
+               activeTab === "topics" || activeTab === "job-tests" ||
+               activeTab === "quizzes" || activeTab === "scholarship" ||
+               activeTab === "mcq" || activeTab === "past_paper" || 
+               activeTab === "job" || activeTab === "quiz" ? (
+                <>
+                  {activeTab === "subjects" || activeTab === "topics" || 
+                   activeTab === "job-tests" || activeTab === "quizzes" ? (
+                    null // These tabs have their own management components
+                  ) : (
+                    <ContentTable 
+                      content={currentContent}
+                      onEditClick={handleEditClick}
+                      onUpdateStatus={handleUpdateStatus}
+                      onDelete={handleDelete}
+                    />
+                  )}
+                </>
+              ) : null}
             </CardContent>
           </Card>
         </motion.div>
