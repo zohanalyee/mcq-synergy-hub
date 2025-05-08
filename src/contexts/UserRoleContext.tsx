@@ -1,5 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { toast } from 'sonner';
+import { useAuth } from './AuthContext';
 
 type Role = 'admin' | 'user' | 'guest';
 
@@ -7,36 +9,52 @@ type UserRoleContextType = {
   userRole: Role;
   setUserRole: (role: Role) => void;
   isAdmin: boolean;
+  checkIsAdmin: () => boolean;
 };
 
 const UserRoleContext = createContext<UserRoleContextType | undefined>(undefined);
 
+// List of admin emails (typically this would come from a secure backend)
+const ADMIN_EMAILS = [
+  'zohaibalichanna@gmail.com',
+  'zohaib.ibapsl@gmail.com'
+  // Add other admin emails as needed
+];
+
 export const UserRoleProvider = ({ children }: { children: React.ReactNode }) => {
-  // In a real app, you'd check auth status from a backend or localStorage
+  const { user } = useAuth();
   const [userRole, setUserRole] = useState<Role>('guest');
 
-  useEffect(() => {
-    // Check if we have a saved role in localStorage
-    const savedRole = localStorage.getItem('userRole') as Role | null;
-    if (savedRole && ['admin', 'user', 'guest'].includes(savedRole)) {
-      setUserRole(savedRole);
-    } else {
-      // Default to admin for development/testing
-      setUserRole('admin');
-      localStorage.setItem('userRole', 'admin');
-    }
-  }, []);
+  // This function checks if the current user is an admin
+  const checkIsAdmin = () => {
+    if (!user || !user.email) return false;
+    return ADMIN_EMAILS.includes(user.email.toLowerCase());
+  };
 
-  // Update localStorage when role changes
   useEffect(() => {
-    localStorage.setItem('userRole', userRole);
-  }, [userRole]);
+    // Set role based on authentication status and email check
+    if (!user) {
+      setUserRole('guest');
+      localStorage.setItem('userRole', 'guest');
+    } else {
+      // Check if the user's email is in the admin list
+      const isAdminUser = checkIsAdmin();
+      
+      if (isAdminUser) {
+        setUserRole('admin');
+        localStorage.setItem('userRole', 'admin');
+      } else {
+        setUserRole('user');
+        localStorage.setItem('userRole', 'user');
+      }
+    }
+  }, [user]);
 
   // Computed property for convenience
   const isAdmin = userRole === 'admin';
 
   return (
-    <UserRoleContext.Provider value={{ userRole, setUserRole, isAdmin }}>
+    <UserRoleContext.Provider value={{ userRole, setUserRole, isAdmin, checkIsAdmin }}>
       {children}
     </UserRoleContext.Provider>
   );
