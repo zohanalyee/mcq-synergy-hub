@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from "framer-motion";
@@ -65,11 +64,11 @@ const MCQs = () => {
         console.log("Fetched MCQs:", items);
         setMCQContent(items);
         
-        const { subjects, topicsBySubject } = getSubjectsAndTopics();
+        const { subjects, topics } = getSubjectsAndTopics();
         setSubjects(subjects);
         
         if (subjects.length > 0 && subjectFilter !== "all") {
-          setTopics(topicsBySubject[subjectFilter] || []);
+          setTopics(topics[subjectFilter] || []);
         }
       } catch (error) {
         console.error("Error fetching MCQs:", error);
@@ -89,8 +88,8 @@ const MCQs = () => {
   // Update topics when subject changes
   useEffect(() => {
     if (subjectFilter !== "all") {
-      const { topicsBySubject } = getSubjectsAndTopics();
-      setTopics(topicsBySubject[subjectFilter] || []);
+      const { topics } = getSubjectsAndTopics();
+      setTopics(topics[subjectFilter] || []);
       setTopicFilter("all"); // Reset topic when subject changes
     }
   }, [subjectFilter]);
@@ -226,7 +225,7 @@ const MCQs = () => {
                 </SelectContent>
               </Select>
             </div>
-            {user && (
+            {isAdmin && (
               <Button onClick={() => navigate("/submit-content")} className="flex gap-2">
                 <Upload className="h-4 w-4" />
                 Submit MCQs
@@ -289,10 +288,10 @@ const MCQs = () => {
                     <p className="mt-2 text-muted-foreground">
                       {searchQuery || subjectFilter !== "all" || topicFilter !== "all" || difficultyFilter !== "all"
                         ? "Try adjusting your filters"
-                        : user ? "Be the first to submit MCQs" : "Sign in to submit MCQs"
+                        : isAdmin ? "Be the first to submit MCQs" : "Contact admin to add MCQs"
                       }
                     </p>
-                    {user && (
+                    {isAdmin && (
                       <Button onClick={() => navigate('/submit-content')} className="mt-4">
                         Submit MCQs
                       </Button>
