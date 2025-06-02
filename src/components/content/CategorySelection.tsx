@@ -1,11 +1,10 @@
 
-import { FormField, FormItem, FormControl, FormLabel, FormMessage } from "@/components/ui/form";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ContentCategory } from "@/interfaces/content";
-import { Briefcase, FileText, FileUp, GraduationCap, List } from "lucide-react";
 
 interface CategorySelectionProps {
-  form: any; // Using any to make it work with react-hook-form
+  form: any;
 }
 
 const CategorySelection = ({ form }: CategorySelectionProps) => {
@@ -14,68 +13,26 @@ const CategorySelection = ({ form }: CategorySelectionProps) => {
       control={form.control}
       name="category"
       render={({ field }) => (
-        <FormItem className="space-y-3">
+        <FormItem>
           <FormLabel>Content Type</FormLabel>
-          <FormControl>
-            <RadioGroup
-              onValueChange={(value) => {
-                field.onChange(value);
-                // Reset form fields when changing category
-                form.reset({
-                  ...form.getValues(),
-                  category: value as ContentCategory
-                });
-              }}
-              defaultValue={field.value}
-              className="flex flex-wrap gap-4"
-            >
-              <FormItem className="flex items-center space-x-3 space-y-0">
-                <FormControl>
-                  <RadioGroupItem value="scholarship" />
-                </FormControl>
-                <FormLabel className="font-normal flex items-center">
-                  <GraduationCap className="h-4 w-4 mr-1" />
-                  Scholarship
-                </FormLabel>
-              </FormItem>
-              <FormItem className="flex items-center space-x-3 space-y-0">
-                <FormControl>
-                  <RadioGroupItem value="job" />
-                </FormControl>
-                <FormLabel className="font-normal flex items-center">
-                  <Briefcase className="h-4 w-4 mr-1" />
-                  Job
-                </FormLabel>
-              </FormItem>
-              <FormItem className="flex items-center space-x-3 space-y-0">
-                <FormControl>
-                  <RadioGroupItem value="mcq" />
-                </FormControl>
-                <FormLabel className="font-normal flex items-center">
-                  <List className="h-4 w-4 mr-1" />
-                  MCQs
-                </FormLabel>
-              </FormItem>
-              <FormItem className="flex items-center space-x-3 space-y-0">
-                <FormControl>
-                  <RadioGroupItem value="quiz" />
-                </FormControl>
-                <FormLabel className="font-normal flex items-center">
-                  <FileUp className="h-4 w-4 mr-1" />
-                  Quiz
-                </FormLabel>
-              </FormItem>
-              <FormItem className="flex items-center space-x-3 space-y-0">
-                <FormControl>
-                  <RadioGroupItem value="past_paper" />
-                </FormControl>
-                <FormLabel className="font-normal flex items-center">
-                  <FileText className="h-4 w-4 mr-1" />
-                  Past Paper
-                </FormLabel>
-              </FormItem>
-            </RadioGroup>
-          </FormControl>
+          <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Select content type" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              <SelectItem value="scholarship">Scholarship</SelectItem>
+              <SelectItem value="job">Job</SelectItem>
+              <SelectItem value="mcq">MCQs</SelectItem>
+              <SelectItem value="quiz">Quiz</SelectItem>
+              <SelectItem value="past_paper">Past Paper</SelectItem>
+              <SelectItem value="cv">CVs</SelectItem>
+            </SelectContent>
+          </Select>
+          <FormDescription>
+            Choose the type of content you want to submit
+          </FormDescription>
           <FormMessage />
         </FormItem>
       )}

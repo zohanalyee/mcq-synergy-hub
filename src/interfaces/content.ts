@@ -1,5 +1,4 @@
-
-export type ContentCategory = 'scholarship' | 'job' | 'mcq' | 'past_paper' | 'quiz';
+export type ContentCategory = 'scholarship' | 'job' | 'mcq' | 'past_paper' | 'quiz' | 'cv';
 
 export type ContentStatus = 'pending' | 'approved' | 'rejected';
 
@@ -42,6 +41,12 @@ export interface ContentItem {
   timeLimit?: number;
   marks?: number;
   questions?: MCQItem[];
+  // CV specific fields
+  candidateName?: string;
+  experience?: string;
+  skills?: string;
+  education?: string;
+  contactInfo?: string;
   // Visibility settings
   showInSubjects?: boolean;
   showInSyllabus?: boolean;
@@ -91,6 +96,12 @@ export interface ContentSubmission {
   metaKeywords?: string;
   // MCQ and Quiz CSV
   csvFile?: File;
+  // CV specific fields
+  candidateName?: string;
+  experience?: string;
+  skills?: string;
+  education?: string;
+  contactInfo?: string;
   // Visibility settings
   showInSubjects?: boolean;
   showInSyllabus?: boolean;

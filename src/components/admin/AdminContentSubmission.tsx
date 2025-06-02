@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
@@ -30,7 +29,7 @@ const AdminContentSubmission = () => {
     defaultValues: {
       title: "",
       description: "",
-      category: "scholarship",
+      category: "cv", // Changed default to cv
       tags: [],
       metaTitle: "",
       metaDescription: "",
@@ -83,7 +82,7 @@ const AdminContentSubmission = () => {
       form.reset({
         title: "",
         description: "",
-        category: "scholarship",
+        category: "cv", // Changed default to cv
         tags: [],
         metaTitle: "",
         metaDescription: "",
@@ -117,7 +116,7 @@ const AdminContentSubmission = () => {
         <CardHeader className="px-0 pt-0">
           <CardTitle className="text-2xl">Submit Content</CardTitle>
           <p className="text-muted-foreground">
-            Add new scholarships, jobs, MCQs, quizzes, and past papers to the system.
+            Add new CVs, scholarships, jobs, MCQs, quizzes, and past papers to the system.
           </p>
         </CardHeader>
         

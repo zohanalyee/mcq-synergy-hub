@@ -33,6 +33,8 @@ export const useAdminContent = (defaultTab: string = 'pending') => {
         return allContent.filter(item => item.category === 'quiz');
       case 'job':
         return allContent.filter(item => item.category === 'job');
+      case 'cv':
+        return allContent.filter(item => item.category === 'cv');
       case 'past_paper':
         return allContent.filter(item => item.category === 'past_paper');
       default:
@@ -49,6 +51,7 @@ export const useAdminContent = (defaultTab: string = 'pending') => {
       scholarshipCount: allContent.filter(item => item.category === 'scholarship').length,
       mcqCount: allContent.filter(item => item.category === 'mcq').length,
       quizCount: allContent.filter(item => item.category === 'quiz').length,
+      cvCount: allContent.filter(item => item.category === 'cv').length,
     };
   };
 

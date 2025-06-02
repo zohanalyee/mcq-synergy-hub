@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -22,10 +21,9 @@ import Scholarships from "./pages/Scholarships";
 import CustomSyllabus from "./pages/CustomSyllabus";
 import SubjectContent from "./pages/SubjectContent";
 import CustomQuizzes from "./pages/CustomQuizzes";
-import SubmitContent from "./pages/SubmitContent";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
-import NoticeBoard from "./components/NoticeBoard";
+import NoticeBoard from "@/components/NoticeBoard";
 import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 import MCQs from "./pages/MCQs";
@@ -67,7 +65,6 @@ const App = () => {
                 <Route path="/past-papers" element={<PastPapers />} />
                 <Route path="/mcqs" element={<MCQs />} />
                 <Route path="/quizzes" element={<Quizzes />} />
-                <Route path="/submit-content" element={<SubmitContent />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
