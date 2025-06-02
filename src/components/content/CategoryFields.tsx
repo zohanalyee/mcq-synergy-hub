@@ -1,6 +1,8 @@
+
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { ContentCategory } from "@/interfaces/content";
 import { Calendar } from "lucide-react";
 import CSVUploader from "@/components/CSVUploader";
