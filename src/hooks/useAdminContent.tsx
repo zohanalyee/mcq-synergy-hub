@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { ContentItem } from '@/interfaces/content';
 import { getAllContent } from '@/services/contentService';
 
-export const useAdminContent = (defaultTab: string = 'pending') => {
+export const useAdminContent = (defaultTab: string = 'cvs') => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const getAllContentItems = (): ContentItem[] => {
