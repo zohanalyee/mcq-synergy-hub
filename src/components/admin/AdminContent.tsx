@@ -26,6 +26,8 @@ const AdminContent = ({
                       activeTab === "mcq" || activeTab === "past_paper" || 
                       activeTab === "job" || activeTab === "quiz";
 
+  const isSubmitTab = activeTab === "submit-content";
+
   return (
     <Card>
       <CardHeader className="pb-3">

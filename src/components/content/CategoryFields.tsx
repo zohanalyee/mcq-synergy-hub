@@ -34,20 +34,101 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
       if (selectedSubject) {
         const topicsData = getTopics();
         const subjectTopics = topicsData[selectedSubject] || [];
-        setTopics(subjectTopics);
+        setTopics(subjectTopics.map(topic => ({ title: topic })));
+        
+        // Reset topic when subject changes
+        if (form.getValues('topic') && !subjectTopics.some(t => t === form.getValues('topic'))) {
+          form.setValue('topic', '');
+        }
       } else {
         setTopics([]);
+        form.setValue('topic', '');
       }
     };
 
     if ((category === 'mcq' || category === 'quiz') && selectedSubject) {
       loadTopics();
     }
-  }, [category, selectedSubject]);
+  }, [category, selectedSubject, form]);
 
   const handleCSVChange = (file: File | undefined) => {
     form.setValue('csvFile', file);
   };
+
+  // Visibility settings component
+  const VisibilitySettings = () => (
+    <div className="space-y-4 border rounded-md p-4 bg-muted/20">
+      <h4 className="font-medium">Content Visibility</h4>
+      <p className="text-sm text-muted-foreground">
+        Choose where this content should appear in the application
+      </p>
+      
+      <div className="space-y-3">
+        <FormField
+          control={form.control}
+          name="showInSubjects"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Show in Subjects</FormLabel>
+                <FormDescription>
+                  Display this content in the subjects page and subject-wise practice
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="showInSyllabus"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Show in Custom Syllabus</FormLabel>
+                <FormDescription>
+                  Include this content in the custom syllabus builder
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="showInMockTests"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+              <FormControl>
+                <Checkbox
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+              <div className="space-y-1 leading-none">
+                <FormLabel>Show in Mock Tests</FormLabel>
+                <FormDescription>
+                  Make this content available in timed mock tests
+                </FormDescription>
+              </div>
+            </FormItem>
+          )}
+        />
+      </div>
+    </div>
+  );
 
   switch (category) {
     case 'job':
@@ -134,6 +215,8 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
               </FormItem>
             )}
           />
+          
+          <VisibilitySettings />
         </div>
       );
     
@@ -198,6 +281,8 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
               </FormItem>
             )}
           />
+          
+          <VisibilitySettings />
         </div>
       );
       
@@ -211,7 +296,7 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Subject</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} value={field.value || ""}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Select a subject" />
@@ -241,12 +326,12 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
                 <FormLabel>Topic</FormLabel>
                 <Select 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
+                  value={field.value || ""}
                   disabled={!selectedSubject}
                 >
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a topic" />
+                      <SelectValue placeholder={selectedSubject ? "Select a topic" : "Select a subject first"} />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
@@ -331,6 +416,8 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
               />
             </>
           )}
+          
+          <VisibilitySettings />
         </div>
       );
       
@@ -364,6 +451,8 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
               </FormItem>
             )}
           />
+          
+          <VisibilitySettings />
         </div>
       );
   }

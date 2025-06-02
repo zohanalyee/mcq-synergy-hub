@@ -1,71 +1,61 @@
 
-import { useState, useEffect } from "react";
-import { ContentItem } from "@/interfaces/content";
-import { getAllContent } from "@/services/baseContentService";
+import { useState, useMemo } from 'react';
+import { ContentItem } from '@/interfaces/content';
+import { getAllContent } from '@/services/contentService';
 
-export const useAdminContent = () => {
-  const [content, setContent] = useState<ContentItem[]>([]);
-  const [activeTab, setActiveTab] = useState("pending");
+export const useAdminContent = (defaultTab: string = 'pending') => {
+  const [activeTab, setActiveTab] = useState(defaultTab);
 
-  // Load content
-  useEffect(() => {
-    const loadContent = () => {
-      try {
-        const allContent = getAllContent();
-        setContent(allContent);
-        console.log("Loaded content items:", allContent.length);
-      } catch (error) {
-        console.error("Error loading content:", error);
-      }
-    };
-
-    loadContent();
-  }, []);
-
-  // Get content for the current active tab
-  const getCurrentContent = () => {
-    if (activeTab === 'pending' || activeTab === 'approved' || activeTab === 'rejected') {
-      return filterContentByStatus(activeTab);
-    } else if (['scholarship', 'job', 'mcq', 'past_paper', 'quiz'].includes(activeTab)) {
-      return filterContentByCategory(activeTab);
+  const getAllContentItems = (): ContentItem[] => {
+    try {
+      return getAllContent();
+    } catch (error) {
+      console.error('Error fetching content:', error);
+      return [];
     }
+  };
+
+  const getCurrentContent = (): ContentItem[] => {
+    const allContent = getAllContentItems();
     
-    return content; // Default to all content
+    switch (activeTab) {
+      case 'pending':
+        return allContent.filter(item => item.status === 'pending');
+      case 'approved':
+        return allContent.filter(item => item.status === 'approved');
+      case 'rejected':
+        return allContent.filter(item => item.status === 'rejected');
+      case 'scholarship':
+        return allContent.filter(item => item.category === 'scholarship');
+      case 'mcq':
+        return allContent.filter(item => item.category === 'mcq');
+      case 'quiz':
+        return allContent.filter(item => item.category === 'quiz');
+      case 'job':
+        return allContent.filter(item => item.category === 'job');
+      case 'past_paper':
+        return allContent.filter(item => item.category === 'past_paper');
+      default:
+        return [];
+    }
   };
 
-  // Filter content based on status
-  const filterContentByStatus = (status: string) => {
-    if (status === 'all') return content;
-    return content.filter(item => item.status === status);
-  };
-
-  // Filter content based on category
-  const filterContentByCategory = (category: string) => {
-    return content.filter(item => item.category === category);
-  };
-
-  // Calculate statistics
   const getContentStatistics = () => {
-    const pendingCount = content.filter(item => item.status === 'pending').length;
-    const scholarshipCount = content.filter(item => item.category === 'scholarship').length;
-    const mcqCount = content.filter(item => item.category === 'mcq').length;
-    const quizCount = content.filter(item => item.category === 'quiz').length;
+    const allContent = getAllContentItems();
     
     return {
-      pendingCount,
-      scholarshipCount,
-      mcqCount,
-      quizCount,
-      totalCount: content.length
+      totalCount: allContent.length,
+      pendingCount: allContent.filter(item => item.status === 'pending').length,
+      scholarshipCount: allContent.filter(item => item.category === 'scholarship').length,
+      mcqCount: allContent.filter(item => item.category === 'mcq').length,
+      quizCount: allContent.filter(item => item.category === 'quiz').length,
     };
   };
 
   return {
-    content,
-    setContent,
     activeTab,
     setActiveTab,
     getCurrentContent,
-    getContentStatistics
+    getContentStatistics,
   };
 };

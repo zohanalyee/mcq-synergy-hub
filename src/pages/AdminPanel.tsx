@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -36,7 +35,7 @@ const AdminPanel = () => {
     setActiveTab,
     getCurrentContent,
     getContentStatistics
-  } = useAdminContent();
+  } = useAdminContent("submit-content"); // Set default tab to submit-content
 
   // Initialize admin data when the component loads
   useEffect(() => {

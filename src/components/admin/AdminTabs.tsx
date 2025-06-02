@@ -4,7 +4,8 @@ import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
 import JobTestManager from "./JobTestManager";
 import QuizManager from "./QuizManager";
-import { GraduationCap, FileText, List } from "lucide-react";
+import AdminContentSubmission from "./AdminContentSubmission";
+import { GraduationCap, FileText, List, Plus } from "lucide-react";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -15,6 +16,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="mb-6 flex flex-wrap">
+        <TabsTrigger value="submit-content" className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Submit Content
+        </TabsTrigger>
         <TabsTrigger value="pending">Submissions</TabsTrigger>
         <TabsTrigger value="approved">Approved</TabsTrigger>
         <TabsTrigger value="rejected">Rejected</TabsTrigger>
@@ -27,6 +32,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="topics">Topic Manager</TabsTrigger>
         <TabsTrigger value="job-tests">Job Tests</TabsTrigger>
       </TabsList>
+      
+      <TabsContent value="submit-content">
+        <AdminContentSubmission />
+      </TabsContent>
       
       <TabsContent value="pending">
         {/* Content management is in the main AdminPanel component */}
