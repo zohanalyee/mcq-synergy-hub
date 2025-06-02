@@ -1,10 +1,9 @@
-
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
 import JobTestManager from "./JobTestManager";
 import QuizManager from "./QuizManager";
-import CVSubmission from "./CVSubmission";
+import AdminContentSubmission from "./AdminContentSubmission";
 import { GraduationCap, FileText, List, Plus } from "lucide-react";
 
 type AdminTabsProps = {
@@ -16,9 +15,9 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="mb-6 flex flex-wrap">
-        <TabsTrigger value="cvs" className="flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          CVs
+        <TabsTrigger value="submit-content" className="flex items-center gap-2">
+          <Plus className="h-4 w-4" />
+          Submit Content
         </TabsTrigger>
         <TabsTrigger value="pending">Submissions</TabsTrigger>
         <TabsTrigger value="approved">Approved</TabsTrigger>
@@ -27,15 +26,15 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="mcq">MCQs</TabsTrigger>
         <TabsTrigger value="quiz">Quizzes</TabsTrigger>
         <TabsTrigger value="job">Jobs</TabsTrigger>
-        <TabsTrigger value="cv">CV Management</TabsTrigger>
+        <TabsTrigger value="cv">CVs</TabsTrigger>
         <TabsTrigger value="past_paper">Past Papers</TabsTrigger>
         <TabsTrigger value="subjects">Subject Manager</TabsTrigger>
         <TabsTrigger value="topics">Topic Manager</TabsTrigger>
         <TabsTrigger value="job-tests">Job Tests</TabsTrigger>
       </TabsList>
       
-      <TabsContent value="cvs">
-        <CVSubmission />
+      <TabsContent value="submit-content">
+        <AdminContentSubmission />
       </TabsContent>
       
       <TabsContent value="pending">

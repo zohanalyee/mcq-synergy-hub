@@ -35,7 +35,7 @@ const AdminPanel = () => {
     setActiveTab,
     getCurrentContent,
     getContentStatistics
-  } = useAdminContent("cvs"); // Set default tab to cvs
+  } = useAdminContent("submit-content"); // Set default tab to submit-content
 
   // Initialize admin data when the component loads
   useEffect(() => {
