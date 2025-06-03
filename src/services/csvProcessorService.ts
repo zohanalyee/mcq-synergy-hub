@@ -1,4 +1,3 @@
-
 import { ContentItem, ContentCategory, ContentSubmission } from "@/interfaces/content";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -6,13 +5,7 @@ export interface CSVProcessingResult {
   items: ContentSubmission[];
   errors: string[];
   warnings: string[];
-}
-
-export interface CSVField {
-  name: string;
-  required: boolean;
-  type: 'string' | 'number' | 'date' | 'array';
-  description: string;
+  fileName?: string;
 }
 
 // CSV templates for different content types
@@ -160,16 +153,16 @@ const processCSVRow = (
 
     switch (field.type) {
       case 'array':
-        item[header as keyof ContentSubmission] = value.split(',').map(v => v.trim());
+        (item as any)[header] = value.split(',').map(v => v.trim());
         break;
       case 'number':
-        item[header as keyof ContentSubmission] = parseInt(value) || 0;
+        (item as any)[header] = parseInt(value) || 0;
         break;
       case 'date':
-        item[header as keyof ContentSubmission] = value;
+        (item as any)[header] = value;
         break;
       default:
-        item[header as keyof ContentSubmission] = value;
+        (item as any)[header] = value;
     }
   }
 

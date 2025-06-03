@@ -221,7 +221,7 @@ const EnhancedCSVUploader = ({
             <Card key={index}>
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center justify-between">
-                  <span>{result.fileName}</span>
+                  <span>{result.fileName || `File ${index + 1}`}</span>
                   <div className="flex gap-2">
                     <Badge variant="outline" className="text-xs">
                       {result.items.length} items
@@ -276,7 +276,7 @@ const EnhancedCSVUploader = ({
 
                 {result.items.length > 0 && (
                   <div className="text-xs text-muted-foreground">
-                    Successfully processed {result.items.length} items from {result.fileName}
+                    Successfully processed {result.items.length} items from {result.fileName || 'uploaded file'}
                   </div>
                 )}
               </CardContent>
