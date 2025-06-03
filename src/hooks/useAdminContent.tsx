@@ -3,7 +3,7 @@ import { useState, useMemo } from 'react';
 import { ContentItem } from '@/interfaces/content';
 import { getAllContent } from '@/services/contentService';
 
-export const useAdminContent = (defaultTab: string = 'pending') => {
+export const useAdminContent = (defaultTab: string = 'submit-content') => {
   const [activeTab, setActiveTab] = useState(defaultTab);
 
   const getAllContentItems = (): ContentItem[] => {
@@ -52,6 +52,30 @@ export const useAdminContent = (defaultTab: string = 'pending') => {
       mcqCount: allContent.filter(item => item.category === 'mcq').length,
       quizCount: allContent.filter(item => item.category === 'quiz').length,
       cvCount: allContent.filter(item => item.category === 'cv').length,
+      jobCount: allContent.filter(item => item.category === 'job').length,
+      pastPaperCount: allContent.filter(item => item.category === 'past_paper').length,
+    };
+  };
+
+  const getBulkActionStatistics = () => {
+    const allContent = getAllContentItems();
+    const recentContent = allContent.filter(item => {
+      const createdAt = new Date(item.createdAt);
+      const dayAgo = new Date();
+      dayAgo.setDate(dayAgo.getDate() - 1);
+      return createdAt > dayAgo;
+    });
+
+    return {
+      recentUploads: recentContent.length,
+      pendingReview: allContent.filter(item => item.status === 'pending').length,
+      autoApprovalCandidate: allContent.filter(item => 
+        item.status === 'pending' && 
+        item.metaTitle && 
+        item.metaDescription &&
+        item.tags && 
+        item.tags.length > 0
+      ).length
     };
   };
 
@@ -60,5 +84,6 @@ export const useAdminContent = (defaultTab: string = 'pending') => {
     setActiveTab,
     getCurrentContent,
     getContentStatistics,
+    getBulkActionStatistics,
   };
 };
