@@ -1,35 +1,85 @@
 
-// This file re-exports functionality from domain-specific services
-// to maintain backward compatibility with existing code
+// This file serves as the main interface for content operations
+// It delegates to baseContentService for actual implementation
 
-// Import and re-export from base content service
-export {
-  getAllContent,
-  getApprovedContent,
-  getContentByCategory,
-  getPendingContent,
+import { ContentItem, ContentSubmission, ContentCategory } from "@/interfaces/content";
+import { 
+  getAllContent, 
+  addContentItem, 
+  getContentByCategory as getContentByCategoryBase,
   updateContentStatus,
-  deleteContent,
-  getContentBySubjectAndTopic,
-  getSubjectsAndTopics
-} from './baseContentService';
+  deleteContent 
+} from "./baseContentService";
+import { generateId, convertFileToUrl } from "./contentSubmissionService";
+import { UserRole } from "@/contexts/UserRoleContext";
 
-// Import and re-export from MCQ service
-export {
-  parseCSVForMCQs,
-  getMCQsBySubject,
-  getAllMCQs
-} from './mcqService';
+// Submit new content
+export const submitContent = (submission: ContentSubmission, userRole: UserRole): ContentItem => {
+  console.log("Submitting content:", submission);
+  
+  const now = new Date().toISOString();
+  
+  const contentItem: ContentItem = {
+    id: generateId(),
+    title: submission.title,
+    description: submission.description,
+    category: submission.category,
+    tags: submission.tags,
+    createdAt: now,
+    updatedAt: now,
+    status: userRole === 'admin' ? 'approved' : 'pending', // Auto-approve for admin
+    createdBy: 'current-user', // In a real app, this would be the actual user ID
+    
+    // Handle file uploads
+    imageUrl: submission.imageFile ? convertFileToUrl(submission.imageFile) : undefined,
+    fileUrl: submission.documentFile ? convertFileToUrl(submission.documentFile) : undefined,
+    
+    // Category-specific fields
+    deadline: submission.deadline,
+    department: submission.department,
+    governmentLevel: submission.governmentLevel,
+    cadre: submission.cadre,
+    scholarshipType: submission.scholarshipType,
+    institution: submission.institution,
+    examType: submission.examType,
+    examYear: submission.examYear,
+    
+    // SEO fields
+    metaTitle: submission.metaTitle,
+    metaDescription: submission.metaDescription,
+    metaKeywords: submission.metaKeywords,
+    
+    // CV specific fields
+    candidateName: submission.candidateName,
+    experience: submission.experience,
+    skills: submission.skills,
+    education: submission.education,
+    contactInfo: submission.contactInfo,
+    
+    // Visibility settings
+    showInSubjects: submission.showInSubjects,
+    showInSyllabus: submission.showInSyllabus,
+    showInMockTests: submission.showInMockTests,
+  };
+  
+  return addContentItem(contentItem);
+};
 
-// Import and re-export from quiz service
-export {
-  parseCSVForQuizzes,
-  getQuizzes,
-  getQuizzesBySubject,
-  getQuizzesByTopic
-} from './quizService';
+// Get content by category (only approved content)
+export const getContentByCategory = (category: ContentCategory): ContentItem[] => {
+  console.log("Getting content for category:", category);
+  const content = getContentByCategoryBase(category);
+  console.log("Found content items:", content.length);
+  return content;
+};
 
-// Import and re-export from content submission service
-export {
-  submitContent
-} from './contentSubmissionService';
+// Get all content (for admin use)
+export const getAllContent = (): ContentItem[] => {
+  return getAllContent();
+};
+
+// Update content status
+export const updateContentStatus = updateContentStatus;
+
+// Delete content
+export const deleteContent = deleteContent;
