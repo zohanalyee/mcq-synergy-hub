@@ -1,3 +1,4 @@
+
 import { ContentItem, ContentCategory, ContentSubmission } from "@/interfaces/content";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -6,6 +7,13 @@ export interface CSVProcessingResult {
   errors: string[];
   warnings: string[];
   fileName?: string;
+}
+
+export interface CSVField {
+  name: string;
+  required: boolean;
+  type: 'string' | 'number' | 'date' | 'array';
+  description: string;
 }
 
 // CSV templates for different content types
