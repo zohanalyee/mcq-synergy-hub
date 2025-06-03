@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Laptop, Menu, Moon, Sun, X, BookOpen, FileText, Briefcase, Award, Shield, Upload, User, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -130,8 +131,8 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
 
               <NavigationMenuItem>
                 <NavigationMenuTrigger>More</NavigationMenuTrigger>
-                <NavigationMenuContent>
-                  <div className="grid grid-cols-1 gap-1 p-2 w-48">
+                <NavigationMenuContent className="absolute top-full left-0 z-50 min-w-[200px] bg-background border border-border rounded-md shadow-md p-2">
+                  <div className="grid grid-cols-1 gap-1">
                     {secondaryNavItems.map((item) => (
                       <Button
                         key={item.title}
@@ -153,19 +154,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
 
           {/* Action buttons with consistent spacing */}
           <div className="flex items-center gap-3 flex-shrink-0">
-            {/* Changed: Submit button only visible to admin */}
-            {user && isAdmin && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="hidden md:flex gap-1"
-                onClick={() => handleNavigation('/submit-content')}
-              >
-                <Upload className="h-4 w-4" />
-                Submit
-              </Button>
-            )}
-
+            {/* Admin panel button only visible to admin */}
             {user && isAdmin && (
               <Button 
                 variant="outline" 
@@ -310,22 +299,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                 ))}
               </div>
 
-              {/* Changed: Submit content button only visible to admin in mobile menu */}
-              {user && isAdmin && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full mt-4 flex items-center justify-center gap-2"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    handleNavigation('/submit-content');
-                  }}
-                >
-                  <Upload className="h-4 w-4" />
-                  Submit Content
-                </Button>
-              )}
-
+              {/* Admin panel button only visible to admin in mobile menu */}
               {user && isAdmin && (
                 <Button
                   variant="outline"
