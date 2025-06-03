@@ -14,6 +14,7 @@ import { CSVProcessingResult } from "@/services/csvProcessorService";
 
 // Import form components
 import CategorySelection from "@/components/content/CategorySelection";
+import CSVCategorySelection from "@/components/admin/CSVCategorySelection";
 import BasicInfoFields from "@/components/content/BasicInfoFields";
 import CategoryFields from "@/components/content/CategoryFields";
 import FileUploads from "@/components/content/FileUploads";
@@ -30,6 +31,7 @@ const AdminContentSubmission = () => {
   const [activeTab, setActiveTab] = useState("manual");
   const [csvResults, setCsvResults] = useState<CSVProcessingResult[]>([]);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [csvCategory, setCsvCategory] = useState<ContentCategory>("cv");
   
   const form = useForm<ContentSubmission>({
     defaultValues: {
@@ -226,10 +228,10 @@ const AdminContentSubmission = () => {
                   </p>
                 </div>
 
-                <CategorySelection form={form} />
+                <CSVCategorySelection value={csvCategory} onChange={setCsvCategory} />
 
                 <EnhancedCSVUploader
-                  category={selectedCategory}
+                  category={csvCategory}
                   onFilesProcessed={handleCSVResults}
                   allowMultiple={true}
                 />
