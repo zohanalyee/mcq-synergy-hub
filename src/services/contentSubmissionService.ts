@@ -5,17 +5,24 @@ import { addContentItem } from "./baseContentService";
 import { parseCSVForMCQs } from "./mcqService";
 import { parseCSVForQuizzes } from "./quizService";
 
+// Export helper functions
+export const generateId = (): string => uuidv4();
+
+export const convertFileToUrl = (file: File): string => {
+  return URL.createObjectURL(file);
+};
+
 export const submitContent = (submission: ContentSubmission, userId: string = 'anonymous'): ContentItem => {
   // In a real app, you'd upload the files to storage and get URLs back
   // For this demo, we'll just store the file names
-  const imageUrl = submission.imageFile ? URL.createObjectURL(submission.imageFile) : undefined;
-  const fileUrl = submission.documentFile ? URL.createObjectURL(submission.documentFile) : undefined;
+  const imageUrl = submission.imageFile ? convertFileToUrl(submission.imageFile) : undefined;
+  const fileUrl = submission.documentFile ? convertFileToUrl(submission.documentFile) : undefined;
 
   let questions: MCQItem[] = [];
   
   // Create new content item with visibility settings
   const newItem: ContentItem = {
-    id: uuidv4(),
+    id: generateId(),
     ...submission,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
