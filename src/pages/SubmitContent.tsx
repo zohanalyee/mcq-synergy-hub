@@ -71,8 +71,8 @@ const SubmitContent = () => {
       // Add tags to the submission
       const fullSubmission = { ...data, tags };
       
-      // Submit content
-      submitContent(fullSubmission, userRole === 'guest' ? 'anonymous' : userRole);
+      // Submit content with the correct userRole type
+      submitContent(fullSubmission, userRole);
       
       // Show success notification
       toast.success("Content submitted successfully", {

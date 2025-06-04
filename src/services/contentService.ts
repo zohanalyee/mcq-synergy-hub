@@ -11,17 +11,11 @@ import {
   deleteContent as deleteContentBase,
   getSubjectsAndTopics
 } from "./baseContentService";
-import { v4 as uuidv4 } from 'uuid';
-
-// Helper functions that were missing
-export const generateId = (): string => uuidv4();
-
-export const convertFileToUrl = (file: File): string => {
-  return URL.createObjectURL(file);
-};
+import { generateId, convertFileToUrl } from "./contentSubmissionService";
+import { UserRole } from "@/contexts/UserRoleContext";
 
 // Submit new content
-export const submitContent = (submission: ContentSubmission, userRole: 'admin' | 'user'): ContentItem => {
+export const submitContent = (submission: ContentSubmission, userRole: UserRole): ContentItem => {
   console.log("Submitting content:", submission);
   
   const now = new Date().toISOString();
@@ -80,14 +74,13 @@ export const getContentByCategory = (category: ContentCategory): ContentItem[] =
   return content;
 };
 
-// Re-export functions from base service with proper names
+// Get all content (for admin use)
 export const getAllContent = (): ContentItem[] => {
   return getAllContentBase();
 };
 
-export const updateContentStatus = updateContentStatusBase;
-
-export const deleteContent = deleteContentBase;
-
-// Export the getSubjectsAndTopics function
-export { getSubjectsAndTopics } from "./baseContentService";
+// Re-export functions from base service
+export { updateContentStatusBase as updateContentStatus };
+export { deleteContentBase as deleteContent };
+export { getSubjectsAndTopics };
+export { generateId, convertFileToUrl };

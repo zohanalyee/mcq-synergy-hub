@@ -8,6 +8,7 @@ interface UserRoleContextType {
   userRole: UserRole;
   setUserRole: (role: UserRole) => void;
   isAdmin: boolean;
+  checkIsAdmin: () => boolean;
 }
 
 const UserRoleContext = createContext<UserRoleContextType | undefined>(undefined);
@@ -31,9 +32,13 @@ export const UserRoleProvider: React.FC<UserRoleProviderProps> = ({ children }) 
   }, [user]);
 
   const isAdmin = userRole === 'admin';
+  
+  const checkIsAdmin = (): boolean => {
+    return userRole === 'admin';
+  };
 
   return (
-    <UserRoleContext.Provider value={{ userRole, setUserRole, isAdmin }}>
+    <UserRoleContext.Provider value={{ userRole, setUserRole, isAdmin, checkIsAdmin }}>
       {children}
     </UserRoleContext.Provider>
   );
