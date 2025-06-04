@@ -1,3 +1,4 @@
+
 import { FormField, FormItem, FormLabel, FormControl, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -132,98 +133,6 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
   );
 
   switch (category) {
-    case 'cv':
-      return (
-        <div className="space-y-6">
-          <FormField
-            control={form.control}
-            name="candidateName"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Candidate Name</FormLabel>
-                <FormControl>
-                  <Input placeholder="Enter candidate full name" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="experience"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Experience Level</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select experience level" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    <SelectItem value="entry">Entry Level (0-1 years)</SelectItem>
-                    <SelectItem value="junior">Junior (1-3 years)</SelectItem>
-                    <SelectItem value="mid">Mid Level (3-5 years)</SelectItem>
-                    <SelectItem value="senior">Senior (5-8 years)</SelectItem>
-                    <SelectItem value="lead">Lead (8+ years)</SelectItem>
-                    <SelectItem value="executive">Executive/Management</SelectItem>
-                  </SelectContent>
-                </Select>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="skills"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Key Skills</FormLabel>
-                <FormControl>
-                  <Input placeholder="e.g., React, Node.js, Project Management" {...field} />
-                </FormControl>
-                <FormDescription>
-                  Enter key skills separated by commas
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="education"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Education</FormLabel>
-                <FormControl>
-                  <Input placeholder="Highest qualification or degree" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <FormField
-            control={form.control}
-            name="contactInfo"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Contact Information</FormLabel>
-                <FormControl>
-                  <Input placeholder="Email, phone, LinkedIn profile" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          
-          <VisibilitySettings />
-        </div>
-      );
-    
     case 'job':
       return (
         <div className="space-y-6">

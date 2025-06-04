@@ -22,7 +22,6 @@ const CSVCategorySelection = ({ value, onChange }: CSVCategorySelectionProps) =>
           <SelectItem value="mcq">MCQs</SelectItem>
           <SelectItem value="quiz">Quiz</SelectItem>
           <SelectItem value="past_paper">Past Paper</SelectItem>
-          <SelectItem value="cv">CVs</SelectItem>
         </SelectContent>
       </Select>
       <p className="text-sm text-muted-foreground">

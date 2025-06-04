@@ -1,3 +1,4 @@
+
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
@@ -26,7 +27,6 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="mcq">MCQs</TabsTrigger>
         <TabsTrigger value="quiz">Quizzes</TabsTrigger>
         <TabsTrigger value="job">Jobs</TabsTrigger>
-        <TabsTrigger value="cv">CVs</TabsTrigger>
         <TabsTrigger value="past_paper">Past Papers</TabsTrigger>
         <TabsTrigger value="subjects">Subject Manager</TabsTrigger>
         <TabsTrigger value="topics">Topic Manager</TabsTrigger>
@@ -62,10 +62,6 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       </TabsContent>
       
       <TabsContent value="job">
-        {/* Content management is in the main AdminPanel component */}
-      </TabsContent>
-      
-      <TabsContent value="cv">
         {/* Content management is in the main AdminPanel component */}
       </TabsContent>
       

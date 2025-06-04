@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
@@ -31,13 +30,13 @@ const AdminContentSubmission = () => {
   const [activeTab, setActiveTab] = useState("manual");
   const [csvResults, setCsvResults] = useState<CSVProcessingResult[]>([]);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
-  const [csvCategory, setCsvCategory] = useState<ContentCategory>("cv");
+  const [csvCategory, setCsvCategory] = useState<ContentCategory>("scholarship");
   
   const form = useForm<ContentSubmission>({
     defaultValues: {
       title: "",
       description: "",
-      category: "cv",
+      category: "scholarship",
       tags: [],
       metaTitle: "",
       metaDescription: "",
@@ -134,7 +133,7 @@ const AdminContentSubmission = () => {
       form.reset({
         title: "",
         description: "",
-        category: "cv",
+        category: "scholarship",
         tags: [],
         metaTitle: "",
         metaDescription: "",

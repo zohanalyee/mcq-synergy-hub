@@ -27,7 +27,6 @@ const CategorySelection = ({ form }: CategorySelectionProps) => {
               <SelectItem value="mcq">MCQs</SelectItem>
               <SelectItem value="quiz">Quiz</SelectItem>
               <SelectItem value="past_paper">Past Paper</SelectItem>
-              <SelectItem value="cv">CVs</SelectItem>
             </SelectContent>
           </Select>
           <FormDescription>
