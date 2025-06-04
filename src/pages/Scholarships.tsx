@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -12,10 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { getContentByCategory } from "@/services/contentService";
+import { useUserRole } from "@/contexts/UserRoleContext";
+import QuickSubmissionDialog from "@/components/admin/QuickSubmissionDialog";
 
 const Scholarships = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin } = useUserRole();
   const [scholarships, setScholarships] = useState<ContentItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -99,10 +101,18 @@ const Scholarships = () => {
                 className="w-full pl-10"
               />
             </div>
-            <Button onClick={() => navigate("/submit-content")} className="flex gap-2">
-              <Upload className="h-4 w-4" />
-              Submit Scholarship
-            </Button>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <QuickSubmissionDialog 
+                  category="scholarship" 
+                  buttonText="Add Scholarship"
+                />
+              )}
+              <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
+                <Upload className="h-4 w-4" />
+                Submit Scholarship
+              </Button>
+            </div>
           </div>
         </div>
 

@@ -50,10 +50,10 @@ export const submitContent = (submission: ContentSubmission, userRole: UserRole)
     metaDescription: submission.metaDescription,
     metaKeywords: submission.metaKeywords,
     
-    // Visibility settings
-    showInSubjects: submission.showInSubjects,
-    showInSyllabus: submission.showInSyllabus,
-    showInMockTests: submission.showInMockTests,
+    // Visibility settings - scholarships and jobs always visible on their pages
+    showInSubjects: submission.category === 'scholarship' || submission.category === 'job' ? false : (submission.showInSubjects ?? true),
+    showInSyllabus: submission.category === 'scholarship' || submission.category === 'job' ? false : (submission.showInSyllabus ?? false),
+    showInMockTests: submission.category === 'scholarship' || submission.category === 'job' ? false : (submission.showInMockTests ?? false),
   };
   
   return addContentItem(contentItem);

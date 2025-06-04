@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -12,10 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { getContentByCategory } from "@/services/contentService";
+import { useUserRole } from "@/contexts/UserRoleContext";
+import QuickSubmissionDialog from "@/components/admin/QuickSubmissionDialog";
 
 const Jobs = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isAdmin } = useUserRole();
   const [jobs, setJobs] = useState<ContentItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
@@ -98,6 +100,18 @@ const Jobs = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10"
               />
+            </div>
+            <div className="flex gap-2">
+              {isAdmin && (
+                <QuickSubmissionDialog 
+                  category="job" 
+                  buttonText="Add Job"
+                />
+              )}
+              <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
+                <Upload className="h-4 w-4" />
+                Submit Job
+              </Button>
             </div>
           </div>
         </div>

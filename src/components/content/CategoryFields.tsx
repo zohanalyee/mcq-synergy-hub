@@ -57,7 +57,7 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
     form.setValue('csvFile', file);
   };
 
-  // Visibility settings component
+  // Visibility settings component - only for MCQ, Quiz, and Past Papers
   const VisibilitySettings = () => (
     <div className="space-y-4 border rounded-md p-4 bg-muted/20">
       <h4 className="font-medium">Content Visibility</h4>
@@ -217,8 +217,6 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
               </FormItem>
             )}
           />
-          
-          <VisibilitySettings />
         </div>
       );
     
@@ -283,8 +281,6 @@ const CategoryFields = ({ category, form }: CategoryFieldsProps) => {
               </FormItem>
             )}
           />
-          
-          <VisibilitySettings />
         </div>
       );
       
