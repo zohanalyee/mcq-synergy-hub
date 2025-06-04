@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -7,7 +8,7 @@ import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { initializeAdminData } from "@/services/adminService";
-import EditContentDialog from "@/components/admin/content/EditContentDialog";
+import EnhancedEditContentDialog from "@/components/admin/content/EnhancedEditContentDialog";
 import { useContentManagement } from "@/hooks/useContentManagement";
 import { useAdminContent } from "@/hooks/useAdminContent";
 import AdminHeader from "@/components/admin/AdminHeader";
@@ -28,6 +29,7 @@ const AdminPanel = () => {
     handleUpdateStatus,
     handleSaveEdit,
     handleDelete,
+    handleBulkAction,
   } = useContentManagement();
 
   const {
@@ -35,7 +37,7 @@ const AdminPanel = () => {
     setActiveTab,
     getCurrentContent,
     getContentStatistics
-  } = useAdminContent("submit-content"); // Set default tab to submit-content
+  } = useAdminContent("submit-content");
 
   // Initialize admin data when the component loads
   useEffect(() => {
@@ -106,10 +108,11 @@ const AdminPanel = () => {
           handleEditClick={handleEditClick}
           handleUpdateStatus={handleUpdateStatus}
           handleDelete={handleDelete}
+          onBulkAction={handleBulkAction}
         />
       </div>
 
-      <EditContentDialog
+      <EnhancedEditContentDialog
         open={editDialogOpen}
         onOpenChange={setEditDialogOpen}
         currentItem={currentItem}

@@ -61,24 +61,12 @@ export const useContentManagement = () => {
     }
   };
 
-  // Save edited content
-  const handleSaveEdit = (
-    title: string, 
-    description: string, 
-    visibility?: {
-      showInSubjects?: boolean;
-      showInSyllabus?: boolean;
-      showInMockTests?: boolean;
-    }
-  ) => {
+  // Enhanced save with full content update support
+  const handleSaveEdit = (updatedData: Partial<ContentItem>) => {
     if (!currentItem) return;
     
     try {
-      const updatedItem = updateContentStatus(currentItem.id, currentItem.status, {
-        title,
-        description,
-        ...visibility
-      });
+      const updatedItem = updateContentStatus(currentItem.id, currentItem.status, updatedData);
       
       if (updatedItem) {
         setContent(prev => 
@@ -121,6 +109,73 @@ export const useContentManagement = () => {
     }
   };
 
+  // New bulk action handler
+  const handleBulkAction = (action: string, selectedIds: string[]) => {
+    try {
+      switch (action) {
+        case 'approve':
+          selectedIds.forEach(id => {
+            const updatedItem = updateContentStatus(id, 'approved');
+            if (updatedItem) {
+              setContent(prev => prev.map(item => item.id === id ? updatedItem : item));
+            }
+          });
+          toast.success(`${selectedIds.length} items approved`);
+          break;
+          
+        case 'reject':
+          selectedIds.forEach(id => {
+            const updatedItem = updateContentStatus(id, 'rejected');
+            if (updatedItem) {
+              setContent(prev => prev.map(item => item.id === id ? updatedItem : item));
+            }
+          });
+          toast.success(`${selectedIds.length} items rejected`);
+          break;
+          
+        case 'delete':
+          selectedIds.forEach(id => {
+            deleteContent(id);
+          });
+          setContent(prev => prev.filter(item => !selectedIds.includes(item.id)));
+          toast.success(`${selectedIds.length} items deleted`);
+          break;
+          
+        case 'export':
+          // Simple CSV export
+          const itemsToExport = content.filter(item => selectedIds.includes(item.id));
+          const csvContent = [
+            ['Title', 'Category', 'Status', 'Created At', 'Description'].join(','),
+            ...itemsToExport.map(item => [
+              `"${item.title}"`,
+              item.category,
+              item.status,
+              item.createdAt,
+              `"${item.description.replace(/"/g, '""')}"`
+            ].join(','))
+          ].join('\n');
+          
+          const blob = new Blob([csvContent], { type: 'text/csv' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `content-export-${new Date().toISOString().split('T')[0]}.csv`;
+          a.click();
+          URL.revokeObjectURL(url);
+          
+          toast.success("Content exported successfully");
+          break;
+      }
+    } catch (error) {
+      console.error("Error performing bulk action:", error);
+      hookToast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to perform bulk action. Please try again."
+      });
+    }
+  };
+
   // Filter content based on status
   const filterContentByStatus = (status: string) => {
     if (status === 'all') return content;
@@ -141,6 +196,7 @@ export const useContentManagement = () => {
     handleUpdateStatus,
     handleSaveEdit,
     handleDelete,
+    handleBulkAction,
     filterContentByStatus,
     filterContentByCategory
   };

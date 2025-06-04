@@ -1,17 +1,17 @@
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import AdminTabs from "@/components/admin/AdminTabs";
-import ContentTable from "@/components/admin/content/ContentTable";
-import { ContentItem } from "@/interfaces/content";
+import { ContentItem, ContentStatus } from "@/interfaces/content";
+import AdminTabs from "./AdminTabs";
+import EnhancedContentTable from "./content/EnhancedContentTable";
 
-type AdminContentProps = {
+interface AdminContentProps {
   activeTab: string;
   setActiveTab: (tab: string) => void;
   currentContent: ContentItem[];
   handleEditClick: (item: ContentItem) => void;
-  handleUpdateStatus: (id: string, status: "approved" | "rejected" | "pending") => void;
+  handleUpdateStatus: (id: string, status: ContentStatus) => void;
   handleDelete: (id: string) => void;
-};
+  onBulkAction?: (action: string, selectedIds: string[]) => void;
+}
 
 const AdminContent = ({
   activeTab,
@@ -19,33 +19,27 @@ const AdminContent = ({
   currentContent,
   handleEditClick,
   handleUpdateStatus,
-  handleDelete
+  handleDelete,
+  onBulkAction
 }: AdminContentProps) => {
-  const isContentTab = activeTab === "pending" || activeTab === "approved" || 
-                      activeTab === "rejected" || activeTab === "scholarship" || 
-                      activeTab === "mcq" || activeTab === "past_paper" || 
-                      activeTab === "job" || activeTab === "quiz";
-
-  const isSubmitTab = activeTab === "submit-content";
+  
+  // Don't show table for submit-content tab or management tabs
+  const isContentTab = !['submit-content', 'subjects', 'topics', 'job-tests', 'quizzes'].includes(activeTab);
 
   return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle>Content Management</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
-        
-        {isContentTab && (
-          <ContentTable 
-            content={currentContent}
-            onEditClick={handleEditClick}
-            onUpdateStatus={handleUpdateStatus}
-            onDelete={handleDelete}
-          />
-        )}
-      </CardContent>
-    </Card>
+    <div className="space-y-6">
+      <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
+      
+      {isContentTab && (
+        <EnhancedContentTable
+          content={currentContent}
+          onEditClick={handleEditClick}
+          onUpdateStatus={handleUpdateStatus}
+          onDelete={handleDelete}
+          onBulkAction={onBulkAction}
+        />
+      )}
+    </div>
   );
 };
 
