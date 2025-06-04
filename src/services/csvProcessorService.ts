@@ -1,4 +1,3 @@
-
 import { ContentItem, ContentCategory, ContentSubmission } from "@/interfaces/content";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -48,16 +47,6 @@ export const CSV_TEMPLATES: Record<ContentCategory, CSVField[]> = {
     { name: 'tags', required: false, type: 'array', description: 'Comma-separated tags' },
     { name: 'metaTitle', required: false, type: 'string', description: 'SEO title' },
     { name: 'metaDescription', required: false, type: 'string', description: 'SEO description' },
-  ],
-  cv: [
-    { name: 'title', required: true, type: 'string', description: 'CV title/position' },
-    { name: 'candidateName', required: true, type: 'string', description: 'Candidate name' },
-    { name: 'description', required: true, type: 'string', description: 'Brief summary' },
-    { name: 'experience', required: false, type: 'string', description: 'Work experience' },
-    { name: 'skills', required: false, type: 'string', description: 'Skills and competencies' },
-    { name: 'education', required: false, type: 'string', description: 'Educational background' },
-    { name: 'contactInfo', required: false, type: 'string', description: 'Contact information' },
-    { name: 'tags', required: false, type: 'array', description: 'Comma-separated tags' },
   ],
   mcq: [
     { name: 'question', required: true, type: 'string', description: 'Question text' },

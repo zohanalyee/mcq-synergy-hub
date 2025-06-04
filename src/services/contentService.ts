@@ -50,13 +50,6 @@ export const submitContent = (submission: ContentSubmission, userRole: UserRole)
     metaDescription: submission.metaDescription,
     metaKeywords: submission.metaKeywords,
     
-    // CV specific fields
-    candidateName: submission.candidateName,
-    experience: submission.experience,
-    skills: submission.skills,
-    education: submission.education,
-    contactInfo: submission.contactInfo,
-    
     // Visibility settings
     showInSubjects: submission.showInSubjects,
     showInSyllabus: submission.showInSyllabus,
