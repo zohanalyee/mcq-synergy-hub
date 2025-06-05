@@ -1,3 +1,4 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +25,7 @@ import CustomQuizzes from "./pages/CustomQuizzes";
 import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import NoticeBoard from "@/components/NoticeBoard";
+import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 import MCQs from "./pages/MCQs";
@@ -41,6 +43,7 @@ const App = () => {
               <Toaster />
               <Sonner position="top-center" />
               <NoticeBoard />
+              <FloatingFeedbackButton />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/signin" element={<SignIn />} />

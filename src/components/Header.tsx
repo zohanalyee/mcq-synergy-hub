@@ -53,12 +53,11 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     { title: 'Scholarships', path: '/scholarships' },
     { title: 'Jobs', path: '/jobs' },
     { title: 'Mock Tests', path: '/mock-tests' },
+    { title: 'Past Papers', path: '/past-papers' },
   ];
 
   const secondaryNavItems = [
     { title: 'Analytics', path: '/analytics' },
-    { title: 'Leaderboard', path: '/leaderboard' },
-    { title: 'Past Papers', path: '/past-papers' },
     { title: 'Feedback', path: '/feedback' },
   ];
 

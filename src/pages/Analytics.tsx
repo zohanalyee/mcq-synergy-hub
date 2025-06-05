@@ -1,7 +1,8 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 import { 
   BarChart, 
   LineChart, 
@@ -19,6 +20,7 @@ import {
 } from "recharts";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import { useAuth } from "@/contexts/AuthContext";
 
 const performanceData = [
   { date: "Jan", score: 65 },
@@ -54,6 +56,36 @@ const topicPerformance = [
 ];
 
 const Analytics = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // Redirect to sign in if user is not authenticated
+  useEffect(() => {
+    if (!user) {
+      navigate('/signin');
+    }
+  }, [user, navigate]);
+
+  // Show loading or sign in prompt if user is not authenticated
+  if (!user) {
+    return (
+      <>
+        <Header />
+        <div className="container mx-auto px-4 pt-28 pb-16">
+          <div className="text-center py-16">
+            <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
+            <p className="text-muted-foreground mb-6">
+              Please sign in to view your analytics and track your progress.
+            </p>
+            <Button onClick={() => navigate('/signin')}>
+              Sign In
+            </Button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   const container = {
     hidden: { opacity: 0 },
     visible: {
