@@ -101,18 +101,17 @@ const Scholarships = () => {
                 className="w-full pl-10"
               />
             </div>
-            <div className="flex gap-2">
-              {isAdmin && (
+            {isAdmin && (
+              <div className="flex gap-2">
                 <QuickSubmissionDialog 
                   category="scholarship" 
                   buttonText="Add Scholarship"
                 />
-              )}
-              <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
-                <Upload className="h-4 w-4" />
-                Submit Scholarship
-              </Button>
-            </div>
+                <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
+                  Submit Content
+                </Button>
+              </div>
+            )}
           </div>
         </div>
 
