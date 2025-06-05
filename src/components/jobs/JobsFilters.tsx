@@ -1,6 +1,6 @@
 
 import { useNavigate } from "react-router-dom";
-import { Search, Upload } from "lucide-react";
+import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useUserRole } from "@/contexts/UserRoleContext";
@@ -26,18 +26,17 @@ const JobsFilters = ({ searchQuery, onSearchChange }: JobsFiltersProps) => {
           className="w-full pl-10"
         />
       </div>
-      <div className="flex gap-2">
-        {isAdmin && (
+      {isAdmin && (
+        <div className="flex gap-2">
           <QuickSubmissionDialog 
             category="job" 
             buttonText="Add Job"
           />
-        )}
-        <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
-          <Upload className="h-4 w-4" />
-          Submit Job
-        </Button>
-      </div>
+          <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
+            Submit Content
+          </Button>
+        </div>
+      )}
     </div>
   );
 };

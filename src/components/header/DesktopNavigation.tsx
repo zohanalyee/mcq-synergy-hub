@@ -40,8 +40,8 @@ const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }
 
         <NavigationMenuItem>
           <NavigationMenuTrigger>More</NavigationMenuTrigger>
-          <NavigationMenuContent className="min-w-[200px] bg-background border border-border rounded-md shadow-lg p-2">
-            <div className="grid grid-cols-1 gap-1">
+          <NavigationMenuContent className="min-w-[200px]">
+            <div className="grid grid-cols-1 gap-1 p-2">
               {secondaryNavItems.map((item) => (
                 <Button
                   key={item.title}
