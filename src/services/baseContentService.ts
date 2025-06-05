@@ -15,6 +15,15 @@ export const getContentByCategory = (category: string): ContentItem[] => {
   );
 };
 
+export const getContentBySubjectAndTopic = (subject: string, topic?: string): ContentItem[] => {
+  return contentStore.filter(item => {
+    if (item.status !== 'approved') return false;
+    if (item.subject !== subject) return false;
+    if (topic && item.topic !== topic) return false;
+    return true;
+  });
+};
+
 export const addContentItem = (item: ContentItem): ContentItem => {
   contentStore.push(item);
   console.log("Added content item:", item.title);
