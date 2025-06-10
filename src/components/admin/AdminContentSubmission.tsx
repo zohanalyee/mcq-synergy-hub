@@ -5,12 +5,11 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { ContentSubmission, ContentCategory } from "@/interfaces/content";
 import { submitContent } from "@/services/contentService";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { toast } from "sonner";
-import { CSVProcessingResult } from "@/services/csvProcessorService";
+import { CSVProcessingResult } from "@/services/enhancedCSVProcessor";
 
 // Import form components
 import CategorySelection from "@/components/content/CategorySelection";
@@ -29,8 +28,6 @@ const AdminContentSubmission = () => {
   const [documentName, setDocumentName] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("manual");
-  const [csvResults, setCsvResults] = useState<CSVProcessingResult[]>([]);
-  const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [csvCategory, setCsvCategory] = useState<ContentCategory>("scholarship");
   
   const form = useForm<ContentSubmission>({
@@ -69,52 +66,15 @@ const AdminContentSubmission = () => {
 
   // Handle CSV processing results
   const handleCSVResults = (results: CSVProcessingResult[]) => {
-    setCsvResults(results);
+    console.log('CSV processing completed:', results);
     
-    const totalItems = results.reduce((sum, r) => sum + r.items.length, 0);
-    const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
+    const totalSuccess = results.reduce((sum, r) => sum + (r.successCount || 0), 0);
     
-    if (totalErrors === 0 && totalItems > 0) {
-      toast.success(`Ready to submit ${totalItems} items`, {
-        description: "Review the items below and click 'Submit All' to add them to the system"
-      });
-    }
-  };
-
-  // Submit all CSV items
-  const handleBulkSubmit = async () => {
-    if (csvResults.length === 0) return;
-
-    setBulkSubmitting(true);
-    let successCount = 0;
-    let errorCount = 0;
-
-    try {
-      for (const result of csvResults) {
-        for (const item of result.items) {
-          try {
-            await submitContent(item, userRole);
-            successCount++;
-          } catch (error) {
-            errorCount++;
-            console.error('Failed to submit item:', error);
-          }
-        }
-      }
-
-      if (errorCount === 0) {
-        toast.success(`Successfully submitted ${successCount} items`);
-      } else {
-        toast.warning(`Submitted ${successCount} items with ${errorCount} errors`);
-      }
-
-      // Reset CSV results after successful submission
-      setCsvResults([]);
-      
-    } catch (error) {
-      toast.error('Failed to submit items');
-    } finally {
-      setBulkSubmitting(false);
+    if (totalSuccess > 0) {
+      // Trigger a page refresh to show the new data
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     }
   };
 
@@ -123,8 +83,8 @@ const AdminContentSubmission = () => {
     setIsSubmitting(true);
     
     try {
-      const fullSubmission = { ...data, tags };
-      const newItem = await submitContent(fullSubmission, userRole);
+      const fullSubmission = { ...data, tags, status: 'approved' };
+      await submitContent(fullSubmission, userRole);
       
       toast.success("Content submitted successfully", {
         description: "Content has been added to the system."
@@ -146,6 +106,11 @@ const AdminContentSubmission = () => {
       setTags([]);
       setImagePreview(null);
       setDocumentName(null);
+      
+      // Refresh page to show new content
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
       
     } catch (error) {
       console.error("Error submitting content:", error);
@@ -224,7 +189,7 @@ const AdminContentSubmission = () => {
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Bulk Upload via CSV</h3>
                   <p className="text-sm text-muted-foreground">
-                    Upload CSV files to add multiple items at once. Each content type has its own format.
+                    Upload CSV files to add multiple items at once. Data will be automatically saved to the database.
                   </p>
                 </div>
 
@@ -234,27 +199,8 @@ const AdminContentSubmission = () => {
                   category={csvCategory}
                   onFilesProcessed={handleCSVResults}
                   allowMultiple={true}
+                  autoSubmit={true}
                 />
-
-                {csvResults.length > 0 && (
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <div>
-                        <h4 className="font-medium">Ready for Submission</h4>
-                        <p className="text-sm text-muted-foreground">
-                          {csvResults.reduce((sum, r) => sum + r.items.length, 0)} items processed and ready to submit
-                        </p>
-                      </div>
-                      <Button
-                        onClick={handleBulkSubmit}
-                        disabled={bulkSubmitting}
-                        className="flex items-center gap-2"
-                      >
-                        {bulkSubmitting ? 'Submitting...' : 'Submit All Items'}
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             </TabsContent>
           </Tabs>

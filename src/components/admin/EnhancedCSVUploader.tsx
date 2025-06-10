@@ -6,25 +6,29 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentCategory } from '@/interfaces/content';
-import { parseCSV, generateCSVTemplate, CSVProcessingResult } from '@/services/csvProcessorService';
+import { processAndSubmitCSV, generateCSVTemplate, CSVProcessingResult } from '@/services/enhancedCSVProcessor';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import { toast } from 'sonner';
 
 interface EnhancedCSVUploaderProps {
   category: ContentCategory;
-  onFilesProcessed: (results: CSVProcessingResult[]) => void;
+  onFilesProcessed?: (results: CSVProcessingResult[]) => void;
   allowMultiple?: boolean;
+  autoSubmit?: boolean;
 }
 
 const EnhancedCSVUploader = ({ 
   category, 
-  onFilesProcessed, 
-  allowMultiple = true 
+  onFilesProcessed,
+  allowMultiple = true,
+  autoSubmit = true
 }: EnhancedCSVUploaderProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
   const [results, setResults] = useState<CSVProcessingResult[]>([]);
   const [dragOver, setDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { userRole } = useUserRole();
 
   const handleFileChange = (selectedFiles: FileList | null) => {
     if (!selectedFiles) return;
@@ -45,34 +49,41 @@ const EnhancedCSVUploader = ({
 
     setFiles(csvFiles);
     setResults([]);
+
+    // Auto-process if enabled
+    if (autoSubmit) {
+      processFiles(csvFiles);
+    }
   };
 
-  const processFiles = async () => {
-    if (files.length === 0) return;
+  const processFiles = async (filesToProcess?: File[]) => {
+    const targetFiles = filesToProcess || files;
+    if (targetFiles.length === 0) return;
 
     setProcessing(true);
     const processResults: CSVProcessingResult[] = [];
 
     try {
-      for (const file of files) {
+      for (const file of targetFiles) {
         const content = await file.text();
-        const result = parseCSV(content, category);
-        result.fileName = file.name;
+        const result = await processAndSubmitCSV(content, category, userRole, file.name);
         processResults.push(result);
       }
 
       setResults(processResults);
-      onFilesProcessed(processResults);
+      if (onFilesProcessed) {
+        onFilesProcessed(processResults);
+      }
 
-      const totalItems = processResults.reduce((sum, r) => sum + r.items.length, 0);
+      const totalSuccess = processResults.reduce((sum, r) => sum + (r.successCount || 0), 0);
       const totalErrors = processResults.reduce((sum, r) => sum + r.errors.length, 0);
 
       if (totalErrors > 0) {
         toast.error(`Processed with ${totalErrors} errors`, {
-          description: `${totalItems} items processed successfully`
+          description: `${totalSuccess} items saved successfully`
         });
       } else {
-        toast.success(`Successfully processed ${totalItems} items`);
+        toast.success(`Successfully processed and saved ${totalSuccess} items`);
       }
 
     } catch (error) {
@@ -108,14 +119,6 @@ const EnhancedCSVUploader = ({
     a.download = `${category}_template.csv`;
     a.click();
     URL.revokeObjectURL(url);
-  };
-
-  const handleAIEnhancement = async () => {
-    if (results.length === 0) return;
-    
-    toast.info('AI enhancement coming soon!', {
-      description: 'This will auto-generate tags, SEO fields, and improve content quality'
-    });
   };
 
   return (
@@ -159,7 +162,7 @@ const EnhancedCSVUploader = ({
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Click to change files or drag new ones here
+                  {autoSubmit ? 'Processing automatically...' : 'Click to change files'}
                 </p>
               </div>
             ) : (
@@ -179,37 +182,25 @@ const EnhancedCSVUploader = ({
 
           {/* Actions */}
           <div className="flex flex-wrap gap-2 justify-between items-center">
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={downloadTemplate}
-                className="flex items-center gap-2"
-              >
-                <Download className="h-4 w-4" />
-                Download Template
-              </Button>
-              
-              {results.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleAIEnhancement}
-                  className="flex items-center gap-2"
-                >
-                  <Wand2 className="h-4 w-4" />
-                  AI Enhance
-                </Button>
-              )}
-            </div>
-
             <Button
-              onClick={processFiles}
-              disabled={files.length === 0 || processing}
+              variant="outline"
+              size="sm"
+              onClick={downloadTemplate}
               className="flex items-center gap-2"
             >
-              {processing ? 'Processing...' : 'Process Files'}
+              <Download className="h-4 w-4" />
+              Download Template
             </Button>
+
+            {!autoSubmit && (
+              <Button
+                onClick={() => processFiles()}
+                disabled={files.length === 0 || processing}
+                className="flex items-center gap-2"
+              >
+                {processing ? 'Processing...' : 'Process & Submit'}
+              </Button>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -223,17 +214,14 @@ const EnhancedCSVUploader = ({
                 <CardTitle className="text-sm flex items-center justify-between">
                   <span>{result.fileName || `File ${index + 1}`}</span>
                   <div className="flex gap-2">
-                    <Badge variant="outline" className="text-xs">
-                      {result.items.length} items
-                    </Badge>
+                    {result.successCount && (
+                      <Badge variant="outline" className="text-xs bg-green-50 text-green-700">
+                        {result.successCount} saved
+                      </Badge>
+                    )}
                     {result.errors.length > 0 && (
                       <Badge variant="destructive" className="text-xs">
                         {result.errors.length} errors
-                      </Badge>
-                    )}
-                    {result.warnings.length > 0 && (
-                      <Badge variant="secondary" className="text-xs">
-                        {result.warnings.length} warnings
                       </Badge>
                     )}
                   </div>
@@ -257,26 +245,9 @@ const EnhancedCSVUploader = ({
                   </Alert>
                 )}
 
-                {result.warnings.length > 0 && (
-                  <Alert className="mb-3">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>Warnings</AlertTitle>
-                    <AlertDescription>
-                      <ul className="list-disc list-inside mt-1 text-xs">
-                        {result.warnings.slice(0, 2).map((warning, i) => (
-                          <li key={i}>{warning}</li>
-                        ))}
-                        {result.warnings.length > 2 && (
-                          <li>... and {result.warnings.length - 2} more warnings</li>
-                        )}
-                      </ul>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {result.items.length > 0 && (
-                  <div className="text-xs text-muted-foreground">
-                    Successfully processed {result.items.length} items from {result.fileName || 'uploaded file'}
+                {result.successCount && result.successCount > 0 && (
+                  <div className="text-xs text-green-600 font-medium">
+                    ✓ Successfully saved {result.successCount} items to database
                   </div>
                 )}
               </CardContent>
