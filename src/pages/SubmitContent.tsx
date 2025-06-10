@@ -72,7 +72,7 @@ const SubmitContent = () => {
       const fullSubmission = { ...data, tags };
       
       // Submit content with the correct userRole type
-      submitContent(fullSubmission, userRole);
+      await submitContent(fullSubmission, userRole);
       
       // Show success notification
       toast.success("Content submitted successfully", {

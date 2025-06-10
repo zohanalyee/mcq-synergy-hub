@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { ContentItem, ContentSubmission, ContentCategory, ContentStatus } from "@/interfaces/content";
+import { UserRole } from "@/contexts/UserRoleContext";
 
 // Helper function to transform database row to ContentItem
 const transformContentItem = (row: any): ContentItem => {
@@ -150,7 +151,7 @@ export const getContentBySubjectAndTopic = async (subject?: string, topic?: stri
   }
 };
 
-export const submitContent = async (submission: ContentSubmission): Promise<ContentItem | null> => {
+export const submitContent = async (submission: ContentSubmission, userRole?: UserRole): Promise<ContentItem | null> => {
   try {
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -180,11 +181,17 @@ export const submitContent = async (submission: ContentSubmission): Promise<Cont
   }
 };
 
-export const updateContentStatus = async (id: string, status: ContentStatus): Promise<ContentItem | null> => {
+export const updateContentStatus = async (id: string, status: ContentStatus, updatedData?: Partial<ContentItem>): Promise<ContentItem | null> => {
   try {
+    const updatePayload = {
+      status,
+      updated_at: new Date().toISOString(),
+      ...(updatedData ? transformToDbRow(updatedData) : {})
+    };
+
     const { data, error } = await supabase
       .from('content_items')
-      .update({ status, updated_at: new Date().toISOString() })
+      .update(updatePayload)
       .eq('id', id)
       .select()
       .single();

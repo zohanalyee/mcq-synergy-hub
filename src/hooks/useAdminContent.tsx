@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { ContentItem, ContentStatus } from "@/interfaces/content";
+import { ContentItem, ContentStatus, ContentCategory } from "@/interfaces/content";
 import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
 import { toast } from "sonner";
 
@@ -8,6 +8,7 @@ export const useAdminContent = () => {
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("submit-content");
 
   const loadContent = async () => {
     try {
@@ -63,12 +64,41 @@ export const useAdminContent = () => {
     loadContent();
   };
 
+  const getCurrentContent = () => {
+    if (activeTab === "all") return content;
+    if (activeTab === "pending" || activeTab === "approved" || activeTab === "rejected") {
+      return content.filter(item => item.status === activeTab);
+    }
+    // Filter by category
+    return content.filter(item => item.category === activeTab);
+  };
+
+  const getContentStatistics = () => {
+    const pendingCount = content.filter(item => item.status === "pending").length;
+    const scholarshipCount = content.filter(item => item.category === "scholarship").length;
+    const mcqCount = content.filter(item => item.category === "mcq").length;
+    const quizCount = content.filter(item => item.category === "quiz").length;
+    const totalCount = content.length;
+
+    return {
+      pendingCount,
+      scholarshipCount,
+      mcqCount,
+      quizCount,
+      totalCount
+    };
+  };
+
   return {
     content,
     loading,
     error,
     handleUpdateStatus,
     handleDelete,
-    refreshContent
+    refreshContent,
+    activeTab,
+    setActiveTab,
+    getCurrentContent,
+    getContentStatistics
   };
 };

@@ -37,7 +37,7 @@ const AdminPanel = () => {
     setActiveTab,
     getCurrentContent,
     getContentStatistics
-  } = useAdminContent("submit-content");
+  } = useAdminContent();
 
   // Initialize admin data when the component loads
   useEffect(() => {

@@ -63,7 +63,7 @@ const QuickSubmissionDialog = ({ category, buttonText }: QuickSubmissionDialogPr
     
     try {
       const fullSubmission = { ...data, tags, category };
-      const newItem = submitContent(fullSubmission, userRole);
+      const newItem = await submitContent(fullSubmission, userRole);
       
       toast.success(`${category} submitted successfully`, {
         description: "Content has been added and will appear on the page."

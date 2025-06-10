@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
@@ -123,7 +124,7 @@ const AdminContentSubmission = () => {
     
     try {
       const fullSubmission = { ...data, tags };
-      const newItem = submitContent(fullSubmission, userRole);
+      const newItem = await submitContent(fullSubmission, userRole);
       
       toast.success("Content submitted successfully", {
         description: "Content has been added to the system."
