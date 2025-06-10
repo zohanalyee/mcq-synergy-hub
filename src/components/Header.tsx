@@ -108,12 +108,8 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
         user={user}
         profile={profile}
         isAdmin={isAdmin}
-        navItems={[...navItems, ...secondaryNavItems, 
-          { title: 'Custom Syllabus', path: '/custom-syllabus' },
-          { title: 'Custom Quizzes', path: '/custom-quizzes' },
-          { title: 'Leaderboard', path: '/leaderboard' }
-        ]}
-        secondaryNavItems={[]}
+        navItems={navItems}
+        secondaryNavItems={secondaryNavItems}
         isActive={isActive}
         onClose={() => setIsMobileMenuOpen(false)}
         onNavigate={handleNavigation}
