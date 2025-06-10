@@ -1,86 +1,74 @@
 
-import { useState, useMemo } from 'react';
-import { ContentItem } from '@/interfaces/content';
-import { getAllContent } from '@/services/contentService';
+import { useState, useEffect } from "react";
+import { ContentItem, ContentStatus } from "@/interfaces/content";
+import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
+import { toast } from "sonner";
 
-export const useAdminContent = (defaultTab: string = 'submit-content') => {
-  const [activeTab, setActiveTab] = useState(defaultTab);
+export const useAdminContent = () => {
+  const [content, setContent] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const getAllContentItems = (): ContentItem[] => {
+  const loadContent = async () => {
     try {
-      return getAllContent();
+      setLoading(true);
+      setError(null);
+      const allContent = await getAllContent();
+      setContent(allContent);
     } catch (error) {
-      console.error('Error fetching content:', error);
-      return [];
+      console.error("Error loading content:", error);
+      setError("Failed to load content");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const getCurrentContent = (): ContentItem[] => {
-    const allContent = getAllContentItems();
-    
-    switch (activeTab) {
-      case 'pending':
-        return allContent.filter(item => item.status === 'pending');
-      case 'approved':
-        return allContent.filter(item => item.status === 'approved');
-      case 'rejected':
-        return allContent.filter(item => item.status === 'rejected');
-      case 'scholarship':
-        return allContent.filter(item => item.category === 'scholarship');
-      case 'mcq':
-        return allContent.filter(item => item.category === 'mcq');
-      case 'quiz':
-        return allContent.filter(item => item.category === 'quiz');
-      case 'job':
-        return allContent.filter(item => item.category === 'job');
-      case 'past_paper':
-        return allContent.filter(item => item.category === 'past_paper');
-      default:
-        return [];
+  useEffect(() => {
+    loadContent();
+  }, []);
+
+  const handleUpdateStatus = async (id: string, status: ContentStatus) => {
+    try {
+      const updatedItem = await updateContentStatus(id, status);
+      if (updatedItem) {
+        setContent(prev => 
+          prev.map(item => item.id === id ? updatedItem : item)
+        );
+        toast.success(`Content ${status}`, {
+          description: `The content has been successfully ${status}.`
+        });
+      }
+    } catch (error) {
+      console.error(`Error ${status} content:`, error);
+      toast.error(`Failed to ${status} content`);
     }
   };
 
-  const getContentStatistics = () => {
-    const allContent = getAllContentItems();
-    
-    return {
-      totalCount: allContent.length,
-      pendingCount: allContent.filter(item => item.status === 'pending').length,
-      scholarshipCount: allContent.filter(item => item.category === 'scholarship').length,
-      mcqCount: allContent.filter(item => item.category === 'mcq').length,
-      quizCount: allContent.filter(item => item.category === 'quiz').length,
-      jobCount: allContent.filter(item => item.category === 'job').length,
-      pastPaperCount: allContent.filter(item => item.category === 'past_paper').length,
-    };
+  const handleDelete = async (id: string) => {
+    try {
+      const deleted = await deleteContent(id);
+      if (deleted) {
+        setContent(prev => prev.filter(item => item.id !== id));
+        toast.success("Content deleted", {
+          description: "The content has been successfully deleted."
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting content:", error);
+      toast.error("Failed to delete content");
+    }
   };
 
-  const getBulkActionStatistics = () => {
-    const allContent = getAllContentItems();
-    const recentContent = allContent.filter(item => {
-      const createdAt = new Date(item.createdAt);
-      const dayAgo = new Date();
-      dayAgo.setDate(dayAgo.getDate() - 1);
-      return createdAt > dayAgo;
-    });
-
-    return {
-      recentUploads: recentContent.length,
-      pendingReview: allContent.filter(item => item.status === 'pending').length,
-      autoApprovalCandidate: allContent.filter(item => 
-        item.status === 'pending' && 
-        item.metaTitle && 
-        item.metaDescription &&
-        item.tags && 
-        item.tags.length > 0
-      ).length
-    };
+  const refreshContent = () => {
+    loadContent();
   };
 
   return {
-    activeTab,
-    setActiveTab,
-    getCurrentContent,
-    getContentStatistics,
-    getBulkActionStatistics,
+    content,
+    loading,
+    error,
+    handleUpdateStatus,
+    handleDelete,
+    refreshContent
   };
 };

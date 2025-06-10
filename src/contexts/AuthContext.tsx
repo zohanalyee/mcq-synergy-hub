@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
-import { signOut as authSignOut } from '@/services/authService';
+import { signOut as authSignOut, signIn as authSignIn, signUp as authSignUp } from '@/services/authService';
 
 interface AuthContextType {
   user: User | null;
@@ -10,6 +10,10 @@ interface AuthContextType {
   profile: any | null;
   loading: boolean;
   signOut: () => Promise<void>;
+  signIn: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string) => Promise<void>;
+  updateProfile?: (data: any) => Promise<void>;
+  uploadAvatar?: (file: File) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,12 +89,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const handleSignIn = async (email: string, password: string) => {
+    try {
+      const { data, error } = await authSignIn(email, password);
+      if (error) throw error;
+      // State will be updated by onAuthStateChange
+    } catch (error) {
+      console.error('Error signing in:', error);
+      throw error;
+    }
+  };
+
+  const handleSignUp = async (email: string, password: string) => {
+    try {
+      const { data, error } = await authSignUp(email, password);
+      if (error) throw error;
+      // State will be updated by onAuthStateChange
+    } catch (error) {
+      console.error('Error signing up:', error);
+      throw error;
+    }
+  };
+
   const value = {
     user,
     session,
     profile,
     loading,
     signOut: handleSignOut,
+    signIn: handleSignIn,
+    signUp: handleSignUp,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

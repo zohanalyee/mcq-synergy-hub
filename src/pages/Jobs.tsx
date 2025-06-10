@@ -1,72 +1,61 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { motion } from "framer-motion";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
-import { ContentItem } from "@/interfaces/content";
-import { getContentByCategory } from "@/services/contentService";
 import JobsHeader from "@/components/jobs/JobsHeader";
 import JobsFilters from "@/components/jobs/JobsFilters";
 import JobsGrid from "@/components/jobs/JobsGrid";
+import { getContentByCategory } from "@/services/contentService";
+import { ContentItem } from "@/interfaces/content";
 
 const Jobs = () => {
-  const { toast } = useToast();
   const [jobs, setJobs] = useState<ContentItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-  
+
   useEffect(() => {
-    const fetchJobs = () => {
+    const loadJobs = async () => {
       try {
-        const items = getContentByCategory('job');
-        console.log("Fetched jobs:", items);
-        setJobs(items);
+        setIsLoading(true);
+        const jobsData = await getContentByCategory("job");
+        setJobs(jobsData);
       } catch (error) {
-        console.error("Error fetching jobs:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load jobs. Please try again."
-        });
+        console.error("Error loading jobs:", error);
       } finally {
         setIsLoading(false);
       }
     };
-    
-    fetchJobs();
+
+    loadJobs();
   }, []);
-  
-  const filteredJobs = jobs.filter(item => 
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (item.department && item.department.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (item.governmentLevel && item.governmentLevel.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+
+  const filteredJobs = jobs.filter(job =>
+    job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    job.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    job.department?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Jobs", href: "/jobs", isCurrent: true },
-  ];
-
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
       <Header />
-      
-      <div className="container px-4 mx-auto pt-28 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
+      <div className="container mx-auto px-4 pt-20 pb-12">
         <JobsHeader />
         <JobsFilters 
-          searchQuery={searchQuery} 
-          onSearchChange={setSearchQuery} 
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
         />
-        <div className="mt-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-8"
+        >
           <JobsGrid 
-            jobs={filteredJobs} 
-            isLoading={isLoading} 
-            searchQuery={searchQuery} 
+            jobs={filteredJobs}
+            isLoading={isLoading}
+            searchQuery={searchQuery}
           />
-        </div>
+        </motion.div>
       </div>
     </div>
   );
