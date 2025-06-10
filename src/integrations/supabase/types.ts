@@ -9,6 +9,117 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      content_items: {
+        Row: {
+          cadre: string | null
+          category: string
+          correct_option: string | null
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          department: string | null
+          description: string | null
+          difficulty: string | null
+          exam_type: string | null
+          exam_year: string | null
+          explanation: string | null
+          file_url: string | null
+          government_level: string | null
+          id: string
+          image_url: string | null
+          institution: string | null
+          marks: number | null
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
+          options: Json | null
+          questions: Json | null
+          scholarship_type: string | null
+          show_in_mock_tests: boolean | null
+          show_in_subjects: boolean | null
+          show_in_syllabus: boolean | null
+          status: string
+          subject: string | null
+          tags: string[] | null
+          time_limit: number | null
+          title: string
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          cadre?: string | null
+          category: string
+          correct_option?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          department?: string | null
+          description?: string | null
+          difficulty?: string | null
+          exam_type?: string | null
+          exam_year?: string | null
+          explanation?: string | null
+          file_url?: string | null
+          government_level?: string | null
+          id?: string
+          image_url?: string | null
+          institution?: string | null
+          marks?: number | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          options?: Json | null
+          questions?: Json | null
+          scholarship_type?: string | null
+          show_in_mock_tests?: boolean | null
+          show_in_subjects?: boolean | null
+          show_in_syllabus?: boolean | null
+          status?: string
+          subject?: string | null
+          tags?: string[] | null
+          time_limit?: number | null
+          title: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cadre?: string | null
+          category?: string
+          correct_option?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          department?: string | null
+          description?: string | null
+          difficulty?: string | null
+          exam_type?: string | null
+          exam_year?: string | null
+          explanation?: string | null
+          file_url?: string | null
+          government_level?: string | null
+          id?: string
+          image_url?: string | null
+          institution?: string | null
+          marks?: number | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          options?: Json | null
+          questions?: Json | null
+          scholarship_type?: string | null
+          show_in_mock_tests?: boolean | null
+          show_in_subjects?: boolean | null
+          show_in_syllabus?: boolean | null
+          status?: string
+          subject?: string | null
+          tags?: string[] | null
+          time_limit?: number | null
+          title?: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string | null
@@ -59,6 +170,106 @@ export type Database = {
           username?: string | null
         }
         Relationships: []
+      }
+      subjects: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      topics: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          subject_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          subject_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          subject_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topics_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_quiz_attempts: {
+        Row: {
+          answers: Json | null
+          completed_at: string
+          content_id: string | null
+          id: string
+          score: number
+          time_taken: number | null
+          total_questions: number
+          user_id: string | null
+        }
+        Insert: {
+          answers?: Json | null
+          completed_at?: string
+          content_id?: string | null
+          id?: string
+          score?: number
+          time_taken?: number | null
+          total_questions?: number
+          user_id?: string | null
+        }
+        Update: {
+          answers?: Json | null
+          completed_at?: string
+          content_id?: string | null
+          id?: string
+          score?: number
+          time_taken?: number | null
+          total_questions?: number
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_quiz_attempts_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

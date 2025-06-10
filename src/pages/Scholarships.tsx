@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -12,21 +13,24 @@ import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { getContentByCategory } from "@/services/contentService";
 import { useUserRole } from "@/contexts/UserRoleContext";
+import { useAuth } from "@/contexts/AuthContext";
 import QuickSubmissionDialog from "@/components/admin/QuickSubmissionDialog";
 
 const Scholarships = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isAdmin } = useUserRole();
+  const { user } = useAuth();
   const [scholarships, setScholarships] = useState<ContentItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const fetchScholarships = () => {
+    const fetchScholarships = async () => {
       try {
-        const items = getContentByCategory('scholarship');
-        console.log("Fetched scholarships:", items);
+        setIsLoading(true);
+        const items = await getContentByCategory('scholarship');
+        console.log("Fetched scholarships from Supabase:", items);
         setScholarships(items);
       } catch (error) {
         console.error("Error fetching scholarships:", error);
@@ -101,7 +105,7 @@ const Scholarships = () => {
                 className="w-full pl-10"
               />
             </div>
-            {isAdmin && (
+            {user && isAdmin && (
               <div className="flex gap-2">
                 <QuickSubmissionDialog 
                   category="scholarship" 
@@ -111,6 +115,11 @@ const Scholarships = () => {
                   Submit Content
                 </Button>
               </div>
+            )}
+            {!user && (
+              <Button onClick={() => navigate("/auth")} variant="outline" className="flex gap-2">
+                Sign In to Submit
+              </Button>
             )}
           </div>
         </div>
@@ -219,9 +228,15 @@ const Scholarships = () => {
                   ? "No scholarships match your search criteria. Try adjusting your search."
                   : "Be the first to submit a scholarship!"}
               </p>
-              <Button onClick={() => navigate("/submit-content")} className="mt-6">
-                Submit a Scholarship
-              </Button>
+              {user ? (
+                <Button onClick={() => navigate("/submit-content")} className="mt-6">
+                  Submit a Scholarship
+                </Button>
+              ) : (
+                <Button onClick={() => navigate("/auth")} className="mt-6">
+                  Sign In to Submit
+                </Button>
+              )}
             </div>
           )}
         </div>

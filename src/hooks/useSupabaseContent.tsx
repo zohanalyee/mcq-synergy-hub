@@ -1,45 +1,45 @@
 
 import { useState, useEffect } from "react";
 import { ContentItem, ContentStatus } from "@/interfaces/content";
-import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
+import { 
+  getAllContent, 
+  updateContentStatus, 
+  deleteContent,
+  getContentByCategory 
+} from "@/services/contentService";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 
-export const useContentManagement = () => {
+export const useSupabaseContent = () => {
   const { toast: hookToast } = useToast();
   const [content, setContent] = useState<ContentItem[]>([]);
-  const [currentItem, setCurrentItem] = useState<ContentItem | null>(null);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Load content from Supabase
-  useEffect(() => {
-    const loadContent = async () => {
-      try {
-        setLoading(true);
-        const allContent = await getAllContent();
-        setContent(allContent);
-        console.log("Loaded content items from Supabase:", allContent.length);
-      } catch (error) {
-        console.error("Error loading content:", error);
-        hookToast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load content. Please try again."
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadContent = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const allContent = await getAllContent();
+      setContent(allContent);
+      console.log("Loaded content from Supabase:", allContent.length, "items");
+    } catch (error) {
+      console.error("Error loading content:", error);
+      setError("Failed to load content");
+      hookToast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load content. Please try again."
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     loadContent();
   }, []);
-
-  // Open edit dialog
-  const handleEditClick = (item: ContentItem) => {
-    setCurrentItem(item);
-    setEditDialogOpen(true);
-  };
 
   // Update content status
   const handleUpdateStatus = async (id: string, status: ContentStatus) => {
@@ -65,34 +65,6 @@ export const useContentManagement = () => {
     }
   };
 
-  // Enhanced save with full content update support
-  const handleSaveEdit = async (updatedData: Partial<ContentItem>) => {
-    if (!currentItem) return;
-    
-    try {
-      const updatedItem = await updateContentStatus(currentItem.id, currentItem.status, updatedData);
-      
-      if (updatedItem) {
-        setContent(prev => 
-          prev.map(item => item.id === currentItem.id ? updatedItem : item)
-        );
-        
-        toast.success("Content updated", {
-          description: "The content has been successfully updated."
-        });
-        
-        setEditDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Error updating content:", error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update content. Please try again."
-      });
-    }
-  };
-
   // Delete content
   const handleDelete = async (id: string) => {
     try {
@@ -113,35 +85,28 @@ export const useContentManagement = () => {
     }
   };
 
-  // New bulk action handler
+  // Bulk actions
   const handleBulkAction = async (action: string, selectedIds: string[]) => {
     try {
       switch (action) {
         case 'approve':
           for (const id of selectedIds) {
-            const updatedItem = await updateContentStatus(id, 'approved');
-            if (updatedItem) {
-              setContent(prev => prev.map(item => item.id === id ? updatedItem : item));
-            }
+            await handleUpdateStatus(id, 'approved');
           }
           toast.success(`${selectedIds.length} items approved`);
           break;
           
         case 'reject':
           for (const id of selectedIds) {
-            const updatedItem = await updateContentStatus(id, 'rejected');
-            if (updatedItem) {
-              setContent(prev => prev.map(item => item.id === id ? updatedItem : item));
-            }
+            await handleUpdateStatus(id, 'rejected');
           }
           toast.success(`${selectedIds.length} items rejected`);
           break;
           
         case 'delete':
           for (const id of selectedIds) {
-            await deleteContent(id);
+            await handleDelete(id);
           }
-          setContent(prev => prev.filter(item => !selectedIds.includes(item.id)));
           toast.success(`${selectedIds.length} items deleted`);
           break;
           
@@ -191,18 +156,20 @@ export const useContentManagement = () => {
     return content.filter(item => item.category === category);
   };
 
+  // Refresh content
+  const refreshContent = () => {
+    loadContent();
+  };
+
   return {
     content,
     loading,
-    currentItem,
-    editDialogOpen,
-    setEditDialogOpen,
-    handleEditClick,
+    error,
     handleUpdateStatus,
-    handleSaveEdit,
     handleDelete,
     handleBulkAction,
     filterContentByStatus,
-    filterContentByCategory
+    filterContentByCategory,
+    refreshContent
   };
 };
