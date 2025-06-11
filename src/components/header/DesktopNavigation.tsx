@@ -9,10 +9,12 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
+import { BookOpen, FileText, Users, Briefcase, Target, Clock, PenTool, GraduationCap } from 'lucide-react';
 
 interface NavItem {
   title: string;
   path: string;
+  icon?: React.ReactNode;
 }
 
 interface DesktopNavigationProps {
@@ -23,38 +25,36 @@ interface DesktopNavigationProps {
 }
 
 const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }: DesktopNavigationProps) => {
+  // All navigation items in one place - no more dropdown
+  const allNavItems = [
+    { title: 'Home', path: '/', icon: <BookOpen className="w-4 h-4" /> },
+    { title: 'Subjects', path: '/subjects', icon: <FileText className="w-4 h-4" /> },
+    { title: 'MCQs', path: '/mcqs', icon: <PenTool className="w-4 h-4" /> },
+    { title: 'Quizzes', path: '/quizzes', icon: <Target className="w-4 h-4" /> },
+    { title: 'Mock Tests', path: '/mock-tests', icon: <Clock className="w-4 h-4" /> },
+    { title: 'Custom Syllabus', path: '/custom-syllabus', icon: <GraduationCap className="w-4 h-4" /> },
+    { title: 'Scholarships', path: '/scholarships', icon: <Users className="w-4 h-4" /> },
+    { title: 'Jobs', path: '/jobs', icon: <Briefcase className="w-4 h-4" /> },
+    { title: 'Past Papers', path: '/past-papers', icon: <FileText className="w-4 h-4" /> },
+  ];
+
   return (
-    <NavigationMenu className="hidden md:flex mx-4">
-      <NavigationMenuList>
-        {navItems.map((item) => (
+    <NavigationMenu className="hidden lg:flex mx-4">
+      <NavigationMenuList className="flex-wrap gap-1">
+        {allNavItems.map((item) => (
           <NavigationMenuItem key={item.title}>
             <NavigationMenuLink
-              className={navigationMenuTriggerStyle()}
-              active={isActive(item.path)}
+              className={`${navigationMenuTriggerStyle()} cursor-pointer flex items-center gap-2 text-sm px-3 py-2 ${
+                isActive(item.path) ? 'bg-accent text-accent-foreground' : ''
+              }`}
               onClick={() => onNavigate(item.path)}
             >
-              {item.title}
+              {item.icon}
+              <span className="hidden xl:inline">{item.title}</span>
+              <span className="xl:hidden">{item.title.split(' ')[0]}</span>
             </NavigationMenuLink>
           </NavigationMenuItem>
         ))}
-
-        <NavigationMenuItem>
-          <NavigationMenuTrigger>More</NavigationMenuTrigger>
-          <NavigationMenuContent className="min-w-[200px]">
-            <div className="grid grid-cols-1 gap-1 p-2">
-              {secondaryNavItems.map((item) => (
-                <Button
-                  key={item.title}
-                  variant="ghost"
-                  className={`justify-start ${isActive(item.path) ? 'bg-accent' : ''}`}
-                  onClick={() => onNavigate(item.path)}
-                >
-                  {item.title}
-                </Button>
-              ))}
-            </div>
-          </NavigationMenuContent>
-        </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
   );

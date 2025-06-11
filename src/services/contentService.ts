@@ -1,11 +1,10 @@
 
 // This file serves as the main interface for content operations
-// It now delegates to supabaseContentService for actual implementation
+// It now delegates to both supabaseContentService and enhancedContentService
 
 import { ContentItem, ContentSubmission, ContentCategory } from "@/interfaces/content";
 import { 
   getAllContent as getAllContentBase, 
-  submitContent as submitContentBase,
   getContentByCategory as getContentByCategoryBase,
   getContentBySubjectAndTopic as getContentBySubjectAndTopicBase,
   updateContentStatus as updateContentStatusBase,
@@ -14,16 +13,21 @@ import {
   saveQuizAttempt,
   getUserQuizAttempts
 } from "./supabaseContentService";
+import { EnhancedContentService } from "./enhancedContentService";
 import { UserRole } from "@/contexts/UserRoleContext";
 
-// Re-export all functions from supabaseContentService
-export const submitContent = submitContentBase;
+// Use enhanced service for submission
+export const submitContent = EnhancedContentService.submitContent;
+
+// Re-export all other functions from supabaseContentService
 export const getContentByCategory = getContentByCategoryBase;
 export const getContentBySubjectAndTopic = getContentBySubjectAndTopicBase;
 export const getAllContent = getAllContentBase;
 export const updateContentStatus = updateContentStatusBase;
 export const deleteContent = deleteContentBase;
-export const getSubjectsAndTopics = getSubjectsAndTopicsBase;
+
+// Use enhanced service for subjects and topics
+export const getSubjectsAndTopics = EnhancedContentService.getSubjectsAndTopics;
 
 // Export quiz-related functions
 export { saveQuizAttempt, getUserQuizAttempts };

@@ -47,12 +47,16 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     }
   };
 
+  // Updated navigation items - all in main nav, no secondary nav
   const navItems = [
     { title: 'Home', path: '/' },
     { title: 'Subjects', path: '/subjects' },
+    { title: 'MCQs', path: '/mcqs' },
+    { title: 'Quizzes', path: '/quizzes' },
+    { title: 'Mock Tests', path: '/mock-tests' },
+    { title: 'Custom Syllabus', path: '/custom-syllabus' },
     { title: 'Scholarships', path: '/scholarships' },
     { title: 'Jobs', path: '/jobs' },
-    { title: 'Mock Tests', path: '/mock-tests' },
     { title: 'Past Papers', path: '/past-papers' },
   ];
 
@@ -69,26 +73,22 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled 
-          ? 'py-3 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
-          : 'py-5 bg-transparent'
+          ? 'py-2 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
+          : 'py-4 bg-transparent'
       }`}
     >
       <div className="container px-4 mx-auto">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-4">
           <HeaderLogo onNavigate={handleNavigation} />
 
-          {/* Spacer to push nav items to center */}
-          <div className="flex-grow"></div>
-
-          <DesktopNavigation 
-            navItems={navItems}
-            secondaryNavItems={secondaryNavItems}
-            isActive={isActive}
-            onNavigate={handleNavigation}
-          />
-
-          {/* Spacer to push actions to right */}
-          <div className="flex-grow"></div>
+          <div className="flex-1 flex justify-center">
+            <DesktopNavigation 
+              navItems={navItems}
+              secondaryNavItems={secondaryNavItems}
+              isActive={isActive}
+              onNavigate={handleNavigation}
+            />
+          </div>
 
           <HeaderActions 
             theme={theme}

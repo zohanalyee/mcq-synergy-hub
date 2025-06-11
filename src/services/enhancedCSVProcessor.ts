@@ -82,7 +82,7 @@ const processCSVRow = async (
   // Map CSV columns to data object
   headers.forEach((header, index) => {
     if (values[index]) {
-      data[header.toLowerCase()] = values[index];
+      data[header.toLowerCase().replace(/\s+/g, '_')] = values[index];
     }
   });
 
@@ -91,7 +91,7 @@ const processCSVRow = async (
     throw new Error('Title is required');
   }
 
-  // Create base content item for database
+  // Create base content item for database (using snake_case for database fields)
   const contentItem = {
     title: data.title,
     description: data.description || '',
@@ -103,18 +103,18 @@ const processCSVRow = async (
     status: 'pending'
   };
 
-  // Add category-specific fields
+  // Add category-specific fields with proper snake_case mapping
   if (category === 'scholarship') {
     Object.assign(contentItem, {
       deadline: data.deadline || null,
-      scholarshipType: data.scholarship_type || data.type || null,
+      scholarship_type: data.scholarship_type || data.type || null,
       institution: data.institution || null
     });
   } else if (category === 'job') {
     Object.assign(contentItem, {
       deadline: data.deadline || null,
       department: data.department || null,
-      governmentLevel: data.government_level || data.level || null,
+      government_level: data.government_level || data.level || null,
       cadre: data.cadre || null
     });
   } else if (category === 'mcq') {
@@ -135,21 +135,22 @@ const processCSVRow = async (
         C: data.option_c,
         D: data.option_d
       },
-      correctOption: data.correct_option.toUpperCase(),
+      correct_option: data.correct_option.toUpperCase(),
       difficulty: data.difficulty || 'Medium',
-      explanation: data.explanation || ''
+      explanation: data.explanation || '',
+      description: data.question // Store question in description field
     });
   } else if (category === 'quiz') {
     Object.assign(contentItem, {
       subject: data.subject || null,
       topic: data.topic || null,
-      timeLimit: data.time_limit ? parseInt(data.time_limit) : 30,
+      time_limit: data.time_limit ? parseInt(data.time_limit) : 30,
       marks: data.marks ? parseInt(data.marks) : 10
     });
   } else if (category === 'past_paper') {
     Object.assign(contentItem, {
-      examType: data.exam_type || null,
-      examYear: data.exam_year || null,
+      exam_type: data.exam_type || null,
+      exam_year: data.exam_year || null,
       subject: data.subject || null
     });
   }
@@ -176,11 +177,13 @@ export const submitCSVItemsToDatabase = async (
         .insert([itemWithUser]);
 
       if (error) {
+        console.error('Supabase insert error:', error);
         result.errors.push(`Failed to insert item "${item.title}": ${error.message}`);
       } else {
         result.success++;
       }
     } catch (error) {
+      console.error('Processing error:', error);
       result.errors.push(`Error processing item "${item.title}": ${error}`);
     }
   }

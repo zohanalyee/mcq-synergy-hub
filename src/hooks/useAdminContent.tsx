@@ -2,13 +2,15 @@
 import { useState, useEffect } from "react";
 import { ContentItem, ContentStatus, ContentCategory } from "@/interfaces/content";
 import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
-import { toast } from "sonner";
+import { useEnhancedToast } from "@/hooks/useEnhancedToast";
+import { EnhancedContentService } from "@/services/enhancedContentService";
 
 export const useAdminContent = () => {
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("submit-content");
+  const { showToast } = useEnhancedToast();
 
   const loadContent = async () => {
     try {
@@ -16,9 +18,15 @@ export const useAdminContent = () => {
       setError(null);
       const allContent = await getAllContent();
       setContent(allContent);
+      console.log("Loaded content from Supabase:", allContent.length, "items");
     } catch (error) {
       console.error("Error loading content:", error);
       setError("Failed to load content");
+      showToast({
+        variant: "destructive",
+        description: "Failed to load content. Please try again.",
+        duration: 3000,
+      });
     } finally {
       setLoading(false);
     }
@@ -26,6 +34,14 @@ export const useAdminContent = () => {
 
   useEffect(() => {
     loadContent();
+
+    // Setup real-time updates
+    const unsubscribe = EnhancedContentService.setupRealTimeUpdates((payload) => {
+      console.log('Real-time update received:', payload);
+      loadContent(); // Refresh content when changes occur
+    });
+
+    return unsubscribe;
   }, []);
 
   const handleUpdateStatus = async (id: string, status: ContentStatus) => {
@@ -35,13 +51,21 @@ export const useAdminContent = () => {
         setContent(prev => 
           prev.map(item => item.id === id ? updatedItem : item)
         );
-        toast.success(`Content ${status}`, {
-          description: `The content has been successfully ${status}.`
+        
+        const actionText = status === "approved" ? "approved" : "rejected";
+        showToast({
+          variant: "success",
+          description: `Content has been successfully ${actionText}.`,
+          duration: 2000,
         });
       }
     } catch (error) {
-      console.error(`Error ${status} content:`, error);
-      toast.error(`Failed to ${status} content`);
+      console.error(`Error ${status === "approved" ? "approving" : "rejecting"} content:`, error);
+      showToast({
+        variant: "destructive",
+        description: `Failed to ${status === "approved" ? "approve" : "reject"} content. Please try again.`,
+        duration: 3000,
+      });
     }
   };
 
@@ -50,13 +74,19 @@ export const useAdminContent = () => {
       const deleted = await deleteContent(id);
       if (deleted) {
         setContent(prev => prev.filter(item => item.id !== id));
-        toast.success("Content deleted", {
-          description: "The content has been successfully deleted."
+        showToast({
+          variant: "success",
+          description: "Content has been successfully deleted.",
+          duration: 2000,
         });
       }
     } catch (error) {
       console.error("Error deleting content:", error);
-      toast.error("Failed to delete content");
+      showToast({
+        variant: "destructive",
+        description: "Failed to delete content. Please try again.",
+        duration: 3000,
+      });
     }
   };
 

@@ -131,4 +131,67 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  /* Enhanced navigation scrolling for mobile */
+  .nav-scroll {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  
+  .nav-scroll::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Enhanced toast positioning */
+  .enhanced-toast {
+    @apply fixed top-4 right-4 z-50 max-w-sm;
+  }
+
+  /* Smooth transitions for navigation */
+  .nav-transition {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
+
+/* Enhanced notification styles */
+[data-sonner-toaster] {
+  --width: 356px;
+  --border-radius: 8px;
+  --toast-bg: hsl(var(--background));
+  --toast-border: hsl(var(--border));
+  --toast-text: hsl(var(--foreground));
+}
+
+[data-sonner-toaster][data-theme="dark"] {
+  --toast-bg: hsl(var(--background));
+  --toast-border: hsl(var(--border));
+  --toast-text: hsl(var(--foreground));
+}
+
+[data-sonner-toast] {
+  --y: translateY(0);
+  --lift-amount: calc(var(--lift) * var(--gap));
+  --window-width: 100vw;
+  --width: var(--width);
+  --window-height: 100vh;
+  --front-z-index: 1000;
+  --normal-bg: var(--toast-bg);
+  --normal-border: var(--toast-border);
+  --normal-text: var(--toast-text);
+  --success-bg: hsl(var(--primary));
+  --success-border: hsl(var(--primary));
+  --success-text: hsl(var(--primary-foreground));
+  --error-bg: hsl(var(--destructive));
+  --error-border: hsl(var(--destructive));
+  --error-text: hsl(var(--destructive-foreground));
+  animation: slideIn 0.32s cubic-bezier(.21,1.02,.73,1) forwards;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(calc(100% + var(--viewport-offset)));
+  }
+  to {
+    transform: translateX(0);
+  }
 }
