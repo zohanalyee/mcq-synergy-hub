@@ -77,6 +77,8 @@ export interface ContentSubmission {
   tags: string[];
   imageFile?: File;
   documentFile?: File;
+  imageUrl?: string;
+  fileUrl?: string;
   deadline?: string;
   department?: string;
   governmentLevel?: string;
@@ -89,6 +91,21 @@ export interface ContentSubmission {
   metaTitle?: string;
   metaDescription?: string;
   metaKeywords?: string;
+  // MCQ and Quiz specific fields
+  subject?: string;
+  topic?: string;
+  difficulty?: 'Easy' | 'Medium' | 'Hard';
+  explanation?: string;
+  options?: {
+    A: string;
+    B: string;
+    C: string;
+    D: string;
+  };
+  correctOption?: 'A' | 'B' | 'C' | 'D';
+  timeLimit?: number;
+  marks?: number;
+  questions?: MCQItem[];
   // MCQ and Quiz CSV
   csvFile?: File;
   // Visibility settings

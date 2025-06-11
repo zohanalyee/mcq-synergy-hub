@@ -67,7 +67,7 @@ export class EnhancedContentService {
           subject: submission.subject || null,
         }),
 
-        // File URLs
+        // File URLs - handle both file objects and direct URLs
         image_url: submission.imageUrl || null,
         file_url: submission.fileUrl || null,
 
