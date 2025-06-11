@@ -58,7 +58,7 @@ export class EnhancedContentService {
           topic: submission.topic || null,
           time_limit: submission.timeLimit || 30,
           marks: submission.marks || 10,
-          questions: submission.questions || [],
+          questions: submission.questions ? JSON.stringify(submission.questions) : JSON.stringify([]),
         }),
         
         ...(submission.category === 'past_paper' && {
@@ -86,7 +86,7 @@ export class EnhancedContentService {
 
       const { data, error } = await supabase
         .from('content_items')
-        .insert([contentData])
+        .insert(contentData)
         .select()
         .single();
 
@@ -192,7 +192,7 @@ export class EnhancedContentService {
       correctOption: row.correct_option,
       timeLimit: row.time_limit,
       marks: row.marks,
-      questions: row.questions || [],
+      questions: row.questions ? (typeof row.questions === 'string' ? JSON.parse(row.questions) : row.questions) : [],
       showInSubjects: row.show_in_subjects,
       showInSyllabus: row.show_in_syllabus,
       showInMockTests: row.show_in_mock_tests,
