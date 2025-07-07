@@ -31,6 +31,7 @@ import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 import MCQs from "./pages/MCQs";
 import Quizzes from "./pages/Quizzes";
+import SubmitContent from "./pages/SubmitContent";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -42,7 +43,15 @@ const App = () => {
           <UserRoleProvider>
             <TooltipProvider>
               <Toaster />
-              <Sonner position="top-center" />
+              <Sonner 
+                position="top-right" 
+                toastOptions={{
+                  duration: 3000,
+                  style: {
+                    maxWidth: '400px'
+                  }
+                }}
+              />
               <NoticeBoard />
               <FloatingFeedbackButton />
               <Routes>
@@ -53,6 +62,7 @@ const App = () => {
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/sign-up" element={<SignUp />} />
                 <Route path="/get-started" element={<GetStarted />} />
+                <Route path="/submit-content" element={<SubmitContent />} />
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/dashboard" element={<Dashboard />} />

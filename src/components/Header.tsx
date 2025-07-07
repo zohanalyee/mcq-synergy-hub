@@ -58,6 +58,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     { title: 'Scholarships', path: '/scholarships' },
     { title: 'Jobs', path: '/jobs' },
     { title: 'Past Papers', path: '/past-papers' },
+    { title: 'Submit Content', path: '/submit-content' },
   ];
 
   const secondaryNavItems = [

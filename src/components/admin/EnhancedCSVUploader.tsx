@@ -34,12 +34,16 @@ const EnhancedCSVUploader = ({
     );
 
     if (csvFiles.length === 0) {
-      toast.error('Please select valid CSV files');
+        toast.error("Please select valid CSV files", {
+          duration: 3000,
+        });
       return;
     }
 
     if (!allowMultiple && csvFiles.length > 1) {
-      toast.error('Please select only one CSV file');
+        toast.error("Please select only one CSV file", {
+          duration: 3000,
+        });
       return;
     }
 
@@ -69,14 +73,19 @@ const EnhancedCSVUploader = ({
 
       if (totalErrors > 0) {
         toast.error(`Processed with ${totalErrors} errors`, {
-          description: `${totalItems} items processed successfully`
+          description: `${totalItems} items processed successfully`,
+          duration: 4000,
         });
       } else {
-        toast.success(`Successfully processed ${totalItems} items`);
+        toast.success(`Successfully processed ${totalItems} items`, {
+          duration: 3000,
+        });
       }
 
     } catch (error) {
-      toast.error('Failed to process CSV files');
+      toast.error("Failed to process CSV files", {
+        duration: 4000,
+      });
       console.error(error);
     } finally {
       setProcessing(false);
@@ -113,8 +122,9 @@ const EnhancedCSVUploader = ({
   const handleAIEnhancement = async () => {
     if (results.length === 0) return;
     
-    toast.info('AI enhancement coming soon!', {
-      description: 'This will auto-generate tags, SEO fields, and improve content quality'
+    toast.info("AI enhancement coming soon!", {
+      description: "This will auto-generate tags, SEO fields, and improve content quality",
+      duration: 3000,
     });
   };
 

@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useForm } from "react-hook-form";
-import { useToast } from "@/hooks/use-toast";
 import { toast } from "sonner";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
@@ -24,7 +23,6 @@ import SubmitButton from "@/components/content/SubmitButton";
 
 const SubmitContent = () => {
   const navigate = useNavigate();
-  const { toast: hookToast } = useToast();
   const { userRole } = useUserRole();
   const [tags, setTags] = useState<string[]>([]);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -76,17 +74,17 @@ const SubmitContent = () => {
       
       // Show success notification
       toast.success("Content submitted successfully", {
-        description: "Your submission will be reviewed by an administrator."
+        description: "Your submission will be reviewed by an administrator.",
+        duration: 3000,
       });
       
       // Redirect after a short delay
       setTimeout(() => navigate("/"), 1500);
     } catch (error) {
       console.error("Error submitting content:", error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to submit content. Please try again."
+      toast.error("Submission failed", {
+        description: "Failed to submit content. Please try again.",
+        duration: 4000,
       });
     } finally {
       setIsSubmitting(false);

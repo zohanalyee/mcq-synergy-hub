@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { ContentItem, ContentStatus, ContentCategory } from "@/interfaces/content";
 import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
-import { useEnhancedToast } from "@/hooks/useEnhancedToast";
+import { toast } from "sonner";
 import { EnhancedContentService } from "@/services/enhancedContentService";
 
 export const useAdminContent = () => {
@@ -10,7 +10,7 @@ export const useAdminContent = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("submit-content");
-  const { showToast } = useEnhancedToast();
+  
 
   const loadContent = async () => {
     try {
@@ -22,9 +22,8 @@ export const useAdminContent = () => {
     } catch (error) {
       console.error("Error loading content:", error);
       setError("Failed to load content");
-      showToast({
-        variant: "destructive",
-        description: "Failed to load content. Please try again.",
+      toast.error("Failed to load content", {
+        description: "Please try again.",
         duration: 3000,
       });
     } finally {
@@ -53,16 +52,14 @@ export const useAdminContent = () => {
         );
         
         const actionText = status === "approved" ? "approved" : "rejected";
-        showToast({
-          variant: "success",
+        toast.success(`Content ${actionText}`, {
           description: `Content has been successfully ${actionText}.`,
           duration: 2000,
         });
       }
     } catch (error) {
       console.error(`Error ${status === "approved" ? "approving" : "rejecting"} content:`, error);
-      showToast({
-        variant: "destructive",
+      toast.error("Update failed", {
         description: `Failed to ${status === "approved" ? "approve" : "reject"} content. Please try again.`,
         duration: 3000,
       });
@@ -74,16 +71,14 @@ export const useAdminContent = () => {
       const deleted = await deleteContent(id);
       if (deleted) {
         setContent(prev => prev.filter(item => item.id !== id));
-        showToast({
-          variant: "success",
+        toast.success("Content deleted", {
           description: "Content has been successfully deleted.",
           duration: 2000,
         });
       }
     } catch (error) {
       console.error("Error deleting content:", error);
-      showToast({
-        variant: "destructive",
+      toast.error("Delete failed", {
         description: "Failed to delete content. Please try again.",
         duration: 3000,
       });
