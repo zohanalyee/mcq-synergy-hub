@@ -11,6 +11,7 @@ import { submitContent } from "@/services/contentService";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { toast } from "sonner";
 import { CSVProcessingResult } from "@/services/csvProcessorService";
+import { useContentSubmission } from "@/hooks/useContentSubmission";
 
 // Import form components
 import CategorySelection from "@/components/content/CategorySelection";
@@ -24,48 +25,26 @@ import EnhancedCSVUploader from "@/components/admin/EnhancedCSVUploader";
 
 const AdminContentSubmission = () => {
   const { userRole } = useUserRole();
-  const [tags, setTags] = useState<string[]>([]);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [documentName, setDocumentName] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState("manual");
   const [csvResults, setCsvResults] = useState<CSVProcessingResult[]>([]);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [csvCategory, setCsvCategory] = useState<ContentCategory>("scholarship");
   
-  const form = useForm<ContentSubmission>({
-    defaultValues: {
-      title: "",
-      description: "",
-      category: "scholarship",
-      tags: [],
-      metaTitle: "",
-      metaDescription: "",
-      metaKeywords: "",
-      showInSubjects: true,
-      showInSyllabus: false,
-      showInMockTests: false,
-    }
-  });
+  // Use the enhanced submission hook for manual submissions
+  const {
+    form,
+    tags,
+    setTags,
+    imagePreview,
+    documentName,
+    isSubmitting,
+    handleImageChange,
+    handleDocumentChange,
+    onSubmit: handleManualSubmit,
+    resetForm,
+  } = useContentSubmission();
 
   const selectedCategory = form.watch("category") as ContentCategory;
-
-  // Handle file uploads
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue('imageFile', file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
-
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue('documentFile', file);
-      setDocumentName(file.name);
-    }
-  };
 
   // Handle CSV processing results
   const handleCSVResults = (results: CSVProcessingResult[]) => {
@@ -81,80 +60,72 @@ const AdminContentSubmission = () => {
     }
   };
 
-  // Submit all CSV items
+  // Enhanced bulk submission with better error handling
   const handleBulkSubmit = async () => {
-    if (csvResults.length === 0) return;
+    if (csvResults.length === 0) {
+      toast.error("No items to submit");
+      return;
+    }
 
+    const totalItems = csvResults.reduce((sum, r) => sum + r.items.length, 0);
+    
     setBulkSubmitting(true);
     let successCount = 0;
     let errorCount = 0;
+    const errors: string[] = [];
 
     try {
+      toast.info(`Starting bulk submission of ${totalItems} items...`);
+
       for (const result of csvResults) {
         for (const item of result.items) {
           try {
             await submitContent(item, userRole);
             successCount++;
-          } catch (error) {
+          } catch (error: any) {
             errorCount++;
-            console.error('Failed to submit item:', error);
+            const errorMsg = error?.message || 'Unknown error';
+            errors.push(`${item.title}: ${errorMsg}`);
+            console.error('Failed to submit item:', item.title, error);
           }
         }
       }
 
+      // Show detailed results
       if (errorCount === 0) {
-        toast.success(`Successfully submitted ${successCount} items`);
+        toast.success(`Successfully submitted all ${successCount} items!`, {
+          description: "All items have been added to the system.",
+          duration: 4000,
+        });
       } else {
-        toast.warning(`Submitted ${successCount} items with ${errorCount} errors`);
+        toast.warning(`Submitted ${successCount} of ${totalItems} items`, {
+          description: `${errorCount} items failed. Check console for details.`,
+          duration: 6000,
+        });
+        
+        // Log detailed errors for debugging
+        console.error('Bulk submission errors:', errors);
       }
 
-      // Reset CSV results after successful submission
+      // Reset CSV results after processing
       setCsvResults([]);
       
-    } catch (error) {
-      toast.error('Failed to submit items');
+    } catch (error: any) {
+      console.error('Bulk submission failed:', error);
+      toast.error('Bulk submission failed', {
+        description: error?.message || 'An unexpected error occurred during bulk submission.',
+        duration: 5000,
+      });
     } finally {
       setBulkSubmitting(false);
     }
   };
 
-  // Form submission for manual entry
+  // Enhanced manual submission with success callback
   const onSubmit = async (data: ContentSubmission) => {
-    setIsSubmitting(true);
-    
-    try {
-      const fullSubmission = { ...data, tags };
-      const newItem = await submitContent(fullSubmission, userRole);
-      
-      toast.success("Content submitted successfully", {
-        description: "Content has been added to the system."
-      });
-      
-      // Reset form
-      form.reset({
-        title: "",
-        description: "",
-        category: "scholarship",
-        tags: [],
-        metaTitle: "",
-        metaDescription: "",
-        metaKeywords: "",
-        showInSubjects: true,
-        showInSyllabus: false,
-        showInMockTests: false,
-      });
-      setTags([]);
-      setImagePreview(null);
-      setDocumentName(null);
-      
-    } catch (error) {
-      console.error("Error submitting content:", error);
-      toast.error("Failed to submit content", {
-        description: "Please try again."
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
+    await handleManualSubmit(data);
+    // Reset form after successful submission
+    resetForm();
   };
 
   return (

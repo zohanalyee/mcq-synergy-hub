@@ -1,18 +1,17 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useForm } from "react-hook-form";
-import { toast } from "sonner";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import SEOFields from "@/components/SEOFields";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
-import { ContentSubmission, ContentCategory } from "@/interfaces/content";
-import { submitContent } from "@/services/contentService";
-import { useUserRole } from "@/contexts/UserRoleContext";
+import { ContentCategory } from "@/interfaces/content";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, CheckCircle2 } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Import refactored components
 import CategorySelection from "@/components/content/CategorySelection";
@@ -21,75 +20,67 @@ import CategoryFields from "@/components/content/CategoryFields";
 import FileUploads from "@/components/content/FileUploads";
 import SubmitButton from "@/components/content/SubmitButton";
 
+// Import the new submission hook
+import { useContentSubmission } from "@/hooks/useContentSubmission";
+
 const SubmitContent = () => {
-  const navigate = useNavigate();
-  const { userRole } = useUserRole();
-  const [tags, setTags] = useState<string[]>([]);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [documentName, setDocumentName] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("basic");
   
-  const form = useForm<ContentSubmission>({
-    defaultValues: {
-      title: "",
-      description: "",
-      category: "scholarship",
-      tags: [],
-      metaTitle: "",
-      metaDescription: "",
-      metaKeywords: "",
-    }
-  });
+  // Use the enhanced submission hook
+  const {
+    form,
+    tags,
+    setTags,
+    imagePreview,
+    documentName,
+    isSubmitting,
+    handleImageChange,
+    handleDocumentChange,
+    onSubmit,
+  } = useContentSubmission("/");
 
   const selectedCategory = form.watch("category") as ContentCategory;
 
-  // Handle file uploads
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue('imageFile', file);
-      setImagePreview(URL.createObjectURL(file));
-    }
-  };
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <>
+        <Header />
+        <div className="container mx-auto px-4 pt-28 pb-16">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-4 text-muted-foreground">Loading...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      form.setValue('documentFile', file);
-      setDocumentName(file.name);
-    }
-  };
-
-  // Form submission
-  const onSubmit = async (data: ContentSubmission) => {
-    setIsSubmitting(true);
-    
-    try {
-      // Add tags to the submission
-      const fullSubmission = { ...data, tags };
-      
-      // Submit content with the correct userRole type
-      await submitContent(fullSubmission, userRole);
-      
-      // Show success notification
-      toast.success("Content submitted successfully", {
-        description: "Your submission will be reviewed by an administrator.",
-        duration: 3000,
-      });
-      
-      // Redirect after a short delay
-      setTimeout(() => navigate("/"), 1500);
-    } catch (error) {
-      console.error("Error submitting content:", error);
-      toast.error("Submission failed", {
-        description: "Failed to submit content. Please try again.",
-        duration: 4000,
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // Show auth required message for non-authenticated users
+  if (!user) {
+    return (
+      <>
+        <Header />
+        <div className="container mx-auto px-4 pt-28 pb-16">
+          <div className="max-w-3xl mx-auto">
+            <Alert className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Please sign in to submit content. You'll be redirected to the authentication page.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="text-center">
+              <Button onClick={() => window.location.href = '/auth'}>
+                Sign In to Continue
+              </Button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   const breadcrumbItems = [
     { title: "Home", href: "/" },
