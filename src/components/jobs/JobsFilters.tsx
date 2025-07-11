@@ -32,9 +32,6 @@ const JobsFilters = ({ searchQuery, onSearchChange }: JobsFiltersProps) => {
             category="job" 
             buttonText="Add Job"
           />
-          <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
-            Submit Content
-          </Button>
         </div>
       )}
     </div>

@@ -111,9 +111,6 @@ const Scholarships = () => {
                   category="scholarship" 
                   buttonText="Add Scholarship"
                 />
-                <Button onClick={() => navigate("/submit-content")} variant="outline" className="flex gap-2">
-                  Submit Content
-                </Button>
               </div>
             )}
             {!user && (

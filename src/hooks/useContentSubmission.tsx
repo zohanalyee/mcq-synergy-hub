@@ -179,15 +179,15 @@ export const useContentSubmission = (redirectPath?: string): UseContentSubmissio
       const result = await submitContent(fullSubmission, userRole);
       
       if (result) {
-        toast.success("Content submitted successfully!", {
-          description: "Your submission will be reviewed by an administrator.",
-          duration: 3000,
+        toast.success("✅ Content submitted successfully!", {
+          description: "Your submission will be reviewed by an administrator. Check Admin Panel for status updates.",
+          duration: 4000,
         });
         
         // Reset form and redirect
         resetForm();
         if (redirectPath) {
-          setTimeout(() => navigate(redirectPath), 1500);
+          setTimeout(() => navigate(redirectPath), 2000);
         }
       } else {
         throw new Error('Submission returned no result');
@@ -200,18 +200,21 @@ export const useContentSubmission = (redirectPath?: string): UseContentSubmissio
       let errorMessage = "Failed to submit content. Please try again.";
       let errorDescription = "";
       
-      if (error?.message?.includes('auth')) {
-        errorMessage = "Authentication error";
+      if (error?.message?.includes('auth') || error?.message?.includes('Authentication required')) {
+        errorMessage = "❌ Authentication error";
         errorDescription = "Please sign in and try again.";
       } else if (error?.message?.includes('network')) {
-        errorMessage = "Network error";
+        errorMessage = "❌ Network error";
         errorDescription = "Please check your connection and try again.";
       } else if (error?.message?.includes('validation')) {
-        errorMessage = "Validation error";
+        errorMessage = "❌ Validation error";
         errorDescription = "Please check your input and try again.";
       } else if (error?.message?.includes('upload')) {
-        errorMessage = "File upload failed";
+        errorMessage = "❌ File upload failed";
         errorDescription = "Please try uploading your files again.";
+      } else {
+        errorMessage = "❌ Submission failed";
+        errorDescription = error?.message || "Please try again.";
       }
       
       toast.error(errorMessage, {

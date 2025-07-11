@@ -44,13 +44,17 @@ const App = () => {
             <TooltipProvider>
               <Toaster />
               <Sonner 
-                position="top-right" 
+                position="top-right"
+                expand={true}
+                richColors={true}
+                closeButton={true}
                 toastOptions={{
                   duration: 3000,
                   style: {
                     maxWidth: '400px'
                   }
                 }}
+                visibleToasts={5}
               />
               <NoticeBoard />
               <FloatingFeedbackButton />
@@ -62,7 +66,7 @@ const App = () => {
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/sign-up" element={<SignUp />} />
                 <Route path="/get-started" element={<GetStarted />} />
-                <Route path="/submit-content" element={<SubmitContent />} />
+                
                 <Route path="/admin" element={<AdminPanel />} />
                 <Route path="/subjects" element={<Subjects />} />
                 <Route path="/dashboard" element={<Dashboard />} />

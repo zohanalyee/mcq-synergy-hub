@@ -12,11 +12,7 @@ export class EnhancedContentService {
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
-        toast.error("Authentication required", {
-          description: "Please sign in to submit content.",
-          duration: 3000,
-        });
-        return null;
+        throw new Error('Authentication required');
       }
 
       // Prepare data for database with proper field mapping
@@ -92,25 +88,12 @@ export class EnhancedContentService {
 
       if (error) {
         console.error('Content submission error:', error);
-        toast.error("Submission failed", {
-          description: `Failed to submit content: ${error.message}`,
-          duration: 4000,
-        });
         throw error;
       }
-
-      toast.success("Content submitted successfully!", {
-        description: "Your content has been submitted for review.",
-        duration: 3000,
-      });
 
       return this.transformDbRowToContentItem(data);
     } catch (error) {
       console.error('Error in submitContent:', error);
-      toast.error("Unexpected error", {
-        description: "An unexpected error occurred while submitting content.",
-        duration: 4000,
-      });
       throw error;
     }
   }

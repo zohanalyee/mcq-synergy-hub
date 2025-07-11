@@ -36,7 +36,6 @@ const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }
     { title: 'Scholarships', path: '/scholarships', icon: <Users className="w-4 h-4" /> },
     { title: 'Jobs', path: '/jobs', icon: <Briefcase className="w-4 h-4" /> },
     { title: 'Past Papers', path: '/past-papers', icon: <FileText className="w-4 h-4" /> },
-    { title: 'Submit Content', path: '/submit-content', icon: <PenTool className="w-4 h-4" /> },
   ];
 
   return (

@@ -54,8 +54,14 @@ const AdminContentSubmission = () => {
     const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
     
     if (totalErrors === 0 && totalItems > 0) {
-      toast.success(`Ready to submit ${totalItems} items`, {
-        description: "Review the items below and click 'Submit All' to add them to the system"
+      toast.success(`✅ Ready to submit ${totalItems} items`, {
+        description: "Review the items below and click 'Submit All' to add them to the system",
+        duration: 4000,
+      });
+    } else if (totalErrors > 0) {
+      toast.error(`❌ ${totalErrors} validation errors found`, {
+        description: `Please fix the errors before submitting. ${totalItems} items are ready.`,
+        duration: 5000,
       });
     }
   };
@@ -93,15 +99,24 @@ const AdminContentSubmission = () => {
 
       // Show detailed results
       if (errorCount === 0) {
-        toast.success(`Successfully submitted all ${successCount} items!`, {
-          description: "All items have been added to the system.",
+        toast.success(`✅ Successfully submitted all ${successCount} items!`, {
+          description: "All items have been added to the system and are pending review.",
           duration: 4000,
         });
       } else {
-        toast.warning(`Submitted ${successCount} of ${totalItems} items`, {
-          description: `${errorCount} items failed. Check console for details.`,
+        toast.warning(`⚠️ Submitted ${successCount} of ${totalItems} items`, {
+          description: `${errorCount} items failed. Check the console or retry failed items.`,
           duration: 6000,
         });
+        
+        // Show first few errors to user
+        if (errors.length > 0) {
+          const firstErrors = errors.slice(0, 3);
+          toast.error("Failed items:", {
+            description: firstErrors.join(', '),
+            duration: 8000,
+          });
+        }
         
         // Log detailed errors for debugging
         console.error('Bulk submission errors:', errors);
@@ -112,7 +127,7 @@ const AdminContentSubmission = () => {
       
     } catch (error: any) {
       console.error('Bulk submission failed:', error);
-      toast.error('Bulk submission failed', {
+      toast.error('❌ Bulk submission failed', {
         description: error?.message || 'An unexpected error occurred during bulk submission.',
         duration: 5000,
       });
