@@ -15,6 +15,7 @@
     --popover-foreground: 220 20% 15%;
 
     --primary: 214 90% 52%;
+    --primary-glow: 214 90% 65%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 210 20% 96%;
@@ -24,6 +25,7 @@
     --muted-foreground: 220 10% 45%;
 
     --accent: 243 75% 59%;
+    --accent-glow: 243 75% 72%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
@@ -34,6 +36,14 @@
     --ring: 214 90% 52%;
 
     --radius: 0.9rem;
+
+    /* Enhanced theme tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary)));
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 220 20% 15%;
@@ -56,6 +66,7 @@
     --popover-foreground: 213 31% 91%;
 
     --primary: 214 90% 52%;
+    --primary-glow: 214 90% 65%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 222 47% 15%;
@@ -65,6 +76,7 @@
     --muted-foreground: 215 20.2% 65.1%;
 
     --accent: 243 75% 59%;
+    --accent-glow: 243 75% 72%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 63% 31%;
@@ -73,6 +85,14 @@
     --border: 217 33% 17%;
     --input: 217 33% 17%;
     --ring: 214 90% 52%;
+
+    /* Enhanced dark theme tokens */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary)));
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.4);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.5);
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --sidebar-background: 224 71% 8%;
     --sidebar-foreground: 213 31% 91%;
@@ -119,6 +139,51 @@
   
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
+  }
+
+  /* Enhanced tab styles */
+  .enhanced-tab {
+    @apply relative overflow-hidden px-6 py-3 rounded-lg font-medium;
+    @apply transition-all duration-300 ease-in-out;
+    @apply hover:shadow-md hover:scale-105;
+    background: var(--gradient-subtle);
+    border: 1px solid hsl(var(--border));
+  }
+  
+  .enhanced-tab.active {
+    background: var(--gradient-primary);
+    @apply text-primary-foreground border-primary shadow-elegant;
+    transform: translateY(-2px);
+  }
+  
+  .enhanced-tab::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: var(--gradient-accent);
+  }
+  
+  .enhanced-tab:hover::before {
+    @apply opacity-20;
+  }
+
+  /* Dropdown enhancements */
+  .centered-dropdown {
+    @apply transform -translate-x-1/2 left-1/2;
+  }
+  
+  .enhanced-dropdown {
+    @apply bg-card border border-border rounded-lg shadow-elegant;
+    @apply backdrop-blur-sm max-h-64 overflow-y-auto;
+    @apply animate-in slide-in-from-top-2 duration-200;
+  }
+
+  /* Button hover effects */
+  .hover-lift {
+    @apply transition-all duration-200 hover:shadow-lg hover:-translate-y-1;
+  }
+  
+  .hover-glow:hover {
+    box-shadow: var(--shadow-glow);
   }
   
   /* Hide scrollbar for Chrome, Safari and Opera */

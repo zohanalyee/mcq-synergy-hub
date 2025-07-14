@@ -18,7 +18,7 @@ import { subjects } from "@/data/subjectsData";
 
 // Import custom components
 import { CustomSubject, QuizSettings } from "@/components/custom-syllabus/interfaces";
-import SubjectFilter from "@/components/custom-syllabus/SubjectFilter";
+import EnhancedSubjectFilter from "@/components/custom-syllabus/EnhancedSubjectFilter";
 import SubjectCard from "@/components/custom-syllabus/SubjectCard";
 import QuizPanel from "@/components/custom-syllabus/QuizPanel";
 import { generateTopicsForSubject, getCategories } from "@/components/custom-syllabus/utils";
@@ -215,7 +215,7 @@ const CustomSyllabus = () => {
           
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6">
-              <SubjectFilter
+              <EnhancedSubjectFilter
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
                 selectedCategory={selectedCategory}

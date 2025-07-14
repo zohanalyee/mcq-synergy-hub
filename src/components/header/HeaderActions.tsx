@@ -1,5 +1,5 @@
 
-import { Laptop, Moon, Sun, Shield, Menu } from 'lucide-react';
+import { Shield, Menu } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LogOut } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 interface HeaderActionsProps {
   theme?: string;
@@ -53,20 +54,7 @@ const HeaderActions = ({
         </Button>
       )}
 
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        onClick={onToggleTheme} 
-        className="rounded-full hover:bg-background/80"
-      >
-        {theme === 'dark' ? (
-          <Sun className="h-5 w-5" />
-        ) : theme === 'light' ? (
-          <Moon className="h-5 w-5" />
-        ) : (
-          <Laptop className="h-5 w-5" />
-        )}
-      </Button>
+      <ThemeToggle />
 
       {/* User menu or sign in button */}
       {user ? (
