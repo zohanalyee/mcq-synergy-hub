@@ -208,7 +208,7 @@ export const updateContentStatus = async (id: string, status: ContentStatus, upd
   }
 };
 
-export const deleteContent = async (id: string): Promise<boolean> => {
+export const deleteContent = async (id: string): Promise<{ success: boolean; error?: string }> => {
   try {
     const { error } = await supabase
       .from('content_items')
@@ -217,13 +217,19 @@ export const deleteContent = async (id: string): Promise<boolean> => {
 
     if (error) {
       console.error('Error deleting content:', error);
-      throw error;
+      
+      // Check for specific RLS policy violations
+      if (error.message.includes('row-level security')) {
+        return { success: false, error: 'You do not have permission to delete this content.' };
+      }
+      
+      return { success: false, error: error.message || 'Failed to delete content' };
     }
 
-    return true;
+    return { success: true };
   } catch (error) {
     console.error('Error in deleteContent:', error);
-    return false;
+    return { success: false, error: 'An unexpected error occurred while deleting content.' };
   }
 };
 

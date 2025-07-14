@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react";
 import { ContentItem, ContentStatus } from "@/interfaces/content";
-import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
+import { getAllContent, updateContentStatus, deleteContent } from "@/services/supabaseContentService";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 
@@ -93,22 +93,29 @@ export const useContentManagement = () => {
     }
   };
 
-  // Delete content
+  // Delete content with confirmation and proper error handling
   const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this content? This action cannot be undone.")) {
+      return;
+    }
+
     try {
-      const deleted = await deleteContent(id);
-      if (deleted) {
+      const result = await deleteContent(id);
+      
+      if (result.success) {
         setContent(prev => prev.filter(item => item.id !== id));
         toast.success("Content deleted", {
           description: "The content has been successfully deleted."
         });
+      } else {
+        toast.error("Delete failed", {
+          description: result.error || "Failed to delete content."
+        });
       }
     } catch (error) {
       console.error("Error deleting content:", error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete content. Please try again."
+      toast.error("Delete failed", {
+        description: "An unexpected error occurred while deleting content."
       });
     }
   };
@@ -138,11 +145,33 @@ export const useContentManagement = () => {
           break;
           
         case 'delete':
-          for (const id of selectedIds) {
-            await deleteContent(id);
+          // Add confirmation for bulk delete
+          if (!confirm(`Are you sure you want to delete ${selectedIds.length} items? This action cannot be undone.`)) {
+            return;
           }
-          setContent(prev => prev.filter(item => !selectedIds.includes(item.id)));
-          toast.success(`${selectedIds.length} items deleted`);
+          
+          let deleteSuccessCount = 0;
+          let deleteErrors: string[] = [];
+          
+          for (const id of selectedIds) {
+            const result = await deleteContent(id);
+            if (result.success) {
+              deleteSuccessCount++;
+            } else {
+              deleteErrors.push(result.error || `Failed to delete item ${id}`);
+            }
+          }
+          
+          if (deleteSuccessCount > 0) {
+            setContent(prev => prev.filter(item => !selectedIds.includes(item.id)));
+            toast.success(`${deleteSuccessCount} items deleted successfully`);
+          }
+          
+          if (deleteErrors.length > 0) {
+            toast.error(`${deleteErrors.length} items failed to delete`, {
+              description: deleteErrors.join(", ")
+            });
+          }
           break;
           
         case 'export':

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { 
   FileEdit, Check, X, Edit, Trash, Search, Filter, 
   Download, ChevronUp, ChevronDown, Calendar,
-  CheckSquare, Square
+  CheckSquare, Square, Loader2
 } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import CategoryBadge from "./CategoryBadge";
