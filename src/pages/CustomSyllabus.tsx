@@ -214,45 +214,7 @@ const CustomSyllabus = () => {
           </div>
           
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6">
-              <EnhancedSubjectFilter
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                categories={getCategories(subjects)}
-              />
-
-              <motion.div
-                variants={container}
-                initial="hidden"
-                animate={isLoaded ? "show" : "hidden"}
-                className="space-y-4"
-              >
-                {filteredSubjects.length > 0 ? (
-                  filteredSubjects.map((subject) => (
-                    <motion.div key={subject.title} variants={item}>
-                      <SubjectCard
-                        subject={subject}
-                        toggleSubjectSelection={toggleSubjectSelection}
-                        toggleTopicSelection={toggleTopicSelection}
-                        toggleSubjectExpansion={toggleSubjectExpansion}
-                      />
-                    </motion.div>
-                  ))
-                ) : (
-                  <Card className="p-8 text-center">
-                    <p className="text-muted-foreground mb-4">No subjects or topics match your search criteria.</p>
-                    <Button onClick={() => {
-                      setSearchQuery("");
-                      setSelectedCategory("All");
-                    }}>Clear Filters</Button>
-                  </Card>
-                )}
-              </motion.div>
-            </div>
-            
-            <div ref={selectedTopicsRef}>
+            <div className="lg:col-span-2 space-y-6" ref={selectedTopicsRef}>
               <div className="sticky top-28 space-y-6">
                 <QuizPanel
                   syllabusName={syllabusName}
@@ -276,6 +238,44 @@ const CustomSyllabus = () => {
                   </div>
                 )}
               </div>
+            </div>
+            
+            <div className="lg:col-span-1 space-y-6">
+              <EnhancedSubjectFilter
+                searchQuery={searchQuery}
+                setSearchQuery={setSearchQuery}
+                selectedCategory={selectedCategory}
+                setSelectedCategory={setSelectedCategory}
+                categories={getCategories(subjects)}
+              />
+
+              <motion.div
+                variants={container}
+                initial="hidden"
+                animate={isLoaded ? "show" : "hidden"}
+                className="space-y-4 max-h-[600px] overflow-y-auto"
+              >
+                {filteredSubjects.length > 0 ? (
+                  filteredSubjects.map((subject) => (
+                    <motion.div key={subject.title} variants={item}>
+                      <SubjectCard
+                        subject={subject}
+                        toggleSubjectSelection={toggleSubjectSelection}
+                        toggleTopicSelection={toggleTopicSelection}
+                        toggleSubjectExpansion={toggleSubjectExpansion}
+                      />
+                    </motion.div>
+                  ))
+                ) : (
+                  <Card className="p-8 text-center">
+                    <p className="text-muted-foreground mb-4">No subjects or topics match your search criteria.</p>
+                    <Button onClick={() => {
+                      setSearchQuery("");
+                      setSelectedCategory("All");
+                    }}>Clear Filters</Button>
+                  </Card>
+                )}
+              </motion.div>
             </div>
           </div>
         </motion.div>

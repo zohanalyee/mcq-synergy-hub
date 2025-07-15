@@ -41,38 +41,39 @@ const SubjectCard = ({
   };
   
   return (
-    <Card>
-      <CardHeader className="p-4 pb-0">
+    <Card className="h-auto min-h-[120px]">
+      <CardHeader className="p-3 pb-2">
         <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             <Checkbox 
               id={`subject-${subject.title}`}
               checked={subject.selected}
               onCheckedChange={() => toggleSubjectSelection(subject.title)}
             />
-            <div className="p-2 rounded-lg" style={{ backgroundColor: `${subject.color}20` }}>
+            <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${subject.color}20` }}>
               {displayIcon()}
             </div>
-            <div className="text-xl font-semibold">{subject.title}</div>
+            <div className="text-sm font-semibold line-clamp-2">{subject.title}</div>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => toggleSubjectExpansion(subject.title)}
+            className="h-6 w-6 p-0"
           >
-            {subject.expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            {subject.expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
           </Button>
         </div>
       </CardHeader>
       
       <Collapsible open={subject.expanded}>
         <CollapsibleContent>
-          <CardContent className="p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <CardContent className="p-3 pt-0">
+            <div className="grid grid-cols-1 gap-1">
               {subject.topics.map((topic: Topic) => (
                 <div 
                   key={topic.id} 
-                  className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted/50"
+                  className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-muted/50"
                 >
                   <Checkbox 
                     id={topic.id} 
@@ -81,7 +82,7 @@ const SubjectCard = ({
                   />
                   <label 
                     htmlFor={topic.id} 
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                    className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1 line-clamp-1"
                   >
                     {topic.name}
                   </label>

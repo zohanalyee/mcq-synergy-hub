@@ -87,48 +87,49 @@ const SubjectCard = ({
       onMouseLeave={() => setIsHovered(false)}
       className="cursor-pointer"
     >
-      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg"
+      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg h-[180px] flex flex-col"
         style={{ borderTopColor: color }}
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.3 }}
+          className="flex-1 flex flex-col"
         >
-          <CardContent className="p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 rounded-lg" style={{ backgroundColor: `${color}20` }}>
+          <CardContent className="p-4 flex-1 flex flex-col">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}20` }}>
                 {renderDisplayIcon()}
               </div>
-              <div className="flex flex-col gap-2 items-end">
-                <span className="text-sm font-medium text-muted-foreground">
+              <div className="flex flex-col gap-1 items-end">
+                <span className="text-xs font-medium text-muted-foreground">
                   {topicCount} Topics
                 </span>
                 <Badge 
                   variant={purpose === "reading" ? "outline" : "default"}
                   className={cn(
-                    "flex items-center gap-1",
+                    "flex items-center gap-1 text-xs h-5",
                     purpose === "reading" ? "border-blue-500 text-blue-600" : "bg-green-500 hover:bg-green-600"
                   )}
                 >
                   {purpose === "reading" ? (
                     <>
-                      <FileText className="h-3 w-3" /> Reading
+                      <FileText className="h-2.5 w-2.5" /> Reading
                     </>
                   ) : (
                     <>
-                      <CheckSquare className="h-3 w-3" /> MCQs
+                      <CheckSquare className="h-2.5 w-2.5" /> MCQs
                     </>
                   )}
                 </Badge>
               </div>
             </div>
             
-            <h3 className="text-xl font-semibold mb-2">{title}</h3>
-            <p className="text-muted-foreground text-sm mb-4">{description}</p>
+            <h3 className="text-lg font-semibold mb-2 line-clamp-2">{title}</h3>
+            <p className="text-muted-foreground text-xs mb-3 line-clamp-2 flex-1">{description}</p>
             
             <div className={cn(
-              "text-sm font-medium transition-all duration-300 flex items-center justify-between",
+              "text-xs font-medium transition-all duration-300 flex items-center justify-between mt-auto",
               isHovered ? "text-primary" : "text-foreground"
             )}>
               <span>Explore Topics →</span>
