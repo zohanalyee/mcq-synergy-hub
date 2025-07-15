@@ -47,12 +47,12 @@ const QuizPanel = ({
   }, [customSubjects]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Your Custom Quiz</CardTitle>
-        <CardDescription>Configure your quiz details</CardDescription>
+    <Card className="h-fit">
+      <CardHeader className="pb-4">
+        <CardTitle className="text-lg">Custom Quiz</CardTitle>
+        <CardDescription className="text-sm">Configure quiz details</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="topics">Topics</TabsTrigger>

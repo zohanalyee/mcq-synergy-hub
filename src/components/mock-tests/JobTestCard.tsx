@@ -46,8 +46,8 @@ export const JobTestCard = ({
   const isCustomizing = customizeJobTest === test.id;
 
   return (
-    <Card className="h-full hover:shadow-md transition-shadow duration-300">
-      <CardContent className="p-6">
+    <Card className="h-[140px] hover:shadow-md transition-shadow duration-300">
+      <CardContent className="p-4">
         <JobTestDetails 
           title={test.title}
           description={test.description}

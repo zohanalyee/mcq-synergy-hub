@@ -253,7 +253,7 @@ const CustomSyllabus = () => {
                 variants={container}
                 initial="hidden"
                 animate={isLoaded ? "show" : "hidden"}
-                className="space-y-4 max-h-[600px] overflow-y-auto"
+                className="space-y-3 max-h-[400px] overflow-y-auto"
               >
                 {filteredSubjects.length > 0 ? (
                   filteredSubjects.map((subject) => (

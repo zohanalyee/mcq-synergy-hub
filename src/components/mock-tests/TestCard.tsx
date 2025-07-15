@@ -64,44 +64,44 @@ export const TestCard = ({
   };
 
   return (
-    <Card className="h-full hover:shadow-md transition-shadow duration-300">
-      <CardContent className="p-6">
-        <div className="flex justify-between items-start mb-4">
-          <h3 className="text-xl font-semibold">{test.title}</h3>
+    <Card className="h-[140px] hover:shadow-md transition-shadow duration-300">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-lg font-semibold line-clamp-1">{test.title}</h3>
         </div>
         
-        <p className="text-muted-foreground text-sm mb-6">{test.description}</p>
+        <p className="text-muted-foreground text-xs mb-3 line-clamp-2">{test.description}</p>
         
-        <div className="grid grid-cols-2 gap-3 mb-6">
-          <div className="flex items-center gap-2 text-sm">
-            <Clock className="h-4 w-4 text-muted-foreground" />
-            <span>{test.duration} mins</span>
+        <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="flex items-center gap-1 text-xs">
+            <Clock className="h-3 w-3 text-muted-foreground" />
+            <span>{test.duration}m</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <BookOpen className="h-4 w-4 text-muted-foreground" />
-            <span>{test.questions} questions</span>
+          <div className="flex items-center gap-1 text-xs">
+            <BookOpen className="h-3 w-3 text-muted-foreground" />
+            <span>{test.questions}q</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <Award className="h-4 w-4 text-muted-foreground" />
-            <span>Certification</span>
+          <div className="flex items-center gap-1 text-xs">
+            <Award className="h-3 w-3 text-muted-foreground" />
+            <span>Cert</span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <BarChart2 className="h-4 w-4 text-muted-foreground" />
-            <span>Detailed analysis</span>
+          <div className="flex items-center gap-1 text-xs">
+            <BarChart2 className="h-3 w-3 text-muted-foreground" />
+            <span>Analysis</span>
           </div>
         </div>
         
-        <div className="flex flex-col space-y-3">
-          <div className="flex items-center justify-between">
-            <Button variant="outline" className="flex items-center w-1/2 justify-center" onClick={() => toggleExpandTest(test.id)}>
+        <div className="flex flex-col space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <Button variant="outline" size="sm" className="flex items-center flex-1 text-xs" onClick={() => toggleExpandTest(test.id)}>
               {expandedTest === test.id ? (
-                <>Hide Topics <ArrowUp className="ml-2 h-4 w-4" /></>
+                <>Topics <ArrowUp className="ml-1 h-3 w-3" /></>
               ) : (
-                <>Show Topics <ArrowDown className="ml-2 h-4 w-4" /></>
+                <>Topics <ArrowDown className="ml-1 h-3 w-3" /></>
               )}
             </Button>
-            <Button variant="outline" className="flex items-center w-1/2 ml-2 justify-center" onClick={e => toggleCustomizeTest(test.id, e)}>
-              <SlidersHorizontal className="mr-2 h-4 w-4" /> Customize
+            <Button variant="outline" size="sm" className="flex items-center flex-1 text-xs" onClick={e => toggleCustomizeTest(test.id, e)}>
+              <SlidersHorizontal className="mr-1 h-3 w-3" /> Custom
             </Button>
           </div>
           
@@ -203,7 +203,7 @@ export const TestCard = ({
           )}
           
           {!customizeTest && (
-            <Button className="w-full" onClick={() => handleStartTest(test)}>
+            <Button className="w-full" size="sm" onClick={() => handleStartTest(test)}>
               Start Test
             </Button>
           )}
