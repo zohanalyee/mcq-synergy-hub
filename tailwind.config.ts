@@ -172,6 +172,8 @@ export default {
 				'neo': '5px 5px 15px #d1d9e6, -5px -5px 15px #ffffff',
 				'neo-inset': 'inset 5px 5px 10px #d1d9e6, inset -5px -5px 10px #ffffff',
 				'glass': '0 4px 30px rgba(0, 0, 0, 0.1)',
+				'elegant': '0 10px 30px -10px hsl(214 90% 52% / 0.3)',
+				'glow': '0 0 40px hsl(214 90% 65% / 0.4)',
 			},
 			backdropBlur: {
 				xs: '2px',
