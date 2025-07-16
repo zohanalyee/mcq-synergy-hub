@@ -66,7 +66,7 @@ export const TestCard = ({
   const isExpanded = expandedTest === test.id || customizeTest === test.id;
 
   return (
-    <Card className={`min-h-[140px] hover:shadow-md transition-all duration-300 ${isExpanded ? 'h-auto' : 'h-[140px]'}`}>
+    <Card className="min-h-[140px] hover:shadow-md transition-all duration-300">
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-semibold line-clamp-1">{test.title}</h3>
