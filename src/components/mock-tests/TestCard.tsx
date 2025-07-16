@@ -206,7 +206,7 @@ export const TestCard = ({
             </motion.div>
           )}
           
-          {!customizeTest && (
+          {customizeTest !== test.id && (
             <Button className="w-full" size="sm" onClick={() => handleStartTest(test)}>
               Start Test
             </Button>
