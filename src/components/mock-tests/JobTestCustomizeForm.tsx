@@ -37,10 +37,11 @@ export const JobTestCustomizeForm = ({
 
   return (
     <motion.div 
-      className="border rounded-lg p-3"
+      className="border rounded-lg p-3 mt-2"
       initial={{ opacity: 0, height: 0 }}
       animate={{ opacity: 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
+      transition={{ duration: 0.2 }}
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">

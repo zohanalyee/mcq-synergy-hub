@@ -63,8 +63,10 @@ export const TestCard = ({
     handleStartTest(test, data);
   };
 
+  const isExpanded = expandedTest === test.id || customizeTest === test.id;
+
   return (
-    <Card className="h-[140px] hover:shadow-md transition-shadow duration-300">
+    <Card className={`min-h-[140px] hover:shadow-md transition-all duration-300 ${isExpanded ? 'h-auto' : 'h-[140px]'}`}>
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-semibold line-clamp-1">{test.title}</h3>
@@ -107,13 +109,14 @@ export const TestCard = ({
           
           {expandedTest === test.id && test.topics && (
             <motion.div 
-              className="border rounded-lg p-3 bg-secondary/20"
+              className="border rounded-lg p-3 bg-secondary/20 mt-2"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
             >
               <h4 className="text-sm font-medium mb-2">Select topics to include:</h4>
-              <div className="space-y-2">
+              <div className="max-h-32 overflow-y-auto space-y-2">
                 {test.topics.map((topic: string, index: number) => (
                   <div key={index} className="flex items-center space-x-2">
                     <Checkbox 
@@ -128,7 +131,7 @@ export const TestCard = ({
                   </div>
                 ))}
               </div>
-              <div className="mt-3">
+              <div className="mt-2">
                 <p className="text-xs text-muted-foreground">At least one topic must be selected.</p>
               </div>
             </motion.div>
@@ -136,10 +139,11 @@ export const TestCard = ({
           
           {customizeTest === test.id && (
             <motion.div 
-              className="border rounded-lg p-3"
+              className="border rounded-lg p-3 mt-2"
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
             >
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmitCustomization)} className="space-y-3">
