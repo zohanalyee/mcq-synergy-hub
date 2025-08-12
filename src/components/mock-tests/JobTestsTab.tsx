@@ -25,7 +25,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
   
   const handleStartJobTest = (test: JobTest, customSettings?: any) => {
     const settings = customSettings || {
-      difficulty: "Medium", // Default value since JobTest doesn't have a difficulty property
+      difficulty: "medium", // Default value since JobTest doesn't have a difficulty property
       questionCount: test.questions,
       duration: test.duration
     };

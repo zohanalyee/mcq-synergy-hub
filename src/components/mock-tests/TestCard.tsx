@@ -49,8 +49,12 @@ export const TestCard = ({
   isTopicSelected,
   handleStartTest
 }: TestCardProps) => {
-  const [customSettings, setCustomSettings] = useState({
-    difficulty: test.difficulty,
+  const [customSettings, setCustomSettings] = useState<{ 
+    difficulty: "easy" | "medium" | "hard";
+    questionCount: number;
+    duration: number;
+  }>({
+    difficulty: (test.difficulty || "medium").toLowerCase() as "easy" | "medium" | "hard",
     questionCount: test.questions,
     duration: test.duration
   });
@@ -180,7 +184,7 @@ export const TestCard = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor={`difficulty-${test.id}`} className="text-sm font-medium">Difficulty</Label>
-                <Select value={customSettings.difficulty} onValueChange={(value) => 
+                <Select value={customSettings.difficulty} onValueChange={(value: "easy" | "medium" | "hard") => 
                   setCustomSettings(prev => ({ ...prev, difficulty: value }))
                 }>
                   <SelectTrigger id={`difficulty-${test.id}`} className="h-9">
