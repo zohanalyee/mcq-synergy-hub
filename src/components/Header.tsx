@@ -15,7 +15,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
   const { userRole, isAdmin } = useUserRole();
   const { user, profile, signOut } = useAuth();
   
-  // Use try-catch to handle the case when Header is used outside Router context
   let navigate;
   try {
     navigate = useNavigate();
@@ -47,7 +46,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     }
   };
 
-  // Updated navigation items - all in main nav, no secondary nav
   const navItems = [
     { title: 'Home', path: '/' },
     { title: 'Subjects', path: '/subjects' },
@@ -73,12 +71,12 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled 
-          ? 'py-2 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
-          : 'py-4 bg-transparent'
+          ? 'py-2 sm:py-3 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
+          : 'py-3 sm:py-4 bg-transparent'
       }`}
     >
       <div className="container px-4 mx-auto">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           <HeaderLogo onNavigate={handleNavigation} />
 
           <div className="flex-1 flex justify-center">

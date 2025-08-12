@@ -24,30 +24,25 @@ const SubjectCard = ({
   description, 
   topicCount,
   color,
-  purpose = "mcqs", // Default to MCQs if not specified
+  purpose = "mcqs",
   onClick 
 }: SubjectCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
   
-  // Safely render the icon
   const renderDisplayIcon = () => {
-    // If no icon provided, use default
     if (!icon) {
-      return <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+      return <FileText className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: color || '#3b82f6' }} />;
     }
     
-    // If it's a valid React element
     if (React.isValidElement(icon)) {
-      // Need to use type assertion to handle TypeScript constraints on cloneElement
       return React.cloneElement(icon as React.ReactElement<any>, { 
-        className: "h-6 w-6",
+        className: "h-6 w-6 sm:h-7 sm:w-7",
         style: { color: color || '#3b82f6' } 
       });
     }
     
-    // Fallback
-    return <FileText className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
+    return <FileText className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: color || '#3b82f6' }} />;
   };
   
   const handleClick = () => {
@@ -56,19 +51,17 @@ const SubjectCard = ({
       return;
     }
     
-    // Navigate to the appropriate page based on purpose
     if (purpose === "reading") {
       navigate(`/subject-content/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"))}`, { 
         state: { 
           title,
           purpose,
           color,
-          icon: null, // Don't pass React elements directly in navigation state
+          icon: null,
           topicCount
         } 
       });
     } else {
-      // For MCQs, we'll navigate to the custom syllabus page with the subject preselected
       navigate(`/custom-syllabus`, { 
         state: { 
           preselectedSubject: title,
@@ -87,7 +80,7 @@ const SubjectCard = ({
       onMouseLeave={() => setIsHovered(false)}
       className="cursor-pointer"
     >
-      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg h-[180px] flex flex-col"
+      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg min-h-[200px] sm:min-h-[220px] flex flex-col"
         style={{ borderTopColor: color }}
       >
         <motion.div
@@ -96,47 +89,52 @@ const SubjectCard = ({
           transition={{ duration: 0.3 }}
           className="flex-1 flex flex-col"
         >
-          <CardContent className="p-4 flex-1 flex flex-col">
-            <div className="flex items-start justify-between mb-3">
-              <div className="p-2 rounded-lg" style={{ backgroundColor: `${color}20` }}>
+          <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
+            <div className="flex items-start justify-between mb-4">
+              <div className="p-3 sm:p-4 rounded-lg" style={{ backgroundColor: `${color}20` }}>
                 {renderDisplayIcon()}
               </div>
-              <div className="flex flex-col gap-1 items-end">
-                <span className="text-xs font-medium text-muted-foreground">
+              <div className="flex flex-col gap-2 items-end">
+                <span className="text-xs sm:text-sm font-medium text-muted-foreground">
                   {topicCount} Topics
                 </span>
                 <Badge 
                   variant={purpose === "reading" ? "outline" : "default"}
                   className={cn(
-                    "flex items-center gap-1 text-xs h-5",
+                    "flex items-center gap-1 text-xs h-6 px-2",
                     purpose === "reading" ? "border-blue-500 text-blue-600" : "bg-green-500 hover:bg-green-600"
                   )}
                 >
                   {purpose === "reading" ? (
                     <>
-                      <FileText className="h-2.5 w-2.5" /> Reading
+                      <FileText className="h-3 w-3" /> Reading
                     </>
                   ) : (
                     <>
-                      <CheckSquare className="h-2.5 w-2.5" /> MCQs
+                      <CheckSquare className="h-3 w-3" /> MCQs
                     </>
                   )}
                 </Badge>
               </div>
             </div>
             
-            <h3 className="text-lg font-semibold mb-2 line-clamp-2">{title}</h3>
-            <p className="text-muted-foreground text-xs mb-3 line-clamp-2 flex-1">{description}</p>
+            <h3 className="text-lg sm:text-xl font-semibold mb-3 line-clamp-2 leading-tight">{title}</h3>
+            <p className="text-muted-foreground text-sm sm:text-base mb-4 line-clamp-3 flex-1 leading-relaxed">{description}</p>
             
             <div className={cn(
-              "text-xs font-medium transition-all duration-300 flex items-center justify-between mt-auto",
+              "text-sm font-medium transition-all duration-300 flex items-center justify-between mt-auto pt-2 border-t border-border/30",
               isHovered ? "text-primary" : "text-foreground"
             )}>
-              <span>Explore Topics →</span>
+              <span className="flex items-center gap-2">
+                Explore Topics 
+                <span className="transition-transform duration-300" style={{ transform: isHovered ? 'translateX(4px)' : 'translateX(0)' }}>
+                  →
+                </span>
+              </span>
               {purpose === "reading" ? (
-                <span className="text-xs text-blue-500">Learn by Reading</span>
+                <span className="text-xs text-blue-500 font-medium">Learn by Reading</span>
               ) : (
-                <span className="text-xs text-green-500">Practice with MCQs</span>
+                <span className="text-xs text-green-500 font-medium">Practice with MCQs</span>
               )}
             </div>
           </CardContent>

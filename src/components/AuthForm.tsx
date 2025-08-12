@@ -56,7 +56,7 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {serverError && (
-          <div className="bg-destructive/15 text-destructive text-sm p-3 rounded-md">
+          <div className="bg-destructive/15 text-destructive text-sm p-4 rounded-md border border-destructive/20">
             {serverError}
           </div>
         )}
@@ -66,12 +66,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           name="email"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Email</FormLabel>
+              <FormLabel className="text-sm font-medium">Email</FormLabel>
               <FormControl>
                 <Input 
                   placeholder="yourname@example.com" 
                   {...field} 
                   autoComplete={mode === 'login' ? 'username' : 'email'}
+                  className="h-11"
                 />
               </FormControl>
               <FormMessage />
@@ -84,13 +85,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-sm font-medium">Password</FormLabel>
               <FormControl>
                 <Input 
                   type="password" 
                   placeholder="••••••••" 
                   {...field} 
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
+                  className="h-11"
                 />
               </FormControl>
               <FormMessage />
@@ -100,12 +102,13 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
         
         <Button 
           type="submit" 
-          className="w-full" 
+          className="w-full h-11 text-base font-medium" 
           disabled={loading}
+          size="lg"
         >
           {loading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
               {mode === 'login' ? 'Signing In...' : 'Signing Up...'}
             </>
           ) : (
