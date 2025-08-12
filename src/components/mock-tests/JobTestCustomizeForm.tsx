@@ -27,7 +27,7 @@ export const JobTestCustomizeForm = ({
   const form = useForm({
     resolver: zodResolver(testCustomizationSchema),
     defaultValues: {
-      difficulty: "Medium" as const,
+      difficulty: "medium" as const,
       questionCount: defaultQuestions,
       duration: defaultDuration
     }
@@ -54,15 +54,15 @@ export const JobTestCustomizeForm = ({
                 <FormControl>
                   <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex space-x-4">
                     <div className="flex items-center space-x-1">
-                      <RadioGroupItem value="Easy" id={`job-easy-${testId}`} />
+                      <RadioGroupItem value="easy" id={`job-easy-${testId}`} />
                       <FormLabel htmlFor={`job-easy-${testId}`} className="text-green-500 text-sm">Easy</FormLabel>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <RadioGroupItem value="Medium" id={`job-medium-${testId}`} />
+                      <RadioGroupItem value="medium" id={`job-medium-${testId}`} />
                       <FormLabel htmlFor={`job-medium-${testId}`} className="text-amber-500 text-sm">Medium</FormLabel>
                     </div>
                     <div className="flex items-center space-x-1">
-                      <RadioGroupItem value="Hard" id={`job-hard-${testId}`} />
+                      <RadioGroupItem value="hard" id={`job-hard-${testId}`} />
                       <FormLabel htmlFor={`job-hard-${testId}`} className="text-red-500 text-sm">Hard</FormLabel>
                     </div>
                   </RadioGroup>
