@@ -125,6 +125,123 @@ export type Database = {
         }
         Relationships: []
       }
+      content_submissions: {
+        Row: {
+          cadre: string | null
+          category: string
+          correct_option: string | null
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          department: string | null
+          description: string | null
+          difficulty: string | null
+          exam_type: string | null
+          exam_year: string | null
+          explanation: string | null
+          file_url: string | null
+          government_level: string | null
+          id: string
+          image_url: string | null
+          institution: string | null
+          marks: number | null
+          meta_description: string | null
+          meta_keywords: string | null
+          meta_title: string | null
+          options: Json | null
+          published_at: string | null
+          questions: Json | null
+          rejection_reason: string | null
+          scholarship_type: string | null
+          show_in_mock_tests: boolean | null
+          show_in_subjects: boolean | null
+          show_in_syllabus: boolean | null
+          status: string
+          subject: string | null
+          tags: Json | null
+          time_limit: number | null
+          title: string
+          topic: string | null
+          updated_at: string
+        }
+        Insert: {
+          cadre?: string | null
+          category: string
+          correct_option?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          department?: string | null
+          description?: string | null
+          difficulty?: string | null
+          exam_type?: string | null
+          exam_year?: string | null
+          explanation?: string | null
+          file_url?: string | null
+          government_level?: string | null
+          id?: string
+          image_url?: string | null
+          institution?: string | null
+          marks?: number | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          options?: Json | null
+          published_at?: string | null
+          questions?: Json | null
+          rejection_reason?: string | null
+          scholarship_type?: string | null
+          show_in_mock_tests?: boolean | null
+          show_in_subjects?: boolean | null
+          show_in_syllabus?: boolean | null
+          status?: string
+          subject?: string | null
+          tags?: Json | null
+          time_limit?: number | null
+          title: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cadre?: string | null
+          category?: string
+          correct_option?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          department?: string | null
+          description?: string | null
+          difficulty?: string | null
+          exam_type?: string | null
+          exam_year?: string | null
+          explanation?: string | null
+          file_url?: string | null
+          government_level?: string | null
+          id?: string
+          image_url?: string | null
+          institution?: string | null
+          marks?: number | null
+          meta_description?: string | null
+          meta_keywords?: string | null
+          meta_title?: string | null
+          options?: Json | null
+          published_at?: string | null
+          questions?: Json | null
+          rejection_reason?: string | null
+          scholarship_type?: string | null
+          show_in_mock_tests?: boolean | null
+          show_in_subjects?: boolean | null
+          show_in_syllabus?: boolean | null
+          status?: string
+          subject?: string | null
+          tags?: Json | null
+          time_limit?: number | null
+          title?: string
+          topic?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string | null

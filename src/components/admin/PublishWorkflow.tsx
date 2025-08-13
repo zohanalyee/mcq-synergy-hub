@@ -21,6 +21,7 @@ interface PendingContent {
   topic?: string;
   created_at: string;
   fileName?: string;
+  [key: string]: any; // Allow additional properties from database
 }
 
 const PublishWorkflow = () => {
@@ -35,10 +36,12 @@ const PublishWorkflow = () => {
   const loadPendingContent = async () => {
     setLoading(true);
     try {
-      const data = await bulkContentService.getPendingContent(
+      const rawData = await bulkContentService.getPendingContent(
         categoryFilter === 'all' ? undefined : categoryFilter
       );
-      setPendingContent(data);
+      // Filter and map the data to match our interface
+      const filteredData = rawData.filter(item => item.title && item.description && item.category);
+      setPendingContent(filteredData);
     } catch (error: any) {
       toast.error("Failed to load pending content", {
         description: error.message
