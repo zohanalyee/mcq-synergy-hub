@@ -13,17 +13,24 @@ import { parseAiken } from '@/services/aikenParser';
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import BulkUploadPreview from './BulkUploadPreview';
+import PublishWorkflow from './PublishWorkflow';
+import { BulkUploadResult } from '@/services/bulkContentService';
 
 interface EnhancedCSVUploaderProps {
   category: ContentCategory;
   onFilesProcessed: (results: CSVProcessingResult[]) => void;
   allowMultiple?: boolean;
+  showPreview?: boolean;
+  showPublishWorkflow?: boolean;
 }
 
 const EnhancedCSVUploader = ({ 
   category, 
   onFilesProcessed, 
-  allowMultiple = true 
+  allowMultiple = true,
+  showPreview = true,
+  showPublishWorkflow = true
 }: EnhancedCSVUploaderProps) => {
   const [files, setFiles] = useState<File[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -32,6 +39,7 @@ const EnhancedCSVUploader = ({
   const [sheetUrl, setSheetUrl] = useState('');
   const [detectedHeaders, setDetectedHeaders] = useState<string[]>([]);
   const [headerMap, setHeaderMap] = useState<Record<string, string>>({}); // target -> source
+  const [uploadResult, setUploadResult] = useState<BulkUploadResult | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helpers
@@ -459,6 +467,47 @@ const EnhancedCSVUploader = ({
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Bulk Upload Preview */}
+      {showPreview && results.length > 0 && (
+        <BulkUploadPreview
+          results={results}
+          onUploadComplete={(result) => {
+            setUploadResult(result);
+            toast.success(`Upload completed: ${result.successful} successful, ${result.failed} failed`);
+          }}
+        />
+      )}
+
+      {/* Upload Result Summary */}
+      {uploadResult && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-sm">Upload Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{uploadResult.successful}</div>
+                <div className="text-muted-foreground">Successful</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-red-600">{uploadResult.failed}</div>
+                <div className="text-muted-foreground">Failed</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-yellow-600">{uploadResult.duplicates}</div>
+                <div className="text-muted-foreground">Duplicates</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Publish Workflow */}
+      {showPublishWorkflow && (
+        <PublishWorkflow />
       )}
     </div>
   );
