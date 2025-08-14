@@ -31,13 +31,22 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
     }))
   );
 
-  const validItems = allItems.filter(item => 
-    item.title && item.description && item.category
-  );
+  // Category-specific validation
+  const isValidItem = (item: any) => {
+    // Basic validation - category is always required
+    if (!item.category) return false;
+    
+    // For MCQ and Quiz, check for question instead of title
+    if (item.category === 'mcq' || item.category === 'quiz') {
+      return item.title || (item as any).question; // Either title or question field
+    }
+    
+    // For other categories, title is required
+    return item.title;
+  };
 
-  const invalidItems = allItems.filter(item => 
-    !item.title || !item.description || !item.category
-  );
+  const validItems = allItems.filter(isValidItem);
+  const invalidItems = allItems.filter(item => !isValidItem(item));
 
   // Select/deselect all valid items
   const toggleSelectAll = () => {
@@ -256,7 +265,7 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
               </TableHeader>
               <TableBody>
                 {allItems.map((item) => {
-                  const isValid = item.title && item.description && item.category;
+                  const isValid = isValidItem(item);
                   const isSelected = selectedItems.has(item.uniqueId);
                   
                   return (
@@ -272,7 +281,7 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
                         )}
                       </TableCell>
                       <TableCell className="font-medium">
-                        {item.title || <span className="text-red-500">Missing title</span>}
+                        {item.title || (item as any).question || <span className="text-red-500">Missing title/question</span>}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{item.category}</Badge>

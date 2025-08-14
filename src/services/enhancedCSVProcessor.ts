@@ -9,6 +9,37 @@ export interface CSVProcessingResult {
   fileName?: string;
 }
 
+// Helper function to parse and validate dates
+const parseDate = (dateStr: string): string | null => {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  
+  try {
+    // Try various date formats
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) {
+      // Try parsing common formats like DD/MM/YYYY, MM/DD/YYYY, YYYY-MM-DD
+      const formats = [
+        /^\d{1,2}\/\d{1,2}\/\d{4}$/, // DD/MM/YYYY or MM/DD/YYYY
+        /^\d{4}-\d{1,2}-\d{1,2}$/, // YYYY-MM-DD
+        /^\d{1,2}-\d{1,2}-\d{4}$/, // DD-MM-YYYY or MM-DD-YYYY
+      ];
+      
+      for (const format of formats) {
+        if (format.test(dateStr)) {
+          const parsed = new Date(dateStr);
+          if (!isNaN(parsed.getTime())) {
+            return parsed.toISOString();
+          }
+        }
+      }
+      return null;
+    }
+    return date.toISOString();
+  } catch {
+    return null;
+  }
+};
+
 export const processCSVForDatabase = async (
   content: string,
   category: ContentCategory
@@ -91,10 +122,15 @@ const processCSVRow = async (
     throw new Error('Title is required');
   }
 
+  // For MCQ items, map question to title if title is missing
+  if (category === 'mcq' && !data.title && data.question) {
+    data.title = data.question;
+  }
+
   // Create base content item for database (using snake_case for database fields)
   const contentItem = {
     title: data.title,
-    description: data.description || '',
+    description: data.description || (category === 'mcq' ? data.question || '' : ''),
     category: category,
     tags: data.tags ? data.tags.split(';').map((t: string) => t.trim()) : [],
     created_at: new Date().toISOString(),
@@ -103,20 +139,32 @@ const processCSVRow = async (
     status: 'pending'
   };
 
-  // Add category-specific fields with proper snake_case mapping
+  // Add category-specific fields with proper snake_case mapping and date validation
   if (category === 'scholarship') {
+    const deadline = parseDate(data.deadline);
     Object.assign(contentItem, {
-      deadline: data.deadline || null,
+      deadline: deadline,
       scholarship_type: data.scholarship_type || data.type || null,
       institution: data.institution || null
     });
+    
+    // Add warning for invalid deadline
+    if (data.deadline && !deadline) {
+      throw new Error(`Invalid deadline format: "${data.deadline}". Use YYYY-MM-DD or DD/MM/YYYY format.`);
+    }
   } else if (category === 'job') {
+    const deadline = parseDate(data.deadline);
     Object.assign(contentItem, {
-      deadline: data.deadline || null,
+      deadline: deadline,
       department: data.department || null,
       government_level: data.government_level || data.level || null,
       cadre: data.cadre || null
     });
+    
+    // Add warning for invalid deadline
+    if (data.deadline && !deadline) {
+      throw new Error(`Invalid deadline format: "${data.deadline}". Use YYYY-MM-DD or DD/MM/YYYY format.`);
+    }
   } else if (category === 'mcq') {
     // For MCQ, validate required fields
     if (!data.question) throw new Error('Question is required for MCQ');
@@ -153,6 +201,11 @@ const processCSVRow = async (
       exam_year: data.exam_year || null,
       subject: data.subject || null
     });
+  }
+
+  // Store original question for MCQ items
+  if (category === 'mcq' && data.question) {
+    (contentItem as any).question = data.question;
   }
 
   return contentItem;
