@@ -404,8 +404,11 @@ const EnhancedCSVUploader = ({
                   <div key={field.name} className="space-y-1">
                     <Label className="text-xs">{field.name}{field.required ? ' *' : ''}</Label>
                     <Select
-                      value={headerMap[field.name] || ''}
-                      onValueChange={(v) => setHeaderMap(prev => ({ ...prev, [field.name]: v }))}
+                      value={headerMap[field.name] || '__none__'}
+                      onValueChange={(v) => setHeaderMap(prev => ({ 
+                        ...prev, 
+                        [field.name]: v === '__none__' ? '' : v 
+                      }))}
                     >
                       <SelectTrigger className="h-8">
                         <SelectValue placeholder="Select source column" />
@@ -414,7 +417,7 @@ const EnhancedCSVUploader = ({
                         {detectedHeaders.map(h => (
                           <SelectItem key={h} value={h}>{h}</SelectItem>
                         ))}
-                        <SelectItem value="">(none)</SelectItem>
+                        <SelectItem value="__none__">(none)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
