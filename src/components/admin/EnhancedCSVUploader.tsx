@@ -82,7 +82,8 @@ const EnhancedCSVUploader = ({
       if (!match) return null;
       const id = match[1];
       const gid = u.searchParams.get('gid');
-      let exportUrl = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv`;
+      // Include usp=sharing parameter for public access
+      let exportUrl = `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&usp=sharing`;
       if (gid) exportUrl += `&gid=${gid}`;
       return exportUrl;
     } catch {
@@ -293,41 +294,103 @@ const EnhancedCSVUploader = ({
           {/* Import from Google Sheets */}
           <div className="flex flex-col gap-2">
             <Label htmlFor="gsheet-url" className="text-sm">Import from Google Sheets (public)</Label>
+            <div className="text-xs text-muted-foreground mb-2">
+              Make sure your Google Sheet is publicly accessible: Share → Anyone with the link can view
+            </div>
             <div className="flex gap-2 items-center">
-              <Input id="gsheet-url" placeholder="Paste Google Sheets URL" value={sheetUrl} onChange={(e) => setSheetUrl(e.target.value)} />
+              <Input 
+                id="gsheet-url" 
+                placeholder="https://docs.google.com/spreadsheets/d/..." 
+                value={sheetUrl} 
+                onChange={(e) => setSheetUrl(e.target.value)}
+                disabled={processing}
+              />
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
                 className="flex items-center gap-2"
+                disabled={processing}
                 onClick={async () => {
-                  if (!sheetUrl) return;
-                  const exportUrl = deriveGoogleCsvUrl(sheetUrl);
-                  if (!exportUrl) {
-                    toast.error('Invalid Google Sheets URL');
+                  if (!sheetUrl.trim()) {
+                    toast.error('Please enter a Google Sheets URL');
                     return;
                   }
+                  
+                  const exportUrl = deriveGoogleCsvUrl(sheetUrl);
+                  if (!exportUrl) {
+                    toast.error('Invalid Google Sheets URL. Please ensure it\'s a valid Google Sheets link.');
+                    return;
+                  }
+                  
                   try {
                     setProcessing(true);
-                    const res = await fetch(exportUrl);
-                    if (!res.ok) throw new Error('Fetch failed');
+                    
+                    // Try to fetch with a timeout
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+                    
+                    const res = await fetch(exportUrl, {
+                      signal: controller.signal,
+                      mode: 'cors',
+                      credentials: 'omit'
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    if (!res.ok) {
+                      if (res.status === 403) {
+                        throw new Error('PERMISSION_DENIED');
+                      } else if (res.status === 404) {
+                        throw new Error('NOT_FOUND');
+                      } else {
+                        throw new Error(`HTTP_${res.status}`);
+                      }
+                    }
+                    
                     const csv = await res.text();
+                    
+                    if (!csv || csv.trim().length === 0) {
+                      throw new Error('EMPTY_RESPONSE');
+                    }
+                    
                     setDetectedHeaders(extractHeadersFromCSV(csv));
                     const mapped = Object.keys(headerMap).length ? applyHeaderMappingToFirstLine(csv, headerMap) : csv;
                     const parsed = parseCSV(mapped, category);
                     parsed.fileName = 'Google Sheet';
                     setResults([parsed, ...results]);
                     onFilesProcessed([parsed]);
-                    toast.success(`Imported ${parsed.items.length} items from Google Sheets`);
-                  } catch (e) {
-                    console.error(e);
-                    toast.error('Failed to import from Google Sheets');
+                    toast.success(`Successfully imported ${parsed.items.length} items from Google Sheets`);
+                    setSheetUrl(''); // Clear the URL on success
+                  } catch (e: any) {
+                    console.error('Google Sheets import error:', e);
+                    
+                    if (e.name === 'AbortError') {
+                      toast.error('Import timed out. Please try again or check your internet connection.');
+                    } else if (e.message === 'PERMISSION_DENIED') {
+                      toast.error('Access denied. Please ensure the Google Sheet is publicly accessible.', {
+                        description: 'Go to Share → Anyone with the link can view'
+                      });
+                    } else if (e.message === 'NOT_FOUND') {
+                      toast.error('Google Sheet not found. Please check the URL and try again.');
+                    } else if (e.message === 'EMPTY_RESPONSE') {
+                      toast.error('The Google Sheet appears to be empty or invalid.');
+                    } else if (e.message.includes('CORS') || e.message.includes('cors')) {
+                      toast.error('Browser blocked the request (CORS).', {
+                        description: 'Try downloading the CSV manually and uploading it instead.'
+                      });
+                    } else {
+                      toast.error('Failed to import from Google Sheets', {
+                        description: 'Please ensure the sheet is publicly accessible and try again.'
+                      });
+                    }
                   } finally {
                     setProcessing(false);
                   }
                 }}
               >
-                <LinkIcon className="h-4 w-4" /> Import
+                <LinkIcon className="h-4 w-4" /> 
+                {processing ? 'Importing...' : 'Import'}
               </Button>
             </div>
           </div>
