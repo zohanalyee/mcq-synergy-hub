@@ -15,12 +15,12 @@ import { toast } from "sonner";
 interface PendingContent {
   id: string;
   title: string;
-  description: string;
+  description?: string;
   category: string;
   subject?: string;
   topic?: string;
   created_at: string;
-  fileName?: string;
+  status: string;
   [key: string]: any; // Allow additional properties from database
 }
 
@@ -40,7 +40,7 @@ const PublishWorkflow = () => {
         categoryFilter === 'all' ? undefined : categoryFilter
       );
       // Filter and map the data to match our interface
-      const filteredData = rawData.filter(item => item.title && item.description && item.category);
+      const filteredData = rawData.filter(item => item.title && item.category);
       setPendingContent(filteredData);
     } catch (error: any) {
       toast.error("Failed to load pending content", {
@@ -58,7 +58,7 @@ const PublishWorkflow = () => {
   // Filter content based on search
   const filteredContent = pendingContent.filter(item =>
     item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (item.description && item.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (item.subject && item.subject.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (item.topic && item.topic.toLowerCase().includes(searchTerm.toLowerCase()))
   );

@@ -11,17 +11,17 @@ export interface BulkUploadResult {
 
 export interface PublishStatus {
   id: string;
-  status: 'pending' | 'published' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected';
   publishedAt?: string;
   rejectionReason?: string;
 }
 
-interface ContentSubmissionDB {
+interface ContentItemDB {
   id?: string;
   title: string;
   description?: string;
   category: string;
-  tags?: any;
+  tags?: string[];
   status?: string;
   image_url?: string;
   file_url?: string;
@@ -40,19 +40,17 @@ interface ContentSubmissionDB {
   topic?: string;
   difficulty?: string;
   explanation?: string;
-  options?: any;
+  options?: Record<string, any>;
   correct_option?: string;
   time_limit?: number;
   marks?: number;
-  questions?: any;
+  questions?: Record<string, any>[];
   show_in_subjects?: boolean;
   show_in_syllabus?: boolean;
   show_in_mock_tests?: boolean;
   created_by?: string;
   created_at?: string;
   updated_at?: string;
-  published_at?: string;
-  rejection_reason?: string;
 }
 
 class BulkContentService {
@@ -66,7 +64,7 @@ class BulkContentService {
       // by using basic queries since the RPC doesn't exist yet
       for (const item of items) {
         const { data } = await supabase
-          .from('content_submissions' as any)
+          .from('content_items')
           .select('id')
           .eq('title', item.title)
           .eq('category', item.category)
@@ -88,12 +86,12 @@ class BulkContentService {
   }
 
   // Transform ContentSubmission to database format
-  private transformToDbFormat(item: ContentSubmission): ContentSubmissionDB {
+  private transformToDbFormat(item: ContentSubmission): ContentItemDB {
     return {
       title: item.title,
       description: item.description,
       category: item.category,
-      tags: JSON.stringify(item.tags || []),
+      tags: item.tags || [],
       status: 'pending',
       image_url: item.imageUrl,
       file_url: item.fileUrl,
@@ -112,11 +110,11 @@ class BulkContentService {
       topic: item.topic,
       difficulty: item.difficulty,
       explanation: item.explanation,
-      options: item.options ? JSON.stringify(item.options) : null,
+      options: item.options || {},
       correct_option: item.correctOption,
       time_limit: item.timeLimit,
       marks: item.marks,
-      questions: item.questions ? JSON.stringify(item.questions) : JSON.stringify([]),
+      questions: item.questions || [],
       show_in_subjects: item.showInSubjects,
       show_in_syllabus: item.showInSyllabus,
       show_in_mock_tests: item.showInMockTests,
@@ -152,7 +150,7 @@ class BulkContentService {
           const dbItems = batch.map(item => this.transformToDbFormat(item));
           
           const { data, error } = await supabase
-            .from('content_submissions' as any)
+            .from('content_items')
             .insert(dbItems);
 
           if (error) {
@@ -179,10 +177,9 @@ class BulkContentService {
 
     try {
       const { error } = await supabase
-        .from('content_submissions' as any)
+        .from('content_items')
         .update({ 
-          status: 'published',
-          published_at: new Date().toISOString(),
+          status: 'approved',
           updated_at: new Date().toISOString()
         })
         .in('id', ids)
@@ -204,7 +201,7 @@ class BulkContentService {
   async getPendingContent(category?: string, limit = 100): Promise<any[]> {
     try {
       let query = supabase
-        .from('content_submissions' as any)
+        .from('content_items')
         .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
