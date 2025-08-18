@@ -1,6 +1,37 @@
 import { ContentItem, ContentCategory, ContentSubmission } from "@/interfaces/content";
 import { v4 as uuidv4 } from 'uuid';
 
+// Helper function to safely parse dates
+const parseDate = (dateStr: string | null | undefined): string | null => {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+  
+  // Check if it's already an ISO string
+  const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+  if (isoRegex.test(trimmed)) return trimmed;
+  
+  // Try common date formats
+  const formats = [
+    /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+    /^\d{2}\/\d{2}\/\d{4}$/, // MM/DD/YYYY
+    /^\d{2}-\d{2}-\d{4}$/, // MM-DD-YYYY
+    /^\d{1,2}\/\d{1,2}\/\d{4}$/, // M/D/YYYY
+  ];
+  
+  const hasValidFormat = formats.some(format => format.test(trimmed));
+  if (!hasValidFormat) return null;
+  
+  try {
+    const date = new Date(trimmed);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+  } catch {
+    return null;
+  }
+};
+
 export interface CSVProcessingResult {
   items: ContentSubmission[];
   errors: string[];
@@ -156,7 +187,13 @@ const processCSVRow = (
         (item as any)[header] = parseInt(value) || 0;
         break;
       case 'date':
-        (item as any)[header] = value;
+        const parsedDate = parseDate(value);
+        if (parsedDate) {
+          (item as any)[header] = parsedDate;
+        } else if (value && value.trim()) {
+          // Add warning for invalid date format but don't fail
+          console.warn(`Invalid date format in row: "${value}" for field ${header}`);
+        }
         break;
       default:
         (item as any)[header] = value;

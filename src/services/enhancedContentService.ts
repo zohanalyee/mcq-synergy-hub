@@ -4,6 +4,37 @@ import { ContentItem, ContentSubmission, ContentCategory, ContentStatus } from "
 import { UserRole } from "@/contexts/UserRoleContext";
 import { toast } from "sonner";
 
+// Helper function to safely parse dates
+const parseDate = (dateStr: string | null | undefined): string | null => {
+  if (!dateStr || typeof dateStr !== 'string') return null;
+  
+  const trimmed = dateStr.trim();
+  if (!trimmed) return null;
+  
+  // Check if it's already an ISO string
+  const isoRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+  if (isoRegex.test(trimmed)) return trimmed;
+  
+  // Try common date formats
+  const formats = [
+    /^\d{4}-\d{2}-\d{2}$/, // YYYY-MM-DD
+    /^\d{2}\/\d{2}\/\d{4}$/, // MM/DD/YYYY
+    /^\d{2}-\d{2}-\d{4}$/, // MM-DD-YYYY
+    /^\d{1,2}\/\d{1,2}\/\d{4}$/, // M/D/YYYY
+  ];
+  
+  const hasValidFormat = formats.some(format => format.test(trimmed));
+  if (!hasValidFormat) return null;
+  
+  try {
+    const date = new Date(trimmed);
+    if (isNaN(date.getTime())) return null;
+    return date.toISOString();
+  } catch {
+    return null;
+  }
+};
+
 // Enhanced content service with real-time updates and proper error handling
 export class EnhancedContentService {
   // Submit content with real-time feedback
@@ -28,13 +59,13 @@ export class EnhancedContentService {
         
         // Category-specific fields
         ...(submission.category === 'scholarship' && {
-          deadline: submission.deadline || null,
+          deadline: parseDate(submission.deadline), // Sanitize deadline
           scholarship_type: submission.scholarshipType || null,
           institution: submission.institution || null,
         }),
         
         ...(submission.category === 'job' && {
-          deadline: submission.deadline || null,
+          deadline: parseDate(submission.deadline), // Sanitize deadline
           department: submission.department || null,
           government_level: submission.governmentLevel || null,
           cadre: submission.cadre || null,
