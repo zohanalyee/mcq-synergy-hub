@@ -36,13 +36,22 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
     // Basic validation - category is always required
     if (!item.category) return false;
     
-    // For MCQ and Quiz, check for question instead of title
-    if (item.category === 'mcq' || item.category === 'quiz') {
-      return item.title || (item as any).question; // Either title or question field
+    // MCQ-specific validation
+    if (item.category === 'mcq') {
+      const requiredFields = ['question', 'optionA', 'optionB', 'optionC', 'optionD', 'correctOption', 'subject', 'topic'];
+      return requiredFields.every(field => item[field] && item[field].toString().trim().length > 0);
+    }
+    
+    // Quiz-specific validation
+    if (item.category === 'quiz') {
+      const requiredFields = ['title', 'subject', 'topic'];
+      const hasBasicFields = requiredFields.every(field => item[field] && item[field].toString().trim().length > 0);
+      // Quiz should have either questions array or CSV data
+      return hasBasicFields && (item.questions?.length > 0 || item.csvFile);
     }
     
     // For other categories, title is required
-    return item.title;
+    return item.title && item.title.toString().trim().length > 0;
   };
 
   const validItems = allItems.filter(isValidItem);
@@ -243,7 +252,13 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
           <Alert variant="destructive" className="mb-4">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              {invalidItems.length} items have missing required fields and will be skipped.
+              ❌ {invalidItems.length} validation errors found<br/>
+              {invalidItems.some(item => item.category === 'mcq') && (
+                <span className="text-xs mt-1 block">
+                  MCQ items require: question, optionA, optionB, optionC, optionD, correctOption, subject, topic
+                </span>
+              )}
+              Please fix the errors before submitting.
             </AlertDescription>
           </Alert>
         )}
@@ -280,9 +295,12 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
                           />
                         )}
                       </TableCell>
-                      <TableCell className="font-medium">
-                        {item.title || (item as any).question || <span className="text-red-500">Missing title/question</span>}
-                      </TableCell>
+                       <TableCell className="font-medium">
+                         {item.category === 'mcq' ? 
+                           ((item as any).question || <span className="text-red-500">Missing question</span>) :
+                           (item.title || <span className="text-red-500">Missing title</span>)
+                         }
+                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{item.category}</Badge>
                       </TableCell>

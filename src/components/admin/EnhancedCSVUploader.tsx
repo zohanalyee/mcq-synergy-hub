@@ -130,8 +130,33 @@ const EnhancedCSVUploader = ({
     // Pre-suggest mappings for required fields when possible
     const required = (CSV_TEMPLATES[category] || []).map(f => f.name);
     const suggestions: Record<string, string> = {};
+    
+    // Create mapping variations for common field names
+    const fieldVariations: Record<string, string[]> = {
+      'question': ['question', 'q', 'question text', 'mcq question'],
+      'optionA': ['optiona', 'option a', 'a', 'choice a', 'answer a'],
+      'optionB': ['optionb', 'option b', 'b', 'choice b', 'answer b'], 
+      'optionC': ['optionc', 'option c', 'c', 'choice c', 'answer c'],
+      'optionD': ['optiond', 'option d', 'd', 'choice d', 'answer d'],
+      'correctOption': ['correctoption', 'correct option', 'correct answer', 'answer', 'correct'],
+      'subject': ['subject', 'subject name'],
+      'topic': ['topic', 'topic name'],
+      'difficulty': ['difficulty', 'level'],
+      'explanation': ['explanation', 'explain', 'reason']
+    };
+    
     for (const field of required) {
-      const match = detectedHeaders.find(h => h.toLowerCase() === field.toLowerCase());
+      // First try exact match
+      let match = detectedHeaders.find(h => h.toLowerCase() === field.toLowerCase());
+      
+      // If no exact match, try variations
+      if (!match && fieldVariations[field]) {
+        for (const variation of fieldVariations[field]) {
+          match = detectedHeaders.find(h => h.toLowerCase() === variation);
+          if (match) break;
+        }
+      }
+      
       if (match) suggestions[field] = match;
     }
     setHeaderMap(suggestions);
