@@ -128,6 +128,7 @@ const EnhancedCSVUploader = ({
     }
 
     // Pre-suggest mappings for required fields when possible
+    const currentHeaders = detectedHeaders; // Use local variable instead of state
     const required = (CSV_TEMPLATES[category] || []).map(f => f.name);
     const suggestions: Record<string, string> = {};
     
@@ -147,12 +148,12 @@ const EnhancedCSVUploader = ({
     
     for (const field of required) {
       // First try exact match
-      let match = detectedHeaders.find(h => h.toLowerCase() === field.toLowerCase());
+      let match = currentHeaders.find(h => h.toLowerCase() === field.toLowerCase());
       
       // If no exact match, try variations
       if (!match && fieldVariations[field]) {
         for (const variation of fieldVariations[field]) {
-          match = detectedHeaders.find(h => h.toLowerCase() === variation);
+          match = currentHeaders.find(h => h.toLowerCase() === variation);
           if (match) break;
         }
       }
@@ -379,12 +380,45 @@ const EnhancedCSVUploader = ({
                       throw new Error('EMPTY_RESPONSE');
                     }
                     
-                    setDetectedHeaders(extractHeadersFromCSV(csv));
+                    const headers = extractHeadersFromCSV(csv);
+                    setDetectedHeaders(headers);
+                    
+                    // Auto-build headerMap suggestions if empty
+                    if (Object.keys(headerMap).length === 0) {
+                      const suggestions: Record<string, string> = {};
+                      const fieldVariations: Record<string, string[]> = {
+                        'question': ['question', 'q', 'question text', 'mcq question'],
+                        'optionA': ['optiona', 'option a', 'a', 'choice a', 'answer a'],
+                        'optionB': ['optionb', 'option b', 'b', 'choice b', 'answer b'], 
+                        'optionC': ['optionc', 'option c', 'c', 'choice c', 'answer c'],
+                        'optionD': ['optiond', 'option d', 'd', 'choice d', 'answer d'],
+                        'correctOption': ['correctoption', 'correct option', 'correct answer', 'answer', 'correct'],
+                        'subject': ['subject', 'subject name'],
+                        'topic': ['topic', 'topic name']
+                      };
+                      
+                      for (const [field, variations] of Object.entries(fieldVariations)) {
+                        const match = headers.find(h => 
+                          variations.some(v => h.toLowerCase() === v) || 
+                          h.toLowerCase() === field.toLowerCase()
+                        );
+                        if (match) suggestions[field] = match;
+                      }
+                      setHeaderMap(suggestions);
+                    }
+                    
+                    console.log('Google Sheets import - Category:', category, 'Headers:', headers, 'HeaderMap:', headerMap);
+                    
                     const mapped = Object.keys(headerMap).length ? applyHeaderMappingToFirstLine(csv, headerMap) : csv;
                     const parsed = parseCSV(mapped, category);
                     parsed.fileName = 'Google Sheet';
                     setResults([parsed, ...results]);
                     onFilesProcessed([parsed]);
+                    
+                    if (parsed.warnings.length > 0) {
+                      parsed.warnings.forEach(warning => toast.warning(warning));
+                    }
+                    
                     toast.success(`Successfully imported ${parsed.items.length} items from Google Sheets`);
                     setSheetUrl(''); // Clear the URL on success
                   } catch (e: any) {

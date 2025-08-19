@@ -34,12 +34,19 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
   // Category-specific validation
   const isValidItem = (item: any) => {
     // Basic validation - category is always required
-    if (!item.category) return false;
+    if (!item.category) {
+      console.log('Invalid item - missing category:', item);
+      return false;
+    }
     
     // MCQ-specific validation
     if (item.category === 'mcq') {
       const requiredFields = ['question', 'optionA', 'optionB', 'optionC', 'optionD', 'correctOption', 'subject', 'topic'];
-      return requiredFields.every(field => item[field] && item[field].toString().trim().length > 0);
+      const missingFields = requiredFields.filter(field => !item[field] || !item[field].toString().trim());
+      if (missingFields.length > 0) {
+        console.log('Invalid MCQ - missing fields:', missingFields, 'Item:', item);
+      }
+      return missingFields.length === 0;
     }
     
     // Quiz-specific validation
@@ -51,7 +58,11 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
     }
     
     // For other categories, title is required
-    return item.title && item.title.toString().trim().length > 0;
+    const isValid = item.title && item.title.toString().trim().length > 0;
+    if (!isValid) {
+      console.log('Invalid item - missing title:', item);
+    }
+    return isValid;
   };
 
   const validItems = allItems.filter(isValidItem);

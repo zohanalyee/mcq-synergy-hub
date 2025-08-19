@@ -107,13 +107,91 @@ export const CSV_TEMPLATES: Record<ContentCategory, CSVField[]> = {
   ]
 };
 
+// Quote-aware CSV line parser
+const parseCSVLine = (line: string): string[] => {
+  const result: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  let i = 0;
+  
+  while (i < line.length) {
+    const char = line[i];
+    
+    if (char === '"') {
+      if (inQuotes && line[i + 1] === '"') {
+        // Escaped quote
+        current += '"';
+        i += 2;
+      } else {
+        // Toggle quote state
+        inQuotes = !inQuotes;
+        i++;
+      }
+    } else if (char === ',' && !inQuotes) {
+      // Field separator
+      result.push(current.trim());
+      current = '';
+      i++;
+    } else {
+      current += char;
+      i++;
+    }
+  }
+  
+  // Add the last field
+  result.push(current.trim());
+  return result;
+};
+
 // Helper function to normalize header names
 const normalizeHeader = (header: string): string => {
-  return header.toLowerCase()
-    .replace(/[^a-z0-9]/g, '')
-    .replace(/^option([abcd])$/, 'option$1')
-    .replace(/^correctanswer$/, 'correctoption')
-    .replace(/^answer$/, 'correctoption');
+  // Remove BOM and clean the header
+  let cleaned = header.replace(/^\uFEFF/, '').trim().toLowerCase();
+  
+  // Handle common variations
+  const variations: Record<string, string> = {
+    'question text': 'question',
+    'mcq question': 'question',
+    'q': 'question',
+    'option a': 'optiona',
+    'option b': 'optionb', 
+    'option c': 'optionc',
+    'option d': 'optiond',
+    'choice a': 'optiona',
+    'choice b': 'optionb',
+    'choice c': 'optionc', 
+    'choice d': 'optiond',
+    'answer a': 'optiona',
+    'answer b': 'optionb',
+    'answer c': 'optionc',
+    'answer d': 'optiond',
+    'correct answer': 'correctoption',
+    'correct option': 'correctoption',
+    'correct': 'correctoption',
+    'answer': 'correctoption',
+    'subject name': 'subject',
+    'topic name': 'topic',
+    'level': 'difficulty'
+  };
+  
+  // Try direct match first
+  if (variations[cleaned]) {
+    return variations[cleaned];
+  }
+  
+  // Remove all non-alphanumeric characters and try again
+  const normalized = cleaned.replace(/[^a-z0-9]/g, '');
+  return variations[normalized] || normalized;
+};
+
+// Auto-detect MCQ format based on headers
+const detectMCQFormat = (headers: string[]): boolean => {
+  const normalizedHeaders = headers.map(normalizeHeader);
+  const mcqIndicators = ['question', 'optiona', 'optionb', 'optionc', 'optiond', 'correctoption'];
+  const foundIndicators = mcqIndicators.filter(indicator => 
+    normalizedHeaders.includes(indicator)
+  );
+  return foundIndicators.length >= 4; // Need at least question + 3 options
 };
 
 export const parseCSV = (csvContent: string, category: ContentCategory): CSVProcessingResult => {
@@ -130,26 +208,39 @@ export const parseCSV = (csvContent: string, category: ContentCategory): CSVProc
       return result;
     }
 
-    // Normalize headers and create index map
-    const rawHeaders = lines[0].split(',').map(h => h.trim());
+    // Parse headers with quote-aware parsing
+    const rawHeaders = parseCSVLine(lines[0]);
     const normalizedHeaders = rawHeaders.map(normalizeHeader);
-    const template = CSV_TEMPLATES[category];
     
-    // Create header index mapping
+    // Auto-detect MCQ format if wrong category selected
+    const isMCQFormat = detectMCQFormat(rawHeaders);
+    let actualCategory = category;
+    
+    if (isMCQFormat && category !== 'mcq') {
+      actualCategory = 'mcq';
+      result.warnings.push(`Auto-detected MCQ format. Processing as MCQ instead of ${category}.`);
+    }
+    
+    const template = CSV_TEMPLATES[actualCategory];
+    
+    // Create header index mapping with normalized headers
     const headerIndexMap: Record<string, number> = {};
     for (let i = 0; i < normalizedHeaders.length; i++) {
       const normalized = normalizedHeaders[i];
-      const templateField = template.find(f => 
-        normalizeHeader(f.name) === normalized ||
-        f.name.toLowerCase() === normalized
-      );
+      const templateField = template.find(f => normalizeHeader(f.name) === normalized);
       if (templateField) {
         headerIndexMap[templateField.name] = i;
       }
     }
     
-    // Validate required fields - skip title/description for MCQs
-    const requiredFields = template.filter(field => field.required);
+    // For MCQs, don't require title/description - they'll be derived from question
+    const requiredFields = template.filter(field => {
+      if (actualCategory === 'mcq' && (field.name === 'title' || field.name === 'description')) {
+        return false;
+      }
+      return field.required;
+    });
+    
     const missingRequired = requiredFields.filter(field => 
       !(field.name in headerIndexMap)
     );
@@ -159,14 +250,14 @@ export const parseCSV = (csvContent: string, category: ContentCategory): CSVProc
       return result;
     }
 
-    // Process data rows
+    // Process data rows with quote-aware parsing
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
       if (!line.trim()) continue;
 
       try {
-        const values = line.split(',').map(v => v.trim());
-        const item = processCSVRow(headerIndexMap, values, category, template);
+        const values = parseCSVLine(line);
+        const item = processCSVRow(headerIndexMap, values, actualCategory, template);
         
         if (item) {
           result.items.push(item);
@@ -224,9 +315,23 @@ const processCSVRow = (
     }
   }
 
-  // For MCQs, map question to title if no title exists
-  if (category === 'mcq' && !item.title && (item as any).question) {
-    item.title = (item as any).question;
+  // For MCQs, map question to title and normalize correct option
+  if (category === 'mcq') {
+    if (!item.title && (item as any).question) {
+      item.title = (item as any).question;
+    }
+    
+    // Normalize correct option to A-D
+    if ((item as any).correctOption) {
+      const correct = (item as any).correctOption.toString().toUpperCase();
+      if (['A', 'B', 'C', 'D'].includes(correct)) {
+        (item as any).correctOption = correct;
+      } else if (['1', '2', '3', '4'].includes(correct)) {
+        // Convert 1-4 to A-D
+        const mapping: Record<string, string> = { '1': 'A', '2': 'B', '3': 'C', '4': 'D' };
+        (item as any).correctOption = mapping[correct];
+      }
+    }
   }
 
   // Validate required fields
