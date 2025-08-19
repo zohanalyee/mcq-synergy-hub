@@ -91,25 +91,44 @@ class BulkContentService {
     const unique: ContentSubmission[] = [];
     
     try {
-      // For now, we'll implement a simpler duplicate check
-      // by using basic queries since the RPC doesn't exist yet
       for (const item of items) {
-        const { data } = await supabase
+        // Get the title to check (use question for MCQs if no title)
+        let checkTitle = item.title;
+        if (item.category === 'mcq' && !checkTitle && (item as any).question) {
+          checkTitle = (item as any).question;
+        }
+
+        if (!checkTitle) {
+          unique.push(item);
+          continue;
+        }
+
+        let query = supabase
           .from('content_items')
           .select('id')
-          .eq('title', item.title)
           .eq('category', item.category)
           .limit(1);
+
+        // For MCQs, check by question content and subject/topic
+        if (item.category === 'mcq') {
+          query = query
+            .eq('title', checkTitle)
+            .eq('subject', item.subject)
+            .eq('topic', item.topic);
+        } else {
+          query = query.eq('title', checkTitle);
+        }
+
+        const { data } = await query;
         
         if (data && data.length > 0) {
-          duplicates.push(`"${item.title}" already exists`);
+          duplicates.push(`"${checkTitle}" already exists`);
         } else {
           unique.push(item);
         }
       }
     } catch (error) {
       console.error('Error checking duplicates:', error);
-      // If we can't check duplicates, assume all are unique
       return { duplicates: [], unique: items };
     }
 
@@ -118,15 +137,32 @@ class BulkContentService {
 
   // Transform ContentSubmission to database format
   private transformToDbFormat(item: ContentSubmission): ContentItemDB {
+    // For MCQs, use question as title if no title exists
+    let title = item.title;
+    if (item.category === 'mcq' && !title && (item as any).question) {
+      title = (item as any).question;
+    }
+
+    // For MCQs, construct options object from optionA-D
+    let options = item.options || {};
+    if (item.category === 'mcq' && (!options || Object.keys(options).length === 0)) {
+      options = {
+        A: (item as any).optionA || '',
+        B: (item as any).optionB || '',
+        C: (item as any).optionC || '',
+        D: (item as any).optionD || ''
+      };
+    }
+
     return {
-      title: item.title,
-      description: item.description,
+      title: title,
+      description: item.description || (item.category === 'mcq' ? (item as any).question : ''),
       category: item.category,
       tags: item.tags || [],
       status: 'pending',
       image_url: item.imageUrl,
       file_url: item.fileUrl,
-      deadline: parseDate(item.deadline), // Sanitize deadline
+      deadline: parseDate(item.deadline),
       department: item.department,
       government_level: item.governmentLevel,
       cadre: item.cadre,
@@ -141,8 +177,8 @@ class BulkContentService {
       topic: item.topic,
       difficulty: item.difficulty,
       explanation: item.explanation,
-      options: item.options || {},
-      correct_option: item.correctOption,
+      options: options,
+      correct_option: item.correctOption?.toUpperCase(),
       time_limit: item.timeLimit,
       marks: item.marks,
       questions: item.questions || [],

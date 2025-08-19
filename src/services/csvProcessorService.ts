@@ -107,6 +107,15 @@ export const CSV_TEMPLATES: Record<ContentCategory, CSVField[]> = {
   ]
 };
 
+// Helper function to normalize header names
+const normalizeHeader = (header: string): string => {
+  return header.toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+    .replace(/^option([abcd])$/, 'option$1')
+    .replace(/^correctanswer$/, 'correctoption')
+    .replace(/^answer$/, 'correctoption');
+};
+
 export const parseCSV = (csvContent: string, category: ContentCategory): CSVProcessingResult => {
   const result: CSVProcessingResult = {
     items: [],
@@ -121,13 +130,28 @@ export const parseCSV = (csvContent: string, category: ContentCategory): CSVProc
       return result;
     }
 
-    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    // Normalize headers and create index map
+    const rawHeaders = lines[0].split(',').map(h => h.trim());
+    const normalizedHeaders = rawHeaders.map(normalizeHeader);
     const template = CSV_TEMPLATES[category];
     
-    // Validate headers
+    // Create header index mapping
+    const headerIndexMap: Record<string, number> = {};
+    for (let i = 0; i < normalizedHeaders.length; i++) {
+      const normalized = normalizedHeaders[i];
+      const templateField = template.find(f => 
+        normalizeHeader(f.name) === normalized ||
+        f.name.toLowerCase() === normalized
+      );
+      if (templateField) {
+        headerIndexMap[templateField.name] = i;
+      }
+    }
+    
+    // Validate required fields - skip title/description for MCQs
     const requiredFields = template.filter(field => field.required);
     const missingRequired = requiredFields.filter(field => 
-      !headers.includes(field.name.toLowerCase())
+      !(field.name in headerIndexMap)
     );
     
     if (missingRequired.length > 0) {
@@ -142,7 +166,7 @@ export const parseCSV = (csvContent: string, category: ContentCategory): CSVProc
 
       try {
         const values = line.split(',').map(v => v.trim());
-        const item = processCSVRow(headers, values, category, template);
+        const item = processCSVRow(headerIndexMap, values, category, template);
         
         if (item) {
           result.items.push(item);
@@ -160,7 +184,7 @@ export const parseCSV = (csvContent: string, category: ContentCategory): CSVProc
 };
 
 const processCSVRow = (
-  headers: string[], 
+  headerIndexMap: Record<string, number>, 
   values: string[], 
   category: ContentCategory,
   template: CSVField[]
@@ -170,40 +194,46 @@ const processCSVRow = (
     tags: []
   };
 
-  for (let i = 0; i < headers.length && i < values.length; i++) {
-    const header = headers[i];
-    const value = values[i];
+  // Process values using header index map
+  for (const [fieldName, index] of Object.entries(headerIndexMap)) {
+    if (index >= values.length) continue;
     
+    const value = values[index]?.trim();
     if (!value) continue;
 
-    const field = template.find(f => f.name.toLowerCase() === header);
+    const field = template.find(f => f.name === fieldName);
     if (!field) continue;
 
     switch (field.type) {
       case 'array':
-        (item as any)[header] = value.split(',').map(v => v.trim());
+        (item as any)[fieldName] = value.split(',').map(v => v.trim());
         break;
       case 'number':
-        (item as any)[header] = parseInt(value) || 0;
+        (item as any)[fieldName] = parseInt(value) || 0;
         break;
       case 'date':
         const parsedDate = parseDate(value);
         if (parsedDate) {
-          (item as any)[header] = parsedDate;
+          (item as any)[fieldName] = parsedDate;
         } else if (value && value.trim()) {
-          // Add warning for invalid date format but don't fail
-          console.warn(`Invalid date format in row: "${value}" for field ${header}`);
+          console.warn(`Invalid date format in row: "${value}" for field ${fieldName}`);
         }
         break;
       default:
-        (item as any)[header] = value;
+        (item as any)[fieldName] = value;
     }
+  }
+
+  // For MCQs, map question to title if no title exists
+  if (category === 'mcq' && !item.title && (item as any).question) {
+    item.title = (item as any).question;
   }
 
   // Validate required fields
   const requiredFields = template.filter(f => f.required);
   for (const field of requiredFields) {
-    if (!item[field.name as keyof ContentSubmission]) {
+    const value = item[field.name as keyof ContentSubmission] || (item as any)[field.name];
+    if (!value || (typeof value === 'string' && !value.trim())) {
       throw new Error(`Missing required field: ${field.name}`);
     }
   }
