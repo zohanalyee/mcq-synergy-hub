@@ -38,8 +38,8 @@ const TopicManager = () => {
             </SelectTrigger>
             <SelectContent>
               {subjects.map((subject) => (
-                <SelectItem key={subject.title} value={subject.title}>
-                  {subject.title}
+                <SelectItem key={subject.name || subject.id} value={subject.name || ''}>
+                  {subject.name}
                 </SelectItem>
               ))}
             </SelectContent>

@@ -26,8 +26,15 @@ export const getAllContent = getAllContentBase;
 export const updateContentStatus = updateContentStatusBase;
 export const deleteContent = deleteContentBase;
 
-// Use enhanced service for subjects and topics
-export const getSubjectsAndTopics = EnhancedContentService.getSubjectsAndTopics;
+// Use enhanced service for subjects and topics but fall back to Supabase services
+export const getSubjectsAndTopics = async () => {
+  try {
+    return await EnhancedContentService.getSubjectsAndTopics();
+  } catch (error) {
+    console.error("Error fetching subjects and topics:", error);
+    return { subjects: [], topics: {} };
+  }
+};
 
 // Export quiz-related functions
 export { saveQuizAttempt, getUserQuizAttempts };

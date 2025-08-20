@@ -1,13 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { Topic, TopicsData } from "@/data/topicsData";
-import { getSubjects } from "@/services/subjectService";
-import { getTopics, addTopic, removeTopic } from "@/services/topicService";
+import { useSupabaseSubjects } from "./useSupabaseSubjects";
+import { useSupabaseTopics } from "./useSupabaseTopics";
 import { toast } from "sonner";
 
 export function useTopicManagement() {
-  const [allTopics, setAllTopics] = useState<TopicsData>(getTopics());
-  const [subjects, setSubjects] = useState(getSubjects());
+  const { subjects } = useSupabaseSubjects();
+  const { allTopics, handleAddTopic, handleRemoveTopic } = useSupabaseTopics();
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [title, setTitle] = useState('');
@@ -18,42 +18,38 @@ export function useTopicManagement() {
 
   useEffect(() => {
     if (subjects.length > 0 && !selectedSubject) {
-      setSelectedSubject(subjects[0].title);
+      setSelectedSubject(subjects[0].name || '');
     }
   }, [subjects, selectedSubject]);
 
-  const handleAddTopic = () => {
+  const handleAddTopicLocal = async () => {
     if (!title || !content || !selectedSubject) {
       toast.error("Please fill out all required fields");
       return;
     }
 
-    const newTopic: Topic = {
-      title,
-      content,
-    };
+    const subject = subjects.find(s => s.name === selectedSubject);
+    if (!subject) {
+      toast.error("Selected subject not found");
+      return;
+    }
 
-    const added = addTopic(selectedSubject, newTopic);
+    const result = await handleAddTopic(subject.id!, selectedSubject, {
+      name: title,
+      description: content,
+    });
     
-    if (added) {
-      setAllTopics(getTopics());
+    if (result) {
       setIsAddDialogOpen(false);
       resetForm();
-      toast.success(`Topic "${title}" added to ${selectedSubject}`);
-    } else {
-      toast.error("Failed to add topic");
     }
   };
 
-  const handleRemoveTopic = (topicTitle: string) => {
-    if (window.confirm(`Are you sure you want to delete the topic "${topicTitle}"?`)) {
-      const removed = removeTopic(selectedSubject, topicTitle);
-      
-      if (removed) {
-        setAllTopics(getTopics());
-        toast.success(`Topic "${topicTitle}" removed successfully`);
-      } else {
-        toast.error("Failed to remove topic");
+  const handleRemoveTopicLocal = async (topicName: string) => {
+    if (window.confirm(`Are you sure you want to delete the topic "${topicName}"?`)) {
+      const topic = currentTopics.find(t => t.name === topicName);
+      if (topic && topic.id) {
+        await handleRemoveTopic(topic.id, selectedSubject, topicName);
       }
     }
   };
@@ -75,8 +71,8 @@ export function useTopicManagement() {
     content,
     setContent,
     currentTopics,
-    handleAddTopic,
-    handleRemoveTopic,
+    handleAddTopic: handleAddTopicLocal,
+    handleRemoveTopic: handleRemoveTopicLocal,
     resetForm
   };
 }

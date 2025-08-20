@@ -1,12 +1,12 @@
 
 import { FileText, Trash } from "lucide-react";
-import { Topic } from "@/data/topicsData";
+import { Topic } from "@/services/supabaseTopicService";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TopicListProps {
   topics: Topic[];
-  onRemoveTopic: (topicTitle: string) => void;
+  onRemoveTopic: (topicName: string) => void;
 }
 
 const TopicList: React.FC<TopicListProps> = ({ topics, onRemoveTopic }) => {
@@ -30,24 +30,24 @@ const TopicList: React.FC<TopicListProps> = ({ topics, onRemoveTopic }) => {
         </TableHeader>
         <TableBody>
           {topics.map((topic) => (
-            <TableRow key={topic.title}>
+            <TableRow key={topic.name || topic.id}>
               <TableCell>
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-primary" />
-                  <span className="font-medium">{topic.title}</span>
+                  <span className="font-medium">{topic.name}</span>
                 </div>
               </TableCell>
               <TableCell className="hidden md:table-cell">
-                {topic.content.length > 100 
-                  ? `${topic.content.substring(0, 100)}...`
-                  : topic.content}
+                {topic.description && topic.description.length > 100 
+                  ? `${topic.description.substring(0, 100)}...`
+                  : topic.description || 'No description'}
               </TableCell>
               <TableCell className="text-right">
                 <Button
                   variant="outline"
                   size="icon"
                   className="text-destructive hover:bg-destructive/10"
-                  onClick={() => onRemoveTopic(topic.title)}
+                  onClick={() => onRemoveTopic(topic.name || '')}
                 >
                   <Trash className="h-4 w-4" />
                 </Button>

@@ -183,13 +183,13 @@ const EnhancedCSVUploader = ({
         } else if (file.name.endsWith('.xlsx')) {
           const csv = await getFirstSheetCSV(file);
           const mapped = Object.keys(headerMap).length ? applyHeaderMappingToFirstLine(csv, headerMap) : csv;
-          const result = parseCSV(mapped, category);
+          const result = await parseCSV(mapped, category);
           result.fileName = file.name;
           processResults.push(result);
         } else {
           const csv = await file.text();
           const mapped = Object.keys(headerMap).length ? applyHeaderMappingToFirstLine(csv, headerMap) : csv;
-          const result = parseCSV(mapped, category);
+          const result = await parseCSV(mapped, category);
           result.fileName = file.name;
           processResults.push(result);
         }
@@ -410,7 +410,7 @@ const EnhancedCSVUploader = ({
                     console.log('Google Sheets import - Category:', category, 'Headers:', headers, 'HeaderMap:', headerMap);
                     
                     const mapped = Object.keys(headerMap).length ? applyHeaderMappingToFirstLine(csv, headerMap) : csv;
-                    const parsed = parseCSV(mapped, category);
+                    const parsed = await parseCSV(mapped, category);
                     parsed.fileName = 'Google Sheet';
                     setResults([parsed, ...results]);
                     onFilesProcessed([parsed]);

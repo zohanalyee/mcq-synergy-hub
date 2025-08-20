@@ -1,5 +1,7 @@
 import { ContentItem, ContentCategory, ContentSubmission } from "@/interfaces/content";
 import { v4 as uuidv4 } from 'uuid';
+import { findOrCreateSubject } from "./supabaseSubjectService";
+import { findOrCreateTopic } from "./supabaseTopicService";
 
 // Helper function to safely parse dates
 const parseDate = (dateStr: string | null | undefined): string | null => {
@@ -194,7 +196,7 @@ const detectMCQFormat = (headers: string[]): boolean => {
   return foundIndicators.length >= 4; // Need at least question + 3 options
 };
 
-export const parseCSV = (csvContent: string, category: ContentCategory): CSVProcessingResult => {
+export const parseCSV = async (csvContent: string, category: ContentCategory): Promise<CSVProcessingResult> => {
   const result: CSVProcessingResult = {
     items: [],
     errors: [],
@@ -257,7 +259,7 @@ export const parseCSV = (csvContent: string, category: ContentCategory): CSVProc
 
       try {
         const values = parseCSVLine(line);
-        const item = processCSVRow(headerIndexMap, values, actualCategory, template);
+        const item = await processCSVRow(headerIndexMap, values, actualCategory, template);
         
         if (item) {
           result.items.push(item);
@@ -274,12 +276,12 @@ export const parseCSV = (csvContent: string, category: ContentCategory): CSVProc
   return result;
 };
 
-const processCSVRow = (
+const processCSVRow = async (
   headerIndexMap: Record<string, number>, 
   values: string[], 
   category: ContentCategory,
   template: CSVField[]
-): ContentSubmission | null => {
+): Promise<ContentSubmission | null> => {
   const item: Partial<ContentSubmission> = {
     category,
     tags: []
@@ -319,6 +321,20 @@ const processCSVRow = (
   if (category === 'mcq') {
     if (!item.title && (item as any).question) {
       item.title = (item as any).question;
+    }
+    
+    // Ensure subject and topic exist in database
+    if ((item as any).subject) {
+      try {
+        const subjectName = (item as any).subject.trim();
+        const subject = await findOrCreateSubject(subjectName, 'mcq');
+        if (subject && (item as any).topic) {
+          const topicName = (item as any).topic.trim();
+          await findOrCreateTopic(subject.id!, topicName);
+        }
+      } catch (error) {
+        console.warn(`Failed to create subject/topic: ${error}`);
+      }
     }
     
     // Normalize correct option to A-D
