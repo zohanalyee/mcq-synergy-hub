@@ -7,13 +7,46 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
   }
   public: {
     Tables: {
+      content_downloads: {
+        Row: {
+          content_filter: Json | null
+          created_at: string
+          download_type: string
+          download_url: string | null
+          expires_at: string | null
+          file_name: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          content_filter?: Json | null
+          created_at?: string
+          download_type: string
+          download_url?: string | null
+          expires_at?: string | null
+          file_name?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          content_filter?: Json | null
+          created_at?: string
+          download_type?: string
+          download_url?: string | null
+          expires_at?: string | null
+          file_name?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       content_items: {
         Row: {
           cadre: string | null
@@ -33,23 +66,29 @@ export type Database = {
           id: string
           image_url: string | null
           institution: string | null
+          is_featured: boolean | null
+          last_used_at: string | null
           marks: number | null
           meta_description: string | null
           meta_keywords: string | null
           meta_title: string | null
           options: Json | null
+          question_type: string | null
           questions: Json | null
+          reference_material: string | null
           scholarship_type: string | null
           show_in_mock_tests: boolean | null
           show_in_subjects: boolean | null
           show_in_syllabus: boolean | null
           status: string
           subject: string | null
+          subtopic: string | null
           tags: string[] | null
           time_limit: number | null
           title: string
           topic: string | null
           updated_at: string
+          usage_count: number | null
         }
         Insert: {
           cadre?: string | null
@@ -69,23 +108,29 @@ export type Database = {
           id?: string
           image_url?: string | null
           institution?: string | null
+          is_featured?: boolean | null
+          last_used_at?: string | null
           marks?: number | null
           meta_description?: string | null
           meta_keywords?: string | null
           meta_title?: string | null
           options?: Json | null
+          question_type?: string | null
           questions?: Json | null
+          reference_material?: string | null
           scholarship_type?: string | null
           show_in_mock_tests?: boolean | null
           show_in_subjects?: boolean | null
           show_in_syllabus?: boolean | null
           status?: string
           subject?: string | null
+          subtopic?: string | null
           tags?: string[] | null
           time_limit?: number | null
           title: string
           topic?: string | null
           updated_at?: string
+          usage_count?: number | null
         }
         Update: {
           cadre?: string | null
@@ -105,25 +150,67 @@ export type Database = {
           id?: string
           image_url?: string | null
           institution?: string | null
+          is_featured?: boolean | null
+          last_used_at?: string | null
           marks?: number | null
           meta_description?: string | null
           meta_keywords?: string | null
           meta_title?: string | null
           options?: Json | null
+          question_type?: string | null
           questions?: Json | null
+          reference_material?: string | null
           scholarship_type?: string | null
           show_in_mock_tests?: boolean | null
           show_in_subjects?: boolean | null
           show_in_syllabus?: boolean | null
           status?: string
           subject?: string | null
+          subtopic?: string | null
           tags?: string[] | null
           time_limit?: number | null
           title?: string
           topic?: string | null
           updated_at?: string
+          usage_count?: number | null
         }
         Relationships: []
+      }
+      content_question_tags: {
+        Row: {
+          content_id: string | null
+          created_at: string
+          id: string
+          tag_id: string | null
+        }
+        Insert: {
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          tag_id?: string | null
+        }
+        Update: {
+          content_id?: string | null
+          created_at?: string
+          id?: string
+          tag_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_question_tags_content_id_fkey"
+            columns: ["content_id"]
+            isOneToOne: false
+            referencedRelation: "content_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "content_question_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "question_tags"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_submissions: {
         Row: {
@@ -242,6 +329,54 @@ export type Database = {
         }
         Relationships: []
       }
+      custom_test_sessions: {
+        Row: {
+          created_at: string
+          difficulty_levels: Json | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          question_count: number
+          questions: Json | null
+          session_name: string
+          subjects: Json | null
+          subtopics: Json | null
+          time_limit: number
+          topics: Json | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          difficulty_levels?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question_count?: number
+          questions?: Json | null
+          session_name: string
+          subjects?: Json | null
+          subtopics?: Json | null
+          time_limit?: number
+          topics?: Json | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          difficulty_levels?: Json | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          question_count?: number
+          questions?: Json | null
+          session_name?: string
+          subjects?: Json | null
+          subtopics?: Json | null
+          time_limit?: number
+          topics?: Json | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string | null
@@ -317,6 +452,30 @@ export type Database = {
         }
         Relationships: []
       }
+      question_tags: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           category: string | null
@@ -343,6 +502,38 @@ export type Database = {
           name?: string
         }
         Relationships: []
+      }
+      subtopics: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          topic_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          topic_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          topic_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subtopics_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       test_attempts: {
         Row: {
