@@ -32,6 +32,7 @@ import Feedback from "./pages/Feedback";
 import MCQs from "./pages/MCQs";
 import Quizzes from "./pages/Quizzes";
 import SubmitContent from "./pages/SubmitContent";
+import QuestionBank from "./pages/QuestionBank";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -84,6 +85,7 @@ const App = () => {
                 <Route path="/past-papers" element={<PastPapers />} />
                 <Route path="/mcqs" element={<MCQs />} />
                 <Route path="/quizzes" element={<Quizzes />} />
+                <Route path="/question-bank" element={<QuestionBank />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
