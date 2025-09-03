@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import { 
   Database, 
@@ -10,10 +11,15 @@ import {
   FileQuestion, 
   Search, 
   BarChart3,
-  Plus
+  Plus,
+  Upload,
+  Info,
+  Settings
 } from "lucide-react";
 import { useAdminContent } from "@/hooks/useAdminContent";
 import EnhancedContentTable from "@/components/admin/content/EnhancedContentTable";
+import BulkUploadDialog from "./question-bank/BulkUploadDialog";
+import ManualQuestionDialog from "./question-bank/ManualQuestionDialog";
 import { ContentItem } from "@/interfaces/content";
 
 const QuestionBankManager = () => {
@@ -82,6 +88,10 @@ const QuestionBankManager = () => {
     toast.info("Question deletion will be available through the main content manager");
   };
 
+  const handleRefresh = () => {
+    window.location.reload();
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -92,20 +102,28 @@ const QuestionBankManager = () => {
             Question Bank Manager
           </h2>
           <p className="text-muted-foreground">
-            Manage, filter, and export questions from the central question bank
+            Central repository for all questions - feeds into all tests, syllabus, and job preparation modules
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button onClick={handleGenerateTest} variant="outline" size="sm">
-            <FileQuestion className="h-4 w-4 mr-2" />
-            Generate Test
-          </Button>
-          <Button onClick={() => handleExportQuestions('pdf')} variant="outline" size="sm">
-            <Download className="h-4 w-4 mr-2" />
-            Export PDF
+          <ManualQuestionDialog onQuestionAdded={handleRefresh} />
+          <BulkUploadDialog onUploadComplete={handleRefresh} />
+          <Button variant="outline" size="sm">
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
           </Button>
         </div>
       </div>
+
+      {/* Info Alert */}
+      <Alert>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          <strong>Single Source of Truth:</strong> All questions added here are automatically available across 
+          Custom Syllabus Builder, Job Tests, Subject Tests, and Practice Modules. No need to add questions 
+          separately in each category.
+        </AlertDescription>
+      </Alert>
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -153,6 +171,10 @@ const QuestionBankManager = () => {
             <Search className="h-4 w-4 mr-2" />
             Browse Questions
           </TabsTrigger>
+          <TabsTrigger value="manage">
+            <Settings className="h-4 w-4 mr-2" />
+            Manage Questions
+          </TabsTrigger>
           <TabsTrigger value="analytics">
             <BarChart3 className="h-4 w-4 mr-2" />
             Analytics
@@ -165,13 +187,69 @@ const QuestionBankManager = () => {
 
         <TabsContent value="browse" className="space-y-4">
           <div className="bg-card rounded-lg border p-4">
-            <h3 className="text-lg font-semibold mb-4">MCQ Questions</h3>
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold">All Questions in Question Bank</h3>
+              <Badge variant="outline" className="px-3 py-1">
+                {stats.totalQuestions} Total Questions
+              </Badge>
+            </div>
             <EnhancedContentTable
               content={mcqContent}
               onEditClick={handleEditClick}
               onUpdateStatus={handleUpdateStatus}
               onDelete={handleDelete}
             />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="manage" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Quick Actions</CardTitle>
+                <CardDescription>Add questions to the Question Bank</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid gap-3">
+                  <ManualQuestionDialog onQuestionAdded={handleRefresh} />
+                  <BulkUploadDialog onUploadComplete={handleRefresh} />
+                </div>
+                <div className="text-sm text-muted-foreground">
+                  <p>• Questions added here are immediately available across all modules</p>
+                  <p>• Auto-validation ensures data consistency</p>
+                  <p>• Subjects/topics are created automatically if missing</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Integration Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Integration Status</CardTitle>
+                <CardDescription>Modules using Question Bank</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-2 border rounded">
+                    <span>Custom Syllabus Builder</span>
+                    <Badge variant="default">Connected</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border rounded">
+                    <span>Job Test Preparation</span>
+                    <Badge variant="default">Connected</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border rounded">
+                    <span>Subject-wise Practice</span>
+                    <Badge variant="default">Connected</Badge>
+                  </div>
+                  <div className="flex items-center justify-between p-2 border rounded">
+                    <span>Topic-wise Quizzes</span>
+                    <Badge variant="default">Connected</Badge>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 

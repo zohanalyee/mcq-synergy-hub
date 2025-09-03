@@ -17,6 +17,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="mb-6 flex flex-wrap">
+        <TabsTrigger value="question-bank" className="flex items-center gap-2 border-2 border-primary/20">
+          <Database className="h-4 w-4" />
+          Question Bank ⭐
+        </TabsTrigger>
         <TabsTrigger value="submit-content" className="flex items-center gap-2">
           <Plus className="h-4 w-4" />
           Submit Content
@@ -29,10 +33,6 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="quiz">Quizzes</TabsTrigger>
         <TabsTrigger value="job">Jobs</TabsTrigger>
         <TabsTrigger value="past_paper">Past Papers</TabsTrigger>
-        <TabsTrigger value="question-bank" className="flex items-center gap-2">
-          <Database className="h-4 w-4" />
-          Question Bank
-        </TabsTrigger>
         <TabsTrigger value="analytics" className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4" />
           Analytics
