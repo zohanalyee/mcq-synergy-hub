@@ -32,7 +32,7 @@ const AdminHeader = ({
             Admin Panel
           </h1>
           <p className="text-muted-foreground">
-            Manage content, subjects, topics, quizzes, MCQs, and job tests.
+            Manage content, question bank, analytics, subjects, topics, quizzes, MCQs, and job tests.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-3">

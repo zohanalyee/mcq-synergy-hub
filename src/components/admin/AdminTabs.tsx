@@ -4,8 +4,9 @@ import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
 import JobTestManager from "./JobTestManager";
 import QuizManager from "./QuizManager";
+import QuestionBankManager from "./QuestionBankManager";
 import AdminContentSubmission from "./AdminContentSubmission";
-import { GraduationCap, FileText, List, Plus } from "lucide-react";
+import { GraduationCap, FileText, List, Plus, Database, Download, BarChart3 } from "lucide-react";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -28,6 +29,14 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="quiz">Quizzes</TabsTrigger>
         <TabsTrigger value="job">Jobs</TabsTrigger>
         <TabsTrigger value="past_paper">Past Papers</TabsTrigger>
+        <TabsTrigger value="question-bank" className="flex items-center gap-2">
+          <Database className="h-4 w-4" />
+          Question Bank
+        </TabsTrigger>
+        <TabsTrigger value="analytics" className="flex items-center gap-2">
+          <BarChart3 className="h-4 w-4" />
+          Analytics
+        </TabsTrigger>
         <TabsTrigger value="subjects">Subject Manager</TabsTrigger>
         <TabsTrigger value="topics">Topic Manager</TabsTrigger>
         <TabsTrigger value="job-tests">Job Tests</TabsTrigger>
@@ -67,6 +76,20 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       
       <TabsContent value="past_paper">
         {/* Content management is in the main AdminPanel component */}
+      </TabsContent>
+      
+      <TabsContent value="question-bank">
+        <QuestionBankManager />
+      </TabsContent>
+      
+      <TabsContent value="analytics">
+        <div className="p-6 bg-card rounded-lg border">
+          <h3 className="text-lg font-semibold mb-4">Analytics Dashboard</h3>
+          <p className="text-muted-foreground">
+            Comprehensive analytics and reporting tools for question usage, user performance, 
+            and content effectiveness will be available here.
+          </p>
+        </div>
       </TabsContent>
       
       <TabsContent value="subjects">

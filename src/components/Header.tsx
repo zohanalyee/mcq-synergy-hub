@@ -61,6 +61,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
   const secondaryNavItems = [
     { title: 'Analytics', path: '/analytics' },
     { title: 'Feedback', path: '/feedback' },
+    ...(isAdmin ? [{ title: 'Question Bank', path: '/question-bank' }] : []),
   ];
 
   const isActive = (path: string) => {

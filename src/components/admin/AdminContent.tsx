@@ -24,7 +24,7 @@ const AdminContent = ({
 }: AdminContentProps) => {
   
   // Don't show table for submit-content tab or management tabs
-  const isContentTab = !['submit-content', 'subjects', 'topics', 'job-tests', 'quizzes'].includes(activeTab);
+  const isContentTab = !['submit-content', 'subjects', 'topics', 'job-tests', 'quizzes', 'question-bank', 'analytics'].includes(activeTab);
 
   return (
     <div className="space-y-6">

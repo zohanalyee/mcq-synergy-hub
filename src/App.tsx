@@ -86,6 +86,7 @@ const App = () => {
                 <Route path="/mcqs" element={<MCQs />} />
                 <Route path="/quizzes" element={<Quizzes />} />
                 <Route path="/question-bank" element={<QuestionBank />} />
+                <Route path="/submit-content" element={<SubmitContent />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
