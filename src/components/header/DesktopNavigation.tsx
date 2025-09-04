@@ -36,22 +36,21 @@ const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }
     { title: 'Scholarships', path: '/scholarships', icon: <Users className="w-4 h-4" /> },
     { title: 'Jobs', path: '/jobs', icon: <Briefcase className="w-4 h-4" /> },
     { title: 'Past Papers', path: '/past-papers', icon: <FileText className="w-4 h-4" /> },
-    ...secondaryNavItems.map(item => ({ ...item, icon: <BookOpen className="w-4 h-4" /> }))
   ];
 
   return (
-    <NavigationMenu className="hidden lg:flex mx-2">
-      <NavigationMenuList className="flex-wrap gap-1 max-w-full">
+    <NavigationMenu className="hidden lg:flex mx-4">
+      <NavigationMenuList className="flex-wrap gap-1">
         {allNavItems.map((item) => (
           <NavigationMenuItem key={item.title}>
             <NavigationMenuLink
-              className={`${navigationMenuTriggerStyle()} cursor-pointer flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-md transition-all duration-200 hover:scale-105 ${
-                isActive(item.path) ? 'bg-primary text-primary-foreground shadow-md' : 'hover:bg-accent/80'
+              className={`${navigationMenuTriggerStyle()} cursor-pointer flex items-center gap-2 text-sm px-3 py-2 ${
+                isActive(item.path) ? 'bg-accent text-accent-foreground' : ''
               }`}
               onClick={() => onNavigate(item.path)}
             >
               {item.icon}
-              <span className="hidden xl:inline whitespace-nowrap">{item.title}</span>
+              <span className="hidden xl:inline">{item.title}</span>
               <span className="xl:hidden">{item.title.split(' ')[0]}</span>
             </NavigationMenuLink>
           </NavigationMenuItem>

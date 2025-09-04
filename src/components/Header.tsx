@@ -72,12 +72,12 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
     <header 
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled 
-          ? 'py-2 sm:py-3 glass backdrop-blur-md bg-background/80 border-b border-border/40 shadow-sm' 
+          ? 'py-2 sm:py-3 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
           : 'py-3 sm:py-4 bg-transparent'
       }`}
     >
-      <div className="container px-4 sm:px-6 lg:px-8 mx-auto">
-        <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
+      <div className="container px-4 mx-auto">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
           <HeaderLogo onNavigate={handleNavigation} />
 
           <div className="flex-1 flex justify-center">

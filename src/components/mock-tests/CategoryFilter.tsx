@@ -9,17 +9,17 @@ type CategoryFilterProps = {
 
 export const CategoryFilter = ({ categories, activeFilter, onFilterChange }: CategoryFilterProps) => {
   return (
-    <div className="w-full">
-      <div className="flex flex-wrap gap-2">
+    <div className="mb-8 overflow-x-auto pb-2">
+      <div className="flex space-x-2 min-w-max">
         {categories.map((category, index) => (
           <Button 
             key={index} 
             variant={activeFilter === category ? "default" : "outline"} 
             onClick={() => onFilterChange(category)} 
             size="sm" 
-            className="capitalize hover-lift transition-all duration-200 text-sm px-3 py-2"
+            className="capitalize"
           >
-            {category === "all" ? "All Subjects" : category}
+            {category === "all" ? "All" : category}
           </Button>
         ))}
       </div>
