@@ -39,22 +39,42 @@ const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }
   ];
 
   return (
-    <NavigationMenu className="hidden lg:flex mx-4">
-      <NavigationMenuList className="flex-wrap gap-1">
-        {allNavItems.map((item) => (
+    <NavigationMenu className="hidden lg:flex">
+      <NavigationMenuList className="gap-1">
+        {allNavItems.slice(0, 6).map((item) => (
           <NavigationMenuItem key={item.title}>
             <NavigationMenuLink
-              className={`${navigationMenuTriggerStyle()} cursor-pointer flex items-center gap-2 text-sm px-3 py-2 ${
+              className={`${navigationMenuTriggerStyle()} cursor-pointer flex items-center gap-1.5 text-sm px-2.5 py-1.5 h-8 ${
                 isActive(item.path) ? 'bg-accent text-accent-foreground' : ''
               }`}
               onClick={() => onNavigate(item.path)}
             >
-              {item.icon}
-              <span className="hidden xl:inline">{item.title}</span>
-              <span className="xl:hidden">{item.title.split(' ')[0]}</span>
+              <span className="text-xs font-medium">{item.title}</span>
             </NavigationMenuLink>
           </NavigationMenuItem>
         ))}
+        
+        <NavigationMenuItem>
+          <NavigationMenuTrigger className="text-sm px-2.5 py-1.5 h-8">
+            More
+          </NavigationMenuTrigger>
+          <NavigationMenuContent>
+            <ul className="grid w-48 gap-1 p-2">
+              {[...allNavItems.slice(6), ...secondaryNavItems].map((item) => (
+                <li key={item.title}>
+                  <NavigationMenuLink
+                    className={`block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer ${
+                      isActive(item.path) ? 'bg-accent text-accent-foreground' : ''
+                    }`}
+                    onClick={() => onNavigate(item.path)}
+                  >
+                    <div className="text-sm font-medium leading-none">{item.title}</div>
+                  </NavigationMenuLink>
+                </li>
+              ))}
+            </ul>
+          </NavigationMenuContent>
+        </NavigationMenuItem>
       </NavigationMenuList>
     </NavigationMenu>
   );

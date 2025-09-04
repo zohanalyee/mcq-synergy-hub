@@ -76,11 +76,11 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
           : 'py-3 sm:py-4 bg-transparent'
       }`}
     >
-      <div className="container px-4 mx-auto">
-        <div className="flex items-center justify-between gap-2 sm:gap-4">
+      <div className="container px-4 mx-auto max-w-7xl">
+        <div className="flex items-center justify-between gap-3 sm:gap-6">
           <HeaderLogo onNavigate={handleNavigation} />
 
-          <div className="flex-1 flex justify-center">
+          <div className="flex-1 flex justify-center max-w-4xl">
             <DesktopNavigation 
               navItems={navItems}
               secondaryNavItems={secondaryNavItems}

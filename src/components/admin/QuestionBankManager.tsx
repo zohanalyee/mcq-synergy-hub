@@ -21,6 +21,7 @@ import EnhancedContentTable from "@/components/admin/content/EnhancedContentTabl
 import BulkUploadDialog from "./question-bank/BulkUploadDialog";
 import ManualQuestionDialog from "./question-bank/ManualQuestionDialog";
 import { ContentItem } from "@/interfaces/content";
+import { insertSampleData } from "@/utils/sampleQuestions";
 
 const QuestionBankManager = () => {
   const { getCurrentContent } = useAdminContent();
@@ -108,9 +109,20 @@ const QuestionBankManager = () => {
         <div className="flex items-center gap-2">
           <ManualQuestionDialog onQuestionAdded={handleRefresh} />
           <BulkUploadDialog onUploadComplete={handleRefresh} />
-          <Button variant="outline" size="sm">
-            <Settings className="h-4 w-4 mr-2" />
-            Settings
+          <Button 
+            onClick={async () => {
+              const success = await insertSampleData();
+              if (success) {
+                toast.success("Sample data added successfully!");
+                handleRefresh();
+              } else {
+                toast.error("Failed to add sample data");
+              }
+            }}
+            variant="outline"
+            size="sm"
+          >
+            Add Sample Data
           </Button>
         </div>
       </div>

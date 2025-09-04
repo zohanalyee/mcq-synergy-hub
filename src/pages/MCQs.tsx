@@ -8,11 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Clock, Target, Brain } from "lucide-react";
-import { getContentByCategory, getSubjectsAndTopics } from "@/services/contentService";
+import { getQuestionBank, QuestionBankItem } from "@/services/questionBankService";
+import { supabase } from "@/integrations/supabase/client";
 import { ContentItem } from "@/interfaces/content";
 
 const MCQs = () => {
-  const [mcqs, setMCQs] = useState<ContentItem[]>([]);
+  const [mcqs, setMCQs] = useState<QuestionBankItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
   const [isLoading, setIsLoading] = useState(true);
@@ -23,14 +24,30 @@ const MCQs = () => {
     const loadData = async () => {
       try {
         setIsLoading(true);
-        const [mcqsData, subjectsTopicsData] = await Promise.all([
-          getContentByCategory("mcq"),
-          getSubjectsAndTopics()
+        
+        // Get questions from Question Bank
+        const mcqsData = await getQuestionBank();
+        
+        // Get subjects and topics from database
+        const [{ data: subjectsData }, { data: topicsData }] = await Promise.all([
+          supabase.from('subjects').select('name'),
+          supabase.from('topics').select('name, subjects(name)')
         ]);
         
+        const subjectNames = subjectsData?.map(s => s.name) || [];
+        const topicsMap: Record<string, string[]> = {};
+        
+        topicsData?.forEach(topic => {
+          const subjectName = (topic.subjects as any)?.name;
+          if (subjectName) {
+            if (!topicsMap[subjectName]) topicsMap[subjectName] = [];
+            topicsMap[subjectName].push(topic.name);
+          }
+        });
+        
         setMCQs(mcqsData);
-        setSubjects(subjectsTopicsData.subjects);
-        setTopics(subjectsTopicsData.topics);
+        setSubjects(subjectNames);
+        setTopics(topicsMap);
       } catch (error) {
         console.error("Error loading data:", error);
       } finally {
@@ -46,9 +63,9 @@ const MCQs = () => {
   const filteredMCQs = mcqs.filter(mcq => {
     const matchesSearch = !searchQuery || 
       mcq.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mcq.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mcq.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      mcq.topic?.toLowerCase().includes(searchQuery.toLowerCase());
+      mcq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mcq.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      mcq.topic.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesFilter = activeFilter === "all" || mcq.subject === activeFilter;
 
@@ -59,7 +76,7 @@ const MCQs = () => {
     return topics[subject] || [];
   };
 
-  const renderMCQCard = (mcq: ContentItem, index: number) => (
+  const renderMCQCard = (mcq: QuestionBankItem, index: number) => (
     <motion.div
       key={mcq.id}
       initial={{ opacity: 0, y: 20 }}
@@ -92,22 +109,22 @@ const MCQs = () => {
                 {mcq.topic}
               </Badge>
             )}
-            {mcq.timeLimit && (
+            {mcq.subtopic && (
               <Badge variant="outline" className="text-xs">
                 <Clock className="w-3 h-3 mr-1" />
-                {mcq.timeLimit} min
+                {mcq.subtopic}
               </Badge>
             )}
           </div>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
-            {mcq.description}
+            {mcq.question}
           </p>
           <div className="flex justify-between items-center">
             <div className="flex items-center text-sm text-muted-foreground">
               <Brain className="w-4 h-4 mr-1" />
-              {mcq.marks || 1} marks
+              Usage: {mcq.usage_count}
             </div>
             <Button size="sm">
               Practice Now

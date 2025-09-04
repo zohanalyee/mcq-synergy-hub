@@ -27,6 +27,92 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
     }
   };
 
+  const parseCSV = (csvText: string) => {
+    const lines = csvText.split('\n').filter(line => line.trim());
+    if (lines.length < 2) throw new Error("CSV must have header and at least one data row");
+    
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const questions = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = lines[i].split(',').map(v => v.trim());
+      if (values.length < headers.length) continue;
+      
+      const question: any = {};
+      headers.forEach((header, index) => {
+        question[header] = values[index] || '';
+      });
+      
+      // Validate required fields
+      if (!question.title || !question.question || !question.correct_option) {
+        continue;
+      }
+      
+      questions.push({
+        title: question.title,
+        description: question.question,
+        category: 'mcq',
+        subject: question.subject || 'General',
+        topic: question.topic || 'General',
+        subtopic: question.subtopic || '',
+        difficulty: question.difficulty || 'Medium',
+        correct_option: question.correct_option.toUpperCase(),
+        explanation: question.explanation || '',
+        options: {
+          A: question.option_a || '',
+          B: question.option_b || '',
+          C: question.option_c || '',
+          D: question.option_d || ''
+        },
+        question_type: 'mcq',
+        status: 'approved',
+        tags: question.tags ? question.tags.split(';') : [],
+        marks: parseInt(question.marks) || 1,
+        time_limit: parseInt(question.time_limit) || 60
+      });
+    }
+    
+    return questions;
+  };
+
+  const ensureSubjectExists = async (subjectName: string) => {
+    const { data: existing } = await supabase
+      .from('subjects')
+      .select('id')
+      .eq('name', subjectName)
+      .single();
+    
+    if (!existing) {
+      await supabase
+        .from('subjects')
+        .insert({ name: subjectName, category: 'General' });
+    }
+  };
+
+  const ensureTopicExists = async (topicName: string, subjectName: string) => {
+    // Get subject ID first
+    const { data: subject } = await supabase
+      .from('subjects')
+      .select('id')
+      .eq('name', subjectName)
+      .single();
+    
+    if (subject) {
+      const { data: existing } = await supabase
+        .from('topics')
+        .select('id')
+        .eq('name', topicName)
+        .eq('subject_id', subject.id)
+        .single();
+      
+      if (!existing) {
+        await supabase
+          .from('topics')
+          .insert({ name: topicName, subject_id: subject.id });
+      }
+    }
+  };
+
   const handleUpload = async () => {
     if (!file) {
       toast.error("Please select a CSV file");
@@ -35,14 +121,58 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
 
     setUploading(true);
     try {
-      // Here you would implement CSV parsing and validation
-      // For now, showing a success message
-      toast.success("Questions uploaded to Question Bank successfully!");
+      const csvText = await file.text();
+      const questions = parseCSV(csvText);
+      
+      if (questions.length === 0) {
+        toast.error("No valid questions found in CSV");
+        return;
+      }
+
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Ensure subjects and topics exist
+      const uniqueSubjects = [...new Set(questions.map(q => q.subject))];
+      const uniqueTopics = [...new Set(questions.map(q => ({ subject: q.subject, topic: q.topic })))];
+      
+      for (const subject of uniqueSubjects) {
+        await ensureSubjectExists(subject);
+      }
+      
+      for (const { subject, topic } of uniqueTopics) {
+        if (topic) {
+          await ensureTopicExists(topic, subject);
+        }
+      }
+
+      // Insert questions into content_items
+      const questionsToInsert = questions.map(q => ({
+        ...q,
+        created_by: user?.id,
+        show_in_subjects: true,
+        show_in_syllabus: true,
+        show_in_mock_tests: true
+      }));
+
+      const { data, error } = await supabase
+        .from('content_items')
+        .insert(questionsToInsert)
+        .select();
+
+      if (error) {
+        console.error("Database error:", error);
+        toast.error(`Failed to upload questions: ${error.message}`);
+        return;
+      }
+
+      toast.success(`Successfully uploaded ${data.length} questions to Question Bank!`);
       setIsOpen(false);
       setFile(null);
       onUploadComplete?.();
     } catch (error) {
-      toast.error("Failed to upload questions");
+      console.error("Upload error:", error);
+      toast.error(`Failed to upload questions: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploading(false);
     }
