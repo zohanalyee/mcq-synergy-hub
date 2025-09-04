@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Upload, Download, FileSpreadsheet, CheckCircle, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { parseCSV } from "@/services/csvProcessorService";
 
 interface BulkUploadDialogProps {
   onUploadComplete?: () => void;
@@ -35,14 +36,78 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
 
     setUploading(true);
     try {
-      // Here you would implement CSV parsing and validation
-      // For now, showing a success message
-      toast.success("Questions uploaded to Question Bank successfully!");
+      // Read the CSV file
+      const csvText = await file.text();
+      
+      // Parse CSV data
+      const result = await parseCSV(csvText, "mcq");
+      
+      if (result.errors.length > 0) {
+        toast.error(`CSV has ${result.errors.length} errors. Please fix them and try again.`);
+        console.error("CSV errors:", result.errors);
+        return;
+      }
+
+      // Process each question and insert into content_items
+      let successCount = 0;
+      let failureCount = 0;
+
+      for (const item of result.items) {
+        try {
+          // Ensure we have all required MCQ fields
+          if (!item.description || !item.options) {
+            failureCount++;
+            continue;
+          }
+
+          const { error } = await supabase
+            .from('content_items')
+            .insert({
+              title: item.title || `MCQ: ${item.description?.substring(0, 50)}...`,
+              description: item.description,
+              options: item.options,
+              correct_option: item.correctOption,
+              subject: item.subject,
+              topic: item.topic,
+              difficulty: item.difficulty,
+              explanation: item.explanation,
+              category: 'mcq',
+              status: 'approved',
+              marks: item.marks || 1,
+              time_limit: item.timeLimit || 60,
+              created_by: (await supabase.auth.getUser()).data.user?.id
+            });
+
+          if (error) {
+            console.error("Error inserting question:", error);
+            failureCount++;
+          } else {
+            successCount++;
+          }
+        } catch (error) {
+          console.error("Error processing question:", error);
+          failureCount++;
+        }
+      }
+
+      if (successCount > 0) {
+        toast.success(`Successfully uploaded ${successCount} questions to Question Bank!`);
+      }
+      
+      if (failureCount > 0) {
+        toast.warning(`${failureCount} questions failed to upload. Check console for details.`);
+      }
+
+      if (result.warnings.length > 0) {
+        toast.info(`${result.warnings.length} warnings during processing.`);
+      }
+
       setIsOpen(false);
       setFile(null);
       onUploadComplete?.();
     } catch (error) {
-      toast.error("Failed to upload questions");
+      console.error("Upload error:", error);
+      toast.error("Failed to upload questions. Please check the file format.");
     } finally {
       setUploading(false);
     }
@@ -51,9 +116,10 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
   const downloadTemplate = () => {
     // Create a sample CSV template
     const csvContent = [
-      "title,question,option_a,option_b,option_c,option_d,correct_option,subject,topic,subtopic,difficulty,explanation",
-      "Sample Question,What is 2+2?,2,3,4,5,C,Mathematics,Arithmetic,Addition,Easy,Basic arithmetic operation",
-      "Another Question,Capital of France?,London,Paris,Berlin,Madrid,B,Geography,Countries,Europe,Medium,France is a European country"
+      "title,question,option_a,option_b,option_c,option_d,correct_option,subject,topic,subtopic,difficulty,explanation,marks,time_limit",
+      "Basic Math Question,What is 2+2?,2,3,4,5,C,Mathematics,Arithmetic,Addition,Easy,Basic arithmetic operation,1,60",
+      "Geography Question,What is the capital of France?,London,Paris,Berlin,Madrid,B,Geography,Countries,Europe,Medium,France is a European country,1,90",
+      "Science Question,What is the chemical symbol for water?,H2O,CO2,NaCl,O2,A,Chemistry,Basic Chemistry,Chemical Formulas,Easy,Water has the chemical formula H2O,2,45"
     ].join('\n');
 
     const blob = new Blob([csvContent], { type: 'text/csv' });
@@ -119,9 +185,9 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
               </div>
               
               {file && (
-                <div className="flex items-center gap-2 p-3 bg-green-50 rounded-lg">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">File selected: {file.name}</span>
+                <div className="flex items-center gap-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                  <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                  <span className="text-sm text-green-800 dark:text-green-200">File selected: {file.name}</span>
                 </div>
               )}
             </CardContent>
