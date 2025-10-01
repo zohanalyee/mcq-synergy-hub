@@ -115,7 +115,7 @@ const PublishWorkflow = () => {
 
   // Content preview component
   const ContentPreview = ({ item }: { item: PendingContent }) => (
-    <DialogContent className="max-w-2xl">
+    <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
       <DialogHeader>
         <DialogTitle>Content Preview</DialogTitle>
       </DialogHeader>

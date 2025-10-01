@@ -107,7 +107,7 @@ const QuickSubmissionDialog = ({ category, buttonText }: QuickSubmissionDialogPr
           {buttonText || `Add ${categoryDisplayName}`}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Submit New {categoryDisplayName}</DialogTitle>
         </DialogHeader>

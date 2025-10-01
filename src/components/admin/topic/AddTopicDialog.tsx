@@ -35,7 +35,7 @@ const AddTopicDialog: React.FC<AddTopicDialogProps> = ({
           <Plus className="mr-2 h-4 w-4" /> Add Topic
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Topic</DialogTitle>
           <DialogDescription>

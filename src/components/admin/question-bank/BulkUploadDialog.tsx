@@ -203,7 +203,7 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
           Bulk Upload Questions
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />

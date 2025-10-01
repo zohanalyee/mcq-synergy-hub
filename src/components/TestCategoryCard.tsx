@@ -27,8 +27,8 @@ const TestCategoryCard = ({
       whileHover={{ scale: 1.02 }}
       className="h-full"
     >
-      <Card className={`h-full overflow-hidden border-none ${bgClass}`}>
-        <CardContent className="p-6 flex flex-col h-full">
+      <Card className={`min-h-[220px] max-h-[280px] overflow-hidden border-none ${bgClass}`}>
+        <CardContent className="p-6 flex flex-col">
           <div className="mb-4">{icon}</div>
           <h3 className="text-xl font-semibold mb-2">{title}</h3>
           <p className="text-sm text-muted-foreground mb-6 flex-grow">{description}</p>

@@ -129,8 +129,8 @@ const BulkUploadPreview = ({ results, onUploadComplete }: BulkUploadPreviewProps
 
   // Render item preview dialog
   const ItemPreviewDialog = ({ item }: { item: ContentSubmission }) => (
-    <DialogContent className="max-w-2xl">
-      <DialogHeader>
+      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
         <DialogTitle>Content Preview</DialogTitle>
       </DialogHeader>
       <ScrollArea className="max-h-96">

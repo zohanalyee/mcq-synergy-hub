@@ -37,8 +37,8 @@ const TestimonialCard = ({
       viewport={{ once: true }}
       className="h-full"
     >
-      <Card className="h-full">
-        <CardContent className="p-6 flex flex-col justify-between h-full">
+      <Card className="min-h-[240px] max-h-[320px]">
+        <CardContent className="p-6 flex flex-col justify-between">
           <div>
             <div className="flex space-x-1 mb-4">
               {[...Array(5)].map((_, i) => (

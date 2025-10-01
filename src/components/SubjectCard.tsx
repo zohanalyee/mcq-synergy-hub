@@ -80,7 +80,7 @@ const SubjectCard = ({
       onMouseLeave={() => setIsHovered(false)}
       className="cursor-pointer"
     >
-      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg min-h-[200px] sm:min-h-[220px] flex flex-col"
+      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg min-h-[240px] max-h-[320px] flex flex-col"
         style={{ borderTopColor: color }}
       >
         <motion.div

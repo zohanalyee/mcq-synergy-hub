@@ -17,8 +17,8 @@ const FeatureCard = ({ title, description, icon, delay = 0 }: FeatureCardProps) 
       transition={{ duration: 0.5, delay: delay * 0.1 }}
       viewport={{ once: true }}
     >
-      <Card className="h-full bg-card border hover:shadow-md transition-shadow duration-300">
-        <CardContent className="p-6 flex flex-col h-full">
+      <Card className="min-h-[200px] bg-card border hover:shadow-md transition-shadow duration-300">
+        <CardContent className="p-6 flex flex-col">
           <div className="mb-4 text-primary">{icon}</div>
           <h3 className="text-xl font-semibold mb-3">{title}</h3>
           <p className="text-muted-foreground">{description}</p>

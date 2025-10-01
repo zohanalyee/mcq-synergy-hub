@@ -82,7 +82,7 @@ export const TestCard = ({
   };
 
   return (
-    <Card className="hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary/60">
+    <Card className="min-h-[220px] hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary/60">
       <CardContent className="p-4 sm:p-6">
         {/* Header Section */}
         <div className="flex justify-between items-start mb-4">
@@ -155,7 +155,7 @@ export const TestCard = ({
         {isExpanded && (
           <div className="border-t pt-4 mt-4 space-y-3">
             <h4 className="font-medium text-sm sm:text-base mb-3">Select Topics ({selectedTestTopics.length}/{test.topics.length})</h4>
-            <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto">
+            <div className="grid grid-cols-1 gap-2 max-h-60 overflow-y-auto pr-2">
               {test.topics.map((topic) => (
                 <div key={topic} className="flex items-center space-x-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
                   <Checkbox

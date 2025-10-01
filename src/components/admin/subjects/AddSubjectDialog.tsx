@@ -67,7 +67,7 @@ const AddSubjectDialog: React.FC<AddSubjectDialogProps> = ({ onAddSubject, categ
           <Plus className="mr-2 h-4 w-4" /> Add Subject
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Subject</DialogTitle>
           <DialogDescription>
