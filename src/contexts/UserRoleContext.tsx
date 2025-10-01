@@ -1,6 +1,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from './AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 
 export type UserRole = 'admin' | 'user';
 
@@ -22,24 +23,40 @@ export const UserRoleProvider: React.FC<UserRoleProviderProps> = ({ children }) 
   const { user } = useAuth();
 
   useEffect(() => {
-    // Check if user is admin based on their email or other criteria
-    // More flexible admin detection - check for common admin email patterns
-    if (user?.email) {
-      const email = user.email.toLowerCase();
-      // Check for admin email patterns or specific admin emails
-      if (email.includes('admin') || 
-          email === 'admin@example.com' || 
-          email === 'zohaib.ibapsl@gmail.com' || // Add the actual admin email
-          email === 'zohaibalichanna@gmail.com' || // Add another admin email
-          email.endsWith('@admin.com') ||
-          email.startsWith('admin@')) {
-        setUserRole('admin');
-      } else {
+    const checkAdminRole = async () => {
+      if (!user?.id) {
+        setUserRole('user');
+        return;
+      }
+
+      try {
+        // Query user_roles table to check if user has admin role
+        const { data, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .eq('role', 'admin')
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error checking admin role:', error);
+          setUserRole('user');
+          return;
+        }
+
+        // User has admin role in database
+        if (data) {
+          setUserRole('admin');
+        } else {
+          setUserRole('user');
+        }
+      } catch (error) {
+        console.error('Error checking admin role:', error);
         setUserRole('user');
       }
-    } else {
-      setUserRole('user');
-    }
+    };
+
+    checkAdminRole();
   }, [user]);
 
   const isAdmin = userRole === 'admin';
