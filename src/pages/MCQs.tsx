@@ -25,27 +25,31 @@ const MCQs = () => {
       try {
         setIsLoading(true);
         
-        // Get questions from Question Bank
+        // Get questions from Question Bank with valid subject/topic relationships
+        const { getSubjectsWithQuestions, getTopicsWithQuestions } = await import('@/services/questionUploadService');
+        
         const mcqsData = await getQuestionBank();
         
-        // Get subjects and topics from database
-        const [{ data: subjectsData }, { data: topicsData }] = await Promise.all([
-          supabase.from('subjects').select('name'),
-          supabase.from('topics').select('name, subjects(name)')
-        ]);
+        // Get only subjects that have questions
+        const subjectNames = await getSubjectsWithQuestions();
         
-        const subjectNames = subjectsData?.map(s => s.name) || [];
+        // Build topics map only for subjects with questions
         const topicsMap: Record<string, string[]> = {};
-        
-        topicsData?.forEach(topic => {
-          const subjectName = (topic.subjects as any)?.name;
-          if (subjectName) {
-            if (!topicsMap[subjectName]) topicsMap[subjectName] = [];
-            topicsMap[subjectName].push(topic.name);
+        for (const subjectName of subjectNames) {
+          const topicNames = await getTopicsWithQuestions(subjectName);
+          if (topicNames.length > 0) {
+            topicsMap[subjectName] = topicNames;
           }
+        }
+        
+        // Filter MCQs to only show those with valid subject/topic relationships
+        const validMCQs = mcqsData.filter(mcq => {
+          const hasValidSubject = subjectNames.includes(mcq.subject);
+          const hasValidTopic = topicsMap[mcq.subject]?.includes(mcq.topic);
+          return hasValidSubject && hasValidTopic;
         });
         
-        setMCQs(mcqsData);
+        setMCQs(validMCQs);
         setSubjects(subjectNames);
         setTopics(topicsMap);
       } catch (error) {

@@ -40,27 +40,35 @@ export const QuestionBankFilters = ({ filters, onFiltersChange, onSearch }: Ques
 
   const loadSubjectsAndTopics = async () => {
     try {
-      const [subjectsData, topicsData] = await Promise.all([
-        getSubjects(),
-        getTopics()
-      ]);
+      const { getSubjectsWithQuestions, getTopicsWithQuestions } = await import('@/services/questionUploadService');
       
-      setSubjects(subjectsData);
+      // Get only subjects that have questions
+      const subjectNames = await getSubjectsWithQuestions();
       
-      // Convert topics object to array
+      // Get full subject data for these subjects
+      const allSubjects = await getSubjects();
+      const validSubjects = allSubjects.filter(s => subjectNames.includes(s.name));
+      
+      setSubjects(validSubjects);
+      
+      // Get topics that have questions for each subject
       const topicsArray: Topic[] = [];
-      Object.entries(topicsData).forEach(([subjectName, subjectTopics]) => {
-        const subject = subjectsData.find(s => s.name === subjectName);
-        if (subject) {
-          subjectTopics.forEach(topic => {
-            topicsArray.push({
-              id: topic.id || '',
-              name: topic.name,
-              subject_id: subject.id || ''
+      for (const subject of validSubjects) {
+        const topicNames = await getTopicsWithQuestions(subject.name);
+        const subjectTopics = await getTopics();
+        
+        if (subjectTopics[subject.name]) {
+          subjectTopics[subject.name]
+            .filter(t => topicNames.includes(t.name))
+            .forEach(topic => {
+              topicsArray.push({
+                id: topic.id || '',
+                name: topic.name,
+                subject_id: subject.id || ''
+              });
             });
-          });
         }
-      });
+      }
       
       setTopics(topicsArray);
     } catch (error) {

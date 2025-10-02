@@ -217,9 +217,62 @@ export const submitCSVItemsToDatabase = async (
 ): Promise<{ success: number; errors: string[] }> => {
   const result = { success: 0, errors: [] };
 
-  for (const item of items) {
+  // Import the validation service
+  const { validateQuestionBatch, prepareQuestionForUpload } = await import('./questionUploadService');
+
+  // For MCQ items, validate subjects/topics first
+  const mcqItems = items.filter(item => item.category === 'mcq');
+  const otherItems = items.filter(item => item.category !== 'mcq');
+
+  if (mcqItems.length > 0) {
+    const { validations, summary } = await validateQuestionBatch(mcqItems);
+
+    if (summary.errors.length > 0) {
+      result.errors.push(...summary.errors);
+    }
+
+    // Process MCQ items with validation
+    for (const item of mcqItems) {
+      try {
+        if (!item.subject || !item.topic) {
+          result.errors.push(`MCQ "${item.title}" missing subject or topic`);
+          continue;
+        }
+
+        const key = `${item.subject}|${item.topic}`;
+        const validation = validations.get(key);
+
+        if (!validation) {
+          result.errors.push(`Failed to validate subject/topic for "${item.title}"`);
+          continue;
+        }
+
+        const preparedItem = await prepareQuestionForUpload(item, validation);
+        const itemWithUser = {
+          ...preparedItem,
+          created_by: userId
+        };
+
+        const { error } = await supabase
+          .from('content_items')
+          .insert([itemWithUser]);
+
+        if (error) {
+          console.error('Supabase insert error:', error);
+          result.errors.push(`Failed to insert item "${item.title}": ${error.message}`);
+        } else {
+          result.success++;
+        }
+      } catch (error) {
+        console.error('Processing error:', error);
+        result.errors.push(`Error processing item "${item.title}": ${error}`);
+      }
+    }
+  }
+
+  // Process non-MCQ items normally
+  for (const item of otherItems) {
     try {
-      // Set the created_by field
       const itemWithUser = {
         ...item,
         created_by: userId

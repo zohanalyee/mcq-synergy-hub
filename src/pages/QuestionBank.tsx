@@ -44,12 +44,20 @@ const QuestionBank = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [questionsData, statsData] = await Promise.all([
+      const { getSubjectsWithQuestions } = await import('@/services/questionUploadService');
+      
+      const [questionsData, statsData, validSubjects] = await Promise.all([
         getQuestionBank(filters),
-        getQuestionStats()
+        getQuestionStats(),
+        getSubjectsWithQuestions()
       ]);
       
-      setQuestions(questionsData);
+      // Filter questions to only show those with valid subject/topic relationships
+      const validQuestions = questionsData.filter(q => 
+        validSubjects.includes(q.subject)
+      );
+      
+      setQuestions(validQuestions);
       setStats(statsData);
     } catch (error) {
       console.error("Error loading question bank data:", error);
