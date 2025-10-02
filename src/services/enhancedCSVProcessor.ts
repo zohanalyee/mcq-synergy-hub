@@ -136,7 +136,10 @@ const processCSVRow = async (
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
     created_by: null, // Will be set during actual submission
-    status: 'pending'
+    status: category === 'mcq' ? 'question_bank' : 'pending',
+    show_in_subjects: false,
+    show_in_syllabus: false,
+    show_in_mock_tests: false
   };
 
   // Add category-specific fields with proper snake_case mapping and date validation

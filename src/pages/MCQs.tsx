@@ -28,7 +28,39 @@ const MCQs = () => {
         // Get questions from Question Bank with valid subject/topic relationships
         const { getSubjectsWithQuestions, getTopicsWithQuestions } = await import('@/services/questionUploadService');
         
-        const mcqsData = await getQuestionBank();
+        // Only fetch approved questions that are visible in subjects
+        const { data: mcqsData, error } = await supabase
+          .from('content_items')
+          .select('*')
+          .eq('category', 'mcq')
+          .eq('status', 'approved')
+          .eq('show_in_subjects', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        // Transform to QuestionBankItem format
+        const transformedData: QuestionBankItem[] = (mcqsData || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          question: item.description || '',
+          subject: item.subject || '',
+          topic: item.topic || '',
+          subtopic: item.subtopic || '',
+          difficulty: (item.difficulty as 'Easy' | 'Medium' | 'Hard') || 'Medium',
+          correctOption: (item.correct_option as 'A' | 'B' | 'C' | 'D') || 'A',
+          explanation: item.explanation || '',
+          options: (typeof item.options === 'object' && item.options !== null) 
+            ? item.options as { A: string; B: string; C: string; D: string }
+            : { A: '', B: '', C: '', D: '' },
+          usage_count: item.usage_count || 0,
+          tags: Array.isArray(item.tags) ? item.tags : [],
+          question_type: item.question_type || 'mcq',
+          is_featured: item.is_featured || false,
+          created_at: item.created_at,
+          reference_material: item.reference_material || '',
+          last_used_at: item.last_used_at || undefined
+        }));
         
         // Get only subjects that have questions
         const subjectNames = await getSubjectsWithQuestions();
@@ -43,7 +75,7 @@ const MCQs = () => {
         }
         
         // Filter MCQs to only show those with valid subject/topic relationships
-        const validMCQs = mcqsData.filter(mcq => {
+        const validMCQs = transformedData.filter(mcq => {
           const hasValidSubject = subjectNames.includes(mcq.subject);
           const hasValidTopic = topicsMap[mcq.subject]?.includes(mcq.topic);
           return hasValidSubject && hasValidTopic;

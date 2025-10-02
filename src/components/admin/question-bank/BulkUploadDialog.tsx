@@ -65,7 +65,7 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
           D: question.option_d || ''
         },
         question_type: 'mcq',
-        status: 'approved',
+        status: 'question_bank',
         tags: question.tags ? question.tags.split(';') : [],
         marks: parseInt(question.marks) || 1,
         time_limit: parseInt(question.time_limit) || 60
@@ -150,9 +150,9 @@ const BulkUploadDialog = ({ onUploadComplete }: BulkUploadDialogProps) => {
       const questionsToInsert = questions.map(q => ({
         ...q,
         created_by: user?.id,
-        show_in_subjects: true,
-        show_in_syllabus: true,
-        show_in_mock_tests: true
+        show_in_subjects: false,
+        show_in_syllabus: false,
+        show_in_mock_tests: false
       }));
 
       const { data, error } = await supabase

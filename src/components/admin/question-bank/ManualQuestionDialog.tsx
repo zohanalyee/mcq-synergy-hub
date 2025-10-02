@@ -128,11 +128,11 @@ const ManualQuestionDialog = ({ onQuestionAdded }: ManualQuestionDialogProps) =>
         correct_option: formData.correct_option,
         tags: formData.tags,
         question_type: 'mcq',
-        status: 'approved', // Direct to Question Bank
+        status: 'question_bank',
         created_by: user?.id,
-        show_in_subjects: true,
-        show_in_syllabus: true,
-        show_in_mock_tests: true
+        show_in_subjects: false,
+        show_in_syllabus: false,
+        show_in_mock_tests: false
       };
 
       const { error } = await supabase

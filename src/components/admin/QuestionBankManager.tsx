@@ -18,10 +18,12 @@ import {
 } from "lucide-react";
 import { useAdminContent } from "@/hooks/useAdminContent";
 import EnhancedContentTable from "@/components/admin/content/EnhancedContentTable";
+import QuestionBankTable from "./question-bank/QuestionBankTable";
 import BulkUploadDialog from "./question-bank/BulkUploadDialog";
 import ManualQuestionDialog from "./question-bank/ManualQuestionDialog";
 import { ContentItem } from "@/interfaces/content";
 import { insertSampleData } from "@/utils/sampleQuestions";
+import QuestionAssignmentDialog from "./question-bank/QuestionAssignmentDialog";
 
 const QuestionBankManager = () => {
   const { getCurrentContent } = useAdminContent();
@@ -34,8 +36,10 @@ const QuestionBankManager = () => {
     subjectCounts: {} as Record<string, number>
   });
 
-  // Get MCQ content items (these are our questions)
-  const mcqContent = getCurrentContent().filter(item => item.category === 'mcq');
+  // Get MCQ content items with 'question_bank' status (awaiting assignment)
+  const mcqContent = getCurrentContent().filter(item => 
+    item.category === 'mcq' && item.status === 'question_bank'
+  );
 
   useEffect(() => {
     calculateStats();
@@ -131,9 +135,9 @@ const QuestionBankManager = () => {
       <Alert>
         <Info className="h-4 w-4" />
         <AlertDescription>
-          <strong>Single Source of Truth:</strong> All questions added here are automatically available across 
-          Custom Syllabus Builder, Job Tests, Subject Tests, and Practice Modules. No need to add questions 
-          separately in each category.
+          <strong>Question Bank Workflow:</strong> Questions uploaded to the Question Bank require admin 
+          assignment before appearing in practice sections. Use "Assign to Sections" to approve and assign 
+          questions to Subject Practice, Custom Syllabus Builder, or Job Test Preparation.
         </AlertDescription>
       </Alert>
 
@@ -200,15 +204,14 @@ const QuestionBankManager = () => {
         <TabsContent value="browse" className="space-y-4">
           <div className="bg-card rounded-lg border p-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">All Questions in Question Bank</h3>
+              <h3 className="text-lg font-semibold">Questions Awaiting Assignment</h3>
               <Badge variant="outline" className="px-3 py-1">
-                {stats.totalQuestions} Total Questions
+                {stats.totalQuestions} Questions
               </Badge>
             </div>
-            <EnhancedContentTable
-              content={mcqContent}
-              onEditClick={handleEditClick}
-              onUpdateStatus={handleUpdateStatus}
+            <QuestionBankTable
+              questions={mcqContent}
+              onRefresh={handleRefresh}
               onDelete={handleDelete}
             />
           </div>
