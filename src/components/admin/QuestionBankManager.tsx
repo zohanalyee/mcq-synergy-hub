@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,52 +26,38 @@ import { insertSampleData } from "@/utils/sampleQuestions";
 import QuestionAssignmentDialog from "./question-bank/QuestionAssignmentDialog";
 
 const QuestionBankManager = () => {
-  const { getCurrentContent } = useAdminContent();
+  const { content } = useAdminContent();
   const [loading, setLoading] = useState(false);
-  const [stats, setStats] = useState({
-    totalQuestions: 0,
-    easyQuestions: 0,
-    mediumQuestions: 0,
-    hardQuestions: 0,
-    subjectCounts: {} as Record<string, number>
-  });
 
   // Get MCQ content items with 'question_bank' status (awaiting assignment)
-  const mcqContent = getCurrentContent().filter(item => 
-    item.category === 'mcq' && item.status === 'question_bank'
-  );
+  const mcqContent = useMemo(() => (
+    content.filter(item => item.category === 'mcq' && item.status === 'question_bank')
+  ), [content]);
 
-  useEffect(() => {
-    calculateStats();
-  }, [mcqContent]);
-
-  const calculateStats = () => {
-    const total = mcqContent.length;
+  // Derived statistics from current MCQ content
+  const stats = useMemo(() => {
     const subjectCounts: Record<string, number> = {};
-    
     let easy = 0, medium = 0, hard = 0;
-    
+
     mcqContent.forEach(item => {
-      // Count by subject
       if (item.subject) {
         subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
       }
-      
-      // Count by difficulty (if available in content)
       const difficulty = item.difficulty;
       if (difficulty === 'Easy') easy++;
       else if (difficulty === 'Medium') medium++;
       else if (difficulty === 'Hard') hard++;
     });
-    
-    setStats({
-      totalQuestions: total,
+
+    return {
+      totalQuestions: mcqContent.length,
       easyQuestions: easy,
       mediumQuestions: medium,
       hardQuestions: hard,
       subjectCounts
-    });
-  };
+    };
+  }, [mcqContent]);
+
 
   const handleGenerateTest = () => {
     toast.info("Test generation feature will be available soon!");
