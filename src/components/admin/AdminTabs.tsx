@@ -6,7 +6,8 @@ import JobTestManager from "./JobTestManager";
 import QuizManager from "./QuizManager";
 import QuestionBankManager from "./QuestionBankManager";
 import AdminContentSubmission from "./AdminContentSubmission";
-import { GraduationCap, FileText, List, Plus, Database, Download, BarChart3 } from "lucide-react";
+import { DataMigrationUtility } from "./DataMigrationUtility";
+import { GraduationCap, FileText, List, Plus, Database, Download, BarChart3, Settings } from "lucide-react";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -40,6 +41,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="subjects">Subject Manager</TabsTrigger>
         <TabsTrigger value="topics">Topic Manager</TabsTrigger>
         <TabsTrigger value="job-tests">Job Tests</TabsTrigger>
+        <TabsTrigger value="data-migration" className="flex items-center gap-2">
+          <Settings className="h-4 w-4" />
+          Data Migration
+        </TabsTrigger>
       </TabsList>
       
       <TabsContent value="submit-content">
@@ -106,6 +111,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       
       <TabsContent value="quizzes">
         <QuizManager />
+      </TabsContent>
+      
+      <TabsContent value="data-migration">
+        <DataMigrationUtility />
       </TabsContent>
     </Tabs>
   );
