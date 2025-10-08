@@ -10,7 +10,8 @@ import { toast } from "@/components/ui/use-toast";
 import { Slider } from "@/components/ui/slider";
 import { CustomSubject, QuizSettings } from "./interfaces";
 import SelectedQuizTopics from "./SelectedQuizTopics";
-import { Brain, FlaskConical, Clock, Gauge, Zap } from "lucide-react";
+import { Brain, FlaskConical, Clock, Gauge, Zap, Loader2 } from "lucide-react";
+import { generateTestFromSyllabus } from "@/services/testGenerationService";
 
 interface QuizConfigPanelProps {
   quizName: string;
@@ -35,8 +36,9 @@ const QuizConfigPanel: React.FC<QuizConfigPanelProps> = ({
 }) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("topics");
+  const [isGenerating, setIsGenerating] = useState(false);
   
-  const createQuiz = () => {
+  const createQuiz = async () => {
     if (selectedTopicsCount === 0) {
       toast({
         title: "Selection Required",
@@ -46,25 +48,58 @@ const QuizConfigPanel: React.FC<QuizConfigPanelProps> = ({
       return;
     }
 
-    const selectedQuizData = {
-      name: quizName,
-      topics: customSubjects
+    setIsGenerating(true);
+
+    try {
+      // Build selected topics structure
+      const selectedTopics = customSubjects
         .filter(subject => subject.topics.some(topic => topic.selected))
-        .map(subject => ({
-          subject: subject.title,
-          topics: subject.topics.filter(topic => topic.selected).map(t => t.name)
-        })),
-      settings: quizSettings
-    };
+        .flatMap(subject => 
+          subject.topics
+            .filter(topic => topic.selected)
+            .map(topic => ({
+              subject: subject.title,
+              topic: topic.name
+            }))
+        );
 
-    console.log("Creating quiz with data:", selectedQuizData);
+      // Generate test from question bank
+      const generatedTest = await generateTestFromSyllabus(selectedTopics, {
+        difficulty: quizSettings.difficulty,
+        questionCount: quizSettings.questionsCount,
+        timeLimit: quizSettings.timeLimit,
+        includeExplanations: true,
+        shuffleQuestions: true,
+        shuffleOptions: true
+      });
 
-    toast({
-      title: "Quiz Created!",
-      description: `Your custom quiz "${quizName}" with ${selectedTopicsCount} topics and ${quizSettings.questionsCount} questions is ready.`,
-    });
+      if (!generatedTest) {
+        toast({
+          title: "No Questions Available",
+          description: "No questions found in the Question Bank for the selected topics. Please try different topics or add questions to the bank.",
+          variant: "destructive"
+        });
+        setIsGenerating(false);
+        return;
+      }
 
-    navigate('/mock-tests');
+      toast({
+        title: "Quiz Generated!",
+        description: `Your custom quiz with ${generatedTest.questions.length} questions is ready.`,
+      });
+
+      // Navigate to test session with generated test
+      navigate('/test-session', { state: { test: generatedTest } });
+    } catch (error) {
+      console.error("Error generating quiz:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate quiz. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -199,11 +234,20 @@ const QuizConfigPanel: React.FC<QuizConfigPanelProps> = ({
       <CardFooter className="flex flex-col gap-3">
         <Button 
           className="w-full" 
-          disabled={selectedTopicsCount === 0}
+          disabled={selectedTopicsCount === 0 || isGenerating}
           onClick={createQuiz}
         >
-          <Zap className="mr-2 h-4 w-4" />
-          Create Quiz
+          {isGenerating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating Quiz...
+            </>
+          ) : (
+            <>
+              <Zap className="mr-2 h-4 w-4" />
+              Create Quiz & Start Test
+            </>
+          )}
         </Button>
         <Button 
           variant="outline" 

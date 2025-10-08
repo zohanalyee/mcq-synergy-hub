@@ -1,5 +1,6 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,9 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ChevronDown, ChevronUp, Settings, Play, Clock, HelpCircle, CheckCircle2 } from "lucide-react";
+import { ChevronDown, ChevronUp, Settings, Play, Clock, HelpCircle, CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import * as z from "zod";
+import { generateCustomTest } from "@/services/testGenerationService";
+import { toast } from "sonner";
 
 export const testCustomizationSchema = z.object({
   difficulty: z.enum(["easy", "medium", "hard"]),
@@ -49,6 +52,8 @@ export const TestCard = ({
   isTopicSelected,
   handleStartTest
 }: TestCardProps) => {
+  const navigate = useNavigate();
+  const [isGenerating, setIsGenerating] = useState(false);
   const [customSettings, setCustomSettings] = useState<{ 
     difficulty: "easy" | "medium" | "hard";
     questionCount: number;
@@ -59,12 +64,63 @@ export const TestCard = ({
     duration: test.duration
   });
 
-  const handleSubmitCustomization = () => {
+  const handleSubmitCustomization = async () => {
+    setIsGenerating(true);
     const selectedTestTopics = selectedTopics[test.id] || test.topics;
-    handleStartTest(test, { 
-      ...customSettings, 
-      topics: selectedTestTopics 
-    });
+    
+    try {
+      const generatedTest = await generateCustomTest({
+        subjects: [test.category],
+        topics: selectedTestTopics,
+        difficulty: customSettings.difficulty,
+        questionCount: customSettings.questionCount,
+        timeLimit: customSettings.duration,
+        includeExplanations: true,
+        shuffleQuestions: true,
+        shuffleOptions: true
+      });
+
+      if (!generatedTest) {
+        toast.error("No questions available for the selected criteria");
+        setIsGenerating(false);
+        return;
+      }
+
+      navigate('/test-session', { state: { test: generatedTest } });
+    } catch (error) {
+      console.error("Error generating test:", error);
+      toast.error("Failed to generate test");
+      setIsGenerating(false);
+    }
+  };
+
+  const handleQuickStart = async () => {
+    setIsGenerating(true);
+    
+    try {
+      const generatedTest = await generateCustomTest({
+        subjects: [test.category],
+        topics: test.topics,
+        difficulty: test.difficulty.toLowerCase() as "easy" | "medium" | "hard",
+        questionCount: test.questions,
+        timeLimit: test.duration,
+        includeExplanations: true,
+        shuffleQuestions: true,
+        shuffleOptions: true
+      });
+
+      if (!generatedTest) {
+        toast.error("No questions available for this test");
+        setIsGenerating(false);
+        return;
+      }
+
+      navigate('/test-session', { state: { test: generatedTest } });
+    } catch (error) {
+      console.error("Error starting test:", error);
+      toast.error("Failed to start test");
+      setIsGenerating(false);
+    }
   };
 
   const isExpanded = expandedTest === test.id;
@@ -141,11 +197,16 @@ export const TestCard = ({
           
           {!isCustomizing && (
             <Button 
-              onClick={() => handleStartTest(test)}
+              onClick={handleQuickStart}
               size="sm"
+              disabled={isGenerating}
               className="flex-1 justify-center text-xs sm:text-sm font-medium"
             >
-              <Play className="h-4 w-4 mr-2" />
+              {isGenerating ? (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              ) : (
+                <Play className="h-4 w-4 mr-2" />
+              )}
               Start Test
             </Button>
           )}

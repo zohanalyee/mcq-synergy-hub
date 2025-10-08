@@ -33,6 +33,7 @@ import MCQs from "./pages/MCQs";
 import Quizzes from "./pages/Quizzes";
 import SubmitContent from "./pages/SubmitContent";
 import QuestionBank from "./pages/QuestionBank";
+import TestSession from "./pages/TestSession";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -87,6 +88,7 @@ const App = () => {
                 <Route path="/quizzes" element={<Quizzes />} />
                 <Route path="/question-bank" element={<QuestionBank />} />
                 <Route path="/submit-content" element={<SubmitContent />} />
+                <Route path="/test-session" element={<TestSession />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
