@@ -62,7 +62,7 @@ const SubjectCard = ({
         } 
       });
     } else {
-      navigate(`/custom-syllabus`, { 
+      navigate(`/custom-quizzes`, { 
         state: { 
           preselectedSubject: title,
           purpose
