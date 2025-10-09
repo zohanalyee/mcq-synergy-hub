@@ -1,10 +1,11 @@
-
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { JobTestCard } from "./JobTestCard";
 import { toast } from "sonner";
 import { JobTest } from "@/data/jobTestsData";
+import { useNavigate } from "react-router-dom";
+import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -13,8 +14,10 @@ type JobTestsTabProps = {
 };
 
 export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProps) => {
+  const navigate = useNavigate();
   const [expandedJobTest, setExpandedJobTest] = useState<number | null>(null);
   const [customizeJobTest, setCustomizeJobTest] = useState<number | null>(null);
+  const [generatingTestId, setGeneratingTestId] = useState<number | null>(null);
   
   const filteredJobTests = jobTests.filter(test => 
     !searchQuery || 
@@ -23,19 +26,45 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
     test.organization.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
-  const handleStartJobTest = (test: JobTest, customSettings?: any) => {
-    const settings = customSettings || {
-      difficulty: "medium", // Default value since JobTest doesn't have a difficulty property
-      questionCount: test.questions,
-      duration: test.duration
-    };
-    toast.success(`Starting ${test.title}`, {
-      description: `${settings.questionCount} questions • ${settings.duration} minutes • Official Test`
-    });
-    console.log(`Starting job test: ${test.title}`, {
-      ...settings,
-      syllabus: test.syllabus
-    });
+  const handleStartJobTest = async (test: JobTest, customSettings?: any) => {
+    setGeneratingTestId(test.id);
+    
+    try {
+      const settings = customSettings || {
+        difficulty: "mixed",
+        questionCount: test.questions,
+        duration: test.duration
+      };
+
+      // Extract topics from syllabus - treating each syllabus item as a topic
+      const topics: string[] = test.syllabus.map(item => item.topic);
+
+      const options: TestGenerationOptions = {
+        subjects: [test.title], // Use test title as subject  
+        topics: topics,
+        difficulty: settings.difficulty.toLowerCase(),
+        questionCount: settings.questionCount,
+        timeLimit: settings.duration,
+        includeExplanations: true,
+        shuffleQuestions: true,
+        shuffleOptions: true
+      };
+
+      const generatedTest = await generateCustomTest(options);
+      
+      toast.success(`${test.title} ready!`, {
+        description: `${generatedTest.questions.length} questions loaded from Question Bank`
+      });
+      
+      navigate('/test-session', { state: { test: generatedTest } });
+    } catch (error) {
+      console.error('Error generating job test:', error);
+      toast.error('Failed to generate test', {
+        description: error instanceof Error ? error.message : 'Questions may not be available for this job test syllabus'
+      });
+    } finally {
+      setGeneratingTestId(null);
+    }
   };
   
   const toggleExpandJobTest = (testId: number) => {
@@ -88,6 +117,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
                 toggleExpandJobTest={toggleExpandJobTest}
                 toggleCustomizeJobTest={toggleCustomizeJobTest}
                 handleStartJobTest={handleStartJobTest}
+                isGenerating={generatingTestId === test.id}
               />
             </motion.div>
           ))}

@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, SlidersHorizontal } from "lucide-react";
+import { ArrowDown, ArrowUp, SlidersHorizontal, Loader2 } from "lucide-react";
 
 interface JobTestControlsProps {
   testId: number;
@@ -10,6 +10,7 @@ interface JobTestControlsProps {
   onToggleCustomize: (testId: number, event: React.MouseEvent) => void;
   onStartTest: () => void;
   showStartButton: boolean;
+  isGenerating?: boolean;
 }
 
 export const JobTestControls = ({
@@ -19,7 +20,8 @@ export const JobTestControls = ({
   onToggleSyllabus,
   onToggleCustomize,
   onStartTest,
-  showStartButton
+  showStartButton,
+  isGenerating = false
 }: JobTestControlsProps) => {
   return (
     <div className="flex flex-col space-y-3">
@@ -41,8 +43,15 @@ export const JobTestControls = ({
       </div>
       
       {showStartButton && (
-        <Button className="w-full" onClick={onStartTest}>
-          Start Test
+        <Button className="w-full" onClick={onStartTest} disabled={isGenerating}>
+          {isGenerating ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating Test...
+            </>
+          ) : (
+            'Start Test'
+          )}
         </Button>
       )}
     </div>

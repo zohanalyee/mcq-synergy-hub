@@ -4,6 +4,9 @@ import { Button } from "@/components/ui/button";
 import { TestCard } from "./TestCard";
 import { CategoryFilter } from "./CategoryFilter";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
+import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
+import { Loader2 } from "lucide-react";
 
 type SubjectTestsTabProps = {
   allMockTests: any[];
@@ -12,10 +15,12 @@ type SubjectTestsTabProps = {
 };
 
 export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: SubjectTestsTabProps) => {
+  const navigate = useNavigate();
   const [filter, setFilter] = useState("all");
   const [expandedTest, setExpandedTest] = useState<number | null>(null);
   const [customizeTest, setCustomizeTest] = useState<number | null>(null);
   const [selectedTopics, setSelectedTopics] = useState<Record<number, string[]>>({});
+  const [generatingTestId, setGeneratingTestId] = useState<number | null>(null);
 
   const getCategories = () => {
     if (!allMockTests || allMockTests.length === 0) {
@@ -35,19 +40,44 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
     return categoryMatch && searchMatch;
   });
   
-  const handleStartTest = (test: any, customSettings?: any) => {
-    const settings = customSettings || {
-      difficulty: test.difficulty,
-      questionCount: test.questions,
-      duration: test.duration
-    };
-    toast.success(`Starting ${test.title}`, {
-      description: `${settings.questionCount} questions • ${settings.duration} minutes • ${settings.difficulty} difficulty`
-    });
-    console.log(`Starting test: ${test.title}`, {
-      ...settings,
-      topics: test.topics
-    });
+  const handleStartTest = async (test: any, customSettings?: any) => {
+    setGeneratingTestId(test.id);
+    
+    try {
+      const settings = customSettings || {
+        difficulty: test.difficulty,
+        questionCount: test.questions,
+        duration: test.duration
+      };
+
+      const topicsForTest = customSettings?.selectedTopics || selectedTopics[test.id] || test.topics;
+
+      const options: TestGenerationOptions = {
+        subjects: [test.title],
+        topics: topicsForTest,
+        difficulty: settings.difficulty.toLowerCase(),
+        questionCount: settings.questionCount,
+        timeLimit: settings.duration,
+        includeExplanations: true,
+        shuffleQuestions: true,
+        shuffleOptions: true
+      };
+
+      const generatedTest = await generateCustomTest(options);
+      
+      toast.success(`Test ready!`, {
+        description: `${generatedTest.questions.length} questions loaded from Question Bank`
+      });
+      
+      navigate('/test-session', { state: { test: generatedTest } });
+    } catch (error) {
+      console.error('Error generating test:', error);
+      toast.error('Failed to generate test', {
+        description: error instanceof Error ? error.message : 'Please try again with different settings'
+      });
+    } finally {
+      setGeneratingTestId(null);
+    }
   };
   
   const toggleExpandTest = (testId: number) => {
@@ -141,6 +171,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
                 handleTopicToggle={handleTopicToggle}
                 isTopicSelected={isTopicSelected}
                 handleStartTest={handleStartTest}
+                isGenerating={generatingTestId === test.id}
               />
             </motion.div>
           ))}

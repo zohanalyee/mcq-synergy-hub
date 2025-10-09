@@ -39,6 +39,7 @@ type TestCardProps = {
   handleTopicToggle: (testId: number, topic: string) => void;
   isTopicSelected: (testId: number, topic: string) => boolean;
   handleStartTest: (test: any, settings?: any) => void;
+  isGenerating?: boolean;
 };
 
 export const TestCard = ({
@@ -48,12 +49,12 @@ export const TestCard = ({
   selectedTopics,
   toggleExpandTest,
   toggleCustomizeTest,
+  isGenerating = false,
   handleTopicToggle,
   isTopicSelected,
   handleStartTest
 }: TestCardProps) => {
   const navigate = useNavigate();
-  const [isGenerating, setIsGenerating] = useState(false);
   const [customSettings, setCustomSettings] = useState<{ 
     difficulty: "easy" | "medium" | "hard";
     questionCount: number;
@@ -65,62 +66,12 @@ export const TestCard = ({
   });
 
   const handleSubmitCustomization = async () => {
-    setIsGenerating(true);
     const selectedTestTopics = selectedTopics[test.id] || test.topics;
-    
-    try {
-      const generatedTest = await generateCustomTest({
-        subjects: [test.category],
-        topics: selectedTestTopics,
-        difficulty: customSettings.difficulty,
-        questionCount: customSettings.questionCount,
-        timeLimit: customSettings.duration,
-        includeExplanations: true,
-        shuffleQuestions: true,
-        shuffleOptions: true
-      });
-
-      if (!generatedTest) {
-        toast.error("No questions available for the selected criteria");
-        setIsGenerating(false);
-        return;
-      }
-
-      navigate('/test-session', { state: { test: generatedTest } });
-    } catch (error) {
-      console.error("Error generating test:", error);
-      toast.error("Failed to generate test");
-      setIsGenerating(false);
-    }
+    await handleStartTest(test, { ...customSettings, selectedTopics: selectedTestTopics });
   };
 
   const handleQuickStart = async () => {
-    setIsGenerating(true);
-    
-    try {
-      const generatedTest = await generateCustomTest({
-        subjects: [test.category],
-        topics: test.topics,
-        difficulty: test.difficulty.toLowerCase() as "easy" | "medium" | "hard",
-        questionCount: test.questions,
-        timeLimit: test.duration,
-        includeExplanations: true,
-        shuffleQuestions: true,
-        shuffleOptions: true
-      });
-
-      if (!generatedTest) {
-        toast.error("No questions available for this test");
-        setIsGenerating(false);
-        return;
-      }
-
-      navigate('/test-session', { state: { test: generatedTest } });
-    } catch (error) {
-      console.error("Error starting test:", error);
-      toast.error("Failed to start test");
-      setIsGenerating(false);
-    }
+    await handleStartTest(test);
   };
 
   const isExpanded = expandedTest === test.id;

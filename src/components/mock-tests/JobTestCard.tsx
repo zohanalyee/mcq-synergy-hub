@@ -24,6 +24,7 @@ export type JobTestCardProps = {
   toggleExpandJobTest: (testId: number) => void;
   toggleCustomizeJobTest: (testId: number, event: React.MouseEvent) => void;
   handleStartJobTest: (test: any, settings?: any) => void;
+  isGenerating?: boolean;
 };
 
 export const JobTestCard = ({
@@ -32,7 +33,8 @@ export const JobTestCard = ({
   customizeJobTest,
   toggleExpandJobTest,
   toggleCustomizeJobTest,
-  handleStartJobTest
+  handleStartJobTest,
+  isGenerating = false
 }: JobTestCardProps) => {
   const handleSubmitJobCustomization = (data: z.infer<typeof testCustomizationSchema>) => {
     handleStartJobTest(test, data);
@@ -64,6 +66,7 @@ export const JobTestCard = ({
           onToggleCustomize={toggleCustomizeJobTest}
           onStartTest={handleStartTest}
           showStartButton={!isCustomizing}
+          isGenerating={isGenerating}
         />
         
         <JobTestSyllabus 

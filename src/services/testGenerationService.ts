@@ -59,75 +59,86 @@ export const generateTestFromSyllabus = async (
 };
 
 // Generate custom test with specific options
-export const generateCustomTest = async (options: TestGenerationOptions): Promise<GeneratedTest | null> => {
-  try {
-    const filters: QuestionFilters = {
+export const generateCustomTest = async (options: TestGenerationOptions): Promise<GeneratedTest> => {
+  const filters: QuestionFilters = {
+    subjects: options.subjects,
+    topics: options.topics,
+    subtopics: options.subtopics,
+    limit: options.questionCount * 3 // Get more questions for better selection
+  };
+
+  // Handle difficulty filtering
+  if (options.difficulty !== 'mixed') {
+    const difficultyMap = {
+      'easy': ['Easy'],
+      'medium': ['Medium'],
+      'hard': ['Hard']
+    };
+    filters.difficulties = difficultyMap[options.difficulty];
+  }
+
+  const availableQuestions = await getQuestionBank(filters);
+
+  if (availableQuestions.length === 0) {
+    throw new Error(
+      `No questions available for the selected criteria.\n\n` +
+      `Subjects: ${options.subjects.join(', ')}\n` +
+      `Topics: ${options.topics.length > 0 ? options.topics.join(', ') : 'All'}\n\n` +
+      `Please try:\n` +
+      `• Selecting different subjects or topics\n` +
+      `• Reducing the difficulty level\n` +
+      `• Checking if questions exist in the Question Bank for this selection`
+    );
+  }
+
+  if (availableQuestions.length < options.questionCount) {
+    throw new Error(
+      `Not enough questions available.\n\n` +
+      `Found: ${availableQuestions.length} questions\n` +
+      `Requested: ${options.questionCount} questions\n\n` +
+      `Please reduce the number of questions or select additional topics.`
+    );
+  }
+
+  let selectedQuestions = availableQuestions;
+
+  // If mixed difficulty, try to balance the questions
+  if (options.difficulty === 'mixed') {
+    selectedQuestions = balanceQuestionsByDifficulty(availableQuestions, options.questionCount);
+  } else {
+    // Shuffle and select the requested number
+    selectedQuestions = selectedQuestions
+      .sort(() => Math.random() - 0.5)
+      .slice(0, options.questionCount);
+  }
+
+  // Shuffle questions if requested
+  if (options.shuffleQuestions) {
+    selectedQuestions = selectedQuestions.sort(() => Math.random() - 0.5);
+  }
+
+  // Shuffle options if requested
+  if (options.shuffleOptions) {
+    selectedQuestions = selectedQuestions.map(shuffleQuestionOptions);
+  }
+
+  const generatedTest: GeneratedTest = {
+    id: crypto.randomUUID(),
+    title: generateTestTitle(options.subjects, options.topics),
+    questions: selectedQuestions,
+    timeLimit: options.timeLimit,
+    totalMarks: selectedQuestions.length, // 1 mark per question
+    instructions: generateTestInstructions(options),
+    metadata: {
       subjects: options.subjects,
       topics: options.topics,
-      subtopics: options.subtopics,
-      limit: options.questionCount * 3 // Get more questions for better selection
-    };
-
-    // Handle difficulty filtering
-    if (options.difficulty !== 'mixed') {
-      const difficultyMap = {
-        'easy': ['Easy'],
-        'medium': ['Medium'],
-        'hard': ['Hard']
-      };
-      filters.difficulties = difficultyMap[options.difficulty];
+      difficulty: options.difficulty,
+      questionCount: selectedQuestions.length,
+      generatedAt: new Date().toISOString()
     }
+  };
 
-    const availableQuestions = await getQuestionBank(filters);
-
-    if (availableQuestions.length === 0) {
-      console.error("No questions available for the specified criteria");
-      return null;
-    }
-
-    let selectedQuestions = availableQuestions;
-
-    // If mixed difficulty, try to balance the questions
-    if (options.difficulty === 'mixed') {
-      selectedQuestions = balanceQuestionsByDifficulty(availableQuestions, options.questionCount);
-    } else {
-      // Shuffle and select the requested number
-      selectedQuestions = selectedQuestions
-        .sort(() => Math.random() - 0.5)
-        .slice(0, options.questionCount);
-    }
-
-    // Shuffle questions if requested
-    if (options.shuffleQuestions) {
-      selectedQuestions = selectedQuestions.sort(() => Math.random() - 0.5);
-    }
-
-    // Shuffle options if requested
-    if (options.shuffleOptions) {
-      selectedQuestions = selectedQuestions.map(shuffleQuestionOptions);
-    }
-
-    const generatedTest: GeneratedTest = {
-      id: crypto.randomUUID(),
-      title: generateTestTitle(options.subjects, options.topics),
-      questions: selectedQuestions,
-      timeLimit: options.timeLimit,
-      totalMarks: selectedQuestions.length, // 1 mark per question
-      instructions: generateTestInstructions(options),
-      metadata: {
-        subjects: options.subjects,
-        topics: options.topics,
-        difficulty: options.difficulty,
-        questionCount: selectedQuestions.length,
-        generatedAt: new Date().toISOString()
-      }
-    };
-
-    return generatedTest;
-  } catch (error) {
-    console.error("Error generating custom test:", error);
-    return null;
-  }
+  return generatedTest;
 };
 
 // Balance questions by difficulty for mixed difficulty tests

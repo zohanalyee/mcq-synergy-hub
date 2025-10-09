@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
@@ -10,6 +11,7 @@ import QuizConfigPanel from "@/components/custom-quizzes/QuizConfigPanel";
 import { generateTopicsForSubject } from "@/components/custom-syllabus/utils";
 
 const CustomQuizzes = () => {
+  const location = useLocation();
   const [isLoaded, setIsLoaded] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,8 +38,26 @@ const CustomQuizzes = () => {
       topicCount: subject.topicCount || 0
     }));
     
-    setCustomSubjects(initialCustomSubjects);
-  }, []);
+    // Check if we have a pre-selected subject from navigation state
+    const preSelectedSubject = location.state?.subject;
+    if (preSelectedSubject) {
+      const updatedSubjects = initialCustomSubjects.map(subject => {
+        if (subject.title === preSelectedSubject) {
+          return {
+            ...subject,
+            selected: true,
+            expanded: true,
+            topics: subject.topics.map(topic => ({ ...topic, selected: true }))
+          };
+        }
+        return subject;
+      });
+      setCustomSubjects(updatedSubjects);
+      setQuizName(`${preSelectedSubject} Practice Quiz`);
+    } else {
+      setCustomSubjects(initialCustomSubjects);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     let topicsCount = 0;
