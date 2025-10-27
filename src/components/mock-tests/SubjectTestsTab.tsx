@@ -50,11 +50,13 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         duration: test.duration
       };
 
-      const topicsForTest = customSettings?.selectedTopics || selectedTopics[test.id] || test.topics;
+      // Get topics - if user selected specific topics use those, otherwise get ALL topics for subject
+      const topicsForTest = customSettings?.selectedTopics || selectedTopics[test.id];
+      const finalTopics = topicsForTest && topicsForTest.length > 0 ? topicsForTest : [];
 
       const options: TestGenerationOptions = {
-        subjects: [test.title],
-        topics: topicsForTest,
+        subjects: [test.title], // Subject name e.g., "Mathematics"
+        topics: finalTopics,    // Empty array = all topics, or specific topics if customized
         difficulty: settings.difficulty.toLowerCase(),
         questionCount: settings.questionCount,
         timeLimit: settings.duration,

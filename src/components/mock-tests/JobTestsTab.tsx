@@ -36,12 +36,13 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
         duration: test.duration
       };
 
-      // Extract topics from syllabus - treating each syllabus item as a topic
-      const topics: string[] = test.syllabus.map(item => item.topic);
+      // Extract subjects from syllabus - syllabus items are SUBJECTS not topics
+      // e.g., "English", "Pakistan Affairs", "General Knowledge" are subjects
+      const subjects: string[] = test.syllabus.map(item => item.topic);
 
       const options: TestGenerationOptions = {
-        subjects: [test.title], // Use test title as subject  
-        topics: topics,
+        subjects: subjects,    // Multiple subjects from syllabus
+        topics: [],           // Empty = get all topics for these subjects
         difficulty: settings.difficulty.toLowerCase(),
         questionCount: settings.questionCount,
         timeLimit: settings.duration,

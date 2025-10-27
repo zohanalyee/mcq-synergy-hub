@@ -62,14 +62,14 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       .eq('category', 'mcq')
       .eq('status', 'question_bank');
 
-    // Apply filters
-    if (filters.subjects?.length) {
+    // Apply filters - only if arrays have items
+    if (filters.subjects?.length && filters.subjects.length > 0) {
       query = query.in('subject', filters.subjects);
     }
-    if (filters.topics?.length) {
+    if (filters.topics?.length && filters.topics.length > 0) {
       query = query.in('topic', filters.topics);
     }
-    if (filters.subtopics?.length) {
+    if (filters.subtopics?.length && filters.subtopics.length > 0) {
       query = query.in('subtopic', filters.subtopics);
     }
     if (filters.difficulties?.length) {

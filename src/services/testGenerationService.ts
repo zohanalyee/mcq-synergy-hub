@@ -60,9 +60,17 @@ export const generateTestFromSyllabus = async (
 
 // Generate custom test with specific options
 export const generateCustomTest = async (options: TestGenerationOptions): Promise<GeneratedTest> => {
-  const filters: QuestionFilters = {
+  console.log('🎯 Generating test with options:', {
     subjects: options.subjects,
     topics: options.topics,
+    difficulty: options.difficulty,
+    questionCount: options.questionCount,
+    timeLimit: options.timeLimit
+  });
+
+  const filters: QuestionFilters = {
+    subjects: options.subjects,
+    topics: options.topics.length > 0 ? options.topics : undefined,
     subtopics: options.subtopics,
     limit: options.questionCount * 3 // Get more questions for better selection
   };
@@ -78,6 +86,10 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
   }
 
   const availableQuestions = await getQuestionBank(filters);
+
+  console.log(`📊 Found ${availableQuestions.length} questions for criteria`);
+  console.log('📚 Available subjects:', [...new Set(availableQuestions.map(q => q.subject))]);
+  console.log('📖 Available topics:', [...new Set(availableQuestions.map(q => q.topic))]);
 
   if (availableQuestions.length === 0) {
     throw new Error(
