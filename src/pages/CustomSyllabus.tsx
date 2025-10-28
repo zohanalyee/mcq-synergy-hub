@@ -213,7 +213,7 @@ const CustomSyllabus = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2 space-y-6" ref={selectedTopicsRef}>
               <div className="sticky top-28 space-y-6">
                 <QuizPanel
