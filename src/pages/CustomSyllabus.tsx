@@ -190,32 +190,31 @@ const CustomSyllabus = () => {
         <PageBreadcrumb items={breadcrumbItems} />
         
         <motion.div
-          className="mb-12"
+          className="mb-4"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
             <div>
-              <h1 className="text-4xl font-bold mb-2">Custom Syllabus Builder</h1>
-              <p className="text-muted-foreground max-w-2xl">
+              <h1 className="text-3xl font-bold mb-1">Custom Syllabus Builder</h1>
+              <p className="text-sm text-muted-foreground max-w-2xl">
                 Create your personalized test syllabus by selecting specific topics from various subjects.
-                Choose exactly what you want to study and test yourself on.
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <Badge variant="outline" className="px-3 py-1.5">
-                <span className="text-primary font-semibold text-lg mr-1.5">{selectedSubjectsCount}</span> Subjects
+            <div className="flex items-center gap-3">
+              <Badge variant="outline" className="px-2.5 py-1">
+                <span className="text-primary font-semibold mr-1">{selectedSubjectsCount}</span> Subjects
               </Badge>
-              <Badge variant="outline" className="px-3 py-1.5">
-                <span className="text-primary font-semibold text-lg mr-1.5">{selectedTopicsCount}</span> Topics
+              <Badge variant="outline" className="px-2.5 py-1">
+                <span className="text-primary font-semibold mr-1">{selectedTopicsCount}</span> Topics
               </Badge>
             </div>
           </div>
           
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-6" ref={selectedTopicsRef}>
-              <div className="sticky top-28 space-y-6">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 max-h-[calc(100vh-16rem)] overflow-hidden">
+            <div className="lg:col-span-2 space-y-4 overflow-y-auto" ref={selectedTopicsRef}>
+              <div className="space-y-4">
                 <QuizPanel
                   syllabusName={syllabusName}
                   setSyllabusName={setSyllabusName}
@@ -240,7 +239,7 @@ const CustomSyllabus = () => {
               </div>
             </div>
             
-            <div className="lg:col-span-1 space-y-6">
+            <div className="lg:col-span-1 space-y-4 overflow-y-auto">
               <EnhancedSubjectFilter
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
@@ -253,7 +252,7 @@ const CustomSyllabus = () => {
                 variants={container}
                 initial="hidden"
                 animate={isLoaded ? "show" : "hidden"}
-                className="space-y-3 max-h-[400px] overflow-y-auto"
+                className="space-y-3"
               >
                 {filteredSubjects.length > 0 ? (
                   filteredSubjects.map((subject) => (
