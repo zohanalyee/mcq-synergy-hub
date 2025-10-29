@@ -4,7 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import HeaderLogo from './header/HeaderLogo';
-import DesktopNavigation from './header/DesktopNavigation';
+import CarouselNavigation from './header/CarouselNavigation';
 import HeaderActions from './header/HeaderActions';
 import MobileMenu from './header/MobileMenu';
 
@@ -80,8 +80,8 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
         <div className="flex items-center justify-between gap-3 sm:gap-6">
           <HeaderLogo onNavigate={handleNavigation} />
 
-          <div className="flex-1 flex justify-center max-w-4xl">
-            <DesktopNavigation 
+          <div className="flex-1 flex justify-center">
+            <CarouselNavigation 
               navItems={navItems}
               secondaryNavItems={secondaryNavItems}
               isActive={isActive}
