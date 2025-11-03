@@ -92,7 +92,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
               <div className="container px-4 mx-auto max-w-7xl">
                 <div className="flex items-center justify-between gap-3 sm:gap-6">
                   <div className="flex items-center gap-3">
-                    <SidebarTrigger className="lg:flex hover:scale-105 transition-transform duration-200" />
+                    <SidebarTrigger className="lg:flex h-10 w-10 rounded-lg bg-gradient-to-br from-primary/20 to-primary/10 hover:from-primary/30 hover:to-primary/20 border border-primary/30 hover:border-primary/50 transition-all duration-300 hover:scale-110 hover:shadow-md shadow-primary/20 group relative" />
                     <HeaderLogo onNavigate={handleNavigation} />
                   </div>
 
