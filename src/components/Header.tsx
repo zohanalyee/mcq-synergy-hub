@@ -71,7 +71,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
 
   return (
     <>
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={false}>
         <div className="min-h-screen flex w-full">
           <AppSidebar 
             navItems={navItems}
