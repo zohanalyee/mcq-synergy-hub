@@ -14,6 +14,7 @@ import {
 import { BookOpen, FileText, Users, Briefcase, Target, Clock, PenTool, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import logo from '@/assets/logo.png';
 
 interface NavItem {
   title: string;
@@ -56,23 +57,17 @@ export function AppSidebar({ navItems, secondaryNavItems, isActive, onNavigate, 
     >
       <SidebarHeader className="border-b border-border/40 p-4">
         <div className={cn(
-          "flex items-center gap-2 transition-all duration-300",
+          "flex items-center gap-3 transition-all duration-300",
           !open && "justify-center"
         )}>
-          <div className={cn(
-            "rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center transition-all duration-300",
-            open ? "w-8 h-8" : "w-10 h-10"
-          )}>
-            <GraduationCap className={cn(
-              "text-primary-foreground transition-all duration-300",
-              open ? "w-5 h-5" : "w-6 h-6"
-            )} />
-          </div>
-          {open && (
-            <span className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
-              EduPortal
-            </span>
-          )}
+          <img 
+            src={logo} 
+            alt="MCQs Point" 
+            className={cn(
+              "object-contain transition-all duration-300",
+              open ? "h-8" : "h-10"
+            )}
+          />
         </div>
       </SidebarHeader>
 
