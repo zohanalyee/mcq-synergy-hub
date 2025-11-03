@@ -50,14 +50,23 @@ export function AppSidebar({ navItems, secondaryNavItems, isActive, onNavigate, 
   const { open } = useSidebar();
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border/40">
+    <Sidebar 
+      collapsible="icon" 
+      className="border-r border-border/40 transition-all duration-300"
+    >
       <SidebarHeader className="border-b border-border/40 p-4">
         <div className={cn(
           "flex items-center gap-2 transition-all duration-300",
           !open && "justify-center"
         )}>
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-            <GraduationCap className="w-5 h-5 text-primary-foreground" />
+          <div className={cn(
+            "rounded-lg bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center transition-all duration-300",
+            open ? "w-8 h-8" : "w-10 h-10"
+          )}>
+            <GraduationCap className={cn(
+              "text-primary-foreground transition-all duration-300",
+              open ? "w-5 h-5" : "w-6 h-6"
+            )} />
           </div>
           {open && (
             <span className="font-semibold text-lg bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent animate-fade-in">
@@ -81,17 +90,19 @@ export function AppSidebar({ navItems, secondaryNavItems, isActive, onNavigate, 
                     isActive={isActive(item.path)}
                     tooltip={item.title}
                     className={cn(
-                      "transition-all duration-200 hover:scale-105",
-                      isActive(item.path) && "bg-primary text-primary-foreground shadow-md"
+                      "transition-all duration-300 hover:scale-105 group relative overflow-hidden",
+                      isActive(item.path) && "bg-primary text-primary-foreground shadow-md",
+                      !open && "justify-center px-2"
                     )}
                   >
                     <span className={cn(
-                      "transition-transform duration-200",
-                      isActive(item.path) && "scale-110"
+                      "transition-all duration-300 flex items-center justify-center",
+                      isActive(item.path) && "scale-110",
+                      !open && "mr-0"
                     )}>
                       {getIcon(item.title)}
                     </span>
-                    <span className="font-medium">{item.title}</span>
+                    {open && <span className="font-medium animate-fade-in">{item.title}</span>}
                     {isActive(item.path) && open && (
                       <ChevronRight className="ml-auto w-4 h-4 animate-fade-in" />
                     )}
@@ -115,17 +126,19 @@ export function AppSidebar({ navItems, secondaryNavItems, isActive, onNavigate, 
                     isActive={isActive(item.path)}
                     tooltip={item.title}
                     className={cn(
-                      "transition-all duration-200 hover:scale-105",
-                      isActive(item.path) && "bg-accent text-accent-foreground"
+                      "transition-all duration-300 hover:scale-105 group",
+                      isActive(item.path) && "bg-accent text-accent-foreground",
+                      !open && "justify-center px-2"
                     )}
                   >
                     <span className={cn(
-                      "transition-transform duration-200",
-                      isActive(item.path) && "scale-110"
+                      "transition-all duration-300 flex items-center justify-center",
+                      isActive(item.path) && "scale-110",
+                      !open && "mr-0"
                     )}>
                       {getIcon(item.title)}
                     </span>
-                    <span className="font-medium">{item.title}</span>
+                    {open && <span className="font-medium animate-fade-in">{item.title}</span>}
                     {item.title === 'Question Bank' && isAdmin && open && (
                       <Badge variant="secondary" className="ml-auto text-xs animate-fade-in">
                         Admin
