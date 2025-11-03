@@ -4,9 +4,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import HeaderLogo from './header/HeaderLogo';
-import CarouselNavigation from './header/CarouselNavigation';
 import HeaderActions from './header/HeaderActions';
 import MobileMenu from './header/MobileMenu';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { AppSidebar } from './AppSidebar';
 
 const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string) => void }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -69,38 +70,48 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
   };
 
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled 
-          ? 'py-2 sm:py-3 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
-          : 'py-3 sm:py-4 bg-transparent'
-      }`}
-    >
-      <div className="container px-4 mx-auto max-w-7xl">
-        <div className="flex items-center justify-between gap-3 sm:gap-6">
-          <HeaderLogo onNavigate={handleNavigation} />
-
-          <div className="flex-1 flex justify-center">
-            <CarouselNavigation 
-              navItems={navItems}
-              secondaryNavItems={secondaryNavItems}
-              isActive={isActive}
-              onNavigate={handleNavigation}
-            />
-          </div>
-
-          <HeaderActions 
-            theme={theme}
-            user={user}
-            profile={profile}
-            isAdmin={isAdmin}
-            onToggleTheme={toggleTheme}
+    <>
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          <AppSidebar 
+            navItems={navItems}
+            secondaryNavItems={secondaryNavItems}
+            isActive={isActive}
             onNavigate={handleNavigation}
-            onSignOut={signOut}
-            onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+            isAdmin={isAdmin}
           />
+          
+          <div className="flex-1 flex flex-col w-full">
+            <header 
+              className={`sticky top-0 z-40 transition-all duration-300 ${
+                scrolled 
+                  ? 'py-2 sm:py-3 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
+                  : 'py-3 sm:py-4 bg-background/40'
+              }`}
+            >
+              <div className="container px-4 mx-auto max-w-7xl">
+                <div className="flex items-center justify-between gap-3 sm:gap-6">
+                  <div className="flex items-center gap-3">
+                    <SidebarTrigger className="lg:flex" />
+                    <HeaderLogo onNavigate={handleNavigation} />
+                  </div>
+
+                  <HeaderActions 
+                    theme={theme}
+                    user={user}
+                    profile={profile}
+                    isAdmin={isAdmin}
+                    onToggleTheme={toggleTheme}
+                    onNavigate={handleNavigation}
+                    onSignOut={signOut}
+                    onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
+                  />
+                </div>
+              </div>
+            </header>
+          </div>
         </div>
-      </div>
+      </SidebarProvider>
 
       <MobileMenu 
         isOpen={isMobileMenuOpen}
@@ -114,7 +125,7 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
         onNavigate={handleNavigation}
         onSignOut={signOut}
       />
-    </header>
+    </>
   );
 };
 
