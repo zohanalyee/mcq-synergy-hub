@@ -173,7 +173,7 @@ const Sidebar = React.forwardRef<
     },
     ref
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar()
+    const { isMobile, state, openMobile, setOpenMobile, toggleSidebar } = useSidebar()
 
     if (collapsible === "none") {
       return (
@@ -211,14 +211,29 @@ const Sidebar = React.forwardRef<
     }
 
     return (
-      <div
-        ref={ref}
-        className="group peer hidden md:block text-sidebar-foreground"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
-        data-variant={variant}
-        data-side={side}
-      >
+      <>
+        {/* Backdrop for click-outside-to-close */}
+        {state === "expanded" && (
+          <div
+            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:block hidden animate-fade-in"
+            onClick={toggleSidebar}
+          />
+        )}
+        
+        <div
+          ref={ref}
+          className="group peer hidden md:block text-sidebar-foreground cursor-pointer relative z-50"
+          data-state={state}
+          data-collapsible={state === "collapsed" ? collapsible : ""}
+          data-variant={variant}
+          data-side={side}
+          onClick={(e) => {
+            if (state === "collapsed") {
+              e.stopPropagation();
+              toggleSidebar();
+            }
+          }}
+        >
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
@@ -252,6 +267,7 @@ const Sidebar = React.forwardRef<
           </div>
         </div>
       </div>
+      </>
     )
   }
 )
