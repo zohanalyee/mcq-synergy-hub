@@ -9,6 +9,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { BookOpen, FileText, Users, Briefcase, Target, Clock, PenTool, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight } from 'lucide-react';
@@ -146,6 +147,10 @@ export function AppSidebar({ navItems, secondaryNavItems, isActive, onNavigate, 
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarRail className="bg-gradient-to-b from-primary/30 via-primary/20 to-primary/30 hover:from-primary/40 hover:via-primary/30 hover:to-primary/40 transition-all duration-300 w-1.5 hover:w-2 rounded-full shadow-md hover:shadow-lg hover:shadow-primary/30 relative group">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-full blur-sm" />
+      </SidebarRail>
 
       <SidebarFooter className="border-t border-border/40 p-2">
         <div className={cn(
