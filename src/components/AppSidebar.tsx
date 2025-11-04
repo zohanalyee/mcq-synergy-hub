@@ -78,18 +78,21 @@ export function AppSidebar({
   isAdmin
 }: AppSidebarProps) {
   const {
-    open
+    open,
+    openMobile,
+    isMobile
   } = useSidebar();
+  const expanded = open || (isMobile && openMobile);
   return <Sidebar collapsible="icon" className="border-r border-border/40 transition-all duration-300">
       <SidebarHeader className="border-b border-border/40 p-3">
-        <div className={cn("flex items-center gap-3 transition-all duration-300", !open && "justify-center")}>
-          <img src={logo} alt="MCQs Point" className={cn("object-contain transition-all duration-300", open ? "h-8" : "h-8")} />
+        <div className={cn("flex items-center gap-3 transition-all duration-300", !expanded && "justify-center")}>
+          <img src={logo} alt="MCQs Point" className={cn("object-contain transition-all duration-300", expanded ? "h-8" : "h-8")} />
         </div>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className={cn(!open && "sr-only")}>
+          <SidebarGroupLabel className={cn(!expanded && "sr-only")}>
             Main Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -105,7 +108,7 @@ export function AppSidebar({
                       className={cn(
                         "transition-all duration-300 hover:scale-105 group relative overflow-hidden my-1",
                         isActive(item.path) && "shadow-lg",
-                        !open && "justify-center px-0 w-12 h-12 mx-auto"
+                        !expanded && "justify-center px-0 w-12 h-12 mx-auto"
                       )}
                     >
                       <span className={cn(
@@ -113,12 +116,12 @@ export function AppSidebar({
                         iconData.color,
                         "shadow-md hover:shadow-xl hover:scale-110",
                         "border border-white/20 hover:border-white/40",
-                        !open && "w-full h-full"
+                        !expanded && "w-full h-full"
                       )}>
                         {iconData.icon}
                       </span>
-                      {open && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
-                      {isActive(item.path) && open && <ChevronRight className="ml-auto w-4 h-4 animate-fade-in" />}
+                      {expanded && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
+                      {isActive(item.path) && expanded && <ChevronRight className="ml-auto w-4 h-4 animate-fade-in" />}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -128,7 +131,7 @@ export function AppSidebar({
         </SidebarGroup>
 
         <SidebarGroup>
-          <SidebarGroupLabel className={cn(!open && "sr-only")}>
+          <SidebarGroupLabel className={cn(!expanded && "sr-only")}>
             Tools & Resources
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -144,7 +147,7 @@ export function AppSidebar({
                       className={cn(
                         "transition-all duration-300 hover:scale-105 group relative overflow-hidden my-1",
                         isActive(item.path) && "shadow-lg",
-                        !open && "justify-center px-0 w-12 h-12 mx-auto"
+                        !expanded && "justify-center px-0 w-12 h-12 mx-auto"
                       )}
                     >
                       <span className={cn(
@@ -152,12 +155,12 @@ export function AppSidebar({
                         iconData.color,
                         "shadow-md hover:shadow-xl hover:scale-110",
                         "border border-white/20 hover:border-white/40",
-                        !open && "w-full h-full"
+                        !expanded && "w-full h-full"
                       )}>
                         {iconData.icon}
                       </span>
-                      {open && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
-                      {item.title === 'Question Bank' && isAdmin && open && (
+                      {expanded && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
+                      {item.title === 'Question Bank' && isAdmin && expanded && (
                         <Badge variant="secondary" className="ml-auto text-xs animate-fade-in">
                           Admin
                         </Badge>
@@ -176,7 +179,7 @@ export function AppSidebar({
       </SidebarRail>
 
       <SidebarFooter className="border-t border-border/40 p-2">
-        <div className={cn("text-xs text-muted-foreground text-center transition-opacity duration-300", !open && "opacity-0")}>
+        <div className={cn("text-xs text-muted-foreground text-center transition-opacity duration-300", !expanded && "opacity-0")}> 
           <p className="animate-fade-in">© 2025 MCQs Point</p>
         </div>
       </SidebarFooter>
