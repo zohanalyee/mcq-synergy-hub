@@ -15,21 +15,60 @@ interface AppSidebarProps {
   isAdmin?: boolean;
 }
 const getIcon = (title: string) => {
-  const icons: Record<string, React.ReactNode> = {
-    'Home': <BookOpen className="w-4 h-4" />,
-    'Subjects': <FileText className="w-4 h-4" />,
-    'MCQs': <PenTool className="w-4 h-4" />,
-    'Quizzes': <Target className="w-4 h-4" />,
-    'Mock Tests': <Clock className="w-4 h-4" />,
-    'Custom Syllabus': <GraduationCap className="w-4 h-4" />,
-    'Scholarships': <Users className="w-4 h-4" />,
-    'Jobs': <Briefcase className="w-4 h-4" />,
-    'Past Papers': <FileText className="w-4 h-4" />,
-    'Analytics': <TrendingUp className="w-4 h-4" />,
-    'Feedback': <MessageSquare className="w-4 h-4" />,
-    'Question Bank': <Database className="w-4 h-4" />
+  const icons: Record<string, { icon: React.ReactNode; color: string }> = {
+    'Home': { 
+      icon: <BookOpen className="w-5 h-5" />, 
+      color: 'from-blue-400 via-blue-500 to-blue-600'
+    },
+    'Subjects': { 
+      icon: <FileText className="w-5 h-5" />, 
+      color: 'from-purple-400 via-purple-500 to-purple-600'
+    },
+    'MCQs': { 
+      icon: <PenTool className="w-5 h-5" />, 
+      color: 'from-green-400 via-green-500 to-green-600'
+    },
+    'Quizzes': { 
+      icon: <Target className="w-5 h-5" />, 
+      color: 'from-red-400 via-red-500 to-red-600'
+    },
+    'Mock Tests': { 
+      icon: <Clock className="w-5 h-5" />, 
+      color: 'from-orange-400 via-orange-500 to-orange-600'
+    },
+    'Custom Syllabus': { 
+      icon: <GraduationCap className="w-5 h-5" />, 
+      color: 'from-indigo-400 via-indigo-500 to-indigo-600'
+    },
+    'Scholarships': { 
+      icon: <Users className="w-5 h-5" />, 
+      color: 'from-pink-400 via-pink-500 to-pink-600'
+    },
+    'Jobs': { 
+      icon: <Briefcase className="w-5 h-5" />, 
+      color: 'from-teal-400 via-teal-500 to-teal-600'
+    },
+    'Past Papers': { 
+      icon: <FileText className="w-5 h-5" />, 
+      color: 'from-amber-400 via-amber-500 to-amber-600'
+    },
+    'Analytics': { 
+      icon: <TrendingUp className="w-5 h-5" />, 
+      color: 'from-cyan-400 via-cyan-500 to-cyan-600'
+    },
+    'Feedback': { 
+      icon: <MessageSquare className="w-5 h-5" />, 
+      color: 'from-lime-400 via-lime-500 to-lime-600'
+    },
+    'Question Bank': { 
+      icon: <Database className="w-5 h-5" />, 
+      color: 'from-violet-400 via-violet-500 to-violet-600'
+    }
   };
-  return icons[title] || <BookOpen className="w-4 h-4" />;
+  return icons[title] || { 
+    icon: <BookOpen className="w-5 h-5" />, 
+    color: 'from-gray-400 via-gray-500 to-gray-600'
+  };
 };
 export function AppSidebar({
   navItems,
@@ -42,9 +81,9 @@ export function AppSidebar({
     open
   } = useSidebar();
   return <Sidebar collapsible="icon" className="border-r border-border/40 transition-all duration-300">
-      <SidebarHeader className="border-b border-border/40 p-4">
+      <SidebarHeader className="border-b border-border/40 p-3">
         <div className={cn("flex items-center gap-3 transition-all duration-300", !open && "justify-center")}>
-          <img src={logo} alt="MCQs Point" className={cn("object-contain transition-all duration-300", open ? "h-8" : "h-10")} />
+          <img src={logo} alt="MCQs Point" className={cn("object-contain transition-all duration-300", open ? "h-8" : "h-8")} />
         </div>
       </SidebarHeader>
 
@@ -55,15 +94,35 @@ export function AppSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map(item => <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={() => onNavigate(item.path)} isActive={isActive(item.path)} tooltip={item.title} className={cn("transition-all duration-300 hover:scale-105 group relative overflow-hidden", isActive(item.path) && "bg-primary text-primary-foreground shadow-md", !open && "justify-center px-2")}>
-                    <span className={cn("transition-all duration-300 flex items-center justify-center", isActive(item.path) && "scale-110", !open && "mr-0")}>
-                      {getIcon(item.title)}
-                    </span>
-                    {open && <span className="font-medium animate-fade-in">{item.title}</span>}
-                    {isActive(item.path) && open && <ChevronRight className="ml-auto w-4 h-4 animate-fade-in" />}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>)}
+              {navItems.map(item => {
+                const iconData = getIcon(item.title);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      onClick={() => onNavigate(item.path)} 
+                      isActive={isActive(item.path)} 
+                      tooltip={item.title}
+                      className={cn(
+                        "transition-all duration-300 hover:scale-105 group relative overflow-hidden my-1",
+                        isActive(item.path) && "shadow-lg",
+                        !open && "justify-center px-0 w-12 h-12 mx-auto"
+                      )}
+                    >
+                      <span className={cn(
+                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br",
+                        iconData.color,
+                        "shadow-md hover:shadow-xl hover:scale-110",
+                        "border border-white/20 hover:border-white/40",
+                        !open && "w-full h-full"
+                      )}>
+                        {iconData.icon}
+                      </span>
+                      {open && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
+                      {isActive(item.path) && open && <ChevronRight className="ml-auto w-4 h-4 animate-fade-in" />}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
@@ -74,17 +133,39 @@ export function AppSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {secondaryNavItems.map(item => <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton onClick={() => onNavigate(item.path)} isActive={isActive(item.path)} tooltip={item.title} className={cn("transition-all duration-300 hover:scale-105 group", isActive(item.path) && "bg-accent text-accent-foreground", !open && "justify-center px-2")}>
-                    <span className={cn("transition-all duration-300 flex items-center justify-center", isActive(item.path) && "scale-110", !open && "mr-0")}>
-                      {getIcon(item.title)}
-                    </span>
-                    {open && <span className="font-medium animate-fade-in">{item.title}</span>}
-                    {item.title === 'Question Bank' && isAdmin && open && <Badge variant="secondary" className="ml-auto text-xs animate-fade-in">
-                        Admin
-                      </Badge>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>)}
+              {secondaryNavItems.map(item => {
+                const iconData = getIcon(item.title);
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      onClick={() => onNavigate(item.path)} 
+                      isActive={isActive(item.path)} 
+                      tooltip={item.title}
+                      className={cn(
+                        "transition-all duration-300 hover:scale-105 group relative overflow-hidden my-1",
+                        isActive(item.path) && "shadow-lg",
+                        !open && "justify-center px-0 w-12 h-12 mx-auto"
+                      )}
+                    >
+                      <span className={cn(
+                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br",
+                        iconData.color,
+                        "shadow-md hover:shadow-xl hover:scale-110",
+                        "border border-white/20 hover:border-white/40",
+                        !open && "w-full h-full"
+                      )}>
+                        {iconData.icon}
+                      </span>
+                      {open && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
+                      {item.title === 'Question Bank' && isAdmin && open && (
+                        <Badge variant="secondary" className="ml-auto text-xs animate-fade-in">
+                          Admin
+                        </Badge>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
