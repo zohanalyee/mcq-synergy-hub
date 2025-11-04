@@ -212,10 +212,10 @@ const Sidebar = React.forwardRef<
 
     return (
       <>
-        {/* Backdrop for click-outside-to-close */}
+        {/* Backdrop for click-outside-to-close with glassy effect */}
         {state === "expanded" && (
           <div
-            className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm md:block hidden animate-fade-in"
+            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-md animate-fade-in"
             onClick={toggleSidebar}
           />
         )}
@@ -247,7 +247,8 @@ const Sidebar = React.forwardRef<
         />
         <div
           className={cn(
-            "duration-200 fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] ease-linear md:flex",
+            "duration-200 fixed inset-y-0 z-10 h-svh transition-[left,right,width] ease-linear flex",
+            "w-[280px] md:w-[--sidebar-width]", // Mobile optimized width
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
               : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
@@ -261,7 +262,7 @@ const Sidebar = React.forwardRef<
         >
           <div
             data-sidebar="sidebar"
-            className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
+            className="flex h-full w-full flex-col backdrop-blur-2xl bg-gradient-to-br from-sidebar-background/95 via-primary/5 to-accent/5 group-data-[variant=floating]:rounded-lg border-r-2 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none"
           >
             {children}
           </div>
