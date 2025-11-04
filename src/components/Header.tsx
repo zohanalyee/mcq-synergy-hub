@@ -5,12 +5,10 @@ import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import HeaderLogo from './header/HeaderLogo';
 import HeaderActions from './header/HeaderActions';
-import MobileMenu from './header/MobileMenu';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 
 const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string) => void }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { userRole, isAdmin } = useUserRole();
@@ -33,7 +31,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
   }, []);
 
   const handleNavigation = (path: string) => {
-    setIsMobileMenuOpen(false);
     if (navigate) {
       navigate(path);
     } else {
@@ -104,7 +101,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                     onToggleTheme={toggleTheme}
                     onNavigate={handleNavigation}
                     onSignOut={signOut}
-                    onOpenMobileMenu={() => setIsMobileMenuOpen(true)}
                   />
                 </div>
               </div>
@@ -112,19 +108,6 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
           </div>
         </div>
       </SidebarProvider>
-
-      <MobileMenu 
-        isOpen={isMobileMenuOpen}
-        user={user}
-        profile={profile}
-        isAdmin={isAdmin}
-        navItems={navItems}
-        secondaryNavItems={secondaryNavItems}
-        isActive={isActive}
-        onClose={() => setIsMobileMenuOpen(false)}
-        onNavigate={handleNavigation}
-        onSignOut={signOut}
-      />
     </>
   );
 };

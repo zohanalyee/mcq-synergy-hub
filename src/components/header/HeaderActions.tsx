@@ -1,5 +1,5 @@
 
-import { Shield, Menu } from 'lucide-react';
+import { Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -21,7 +21,6 @@ interface HeaderActionsProps {
   onToggleTheme: () => void;
   onNavigate: (path: string) => void;
   onSignOut: () => Promise<void>;
-  onOpenMobileMenu: () => void;
 }
 
 const HeaderActions = ({ 
@@ -31,8 +30,7 @@ const HeaderActions = ({
   isAdmin, 
   onToggleTheme, 
   onNavigate, 
-  onSignOut, 
-  onOpenMobileMenu 
+  onSignOut
 }: HeaderActionsProps) => {
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -94,15 +92,6 @@ const HeaderActions = ({
           Sign In
         </Button>
       )}
-
-      <Button 
-        variant="ghost" 
-        size="icon" 
-        className="md:hidden rounded-full hover:bg-background/80"
-        onClick={onOpenMobileMenu}
-      >
-        <Menu className="h-6 w-6" />
-      </Button>
     </div>
   );
 };
