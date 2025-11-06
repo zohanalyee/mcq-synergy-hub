@@ -15,59 +15,59 @@ interface AppSidebarProps {
   isAdmin?: boolean;
 }
 const getIcon = (title: string) => {
-  const icons: Record<string, { icon: React.ReactNode; color: string }> = {
+  const icons: Record<string, { icon: React.ReactNode; textColor: string }> = {
     'Home': { 
       icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-blue-400 via-blue-500 to-blue-600'
+      textColor: 'text-blue-500'
     },
     'Subjects': { 
       icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-purple-400 via-purple-500 to-purple-600'
+      textColor: 'text-purple-500'
     },
     'MCQs': { 
       icon: <PenTool size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-green-400 via-green-500 to-green-600'
+      textColor: 'text-green-500'
     },
     'Quizzes': { 
       icon: <Target size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-red-400 via-red-500 to-red-600'
+      textColor: 'text-red-500'
     },
     'Mock Tests': { 
       icon: <Clock size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-orange-400 via-orange-500 to-orange-600'
+      textColor: 'text-orange-500'
     },
     'Custom Syllabus': { 
       icon: <GraduationCap size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-indigo-400 via-indigo-500 to-indigo-600'
+      textColor: 'text-indigo-500'
     },
     'Scholarships': { 
       icon: <Users size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-pink-400 via-pink-500 to-pink-600'
+      textColor: 'text-pink-500'
     },
     'Jobs': { 
       icon: <Briefcase size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-teal-400 via-teal-500 to-teal-600'
+      textColor: 'text-teal-500'
     },
     'Past Papers': { 
       icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-amber-400 via-amber-500 to-amber-600'
+      textColor: 'text-amber-500'
     },
     'Analytics': { 
       icon: <TrendingUp size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-cyan-400 via-cyan-500 to-cyan-600'
+      textColor: 'text-cyan-500'
     },
     'Feedback': { 
       icon: <MessageSquare size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-lime-400 via-lime-500 to-lime-600'
+      textColor: 'text-lime-500'
     },
     'Question Bank': { 
       icon: <Database size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      color: 'from-violet-400 via-violet-500 to-violet-600'
+      textColor: 'text-violet-500'
     }
   };
   return icons[title] || { 
     icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-    color: 'from-gray-400 via-gray-500 to-gray-600'
+    textColor: 'text-gray-500'
   };
 };
 export function AppSidebar({
@@ -112,10 +112,10 @@ export function AppSidebar({
                       )}
                     >
                       <span className={cn(
-                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br text-white",
-                        iconData.color,
+                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-background/40",
+                        iconData.textColor,
                         "shadow-md hover:shadow-xl hover:scale-110",
-                        "border border-white/20 hover:border-white/40",
+                        "border border-border/40 hover:border-border/60",
                         !expanded && "w-full h-full"
                       )}>
                         {iconData.icon}
@@ -151,10 +151,10 @@ export function AppSidebar({
                       )}
                     >
                       <span className={cn(
-                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br text-white",
-                        iconData.color,
+                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-background/40",
+                        iconData.textColor,
                         "shadow-md hover:shadow-xl hover:scale-110",
-                        "border border-white/20 hover:border-white/40",
+                        "border border-border/40 hover:border-border/60",
                         !expanded && "w-full h-full"
                       )}>
                         {iconData.icon}
