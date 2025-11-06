@@ -17,56 +17,56 @@ interface AppSidebarProps {
 const getIcon = (title: string) => {
   const icons: Record<string, { icon: React.ReactNode; color: string }> = {
     'Home': { 
-      icon: <BookOpen className="w-5 h-5 text-white" />, 
+      icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-blue-400 via-blue-500 to-blue-600'
     },
     'Subjects': { 
-      icon: <FileText className="w-5 h-5 text-white" />, 
+      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-purple-400 via-purple-500 to-purple-600'
     },
     'MCQs': { 
-      icon: <PenTool className="w-5 h-5 text-white" />, 
+      icon: <PenTool size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-green-400 via-green-500 to-green-600'
     },
     'Quizzes': { 
-      icon: <Target className="w-5 h-5 text-white" />, 
+      icon: <Target size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-red-400 via-red-500 to-red-600'
     },
     'Mock Tests': { 
-      icon: <Clock className="w-5 h-5 text-white" />, 
+      icon: <Clock size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-orange-400 via-orange-500 to-orange-600'
     },
     'Custom Syllabus': { 
-      icon: <GraduationCap className="w-5 h-5 text-white" />, 
+      icon: <GraduationCap size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-indigo-400 via-indigo-500 to-indigo-600'
     },
     'Scholarships': { 
-      icon: <Users className="w-5 h-5 text-white" />, 
+      icon: <Users size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-pink-400 via-pink-500 to-pink-600'
     },
     'Jobs': { 
-      icon: <Briefcase className="w-5 h-5 text-white" />, 
+      icon: <Briefcase size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-teal-400 via-teal-500 to-teal-600'
     },
     'Past Papers': { 
-      icon: <FileText className="w-5 h-5 text-white" />, 
+      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-amber-400 via-amber-500 to-amber-600'
     },
     'Analytics': { 
-      icon: <TrendingUp className="w-5 h-5 text-white" />, 
+      icon: <TrendingUp size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-cyan-400 via-cyan-500 to-cyan-600'
     },
     'Feedback': { 
-      icon: <MessageSquare className="w-5 h-5 text-white" />, 
+      icon: <MessageSquare size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-lime-400 via-lime-500 to-lime-600'
     },
     'Question Bank': { 
-      icon: <Database className="w-5 h-5 text-white" />, 
+      icon: <Database size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
       color: 'from-violet-400 via-violet-500 to-violet-600'
     }
   };
   return icons[title] || { 
-    icon: <BookOpen className="w-5 h-5 text-white" />, 
+    icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
     color: 'from-gray-400 via-gray-500 to-gray-600'
   };
 };
@@ -112,7 +112,7 @@ export function AppSidebar({
                       )}
                     >
                       <span className={cn(
-                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br",
+                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br text-white",
                         iconData.color,
                         "shadow-md hover:shadow-xl hover:scale-110",
                         "border border-white/20 hover:border-white/40",
@@ -151,7 +151,7 @@ export function AppSidebar({
                       )}
                     >
                       <span className={cn(
-                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br",
+                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-gradient-to-br text-white",
                         iconData.color,
                         "shadow-md hover:shadow-xl hover:scale-110",
                         "border border-white/20 hover:border-white/40",
