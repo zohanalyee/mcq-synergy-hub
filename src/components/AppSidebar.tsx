@@ -17,56 +17,56 @@ interface AppSidebarProps {
 const getIcon = (title: string) => {
   const icons: Record<string, { icon: React.ReactNode; color: string }> = {
     'Home': { 
-      icon: <BookOpen className="w-5 h-5" />, 
+      icon: <BookOpen className="w-5 h-5 text-white" />, 
       color: 'from-blue-400 via-blue-500 to-blue-600'
     },
     'Subjects': { 
-      icon: <FileText className="w-5 h-5" />, 
+      icon: <FileText className="w-5 h-5 text-white" />, 
       color: 'from-purple-400 via-purple-500 to-purple-600'
     },
     'MCQs': { 
-      icon: <PenTool className="w-5 h-5" />, 
+      icon: <PenTool className="w-5 h-5 text-white" />, 
       color: 'from-green-400 via-green-500 to-green-600'
     },
     'Quizzes': { 
-      icon: <Target className="w-5 h-5" />, 
+      icon: <Target className="w-5 h-5 text-white" />, 
       color: 'from-red-400 via-red-500 to-red-600'
     },
     'Mock Tests': { 
-      icon: <Clock className="w-5 h-5" />, 
+      icon: <Clock className="w-5 h-5 text-white" />, 
       color: 'from-orange-400 via-orange-500 to-orange-600'
     },
     'Custom Syllabus': { 
-      icon: <GraduationCap className="w-5 h-5" />, 
+      icon: <GraduationCap className="w-5 h-5 text-white" />, 
       color: 'from-indigo-400 via-indigo-500 to-indigo-600'
     },
     'Scholarships': { 
-      icon: <Users className="w-5 h-5" />, 
+      icon: <Users className="w-5 h-5 text-white" />, 
       color: 'from-pink-400 via-pink-500 to-pink-600'
     },
     'Jobs': { 
-      icon: <Briefcase className="w-5 h-5" />, 
+      icon: <Briefcase className="w-5 h-5 text-white" />, 
       color: 'from-teal-400 via-teal-500 to-teal-600'
     },
     'Past Papers': { 
-      icon: <FileText className="w-5 h-5" />, 
+      icon: <FileText className="w-5 h-5 text-white" />, 
       color: 'from-amber-400 via-amber-500 to-amber-600'
     },
     'Analytics': { 
-      icon: <TrendingUp className="w-5 h-5" />, 
+      icon: <TrendingUp className="w-5 h-5 text-white" />, 
       color: 'from-cyan-400 via-cyan-500 to-cyan-600'
     },
     'Feedback': { 
-      icon: <MessageSquare className="w-5 h-5" />, 
+      icon: <MessageSquare className="w-5 h-5 text-white" />, 
       color: 'from-lime-400 via-lime-500 to-lime-600'
     },
     'Question Bank': { 
-      icon: <Database className="w-5 h-5" />, 
+      icon: <Database className="w-5 h-5 text-white" />, 
       color: 'from-violet-400 via-violet-500 to-violet-600'
     }
   };
   return icons[title] || { 
-    icon: <BookOpen className="w-5 h-5" />, 
+    icon: <BookOpen className="w-5 h-5 text-white" />, 
     color: 'from-gray-400 via-gray-500 to-gray-600'
   };
 };
