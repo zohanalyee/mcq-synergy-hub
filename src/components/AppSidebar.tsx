@@ -15,59 +15,46 @@ interface AppSidebarProps {
   isAdmin?: boolean;
 }
 const getIcon = (title: string) => {
-  const icons: Record<string, { icon: React.ReactNode; textColor: string }> = {
+  const icons: Record<string, { icon: React.ReactNode }> = {
     'Home': { 
-      icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-blue-500'
+      icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-blue-500" />
     },
     'Subjects': { 
-      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-purple-500'
+      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-purple-500" />
     },
     'MCQs': { 
-      icon: <PenTool size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-green-500'
+      icon: <PenTool size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-green-500" />
     },
     'Quizzes': { 
-      icon: <Target size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-red-500'
+      icon: <Target size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-red-500" />
     },
     'Mock Tests': { 
-      icon: <Clock size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-orange-500'
+      icon: <Clock size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-orange-500" />
     },
     'Custom Syllabus': { 
-      icon: <GraduationCap size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-indigo-500'
+      icon: <GraduationCap size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-indigo-500" />
     },
     'Scholarships': { 
-      icon: <Users size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-pink-500'
+      icon: <Users size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-pink-500" />
     },
     'Jobs': { 
-      icon: <Briefcase size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-teal-500'
+      icon: <Briefcase size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-teal-500" />
     },
     'Past Papers': { 
-      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-amber-500'
+      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-amber-500" />
     },
     'Analytics': { 
-      icon: <TrendingUp size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-cyan-500'
+      icon: <TrendingUp size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-cyan-500" />
     },
     'Feedback': { 
-      icon: <MessageSquare size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-lime-500'
+      icon: <MessageSquare size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-lime-500" />
     },
     'Question Bank': { 
-      icon: <Database size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-      textColor: 'text-violet-500'
+      icon: <Database size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-violet-500" />
     }
   };
   return icons[title] || { 
-    icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5" />, 
-    textColor: 'text-gray-500'
+    icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-gray-500" />
   };
 };
 export function AppSidebar({
@@ -111,15 +98,7 @@ export function AppSidebar({
                         !expanded && "justify-center px-0 w-12 h-12 mx-auto"
                       )}
                     >
-                      <span className={cn(
-                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-background/40",
-                        iconData.textColor,
-                        "shadow-md hover:shadow-xl hover:scale-110",
-                        "border border-border/40 hover:border-border/60",
-                        !expanded && "w-full h-full"
-                      )}>
                         {iconData.icon}
-                      </span>
                       {expanded && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
                       {isActive(item.path) && expanded && <ChevronRight className="ml-auto w-4 h-4 animate-fade-in" />}
                     </SidebarMenuButton>
@@ -150,15 +129,7 @@ export function AppSidebar({
                         !expanded && "justify-center px-0 w-12 h-12 mx-auto"
                       )}
                     >
-                      <span className={cn(
-                        "transition-all duration-300 flex items-center justify-center rounded-lg p-2 backdrop-blur-xl bg-background/40",
-                        iconData.textColor,
-                        "shadow-md hover:shadow-xl hover:scale-110",
-                        "border border-border/40 hover:border-border/60",
-                        !expanded && "w-full h-full"
-                      )}>
                         {iconData.icon}
-                      </span>
                       {expanded && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
                       {item.title === 'Question Bank' && isAdmin && expanded && (
                         <Badge variant="secondary" className="ml-auto text-xs animate-fade-in">
