@@ -184,9 +184,8 @@ const CustomSyllabus = () => {
   ];
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16 max-w-7xl">
+    <Header>
+      <div className="container mx-auto px-4 pt-8 pb-16 max-w-7xl">
         <PageBreadcrumb items={breadcrumbItems} />
         
         <motion.div
@@ -279,7 +278,7 @@ const CustomSyllabus = () => {
           </div>
         </motion.div>
       </div>
-    </>
+    </Header>
   );
 };
 

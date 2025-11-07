@@ -41,9 +41,8 @@ const Quizzes = () => {
   };
   
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16">
+    <Header>
+      <div className="container mx-auto px-4 pt-8 pb-16">
         <PageBreadcrumb items={breadcrumbItems} />
         
         <motion.div 
@@ -87,7 +86,7 @@ const Quizzes = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </Header>
   );
 };
 

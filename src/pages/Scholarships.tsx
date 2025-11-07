@@ -71,10 +71,9 @@ const Scholarships = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <div className="container px-4 mx-auto pt-28 pb-16">
+    <Header>
+      <div className="min-h-screen bg-background">
+        <div className="container px-4 mx-auto pt-8 pb-16">
         <PageBreadcrumb items={breadcrumbItems} />
         
         <div className="mt-6 mb-12">
@@ -216,8 +215,10 @@ const Scholarships = () => {
                 </Card>
               </motion.div>
             ))
-          ) : (
-            <div className="text-center py-16">
+        )}
+      </div>
+    </Header>
+  );
               <AlertCircle className="h-16 w-16 mx-auto text-muted-foreground/40" />
               <h3 className="mt-4 text-lg font-medium">No scholarships found</h3>
               <p className="mt-2 text-muted-foreground">

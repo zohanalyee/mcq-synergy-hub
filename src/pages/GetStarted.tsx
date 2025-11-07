@@ -24,9 +24,8 @@ const GetStarted = () => {
   };
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16">
+    <Header>
+      <div className="container mx-auto px-4 pt-16 pb-16">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -328,13 +327,13 @@ const GetStarted = () => {
                       Get Started <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </CardFooter>
-                </Card>
+            </Card>
               </motion.div>
             </motion.div>
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </Header>
   );
 };
 

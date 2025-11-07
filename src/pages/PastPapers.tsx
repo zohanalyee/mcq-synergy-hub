@@ -44,9 +44,9 @@ const PastPapers = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <Header />
-      <div className="container mx-auto px-4 pt-20 pb-12">
+    <Header>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+        <div className="container mx-auto px-4 pt-8 pb-12">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -153,7 +153,8 @@ const PastPapers = () => {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </Header>
   );
 };
 

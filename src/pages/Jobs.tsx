@@ -36,9 +36,9 @@ const Jobs = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-      <Header />
-      <div className="container mx-auto px-4 pt-20 pb-12">
+    <Header>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
+        <div className="container mx-auto px-4 pt-8 pb-12">
         <JobsHeader />
         <JobsFilters 
           searchQuery={searchQuery}
@@ -56,8 +56,9 @@ const Jobs = () => {
             searchQuery={searchQuery}
           />
         </motion.div>
+        </div>
       </div>
-    </div>
+    </Header>
   );
 };
 
