@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -8,7 +8,7 @@ import HeaderActions from './header/HeaderActions';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 
-const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string) => void }) => {
+const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { userRole, isAdmin } = useUserRole();
@@ -105,6 +105,9 @@ const Header = ({ theme, setTheme }: { theme?: string; setTheme?: (theme: string
                 </div>
               </div>
             </header>
+            <main className="flex-1">
+              {children}
+            </main>
           </div>
         </div>
       </SidebarProvider>

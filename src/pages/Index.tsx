@@ -163,9 +163,9 @@ const Home = () => {
   ];
 
   return (
-    <>
-      <Header theme={theme} setTheme={setTheme} />
+    <Header theme={theme} setTheme={setTheme}>
       <div className={`min-h-screen bg-background ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
+      
       
       {/* Hero Section */}
       <section className="pt-20 pb-20 relative overflow-hidden">
@@ -501,7 +501,7 @@ const Home = () => {
         </div>
       </footer>
       </div>
-    </>
+    </Header>
   );
 };
 
