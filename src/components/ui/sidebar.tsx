@@ -139,7 +139,7 @@ const SidebarProvider = React.forwardRef<
               } as React.CSSProperties
             }
             className={cn(
-              "group/sidebar-wrapper flex min-h-svh w-full has-[[data-variant=inset]]:bg-sidebar",
+              "group/sidebar-wrapper flex min-h-svh w-full overflow-x-hidden has-[[data-variant=inset]]:bg-sidebar",
               className
             )}
             ref={ref}
@@ -212,10 +212,9 @@ const Sidebar = React.forwardRef<
 
     return (
       <>
-        {/* Backdrop for click-outside-to-close with glassy effect */}
         {state === "expanded" && (
           <div
-            className="fixed inset-0 z-40 bg-black/30 backdrop-blur-md animate-fade-in"
+            className="fixed inset-0 z-40 bg-transparent backdrop-blur-0"
             onClick={toggleSidebar}
           />
         )}

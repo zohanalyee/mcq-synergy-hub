@@ -105,7 +105,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
                 </div>
               </div>
             </header>
-            <main className="flex-1">
+            <main className="flex-1 overflow-x-hidden">
               {children}
             </main>
           </div>
