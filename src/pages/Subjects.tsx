@@ -2,7 +2,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import SubjectsHeader from "@/components/subjects/SubjectsHeader";
 import SubjectsSearch from "@/components/subjects/SubjectsSearch";
 import CategoryFilter from "@/components/subjects/CategoryFilter";
@@ -53,16 +52,9 @@ const Subjects = () => {
     setSelectedPurpose("All");
   };
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Subjects", href: "/subjects", isCurrent: true },
-  ];
-
   return (
     <Header>
       <div className="container mx-auto px-4 pt-8 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <SubjectsHeader />
         
         <div className="mb-6">

@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { EnhancedSearchBox } from "@/components/mock-tests/EnhancedSearchBox";
 import { SubjectTestsTab } from "@/components/mock-tests/SubjectTestsTab";
@@ -31,15 +30,6 @@ const MockTests = () => {
     setIsLoaded(true);
   }, []);
   
-  const breadcrumbItems = [{
-    title: "Home",
-    href: "/"
-  }, {
-    title: "Mock Tests",
-    href: "/mock-tests",
-    isCurrent: true
-  }];
-
   const handleClearSearch = () => {
     setSearchQuery("");
   };
@@ -47,8 +37,6 @@ const MockTests = () => {
   return (
     <Header>
       <div className="container mx-auto px-4 pt-8 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

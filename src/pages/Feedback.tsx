@@ -13,9 +13,9 @@ const Feedback = () => {
     <Header>
       <div className="container max-w-3xl py-12">
         <Card>
-          <CardHeader>
-            <CardTitle>Provide Feedback</CardTitle>
-            <CardDescription>
+          <CardHeader className="text-center">
+            <CardTitle className="text-foreground">Provide Feedback</CardTitle>
+            <CardDescription className="text-muted-foreground">
               Help us improve MCQs Point by sharing your thoughts and suggestions
             </CardDescription>
           </CardHeader>

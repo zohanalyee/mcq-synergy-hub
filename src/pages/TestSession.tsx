@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -118,22 +117,14 @@ const TestSession = () => {
   const progress = ((currentQuestion + 1) / testData.questions.length) * 100;
   const answeredCount = Object.keys(answers).length;
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Custom Quizzes", href: "/custom-quizzes" },
-    { title: testData.title, href: "#", isCurrent: true },
-  ];
-
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
-        <PageBreadcrumb items={breadcrumbItems} />
-
         {/* Test Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">{testData.title}</h1>
-          <div className="flex flex-wrap gap-4 items-center">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2 text-foreground">{testData.title}</h1>
+          <div className="flex flex-wrap gap-4 items-center justify-center">
             <Badge variant="outline" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               {formatTime(timeRemaining)}

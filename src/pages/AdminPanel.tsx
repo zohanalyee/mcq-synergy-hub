@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { initializeAdminData } from "@/services/adminService";
@@ -70,11 +69,6 @@ const AdminPanel = () => {
     setIsLoading(false);
   }, [user, navigate, checkIsAdmin]);
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Admin Panel", href: "/admin", isCurrent: true },
-  ];
-
   const currentContent = getCurrentContent();
   const statistics = getContentStatistics();
 
@@ -91,8 +85,6 @@ const AdminPanel = () => {
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <AdminHeader 
           pendingCount={statistics.pendingCount}
           scholarshipCount={statistics.scholarshipCount}

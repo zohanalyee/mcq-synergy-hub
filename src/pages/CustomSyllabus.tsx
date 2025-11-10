@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -178,16 +177,9 @@ const CustomSyllabus = () => {
     show: { y: 0, opacity: 1 },
   };
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Custom Syllabus", href: "/custom-syllabus", isCurrent: true },
-  ];
-
   return (
     <Header>
       <div className="container mx-auto px-4 pt-8 pb-16 max-w-7xl">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <motion.div
           className="mb-4"
           initial={{ opacity: 0, y: -20 }}
@@ -195,9 +187,9 @@ const CustomSyllabus = () => {
           transition={{ duration: 0.5 }}
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-            <div>
-              <h1 className="text-3xl font-bold mb-1">Custom Syllabus Builder</h1>
-              <p className="text-sm text-muted-foreground max-w-2xl">
+            <div className="text-center md:text-left w-full">
+              <h1 className="text-3xl font-bold mb-1 text-foreground">Custom Syllabus Builder</h1>
+              <p className="text-sm text-muted-foreground max-w-2xl mx-auto md:mx-0">
                 Create your personalized test syllabus by selecting specific topics from various subjects.
               </p>
             </div>

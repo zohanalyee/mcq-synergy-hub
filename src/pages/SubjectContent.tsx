@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Book } from "lucide-react";
 import { useEffect, useState, ReactNode } from "react";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import SubjectHeader from "@/components/subject-content/SubjectHeader";
 import TopicsList from "@/components/subject-content/TopicsList";
 import BackButton from "@/components/subject-content/BackButton";
@@ -36,18 +35,10 @@ const SubjectContent = () => {
     setIsLoaded(true);
   }, [title, navigate]);
   
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Subjects", href: "/subjects" },
-    { title: title || "Subject Content", href: "#", isCurrent: true },
-  ];
-
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <BackButton />
         
         <motion.div

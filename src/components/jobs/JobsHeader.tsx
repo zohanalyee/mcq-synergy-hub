@@ -4,12 +4,12 @@ import { Briefcase } from "lucide-react";
 
 const JobsHeader = () => {
   return (
-    <div className="mt-6 mb-12">
+    <div className="mt-6 mb-12 text-center">
       <motion.h1 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-3xl font-bold flex items-center"
+        className="text-3xl font-bold flex items-center justify-center text-foreground"
       >
         <Briefcase className="mr-2 h-8 w-8 text-primary" /> Jobs
       </motion.h1>

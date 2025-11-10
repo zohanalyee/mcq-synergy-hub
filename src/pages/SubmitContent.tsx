@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import SEOFields from "@/components/SEOFields";
 import { Card } from "@/components/ui/card";
 import { Form } from "@/components/ui/form";
@@ -82,17 +81,10 @@ const SubmitContent = () => {
     );
   }
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Submit Content", href: "/submit-content", isCurrent: true },
-  ];
-
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <motion.div
           className="max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 20 }}

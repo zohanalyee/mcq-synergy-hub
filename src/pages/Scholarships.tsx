@@ -5,7 +5,6 @@ import { motion } from "framer-motion";
 import { Search, Award, Calendar, ExternalLink, Upload, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -55,10 +54,6 @@ const Scholarships = () => {
     item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Scholarships", href: "/scholarships", isCurrent: true },
-  ];
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "No deadline";
@@ -74,14 +69,12 @@ const Scholarships = () => {
     <Header>
       <div className="min-h-screen bg-background">
         <div className="container px-4 mx-auto pt-8 pb-16">
-          <PageBreadcrumb items={breadcrumbItems} />
-          
-          <div className="mt-6 mb-12">
+          <div className="mt-6 mb-12 text-center">
             <motion.h1 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="text-3xl font-bold flex items-center"
+              className="text-3xl font-bold flex items-center justify-center text-foreground"
             >
               <Award className="mr-2 h-8 w-8 text-primary" /> Scholarships
             </motion.h1>

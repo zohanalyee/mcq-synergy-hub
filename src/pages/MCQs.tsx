@@ -179,9 +179,9 @@ const MCQs = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-12"
+          className="mb-12 text-center"
         >
-          <h1 className="text-3xl font-bold flex items-center mb-4">
+          <h1 className="text-3xl font-bold flex items-center justify-center mb-4 text-foreground">
             <Brain className="mr-3 h-8 w-8 text-primary" />
             MCQ Practice
           </h1>

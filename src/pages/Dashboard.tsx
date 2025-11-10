@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardTabs from "@/components/dashboard/DashboardTabs";
 import WeeklyProgressChart from "@/components/dashboard/WeeklyProgressChart";
@@ -24,17 +23,10 @@ const Dashboard = () => {
     }
   };
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Dashboard", href: "/dashboard", isCurrent: true },
-  ];
-
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <DashboardHeader />
 
         <DashboardTabs 

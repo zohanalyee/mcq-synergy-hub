@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { SearchBox } from "@/components/quizzes/SearchBox";
 import { SubjectQuizzesTab } from "@/components/quizzes/SubjectQuizzesTab";
 import { TopicQuizzesTab } from "@/components/quizzes/TopicQuizzesTab";
@@ -27,15 +26,6 @@ const Quizzes = () => {
     setIsLoaded(true);
   }, []);
   
-  const breadcrumbItems = [{
-    title: "Home",
-    href: "/"
-  }, {
-    title: "Quizzes",
-    href: "/quizzes",
-    isCurrent: true
-  }];
-
   const handleClearSearch = () => {
     setSearchQuery("");
   };
@@ -43,15 +33,13 @@ const Quizzes = () => {
   return (
     <Header>
       <div className="container mx-auto px-4 pt-8 pb-16">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-8 text-center"
         >
-          <h1 className="text-3xl font-bold">Quizzes</h1>
+          <h1 className="text-3xl font-bold text-foreground">Quizzes</h1>
           <p className="text-muted-foreground">Practice with our collection of topic-specific and subject-wide quizzes</p>
         </motion.div>
 

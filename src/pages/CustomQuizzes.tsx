@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
-import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { subjects } from "@/data/subjectsData";
 import { CustomSubject, QuizSettings } from "@/components/custom-quizzes/interfaces";
@@ -132,17 +131,10 @@ const CustomQuizzes = () => {
     return ["All", ...Array.from(new Set(cats))];
   })();
 
-  const breadcrumbItems = [
-    { title: "Home", href: "/" },
-    { title: "Custom Quizzes", href: "/custom-quizzes", isCurrent: true },
-  ];
-
   return (
     <>
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16 max-w-7xl">
-        <PageBreadcrumb items={breadcrumbItems} />
-        
         <motion.div
           className="mb-12"
           initial={{ opacity: 0, y: -20 }}
