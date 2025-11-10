@@ -47,34 +47,35 @@ const QuizPanel = ({
   }, [customSubjects]);
 
   return (
-    <Card className="h-fit">
-      <CardHeader className="pb-4">
-        <CardTitle className="text-lg">Custom Quiz</CardTitle>
-        <CardDescription className="text-sm">Configure quiz details</CardDescription>
+    <Card className="h-fit sticky top-4">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-base">Custom Quiz</CardTitle>
+        <CardDescription className="text-xs">Configure quiz details</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-2">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="topics">Topics</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-8">
+            <TabsTrigger value="topics" className="text-xs">Topics</TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="topics" className="mt-4">
+          <TabsContent value="topics" className="mt-2 space-y-2">
             <div>
-              <label htmlFor="syllabus-name" className="text-sm font-medium mb-1.5 block">Quiz Name</label>
+              <label htmlFor="syllabus-name" className="text-xs font-medium mb-1 block">Quiz Name</label>
               <Input 
                 id="syllabus-name"
                 value={syllabusName} 
                 onChange={(e) => setSyllabusName(e.target.value)}
-                placeholder="Enter a name for your quiz"
+                placeholder="Enter quiz name"
+                className="h-8 text-sm"
               />
             </div>
             
-            <div className="mt-4">
-              <label className="text-sm font-medium mb-1.5 block">Quiz Categories</label>
-              <div className="flex flex-wrap gap-2 mb-3">
+            <div>
+              <label className="text-xs font-medium mb-1 block">Categories</label>
+              <div className="flex flex-wrap gap-1 mb-1 max-h-20 overflow-y-auto">
                 <Badge 
-                  className="cursor-pointer hover:bg-primary/80" 
+                  className="cursor-pointer hover:bg-primary/80 text-xs px-2 py-0.5" 
                   variant="outline" 
                   onClick={() => setSelectedCategory("All")}
                 >
@@ -83,7 +84,7 @@ const QuizPanel = ({
                 {categories.map((category) => (
                   <Badge 
                     key={category}
-                    className="cursor-pointer hover:bg-primary/80" 
+                    className="cursor-pointer hover:bg-primary/80 text-xs px-2 py-0.5" 
                     variant="outline"
                     onClick={() => setSelectedCategory(category)}
                   >
@@ -91,19 +92,21 @@ const QuizPanel = ({
                   </Badge>
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Click on a category to filter subjects. Each category serves a different quiz function.
+              <p className="text-[10px] text-muted-foreground">
+                Click to filter subjects
               </p>
             </div>
             
-            <SelectedTopics 
-              customSubjects={customSubjects} 
-              selectedSubjectsCount={selectedSubjectsCount}
-              setSelectedCategory={setSelectedCategory}
-            />
+            <div className="max-h-32 overflow-y-auto">
+              <SelectedTopics 
+                customSubjects={customSubjects} 
+                selectedSubjectsCount={selectedSubjectsCount}
+                setSelectedCategory={setSelectedCategory}
+              />
+            </div>
           </TabsContent>
           
-          <TabsContent value="settings" className="mt-4">
+          <TabsContent value="settings" className="mt-2">
             <QuizSettingsComponent 
               quizSettings={quizSettings}
               updateQuizSettings={updateQuizSettings}
@@ -111,9 +114,9 @@ const QuizPanel = ({
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex flex-col gap-3">
+      <CardFooter className="flex flex-col gap-2 pt-2">
         <Button 
-          className="w-full" 
+          className="w-full h-8 text-sm" 
           disabled={selectedTopicsCount === 0}
           onClick={createQuiz}
         >
@@ -121,7 +124,7 @@ const QuizPanel = ({
         </Button>
         <Button 
           variant="outline" 
-          className="w-full"
+          className="w-full h-8 text-sm"
           onClick={() => navigate('/')}
         >
           Cancel
