@@ -211,34 +211,8 @@ const CustomSyllabus = () => {
             </div>
           </div>
           
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3 max-h-[calc(100vh-16rem)] overflow-hidden">
-            <div className="lg:col-span-2 space-y-4 overflow-y-auto" ref={selectedTopicsRef}>
-              <div className="space-y-4">
-                <QuizPanel
-                  syllabusName={syllabusName}
-                  setSyllabusName={setSyllabusName}
-                  selectedTopicsCount={selectedTopicsCount}
-                  selectedSubjectsCount={selectedSubjectsCount}
-                  activeTab={activeTab}
-                  setActiveTab={setActiveTab}
-                  quizSettings={quizSettings}
-                  updateQuizSettings={updateQuizSettings}
-                  createQuiz={createQuiz}
-                  customSubjects={customSubjects}
-                  setSelectedCategory={setSelectedCategory}
-                />
-                
-                {selectedTopicsCount > 0 && (
-                  <div className="fixed bottom-6 right-6 md:hidden">
-                    <Button onClick={scrollToSelectedTopics}>
-                      Review Selection ({selectedTopicsCount})
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div className="lg:col-span-1 space-y-4 overflow-y-auto">
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-4 max-h-[calc(100vh-16rem)] overflow-y-auto" ref={selectedTopicsRef}>
               <EnhancedSubjectFilter
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
@@ -274,6 +248,30 @@ const CustomSyllabus = () => {
                   </Card>
                 )}
               </motion.div>
+            </div>
+            
+            <div className="lg:col-span-1">
+              <QuizPanel
+                syllabusName={syllabusName}
+                setSyllabusName={setSyllabusName}
+                selectedTopicsCount={selectedTopicsCount}
+                selectedSubjectsCount={selectedSubjectsCount}
+                activeTab={activeTab}
+                setActiveTab={setActiveTab}
+                quizSettings={quizSettings}
+                updateQuizSettings={updateQuizSettings}
+                createQuiz={createQuiz}
+                customSubjects={customSubjects}
+                setSelectedCategory={setSelectedCategory}
+              />
+              
+              {selectedTopicsCount > 0 && (
+                <div className="fixed bottom-6 right-6 md:hidden">
+                  <Button onClick={scrollToSelectedTopics}>
+                    Review Selection ({selectedTopicsCount})
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </motion.div>
