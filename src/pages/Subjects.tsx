@@ -54,7 +54,7 @@ const Subjects = () => {
 
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-8 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         <SubjectsHeader />
         
         <div className="mb-6">

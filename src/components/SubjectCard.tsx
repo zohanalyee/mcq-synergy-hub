@@ -78,7 +78,7 @@ const SubjectCard = ({
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="cursor-pointer"
+      className="cursor-pointer w-full max-w-md mx-auto"
     >
       <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg min-h-[180px] max-h-[240px] flex flex-col"
         style={{ borderTopColor: color }}
