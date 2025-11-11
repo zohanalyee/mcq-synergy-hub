@@ -90,7 +90,7 @@ export const TestCard = ({
 
   return (
     <Card className="min-h-[220px] hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary/60">
-      <CardContent className="p-4 sm:p-6">
+      <CardContent className="p-3 sm:p-6">
         {/* Header Section */}
         <div className="flex justify-between items-start mb-4">
           <div className="flex-1 min-w-0">
@@ -125,25 +125,25 @@ export const TestCard = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4">
+        <div className="flex flex-col sm:flex-row gap-2 mb-4">
           <Button 
             onClick={() => toggleExpandTest(test.id)}
             variant="outline" 
             size="sm"
-            className="flex-1 justify-center text-xs sm:text-sm"
+            className="flex-1 justify-center text-xs sm:text-sm px-2 sm:px-4"
           >
-            {isExpanded ? <ChevronUp className="h-4 w-4 mr-2" /> : <ChevronDown className="h-4 w-4 mr-2" />}
-            Topics ({selectedTestTopics.length})
+            {isExpanded ? <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> : <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
+            <span>Topics ({selectedTestTopics.length})</span>
           </Button>
           
           <Button 
             onClick={(e) => toggleCustomizeTest(test.id, e)}
             variant="outline" 
             size="sm"
-            className="flex-1 justify-center text-xs sm:text-sm"
+            className="flex-1 justify-center text-xs sm:text-sm px-2 sm:px-4"
           >
-            <Settings className="h-4 w-4 mr-2" />
-            Customize
+            <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <span>Customize</span>
           </Button>
           
           {!isCustomizing && (
@@ -151,14 +151,20 @@ export const TestCard = ({
               onClick={handleQuickStart}
               size="sm"
               disabled={isGenerating}
-              className="flex-1 justify-center text-xs sm:text-sm font-medium"
+              className="flex-1 justify-center text-xs sm:text-sm font-medium px-2 sm:px-4"
             >
               {isGenerating ? (
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <>
+                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
+                  <span className="hidden sm:inline">Start Test</span>
+                  <span className="sm:hidden">Start</span>
+                </>
               ) : (
-                <Play className="h-4 w-4 mr-2" />
+                <>
+                  <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <span>Start Test</span>
+                </>
               )}
-              Start Test
             </Button>
           )}
         </div>
