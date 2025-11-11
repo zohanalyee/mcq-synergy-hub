@@ -7,6 +7,7 @@ import HeaderLogo from './header/HeaderLogo';
 import HeaderActions from './header/HeaderActions';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
+import { LiquidBackground } from './LiquidBackground';
 
 const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -68,8 +69,9 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
 
   return (
     <>
+      <LiquidBackground speed={20} intensity={1} blobCount={5} />
       <SidebarProvider defaultOpen={false}>
-        <div className="min-h-screen flex w-full">
+        <div className="min-h-screen flex w-full relative">
           <AppSidebar 
             navItems={navItems}
             secondaryNavItems={secondaryNavItems}
