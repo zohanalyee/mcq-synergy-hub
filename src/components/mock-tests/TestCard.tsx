@@ -125,7 +125,7 @@ export const TestCard = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <div className="flex flex-col lg:flex-row flex-wrap gap-2 mb-4">
           <Button 
             onClick={() => toggleExpandTest(test.id)}
             variant="outline" 
