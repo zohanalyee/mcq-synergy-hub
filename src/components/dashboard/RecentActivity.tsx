@@ -19,16 +19,16 @@ const RecentActivity = () => {
       }
     }}>
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">Recent Activity</CardTitle>
+        <CardHeader className="pb-1.5">
+          <CardTitle className="text-base font-medium">Recent Activity</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ul className="space-y-4">
+        <CardContent className="pt-3">
+          <ul className="space-y-3">
             {activities.map((item) => (
-              <li key={item.id} className="flex items-start gap-3 text-sm">
+              <li key={item.id} className="flex items-start gap-2.5 text-sm">
                 <div className="h-2 w-2 mt-1.5 rounded-full bg-primary" />
                 <div>
-                  <p className="font-medium">Completed {item.subject} test</p>
+                  <p className="font-medium text-sm">Completed {item.subject} test</p>
                   <p className="text-muted-foreground text-xs">
                     {item.timeAgo} ago
                   </p>

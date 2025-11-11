@@ -32,17 +32,17 @@ const SubjectCard = ({
   
   const renderDisplayIcon = () => {
     if (!icon) {
-      return <FileText className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: color || '#3b82f6' }} />;
+      return <FileText className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: color || '#3b82f6' }} />;
     }
     
     if (React.isValidElement(icon)) {
       return React.cloneElement(icon as React.ReactElement<any>, { 
-        className: "h-6 w-6 sm:h-7 sm:w-7",
+        className: "h-5 w-5 sm:h-6 sm:w-6",
         style: { color: color || '#3b82f6' } 
       });
     }
     
-    return <FileText className="h-6 w-6 sm:h-7 sm:w-7" style={{ color: color || '#3b82f6' }} />;
+    return <FileText className="h-5 w-5 sm:h-6 sm:w-6" style={{ color: color || '#3b82f6' }} />;
   };
   
   const handleClick = () => {
@@ -80,7 +80,7 @@ const SubjectCard = ({
       onMouseLeave={() => setIsHovered(false)}
       className="cursor-pointer"
     >
-      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg min-h-[240px] max-h-[320px] flex flex-col"
+      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg min-h-[180px] max-h-[240px] flex flex-col"
         style={{ borderTopColor: color }}
       >
         <motion.div
@@ -89,19 +89,19 @@ const SubjectCard = ({
           transition={{ duration: 0.3 }}
           className="flex-1 flex flex-col"
         >
-          <CardContent className="p-4 sm:p-6 flex-1 flex flex-col">
-            <div className="flex items-start justify-between mb-4">
-              <div className="p-3 sm:p-4 rounded-lg" style={{ backgroundColor: `${color}20` }}>
+          <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
+            <div className="flex items-start justify-between mb-3">
+              <div className="p-2 sm:p-3 rounded-lg" style={{ backgroundColor: `${color}20` }}>
                 {renderDisplayIcon()}
               </div>
-              <div className="flex flex-col gap-2 items-end">
-                <span className="text-xs sm:text-sm font-medium text-muted-foreground">
+              <div className="flex flex-col gap-1.5 items-end">
+                <span className="text-xs font-medium text-muted-foreground">
                   {topicCount} Topics
                 </span>
                 <Badge 
                   variant={purpose === "reading" ? "outline" : "default"}
                   className={cn(
-                    "flex items-center gap-1 text-xs h-6 px-2",
+                    "flex items-center gap-1 text-xs h-5 px-1.5",
                     purpose === "reading" ? "border-blue-500 text-blue-600" : "bg-green-500 hover:bg-green-600"
                   )}
                 >
@@ -118,14 +118,14 @@ const SubjectCard = ({
               </div>
             </div>
             
-            <h3 className="text-lg sm:text-xl font-semibold mb-3 line-clamp-2 leading-tight">{title}</h3>
-            <p className="text-muted-foreground text-sm sm:text-base mb-4 line-clamp-3 flex-1 leading-relaxed">{description}</p>
+            <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-2 leading-tight">{title}</h3>
+            <p className="text-muted-foreground text-xs sm:text-sm mb-3 line-clamp-2 flex-1 leading-relaxed">{description}</p>
             
             <div className={cn(
-              "text-sm font-medium transition-all duration-300 flex items-center justify-between mt-auto pt-2 border-t border-border/30",
+              "text-xs font-medium transition-all duration-300 flex items-center justify-between mt-auto pt-1.5 border-t border-border/30",
               isHovered ? "text-primary" : "text-foreground"
             )}>
-              <span className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5">
                 Explore Topics 
                 <span className="transition-transform duration-300" style={{ transform: isHovered ? 'translateX(4px)' : 'translateX(0)' }}>
                   →
