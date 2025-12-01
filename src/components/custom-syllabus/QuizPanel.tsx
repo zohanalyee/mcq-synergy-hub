@@ -23,6 +23,7 @@ interface QuizPanelProps {
   createQuiz: () => void;
   customSubjects: CustomSubject[];
   setSelectedCategory: (category: string) => void;
+  isGenerating?: boolean;
 }
 
 const QuizPanel = ({
@@ -36,7 +37,8 @@ const QuizPanel = ({
   updateQuizSettings,
   createQuiz,
   customSubjects,
-  setSelectedCategory
+  setSelectedCategory,
+  isGenerating = false
 }: QuizPanelProps) => {
   const navigate = useNavigate();
   
@@ -117,10 +119,17 @@ const QuizPanel = ({
       <CardFooter className="flex flex-col gap-2 pt-2">
         <Button 
           className="w-full h-8 text-sm" 
-          disabled={selectedTopicsCount === 0}
+          disabled={selectedTopicsCount === 0 || isGenerating}
           onClick={createQuiz}
         >
-          Create Quiz & Start Test
+          {isGenerating ? (
+            <div className="flex items-center gap-2">
+              <span className="animate-spin">◌</span>
+              <span>Generating...</span>
+            </div>
+          ) : (
+            'Create Quiz & Start Test'
+          )}
         </Button>
         <Button 
           variant="outline" 

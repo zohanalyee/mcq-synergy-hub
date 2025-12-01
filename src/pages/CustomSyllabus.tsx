@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import subjects data
 import { subjects } from "@/data/subjectsData";
@@ -31,6 +33,7 @@ const CustomSyllabus = () => {
   const [selectedTopicsCount, setSelectedTopicsCount] = useState(0);
   const [selectedSubjectsCount, setSelectedSubjectsCount] = useState(0);
   const [activeTab, setActiveTab] = useState("topics");
+  const [isGenerating, setIsGenerating] = useState(false);
   const [quizSettings, setQuizSettings] = useState<QuizSettings>({
     timeLimit: 30,
     questionsCount: 20,
@@ -38,6 +41,7 @@ const CustomSyllabus = () => {
   });
   
   const navigate = useNavigate();
+  const { user } = useAuth();
   const selectedTopicsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -120,7 +124,18 @@ const CustomSyllabus = () => {
     }));
   };
 
-  const createQuiz = () => {
+  const createQuiz = async () => {
+    // Check authentication
+    if (!user) {
+      toast({
+        title: "Authentication Required",
+        description: "Please sign in to create a custom quiz.",
+        variant: "destructive"
+      });
+      navigate('/auth');
+      return;
+    }
+
     if (selectedTopicsCount === 0) {
       toast({
         title: "Selection Required",
@@ -130,25 +145,87 @@ const CustomSyllabus = () => {
       return;
     }
 
-    const selectedSyllabusData = {
-      name: syllabusName,
-      topics: customSubjects
+    setIsGenerating(true);
+
+    try {
+      // Step A: Gather selected topics into a comma-separated string
+      const selectedTopicsString = customSubjects
         .filter(subject => subject.topics.some(topic => topic.selected))
-        .map(subject => ({
-          subject: subject.title,
-          topics: subject.topics.filter(topic => topic.selected).map(t => t.name)
-        })),
-      settings: quizSettings
-    };
+        .map(subject => {
+          const topics = subject.topics.filter(topic => topic.selected).map(t => t.name).join(', ');
+          return `${subject.title}: ${topics}`;
+        })
+        .join('; ');
 
-    console.log("Creating quiz with data:", selectedSyllabusData);
+      // Step B: Call AI to generate test
+      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-test', {
+        body: {
+          topic: selectedTopicsString,
+          difficulty: quizSettings.difficulty,
+          question_count: quizSettings.questionsCount
+        }
+      });
 
-    toast({
-      title: "Quiz Created!",
-      description: `Your custom quiz "${syllabusName}" with ${selectedTopicsCount} topics and ${quizSettings.questionsCount} questions is ready.`,
-    });
+      if (aiError) {
+        console.error('AI generation error:', aiError);
+        toast({
+          title: "Generation Failed",
+          description: "Failed to generate quiz questions. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    navigate('/mock-tests');
+      // Step C: Save to database
+      const { data: sessionData, error: dbError } = await supabase
+        .from('custom_test_sessions')
+        .insert({
+          user_id: user.id,
+          session_name: syllabusName,
+          question_count: quizSettings.questionsCount,
+          time_limit: quizSettings.timeLimit,
+          difficulty_levels: [quizSettings.difficulty],
+          questions: aiResponse.questions,
+          subjects: customSubjects
+            .filter(subject => subject.topics.some(topic => topic.selected))
+            .map(subject => subject.title),
+          topics: customSubjects
+            .filter(subject => subject.topics.some(topic => topic.selected))
+            .map(subject => ({
+              subject: subject.title,
+              topics: subject.topics.filter(topic => topic.selected).map(t => t.name)
+            }))
+        })
+        .select()
+        .single();
+
+      if (dbError) {
+        console.error('Database error:', dbError);
+        toast({
+          title: "Save Failed",
+          description: "Failed to save your quiz. Please try again.",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      toast({
+        title: "Quiz Created!",
+        description: `Your AI-generated quiz "${syllabusName}" is ready with ${quizSettings.questionsCount} questions.`,
+      });
+
+      // Step D: Navigate to test session
+      navigate(`/test-session/${sessionData.id}`);
+    } catch (error) {
+      console.error('Unexpected error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   const scrollToSelectedTopics = () => {
@@ -255,6 +332,7 @@ const CustomSyllabus = () => {
                 createQuiz={createQuiz}
                 customSubjects={customSubjects}
                 setSelectedCategory={setSelectedCategory}
+                isGenerating={isGenerating}
               />
               
               {selectedTopicsCount > 0 && (
