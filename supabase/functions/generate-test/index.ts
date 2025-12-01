@@ -1,5 +1,4 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -13,81 +12,69 @@ serve(async (req) => {
   }
 
   try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
+    const { topic, difficulty, question_count } = await req.json();
+
+    console.log('Generating test with AI:', { topic, difficulty, question_count });
+
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured');
+    }
+
+    // Build the prompt with user parameters
+    const prompt = `You are a strict JSON generator. Create a test with ${question_count} multiple choice questions about ${topic} at ${difficulty} level. Output ONLY raw JSON. Structure: { "session_name": "Title", "questions": [ { "question": "...", "options": ["A", "B", "C", "D"], "answer": "The Correct Option String" } ] }`;
+
+    console.log('Sending prompt to Gemini:', prompt);
+
+    // Call Google Gemini API
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
       {
-        auth: {
-          persistSession: false,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }]
+        }),
       }
     );
 
-    const { subjects, topics, questionCount = 30, difficulty, timeLimit = 45 } = await req.json();
-
-    console.log('Generating test with params:', { subjects, topics, questionCount, difficulty, timeLimit });
-
-    // Build query for content_items
-    let query = supabase
-      .from('content_items')
-      .select('*')
-      .eq('category', 'mcq')
-      .eq('status', 'approved');
-
-    // Filter by subjects if provided
-    if (subjects && subjects.length > 0) {
-      query = query.in('subject', subjects);
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('Gemini API error:', response.status, errorText);
+      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
     }
 
-    // Filter by topics if provided
-    if (topics && topics.length > 0) {
-      query = query.in('topic', topics);
+    const data = await response.json();
+    console.log('Received response from Gemini');
+
+    // Extract the generated text from Gemini response
+    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!generatedText) {
+      console.error('No text generated from Gemini');
+      throw new Error('No content generated from AI');
     }
 
-    // Filter by difficulty if provided
-    if (difficulty && difficulty.length > 0) {
-      query = query.in('difficulty', difficulty);
+    // Parse the JSON from the generated text
+    // Remove markdown code blocks if present
+    let jsonText = generatedText.trim();
+    if (jsonText.startsWith('```json')) {
+      jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+    } else if (jsonText.startsWith('```')) {
+      jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
     }
 
-    const { data: questions, error } = await query;
-
-    if (error) {
-      console.error('Database error:', error);
-      throw error;
-    }
-
-    console.log(`Found ${questions?.length || 0} matching questions`);
-
-    if (!questions || questions.length === 0) {
-      return new Response(
-        JSON.stringify({ 
-          error: 'No questions found matching your criteria',
-          questions: []
-        }),
-        { 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200
-        }
-      );
-    }
-
-    // Shuffle and select requested number of questions
-    const shuffled = questions.sort(() => Math.random() - 0.5);
-    const selectedQuestions = shuffled.slice(0, Math.min(questionCount, questions.length));
-
-    console.log(`Selected ${selectedQuestions.length} questions for test`);
+    const testData = JSON.parse(jsonText);
+    console.log(`Successfully generated ${testData.questions?.length || 0} questions`);
 
     return new Response(
-      JSON.stringify({
-        questions: selectedQuestions,
-        metadata: {
-          totalQuestions: selectedQuestions.length,
-          timeLimit,
-          subjects,
-          topics,
-          difficulty
-        }
-      }),
+      JSON.stringify(testData),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200
@@ -95,9 +82,12 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error generating test:', error);
+    console.error('Error generating test with AI:', error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : 'Unknown error',
+        details: 'Failed to generate test questions'
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 500
