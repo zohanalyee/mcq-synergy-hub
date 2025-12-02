@@ -41,39 +41,57 @@ const SubjectCard = ({
   };
   
   return (
-    <Card className="h-auto min-h-[120px]">
-      <CardHeader className="p-3 pb-2">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-2">
+    <Card className="h-full group hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50 relative overflow-hidden">
+      {/* Gradient Background */}
+      <div 
+        className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity"
+        style={{
+          background: `linear-gradient(135deg, ${subject.color}40 0%, ${subject.color}10 100%)`
+        }}
+      />
+      
+      <CardHeader className="p-4 pb-3 relative z-10">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
             <Checkbox 
               id={`subject-${subject.title}`}
               checked={subject.selected}
               onCheckedChange={() => toggleSubjectSelection(subject.title)}
+              className="shrink-0"
             />
-            <div className="p-1.5 rounded-lg" style={{ backgroundColor: `${subject.color}20` }}>
-              {displayIcon()}
+            <div 
+              className="p-3 rounded-xl shadow-md group-hover:shadow-lg transition-shadow shrink-0" 
+              style={{ backgroundColor: `${subject.color}25` }}
+            >
+              {React.cloneElement(displayIcon() as React.ReactElement, {
+                className: "h-8 w-8",
+                style: { color: subject.color }
+              })}
             </div>
-            <div className="text-sm font-semibold line-clamp-2">{subject.title}</div>
+            <div className="flex-1 min-w-0">
+              <div className="text-base font-bold line-clamp-2 text-foreground">{subject.title}</div>
+              <div className="text-xs text-muted-foreground">{subject.topics.length} topics</div>
+            </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => toggleSubjectExpansion(subject.title)}
-            className="h-6 w-6 p-0"
+            className="h-8 w-8 p-0 shrink-0"
           >
-            {subject.expanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+            {subject.expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
         </div>
       </CardHeader>
       
       <Collapsible open={subject.expanded}>
         <CollapsibleContent>
-          <CardContent className="p-3 pt-0">
-            <div className="grid grid-cols-1 gap-1">
+          <CardContent className="p-4 pt-0 relative z-10">
+            <div className="grid grid-cols-1 gap-2">
               {subject.topics.map((topic: Topic) => (
                 <div 
                   key={topic.id} 
-                  className="flex items-center space-x-2 p-1.5 rounded-md hover:bg-muted/50"
+                  className="flex items-center space-x-2 p-2 rounded-lg hover:bg-accent/50 transition-colors border border-transparent hover:border-primary/30"
                 >
                   <Checkbox 
                     id={topic.id} 
@@ -82,7 +100,7 @@ const SubjectCard = ({
                   />
                   <label 
                     htmlFor={topic.id} 
-                    className="text-xs font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1 line-clamp-1"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1 line-clamp-2"
                   >
                     {topic.name}
                   </label>
