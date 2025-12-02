@@ -88,7 +88,7 @@ const App = () => {
                 <Route path="/quizzes" element={<Quizzes />} />
                 <Route path="/question-bank" element={<QuestionBank />} />
                 <Route path="/submit-content" element={<SubmitContent />} />
-                <Route path="/test-session" element={<TestSession />} />
+                <Route path="/test-session/:id" element={<TestSession />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </TooltipProvider>
