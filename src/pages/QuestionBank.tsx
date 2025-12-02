@@ -135,10 +135,8 @@ const QuestionBank = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 py-8">
+    <Header>
+      <div className="container mx-auto px-4 pt-8 pb-16">
         <div className="space-y-6">
           {/* Header */}
           <div className="flex items-center justify-between text-center md:text-left">
@@ -300,8 +298,8 @@ const QuestionBank = () => {
             </TabsContent>
           </Tabs>
         </div>
-      </main>
-    </div>
+      </div>
+    </Header>
   );
 };
 
