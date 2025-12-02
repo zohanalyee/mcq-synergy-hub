@@ -16,48 +16,88 @@ serve(async (req) => {
 
     console.log('Generating test with AI:', { topic, difficulty, question_count });
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    if (!LOVABLE_API_KEY) {
+      throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    // Build the prompt with user parameters
-    const prompt = `You are a strict JSON generator. Create a test with ${question_count} multiple choice questions about ${topic} at ${difficulty} level. Output ONLY raw JSON. Structure: { "session_name": "Title", "questions": [ { "question": "...", "options": ["A", "B", "C", "D"], "answer": "The Correct Option String" } ] }`;
+    // Build the system prompt
+    const systemPrompt = `You are a strict JSON generator for educational quizzes. Create high-quality multiple choice questions.
+Output ONLY raw JSON in this exact structure:
+{
+  "session_name": "Quiz Title",
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+      "answer": "The exact text of the correct option"
+    }
+  ]
+}`;
 
-    console.log('Sending prompt to Gemini:', prompt);
+    const userPrompt = `Create a test with ${question_count} multiple choice questions about ${topic} at ${difficulty} difficulty level. Each question should have exactly 4 options.`;
 
-    // Call Google Gemini API
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }]
-        }),
-      }
-    );
+    console.log('Calling Lovable AI Gateway...');
+
+    // Call Lovable AI Gateway
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('Gemini API error:', response.status, errorText);
-      throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
+      console.error('AI Gateway error:', response.status, errorText);
+      
+      // Handle rate limiting
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'Rate limit exceeded. Please try again in a moment.',
+            details: 'Too many requests'
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 429
+          }
+        );
+      }
+      
+      // Handle payment required
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ 
+            error: 'AI credits depleted. Please add credits to your workspace.',
+            details: 'Payment required'
+          }),
+          { 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 402
+          }
+        );
+      }
+      
+      throw new Error(`AI Gateway error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
-    console.log('Received response from Gemini');
+    console.log('Received response from AI Gateway');
 
-    // Extract the generated text from Gemini response
-    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    // Extract the generated text from OpenAI-compatible response
+    const generatedText = data.choices?.[0]?.message?.content;
     
     if (!generatedText) {
-      console.error('No text generated from Gemini');
+      console.error('No text generated from AI');
       throw new Error('No content generated from AI');
     }
 
