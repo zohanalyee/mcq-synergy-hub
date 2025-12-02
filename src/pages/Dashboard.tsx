@@ -24,9 +24,8 @@ const Dashboard = () => {
   };
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16">
+    <Header>
+      <div className="container mx-auto px-4 pt-8 pb-16">
         <DashboardHeader />
 
         <DashboardTabs 
@@ -46,7 +45,7 @@ const Dashboard = () => {
           <SubjectBarChart data={subjectData} />
         </motion.div>
       </div>
-    </>
+    </Header>
   );
 };
 
