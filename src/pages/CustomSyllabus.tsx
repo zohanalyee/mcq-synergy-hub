@@ -168,9 +168,37 @@ const CustomSyllabus = () => {
 
       if (aiError) {
         console.error('AI generation error:', aiError);
+        
+        // Check if the error contains rate limit or payment required messages
+        const errorMessage = aiError.message || '';
+        
+        if (errorMessage.includes('Rate limit') || errorMessage.includes('429')) {
+          toast({
+            title: "Too Many Requests",
+            description: "You're generating quizzes too quickly. Please wait a moment and try again.",
+            variant: "destructive"
+          });
+        } else if (errorMessage.includes('credits') || errorMessage.includes('402')) {
+          toast({
+            title: "Credits Depleted",
+            description: "AI credits are depleted. Please add credits to your workspace in Settings.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Generation Failed",
+            description: "Failed to generate quiz questions. Please try again.",
+            variant: "destructive"
+          });
+        }
+        return;
+      }
+
+      // Validate the AI response has the expected data
+      if (!aiResponse || !aiResponse.questions || aiResponse.questions.length === 0) {
         toast({
           title: "Generation Failed",
-          description: "Failed to generate quiz questions. Please try again.",
+          description: "AI generated an invalid response. Please try again.",
           variant: "destructive"
         });
         return;
