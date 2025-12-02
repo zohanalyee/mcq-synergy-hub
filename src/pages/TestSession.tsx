@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -9,16 +9,18 @@ import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Clock, CheckCircle, XCircle, ArrowRight, ArrowLeft, Flag } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Clock, CheckCircle, XCircle, ArrowRight, ArrowLeft, Flag, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { GeneratedTest } from "@/services/testGenerationService";
 
 const TestSession = () => {
-  const location = useLocation();
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const testData = location.state?.test as GeneratedTest;
 
+  const [testData, setTestData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, string>>({});
   const [timeRemaining, setTimeRemaining] = useState(0);
@@ -27,14 +29,41 @@ const TestSession = () => {
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
 
   useEffect(() => {
-    if (!testData) {
-      toast.error("No test data found");
-      navigate("/custom-quizzes");
-      return;
-    }
+    const fetchTestSession = async () => {
+      if (!id) {
+        setError("No session ID provided");
+        setIsLoading(false);
+        return;
+      }
 
-    setTimeRemaining(testData.timeLimit * 60);
-  }, [testData, navigate]);
+      try {
+        const { data, error: fetchError } = await supabase
+          .from("custom_test_sessions")
+          .select("*")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (fetchError) throw fetchError;
+
+        if (!data) {
+          setError("Test session not found");
+          setIsLoading(false);
+          return;
+        }
+
+        setTestData(data);
+        setTimeRemaining(data.time_limit * 60);
+        setIsLoading(false);
+      } catch (err) {
+        console.error("Error fetching test session:", err);
+        setError("Failed to load test session");
+        setIsLoading(false);
+        toast.error("Failed to load test session");
+      }
+    };
+
+    fetchTestSession();
+  }, [id]);
 
   useEffect(() => {
     if (timeRemaining <= 0 || isSubmitted) return;
@@ -52,8 +81,57 @@ const TestSession = () => {
     return () => clearInterval(timer);
   }, [timeRemaining, isSubmitted]);
 
-  if (!testData) {
-    return null;
+  if (isLoading) {
+    return (
+      <>
+        <Header />
+        <div className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
+          <div className="mb-8 text-center">
+            <Skeleton className="h-10 w-64 mx-auto mb-4" />
+            <div className="flex gap-4 justify-center">
+              <Skeleton className="h-6 w-24" />
+              <Skeleton className="h-6 w-32" />
+              <Skeleton className="h-6 w-28" />
+            </div>
+            <Skeleton className="h-2 w-full mt-4" />
+          </div>
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-6 w-32" />
+              <div className="space-y-3 mt-6">
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
+  }
+
+  if (error || !testData) {
+    return (
+      <>
+        <Header />
+        <div className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
+              <h2 className="text-2xl font-bold mb-2">Test Not Found</h2>
+              <p className="text-muted-foreground mb-6">
+                {error || "The test session you're looking for doesn't exist or has been removed."}
+              </p>
+              <Button onClick={() => navigate("/custom-syllabus")}>
+                Create a New Quiz
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>
+    );
   }
 
   const handleAnswerChange = (questionIndex: number, answer: string) => {
@@ -77,8 +155,9 @@ const TestSession = () => {
 
   const handleSubmit = async () => {
     let correctAnswers = 0;
-    testData.questions.forEach((question, index) => {
-      if (answers[index] === question.correctOption) {
+    const questions = testData.questions || [];
+    questions.forEach((question: any, index: number) => {
+      if (answers[index] === question.answer) {
         correctAnswers++;
       }
     });
@@ -94,8 +173,8 @@ const TestSession = () => {
           user_id: user.id,
           test_type: "custom_quiz",
           score: correctAnswers,
-          total_questions: testData.questions.length,
-          time_taken: testData.timeLimit * 60 - timeRemaining,
+          total_questions: questions.length,
+          time_taken: testData.time_limit * 60 - timeRemaining,
           answers: answers,
         });
       }
@@ -104,7 +183,7 @@ const TestSession = () => {
     }
 
     toast.success("Test submitted successfully!", {
-      description: `You scored ${correctAnswers}/${testData.questions.length}`,
+      description: `You scored ${correctAnswers}/${questions.length}`,
     });
   };
 
@@ -114,7 +193,8 @@ const TestSession = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  const progress = ((currentQuestion + 1) / testData.questions.length) * 100;
+  const questions = testData.questions || [];
+  const progress = ((currentQuestion + 1) / questions.length) * 100;
   const answeredCount = Object.keys(answers).length;
 
   return (
@@ -123,17 +203,17 @@ const TestSession = () => {
       <div className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
         {/* Test Header */}
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2 text-foreground">{testData.title}</h1>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">{testData.session_name}</h1>
           <div className="flex flex-wrap gap-4 items-center justify-center">
             <Badge variant="outline" className="flex items-center gap-2">
               <Clock className="h-4 w-4" />
               {formatTime(timeRemaining)}
             </Badge>
             <Badge variant="outline">
-              Question {currentQuestion + 1} of {testData.questions.length}
+              Question {currentQuestion + 1} of {questions.length}
             </Badge>
             <Badge variant="outline">
-              Answered: {answeredCount}/{testData.questions.length}
+              Answered: {answeredCount}/{questions.length}
             </Badge>
           </div>
           <Progress value={progress} className="mt-4" />
@@ -154,7 +234,7 @@ const TestSession = () => {
                   <div className="mb-6">
                     <div className="flex justify-between items-start mb-4">
                       <h2 className="text-xl font-semibold">
-                        {testData.questions[currentQuestion].question}
+                        {questions[currentQuestion].question}
                       </h2>
                       <Button
                         variant="ghost"
@@ -165,10 +245,6 @@ const TestSession = () => {
                         <Flag className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="flex gap-2">
-                      <Badge>{testData.questions[currentQuestion].difficulty}</Badge>
-                      <Badge variant="outline">{testData.questions[currentQuestion].subject}</Badge>
-                    </div>
                   </div>
 
                   {/* Options */}
@@ -176,15 +252,14 @@ const TestSession = () => {
                     value={answers[currentQuestion] || ""}
                     onValueChange={(value) => handleAnswerChange(currentQuestion, value)}
                   >
-                    {Object.entries(testData.questions[currentQuestion].options).map(([key, value]) => (
+                    {questions[currentQuestion].options.map((option: string, idx: number) => (
                       <div
-                        key={key}
+                        key={idx}
                         className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent transition-colors"
                       >
-                        <RadioGroupItem value={key} id={`option-${key}`} />
-                        <Label htmlFor={`option-${key}`} className="flex-1 cursor-pointer">
-                          <span className="font-semibold mr-2">{key}.</span>
-                          {value}
+                        <RadioGroupItem value={option} id={`option-${idx}`} />
+                        <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
+                          {option}
                         </Label>
                       </div>
                     ))}
@@ -201,12 +276,12 @@ const TestSession = () => {
                       Previous
                     </Button>
 
-                    {currentQuestion === testData.questions.length - 1 ? (
+                    {currentQuestion === questions.length - 1 ? (
                       <Button onClick={handleSubmit}>Submit Test</Button>
                     ) : (
                       <Button
                         onClick={() =>
-                          setCurrentQuestion((prev) => Math.min(testData.questions.length - 1, prev + 1))
+                          setCurrentQuestion((prev) => Math.min(questions.length - 1, prev + 1))
                         }
                       >
                         Next
@@ -222,7 +297,7 @@ const TestSession = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold mb-3">Question Navigator</h3>
                   <div className="grid grid-cols-10 gap-2">
-                    {testData.questions.map((_, index) => (
+                    {questions.map((_: any, index: number) => (
                       <Button
                         key={index}
                         variant={currentQuestion === index ? "default" : answers[index] ? "outline" : "ghost"}
@@ -248,19 +323,19 @@ const TestSession = () => {
               <div className="mb-6">
                 <h2 className="text-3xl font-bold mb-2">Test Completed!</h2>
                 <p className="text-xl text-muted-foreground">
-                  You scored {score} out of {testData.questions.length}
+                  You scored {score} out of {questions.length}
                 </p>
                 <div className="text-4xl font-bold text-primary mt-4">
-                  {Math.round((score / testData.questions.length) * 100)}%
+                  {Math.round((score / questions.length) * 100)}%
                 </div>
               </div>
 
               {/* Answer Review */}
               <div className="space-y-4 mt-8 text-left">
                 <h3 className="text-xl font-semibold">Review Answers</h3>
-                {testData.questions.map((question, index) => {
+                {questions.map((question: any, index: number) => {
                   const userAnswer = answers[index];
-                  const isCorrect = userAnswer === question.correctOption;
+                  const isCorrect = userAnswer === question.answer;
 
                   return (
                     <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
@@ -276,17 +351,12 @@ const TestSession = () => {
                           </p>
                           <p className="text-sm">
                             <span className="font-medium">Your answer:</span>{" "}
-                            {userAnswer ? `${userAnswer}. ${question.options[userAnswer]}` : "Not answered"}
+                            {userAnswer || "Not answered"}
                           </p>
                           <p className="text-sm text-green-600">
                             <span className="font-medium">Correct answer:</span>{" "}
-                            {question.correctOption}. {question.options[question.correctOption]}
+                            {question.answer}
                           </p>
-                          {question.explanation && (
-                            <AlertDescription className="mt-2 text-sm">
-                              <span className="font-medium">Explanation:</span> {question.explanation}
-                            </AlertDescription>
-                          )}
                         </div>
                       </div>
                     </Alert>
@@ -295,7 +365,7 @@ const TestSession = () => {
               </div>
 
               <div className="flex gap-4 justify-center mt-8">
-                <Button onClick={() => navigate("/custom-quizzes")}>Create Another Quiz</Button>
+                <Button onClick={() => navigate("/custom-syllabus")}>Create Another Quiz</Button>
                 <Button variant="outline" onClick={() => navigate("/dashboard")}>
                   Go to Dashboard
                 </Button>
