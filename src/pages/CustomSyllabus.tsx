@@ -285,57 +285,60 @@ const CustomSyllabus = () => {
   return (
     <Header>
       <div className="container mx-auto px-4 pt-8 pb-16 max-w-7xl">
+        {/* Hero Header */}
         <motion.div
-          className="mb-4"
+          className="mb-8 text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
-            <div className="text-center md:text-left w-full">
-              <h1 className="text-3xl font-bold mb-1 text-foreground">Custom Syllabus Builder</h1>
-              <p className="text-sm text-muted-foreground max-w-2xl mx-auto md:mx-0">
-                Create your personalized test syllabus by selecting specific topics from various subjects.
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Badge variant="outline" className="px-2.5 py-1">
-                <span className="text-primary font-semibold mr-1">{selectedSubjectsCount}</span> Subjects
-              </Badge>
-              <Badge variant="outline" className="px-2.5 py-1">
-                <span className="text-primary font-semibold mr-1">{selectedTopicsCount}</span> Topics
-              </Badge>
-            </div>
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+            Custom Syllabus Builder
+          </h1>
+          <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-6">
+            Create your personalized test syllabus by selecting specific topics from various subjects
+          </p>
+          <div className="flex items-center justify-center gap-4">
+            <Badge variant="secondary" className="px-4 py-2 text-base">
+              <span className="text-primary font-bold mr-2">{selectedSubjectsCount}</span> Subjects Selected
+            </Badge>
+            <Badge variant="secondary" className="px-4 py-2 text-base">
+              <span className="text-primary font-bold mr-2">{selectedTopicsCount}</span> Topics Selected
+            </Badge>
           </div>
-          
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-            <div className="lg:col-span-2 space-y-4 max-h-[calc(100vh-16rem)] overflow-y-auto" ref={selectedTopicsRef}>
-              <EnhancedSubjectFilter
-                searchQuery={searchQuery}
-                setSearchQuery={setSearchQuery}
-                selectedCategory={selectedCategory}
-                setSelectedCategory={setSelectedCategory}
-                categories={getCategories(subjects)}
-              />
+        </motion.div>
+        
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left: Subjects Grid */}
+          <div className="lg:col-span-2 space-y-6" ref={selectedTopicsRef}>
+            <EnhancedSubjectFilter
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedCategory={selectedCategory}
+              setSelectedCategory={setSelectedCategory}
+              categories={getCategories(subjects)}
+            />
 
-              <motion.div
-                variants={container}
-                initial="hidden"
-                animate={isLoaded ? "show" : "hidden"}
-                className="space-y-3"
-              >
-                {filteredSubjects.length > 0 ? (
-                  filteredSubjects.map((subject) => (
-                    <motion.div key={subject.title} variants={item}>
-                      <SubjectCard
-                        subject={subject}
-                        toggleSubjectSelection={toggleSubjectSelection}
-                        toggleTopicSelection={toggleTopicSelection}
-                        toggleSubjectExpansion={toggleSubjectExpansion}
-                      />
-                    </motion.div>
-                  ))
-                ) : (
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate={isLoaded ? "show" : "hidden"}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+            >
+              {filteredSubjects.length > 0 ? (
+                filteredSubjects.map((subject) => (
+                  <motion.div key={subject.title} variants={item}>
+                    <SubjectCard
+                      subject={subject}
+                      toggleSubjectSelection={toggleSubjectSelection}
+                      toggleTopicSelection={toggleTopicSelection}
+                      toggleSubjectExpansion={toggleSubjectExpansion}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full">
                   <Card className="p-8 text-center">
                     <p className="text-muted-foreground mb-4">No subjects or topics match your search criteria.</p>
                     <Button onClick={() => {
@@ -343,11 +346,14 @@ const CustomSyllabus = () => {
                       setSelectedCategory("All");
                     }}>Clear Filters</Button>
                   </Card>
-                )}
-              </motion.div>
-            </div>
-            
-            <div className="lg:col-span-1">
+                </div>
+              )}
+            </motion.div>
+          </div>
+          
+          {/* Right: Sticky Quiz Panel */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-20">
               <QuizPanel
                 syllabusName={syllabusName}
                 setSyllabusName={setSyllabusName}
@@ -362,17 +368,17 @@ const CustomSyllabus = () => {
                 setSelectedCategory={setSelectedCategory}
                 isGenerating={isGenerating}
               />
-              
-              {selectedTopicsCount > 0 && (
-                <div className="fixed bottom-6 right-6 md:hidden">
-                  <Button onClick={scrollToSelectedTopics}>
-                    Review Selection ({selectedTopicsCount})
-                  </Button>
-                </div>
-              )}
             </div>
+            
+            {selectedTopicsCount > 0 && (
+              <div className="fixed bottom-6 right-6 lg:hidden">
+                <Button onClick={scrollToSelectedTopics} size="lg" className="shadow-lg">
+                  Review Selection ({selectedTopicsCount})
+                </Button>
+              </div>
+            )}
           </div>
-        </motion.div>
+        </div>
       </div>
     </Header>
   );

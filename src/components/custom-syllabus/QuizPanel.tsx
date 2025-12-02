@@ -49,10 +49,10 @@ const QuizPanel = ({
   }, [customSubjects]);
 
   return (
-    <Card className="h-fit sticky top-4">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-base">Custom Quiz</CardTitle>
-        <CardDescription className="text-xs">Configure quiz details</CardDescription>
+    <Card className="h-fit shadow-xl border-2 border-primary/20 bg-gradient-to-br from-card via-card to-accent/5">
+      <CardHeader className="pb-3 border-b">
+        <CardTitle className="text-xl font-bold text-primary">Custom Quiz Builder</CardTitle>
+        <CardDescription className="text-sm">Configure your personalized test</CardDescription>
       </CardHeader>
       <CardContent className="space-y-2">
         <Tabs value={activeTab} onValueChange={setActiveTab}>

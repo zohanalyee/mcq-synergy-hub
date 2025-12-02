@@ -173,8 +173,7 @@ const MCQs = () => {
 
   return (
     <Header>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary/20">
-        <div className="container mx-auto px-4 pt-8 pb-12">
+      <div className="container mx-auto px-4 pt-8 pb-12">
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -243,7 +242,6 @@ const MCQs = () => {
               </p>
             </div>
           )}
-        </div>
         </div>
       </div>
     </Header>

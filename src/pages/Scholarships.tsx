@@ -67,9 +67,8 @@ const Scholarships = () => {
 
   return (
     <Header>
-      <div className="min-h-screen bg-background">
-        <div className="container px-4 mx-auto pt-8 pb-16">
-          <div className="mt-6 mb-12 text-center">
+      <div className="container px-4 mx-auto pt-8 pb-16">
+        <div className="mb-12 text-center">
             <motion.h1 
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -230,7 +229,6 @@ const Scholarships = () => {
             )}
           </div>
         </div>
-      </div>
     </Header>
   );
 };
