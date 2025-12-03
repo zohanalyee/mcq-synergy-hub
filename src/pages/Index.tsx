@@ -168,7 +168,7 @@ const Home = () => {
       
       
       {/* Hero Section */}
-      <section className="pt-20 pb-20 relative overflow-hidden">
+      <section className="pt-8 pb-12 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -259,9 +259,9 @@ const Home = () => {
       </section>
       
       {/* Subjects Section */}
-      <section className="py-20">
+      <section className="py-12">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -305,9 +305,9 @@ const Home = () => {
       </section>
       
       {/* Features Section */}
-      <section className="py-20 bg-muted/50">
+      <section className="py-12 bg-muted/50">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -343,9 +343,9 @@ const Home = () => {
       </section>
       
       {/* Stats Section */}
-      <section className="py-20 bg-gradient-to-r from-primary to-accent text-white">
+      <section className="py-10 bg-gradient-to-r from-primary to-accent text-white">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
             <div>
               <AnimatedCounter
                 from={0}
@@ -386,9 +386,9 @@ const Home = () => {
       </section>
       
       {/* Testimonials Section */}
-      <section className="py-20">
+      <section className="py-12">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-12">
+          <div className="text-center mb-8">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -425,7 +425,7 @@ const Home = () => {
       </section>
       
       {/* CTA Section */}
-      <section className="py-20 bg-muted/50 relative overflow-hidden">
+      <section className="py-12 bg-muted/50 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-3xl mx-auto text-center">
@@ -462,9 +462,9 @@ const Home = () => {
       </section>
       
       {/* Footer */}
-      <footer className="py-12 border-t">
+      <footer className="py-8 border-t">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
               <h3 className="text-lg font-semibold mb-4">MCQs Point</h3>
               <p className="text-muted-foreground">Your intelligent companion for MCQ-based test preparation.</p>

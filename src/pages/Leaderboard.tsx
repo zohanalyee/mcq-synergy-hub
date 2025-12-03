@@ -10,9 +10,8 @@ const Leaderboard = () => {
   const [filter, setFilter] = useState("all");
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16">
+    <Header>
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -35,7 +34,7 @@ const Leaderboard = () => {
           </CardContent>
         </Card>
       </div>
-    </>
+    </Header>
   );
 };
 

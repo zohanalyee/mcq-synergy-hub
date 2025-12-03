@@ -19,6 +19,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Loader2, Upload } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
+import Header from '@/components/Header';
 
 const profileFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -115,18 +116,19 @@ const Profile = () => {
   };
 
   return (
-    <div className="container max-w-4xl py-12">
-      <Card>
-        <CardHeader>
-          <CardTitle>Your Profile</CardTitle>
-          <CardDescription>Manage your account settings and profile</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-8">
-          <div className="flex flex-col items-center sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
+    <Header>
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-12">
+        <Card>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xl">Your Profile</CardTitle>
+            <CardDescription className="text-sm">Manage your account settings</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-col items-center sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
             <div className="flex flex-col items-center space-y-2">
-              <Avatar className="h-24 w-24">
+              <Avatar className="h-20 w-20">
                 <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback>{user?.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
+                <AvatarFallback className="text-lg">{user?.email?.[0]?.toUpperCase() || 'U'}</AvatarFallback>
               </Avatar>
               <div className="relative">
                 <input
@@ -189,16 +191,17 @@ const Profile = () => {
             </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => navigate(-1)}>
+        <CardFooter className="flex justify-between pt-4">
+          <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
             Back
           </Button>
-          <Button variant="destructive" onClick={signOut}>
+          <Button variant="destructive" size="sm" onClick={signOut}>
             Sign Out
           </Button>
         </CardFooter>
       </Card>
     </div>
+    </Header>
   );
 };
 

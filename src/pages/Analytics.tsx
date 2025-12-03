@@ -69,12 +69,11 @@ const Analytics = () => {
   // Show loading or sign in prompt if user is not authenticated
   if (!user) {
     return (
-      <>
-        <Header />
-        <div className="container mx-auto px-4 pt-28 pb-16">
-          <div className="text-center py-16">
-            <h1 className="text-2xl font-bold mb-4">Authentication Required</h1>
-            <p className="text-muted-foreground mb-6">
+      <Header>
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold mb-3">Authentication Required</h1>
+            <p className="text-muted-foreground mb-6 text-sm">
               Please sign in to view your analytics and track your progress.
             </p>
             <Button onClick={() => navigate('/signin')}>
@@ -82,7 +81,7 @@ const Analytics = () => {
             </Button>
           </div>
         </div>
-      </>
+      </Header>
     );
   }
 
@@ -102,21 +101,20 @@ const Analytics = () => {
   };
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16">
+    <Header>
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8"
+          className="mb-6"
         >
-          <h1 className="text-3xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground">Track your performance and progress over time</p>
+          <h1 className="text-2xl font-bold">Analytics</h1>
+          <p className="text-muted-foreground text-sm">Track your performance over time</p>
         </motion.div>
 
-        <Tabs defaultValue="overview" className="mb-8">
-          <TabsList className="mb-8 w-full md:w-auto">
+        <Tabs defaultValue="overview" className="mb-6">
+          <TabsList className="mb-6 w-full md:w-auto">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="subjects">Subjects</TabsTrigger>
             <TabsTrigger value="progress">Progress</TabsTrigger>
@@ -128,7 +126,7 @@ const Analytics = () => {
               variants={container}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-4"
             >
               <motion.div variants={item}>
                 <Card>
@@ -288,7 +286,7 @@ const Analytics = () => {
           </TabsContent>
         </Tabs>
       </div>
-    </>
+    </Header>
   );
 };
 

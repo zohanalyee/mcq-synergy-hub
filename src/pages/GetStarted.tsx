@@ -25,24 +25,24 @@ const GetStarted = () => {
 
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-16 pb-16">
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-10 text-center"
+          className="mb-6 text-center"
         >
-          <h1 className="text-4xl font-bold mb-4">Get Started with MCQs Point</h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Choose a plan that works for you and start enhancing your learning experience with our customized MCQ tests.
+          <h1 className="text-3xl font-bold mb-2">Get Started with MCQs Point</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto text-sm">
+            Choose a plan that works for you and start enhancing your learning experience.
           </p>
         </motion.div>
 
-        <Tabs defaultValue="monthly" className="mb-8">
-          <div className="flex justify-center mb-8">
+        <Tabs defaultValue="monthly" className="mb-6">
+          <div className="flex justify-center mb-6">
             <TabsList>
-              <TabsTrigger value="monthly">Monthly billing</TabsTrigger>
-              <TabsTrigger value="yearly">Yearly billing (Save 20%)</TabsTrigger>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="yearly">Yearly (Save 20%)</TabsTrigger>
             </TabsList>
           </div>
           
@@ -51,7 +51,7 @@ const GetStarted = () => {
               variants={container}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto"
+              className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-5xl mx-auto"
             >
               <motion.div variants={item}>
                 <Card className="border-border/60 h-full">

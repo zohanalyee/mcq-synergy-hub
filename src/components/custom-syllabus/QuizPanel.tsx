@@ -49,12 +49,12 @@ const QuizPanel = ({
   }, [customSubjects]);
 
   return (
-    <Card className="h-fit shadow-xl border-2 border-primary/20 bg-gradient-to-br from-card via-card to-accent/5">
-      <CardHeader className="pb-3 border-b">
-        <CardTitle className="text-xl font-bold text-primary">Custom Quiz Builder</CardTitle>
-        <CardDescription className="text-sm">Configure your personalized test</CardDescription>
+    <Card className="h-fit shadow-md border bg-gradient-to-br from-card via-card to-accent/5">
+      <CardHeader className="pb-2 border-b">
+        <CardTitle className="text-lg font-bold text-primary">Custom Quiz Builder</CardTitle>
+        <CardDescription className="text-xs">Configure your personalized test</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-2">
+      <CardContent className="p-3 space-y-2">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 h-8">
             <TabsTrigger value="topics" className="text-xs">Topics</TabsTrigger>
@@ -116,9 +116,9 @@ const QuizPanel = ({
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex flex-col gap-2 pt-2">
+      <CardFooter className="flex flex-col gap-2 p-3 pt-2">
         <Button 
-          className="w-full h-8 text-sm" 
+          className="w-full h-9 text-sm" 
           disabled={selectedTopicsCount === 0 || isGenerating}
           onClick={createQuiz}
         >
@@ -128,12 +128,12 @@ const QuizPanel = ({
               <span>Generating...</span>
             </div>
           ) : (
-            'Create Quiz & Start Test'
+            'Create Quiz & Start'
           )}
         </Button>
         <Button 
           variant="outline" 
-          className="w-full h-8 text-sm"
+          className="w-full h-8 text-xs"
           onClick={() => navigate('/')}
         >
           Cancel

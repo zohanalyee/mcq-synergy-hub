@@ -13,8 +13,8 @@ interface JobsGridProps {
 const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 gap-6">
-        {Array.from({ length: 3 }).map((_, index) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, index) => (
           <Card key={index} className="animate-pulse">
             <CardContent className="p-0">
               <div className="p-6">
@@ -41,7 +41,7 @@ const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
 
   if (jobs.length > 0) {
     return (
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {jobs.map((job, index) => (
           <JobCard key={job.id} job={job} index={index} />
         ))}

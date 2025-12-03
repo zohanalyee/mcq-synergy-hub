@@ -41,17 +41,16 @@ const MockTests = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-12 text-center"
+          className="mb-6 text-center"
         >
-          <h1 className="text-4xl font-bold mb-4 text-gradient">Mock Tests</h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-            Practice with our comprehensive collection of subject-specific tests and official job examination simulations. 
-            Choose your path to success.
+          <h1 className="text-3xl font-bold mb-2 text-gradient">Mock Tests</h1>
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
+            Practice with subject-specific tests and official job examination simulations.
           </p>
         </motion.div>
 
-        <div className="mb-8">
-          <EnhancedSearchBox 
+        <div className="mb-6">
+          <EnhancedSearchBox
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
             onClearSearch={handleClearSearch}
@@ -59,9 +58,9 @@ const MockTests = () => {
           />
         </div>
 
-        <Tabs defaultValue="subjects" className="mb-8" onValueChange={value => setActiveTab(value)}>
-          <div className="flex justify-center mb-8">
-            <TabsList className="grid w-full max-w-lg grid-cols-2 h-auto">
+        <Tabs defaultValue="subjects" className="mb-6" onValueChange={value => setActiveTab(value)}>
+          <div className="flex justify-center mb-6">
+            <TabsList className="grid w-full max-w-md grid-cols-2 h-auto">
               <TabsTrigger value="subjects" className="gap-2">
                 <span className="text-lg">📚</span>
                 <div className="flex flex-col items-start">
