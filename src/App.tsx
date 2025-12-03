@@ -27,6 +27,7 @@ import AdminPanel from "./pages/AdminPanel";
 import NotFound from "./pages/NotFound";
 import NoticeBoard from "@/components/NoticeBoard";
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 import MCQs from "./pages/MCQs";
@@ -60,6 +61,7 @@ const App = () => {
               />
               <NoticeBoard />
               <FloatingFeedbackButton />
+              <MobileBottomNav />
               <Routes>
                 <Route path="/" element={<Index />} />
                 <Route path="/auth" element={<Auth />} />
