@@ -11,12 +11,12 @@ const Feedback = () => {
 
   return (
     <Header>
-      <div className="container max-w-3xl py-12">
+      <div className="max-w-2xl mx-auto px-4 pt-6 pb-12">
         <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-foreground">Provide Feedback</CardTitle>
-            <CardDescription className="text-muted-foreground">
-              Help us improve MCQs Point by sharing your thoughts and suggestions
+          <CardHeader className="text-center pb-4">
+            <CardTitle className="text-foreground text-xl">Provide Feedback</CardTitle>
+            <CardDescription className="text-muted-foreground text-sm">
+              Help us improve MCQs Point
             </CardDescription>
           </CardHeader>
           <CardContent>

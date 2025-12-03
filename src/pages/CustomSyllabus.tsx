@@ -284,34 +284,34 @@ const CustomSyllabus = () => {
 
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-8 pb-16 max-w-7xl">
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
         {/* Hero Header */}
         <motion.div
-          className="mb-8 text-center"
+          className="mb-6 text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Custom Syllabus Builder
           </h1>
-          <p className="text-lg text-muted-foreground max-w-3xl mx-auto mb-6">
-            Create your personalized test syllabus by selecting specific topics from various subjects
+          <p className="text-base text-muted-foreground max-w-2xl mx-auto mb-4">
+            Select topics from various subjects to create your personalized test
           </p>
-          <div className="flex items-center justify-center gap-4">
-            <Badge variant="secondary" className="px-4 py-2 text-base">
-              <span className="text-primary font-bold mr-2">{selectedSubjectsCount}</span> Subjects Selected
+          <div className="flex items-center justify-center gap-3 flex-wrap">
+            <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+              <span className="text-primary font-bold mr-1">{selectedSubjectsCount}</span> Subjects
             </Badge>
-            <Badge variant="secondary" className="px-4 py-2 text-base">
-              <span className="text-primary font-bold mr-2">{selectedTopicsCount}</span> Topics Selected
+            <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+              <span className="text-primary font-bold mr-1">{selectedTopicsCount}</span> Topics
             </Badge>
           </div>
         </motion.div>
         
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           {/* Left: Subjects Grid */}
-          <div className="lg:col-span-2 space-y-6" ref={selectedTopicsRef}>
+          <div className="lg:col-span-2 space-y-4" ref={selectedTopicsRef}>
             <EnhancedSubjectFilter
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -324,7 +324,7 @@ const CustomSyllabus = () => {
               variants={container}
               initial="hidden"
               animate={isLoaded ? "show" : "hidden"}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3"
             >
               {filteredSubjects.length > 0 ? (
                 filteredSubjects.map((subject) => (

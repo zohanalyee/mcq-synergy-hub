@@ -44,62 +44,55 @@ const SubmitContent = () => {
   // Show loading state while checking authentication
   if (loading) {
     return (
-      <>
-        <Header />
-        <div className="container mx-auto px-4 pt-28 pb-16">
-          <div className="max-w-3xl mx-auto text-center">
+      <Header>
+        <div className="max-w-3xl mx-auto px-4 pt-6 pb-12">
+          <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">Loading...</p>
+            <p className="mt-4 text-muted-foreground text-sm">Loading...</p>
           </div>
         </div>
-      </>
+      </Header>
     );
   }
 
   // Show auth required message for non-authenticated users
   if (!user) {
     return (
-      <>
-        <Header />
-        <div className="container mx-auto px-4 pt-28 pb-16">
-          <div className="max-w-3xl mx-auto">
-            <Alert className="mb-6">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Please sign in to submit content. You'll be redirected to the authentication page.
-              </AlertDescription>
-            </Alert>
-            
-            <div className="text-center">
-              <Button onClick={() => window.location.href = '/auth'}>
-                Sign In to Continue
-              </Button>
-            </div>
+      <Header>
+        <div className="max-w-3xl mx-auto px-4 pt-6 pb-12">
+          <Alert className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="text-sm">
+              Please sign in to submit content.
+            </AlertDescription>
+          </Alert>
+          
+          <div className="text-center">
+            <Button onClick={() => window.location.href = '/auth'}>
+              Sign In to Continue
+            </Button>
           </div>
         </div>
-      </>
+      </Header>
     );
   }
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16">
+    <Header>
+      <div className="max-w-3xl mx-auto px-4 pt-6 pb-12">
         <motion.div
-          className="max-w-3xl mx-auto"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Submit Content</h1>
-            <p className="text-muted-foreground">
-              Share scholarships, job opportunities, past papers, MCQs or quizzes with the community. 
-              All submissions will be reviewed before being published.
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold mb-2">Submit Content</h1>
+            <p className="text-muted-foreground text-sm">
+              Share scholarships, jobs, past papers, MCQs or quizzes with the community.
             </p>
           </div>
 
-          <Card className="p-6">
+          <Card className="p-4">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 {/* Content Type Selection */}
@@ -137,7 +130,7 @@ const SubmitContent = () => {
                 </Tabs>
 
                 {/* Submit Button */}
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-end pt-3">
                   <SubmitButton isSubmitting={isSubmitting} />
                 </div>
               </form>
@@ -145,7 +138,7 @@ const SubmitContent = () => {
           </Card>
         </motion.div>
       </div>
-    </>
+    </Header>
   );
 };
 

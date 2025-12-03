@@ -83,46 +83,43 @@ const TestSession = () => {
 
   if (isLoading) {
     return (
-      <>
-        <Header />
-        <div className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
-          <div className="mb-8 text-center">
-            <Skeleton className="h-10 w-64 mx-auto mb-4" />
-            <div className="flex gap-4 justify-center">
-              <Skeleton className="h-6 w-24" />
-              <Skeleton className="h-6 w-32" />
-              <Skeleton className="h-6 w-28" />
+      <Header>
+        <div className="max-w-4xl mx-auto px-4 pt-6 pb-12">
+          <div className="mb-6 text-center">
+            <Skeleton className="h-8 w-48 mx-auto mb-3" />
+            <div className="flex gap-3 justify-center">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-5 w-24" />
             </div>
-            <Skeleton className="h-2 w-full mt-4" />
+            <Skeleton className="h-2 w-full mt-3" />
           </div>
           <Card>
-            <CardContent className="p-6 space-y-4">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-6 w-32" />
-              <div className="space-y-3 mt-6">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
+            <CardContent className="p-4 space-y-3">
+              <Skeleton className="h-6 w-3/4" />
+              <div className="space-y-2 mt-4">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
               </div>
             </CardContent>
           </Card>
         </div>
-      </>
+      </Header>
     );
   }
 
   if (error || !testData) {
     return (
-      <>
-        <Header />
-        <div className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
+      <Header>
+        <div className="max-w-4xl mx-auto px-4 pt-6 pb-12">
           <Card>
-            <CardContent className="p-8 text-center">
-              <AlertCircle className="h-16 w-16 text-destructive mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Test Not Found</h2>
-              <p className="text-muted-foreground mb-6">
-                {error || "The test session you're looking for doesn't exist or has been removed."}
+            <CardContent className="p-6 text-center">
+              <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-3" />
+              <h2 className="text-xl font-bold mb-2">Test Not Found</h2>
+              <p className="text-muted-foreground text-sm mb-4">
+                {error || "The test session doesn't exist or has been removed."}
               </p>
               <Button onClick={() => navigate("/custom-syllabus")}>
                 Create a New Quiz
@@ -130,7 +127,7 @@ const TestSession = () => {
             </CardContent>
           </Card>
         </div>
-      </>
+      </Header>
     );
   }
 
@@ -198,25 +195,24 @@ const TestSession = () => {
   const answeredCount = Object.keys(answers).length;
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16 max-w-5xl">
+    <Header>
+      <div className="max-w-4xl mx-auto px-4 pt-6 pb-12">
         {/* Test Header */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2 text-foreground">{testData.session_name}</h1>
-          <div className="flex flex-wrap gap-4 items-center justify-center">
-            <Badge variant="outline" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+        <div className="mb-6 text-center">
+          <h1 className="text-2xl font-bold mb-2 text-foreground">{testData.session_name}</h1>
+          <div className="flex flex-wrap gap-2 items-center justify-center">
+            <Badge variant="outline" className="flex items-center gap-1.5 text-xs">
+              <Clock className="h-3.5 w-3.5" />
               {formatTime(timeRemaining)}
             </Badge>
-            <Badge variant="outline">
-              Question {currentQuestion + 1} of {questions.length}
+            <Badge variant="outline" className="text-xs">
+              Q {currentQuestion + 1}/{questions.length}
             </Badge>
-            <Badge variant="outline">
+            <Badge variant="outline" className="text-xs">
               Answered: {answeredCount}/{questions.length}
             </Badge>
           </div>
-          <Progress value={progress} className="mt-4" />
+          <Progress value={progress} className="mt-3" />
         </div>
 
         {!isSubmitted ? (
@@ -292,22 +288,21 @@ const TestSession = () => {
                 </CardContent>
               </Card>
 
-              {/* Question Navigator */}
-              <Card className="mt-4">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold mb-3">Question Navigator</h3>
-                  <div className="grid grid-cols-10 gap-2">
+              <Card className="mt-3">
+                <CardContent className="p-3">
+                  <h3 className="font-semibold mb-2 text-sm">Question Navigator</h3>
+                  <div className="grid grid-cols-10 gap-1.5">
                     {questions.map((_: any, index: number) => (
                       <Button
                         key={index}
                         variant={currentQuestion === index ? "default" : answers[index] ? "outline" : "ghost"}
                         size="sm"
-                        className="relative"
+                        className="relative h-7 w-7 p-0 text-xs"
                         onClick={() => setCurrentQuestion(index)}
                       >
                         {index + 1}
                         {flaggedQuestions.has(index) && (
-                          <Flag className="h-3 w-3 absolute -top-1 -right-1 text-yellow-600" />
+                          <Flag className="h-2.5 w-2.5 absolute -top-0.5 -right-0.5 text-yellow-600" />
                         )}
                       </Button>
                     ))}
@@ -319,42 +314,42 @@ const TestSession = () => {
         ) : (
           /* Results */
           <Card>
-            <CardContent className="p-8 text-center">
-              <div className="mb-6">
-                <h2 className="text-3xl font-bold mb-2">Test Completed!</h2>
-                <p className="text-xl text-muted-foreground">
+            <CardContent className="p-6 text-center">
+              <div className="mb-4">
+                <h2 className="text-2xl font-bold mb-2">Test Completed!</h2>
+                <p className="text-lg text-muted-foreground">
                   You scored {score} out of {questions.length}
                 </p>
-                <div className="text-4xl font-bold text-primary mt-4">
+                <div className="text-3xl font-bold text-primary mt-3">
                   {Math.round((score / questions.length) * 100)}%
                 </div>
               </div>
 
               {/* Answer Review */}
-              <div className="space-y-4 mt-8 text-left">
-                <h3 className="text-xl font-semibold">Review Answers</h3>
+              <div className="space-y-3 mt-6 text-left">
+                <h3 className="text-lg font-semibold">Review Answers</h3>
                 {questions.map((question: any, index: number) => {
                   const userAnswer = answers[index];
                   const isCorrect = userAnswer === question.answer;
 
                   return (
                     <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
-                      <div className="flex items-start gap-3">
+                      <div className="flex items-start gap-2">
                         {isCorrect ? (
-                          <CheckCircle className="h-5 w-5 text-green-600 mt-1" />
+                          <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
                         ) : (
-                          <XCircle className="h-5 w-5 text-red-600 mt-1" />
+                          <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
                         )}
-                        <div className="flex-1">
-                          <p className="font-semibold mb-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm mb-1 break-words">
                             Q{index + 1}: {question.question}
                           </p>
-                          <p className="text-sm">
+                          <p className="text-xs">
                             <span className="font-medium">Your answer:</span>{" "}
                             {userAnswer || "Not answered"}
                           </p>
-                          <p className="text-sm text-green-600">
-                            <span className="font-medium">Correct answer:</span>{" "}
+                          <p className="text-xs text-green-600">
+                            <span className="font-medium">Correct:</span>{" "}
                             {question.answer}
                           </p>
                         </div>
@@ -364,17 +359,17 @@ const TestSession = () => {
                 })}
               </div>
 
-              <div className="flex gap-4 justify-center mt-8">
-                <Button onClick={() => navigate("/custom-syllabus")}>Create Another Quiz</Button>
-                <Button variant="outline" onClick={() => navigate("/dashboard")}>
-                  Go to Dashboard
+              <div className="flex gap-3 justify-center mt-6 flex-wrap">
+                <Button size="sm" onClick={() => navigate("/custom-syllabus")}>Create Another Quiz</Button>
+                <Button size="sm" variant="outline" onClick={() => navigate("/dashboard")}>
+                  Dashboard
                 </Button>
               </div>
             </CardContent>
           </Card>
         )}
       </div>
-    </>
+    </Header>
   );
 };
 

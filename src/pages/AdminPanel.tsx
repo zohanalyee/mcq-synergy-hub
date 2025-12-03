@@ -82,9 +82,8 @@ const AdminPanel = () => {
   }
 
   return (
-    <>
-      <Header />
-      <div className="container mx-auto px-4 pt-28 pb-16">
+    <Header>
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
         <AdminHeader 
           pendingCount={statistics.pendingCount}
           scholarshipCount={statistics.scholarshipCount}
@@ -110,7 +109,7 @@ const AdminPanel = () => {
         currentItem={currentItem}
         onSave={handleSaveEdit}
       />
-    </>
+    </Header>
   );
 };
 
