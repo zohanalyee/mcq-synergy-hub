@@ -125,12 +125,11 @@ const CustomSyllabus = () => {
   };
 
   const createQuiz = async () => {
-    // Check authentication
+    // Login wall - allow browsing but require auth for generation
     if (!user) {
       toast({
-        title: "Authentication Required",
-        description: "Please sign in to create a custom quiz.",
-        variant: "destructive"
+        title: "Sign in to Continue",
+        description: "Please sign in to generate personalized AI tests.",
       });
       navigate('/auth');
       return;
