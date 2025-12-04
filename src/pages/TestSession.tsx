@@ -326,6 +326,35 @@ const TestSession = () => {
                 </div>
               </div>
 
+              {/* Weakness Detection Card */}
+              {Math.round((score / questions.length) * 100) < 50 && testData.subjects && (testData.subjects as string[]).length > 0 && (
+                <Card className="border-destructive/50 bg-destructive/5 mb-6">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                      <div className="text-left flex-1">
+                        <h3 className="font-semibold text-destructive mb-1">Weakness Detected</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          It seems you are struggling with {(testData.subjects as string[]).join(", ")}. Our AI can create a specialized practice test to help you master this.
+                        </p>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => navigate("/custom-syllabus", {
+                            state: {
+                              prefilledSubject: (testData.subjects as string[])[0],
+                              autoGenerate: true
+                            }
+                          })}
+                        >
+                          Improve {(testData.subjects as string[])[0]} Now
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Answer Review */}
               <div className="space-y-3 mt-6 text-left">
                 <h3 className="text-lg font-semibold">Review Answers</h3>
