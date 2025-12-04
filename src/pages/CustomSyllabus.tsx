@@ -9,7 +9,7 @@ import Header from "@/components/Header";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "@/components/ui/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,21 +41,47 @@ const CustomSyllabus = () => {
   });
   
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   const selectedTopicsRef = useRef<HTMLDivElement>(null);
+  
+  // Check for pre-filled subject from navigation (e.g., from Dashboard weakness card)
+  const locationState = location.state as { prefilledSubject?: string; autoGenerate?: boolean } | null;
 
   useEffect(() => {
     setIsLoaded(true);
     
-    const initialCustomSubjects: CustomSubject[] = subjects.map(subject => ({
-      ...subject,
-      expanded: false,
-      selected: false,
-      topics: generateTopicsForSubject(subject.title, subject.topicCount)
-    }));
+    const prefilledSubject = locationState?.prefilledSubject;
+    
+    const initialCustomSubjects: CustomSubject[] = subjects.map(subject => {
+      // Check if this subject should be pre-selected (case-insensitive match)
+      const shouldPreselect = prefilledSubject && 
+        subject.title.toLowerCase().includes(prefilledSubject.toLowerCase());
+      
+      return {
+        ...subject,
+        expanded: shouldPreselect || false,
+        selected: shouldPreselect || false,
+        topics: generateTopicsForSubject(subject.title, subject.topicCount).map(topic => ({
+          ...topic,
+          selected: shouldPreselect || false
+        }))
+      };
+    });
     
     setCustomSubjects(initialCustomSubjects);
-  }, []);
+    
+    // Update syllabus name if pre-filled
+    if (prefilledSubject) {
+      setSyllabusName(`${prefilledSubject} Practice Test`);
+      
+      // Show a toast to inform the user
+      toast({
+        title: "Subject Pre-selected",
+        description: `${prefilledSubject} has been selected. Click "Create Quiz" to generate a practice test.`,
+      });
+    }
+  }, [locationState?.prefilledSubject]);
 
   useEffect(() => {
     let topicsCount = 0;

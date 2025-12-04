@@ -543,6 +543,7 @@ export type Database = {
           created_at: string | null
           id: string
           score: number
+          subjects: string[] | null
           test_type: string
           time_taken: number | null
           total_questions: number
@@ -555,6 +556,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           score?: number
+          subjects?: string[] | null
           test_type: string
           time_taken?: number | null
           total_questions?: number
@@ -567,6 +569,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           score?: number
+          subjects?: string[] | null
           test_type?: string
           time_taken?: number | null
           total_questions?: number
@@ -720,6 +723,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_student_weaknesses: {
+        Args: { target_user_id: string }
+        Returns: {
+          average_score: number
+          subject: string
+          tests_count: number
+        }[]
+      }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
     }
     Enums: {
