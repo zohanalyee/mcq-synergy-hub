@@ -173,6 +173,7 @@ const TestSession = () => {
           total_questions: questions.length,
           time_taken: testData.time_limit * 60 - timeRemaining,
           answers: answers,
+          subjects: testData.subjects,
         });
       }
     } catch (error) {
