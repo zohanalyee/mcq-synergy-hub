@@ -30,16 +30,16 @@ const WeaknessCard = ({ subject, averageScore, testsCount }: WeaknessCardProps) 
       transition={{ duration: 0.2 }}
     >
       <Card className="border-destructive/50 bg-destructive/5 hover:bg-destructive/10 transition-colors">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-destructive/10">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
+        <CardContent className="p-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="p-1.5 rounded-md bg-destructive/10 shrink-0">
+                <AlertTriangle className="h-4 w-4 text-destructive" />
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="font-semibold text-foreground truncate">{subject}</h4>
-                <p className="text-sm text-muted-foreground">
-                  Average: <span className="text-destructive font-medium">{averageScore}%</span>
+              <div className="min-w-0">
+                <h4 className="font-medium text-sm text-foreground truncate">{subject}</h4>
+                <p className="text-xs text-muted-foreground">
+                  <span className="text-destructive font-medium">{averageScore}%</span>
                   <span className="mx-1">•</span>
                   {testsCount} test{testsCount !== 1 ? "s" : ""}
                 </p>
@@ -48,10 +48,10 @@ const WeaknessCard = ({ subject, averageScore, testsCount }: WeaknessCardProps) 
             <Button 
               size="sm" 
               onClick={handleGeneratePractice}
-              className="shrink-0 gap-1.5"
+              className="shrink-0 h-7 px-2 text-xs gap-1"
             >
-              <Zap className="h-4 w-4" />
-              <span className="hidden sm:inline">Fix It</span>
+              <Zap className="h-3.5 w-3.5" />
+              Fix
             </Button>
           </div>
         </CardContent>

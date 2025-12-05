@@ -168,7 +168,7 @@ const Home = () => {
       
       
       {/* Hero Section */}
-      <section className="pt-8 pb-12 relative overflow-hidden">
+      <section className="pt-4 pb-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -177,7 +177,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="px-3 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full">
+              <span className="px-2.5 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full">
                 Prepare Smarter, Score Higher
               </span>
             </motion.div>
@@ -186,7 +186,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mt-6 mb-6 tracking-tight"
+              className="text-3xl md:text-4xl lg:text-5xl font-bold mt-4 mb-4 tracking-tight"
             >
               Master MCQs with <span className="text-gradient">Precision</span> and <span className="text-gradient">Confidence</span>
             </motion.h1>
@@ -195,19 +195,19 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-lg text-muted-foreground mb-8 max-w-3xl mx-auto"
+              className="text-base text-muted-foreground mb-6 max-w-2xl mx-auto"
             >
-              Personalize your test preparation with custom syllabi, analytics-driven insights, and adaptive learning. Designed for university admissions, job exams, and beyond.
+              Personalize your test preparation with custom syllabi, analytics-driven insights, and adaptive learning.
             </motion.p>
             
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-12"
+              className="mb-8"
             >
-              <h2 className="text-2xl font-bold mb-6">Prepare Your Way</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <h2 className="text-xl font-bold mb-4">Prepare Your Way</h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {testCategories.map((category, index) => (
                   <TestCategoryCard
                     key={category.title}
@@ -225,12 +225,12 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-4 justify-center"
+              className="flex flex-col sm:flex-row gap-3 justify-center"
             >
-              <Button size="lg" onClick={() => navigate('/get-started')}>
+              <Button size="default" onClick={() => navigate('/get-started')}>
                 Get Started
               </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate('/subjects')}>
+              <Button size="default" variant="outline" onClick={() => navigate('/subjects')}>
                 Explore Subjects
               </Button>
             </motion.div>
@@ -259,15 +259,15 @@ const Home = () => {
       </section>
       
       {/* Subjects Section */}
-      <section className="py-12">
+      <section className="py-8">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-3xl font-bold mb-4"
+              className="text-2xl font-bold mb-2"
             >
               Popular Subjects
             </motion.h2>
@@ -276,13 +276,13 @@ const Home = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground max-w-2xl mx-auto"
+              className="text-sm text-muted-foreground max-w-xl mx-auto"
             >
-              Explore our comprehensive collection of subjects and topics designed to help you excel in your exams
+              Explore our comprehensive collection of subjects and topics
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {subjects.map((subject, index) => (
               <SubjectCard
                 key={subject.title}
@@ -296,8 +296,8 @@ const Home = () => {
             ))}
           </div>
           
-          <div className="mt-12 text-center">
-            <Button variant="outline" onClick={() => navigate('/subjects')}>
+          <div className="mt-8 text-center">
+            <Button variant="outline" size="sm" onClick={() => navigate('/subjects')}>
               View All Subjects
             </Button>
           </div>
@@ -305,30 +305,30 @@ const Home = () => {
       </section>
       
       {/* Features Section */}
-      <section className="py-12 bg-muted/50">
+      <section className="py-8 bg-muted/50">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-3xl font-bold mb-4"
+              className="text-2xl font-bold mb-2"
             >
-              Powerful Features for Effective Learning
+              Powerful Features
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground max-w-2xl mx-auto"
+              className="text-sm text-muted-foreground max-w-xl mx-auto"
             >
-              Tools and features designed to maximize your learning efficiency and test performance
+              Tools designed to maximize your learning efficiency
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
@@ -343,58 +343,58 @@ const Home = () => {
       </section>
       
       {/* Stats Section */}
-      <section className="py-10 bg-gradient-to-r from-primary to-accent text-white">
+      <section className="py-6 bg-gradient-to-r from-primary to-accent text-white">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
             <div>
               <AnimatedCounter
                 from={0}
                 to={5000}
                 prefix="+"
-                className="text-4xl font-bold mb-2"
+                className="text-2xl md:text-3xl font-bold mb-1"
               />
-              <p className="text-white/80">MCQs Available</p>
+              <p className="text-xs text-white/80">MCQs Available</p>
             </div>
             <div>
               <AnimatedCounter
                 from={0}
                 to={25}
-                className="text-4xl font-bold mb-2"
+                className="text-2xl md:text-3xl font-bold mb-1"
               />
-              <p className="text-white/80">Subjects Covered</p>
+              <p className="text-xs text-white/80">Subjects Covered</p>
             </div>
             <div>
               <AnimatedCounter
                 from={0}
                 to={98}
                 suffix="%"
-                className="text-4xl font-bold mb-2"
+                className="text-2xl md:text-3xl font-bold mb-1"
               />
-              <p className="text-white/80">User Satisfaction</p>
+              <p className="text-xs text-white/80">User Satisfaction</p>
             </div>
             <div>
               <AnimatedCounter
                 from={0}
                 to={20000}
                 prefix="+"
-                className="text-4xl font-bold mb-2"
+                className="text-2xl md:text-3xl font-bold mb-1"
               />
-              <p className="text-white/80">Tests Completed</p>
+              <p className="text-xs text-white/80">Tests Completed</p>
             </div>
           </div>
         </div>
       </section>
       
       {/* Testimonials Section */}
-      <section className="py-12">
+      <section className="py-8">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-8">
+          <div className="text-center mb-6">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-3xl font-bold mb-4"
+              className="text-2xl font-bold mb-2"
             >
               What Our Users Say
             </motion.h2>
@@ -403,13 +403,13 @@ const Home = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground max-w-2xl mx-auto"
+              className="text-sm text-muted-foreground max-w-xl mx-auto"
             >
-              Hear from students and professionals who have transformed their test preparation with MCQs Point
+              Hear from students who transformed their test preparation
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {testimonials.map((testimonial, index) => (
               <TestimonialCard
                 key={testimonial.author}
@@ -425,16 +425,16 @@ const Home = () => {
       </section>
       
       {/* CTA Section */}
-      <section className="py-12 bg-muted/50 relative overflow-hidden">
+      <section className="py-8 bg-muted/50 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
-          <div className="max-w-3xl mx-auto text-center">
+          <div className="max-w-2xl mx-auto text-center">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-3xl font-bold mb-6"
+              className="text-2xl font-bold mb-4"
             >
               Ready to Transform Your Test Preparation?
             </motion.h2>
@@ -443,9 +443,9 @@ const Home = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-muted-foreground mb-8"
+              className="text-sm text-muted-foreground mb-6"
             >
-              Join thousands of students who have improved their test scores with MCQs Point's intelligent preparation system.
+              Join thousands of students who have improved their test scores with MCQs Point.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -453,7 +453,7 @@ const Home = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Button size="lg" onClick={() => navigate('/get-started')}>
+              <Button size="default" onClick={() => navigate('/get-started')}>
                 Get Started Now
               </Button>
             </motion.div>
@@ -462,20 +462,20 @@ const Home = () => {
       </section>
       
       {/* Footer */}
-      <footer className="py-8 border-t">
+      <footer className="py-6 border-t">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div>
-              <h3 className="text-lg font-semibold mb-4">MCQs Point</h3>
-              <p className="text-muted-foreground">Your intelligent companion for MCQ-based test preparation.</p>
+              <h3 className="text-sm font-semibold mb-2">MCQs Point</h3>
+              <p className="text-xs text-muted-foreground">Your intelligent companion for MCQ-based test preparation.</p>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Home</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Subjects</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Mock Tests</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Analytics</a></li>
+              <h3 className="text-sm font-semibold mb-2">Quick Links</h3>
+              <ul className="space-y-1">
+                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Home</a></li>
+                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Subjects</a></li>
+                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Mock Tests</a></li>
+                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Analytics</a></li>
               </ul>
             </div>
             <div>

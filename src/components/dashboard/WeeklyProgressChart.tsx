@@ -29,11 +29,11 @@ const WeeklyProgressChart = ({ data }: WeeklyProgressChartProps) => {
       }
     }}>
       <Card>
-        <CardHeader className="pb-1.5">
-          <CardTitle className="text-base font-medium">Weekly Progress</CardTitle>
+        <CardHeader className="pb-1">
+          <CardTitle className="text-sm font-medium">Weekly Progress</CardTitle>
         </CardHeader>
-        <CardContent className="pt-3">
-          <ResponsiveContainer width="100%" height={160}>
+        <CardContent className="pt-1">
+          <ResponsiveContainer width="100%" height={120}>
             <LineChart data={data} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
               <Line type="monotone" dataKey="score" stroke="#8884d8" strokeWidth={2} />
               <CartesianGrid stroke="#ccc" strokeDasharray="5 5" opacity={0.3} />

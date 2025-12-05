@@ -83,8 +83,8 @@ const AdminPanel = () => {
 
   return (
     <Header>
-      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
-        <AdminHeader 
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
+        <AdminHeader
           pendingCount={statistics.pendingCount}
           scholarshipCount={statistics.scholarshipCount}
           mcqCount={statistics.mcqCount}

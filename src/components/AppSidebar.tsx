@@ -87,20 +87,20 @@ export function AppSidebar({
               {navItems.map(item => {
                 const iconData = getIcon(item.title);
                 return (
-                  <SidebarMenuItem key={item.title}>
+                <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton 
                       onClick={() => onNavigate(item.path)} 
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-300 hover:scale-105 group relative overflow-hidden my-1",
-                        isActive(item.path) && "shadow-lg",
-                        !expanded && "justify-center px-0 w-12 h-12 mx-auto"
+                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-8",
+                        isActive(item.path) && "shadow-sm",
+                        !expanded && "justify-center px-0 w-10 h-10 mx-auto"
                       )}
                     >
                         {iconData.icon}
-                      {expanded && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
-                      {isActive(item.path) && expanded && <ChevronRight className="ml-auto w-4 h-4 animate-fade-in" />}
+                      {expanded && <span className="font-medium animate-fade-in ml-2 text-sm">{item.title}</span>}
+                      {isActive(item.path) && expanded && <ChevronRight className="ml-auto w-3.5 h-3.5 animate-fade-in" />}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -124,15 +124,15 @@ export function AppSidebar({
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-300 hover:scale-105 group relative overflow-hidden my-1",
-                        isActive(item.path) && "shadow-lg",
-                        !expanded && "justify-center px-0 w-12 h-12 mx-auto"
+                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-8",
+                        isActive(item.path) && "shadow-sm",
+                        !expanded && "justify-center px-0 w-10 h-10 mx-auto"
                       )}
                     >
                         {iconData.icon}
-                      {expanded && <span className="font-medium animate-fade-in ml-3">{item.title}</span>}
+                      {expanded && <span className="font-medium animate-fade-in ml-2 text-sm">{item.title}</span>}
                       {item.title === 'Question Bank' && isAdmin && expanded && (
-                        <Badge variant="secondary" className="ml-auto text-xs animate-fade-in">
+                        <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 animate-fade-in">
                           Admin
                         </Badge>
                       )}

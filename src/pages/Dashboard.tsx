@@ -47,18 +47,18 @@ const Dashboard = () => {
 
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-8 pb-16">
+      <div className="container mx-auto px-4 pt-4 pb-12">
         {/* AI Coach Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-accent/20">
-            <Brain className="h-6 w-6 text-primary" />
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
+            <Brain className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold">AI Personal Coach</h1>
-            <p className="text-sm text-muted-foreground">
+            <h1 className="text-xl font-bold">AI Personal Coach</h1>
+            <p className="text-xs text-muted-foreground">
               {hasData 
-                ? `${totalTests} tests completed • ${averageScore}% average score`
-                : "Track your progress and get personalized recommendations"
+                ? `${totalTests} tests • ${averageScore}% avg`
+                : "Track progress & get recommendations"
               }
             </p>
           </div>
@@ -70,14 +70,14 @@ const Dashboard = () => {
         />
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[1, 2, 3, 4].map((i) => (
               <Card key={i}>
-                <CardHeader className="pb-2">
-                  <Skeleton className="h-5 w-32" />
+                <CardHeader className="pb-1">
+                  <Skeleton className="h-4 w-24" />
                 </CardHeader>
                 <CardContent>
-                  <Skeleton className="h-[200px] w-full" />
+                  <Skeleton className="h-[120px] w-full" />
                 </CardContent>
               </Card>
             ))}
@@ -92,7 +92,7 @@ const Dashboard = () => {
               variants={container}
               initial="hidden"
               animate="visible"
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+              className="grid grid-cols-2 lg:grid-cols-4 gap-3"
             >
               <WeeklyProgressChart data={chartWeeklyData} />
               <SubjectPieChart data={chartSubjectData} />

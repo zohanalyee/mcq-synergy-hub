@@ -17,11 +17,11 @@ const FeatureCard = ({ title, description, icon, delay = 0 }: FeatureCardProps) 
       transition={{ duration: 0.5, delay: delay * 0.1 }}
       viewport={{ once: true }}
     >
-      <Card className="min-h-[160px] bg-card border hover:shadow-md transition-shadow duration-300">
-        <CardContent className="p-4 sm:p-5 flex flex-col">
-          <div className="mb-3 text-primary">{icon}</div>
-          <h3 className="text-lg font-semibold mb-2">{title}</h3>
-          <p className="text-muted-foreground text-sm">{description}</p>
+      <Card className="min-h-[100px] bg-card border hover:shadow-md transition-shadow duration-300">
+        <CardContent className="p-3 flex flex-col">
+          <div className="mb-2 text-primary [&>svg]:h-5 [&>svg]:w-5">{icon}</div>
+          <h3 className="text-sm font-semibold mb-1">{title}</h3>
+          <p className="text-muted-foreground text-xs line-clamp-2">{description}</p>
         </CardContent>
       </Card>
     </motion.div>

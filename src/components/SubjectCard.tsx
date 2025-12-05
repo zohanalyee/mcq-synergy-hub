@@ -73,14 +73,14 @@ const SubjectCard = ({
   
   return (
     <motion.div
-      whileHover={{ y: -8 }}
+      whileHover={{ y: -4 }}
       transition={{ type: "spring", stiffness: 400, damping: 10 }}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="cursor-pointer w-full max-w-md mx-auto"
+      className="cursor-pointer w-full"
     >
-      <Card className="overflow-hidden transition-all duration-300 border-t-4 shadow-md hover:shadow-lg min-h-[180px] max-h-[240px] flex flex-col"
+      <Card className="overflow-hidden transition-all duration-300 border-t-2 shadow-sm hover:shadow-md min-h-[140px] max-h-[180px] flex flex-col"
         style={{ borderTopColor: color }}
       >
         <motion.div
@@ -89,53 +89,48 @@ const SubjectCard = ({
           transition={{ duration: 0.3 }}
           className="flex-1 flex flex-col"
         >
-          <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
-            <div className="flex items-start justify-between mb-3">
-              <div className="p-2 sm:p-3 rounded-lg" style={{ backgroundColor: `${color}20` }}>
+          <CardContent className="p-3 flex-1 flex flex-col">
+            <div className="flex items-start justify-between mb-2">
+              <div className="p-1.5 rounded-md" style={{ backgroundColor: `${color}20` }}>
                 {renderDisplayIcon()}
               </div>
-              <div className="flex flex-col gap-1.5 items-end">
-                <span className="text-xs font-medium text-muted-foreground">
+              <div className="flex flex-col gap-1 items-end">
+                <span className="text-[10px] font-medium text-muted-foreground">
                   {topicCount} Topics
                 </span>
                 <Badge 
                   variant={purpose === "reading" ? "outline" : "default"}
                   className={cn(
-                    "flex items-center gap-1 text-xs h-5 px-1.5",
+                    "flex items-center gap-0.5 text-[10px] h-4 px-1",
                     purpose === "reading" ? "border-blue-500 text-blue-600" : "bg-green-500 hover:bg-green-600"
                   )}
                 >
                   {purpose === "reading" ? (
                     <>
-                      <FileText className="h-3 w-3" /> Reading
+                      <FileText className="h-2.5 w-2.5" /> Read
                     </>
                   ) : (
                     <>
-                      <CheckSquare className="h-3 w-3" /> MCQs
+                      <CheckSquare className="h-2.5 w-2.5" /> MCQs
                     </>
                   )}
                 </Badge>
               </div>
             </div>
             
-            <h3 className="text-base sm:text-lg font-semibold mb-2 line-clamp-2 leading-tight">{title}</h3>
-            <p className="text-muted-foreground text-xs sm:text-sm mb-3 line-clamp-2 flex-1 leading-relaxed">{description}</p>
+            <h3 className="text-sm font-semibold mb-1 line-clamp-1 leading-tight">{title}</h3>
+            <p className="text-muted-foreground text-xs mb-2 line-clamp-2 flex-1 leading-snug">{description}</p>
             
             <div className={cn(
-              "text-xs font-medium transition-all duration-300 flex items-center justify-between mt-auto pt-1.5 border-t border-border/30",
+              "text-[10px] font-medium transition-all duration-300 flex items-center justify-between mt-auto pt-1 border-t border-border/30",
               isHovered ? "text-primary" : "text-foreground"
             )}>
-              <span className="flex items-center gap-1.5">
-                Explore Topics 
-                <span className="transition-transform duration-300" style={{ transform: isHovered ? 'translateX(4px)' : 'translateX(0)' }}>
+              <span className="flex items-center gap-1">
+                Explore 
+                <span className="transition-transform duration-300" style={{ transform: isHovered ? 'translateX(2px)' : 'translateX(0)' }}>
                   →
                 </span>
               </span>
-              {purpose === "reading" ? (
-                <span className="text-xs text-blue-500 font-medium">Learn by Reading</span>
-              ) : (
-                <span className="text-xs text-green-500 font-medium">Practice with MCQs</span>
-              )}
             </div>
           </CardContent>
         </motion.div>

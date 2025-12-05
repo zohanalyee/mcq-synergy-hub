@@ -54,18 +54,18 @@ const Subjects = () => {
 
   return (
     <Header>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
         <SubjectsHeader />
         
-        <div className="mb-6">
+        <div className="mb-3">
           <SubjectsSearch 
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
           />
         </div>
         
-        <div className="mb-8">
-          <div className="flex flex-col gap-4 sm:flex-row justify-between">
+        <div className="mb-4">
+          <div className="flex flex-col gap-3 sm:flex-row justify-between">
             <CategoryFilter 
               categories={getCategories()} 
               selectedCategory={selectedCategory} 

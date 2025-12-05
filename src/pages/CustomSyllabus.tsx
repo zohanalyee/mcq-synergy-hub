@@ -328,34 +328,34 @@ const CustomSyllabus = () => {
 
   return (
     <Header>
-      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
         {/* Hero Header */}
         <motion.div
-          className="mb-6 text-center"
+          className="mb-4 text-center"
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+          <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
             Custom Syllabus Builder
           </h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto mb-4">
-            Select topics from various subjects to create your personalized test
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-2">
+            Select topics to create your personalized test
           </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+          <div className="flex items-center justify-center gap-2 flex-wrap">
+            <Badge variant="secondary" className="px-2 py-1 text-xs">
               <span className="text-primary font-bold mr-1">{selectedSubjectsCount}</span> Subjects
             </Badge>
-            <Badge variant="secondary" className="px-3 py-1.5 text-sm">
+            <Badge variant="secondary" className="px-2 py-1 text-xs">
               <span className="text-primary font-bold mr-1">{selectedTopicsCount}</span> Topics
             </Badge>
           </div>
         </motion.div>
         
         {/* Main Content Grid */}
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
           {/* Left: Subjects Grid */}
-          <div className="lg:col-span-2 space-y-4" ref={selectedTopicsRef}>
+          <div className="lg:col-span-2 space-y-3" ref={selectedTopicsRef}>
             <EnhancedSubjectFilter
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}

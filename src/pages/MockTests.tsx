@@ -36,20 +36,20 @@ const MockTests = () => {
   
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-8 pb-16">
+      <div className="container mx-auto px-4 pt-4 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-6 text-center"
+          className="mb-4 text-center"
         >
-          <h1 className="text-3xl font-bold mb-2 text-gradient">Mock Tests</h1>
-          <p className="text-base text-muted-foreground max-w-2xl mx-auto">
-            Practice with subject-specific tests and official job examination simulations.
+          <h1 className="text-2xl font-bold mb-1 text-gradient">Mock Tests</h1>
+          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+            Practice with subject-specific tests and job examination simulations.
           </p>
         </motion.div>
 
-        <div className="mb-6">
+        <div className="mb-4">
           <EnhancedSearchBox
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
@@ -58,22 +58,16 @@ const MockTests = () => {
           />
         </div>
 
-        <Tabs defaultValue="subjects" className="mb-6" onValueChange={value => setActiveTab(value)}>
-          <div className="flex justify-center mb-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2 h-auto">
-              <TabsTrigger value="subjects" className="gap-2">
-                <span className="text-lg">📚</span>
-                <div className="flex flex-col items-start">
-                  <span className="font-semibold">Subject-wise Tests</span>
-                  <span className="text-xs opacity-80">Focused practice</span>
-                </div>
+        <Tabs defaultValue="subjects" className="mb-4" onValueChange={value => setActiveTab(value)}>
+          <div className="flex justify-center mb-4">
+            <TabsList className="grid w-full max-w-sm grid-cols-2 h-9">
+              <TabsTrigger value="subjects" className="gap-1.5 text-xs">
+                <span>📚</span>
+                <span className="font-medium">Subject Tests</span>
               </TabsTrigger>
-              <TabsTrigger value="jobs" className="gap-2">
-                <span className="text-lg">💼</span>
-                <div className="flex flex-col items-start">
-                  <span className="font-semibold">Job/Post Tests</span>
-                  <span className="text-xs opacity-80">Career preparation</span>
-                </div>
+              <TabsTrigger value="jobs" className="gap-1.5 text-xs">
+                <span>💼</span>
+                <span className="font-medium">Job Tests</span>
               </TabsTrigger>
             </TabsList>
           </div>

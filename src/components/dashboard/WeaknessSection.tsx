@@ -23,27 +23,29 @@ const WeaknessSection = ({ weaknesses }: WeaknessSectionProps) => {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: 0.2 }}
-      className="mt-6"
+      className="mt-4"
     >
       <Card className="border-destructive/30">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <AlertTriangle className="h-5 w-5 text-destructive" />
-            Focus Areas (Weaknesses Detected)
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-sm">
+            <AlertTriangle className="h-4 w-4 text-destructive" />
+            Focus Areas (Weaknesses)
           </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            These subjects need extra attention. Click "Fix It" to generate a personalized practice test.
+          <p className="text-xs text-muted-foreground">
+            Click "Fix It" to generate a practice test.
           </p>
         </CardHeader>
-        <CardContent className="space-y-3">
-          {weaknesses.map((weakness) => (
-            <WeaknessCard
-              key={weakness.subject}
-              subject={weakness.subject}
-              averageScore={Number(weakness.average_score)}
-              testsCount={Number(weakness.tests_count)}
-            />
-          ))}
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+            {weaknesses.map((weakness) => (
+              <WeaknessCard
+                key={weakness.subject}
+                subject={weakness.subject}
+                averageScore={Number(weakness.average_score)}
+                testsCount={Number(weakness.tests_count)}
+              />
+            ))}
+          </div>
         </CardContent>
       </Card>
     </motion.div>
