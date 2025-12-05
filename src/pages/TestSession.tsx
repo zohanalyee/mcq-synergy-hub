@@ -343,7 +343,12 @@ const TestSession = () => {
                           onClick={() => navigate("/custom-syllabus", {
                             state: {
                               prefilledSubject: (testData.subjects as string[])[0],
-                              autoGenerate: true
+                              autoGenerate: true,
+                              quizSettings: {
+                                difficulty: (testData.difficulty_levels as string[])?.[0] || "medium",
+                                questionsCount: testData.question_count || 10,
+                                timeLimit: testData.time_limit || 15
+                              }
                             }
                           })}
                         >
