@@ -26,11 +26,11 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
 
   if (subjects.length === 0) {
     return (
-      <div className="text-center py-16">
-        <p className="text-muted-foreground mb-4">No subjects match your search criteria.</p>
+      <div className="text-center py-10">
+        <p className="text-sm text-muted-foreground mb-3">No subjects match your search criteria.</p>
         <motion.button
           onClick={() => window.location.reload()}
-          className="px-4 py-2 rounded-full text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90"
+          className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
@@ -42,7 +42,7 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
 
   return (
     <motion.div 
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6 w-full"
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 w-full"
       variants={container}
       initial="hidden"
       animate={isLoaded ? "show" : "hidden"}

@@ -32,18 +32,18 @@ const Quizzes = () => {
   
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-8 pb-16">
+      <div className="container mx-auto px-4 pt-4 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8 text-center"
+          className="mb-4 text-center"
         >
-          <h1 className="text-3xl font-bold text-foreground">Quizzes</h1>
-          <p className="text-muted-foreground">Practice with our collection of topic-specific and subject-wide quizzes</p>
+          <h1 className="text-2xl font-bold text-foreground">Quizzes</h1>
+          <p className="text-sm text-muted-foreground">Practice with topic-specific and subject-wide quizzes</p>
         </motion.div>
 
-        <div className="mb-6">
+        <div className="mb-4">
           <SearchBox 
             searchQuery={searchQuery} 
             setSearchQuery={setSearchQuery} 
@@ -51,10 +51,10 @@ const Quizzes = () => {
           />
         </div>
 
-        <Tabs defaultValue="topics" className="mb-8" onValueChange={value => setActiveTab(value)}>
-          <TabsList className="grid w-full max-w-md grid-cols-2 mb-6">
-            <TabsTrigger value="topics">Topic Quizzes</TabsTrigger>
-            <TabsTrigger value="subjects">Subject Quizzes</TabsTrigger>
+        <Tabs defaultValue="topics" className="mb-4" onValueChange={value => setActiveTab(value)}>
+          <TabsList className="grid w-full max-w-xs grid-cols-2 mb-4 h-9">
+            <TabsTrigger value="topics" className="text-xs">Topic Quizzes</TabsTrigger>
+            <TabsTrigger value="subjects" className="text-xs">Subject Quizzes</TabsTrigger>
           </TabsList>
           
           <TabsContent value="topics">

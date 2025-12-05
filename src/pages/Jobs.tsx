@@ -37,7 +37,7 @@ const Jobs = () => {
 
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-8 pb-12">
+        <div className="container mx-auto px-4 pt-4 pb-10">
         <JobsHeader />
         <JobsFilters 
           searchQuery={searchQuery}
@@ -47,7 +47,7 @@ const Jobs = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8"
+          className="mt-4"
         >
           <JobsGrid 
             jobs={filteredJobs}

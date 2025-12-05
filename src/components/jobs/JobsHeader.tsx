@@ -4,20 +4,20 @@ import { Briefcase } from "lucide-react";
 
 const JobsHeader = () => {
   return (
-    <div className="mt-6 mb-12 text-center">
+    <div className="mt-2 mb-4 text-center">
       <motion.h1 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
-        className="text-3xl font-bold flex items-center justify-center text-foreground"
+        className="text-2xl font-bold flex items-center justify-center text-foreground"
       >
-        <Briefcase className="mr-2 h-8 w-8 text-primary" /> Jobs
+        <Briefcase className="mr-2 h-6 w-6 text-primary" /> Jobs
       </motion.h1>
       <motion.p
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.1 }}
-        className="text-muted-foreground mt-2"
+        className="text-sm text-muted-foreground mt-1"
       >
         Discover job opportunities in government and private sectors
       </motion.p>
