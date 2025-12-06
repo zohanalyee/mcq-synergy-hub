@@ -12,14 +12,14 @@ interface QuizSettingsProps {
 
 const QuizSettings = ({ quizSettings, updateQuizSettings }: QuizSettingsProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium">Time Limit (minutes)</label>
-          <span className="text-sm text-muted-foreground">{quizSettings.timeLimit} min</span>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] font-medium">Time (min)</label>
+          <span className="text-[10px] text-muted-foreground">{quizSettings.timeLimit}</span>
         </div>
-        <div className="flex items-center gap-4">
-          <Timer className="text-muted-foreground h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <Timer className="text-muted-foreground h-3 w-3 shrink-0" />
           <Slider
             value={[quizSettings.timeLimit]}
             min={5}
@@ -32,12 +32,12 @@ const QuizSettings = ({ quizSettings, updateQuizSettings }: QuizSettingsProps) =
       </div>
       
       <div>
-        <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-medium">Number of Questions</label>
-          <span className="text-sm text-muted-foreground">{quizSettings.questionsCount}</span>
+        <div className="flex items-center justify-between mb-1">
+          <label className="text-[10px] font-medium">Questions</label>
+          <span className="text-[10px] text-muted-foreground">{quizSettings.questionsCount}</span>
         </div>
-        <div className="flex items-center gap-4">
-          <FileQuestion className="text-muted-foreground h-4 w-4" />
+        <div className="flex items-center gap-2">
+          <FileQuestion className="text-muted-foreground h-3 w-3 shrink-0" />
           <Slider
             value={[quizSettings.questionsCount]}
             min={5}
@@ -50,21 +50,21 @@ const QuizSettings = ({ quizSettings, updateQuizSettings }: QuizSettingsProps) =
       </div>
       
       <div>
-        <label className="text-sm font-medium block mb-2">Difficulty Level</label>
+        <label className="text-[10px] font-medium block mb-1">Difficulty</label>
         <Select
           value={quizSettings.difficulty}
           onValueChange={(value) => 
             updateQuizSettings('difficulty', value as QuizSettingsType['difficulty'])
           }
         >
-          <SelectTrigger>
-            <SelectValue placeholder="Select difficulty" />
+          <SelectTrigger className="h-7 text-xs">
+            <SelectValue placeholder="Select" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="easy">Easy</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="hard">Hard</SelectItem>
-            <SelectItem value="mixed">Mixed</SelectItem>
+          <SelectContent className="bg-white/95 dark:bg-card backdrop-blur-xl">
+            <SelectItem value="easy" className="text-xs">Easy</SelectItem>
+            <SelectItem value="medium" className="text-xs">Medium</SelectItem>
+            <SelectItem value="hard" className="text-xs">Hard</SelectItem>
+            <SelectItem value="mixed" className="text-xs">Mixed</SelectItem>
           </SelectContent>
         </Select>
       </div>

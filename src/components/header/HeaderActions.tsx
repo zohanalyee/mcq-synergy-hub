@@ -38,55 +38,49 @@ const HeaderActions = ({
   };
 
   return (
-    <div className="flex items-center gap-3 flex-shrink-0">
-      {/* Admin panel button only visible to admin */}
-      {user && isAdmin && (
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className="hidden md:flex gap-1 border-primary/50"
-          onClick={() => onNavigate('/admin')}
-        >
-          <Shield className="h-4 w-4 text-primary" />
-          Admin
-        </Button>
-      )}
-
+    <div className="flex items-center gap-2 flex-shrink-0">
       <ThemeToggle />
 
       {/* User menu or sign in button */}
       {user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full overflow-hidden">
-              <Avatar className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="rounded-full overflow-hidden h-8 w-8">
+              <Avatar className="h-7 w-7">
                 <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
+                <AvatarFallback className="text-xs">{getInitials(user.email)}</AvatarFallback>
               </Avatar>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border">
+            <DropdownMenuLabel className="text-xs">My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onNavigate('/dashboard')}>
+            <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-1.5">
               Dashboard
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onNavigate('/profile')}>
+            {isAdmin && (
+              <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-1.5">
+                <Shield className="mr-2 h-3.5 w-3.5 text-primary" />
+                Admin Panel
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-1.5">
               Profile
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onNavigate('/feedback')}>
+            <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-1.5">
               Feedback
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onSignOut()}>
-              <LogOut className="mr-2 h-4 w-4" />
+            <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-1.5">
+              <LogOut className="mr-2 h-3.5 w-3.5" />
               <span>Sign Out</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       ) : (
         <Button 
-          className="hidden md:flex backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
+          size="sm"
+          className="h-8 text-xs backdrop-blur-sm bg-primary hover:bg-primary/90" 
           onClick={() => onNavigate('/sign-in')}
         >
           Sign In
