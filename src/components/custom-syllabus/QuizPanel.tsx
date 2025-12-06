@@ -49,35 +49,35 @@ const QuizPanel = ({
   }, [customSubjects]);
 
   return (
-    <Card className="h-fit shadow-md border bg-gradient-to-br from-card via-card to-accent/5">
-      <CardHeader className="pb-2 border-b">
-        <CardTitle className="text-lg font-bold text-primary">Custom Quiz Builder</CardTitle>
-        <CardDescription className="text-xs">Configure your personalized test</CardDescription>
+    <Card className="h-fit shadow-sm glass-card">
+      <CardHeader className="p-3 pb-2 border-b">
+        <CardTitle className="text-sm font-bold text-primary">Quiz Builder</CardTitle>
+        <CardDescription className="text-[10px]">Configure your test</CardDescription>
       </CardHeader>
-      <CardContent className="p-3 space-y-2">
+      <CardContent className="p-2 space-y-1.5">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2 h-8">
-            <TabsTrigger value="topics" className="text-xs">Topics</TabsTrigger>
-            <TabsTrigger value="settings" className="text-xs">Settings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-7">
+            <TabsTrigger value="topics" className="text-[10px]">Topics</TabsTrigger>
+            <TabsTrigger value="settings" className="text-[10px]">Settings</TabsTrigger>
           </TabsList>
           
-          <TabsContent value="topics" className="mt-2 space-y-2">
+          <TabsContent value="topics" className="mt-1.5 space-y-1.5">
             <div>
-              <label htmlFor="syllabus-name" className="text-xs font-medium mb-1 block">Quiz Name</label>
+              <label htmlFor="syllabus-name" className="text-[10px] font-medium mb-0.5 block">Name</label>
               <Input 
                 id="syllabus-name"
                 value={syllabusName} 
                 onChange={(e) => setSyllabusName(e.target.value)}
                 placeholder="Enter quiz name"
-                className="h-8 text-sm"
+                className="h-7 text-xs"
               />
             </div>
             
             <div>
-              <label className="text-xs font-medium mb-1 block">Categories</label>
-              <div className="flex flex-wrap gap-1 mb-1 max-h-20 overflow-y-auto">
+              <label className="text-[10px] font-medium mb-0.5 block">Categories</label>
+              <div className="flex flex-wrap gap-0.5 mb-0.5 max-h-16 overflow-y-auto">
                 <Badge 
-                  className="cursor-pointer hover:bg-primary/80 text-xs px-2 py-0.5" 
+                  className="cursor-pointer hover:bg-primary/80 text-[10px] px-1.5 py-0" 
                   variant="outline" 
                   onClick={() => setSelectedCategory("All")}
                 >
@@ -86,7 +86,7 @@ const QuizPanel = ({
                 {categories.map((category) => (
                   <Badge 
                     key={category}
-                    className="cursor-pointer hover:bg-primary/80 text-xs px-2 py-0.5" 
+                    className="cursor-pointer hover:bg-primary/80 text-[10px] px-1.5 py-0" 
                     variant="outline"
                     onClick={() => setSelectedCategory(category)}
                   >
@@ -94,12 +94,9 @@ const QuizPanel = ({
                   </Badge>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground">
-                Click to filter subjects
-              </p>
             </div>
             
-            <div className="max-h-32 overflow-y-auto">
+            <div className="max-h-24 overflow-y-auto">
               <SelectedTopics 
                 customSubjects={customSubjects} 
                 selectedSubjectsCount={selectedSubjectsCount}
@@ -108,7 +105,7 @@ const QuizPanel = ({
             </div>
           </TabsContent>
           
-          <TabsContent value="settings" className="mt-2">
+          <TabsContent value="settings" className="mt-1.5">
             <QuizSettingsComponent 
               quizSettings={quizSettings}
               updateQuizSettings={updateQuizSettings}
@@ -116,24 +113,24 @@ const QuizPanel = ({
           </TabsContent>
         </Tabs>
       </CardContent>
-      <CardFooter className="flex flex-col gap-2 p-3 pt-2">
+      <CardFooter className="flex flex-col gap-1.5 p-2 pt-1.5">
         <Button 
-          className="w-full h-9 text-sm" 
+          className="w-full h-8 text-xs" 
           disabled={selectedTopicsCount === 0 || isGenerating}
           onClick={createQuiz}
         >
           {isGenerating ? (
-            <div className="flex items-center gap-2">
-              <span className="animate-spin">◌</span>
+            <div className="flex items-center gap-1.5">
+              <span className="animate-spin text-xs">◌</span>
               <span>Generating...</span>
             </div>
           ) : (
-            'Create Quiz & Start'
+            'Create Quiz'
           )}
         </Button>
         <Button 
           variant="outline" 
-          className="w-full h-8 text-xs"
+          className="w-full h-7 text-[10px]"
           onClick={() => navigate('/')}
         >
           Cancel

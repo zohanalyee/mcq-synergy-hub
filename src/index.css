@@ -5,52 +5,58 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 220 20% 15%;
+    --background: 220 20% 97%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 15%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 15%;
+    --popover-foreground: 222 47% 11%;
 
     --primary: 214 90% 52%;
     --primary-glow: 214 90% 65%;
-    --primary-foreground: 210 40% 98%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 220 20% 15%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 10% 94%;
-    --muted-foreground: 220 10% 45%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
     --accent: 243 75% 59%;
     --accent-glow: 243 75% 72%;
-    --accent-foreground: 210 40% 98%;
+    --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 214 90% 52%;
 
-    --radius: 0.9rem;
+    --radius: 0.75rem;
 
-    /* Enhanced theme tokens */
+    /* Enhanced theme tokens - Premium Glass Light Mode */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
-    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary)));
-    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.3);
-    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.4);
+    --gradient-subtle: linear-gradient(135deg, hsl(220 20% 97%), hsl(220 14% 96%));
+    --gradient-page: linear-gradient(135deg, hsl(210 40% 98%), hsl(220 14% 96%));
+    --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.2);
+    --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.3);
+    --shadow-glass: 0 4px 24px -4px hsl(220 20% 10% / 0.08);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 20% 15%;
+    /* Glass card tokens for light mode */
+    --glass-bg: 0 0% 100% / 0.8;
+    --glass-border: 0 0% 100% / 0.4;
+
+    --sidebar-background: 0 0% 100% / 0.8;
+    --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 214 90% 52%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 210 20% 96%;
-    --sidebar-accent-foreground: 220 20% 15%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 222 47% 11%;
     --sidebar-border: 220 13% 91%;
     --sidebar-ring: 214 90% 52%;
   }
@@ -111,9 +117,16 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
     position: relative;
+    background: linear-gradient(135deg, hsl(210 40% 98%) 0%, hsl(220 14% 96%) 50%, hsl(214 32% 91%) 100%);
+    background-attachment: fixed;
+  }
+
+  .dark body,
+  body.dark {
+    background: hsl(224 71% 4%);
   }
   
   /* Liquid background color blobs */
@@ -151,11 +164,20 @@
   }
 
   .glass {
-    @apply bg-white/80 backdrop-blur-lg border border-white/50 shadow-glass;
+    @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-glass;
   }
   
   .dark .glass {
-    @apply bg-black/30 border-white/10;
+    @apply bg-black/40 border-white/10 backdrop-blur-xl;
+  }
+
+  /* Premium glass cards for light mode */
+  .glass-card {
+    @apply bg-white/80 backdrop-blur-sm border border-white/40 shadow-sm;
+  }
+
+  .dark .glass-card {
+    @apply bg-card border-border;
   }
   
   .neo {

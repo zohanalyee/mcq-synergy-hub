@@ -41,7 +41,7 @@ const SubjectCard = ({
   };
   
   return (
-    <Card className="h-full group hover:shadow-lg transition-all duration-200 border hover:border-primary/40 relative overflow-hidden">
+    <Card className="h-full group hover:shadow-md transition-all duration-200 hover:border-primary/40 relative overflow-hidden glass-card">
       {/* Gradient Background */}
       <div 
         className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity"
@@ -50,58 +50,58 @@ const SubjectCard = ({
         }}
       />
       
-      <CardHeader className="p-3 pb-2 relative z-10">
-        <div className="flex items-start justify-between gap-2">
-          <div className="flex items-center gap-2 flex-1 min-w-0">
+      <CardHeader className="p-2.5 pb-1.5 relative z-10">
+        <div className="flex items-start justify-between gap-1.5">
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
             <Checkbox 
               id={`subject-${subject.title}`}
               checked={subject.selected}
               onCheckedChange={() => toggleSubjectSelection(subject.title)}
-              className="shrink-0"
+              className="shrink-0 h-3.5 w-3.5"
             />
             <div 
-              className="p-2 rounded-lg shrink-0" 
+              className="p-1.5 rounded-md shrink-0" 
               style={{ backgroundColor: `${subject.color}20` }}
             >
               {React.cloneElement(displayIcon() as React.ReactElement, {
-                className: "h-5 w-5",
+                className: "h-4 w-4",
                 style: { color: subject.color }
               })}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold line-clamp-1 text-foreground break-words">{subject.title}</div>
-              <div className="text-xs text-muted-foreground">{subject.topics.length} topics</div>
+              <div className="text-xs font-semibold line-clamp-1 text-foreground break-words">{subject.title}</div>
+              <div className="text-[10px] text-muted-foreground">{subject.topics.length} topics</div>
             </div>
           </div>
           <Button
             variant="ghost"
             size="sm"
             onClick={() => toggleSubjectExpansion(subject.title)}
-            className="h-7 w-7 p-0 shrink-0"
+            className="h-6 w-6 p-0 shrink-0"
           >
-            {subject.expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            {subject.expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           </Button>
         </div>
       </CardHeader>
       
       <Collapsible open={subject.expanded}>
         <CollapsibleContent>
-          <CardContent className="p-3 pt-0 relative z-10">
-            <div className="grid grid-cols-1 gap-1 max-h-40 overflow-y-auto">
+          <CardContent className="p-2.5 pt-0 relative z-10">
+            <div className="grid grid-cols-1 gap-0.5 max-h-32 overflow-y-auto">
               {subject.topics.map((topic: Topic) => (
                 <div 
                   key={topic.id} 
-                  className="flex items-center space-x-2 p-1.5 rounded hover:bg-accent/30 transition-colors"
+                  className="flex items-center space-x-1.5 p-1 rounded hover:bg-accent/30 transition-colors"
                 >
                   <Checkbox 
                     id={topic.id} 
                     checked={topic.selected}
                     onCheckedChange={() => toggleTopicSelection(subject.title, topic.id)}
-                    className="h-3.5 w-3.5"
+                    className="h-3 w-3"
                   />
                   <label 
                     htmlFor={topic.id} 
-                    className="text-xs leading-none cursor-pointer flex-1 line-clamp-1 break-words"
+                    className="text-[10px] leading-none cursor-pointer flex-1 line-clamp-1 break-words"
                   >
                     {topic.name}
                   </label>

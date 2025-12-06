@@ -225,21 +225,21 @@ const TestSession = () => {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <Card>
-                <CardContent className="p-6">
+              <Card className="glass-card">
+                <CardContent className="p-4">
                   {/* Question */}
-                  <div className="mb-6">
-                    <div className="flex justify-between items-start mb-4">
-                      <h2 className="text-xl font-semibold">
+                  <div className="mb-4">
+                    <div className="flex justify-between items-start mb-3 gap-2">
+                      <h2 className="text-base font-semibold leading-tight">
                         {questions[currentQuestion].question}
                       </h2>
                       <Button
                         variant="ghost"
                         size="sm"
+                        className={`h-7 w-7 p-0 shrink-0 ${flaggedQuestions.has(currentQuestion) ? "text-yellow-600" : ""}`}
                         onClick={() => toggleFlag(currentQuestion)}
-                        className={flaggedQuestions.has(currentQuestion) ? "text-yellow-600" : ""}
                       >
-                        <Flag className="h-4 w-4" />
+                        <Flag className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -252,10 +252,10 @@ const TestSession = () => {
                     {questions[currentQuestion].options.map((option: string, idx: number) => (
                       <div
                         key={idx}
-                        className="flex items-center space-x-3 p-4 rounded-lg border hover:bg-accent transition-colors"
+                        className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors glass-card"
                       >
                         <RadioGroupItem value={option} id={`option-${idx}`} />
-                        <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer">
+                        <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer text-sm">
                           {option}
                         </Label>
                       </div>
@@ -263,7 +263,7 @@ const TestSession = () => {
                   </RadioGroup>
 
                   {/* Navigation */}
-                  <div className="flex justify-between mt-8">
+                  <div className="flex justify-between mt-4">
                     <Button
                       variant="outline"
                       onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}

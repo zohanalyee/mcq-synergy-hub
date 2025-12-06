@@ -13,22 +13,21 @@ interface JobsGridProps {
 const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-        {Array.from({ length: 6 }).map((_, index) => (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
+        {Array.from({ length: 8 }).map((_, index) => (
           <Card key={index} className="animate-pulse">
             <CardContent className="p-0">
-              <div className="p-4">
-                <div className="h-5 bg-muted rounded-md w-3/4 mb-2"></div>
-                <div className="h-3 bg-muted rounded-md w-1/4 mb-3"></div>
-                <div className="h-3 bg-muted rounded-md w-full mb-1.5"></div>
-                <div className="h-3 bg-muted rounded-md w-2/3 mb-3"></div>
-                <div className="flex gap-1.5 mb-3">
-                  <div className="h-5 bg-muted rounded-full w-14"></div>
-                  <div className="h-5 bg-muted rounded-full w-16"></div>
+              <div className="p-3">
+                <div className="h-4 bg-muted rounded-md w-3/4 mb-1.5"></div>
+                <div className="h-2.5 bg-muted rounded-md w-1/4 mb-2"></div>
+                <div className="h-2.5 bg-muted rounded-md w-full mb-1"></div>
+                <div className="h-2.5 bg-muted rounded-md w-2/3 mb-2"></div>
+                <div className="flex gap-1 mb-2">
+                  <div className="h-4 bg-muted rounded-full w-12"></div>
+                  <div className="h-4 bg-muted rounded-full w-14"></div>
                 </div>
-                <div className="flex justify-between items-center">
-                  <div className="h-3 bg-muted rounded-md w-1/3"></div>
-                  <div className="h-8 bg-muted rounded-md w-20"></div>
+                <div className="flex justify-end">
+                  <div className="h-7 bg-muted rounded-md w-16"></div>
                 </div>
               </div>
             </CardContent>
@@ -40,7 +39,7 @@ const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
 
   if (jobs.length > 0) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2.5">
         {jobs.map((job, index) => (
           <JobCard key={job.id} job={job} index={index} />
         ))}
@@ -49,13 +48,13 @@ const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
   }
 
   return (
-    <div className="text-center py-10">
-      <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground/40" />
-      <h3 className="mt-3 text-base font-medium">No jobs found</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+    <div className="text-center py-8">
+      <AlertCircle className="h-10 w-10 mx-auto text-muted-foreground/40" />
+      <h3 className="mt-2 text-sm font-medium">No jobs found</h3>
+      <p className="mt-0.5 text-xs text-muted-foreground">
         {searchQuery 
-          ? "No jobs match your search criteria."
-          : "No jobs available at the moment."}
+          ? "No jobs match your search."
+          : "No jobs available."}
       </p>
     </div>
   );

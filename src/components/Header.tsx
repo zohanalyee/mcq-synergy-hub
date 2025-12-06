@@ -84,14 +84,14 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
             <header 
               className={`sticky top-0 z-40 transition-all duration-300 ${
                 scrolled 
-                  ? 'py-2 sm:py-3 glass backdrop-blur-md bg-background/60 border-b border-border/40 shadow-sm' 
-                  : 'py-3 sm:py-4 bg-background/40'
+                  ? 'py-2 glass backdrop-blur-xl bg-white/70 dark:bg-background/80 border-b border-white/30 dark:border-border/40 shadow-sm' 
+                  : 'py-2 bg-white/50 dark:bg-background/40 backdrop-blur-md'
               }`}
             >
               <div className="container px-4 mx-auto max-w-7xl">
-                <div className="flex items-center justify-between gap-3 sm:gap-6">
-                  <div className="flex items-center gap-3">
-                    <SidebarTrigger className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/40 via-accent/30 to-primary-glow/40 hover:from-primary/60 hover:via-accent/50 hover:to-primary-glow/60 backdrop-blur-xl border-2 border-white/20 hover:border-white/40 transition-all duration-500 hover:scale-110 hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] shadow-[0_0_15px_rgba(59,130,246,0.3)] group relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent before:translate-x-[-200%] hover:before:translate-x-[200%] before:transition-transform before:duration-700" />
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <SidebarTrigger className="h-9 w-9 rounded-lg bg-white/60 dark:bg-primary/20 hover:bg-white/80 dark:hover:bg-primary/30 backdrop-blur-sm border border-white/40 dark:border-primary/30 transition-all duration-300 hover:scale-105 shadow-sm" />
                     <HeaderLogo onNavigate={handleNavigation} />
                   </div>
 
