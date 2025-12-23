@@ -244,17 +244,17 @@ export const QuestionBankFilters = ({ filters, onFiltersChange, onSearch }: Ques
             <div>
               <Label className="text-sm font-medium">Question Type</Label>
               <Select
-                value={filters.question_type || ""}
+                value={filters.question_type || "all"}
                 onValueChange={(value) => onFiltersChange({
                   ...filters,
-                  question_type: value || undefined
+                  question_type: value === "all" ? undefined : value
                 })}
               >
                 <SelectTrigger className="mt-2">
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="mcq">Multiple Choice</SelectItem>
                   <SelectItem value="true_false">True/False</SelectItem>
                   <SelectItem value="fill_blank">Fill in the Blank</SelectItem>
