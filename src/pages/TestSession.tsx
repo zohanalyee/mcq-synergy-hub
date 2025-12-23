@@ -8,11 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Clock, CheckCircle, XCircle, ArrowRight, ArrowLeft, Flag, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
+import { processTestCompletion } from "@/utils/gamification";
 
 const TestSession = () => {
   const { id } = useParams<{ id: string }>();
@@ -162,27 +164,26 @@ const TestSession = () => {
     setScore(correctAnswers);
     setIsSubmitted(true);
 
-    // Save test attempt to database
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase.from("test_attempts").insert({
-          user_id: user.id,
-          test_type: "custom_quiz",
-          score: correctAnswers,
-          total_questions: questions.length,
-          time_taken: testData.time_limit * 60 - timeRemaining,
-          answers: answers,
-          subjects: testData.subjects,
-        });
-      }
-    } catch (error) {
-      console.error("Error saving test attempt:", error);
-    }
-
-    toast.success("Test submitted successfully!", {
-      description: `You scored ${correctAnswers}/${questions.length}`,
+    // Use centralized gamification processing
+    const timeTaken = testData.time_limit * 60 - timeRemaining;
+    const result = await processTestCompletion({
+      score: correctAnswers,
+      totalQuestions: questions.length,
+      timeTaken,
+      testType: "custom_quiz",
+      subjects: testData.subjects || [],
+      answers
     });
+
+    if (result.newBadges.length > 0) {
+      toast.success(`🏆 New Badge: ${result.newBadges[0].name}!`, {
+        description: result.newBadges[0].description,
+      });
+    } else {
+      toast.success("Test submitted successfully!", {
+        description: `You scored ${correctAnswers}/${questions.length}`,
+      });
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -326,39 +327,14 @@ const TestSession = () => {
                 </div>
               </div>
 
-              {/* Weakness Detection Card */}
-              {Math.round((score / questions.length) * 100) < 50 && testData.subjects && (testData.subjects as string[]).length > 0 && (
-                <Card className="border-destructive/50 bg-destructive/5 mb-6">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
-                      <div className="text-left flex-1">
-                        <h3 className="font-semibold text-destructive mb-1">Weakness Detected</h3>
-                        <p className="text-sm text-muted-foreground mb-3">
-                          It seems you are struggling with {(testData.subjects as string[]).join(", ")}. Our AI can create a specialized practice test to help you master this.
-                        </p>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => navigate("/custom-syllabus", {
-                            state: {
-                              prefilledSubject: (testData.subjects as string[])[0],
-                              autoGenerate: true,
-                              quizSettings: {
-                                difficulty: (testData.difficulty_levels as string[])?.[0] || "medium",
-                                questionsCount: testData.question_count || 10,
-                                timeLimit: testData.time_limit || 15
-                              }
-                            }
-                          })}
-                        >
-                          Improve {(testData.subjects as string[])[0]} Now
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Smart Feedback Card */}
+              <SmartFeedbackCard
+                score={score}
+                totalQuestions={questions.length}
+                timeTaken={testData.time_limit * 60 - timeRemaining}
+                subjects={testData.subjects || []}
+                testType="custom_quiz"
+              />
 
               {/* Answer Review */}
               <div className="space-y-3 mt-6 text-left">
