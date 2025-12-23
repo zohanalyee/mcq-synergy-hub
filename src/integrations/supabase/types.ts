@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          name: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       content_downloads: {
         Row: {
           content_filter: Json | null
@@ -613,6 +640,35 @@ export type Database = {
             columns: ["subject_id"]
             isOneToOne: false
             referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_badges: {
+        Row: {
+          awarded_at: string | null
+          badge_id: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          awarded_at?: string | null
+          badge_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          awarded_at?: string | null
+          badge_id?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
             referencedColumns: ["id"]
           },
         ]
