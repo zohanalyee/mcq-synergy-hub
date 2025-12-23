@@ -1,9 +1,11 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { 
   Database, 
@@ -12,34 +14,155 @@ import {
   Search, 
   BarChart3,
   Plus,
-  Upload,
   Info,
-  Settings
+  Settings,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  RefreshCw
 } from "lucide-react";
-import { useAdminContent } from "@/hooks/useAdminContent";
-import EnhancedContentTable from "@/components/admin/content/EnhancedContentTable";
+import { supabase } from "@/integrations/supabase/client";
 import QuestionBankTable from "./question-bank/QuestionBankTable";
 import BulkUploadDialog from "./question-bank/BulkUploadDialog";
 import ManualQuestionDialog from "./question-bank/ManualQuestionDialog";
 import { ContentItem } from "@/interfaces/content";
 import { insertSampleData } from "@/utils/sampleQuestions";
-import QuestionAssignmentDialog from "./question-bank/QuestionAssignmentDialog";
+
+const ITEMS_PER_PAGE = 20;
 
 const QuestionBankManager = () => {
-  const { content } = useAdminContent();
-  const [loading, setLoading] = useState(false);
+  const [questions, setQuestions] = useState<ContentItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
 
-  // Get MCQ content items with 'question_bank' status (awaiting assignment)
-  const mcqContent = useMemo(() => (
-    content.filter(item => item.category === 'mcq' && item.status === 'question_bank')
-  ), [content]);
+  // Map database row to ContentItem interface
+  const mapDbRowToContentItem = (row: any): ContentItem => ({
+    id: row.id,
+    title: row.title,
+    description: row.description || '',
+    category: row.category,
+    tags: row.tags || [],
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    status: row.status,
+    createdBy: row.created_by || '',
+    imageUrl: row.image_url,
+    fileUrl: row.file_url,
+    deadline: row.deadline,
+    department: row.department,
+    governmentLevel: row.government_level,
+    cadre: row.cadre,
+    scholarshipType: row.scholarship_type,
+    institution: row.institution,
+    examType: row.exam_type,
+    examYear: row.exam_year,
+    metaTitle: row.meta_title,
+    metaDescription: row.meta_description,
+    metaKeywords: row.meta_keywords,
+    subject: row.subject,
+    topic: row.topic,
+    difficulty: row.difficulty,
+    explanation: row.explanation,
+    options: row.options,
+    correctOption: row.correct_option,
+    timeLimit: row.time_limit,
+    marks: row.marks,
+    questions: row.questions,
+    showInSubjects: row.show_in_subjects,
+    showInSyllabus: row.show_in_syllabus,
+    showInMockTests: row.show_in_mock_tests,
+  });
 
-  // Derived statistics from current MCQ content
+  // Fetch questions with server-side pagination
+  const fetchQuestions = async () => {
+    setLoading(true);
+    try {
+      // Build the base query for count
+      let countQuery = supabase
+        .from('content_items')
+        .select('*', { count: 'exact', head: true });
+
+      // Apply category filter
+      if (categoryFilter === "all") {
+        countQuery = countQuery.in('category', ['mcq', 'quiz']);
+      } else {
+        countQuery = countQuery.eq('category', categoryFilter);
+      }
+
+      // Apply search filter
+      if (searchQuery.trim()) {
+        countQuery = countQuery.or(`title.ilike.%${searchQuery}%,topic.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+      }
+
+      // Get total count
+      const { count } = await countQuery;
+      setTotalCount(count || 0);
+
+      // Fetch paginated data with sorting (newest first)
+      const from = (currentPage - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
+
+      let dataQuery = supabase
+        .from('content_items')
+        .select('*');
+
+      // Apply same filters
+      if (categoryFilter === "all") {
+        dataQuery = dataQuery.in('category', ['mcq', 'quiz']);
+      } else {
+        dataQuery = dataQuery.eq('category', categoryFilter);
+      }
+
+      if (searchQuery.trim()) {
+        dataQuery = dataQuery.or(`title.ilike.%${searchQuery}%,topic.ilike.%${searchQuery}%,subject.ilike.%${searchQuery}%`);
+      }
+
+      // Apply sorting (newest first) and pagination
+      const { data, error } = await dataQuery
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+      if (error) {
+        console.error('Error fetching questions:', error);
+        toast.error('Failed to fetch questions');
+        return;
+      }
+
+      setQuestions((data || []).map(mapDbRowToContentItem));
+    } catch (error) {
+      console.error('Error in fetchQuestions:', error);
+      toast.error('Failed to load questions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch on mount and when filters/page change
+  useEffect(() => {
+    fetchQuestions();
+  }, [currentPage, categoryFilter]);
+
+  // Reset to page 1 when search changes (with debounce)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setCurrentPage(1);
+      fetchQuestions();
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Calculate pagination
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  // Derived statistics from fetched questions
   const stats = useMemo(() => {
     const subjectCounts: Record<string, number> = {};
     let easy = 0, medium = 0, hard = 0;
 
-    mcqContent.forEach(item => {
+    questions.forEach(item => {
       if (item.subject) {
         subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
       }
@@ -50,29 +173,16 @@ const QuestionBankManager = () => {
     });
 
     return {
-      totalQuestions: mcqContent.length,
+      totalQuestions: totalCount,
       easyQuestions: easy,
       mediumQuestions: medium,
       hardQuestions: hard,
       subjectCounts
     };
-  }, [mcqContent]);
-
-
-  const handleGenerateTest = () => {
-    toast.info("Test generation feature will be available soon!");
-  };
+  }, [questions, totalCount]);
 
   const handleExportQuestions = (format: 'pdf' | 'excel' | 'word') => {
     toast.info(`${format.toUpperCase()} export feature will be available soon!`);
-  };
-
-  const handleEditClick = (item: ContentItem) => {
-    toast.info("Question editing will be available through the main content manager");
-  };
-
-  const handleUpdateStatus = (id: string, status: any) => {
-    toast.info("Status updates will be available through the main content manager");
   };
 
   const handleDelete = (id: string) => {
@@ -80,7 +190,19 @@ const QuestionBankManager = () => {
   };
 
   const handleRefresh = () => {
-    window.location.reload();
+    fetchQuestions();
+  };
+
+  const handlePrevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   return (
@@ -189,17 +311,85 @@ const QuestionBankManager = () => {
 
         <TabsContent value="browse" className="space-y-4">
           <div className="bg-card rounded-lg border p-4">
+            {/* Search & Filter Controls */}
+            <div className="flex flex-col md:flex-row gap-4 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by title, topic, or subject..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+              <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Filter by category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="mcq">MCQ</SelectItem>
+                  <SelectItem value="quiz">Quiz</SelectItem>
+                  <SelectItem value="job">Job</SelectItem>
+                  <SelectItem value="past_paper">Past Paper</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button variant="outline" onClick={handleRefresh} disabled={loading}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                Refresh
+              </Button>
+            </div>
+
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold">Questions Awaiting Assignment</h3>
+              <h3 className="text-lg font-semibold">Questions (Newest First)</h3>
               <Badge variant="outline" className="px-3 py-1">
-                {stats.totalQuestions} Questions
+                {totalCount} Total Questions
               </Badge>
             </div>
-            <QuestionBankTable
-              questions={mcqContent}
-              onRefresh={handleRefresh}
-              onDelete={handleDelete}
-            />
+
+            {loading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <span className="ml-2 text-muted-foreground">Loading questions...</span>
+              </div>
+            ) : (
+              <>
+                <QuestionBankTable
+                  questions={questions}
+                  onRefresh={handleRefresh}
+                  onDelete={handleDelete}
+                />
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between mt-4 pt-4 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 1}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    
+                    <span className="text-sm text-muted-foreground">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleNextPage}
+                      disabled={currentPage === totalPages}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </TabsContent>
 
@@ -265,7 +455,7 @@ const QuestionBankManager = () => {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-2">Subject Distribution</h4>
+                  <h4 className="font-medium mb-2">Subject Distribution (Current Page)</h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                     {Object.entries(stats.subjectCounts).map(([subject, count]) => (
                       <Badge key={subject} variant="outline" className="justify-between p-2">
@@ -277,7 +467,7 @@ const QuestionBankManager = () => {
                 </div>
                 
                 <div>
-                  <h4 className="font-medium mb-2">Difficulty Distribution</h4>
+                  <h4 className="font-medium mb-2">Difficulty Distribution (Current Page)</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span>Easy Questions</span>
