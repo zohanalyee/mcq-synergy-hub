@@ -9,6 +9,8 @@ import RecentActivity from "@/components/dashboard/RecentActivity";
 import SubjectBarChart from "@/components/dashboard/SubjectBarChart";
 import WeaknessSection from "@/components/dashboard/WeaknessSection";
 import EmptyDashboard from "@/components/dashboard/EmptyDashboard";
+import RecentAchievements from "@/components/dashboard/RecentAchievements";
+import StreakCounter from "@/components/gamification/StreakCounter";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { subjectData, weeklyProgressData } from "@/data/dashboardData";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,19 +51,22 @@ const Dashboard = () => {
     <Header>
       <div className="container mx-auto px-4 pt-4 pb-12">
         {/* AI Coach Header */}
-        <div className="flex items-center gap-2 mb-4">
-          <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
-            <Brain className="h-5 w-5 text-primary" />
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-accent/20">
+              <Brain className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold">AI Personal Coach</h1>
+              <p className="text-xs text-muted-foreground">
+                {hasData 
+                  ? `${totalTests} tests • ${averageScore}% avg`
+                  : "Track progress & get recommendations"
+                }
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold">AI Personal Coach</h1>
-            <p className="text-xs text-muted-foreground">
-              {hasData 
-                ? `${totalTests} tests • ${averageScore}% avg`
-                : "Track progress & get recommendations"
-              }
-            </p>
-          </div>
+          <StreakCounter />
         </div>
 
         <DashboardTabs 
@@ -97,6 +102,16 @@ const Dashboard = () => {
               <WeeklyProgressChart data={chartWeeklyData} />
               <SubjectPieChart data={chartSubjectData} />
               <RecentActivity />
+              <RecentAchievements />
+            </motion.div>
+
+            {/* Second Row */}
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3"
+            >
               <SubjectBarChart data={chartSubjectData} />
             </motion.div>
 
