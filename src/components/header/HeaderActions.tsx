@@ -1,5 +1,4 @@
-
-import { Shield } from 'lucide-react';
+import { Shield, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -10,8 +9,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut } from 'lucide-react';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import StreakCounter from '@/components/gamification/StreakCounter';
 
 interface HeaderActionsProps {
   theme?: string;
@@ -39,6 +38,7 @@ const HeaderActions = ({
 
   return (
     <div className="flex items-center gap-2 flex-shrink-0">
+      {user && <StreakCounter />}
       <ThemeToggle />
 
       {/* User menu or sign in button */}
