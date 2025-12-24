@@ -258,30 +258,20 @@ const TestSession = () => {
 
   // Generate fresh questions from the Hybrid Engine (fail-safe: never spend credits on unknown context)
   const handleGenerateNew = async () => {
-    // Get the topic BEFORE clearing any state
-    const currentTopicRaw =
-      testData?.topics?.[0] ||
-      testData?.subjects?.[0] ||
-      testData?.session_name?.replace("Practice: ", "");
+    // STEP 1: Capture Data (extract BEFORE touching state)
+    const contextTopic = testData?.topics?.[0] || testData?.subjects?.[0];
+    const contextSubject = testData?.subjects?.[0];
+    const contextDiff = testData?.difficulty_levels?.[0] || "Medium";
 
-    const currentTopic = typeof currentTopicRaw === "string" ? currentTopicRaw.trim() : "";
-    const currentDifficulty = testData?.difficulty_levels?.[0] || "Easy";
+    console.log("🎯 Capturing Context:", { contextTopic, contextSubject });
 
-    // Guard clause: do NOT generate a default/random test if context is missing
-    if (!currentTopic) {
-      toast.error("Could not identify the topic. Please start from Custom Syllabus.");
+    // CRITICAL SAFETY CHECK: never spend credits if context is missing
+    if (!contextTopic) {
+      toast.error("Cannot regenerate: Topic context missing.");
       return;
     }
 
-    toast.info(`Generating new ${currentDifficulty} questions for: ${currentTopic}`);
-
-    console.log("%c ♻️ RE-GENERATING TEST", "color: lime; font-weight: bold;", {
-      topic: currentTopic,
-      difficulty: currentDifficulty,
-    });
-
-    // Reset UI
-    setTestData(null);
+    // STEP 2: Reset UI (stay on this page; don't null testData)
     setIsLoading(true);
     setScore(0);
     setCurrentQuestion(0);
@@ -289,26 +279,31 @@ const TestSession = () => {
     setIsSubmitted(false);
 
     try {
+      // STEP 3: Call API (stay on page)
       const { data, error } = await supabase.functions.invoke("generate-test", {
         body: {
-          topic: currentTopic,
-          difficulty: currentDifficulty,
-          subject: testData?.subjects?.[0] ?? null,
+          topic: contextTopic,
+          difficulty: contextDiff,
+          subject: contextSubject ?? null,
           question_count: 10,
         },
       });
 
       if (error) throw error;
 
+      // STEP 4: Update State (replace questions instantly)
       if (data?.questions) {
-        setTestData({
-          ...testData,
+        setTestData((prev: any) => ({
+          ...(prev ?? {}),
+          ...data,
           questions: data.questions,
-          difficulty_levels: [currentDifficulty],
-        });
-        setIsLoading(false);
+        }));
+
         setTimeRemaining((testData?.time_limit || 30) * 60);
-        toast.success(`New ${currentDifficulty} questions for ${currentTopic}!`);
+        setIsLoading(false);
+      } else {
+        setIsLoading(false);
+        toast.error("Failed to generate. Try again.");
       }
     } catch (error) {
       console.error("Generation failed:", error);
