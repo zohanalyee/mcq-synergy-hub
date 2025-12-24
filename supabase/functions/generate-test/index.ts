@@ -29,8 +29,10 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, difficulty, question_count } = await req.json();
-    console.log('Request received:', { topic, difficulty, question_count });
+    const { topic, difficulty, question_count, forceNew, requestId } = await req.json();
+
+    const qc = Number(question_count) || 10;
+    console.log('Request received:', { topic, difficulty, question_count: qc, forceNew: !!forceNew, requestId });
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -39,42 +41,48 @@ serve(async (req) => {
 
     // STEP 1: Database Check (Cache Layer)
     console.log('Step 1: Checking database for existing questions...');
-    
-    let dbQuestions: Question[] = [];
-    try {
-      const { data: existingQuestions, error: dbError } = await supabase
-        .from('content_items')
-        .select('title, options, correct_option, explanation')
-        .eq('category', 'mcq')
-        .eq('status', 'approved')
-        .ilike('topic', `%${topic}%`)
-        .ilike('difficulty', difficulty)
-        .limit(question_count * 2); // Fetch extra for better shuffling
 
-      if (dbError) {
-        console.error('Database query error:', dbError);
-      } else if (existingQuestions && existingQuestions.length > 0) {
-        dbQuestions = existingQuestions
-          .filter(q => q.title && q.options && q.correct_option)
-          .map(q => ({
-            question: q.title,
-            options: Array.isArray(q.options) ? q.options : [],
-            answer: q.correct_option,
-            explanation: q.explanation || undefined
-          }));
-        console.log(`Found ${dbQuestions.length} existing questions in database`);
+    let dbQuestions: Question[] = [];
+
+    // If forceNew is true, skip cache short-circuit and generate fresh questions.
+    if (!forceNew) {
+      try {
+        const { data: existingQuestions, error: dbError } = await supabase
+          .from('content_items')
+          .select('title, options, correct_option, explanation')
+          .eq('category', 'mcq')
+          .eq('status', 'approved')
+          .ilike('topic', `%${topic}%`)
+          .ilike('difficulty', difficulty)
+          .limit(qc * 2); // Fetch extra for better shuffling
+
+        if (dbError) {
+          console.error('Database query error:', dbError);
+        } else if (existingQuestions && existingQuestions.length > 0) {
+          dbQuestions = existingQuestions
+            .filter(q => q.title && q.options && q.correct_option)
+            .map(q => ({
+              question: q.title,
+              options: Array.isArray(q.options) ? q.options : [],
+              answer: q.correct_option,
+              explanation: q.explanation || undefined
+            }));
+          console.log(`Found ${dbQuestions.length} existing questions in database`);
+        }
+      } catch (dbErr) {
+        console.error('Database check failed:', dbErr);
+        // Continue to AI generation if DB fails
       }
-    } catch (dbErr) {
-      console.error('Database check failed:', dbErr);
-      // Continue to AI generation if DB fails
+    } else {
+      console.log('forceNew=true: skipping cache and generating fresh questions');
     }
 
     // If we have enough questions from DB, return them immediately
-    if (dbQuestions.length >= question_count) {
+    if (!forceNew && dbQuestions.length >= qc) {
       console.log('Sufficient questions in cache, skipping AI call');
       const shuffled = shuffleArray(dbQuestions);
-      const selected = shuffled.slice(0, question_count);
-      
+      const selected = shuffled.slice(0, qc);
+
       return new Response(
         JSON.stringify({
           session_name: `${topic} Quiz`,
@@ -86,7 +94,7 @@ serve(async (req) => {
     }
 
     // STEP 2: AI Generation for missing questions
-    const missingCount = question_count - dbQuestions.length;
+    const missingCount = forceNew ? qc : qc - dbQuestions.length;
     console.log(`Step 2: Need ${missingCount} more questions from AI`);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
@@ -215,7 +223,7 @@ Output ONLY raw JSON in this exact structure:
 
     // STEP 4: Combine and return
     const allQuestions = [...dbQuestions, ...newAIQuestions];
-    const finalQuestions = shuffleArray(allQuestions).slice(0, question_count);
+    const finalQuestions = shuffleArray(allQuestions).slice(0, qc);
 
     console.log(`Returning ${finalQuestions.length} questions (${dbQuestions.length} cached + ${newAIQuestions.length} new)`);
 
