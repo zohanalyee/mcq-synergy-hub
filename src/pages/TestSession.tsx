@@ -203,16 +203,92 @@ const TestSession = () => {
     toast.info("Test reset! Good luck on your retry.");
   };
 
-  // Generate fresh questions from the Hybrid Engine
-  const handleGenerateNew = () => {
+  // Generate fresh questions from the Hybrid Engine with preserved context
+  const handleGenerateNew = async () => {
+    // Preserve context from current test
+    const currentSubjects = testData.subjects || [];
+    const currentTopics = testData.topics || [];
+    const currentDifficulty = testData.difficulty_levels || ['Easy', 'Medium', 'Hard'];
+    const currentQuestionCount = testData.question_count || 10;
+    const currentTimeLimit = testData.time_limit || 30;
+    
+    // Smart difficulty progression: if score > 80% and on Easy, bump to Medium
+    const percentage = (score / questions.length) * 100;
+    let newDifficulty = currentDifficulty;
+    
+    if (percentage > 80 && Array.isArray(currentDifficulty)) {
+      const hasOnlyEasy = currentDifficulty.length === 1 && 
+        currentDifficulty[0]?.toLowerCase() === 'easy';
+      if (hasOnlyEasy) {
+        newDifficulty = ['Medium'];
+        toast.info("Great score! Increasing difficulty to Medium.");
+      }
+    }
+    
+    // Reset UI state
     setCurrentQuestion(0);
     setScore(0);
     setIsSubmitted(false);
     setAnswers({});
     setFlaggedQuestions(new Set());
+    setIsLoading(true);
     setTestData(null);
-    navigate("/custom-syllabus");
-    toast.info("Redirecting to create a new quiz with fresh questions!");
+    
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      // Create a new test session with preserved context
+      const { data: newSession, error: createError } = await supabase
+        .from("custom_test_sessions")
+        .insert({
+          session_name: `Practice: ${currentSubjects.join(', ') || 'Mixed Topics'}`,
+          user_id: user?.id || null,
+          subjects: currentSubjects,
+          topics: currentTopics,
+          difficulty_levels: newDifficulty,
+          question_count: currentQuestionCount,
+          time_limit: currentTimeLimit,
+          is_active: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        })
+        .select()
+        .single();
+      
+      if (createError) throw createError;
+      
+      // Generate questions for the new session
+      const { data: generatedData, error: genError } = await supabase.functions.invoke('generate-test', {
+        body: {
+          topic: currentTopics[0] || currentSubjects[0] || 'General Knowledge',
+          difficulty: Array.isArray(newDifficulty) ? newDifficulty[0] : newDifficulty,
+          questionCount: currentQuestionCount
+        }
+      });
+      
+      if (genError) throw genError;
+      
+      const generatedQuestions = generatedData?.questions || [];
+      
+      // Update session with generated questions
+      const { error: updateError } = await supabase
+        .from("custom_test_sessions")
+        .update({ questions: generatedQuestions })
+        .eq("id", newSession.id);
+      
+      if (updateError) throw updateError;
+      
+      // Navigate to the new test session
+      navigate(`/test/${newSession.id}`);
+      toast.success("New practice test ready with fresh questions!");
+      
+    } catch (err) {
+      console.error("Error generating new test:", err);
+      setIsLoading(false);
+      toast.error("Failed to generate new test. Please try again.");
+      // Fallback: navigate to custom syllabus
+      navigate("/custom-syllabus");
+    }
   };
 
   const questions = testData.questions || [];
