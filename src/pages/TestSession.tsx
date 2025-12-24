@@ -192,6 +192,29 @@ const TestSession = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // Retry the same test without re-fetching data
+  const handleRetry = () => {
+    setCurrentQuestion(0);
+    setScore(0);
+    setIsSubmitted(false);
+    setAnswers({});
+    setFlaggedQuestions(new Set());
+    setTimeRemaining(testData.time_limit * 60);
+    toast.info("Test reset! Good luck on your retry.");
+  };
+
+  // Generate fresh questions from the Hybrid Engine
+  const handleGenerateNew = () => {
+    setCurrentQuestion(0);
+    setScore(0);
+    setIsSubmitted(false);
+    setAnswers({});
+    setFlaggedQuestions(new Set());
+    setTestData(null);
+    navigate("/custom-syllabus");
+    toast.info("Redirecting to create a new quiz with fresh questions!");
+  };
+
   const questions = testData.questions || [];
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const answeredCount = Object.keys(answers).length;
@@ -334,6 +357,8 @@ const TestSession = () => {
                 timeTaken={testData.time_limit * 60 - timeRemaining}
                 subjects={testData.subjects || []}
                 testType="custom_quiz"
+                onRetry={handleRetry}
+                onGenerateNew={handleGenerateNew}
               />
 
               {/* Answer Review */}
