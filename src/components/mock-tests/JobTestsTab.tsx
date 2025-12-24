@@ -5,7 +5,7 @@ import { JobTestCard } from "./JobTestCard";
 import { toast } from "sonner";
 import { JobTest } from "@/data/jobTestsData";
 import { useNavigate } from "react-router-dom";
-import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
+import { supabase } from "@/integrations/supabase/client";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -31,37 +31,67 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
     
     try {
       const settings = customSettings || {
-        difficulty: "mixed",
-        questionCount: test.questions,
-        duration: test.duration
+        difficulty: "Medium",
+        questionCount: test.questions || 20,
+        duration: test.duration || 90
       };
 
-      // Extract subjects from syllabus - syllabus items are SUBJECTS not topics
-      // e.g., "English", "Pakistan Affairs", "General Knowledge" are subjects
-      const subjects: string[] = test.syllabus.map(item => item.topic);
+      // Extract subjects from syllabus
+      const syllabusSubjects: string[] = test.syllabus?.map(item => item.topic) || 
+        ['General Knowledge', 'English', 'Current Affairs'];
 
-      const options: TestGenerationOptions = {
-        subjects: subjects,    // Multiple subjects from syllabus
-        topics: [],           // Empty = get all topics for these subjects
-        difficulty: settings.difficulty.toLowerCase(),
-        questionCount: settings.questionCount,
+      toast.info(`Generating ${test.title} test...`);
+
+      console.log("🎯 Job Test - Calling AI Engine:", {
+        mode: 'job_test',
+        topic: test.title,
+        subjects: syllabusSubjects,
         timeLimit: settings.duration,
-        includeExplanations: true,
-        shuffleQuestions: true,
-        shuffleOptions: true
-      };
-
-      const generatedTest = await generateCustomTest(options);
-      
-      toast.success(`${test.title} ready!`, {
-        description: `${generatedTest.questions.length} questions loaded from Question Bank`
+        questionCount: settings.questionCount
       });
-      
-      navigate('/test-session', { state: { test: generatedTest } });
+
+      // Call AI Test Engine with job test context
+      const { data, error } = await supabase.functions.invoke("generate-test", {
+        body: {
+          topic: test.title,
+          difficulty: settings.difficulty,
+          subject: syllabusSubjects[0], // Primary subject
+          question_count: settings.questionCount,
+        },
+      });
+
+      if (error) throw error;
+
+      if (!data?.questions || data.questions.length === 0) {
+        throw new Error("No questions generated");
+      }
+
+      // Create session in DB
+      const { data: session, error: sessionError } = await supabase
+        .from("custom_test_sessions")
+        .insert({
+          session_name: `Job Test: ${test.title}`,
+          subjects: syllabusSubjects,
+          topics: [test.title],
+          difficulty_levels: [settings.difficulty],
+          question_count: data.questions.length,
+          time_limit: settings.duration,
+          questions: data.questions,
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      toast.success(`${test.title} ready!`, {
+        description: `${data.questions.length} AI-generated questions loaded`
+      });
+
+      navigate(`/test-session/${session.id}`);
     } catch (error) {
       console.error('Error generating job test:', error);
       toast.error('Failed to generate test', {
-        description: error instanceof Error ? error.message : 'Questions may not be available for this job test syllabus'
+        description: error instanceof Error ? error.message : 'Please try again'
       });
     } finally {
       setGeneratingTestId(null);

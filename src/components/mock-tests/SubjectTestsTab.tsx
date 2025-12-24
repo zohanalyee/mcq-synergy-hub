@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { TestCard } from "./TestCard";
 import { CategoryFilter } from "./CategoryFilter";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
-import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 type SubjectTestsTabProps = {
   allMockTests: any[];
@@ -45,37 +44,69 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
     
     try {
       const settings = customSettings || {
-        difficulty: test.difficulty,
-        questionCount: test.questions,
-        duration: test.duration
+        difficulty: test.difficulty || 'Medium',
+        questionCount: test.questions || 20,
+        duration: test.duration || 30
       };
 
-      // Get topics - if user selected specific topics use those, otherwise get ALL topics for subject
+      // Get topics - if user selected specific topics use those
       const topicsForTest = customSettings?.selectedTopics || selectedTopics[test.id];
       const finalTopics = topicsForTest && topicsForTest.length > 0 ? topicsForTest : [];
 
-      const options: TestGenerationOptions = {
-        subjects: [test.title], // Subject name e.g., "Mathematics"
-        topics: finalTopics,    // Empty array = all topics, or specific topics if customized
-        difficulty: settings.difficulty.toLowerCase(),
-        questionCount: settings.questionCount,
-        timeLimit: settings.duration,
-        includeExplanations: true,
-        shuffleQuestions: true,
-        shuffleOptions: true
-      };
+      const topic = finalTopics.length > 0 ? finalTopics[0] : `General ${test.title}`;
 
-      const generatedTest = await generateCustomTest(options);
-      
-      toast.success(`Test ready!`, {
-        description: `${generatedTest.questions.length} questions loaded from Question Bank`
+      toast.info(`Generating ${settings.difficulty} questions for: ${test.title}`);
+
+      console.log("🎯 Subject Test - Calling AI Engine:", {
+        mode: 'subject_test',
+        subject: test.title,
+        topic,
+        difficulty: settings.difficulty,
+        questionCount: settings.questionCount
       });
-      
-      navigate('/test-session', { state: { test: generatedTest } });
+
+      // Call AI Test Engine
+      const { data, error } = await supabase.functions.invoke("generate-test", {
+        body: {
+          topic: topic,
+          difficulty: settings.difficulty,
+          subject: test.title,
+          question_count: settings.questionCount,
+        },
+      });
+
+      if (error) throw error;
+
+      if (!data?.questions || data.questions.length === 0) {
+        throw new Error("No questions generated");
+      }
+
+      // Create session in DB
+      const { data: session, error: sessionError } = await supabase
+        .from("custom_test_sessions")
+        .insert({
+          session_name: `Test: ${test.title}`,
+          subjects: [test.title],
+          topics: finalTopics.length > 0 ? finalTopics : [topic],
+          difficulty_levels: [settings.difficulty],
+          question_count: data.questions.length,
+          time_limit: settings.duration,
+          questions: data.questions,
+        })
+        .select()
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      toast.success(`Test ready!`, {
+        description: `${data.questions.length} AI-generated questions loaded`
+      });
+
+      navigate(`/test-session/${session.id}`);
     } catch (error) {
       console.error('Error generating test:', error);
       toast.error('Failed to generate test', {
-        description: error instanceof Error ? error.message : 'Please try again with different settings'
+        description: error instanceof Error ? error.message : 'Please try again'
       });
     } finally {
       setGeneratingTestId(null);
