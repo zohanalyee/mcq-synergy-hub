@@ -166,10 +166,10 @@ const QuestionBankManager = () => {
       if (item.subject) {
         subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
       }
-      const difficulty = item.difficulty;
-      if (difficulty === 'Easy') easy++;
-      else if (difficulty === 'Medium') medium++;
-      else if (difficulty === 'Hard') hard++;
+      const d = item.difficulty?.toLowerCase();
+      if (d === 'easy') easy++;
+      else if (d === 'medium') medium++;
+      else if (d === 'hard') hard++;
     });
 
     return {

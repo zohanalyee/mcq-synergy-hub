@@ -14,10 +14,10 @@ interface QuestionBankTableProps {
 
 const QuestionBankTable = ({ questions, onRefresh, onDelete }: QuestionBankTableProps) => {
   const getDifficultyColor = (difficulty?: string) => {
-    switch (difficulty) {
-      case "Easy": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
-      case "Medium": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
-      case "Hard": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+    switch (difficulty?.toLowerCase()) {
+      case "easy": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      case "medium": return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+      case "hard": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
       default: return "bg-muted text-muted-foreground";
     }
   };
