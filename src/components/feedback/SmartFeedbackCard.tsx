@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, TrendingUp, Target, Zap } from "lucide-react";
+import { AlertCircle, TrendingUp, Target, Zap, RotateCcw, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SmartFeedbackCardProps {
@@ -9,6 +9,8 @@ interface SmartFeedbackCardProps {
   timeTaken?: number;
   subjects?: string[];
   testType?: string;
+  onRetry?: () => void;
+  onGenerateNew?: () => void;
 }
 
 const SmartFeedbackCard = ({ 
@@ -16,7 +18,9 @@ const SmartFeedbackCard = ({
   totalQuestions, 
   timeTaken,
   subjects = [],
-  testType = "quiz"
+  testType = "quiz",
+  onRetry,
+  onGenerateNew
 }: SmartFeedbackCardProps) => {
   const navigate = useNavigate();
   const percentage = Math.round((score / totalQuestions) * 100);
@@ -107,13 +111,31 @@ const SmartFeedbackCard = ({
                 Time taken: {Math.floor(timeTaken / 60)}m {timeTaken % 60}s
               </p>
             )}
-            <Button
-              size="sm"
-              variant={config.variant === "destructive" ? "destructive" : "default"}
-              onClick={handleAction}
-            >
-              {config.actionLabel}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant={config.variant === "destructive" ? "destructive" : "default"}
+                onClick={handleAction}
+              >
+                {config.actionLabel}
+              </Button>
+              
+              {/* Retry button - only show if score < 100% */}
+              {onRetry && percentage < 100 && (
+                <Button size="sm" variant="outline" onClick={onRetry}>
+                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                  Retry Test
+                </Button>
+              )}
+              
+              {/* Generate New button - always show if handler provided */}
+              {onGenerateNew && (
+                <Button size="sm" onClick={onGenerateNew}>
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                  Generate New Questions
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </CardContent>
