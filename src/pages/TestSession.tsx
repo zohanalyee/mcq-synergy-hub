@@ -87,7 +87,27 @@ const TestSession = () => {
         }
 
         setTestData(data);
-        setTimeRemaining(data.time_limit * 60);
+
+        const subjectsArr = normalizeStringArray(data.subjects);
+        const topicsArr = normalizeStringArray(data.topics);
+        const difficultyArr = normalizeStringArray(data.difficulty_levels);
+        const safeQuestionCount = typeof data.question_count === "number" ? data.question_count : Number(data.question_count) || 10;
+        const safeTimeLimit = typeof data.time_limit === "number" ? data.time_limit : Number(data.time_limit) || 30;
+        const safeTotalQuestions = Array.isArray(data.questions) ? data.questions.length : 0;
+
+        // Persist context for "Practice New Questions" (robust against missing topics array)
+        setLastUsedContext({
+          subject: subjectsArr[0],
+          topic: topicsArr[0],
+          subjects: subjectsArr,
+          topics: topicsArr,
+          difficultyLevels: difficultyArr,
+          questionCount: safeQuestionCount,
+          timeLimit: safeTimeLimit,
+          totalQuestions: safeTotalQuestions,
+        });
+
+        setTimeRemaining(safeTimeLimit * 60);
         setIsLoading(false);
       } catch (err) {
         console.error("Error fetching test session:", err);
@@ -238,26 +258,67 @@ const TestSession = () => {
 
   // Generate fresh questions from the Hybrid Engine with preserved context
   const handleGenerateNew = async () => {
-    // Preserve context from current test
-    const currentSubjects = testData.subjects || [];
-    const currentTopics = testData.topics || [];
-    const currentDifficulty = testData.difficulty_levels || ['Easy', 'Medium', 'Hard'];
-    const currentQuestionCount = testData.question_count || 10;
-    const currentTimeLimit = testData.time_limit || 30;
-    
+    // Robust, aggressive topic extraction (never rely on topics array alone)
+    const safeSubjects = normalizeStringArray(testData?.subjects);
+    const safeTopics = normalizeStringArray(testData?.topics);
+    const safeSessionName = typeof testData?.session_name === "string" ? testData.session_name : "";
+
+    // Try to find a valid topic from multiple sources
+    let activeTopic = "General Knowledge"; // Default
+
+    if (safeTopics.length > 0) {
+      activeTopic = safeTopics[0];
+    } else if (safeSubjects.length > 0) {
+      activeTopic = safeSubjects[0];
+    } else if (safeSessionName) {
+      // Extract from "Practice: Physics" -> "Physics"
+      activeTopic = safeSessionName.replace("Practice: ", "").replace("Test: ", "").trim();
+    } else if (lastUsedContext.topic) {
+      activeTopic = lastUsedContext.topic;
+    } else if (lastUsedContext.subject) {
+      activeTopic = lastUsedContext.subject;
+    }
+
+    const activeSubject = safeSubjects[0] || lastUsedContext.subject;
+
+    const rawDifficultyLevels = normalizeStringArray(testData?.difficulty_levels);
+    const currentDifficultyLevels = rawDifficultyLevels.length
+      ? rawDifficultyLevels
+      : lastUsedContext.difficultyLevels.length
+        ? lastUsedContext.difficultyLevels
+        : ["Easy", "Medium", "Hard"];
+
+    const currentQuestionCount =
+      typeof testData?.question_count === "number"
+        ? testData.question_count
+        : Number(testData?.question_count) || lastUsedContext.questionCount || 10;
+
+    const currentTimeLimit =
+      typeof testData?.time_limit === "number"
+        ? testData.time_limit
+        : Number(testData?.time_limit) || lastUsedContext.timeLimit || 30;
+
+    const totalQuestionsForScore = lastUsedContext.totalQuestions || questions.length || 1;
+
     // Smart difficulty progression: if score > 80% and on Easy, bump to Medium
-    const percentage = (score / questions.length) * 100;
-    let newDifficulty = currentDifficulty;
-    
-    if (percentage > 80 && Array.isArray(currentDifficulty)) {
-      const hasOnlyEasy = currentDifficulty.length === 1 && 
-        currentDifficulty[0]?.toLowerCase() === 'easy';
+    const percentage = (score / totalQuestionsForScore) * 100;
+    let newDifficultyLevels = currentDifficultyLevels;
+
+    if (percentage > 80) {
+      const hasOnlyEasy =
+        currentDifficultyLevels.length === 1 &&
+        currentDifficultyLevels[0]?.toLowerCase() === "easy";
+
       if (hasOnlyEasy) {
-        newDifficulty = ['Medium'];
+        newDifficultyLevels = ["Medium"];
         toast.info("Great score! Increasing difficulty to Medium.");
       }
     }
-    
+
+    const difficultyForGeneration = (newDifficultyLevels[0] || currentDifficultyLevels[0] || "Easy").trim();
+
+    console.log("♻️ RE-GENERATING TEST WITH TOPIC:", activeTopic);
+
     // Reset UI state
     setCurrentQuestion(0);
     setScore(0);
@@ -266,60 +327,65 @@ const TestSession = () => {
     setFlaggedQuestions(new Set());
     setIsLoading(true);
     setTestData(null);
-    
+
     try {
+      const requestId = Date.now();
+
       // Get current user
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       // Create a new test session with preserved context
       const { data: newSession, error: createError } = await supabase
         .from("custom_test_sessions")
         .insert({
-          session_name: `Practice: ${currentSubjects.join(', ') || 'Mixed Topics'}`,
+          session_name: `Practice: ${activeTopic}`,
           user_id: user?.id || null,
-          subjects: currentSubjects,
-          topics: currentTopics,
-          difficulty_levels: newDifficulty,
+          subjects: safeSubjects.length ? safeSubjects : lastUsedContext.subjects,
+          topics: safeTopics.length ? safeTopics : activeTopic ? [activeTopic] : lastUsedContext.topics,
+          difficulty_levels: newDifficultyLevels,
           question_count: currentQuestionCount,
           time_limit: currentTimeLimit,
           is_active: true,
-          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         })
         .select()
         .single();
-      
+
       if (createError) throw createError;
-      
+
       // Generate questions for the new session
-      const { data: generatedData, error: genError } = await supabase.functions.invoke('generate-test', {
+      const { data: generatedData, error: genError } = await supabase.functions.invoke("generate-test", {
         body: {
-          topic: currentTopics[0] || currentSubjects[0] || 'General Knowledge',
-          difficulty: Array.isArray(newDifficulty) ? newDifficulty[0] : newDifficulty,
-          questionCount: currentQuestionCount
-        }
+          topic: activeTopic,
+          subject: activeSubject,
+          difficulty: difficultyForGeneration,
+          question_count: currentQuestionCount,
+          forceNew: true,
+          requestId,
+        },
       });
-      
+
       if (genError) throw genError;
-      
+
       const generatedQuestions = generatedData?.questions || [];
-      
+
       // Update session with generated questions
       const { error: updateError } = await supabase
         .from("custom_test_sessions")
         .update({ questions: generatedQuestions })
         .eq("id", newSession.id);
-      
+
       if (updateError) throw updateError;
-      
+
       // Navigate to the new test session
       navigate(`/test/${newSession.id}`);
       toast.success("New practice test ready with fresh questions!");
-      
     } catch (err) {
       console.error("Error generating new test:", err);
       setIsLoading(false);
       toast.error("Failed to generate new test. Please try again.");
-      // Fallback: navigate to custom syllabus
       navigate("/custom-syllabus");
     }
   };
