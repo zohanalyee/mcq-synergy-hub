@@ -37,6 +37,15 @@ const QuestionBankManager = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  
+  // Stats state - fetched from database
+  const [stats, setStats] = useState({
+    totalQuestions: 0,
+    easyQuestions: 0,
+    mediumQuestions: 0,
+    hardQuestions: 0,
+    mixQuestions: 0
+  });
 
   // Map database row to ContentItem interface
   const mapDbRowToContentItem = (row: any): ContentItem => ({
@@ -140,10 +149,59 @@ const QuestionBankManager = () => {
     }
   };
 
+  // Fetch total stats from database (independent of pagination)
+  const fetchStats = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('difficulty')
+        .in('category', ['mcq', 'quiz']);
+      
+      if (error) {
+        console.error('Error fetching stats:', error);
+        return;
+      }
+      
+      let easy = 0, medium = 0, hard = 0, mix = 0;
+      
+      (data || []).forEach(item => {
+        const d = item.difficulty?.toLowerCase()?.trim();
+        
+        if (!d || d === '' || d === 'mix' || d === 'mixed' || d.includes(',')) {
+          mix++;
+        } else if (d === 'easy') {
+          easy++;
+        } else if (d === 'medium') {
+          medium++;
+        } else if (d === 'hard') {
+          hard++;
+        } else {
+          // Any other value counts as Mix
+          mix++;
+        }
+      });
+      
+      setStats({
+        totalQuestions: data?.length || 0,
+        easyQuestions: easy,
+        mediumQuestions: medium,
+        hardQuestions: hard,
+        mixQuestions: mix
+      });
+    } catch (error) {
+      console.error('Error in fetchStats:', error);
+    }
+  };
+
   // Fetch on mount and when filters/page change
   useEffect(() => {
     fetchQuestions();
   }, [currentPage, categoryFilter]);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    fetchStats();
+  }, []);
 
   // Reset to page 1 when search changes (with debounce)
   useEffect(() => {
@@ -157,30 +215,6 @@ const QuestionBankManager = () => {
   // Calculate pagination
   const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
 
-  // Derived statistics from fetched questions
-  const stats = useMemo(() => {
-    const subjectCounts: Record<string, number> = {};
-    let easy = 0, medium = 0, hard = 0;
-
-    questions.forEach(item => {
-      if (item.subject) {
-        subjectCounts[item.subject] = (subjectCounts[item.subject] || 0) + 1;
-      }
-      const d = item.difficulty?.toLowerCase();
-      if (d === 'easy') easy++;
-      else if (d === 'medium') medium++;
-      else if (d === 'hard') hard++;
-    });
-
-    return {
-      totalQuestions: totalCount,
-      easyQuestions: easy,
-      mediumQuestions: medium,
-      hardQuestions: hard,
-      subjectCounts
-    };
-  }, [questions, totalCount]);
-
   const handleExportQuestions = (format: 'pdf' | 'excel' | 'word') => {
     toast.info(`${format.toUpperCase()} export feature will be available soon!`);
   };
@@ -191,6 +225,7 @@ const QuestionBankManager = () => {
 
   const handleRefresh = () => {
     fetchQuestions();
+    fetchStats();
   };
 
   const handlePrevPage = () => {
@@ -250,7 +285,7 @@ const QuestionBankManager = () => {
       </Alert>
 
       {/* Statistics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium">Total Questions</CardTitle>
@@ -284,6 +319,15 @@ const QuestionBankManager = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{stats.hardQuestions}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">Mix</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-600">{stats.mixQuestions}</div>
           </CardContent>
         </Card>
       </div>
@@ -455,36 +499,30 @@ const QuestionBankManager = () => {
             <CardContent>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-2">Subject Distribution (Current Page)</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                    {Object.entries(stats.subjectCounts).map(([subject, count]) => (
-                      <Badge key={subject} variant="outline" className="justify-between p-2">
-                        <span>{subject}</span>
-                        <span className="font-semibold">{count}</span>
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-                
-                <div>
-                  <h4 className="font-medium mb-2">Difficulty Distribution (Current Page)</h4>
+                  <h4 className="font-medium mb-2">Difficulty Distribution (Total Database)</h4>
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">
                       <span>Easy Questions</span>
-                      <Badge variant="outline" className="bg-green-50">
+                      <Badge variant="outline" className="bg-green-50 dark:bg-green-900/30">
                         {stats.easyQuestions}
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>Medium Questions</span>
-                      <Badge variant="outline" className="bg-yellow-50">
+                      <Badge variant="outline" className="bg-yellow-50 dark:bg-yellow-900/30">
                         {stats.mediumQuestions}
                       </Badge>
                     </div>
                     <div className="flex justify-between items-center">
                       <span>Hard Questions</span>
-                      <Badge variant="outline" className="bg-red-50">
+                      <Badge variant="outline" className="bg-red-50 dark:bg-red-900/30">
                         {stats.hardQuestions}
+                      </Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span>Mix Questions</span>
+                      <Badge variant="outline" className="bg-purple-50 dark:bg-purple-900/30">
+                        {stats.mixQuestions}
                       </Badge>
                     </div>
                   </div>
