@@ -16,6 +16,17 @@ import { supabase } from "@/integrations/supabase/client";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
 import { processTestCompletion } from "@/utils/gamification";
 
+type LastUsedTestContext = {
+  subject?: string;
+  topic?: string;
+  subjects: string[];
+  topics: string[];
+  difficultyLevels: string[];
+  questionCount: number;
+  timeLimit: number;
+  totalQuestions: number;
+};
+
 const TestSession = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -29,6 +40,28 @@ const TestSession = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
+
+  // Persist the context of the just-finished test so "Practice New Questions" never falls back to defaults.
+  const [lastUsedContext, setLastUsedContext] = useState<LastUsedTestContext>({
+    subject: undefined,
+    topic: undefined,
+    subjects: [],
+    topics: [],
+    difficultyLevels: [],
+    questionCount: 10,
+    timeLimit: 30,
+    totalQuestions: 0,
+  });
+
+  const normalizeStringArray = (value: any): string[] => {
+    if (Array.isArray(value)) {
+      return value
+        .filter((v) => v != null && String(v).trim() !== "")
+        .map((v) => String(v).trim());
+    }
+    if (typeof value === "string" && value.trim()) return [value.trim()];
+    return [];
+  };
 
   useEffect(() => {
     const fetchTestSession = async () => {
