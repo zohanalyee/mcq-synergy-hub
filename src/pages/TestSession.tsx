@@ -42,7 +42,7 @@ const TestSession = () => {
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
 
   // Persist the context of the just-finished test so "Practice New Questions" never falls back to defaults.
-  const [lastUsedContext, setLastUsedContext] = useState<LastUsedTestContext>({
+  const [, setLastUsedContext] = useState<LastUsedTestContext>({
     subject: undefined,
     topic: undefined,
     subjects: [],
@@ -256,42 +256,31 @@ const TestSession = () => {
     toast.info("Test reset! Good luck on your retry.");
   };
 
-  // Generate fresh questions from the Hybrid Engine with preserved context
+  // Generate fresh questions from the Hybrid Engine (fail-safe: never spend credits on unknown context)
   const handleGenerateNew = async () => {
-    // 1. Aggressive Context Extraction
-    let activeTopic = 'General Knowledge';
-    let activeSubject: string | null = null;
+    // Get the topic BEFORE clearing any state
+    const currentTopicRaw =
+      testData?.topics?.[0] ||
+      testData?.subjects?.[0] ||
+      testData?.session_name?.replace("Practice: ", "");
 
-    // Try finding topic in order of reliability
-    if (testData?.topics && testData.topics.length > 0) {
-      activeTopic = testData.topics[0];
-    } else if (testData?.session_name) {
-      // Extract "Physics" from "Practice: Physics"
-      activeTopic = testData.session_name.replace('Practice: ', '').replace('Test: ', '');
+    const currentTopic = typeof currentTopicRaw === "string" ? currentTopicRaw.trim() : "";
+    const currentDifficulty = testData?.difficulty_levels?.[0] || "Easy";
+
+    // Guard clause: do NOT generate a default/random test if context is missing
+    if (!currentTopic) {
+      toast.error("Could not identify the topic. Please start from Custom Syllabus.");
+      return;
     }
 
-    if (testData?.subjects && testData.subjects.length > 0) {
-      activeSubject = testData.subjects[0];
-    }
+    toast.info(`Generating new ${currentDifficulty} questions for: ${currentTopic}`);
 
-    // 2. Smart Difficulty Logic
-    const currentDifficulty = testData?.difficulty_levels?.[0] || 'Easy';
-    const percentage = (score / questions.length) * 100;
-    let newDifficulty = currentDifficulty;
-
-    // Bump difficulty if score is high
-    if (percentage > 80 && currentDifficulty === 'Easy') {
-      newDifficulty = 'Medium';
-    }
-
-    // 3. DEBUG LOG (Must appear in console)
     console.log("%c ♻️ RE-GENERATING TEST", "color: lime; font-weight: bold;", {
-      topic: activeTopic,
-      difficulty: newDifficulty,
-      subject: activeSubject
+      topic: currentTopic,
+      difficulty: currentDifficulty,
     });
 
-    // 4. Reset UI
+    // Reset UI
     setTestData(null);
     setIsLoading(true);
     setScore(0);
@@ -300,28 +289,26 @@ const TestSession = () => {
     setIsSubmitted(false);
 
     try {
-      // 5. Explicit API Call
-      const { data, error } = await supabase.functions.invoke('generate-test', {
+      const { data, error } = await supabase.functions.invoke("generate-test", {
         body: {
-          topic: activeTopic,
-          difficulty: newDifficulty,
-          subject: activeSubject,
-          question_count: 10 // Force distinct count
-        }
+          topic: currentTopic,
+          difficulty: currentDifficulty,
+          subject: testData?.subjects?.[0] ?? null,
+          question_count: 10,
+        },
       });
 
       if (error) throw error;
 
-      // 6. Update local state with new questions
       if (data?.questions) {
         setTestData({
           ...testData,
           questions: data.questions,
-          difficulty_levels: [newDifficulty]
+          difficulty_levels: [currentDifficulty],
         });
         setIsLoading(false);
         setTimeRemaining((testData?.time_limit || 30) * 60);
-        toast.success(`New ${newDifficulty} questions for ${activeTopic}!`);
+        toast.success(`New ${currentDifficulty} questions for ${currentTopic}!`);
       }
     } catch (error) {
       console.error("Generation failed:", error);
