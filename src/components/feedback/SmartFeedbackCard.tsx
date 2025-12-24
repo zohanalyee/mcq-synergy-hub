@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, TrendingUp, Target, Zap, RotateCcw, Sparkles } from "lucide-react";
+import { AlertCircle, TrendingUp, Target, Zap, RefreshCcw, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SmartFeedbackCardProps {
@@ -123,8 +123,8 @@ const SmartFeedbackCard = ({
               {/* Retry button - only show if score < 100% */}
               {onRetry && percentage < 100 && (
                 <Button size="sm" variant="outline" onClick={onRetry}>
-                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-                  Retry Test
+                  <RefreshCcw className="h-3.5 w-3.5 mr-1.5" />
+                  Retry These Questions
                 </Button>
               )}
               
@@ -132,7 +132,7 @@ const SmartFeedbackCard = ({
               {onGenerateNew && (
                 <Button size="sm" onClick={onGenerateNew}>
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                  Generate New Questions
+                  Practice New Questions
                 </Button>
               )}
             </div>
