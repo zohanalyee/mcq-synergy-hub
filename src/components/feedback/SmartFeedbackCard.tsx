@@ -1,7 +1,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, TrendingUp, Target, Zap, RefreshCcw, Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { AlertCircle, TrendingUp, Target, Zap, RefreshCcw, RotateCcw, Sparkles } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 interface SmartFeedbackCardProps {
   score: number;
@@ -11,6 +11,8 @@ interface SmartFeedbackCardProps {
   testType?: string;
   onRetry?: () => void;
   onGenerateNew?: () => void;
+  onImprove?: () => void; // NEW: For smart remedial - triggers new test with wrong answers
+  isImproving?: boolean; // Loading state for improve button
 }
 
 const SmartFeedbackCard = ({ 
@@ -20,9 +22,10 @@ const SmartFeedbackCard = ({
   subjects = [],
   testType = "quiz",
   onRetry,
-  onGenerateNew
+  onGenerateNew,
+  onImprove,
+  isImproving = false
 }: SmartFeedbackCardProps) => {
-  const navigate = useNavigate();
   const percentage = Math.round((score / totalQuestions) * 100);
 
   // Determine feedback type based on score
@@ -33,8 +36,7 @@ const SmartFeedbackCard = ({
         title: "Outstanding Performance!",
         message: "You've mastered this topic. Consider trying harder questions or exploring new subjects.",
         variant: "success" as const,
-        actionLabel: "Try Advanced Topics",
-        actionPath: "/custom-syllabus"
+        showImprove: false
       };
     } else if (percentage >= 70) {
       return {
@@ -42,8 +44,7 @@ const SmartFeedbackCard = ({
         title: "Great Progress!",
         message: "You're doing well. A bit more practice will help you achieve mastery.",
         variant: "info" as const,
-        actionLabel: "Practice More",
-        actionPath: "/custom-syllabus"
+        showImprove: true
       };
     } else if (percentage >= 50) {
       return {
@@ -51,19 +52,17 @@ const SmartFeedbackCard = ({
         title: "Keep Going!",
         message: "You're on the right track. Focus on the topics you missed to improve your score.",
         variant: "warning" as const,
-        actionLabel: "Review Weak Areas",
-        actionPath: "/custom-syllabus"
+        showImprove: true
       };
     } else {
       return {
         icon: AlertCircle,
         title: "Needs Improvement",
         message: subjects.length > 0 
-          ? `Focus on ${subjects.slice(0, 2).join(" and ")}. Our AI can create a specialized practice test.`
-          : "Don't worry! Practice makes perfect. Try a focused quiz to improve.",
+          ? `Focus on ${subjects.slice(0, 2).join(" and ")}. Let's create a targeted practice test.`
+          : "Don't worry! Practice makes perfect. Let's focus on what you missed.",
         variant: "destructive" as const,
-        actionLabel: subjects.length > 0 ? `Improve ${subjects[0]}` : "Practice Now",
-        actionPath: "/custom-syllabus"
+        showImprove: true
       };
     }
   };
@@ -85,13 +84,12 @@ const SmartFeedbackCard = ({
     destructive: "text-destructive"
   };
 
-  const handleAction = () => {
-    const state = subjects.length > 0 ? {
-      prefilledSubject: subjects[0],
-      autoGenerate: percentage < 50
-    } : undefined;
-    
-    navigate(config.actionPath, { state });
+  // Get improve button label based on subject
+  const getImproveLabel = () => {
+    if (subjects.length > 0) {
+      return `Improve ${subjects[0]}`;
+    }
+    return "Practice Weak Areas";
   };
 
   return (
@@ -112,13 +110,27 @@ const SmartFeedbackCard = ({
               </p>
             )}
             <div className="flex flex-wrap gap-2">
-              <Button
-                size="sm"
-                variant={config.variant === "destructive" ? "destructive" : "default"}
-                onClick={handleAction}
-              >
-                {config.actionLabel}
-              </Button>
+              {/* Smart Improve Button - Triggers new test with wrong answers (No Redirect) */}
+              {onImprove && config.showImprove && (
+                <Button
+                  size="sm"
+                  variant={config.variant === "destructive" ? "destructive" : "default"}
+                  onClick={onImprove}
+                  disabled={isImproving}
+                >
+                  {isImproving ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                      {getImproveLabel()}
+                    </>
+                  )}
+                </Button>
+              )}
               
               {/* Retry button - only show if score < 100% */}
               {onRetry && percentage < 100 && (
@@ -128,11 +140,11 @@ const SmartFeedbackCard = ({
                 </Button>
               )}
               
-              {/* Generate New button - always show if handler provided */}
+              {/* Retake (Same Settings) button - renamed from "Practice New Questions" */}
               {onGenerateNew && (
-                <Button size="sm" onClick={onGenerateNew}>
-                  <Sparkles className="h-3.5 w-3.5 mr-1.5" />
-                  Practice New Questions
+                <Button size="sm" variant="secondary" onClick={onGenerateNew}>
+                  <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
+                  Retake (Same Settings)
                 </Button>
               )}
             </div>

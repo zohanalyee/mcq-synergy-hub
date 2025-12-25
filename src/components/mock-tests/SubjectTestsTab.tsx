@@ -132,7 +132,8 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         description: `${data.questions.length} questions - ${sourceText}`
       });
 
-      navigate(`/test-session/${session.id}`);
+      // Pass returnPath for Smart Return feature
+      navigate(`/test-session/${session.id}`, { state: { returnPath: '/mock-tests' } });
     } catch (error) {
       console.error('Error generating test:', error);
       toast.error('Failed to generate test', {

@@ -98,7 +98,8 @@ const Quizzes = () => {
       if (sessionError) throw sessionError;
       
       toast.success(`Starting ${selectedSubjectA} Quiz!`);
-      navigate(`/test-session/${session.id}`);
+      // Pass returnPath for Smart Return feature
+      navigate(`/test-session/${session.id}`, { state: { returnPath: '/quizzes' } });
       
     } catch (error) {
       console.error("Error generating subject quiz:", error);
@@ -162,7 +163,8 @@ const Quizzes = () => {
       if (sessionError) throw sessionError;
       
       toast.success(`Starting ${selectedTopicB} Quiz!`);
-      navigate(`/test-session/${session.id}`);
+      // Pass returnPath for Smart Return feature
+      navigate(`/test-session/${session.id}`, { state: { returnPath: '/quizzes' } });
       
     } catch (error) {
       console.error("Error generating topic quiz:", error);

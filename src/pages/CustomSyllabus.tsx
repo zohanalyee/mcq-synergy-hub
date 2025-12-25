@@ -307,8 +307,8 @@ const CustomSyllabus = () => {
         description: sourceText,
       });
 
-      // Step D: Navigate to test session
-      navigate(`/test-session/${sessionData.id}`);
+      // Step D: Navigate to test session with returnPath for Smart Return
+      navigate(`/test-session/${sessionData.id}`, { state: { returnPath: '/custom-syllabus' } });
     } catch (error) {
       console.error('Unexpected error:', error);
       toast({
