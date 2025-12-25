@@ -269,19 +269,15 @@ const SubjectContent = () => {
     : mcqs.filter(m => m.topic === selectedTopic);
   
   return (
-    <>
-      <Header />
-      
+    <Header>
       {/* Generation Loader Overlay */}
       <TestGenerationLoader 
         isVisible={isGenerating} 
         topicName={selectedTopic !== "all" ? selectedTopic : title} 
       />
       
-      <div className="container mx-auto px-4 pt-4 pb-24">
-        <div className="mt-16">
-          <BackButton />
-        </div>
+      <div className="container mx-auto px-4 py-4">
+        <BackButton />
         
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -415,7 +411,7 @@ const SubjectContent = () => {
           )}
         </motion.div>
       </div>
-    </>
+    </Header>
   );
 };
 
