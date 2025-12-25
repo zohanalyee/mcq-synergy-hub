@@ -201,12 +201,23 @@ const CustomSyllabus = () => {
         })
         .join('; ');
 
+      // Determine if we should use partial mode (for large requests)
+      const usePartialMode = quizSettings.questionsCount > 20;
+
+      console.log("🎯 Custom Syllabus - Calling AI Engine:", {
+        topic: selectedTopicsString,
+        difficulty: quizSettings.difficulty,
+        question_count: quizSettings.questionsCount,
+        partial_mode: usePartialMode
+      });
+
       // Step B: Call AI to generate test
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: selectedTopicsString,
           difficulty: quizSettings.difficulty,
-          question_count: quizSettings.questionsCount
+          question_count: quizSettings.questionsCount,
+          partial_mode: usePartialMode // Enable partial mode for large requests
         }
       });
 
@@ -248,13 +259,15 @@ const CustomSyllabus = () => {
         return;
       }
 
-      // Step C: Save to database
+      console.log(`📊 Custom Syllabus Response: ${aiResponse.questions.length} questions, remaining: ${aiResponse.remaining_count || 0}, source: ${aiResponse.source}`);
+
+      // Step C: Save to database - CRITICAL: Save REQUESTED total as question_count
       const { data: sessionData, error: dbError } = await supabase
         .from('custom_test_sessions')
         .insert({
           user_id: user.id,
           session_name: syllabusName,
-          question_count: quizSettings.questionsCount,
+          question_count: quizSettings.questionsCount, // REQUESTED TOTAL (not aiResponse.questions.length)
           time_limit: quizSettings.timeLimit,
           difficulty_levels: [quizSettings.difficulty],
           questions: aiResponse.questions,
@@ -281,9 +294,17 @@ const CustomSyllabus = () => {
         return;
       }
 
+      // Show source-based toast
+      const sourceIcon = aiResponse.source === 'cache' ? '⚡' : 
+                         aiResponse.source === 'cache_partial' ? '⏳' :
+                         aiResponse.source === 'hybrid' ? '🔀' : '🤖';
+      const sourceText = aiResponse.source === 'cache_partial' 
+        ? `${aiResponse.cached_count} loaded, ${aiResponse.remaining_count} loading in background...`
+        : `${aiResponse.questions.length} questions ready`;
+
       toast({
-        title: "Quiz Created!",
-        description: `Your AI-generated quiz "${syllabusName}" is ready with ${quizSettings.questionsCount} questions.`,
+        title: `${sourceIcon} Quiz Created!`,
+        description: sourceText,
       });
 
       // Step D: Navigate to test session

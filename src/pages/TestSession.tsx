@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Alert } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Clock, CheckCircle, XCircle, ArrowRight, ArrowLeft, Flag, AlertCircle } from "lucide-react";
+import { Clock, CheckCircle, XCircle, ArrowRight, ArrowLeft, Flag, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
@@ -27,6 +27,35 @@ type LastUsedTestContext = {
   totalQuestions: number;
 };
 
+// Helper to extract topic string from various formats
+function extractTopicString(topics: any): string | null {
+  if (!topics) return null;
+  
+  // If it's a string, use directly
+  if (typeof topics === 'string') return topics;
+  
+  // If it's an array
+  if (Array.isArray(topics)) {
+    if (topics.length === 0) return null;
+    
+    // Array of strings
+    if (typeof topics[0] === 'string') return topics[0];
+    
+    // Array of objects like { subject: "Physics", topics: ["Mechanics", "Optics"] }
+    if (typeof topics[0] === 'object' && topics[0] !== null) {
+      const first = topics[0];
+      // Try to get subject name or first topic
+      if (first.subject) return first.subject;
+      if (first.topics && Array.isArray(first.topics) && first.topics.length > 0) {
+        return first.topics[0];
+      }
+      if (first.name) return first.name;
+    }
+  }
+  
+  return null;
+}
+
 const TestSession = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -42,12 +71,15 @@ const TestSession = () => {
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   
   // Smart Background Loading state
-  const [totalExpected, setTotalExpected] = useState(0);
+  const [expectedTotal, setExpectedTotal] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [remainingCount, setRemainingCount] = useState(0);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollAttemptsRef = useRef(0);
+  const MAX_POLL_ATTEMPTS = 15;
 
   // Persist the context of the just-finished test so "Practice New Questions" never falls back to defaults.
-  const [, setLastUsedContext] = useState<LastUsedTestContext>({
+  const [lastUsedContext, setLastUsedContext] = useState<LastUsedTestContext>({
     subject: undefined,
     topic: undefined,
     subjects: [],
@@ -68,51 +100,130 @@ const TestSession = () => {
     return [];
   };
 
-  // Background fetch for remaining questions
-  const fetchRemainingQuestions = async (topic: string, difficulty: string, count: number, currentData: any) => {
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Background fetch for remaining questions using fetch_only mode
+  const pollForMoreQuestions = useCallback(async () => {
+    if (!testData || remainingCount <= 0 || pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      setIsLoadingMore(false);
+      return;
+    }
+
+    pollAttemptsRef.current += 1;
+    const currentQuestionCount = testData.questions?.length || 0;
+    
+    // Extract topic for polling
+    const topicForPolling = extractTopicString(testData.topics) || 
+                           testData.subjects?.[0] || 
+                           testData.session_name?.replace(/^(Job Test:|Test:)\s*/, '') ||
+                           null;
+    
+    const difficultyForPolling = testData.difficulty_levels?.[0] || "Medium";
+
+    if (!topicForPolling) {
+      console.log("⚠️ Background Fetching: Cannot determine topic for polling");
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+      setIsLoadingMore(false);
+      return;
+    }
+
+    console.log(`🔄 Background Fetching: Attempt ${pollAttemptsRef.current}/${MAX_POLL_ATTEMPTS} - ${currentQuestionCount} questions loaded out of ${expectedTotal} expected`);
+
     try {
-      console.log(`🔄 Fetching ${count} remaining questions in background...`);
-      
+      // Use fetch_only to just get cached questions without triggering new AI generation
       const { data, error } = await supabase.functions.invoke("generate-test", {
         body: {
-          topic,
-          difficulty,
-          question_count: count,
-          forceNew: false, // Use cache first
+          topic: topicForPolling,
+          difficulty: difficultyForPolling,
+          question_count: expectedTotal, // Request full amount
+          fetch_only: true, // CRITICAL: Don't trigger AI, just fetch from DB
         },
       });
 
       if (error) {
         console.error("Background fetch error:", error);
-        setIsLoadingMore(false);
         return;
       }
 
-      if (data?.questions && data.questions.length > 0) {
-        // Seamlessly append new questions to existing ones
-        setTestData((prev: any) => {
-          const existingQuestions = prev?.questions || [];
-          const newQuestions = data.questions.filter((q: any) => 
-            !existingQuestions.some((eq: any) => eq.question === q.question)
-          );
-          
-          console.log(`✅ Appended ${newQuestions.length} new questions`);
-          
-          return {
-            ...prev,
-            questions: [...existingQuestions, ...newQuestions]
-          };
-        });
+      if (data?.questions && data.questions.length > currentQuestionCount) {
+        // Filter to only add NEW questions (avoid duplicates)
+        const existingQuestions = testData.questions || [];
+        const existingQuestionTexts = new Set(existingQuestions.map((q: any) => q.question));
         
-        setRemainingCount(0);
-        toast.success(`Loaded ${data.questions.length} more questions`, { duration: 2000 });
+        const newQuestions = data.questions.filter((q: any) => 
+          !existingQuestionTexts.has(q.question)
+        );
+        
+        if (newQuestions.length > 0) {
+          console.log(`✅ Background Fetching: Appended ${newQuestions.length} new questions`);
+          
+          setTestData((prev: any) => {
+            const updatedQuestions = [...(prev?.questions || []), ...newQuestions];
+            return {
+              ...prev,
+              questions: updatedQuestions
+            };
+          });
+
+          // Update remaining count
+          const newTotal = currentQuestionCount + newQuestions.length;
+          const newRemaining = Math.max(0, expectedTotal - newTotal);
+          setRemainingCount(newRemaining);
+          
+          // Show progress toast
+          if (newRemaining > 0) {
+            toast.info(`Loaded ${newQuestions.length} more questions`, { duration: 2000 });
+          } else {
+            toast.success(`All ${expectedTotal} questions loaded!`, { duration: 3000 });
+            if (pollIntervalRef.current) {
+              clearInterval(pollIntervalRef.current);
+              pollIntervalRef.current = null;
+            }
+            setIsLoadingMore(false);
+          }
+        }
       }
     } catch (err) {
       console.error("Background fetch failed:", err);
-    } finally {
-      setIsLoadingMore(false);
     }
-  };
+  }, [testData, remainingCount, expectedTotal]);
+
+  // Start polling when we have remaining questions
+  useEffect(() => {
+    if (remainingCount > 0 && !isSubmitted && !pollIntervalRef.current) {
+      console.log(`🚀 Starting background polling for ${remainingCount} remaining questions`);
+      setIsLoadingMore(true);
+      pollAttemptsRef.current = 0;
+      
+      // Initial poll after 3 seconds, then every 3 seconds
+      const initialTimeout = setTimeout(() => {
+        pollForMoreQuestions();
+        pollIntervalRef.current = setInterval(pollForMoreQuestions, 3000);
+      }, 3000);
+      
+      return () => {
+        clearTimeout(initialTimeout);
+        if (pollIntervalRef.current) {
+          clearInterval(pollIntervalRef.current);
+          pollIntervalRef.current = null;
+        }
+      };
+    }
+  }, [remainingCount, isSubmitted, pollForMoreQuestions]);
 
   useEffect(() => {
     const fetchTestSession = async () => {
@@ -146,24 +257,19 @@ const TestSession = () => {
         const safeTimeLimit = typeof data.time_limit === "number" ? data.time_limit : Number(data.time_limit) || 30;
         const safeTotalQuestions = Array.isArray(data.questions) ? data.questions.length : 0;
         
-        // Set expected total (use question_count as the total expected)
-        const expectedTotal = safeQuestionCount;
-        setTotalExpected(expectedTotal);
+        // Set expected total from the stored question_count (this is the REQUESTED total)
+        setExpectedTotal(safeQuestionCount);
         
         // Check if we got partial data (fewer questions than expected)
-        const remaining = Math.max(0, expectedTotal - safeTotalQuestions);
+        const remaining = Math.max(0, safeQuestionCount - safeTotalQuestions);
         setRemainingCount(remaining);
         
-        // Start background fetch if there are remaining questions
-        if (remaining > 0 && topicsArr[0]) {
-          setIsLoadingMore(true);
-          fetchRemainingQuestions(topicsArr[0], difficultyArr[0] || "Medium", remaining, data);
-        }
+        console.log(`📊 TestSession Loaded: ${safeTotalQuestions} questions, expected ${safeQuestionCount}, remaining ${remaining}`);
 
-        // Persist context for "Practice New Questions" (robust against missing topics array)
+        // Persist context for "Practice New Questions"
         setLastUsedContext({
           subject: subjectsArr[0],
-          topic: topicsArr[0],
+          topic: extractTopicString(data.topics) || topicsArr[0],
           subjects: subjectsArr,
           topics: topicsArr,
           difficultyLevels: difficultyArr,
@@ -282,6 +388,13 @@ const TestSession = () => {
     setScore(correctAnswers);
     setIsSubmitted(true);
 
+    // Stop polling
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    setIsLoadingMore(false);
+
     // Use centralized gamification processing
     const timeTaken = testData.time_limit * 60 - timeRemaining;
     const result = await processTestCompletion({
@@ -324,7 +437,7 @@ const TestSession = () => {
   // Generate fresh questions from the Hybrid Engine (fail-safe: never spend credits on unknown context)
   const handleGenerateNew = async () => {
     // STEP 1: Capture Data (extract BEFORE touching state)
-    const contextTopic = testData?.topics?.[0] || testData?.subjects?.[0];
+    const contextTopic = extractTopicString(testData?.topics) || testData?.subjects?.[0];
     const contextSubject = testData?.subjects?.[0];
     const contextDiff = testData?.difficulty_levels?.[0] || "Medium";
 
@@ -378,9 +491,13 @@ const TestSession = () => {
   };
 
   const questions = testData.questions || [];
-  const displayTotal = totalExpected > 0 ? Math.max(totalExpected, questions.length) : questions.length;
+  const displayTotal = expectedTotal > 0 ? Math.max(expectedTotal, questions.length) : questions.length;
   const progress = ((currentQuestion + 1) / displayTotal) * 100;
   const answeredCount = Object.keys(answers).length;
+
+  // Check if all questions are loaded
+  const allQuestionsLoaded = remainingCount === 0;
+  const canSubmit = allQuestionsLoaded || questions.length >= expectedTotal;
 
   // Determine source badge
   const getSourceBadge = () => {
@@ -407,8 +524,9 @@ const TestSession = () => {
               </Badge>
             )}
             {isLoadingMore && (
-              <Badge variant="outline" className="text-xs animate-pulse">
-                🔄 Loading more...
+              <Badge variant="outline" className="text-xs animate-pulse flex items-center gap-1">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Loading {remainingCount} more...
               </Badge>
             )}
             <Badge variant="outline" className="flex items-center gap-1.5 text-xs">
@@ -483,7 +601,14 @@ const TestSession = () => {
                     </Button>
 
                     {currentQuestion === questions.length - 1 ? (
-                      <Button onClick={handleSubmit}>Submit Test</Button>
+                      <Button 
+                        onClick={handleSubmit}
+                        disabled={!canSubmit}
+                        title={!canSubmit ? `Waiting for ${remainingCount} more questions to load...` : undefined}
+                      >
+                        {!canSubmit && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                        {canSubmit ? 'Submit Test' : 'Loading...'}
+                      </Button>
                     ) : (
                       <Button
                         onClick={() =>

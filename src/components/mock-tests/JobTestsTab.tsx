@@ -55,12 +55,16 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
       const syllabusSubjects: string[] = test.syllabus?.map(item => item.topic) || 
         ['General Knowledge', 'English', 'Current Affairs'];
 
+      // Determine if we should use partial mode (for large requests)
+      const usePartialMode = settings.questionCount > 20;
+
       console.log("🎯 Job Test - Calling AI Engine:", {
         mode: 'job_test',
         topic: test.title,
         subjects: syllabusSubjects,
         timeLimit: settings.duration,
         questionCount: settings.questionCount,
+        partial_mode: usePartialMode,
         userId: user.id
       });
 
@@ -71,6 +75,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
           difficulty: settings.difficulty,
           subject: syllabusSubjects[0], // Primary subject
           question_count: settings.questionCount,
+          partial_mode: usePartialMode, // Enable partial mode for large requests
         },
       });
 
@@ -80,7 +85,9 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
         throw new Error("No questions generated");
       }
 
-      // Create session in DB with user_id
+      console.log(`📊 Job Test Response: ${data.questions.length} questions, remaining: ${data.remaining_count || 0}, source: ${data.source}`);
+
+      // CRITICAL: Save REQUESTED total as question_count, not returned partial count
       const { data: session, error: sessionError } = await supabase
         .from("custom_test_sessions")
         .insert({
@@ -88,7 +95,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
           subjects: syllabusSubjects,
           topics: [test.title],
           difficulty_levels: [settings.difficulty],
-          question_count: data.questions.length,
+          question_count: settings.questionCount, // REQUESTED TOTAL (not data.questions.length)
           time_limit: settings.duration,
           questions: data.questions,
           user_id: user.id,
@@ -99,8 +106,11 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
       if (sessionError) throw sessionError;
 
       // Show source-based toast
-      const sourceIcon = data.source === 'cache' ? '⚡' : data.source === 'hybrid' ? '🔀' : '🤖';
+      const sourceIcon = data.source === 'cache' ? '⚡' : 
+                         data.source === 'cache_partial' ? '⏳' :
+                         data.source === 'hybrid' ? '🔀' : '🤖';
       const sourceText = data.source === 'cache' ? 'Loaded from Bank' : 
+                         data.source === 'cache_partial' ? `${data.cached_count} loaded, ${data.remaining_count} loading...` :
                          data.source === 'hybrid' ? `${data.cached_count} cached + ${data.ai_count} new` : 
                          'AI Generated';
       

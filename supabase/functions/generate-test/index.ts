@@ -265,7 +265,7 @@ async function saveQuestionsInBackground(
   difficulty: string,
   supabase: any
 ): Promise<void> {
-  console.log(`Background task: Saving ${questions.length} questions...`);
+  console.log(`📦 Background task: Saving ${questions.length} questions...`);
   
   const BATCH_SIZE = 20; // Insert in smaller batches
   const batches = Math.ceil(questions.length / BATCH_SIZE);
@@ -302,19 +302,52 @@ async function saveQuestionsInBackground(
 
       if (insertError) {
         if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
-          console.log(`Background batch ${i + 1}: Some duplicates skipped`);
+          console.log(`📦 Background batch ${i + 1}: Some duplicates skipped`);
         } else {
-          console.error(`Background batch ${i + 1} error:`, insertError);
+          console.error(`📦 Background batch ${i + 1} error:`, insertError);
         }
       } else {
-        console.log(`Background batch ${i + 1}/${batches}: Saved ${batch.length} questions`);
+        console.log(`📦 Background batch ${i + 1}/${batches}: Saved ${batch.length} questions`);
       }
     } catch (err) {
-      console.error(`Background batch ${i + 1} failed:`, err);
+      console.error(`📦 Background batch ${i + 1} failed:`, err);
     }
   }
   
-  console.log('Background task completed');
+  console.log('📦 Background task completed');
+}
+
+// Background generation + saving (combined for EdgeRuntime.waitUntil)
+async function backgroundGenerateAndSave(
+  topic: string,
+  sanitizedTopic: string,
+  difficulty: string,
+  missingCount: number,
+  existingQuestionTexts: string[],
+  apiKey: string,
+  supabase: any
+): Promise<void> {
+  console.log(`🚀 BACKGROUND: Starting generation of ${missingCount} questions for "${topic}"`);
+  
+  try {
+    const newQuestions = await generateQuestionsInBatches(
+      topic, 
+      difficulty, 
+      missingCount, 
+      apiKey,
+      existingQuestionTexts
+    );
+    
+    console.log(`🚀 BACKGROUND: Generated ${newQuestions.length} questions`);
+    
+    if (newQuestions.length > 0) {
+      await saveQuestionsInBackground(newQuestions, topic, sanitizedTopic, difficulty, supabase);
+    }
+    
+    console.log(`🚀 BACKGROUND: Complete - ${newQuestions.length} questions saved to DB`);
+  } catch (err) {
+    console.error('🚀 BACKGROUND: Generation/saving failed:', err);
+  }
 }
 
 serve(async (req) => {
@@ -323,11 +356,24 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, difficulty, question_count, forceNew, requestId, partial_mode } = await req.json();
+    const { topic, difficulty, question_count, forceNew, requestId, partial_mode, fetch_only } = await req.json();
 
     const qc = Number(question_count) || 10;
     const usePartialMode = partial_mode === true;
-    console.log('Request received:', { topic, difficulty, question_count: qc, forceNew: !!forceNew, partial_mode: usePartialMode, requestId });
+    const isFetchOnly = fetch_only === true;
+    const isLargeRequest = qc > 20;
+    const autoPartial = usePartialMode || isLargeRequest;
+    
+    console.log('📥 Request received:', { 
+      topic, 
+      difficulty, 
+      question_count: qc, 
+      forceNew: !!forceNew, 
+      partial_mode: usePartialMode,
+      fetch_only: isFetchOnly,
+      auto_partial: autoPartial,
+      requestId 
+    });
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -356,7 +402,6 @@ serve(async (req) => {
 
     // STEP 1: Database Check (Cache Layer) - SYLLABUS-AWARE FUZZY MATCHING
     console.log('Step 1: Checking database for existing questions...');
-    console.log(`Search conditions: ${searchConditions.substring(0, 200)}...`);
 
     let dbQuestions: Question[] = [];
     let existingQuestionTexts: string[] = [];
@@ -406,10 +451,31 @@ serve(async (req) => {
       console.log('forceNew=true: skipping cache and generating fresh questions');
     }
 
+    // ========== FETCH_ONLY MODE ==========
+    // If fetch_only=true, just return whatever is in DB (used for polling)
+    if (isFetchOnly) {
+      console.log(`🔍 FETCH_ONLY: Returning ${dbQuestions.length} cached questions (no AI generation)`);
+      const returnedQuestions = shuffleArray(dbQuestions).slice(0, qc);
+      
+      return new Response(
+        JSON.stringify({
+          session_name: `${topic} Quiz`,
+          questions: returnedQuestions,
+          source: 'cache',
+          cached_count: returnedQuestions.length,
+          ai_count: 0,
+          remaining_count: Math.max(0, qc - returnedQuestions.length),
+          total_requested: qc
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // ========== IMMEDIATE RETURN: FULL CACHE ==========
     // If we have enough questions from DB, return them immediately (ZERO LATENCY)
     if (!forceNew && dbQuestions.length >= qc) {
       console.log('⚡ INSTANT: Sufficient questions in cache, skipping AI call');
-      const selected = dbQuestions.slice(0, qc);
+      const selected = shuffleArray(dbQuestions).slice(0, qc);
 
       return new Response(
         JSON.stringify({
@@ -425,42 +491,42 @@ serve(async (req) => {
       );
     }
 
-    // PARTIAL MODE: Return available DB questions immediately and generate rest in background
-    if (usePartialMode && dbQuestions.length > 0) {
-      const missingCount = qc - dbQuestions.length;
-      console.log(`⚡ PARTIAL MODE: Returning ${dbQuestions.length} cached, triggering background generation for ${missingCount}`);
+    // ========== IMMEDIATE RETURN: PARTIAL MODE ==========
+    // AUTO PARTIAL: For large requests OR explicit partial_mode, return immediately with cached questions
+    // and trigger background generation for the rest
+    if (autoPartial && dbQuestions.length > 0 && !forceNew) {
+      const returnedQuestions = shuffleArray(dbQuestions).slice(0, Math.min(dbQuestions.length, qc));
+      const missingCount = qc - returnedQuestions.length;
       
-      // Start background generation if needed
+      console.log(`⚡ PARTIAL MODE ACTIVE: Returning ${returnedQuestions.length} questions, Generating ${missingCount} in background`);
+      
+      // Start background generation if needed (NEVER awaited - this is the key fix!)
       if (missingCount > 0) {
         const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
         if (LOVABLE_API_KEY) {
           EdgeRuntime.waitUntil(
-            (async () => {
-              try {
-                const newQuestions = await generateQuestionsInBatches(
-                  topic, 
-                  difficulty, 
-                  missingCount, 
-                  LOVABLE_API_KEY,
-                  existingQuestionTexts
-                );
-                if (newQuestions.length > 0) {
-                  await saveQuestionsInBackground(newQuestions, topic, sanitizedTopic, difficulty, supabase);
-                }
-              } catch (err) {
-                console.error('Background generation failed:', err);
-              }
-            })()
+            backgroundGenerateAndSave(
+              topic,
+              sanitizedTopic,
+              difficulty,
+              missingCount,
+              existingQuestionTexts,
+              LOVABLE_API_KEY,
+              supabase
+            )
           );
+        } else {
+          console.warn('⚠️ LOVABLE_API_KEY not set - cannot generate background questions');
         }
       }
 
+      // IMMEDIATE RETURN - no waiting for AI
       return new Response(
         JSON.stringify({
           session_name: `${topic} Quiz`,
-          questions: dbQuestions,
+          questions: returnedQuestions,
           source: 'cache_partial',
-          cached_count: dbQuestions.length,
+          cached_count: returnedQuestions.length,
           ai_count: 0,
           remaining_count: missingCount,
           total_requested: qc
@@ -469,9 +535,10 @@ serve(async (req) => {
       );
     }
 
-    // STEP 2: AI Generation for missing questions (HYBRID MODE)
+    // ========== FULL AI GENERATION (fallback for small requests with no cache) ==========
+    // Only reaches here if: small request (<= 20) AND no/insufficient cached questions
     const missingCount = forceNew ? qc : qc - dbQuestions.length;
-    console.log(`Step 2: Need ${missingCount} more questions from AI (have ${dbQuestions.length} from cache)`);
+    console.log(`Step 2: Need ${missingCount} questions from AI (have ${dbQuestions.length} from cache)`);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -514,7 +581,9 @@ serve(async (req) => {
             questions: shuffleArray(dbQuestions),
             source: 'cache_partial',
             cached_count: dbQuestions.length,
-            ai_count: 0
+            ai_count: 0,
+            remaining_count: qc - dbQuestions.length,
+            total_requested: qc
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
@@ -523,11 +592,10 @@ serve(async (req) => {
       throw aiError;
     }
 
-    // STEP 3: Save new questions using background task for reliability
+    // Save new questions (background for large batches, inline for small)
     if (newAIQuestions.length > 0) {
       console.log('Step 3: Saving new questions to database...');
       
-      // For small batches, save immediately; for large batches, use background task
       const IMMEDIATE_LIMIT = 20;
       
       if (newAIQuestions.length <= IMMEDIATE_LIMIT) {
@@ -542,7 +610,7 @@ serve(async (req) => {
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
-          status: 'approved', // AUTO-APPROVED
+          status: 'approved',
           show_in_subjects: true,
           show_in_mock_tests: true,
           reference_material: JSON.stringify({
@@ -582,7 +650,6 @@ serve(async (req) => {
     // STEP 4: Combine and return
     const allQuestions = [...dbQuestions, ...newAIQuestions];
     
-    // If we still don't have enough, return what we have
     if (allQuestions.length === 0) {
       throw new Error('No questions could be generated');
     }
