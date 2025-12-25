@@ -70,21 +70,27 @@ function getSyllabusSubjects(topic: string): string[] {
 }
 
 // Build broader search conditions for syllabus-aware matching
+// IMPORTANT: PostgREST uses * for wildcards in .or() filters, NOT %
 function buildSyllabusSearchConditions(topic: string, sanitizedTopic: string, syllabusSubjects: string[]): string {
-  const conditions = [
-    `topic.ilike.%${topic}%`,
-    `topic.ilike.%${sanitizedTopic}%`,
-    `subject.ilike.%${topic}%`,
-    `subject.ilike.%${sanitizedTopic}%`,
-  ];
+  const conditions: string[] = [];
+  
+  // Add sanitized topic (without parentheses) - this is the key for matching
+  if (sanitizedTopic) {
+    conditions.push(`topic.ilike.*${sanitizedTopic}*`);
+    conditions.push(`subject.ilike.*${sanitizedTopic}*`);
+  }
   
   // Add all syllabus subjects to the search
   for (const subject of syllabusSubjects) {
-    conditions.push(`topic.ilike.%${subject}%`);
-    conditions.push(`subject.ilike.%${subject}%`);
+    conditions.push(`topic.ilike.*${subject}*`);
+    conditions.push(`subject.ilike.*${subject}*`);
   }
   
-  return conditions.join(',');
+  // Remove duplicates
+  const uniqueConditions = [...new Set(conditions)];
+  console.log(`🔎 Search conditions (${uniqueConditions.length}): ${uniqueConditions.slice(0, 4).join(', ')}...`);
+  
+  return uniqueConditions.join(',');
 }
 
 // Robust JSON parser with repair logic for truncated responses
@@ -396,9 +402,10 @@ serve(async (req) => {
     }
 
     // Build search conditions (syllabus-aware OR simple)
+    // IMPORTANT: PostgREST uses * for wildcards in .or() filters, NOT %
     const searchConditions = hasSyllabus 
       ? buildSyllabusSearchConditions(topic, sanitizedTopic, syllabusSubjects)
-      : `topic.ilike.%${topic}%,topic.ilike.%${sanitizedTopic}%,subject.ilike.%${topic}%,subject.ilike.%${sanitizedTopic}%`;
+      : `topic.ilike.*${sanitizedTopic}*,subject.ilike.*${sanitizedTopic}*`;
 
     // STEP 1: Database Check (Cache Layer) - SYLLABUS-AWARE FUZZY MATCHING
     console.log('Step 1: Checking database for existing questions...');
@@ -409,18 +416,21 @@ serve(async (req) => {
     // If forceNew is true, skip cache short-circuit and generate fresh questions.
     if (!forceNew) {
       try {
+        // Normalize difficulty for matching (case-insensitive)
+        const difficultyLower = String(difficulty || 'medium').toLowerCase();
+        
         // SYLLABUS-AWARE MATCHING: Search job topic AND all syllabus subjects
         const { data: existingQuestions, error: dbError } = await supabase
           .from('content_items')
-          .select('title, options, correct_option, explanation, topic, subject')
+          .select('title, options, correct_option, explanation, topic, subject, difficulty')
           .eq('category', 'mcq')
           .eq('status', 'approved')
           .or(searchConditions)
-          .ilike('difficulty', difficulty)
-          .limit(qc * 3); // Fetch extra for better randomization
+          .limit(qc * 3); // Fetch extra for better randomization (difficulty filter removed for broader match)
 
         if (dbError) {
-          console.error('Database query error:', dbError);
+          console.error('❌ Database query error:', dbError);
+          console.log('🔎 Failed query conditions:', { searchConditions: searchConditions.substring(0, 200), difficulty: difficultyLower });
         } else if (existingQuestions && existingQuestions.length > 0) {
           // Log what subjects/topics we found
           const foundTopics = [...new Set(existingQuestions.map(q => q.topic || q.subject).filter(Boolean))];
@@ -442,6 +452,10 @@ serve(async (req) => {
           existingQuestionTexts = dbQuestions.map(q => q.question);
           
           console.log(`✅ Found ${dbQuestions.length} existing questions in database (syllabus-aware)`);
+        } else {
+          // CRITICAL LOG: Cache miss - this helps debug why partial mode isn't triggering
+          console.log(`🔎 CACHE MISS: 0 questions found for "${sanitizedTopic}"`);
+          console.log(`🔎 Query details: hasSyllabus=${hasSyllabus}, subjects=[${syllabusSubjects.slice(0, 3).join(', ')}]`);
         }
       } catch (dbErr) {
         console.error('Database check failed:', dbErr);
