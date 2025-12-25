@@ -11,7 +11,7 @@ const BackButton = ({ destination = "/subjects" }: BackButtonProps) => {
   const navigate = useNavigate();
   
   return (
-    <div className="mb-8">
+    <div className="mb-4">
       <Button 
         variant="ghost" 
         className="mr-4" 

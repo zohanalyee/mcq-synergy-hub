@@ -52,14 +52,11 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     { title: 'Mock Tests', path: '/mock-tests' },
     { title: 'Custom Syllabus', path: '/custom-syllabus' },
     { title: 'Scholarships', path: '/scholarships' },
-    { title: 'Jobs', path: '/jobs' },
-    { title: 'Past Papers', path: '/past-papers' },
   ];
 
   const secondaryNavItems = [
     { title: 'Analytics', path: '/analytics' },
     { title: 'Feedback', path: '/feedback' },
-    ...(isAdmin ? [{ title: 'Question Bank', path: '/question-bank' }] : []),
   ];
 
   const isActive = (path: string) => {

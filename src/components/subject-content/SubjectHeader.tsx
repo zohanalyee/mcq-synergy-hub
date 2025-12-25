@@ -20,7 +20,7 @@ const SubjectHeader = ({ title, purpose, color, icon, topicCount }: SubjectHeade
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="mb-8"
+      className="mb-4"
     >
       <div className="flex items-center gap-4 mb-6">
         <div className="p-3 rounded-lg" style={{ backgroundColor: color ? `${color}20` : '#3b82f620' }}>
