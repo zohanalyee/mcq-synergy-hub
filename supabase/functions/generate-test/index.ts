@@ -23,6 +23,11 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+// Sanitize topic for flexible matching - removes brackets and extra whitespace
+function sanitizeTopic(topic: string): string {
+  return topic.replace(/\s*\([^)]*\)\s*/g, '').trim();
+}
+
 // Robust JSON parser with repair logic for truncated responses
 function parseAIResponse(text: string): Question[] {
   let jsonText = text.trim();
@@ -193,6 +198,66 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
   return allQuestions;
 }
 
+// Background task to save remaining questions after returning response
+async function saveQuestionsInBackground(
+  questions: Question[],
+  topic: string,
+  sanitizedTopic: string,
+  difficulty: string,
+  supabase: any
+): Promise<void> {
+  console.log(`Background task: Saving ${questions.length} questions...`);
+  
+  const BATCH_SIZE = 20; // Insert in smaller batches
+  const batches = Math.ceil(questions.length / BATCH_SIZE);
+  
+  for (let i = 0; i < batches; i++) {
+    const batch = questions.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+    
+    const questionsToInsert = batch.map(q => ({
+      title: q.question,
+      description: q.explanation || '',
+      category: 'mcq',
+      subject: sanitizedTopic, // Set subject for better organization
+      topic: topic, // Keep original topic with brackets
+      difficulty: difficulty.toLowerCase(),
+      options: q.options,
+      correct_option: q.answer,
+      explanation: q.explanation || '',
+      status: 'approved', // AUTO-APPROVED
+      show_in_subjects: true,
+      show_in_mock_tests: true,
+      // Metadata for tracking
+      reference_material: JSON.stringify({
+        source_role: topic,
+        original_topic: sanitizedTopic,
+        generated_at: new Date().toISOString(),
+        generator: 'ai'
+      })
+    }));
+
+    try {
+      const { error: insertError } = await supabase
+        .from('content_items')
+        .insert(questionsToInsert);
+
+      if (insertError) {
+        if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
+          console.log(`Background batch ${i + 1}: Some duplicates skipped`);
+        } else {
+          console.error(`Background batch ${i + 1} error:`, insertError);
+        }
+      } else {
+        console.log(`Background batch ${i + 1}/${batches}: Saved ${batch.length} questions`);
+      }
+    } catch (err) {
+      console.error(`Background batch ${i + 1} failed:`, err);
+    }
+  }
+  
+  console.log('Background task completed');
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -209,7 +274,11 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // STEP 1: Database Check (Cache Layer) - SMART QUERY
+    // Sanitize topic for flexible matching
+    const sanitizedTopic = sanitizeTopic(topic);
+    console.log(`Topic: "${topic}" → Sanitized: "${sanitizedTopic}"`);
+
+    // STEP 1: Database Check (Cache Layer) - FUZZY MATCHING
     console.log('Step 1: Checking database for existing questions...');
 
     let dbQuestions: Question[] = [];
@@ -218,13 +287,13 @@ serve(async (req) => {
     // If forceNew is true, skip cache short-circuit and generate fresh questions.
     if (!forceNew) {
       try {
-        // OPTIMIZED: Search BOTH topic AND subject columns, randomize results
+        // FUZZY MATCHING: Search both original topic AND sanitized version
         const { data: existingQuestions, error: dbError } = await supabase
           .from('content_items')
           .select('title, options, correct_option, explanation')
           .eq('category', 'mcq')
           .eq('status', 'approved')
-          .or(`topic.ilike.%${topic}%,subject.ilike.%${topic}%`)
+          .or(`topic.ilike.%${topic}%,topic.ilike.%${sanitizedTopic}%,subject.ilike.%${topic}%,subject.ilike.%${sanitizedTopic}%`)
           .ilike('difficulty', difficulty)
           .limit(qc * 3); // Fetch extra for better randomization
 
@@ -246,7 +315,7 @@ serve(async (req) => {
           // Store existing question texts for duplicate prevention
           existingQuestionTexts = dbQuestions.map(q => q.question);
           
-          console.log(`✅ Found ${dbQuestions.length} existing questions in database (randomized)`);
+          console.log(`✅ Found ${dbQuestions.length} existing questions in database (fuzzy match)`);
         }
       } catch (dbErr) {
         console.error('Database check failed:', dbErr);
@@ -327,43 +396,59 @@ serve(async (req) => {
       throw aiError;
     }
 
-    // STEP 3: Self-Learning Save - Store new questions in database (with duplicate handling)
+    // STEP 3: Save new questions using background task for reliability
     if (newAIQuestions.length > 0) {
-      console.log('Step 3: Saving new questions to database for future use...');
+      console.log('Step 3: Saving new questions to database...');
       
-      try {
+      // For small batches, save immediately; for large batches, use background task
+      const IMMEDIATE_LIMIT = 20;
+      
+      if (newAIQuestions.length <= IMMEDIATE_LIMIT) {
+        // Save immediately for small batches
         const questionsToInsert = newAIQuestions.map(q => ({
           title: q.question,
           description: q.explanation || '',
           category: 'mcq',
-          topic: topic.split(':')[0].trim(), // Extract main topic
+          subject: sanitizedTopic,
+          topic: topic,
           difficulty: difficulty.toLowerCase(),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
-          status: 'approved',
+          status: 'approved', // AUTO-APPROVED
           show_in_subjects: true,
-          show_in_mock_tests: true
+          show_in_mock_tests: true,
+          reference_material: JSON.stringify({
+            source_role: topic,
+            original_topic: sanitizedTopic,
+            generated_at: new Date().toISOString(),
+            generator: 'ai'
+          })
         }));
 
-        // Use upsert with ON CONFLICT to handle duplicates gracefully
-        const { error: insertError } = await supabase
-          .from('content_items')
-          .insert(questionsToInsert);
+        try {
+          const { error: insertError } = await supabase
+            .from('content_items')
+            .insert(questionsToInsert);
 
-        if (insertError) {
-          // Log but don't fail - duplicates are expected
-          if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
-            console.log('Some questions already exist (duplicate), continuing...');
+          if (insertError) {
+            if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
+              console.log('Some questions already exist (duplicate), continuing...');
+            } else {
+              console.error('Failed to save questions:', insertError);
+            }
           } else {
-            console.error('Failed to save questions:', insertError);
+            console.log(`✅ Successfully saved ${questionsToInsert.length} questions (auto-approved)`);
           }
-        } else {
-          console.log(`✅ Successfully saved ${questionsToInsert.length} questions to database (self-learning)`);
+        } catch (saveErr) {
+          console.error('Error saving to database:', saveErr);
         }
-      } catch (saveErr) {
-        console.error('Error saving to database:', saveErr);
-        // Don't fail the request if save fails
+      } else {
+        // Use background task for large batches to prevent timeout
+        console.log(`Large batch (${newAIQuestions.length}): Using background task to save`);
+        EdgeRuntime.waitUntil(
+          saveQuestionsInBackground(newAIQuestions, topic, sanitizedTopic, difficulty, supabase)
+        );
       }
     }
 
