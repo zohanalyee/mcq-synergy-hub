@@ -48,7 +48,6 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   const navItems = [
     { title: 'Home', path: '/' },
     { title: 'Subjects', path: '/subjects' },
-    { title: 'MCQs', path: '/mcqs' },
     { title: 'Quizzes', path: '/quizzes' },
     { title: 'Mock Tests', path: '/mock-tests' },
     { title: 'Custom Syllabus', path: '/custom-syllabus' },

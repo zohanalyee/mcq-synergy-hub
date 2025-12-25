@@ -30,7 +30,7 @@ import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
-import MCQs from "./pages/MCQs";
+
 import Quizzes from "./pages/Quizzes";
 import SubmitContent from "./pages/SubmitContent";
 import QuestionBank from "./pages/QuestionBank";
@@ -86,7 +86,7 @@ const App = () => {
                 <Route path="/jobs" element={<Jobs />} />
                 <Route path="/scholarships" element={<Scholarships />} />
                 <Route path="/past-papers" element={<PastPapers />} />
-                <Route path="/mcqs" element={<MCQs />} />
+                
                 <Route path="/quizzes" element={<Quizzes />} />
                 <Route path="/question-bank" element={<QuestionBank />} />
                 <Route path="/submit-content" element={<SubmitContent />} />
