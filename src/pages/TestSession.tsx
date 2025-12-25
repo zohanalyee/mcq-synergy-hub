@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ type LastUsedTestContext = {
   questionCount: number;
   timeLimit: number;
   totalQuestions: number;
+  returnPath?: string; // Track where user came from
 };
 
 // Helper to extract topic string from various formats
@@ -59,6 +60,7 @@ function extractTopicString(topics: any): string | null {
 const TestSession = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [testData, setTestData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +71,7 @@ const TestSession = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
+  const [isImproving, setIsImproving] = useState(false); // Loading state for Improve button
   
   // Smart Background Loading state
   const [expectedTotal, setExpectedTotal] = useState(0);
@@ -78,7 +81,10 @@ const TestSession = () => {
   const pollAttemptsRef = useRef(0);
   const MAX_POLL_ATTEMPTS = 15;
 
-  // Persist the context of the just-finished test so "Practice New Questions" never falls back to defaults.
+  // Get returnPath from navigation state (for Smart Return)
+  const locationState = location.state as { returnPath?: string } | null;
+
+  // Persist the context of the just-finished test so "Retake" never falls back to defaults.
   const [lastUsedContext, setLastUsedContext] = useState<LastUsedTestContext>({
     subject: undefined,
     topic: undefined,
@@ -88,6 +94,7 @@ const TestSession = () => {
     questionCount: 10,
     timeLimit: 30,
     totalQuestions: 0,
+    returnPath: locationState?.returnPath || "/custom-syllabus", // Default fallback
   });
 
   const normalizeStringArray = (value: any): string[] => {
@@ -266,7 +273,7 @@ const TestSession = () => {
         
         console.log(`📊 TestSession Loaded: ${safeTotalQuestions} questions, expected ${safeQuestionCount}, remaining ${remaining}`);
 
-        // Persist context for "Practice New Questions"
+        // Persist context for "Retake (Same Settings)"
         setLastUsedContext({
           subject: subjectsArr[0],
           topic: extractTopicString(data.topics) || topicsArr[0],
@@ -276,6 +283,7 @@ const TestSession = () => {
           questionCount: safeQuestionCount,
           timeLimit: safeTimeLimit,
           totalQuestions: safeTotalQuestions,
+          returnPath: locationState?.returnPath || "/custom-syllabus",
         });
 
         setTimeRemaining(safeTimeLimit * 60);
@@ -289,7 +297,7 @@ const TestSession = () => {
     };
 
     fetchTestSession();
-  }, [id]);
+  }, [id, locationState?.returnPath]);
 
   useEffect(() => {
     if (timeRemaining <= 0 || isSubmitted) return;
@@ -423,7 +431,7 @@ const TestSession = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // FIX #4: Retry the same test with PRESERVED time limit
+  // Retry the same test with PRESERVED time limit
   const handleRetry = () => {
     const originalTimeLimit = lastUsedContext.timeLimit || testData?.time_limit || 30;
     
@@ -436,7 +444,7 @@ const TestSession = () => {
     toast.info("Test reset! Good luck on your retry.");
   };
 
-  // FIX #4: Generate fresh questions using SAME SETTINGS from lastUsedContext
+  // "Retake (Same Settings)" - Generate fresh questions using SAME SETTINGS
   const handleGenerateNew = async () => {
     // STEP 1: Capture Data from lastUsedContext (preserves original settings)
     const contextTopic = lastUsedContext.topic || extractTopicString(testData?.topics) || testData?.subjects?.[0];
@@ -504,6 +512,98 @@ const TestSession = () => {
       setIsLoading(false);
       toast.error("Failed to generate. Try again.");
     }
+  };
+
+  // NEW: "Improve [Subject]" - Smart Remedial: Generate new test with wrong answers + fresh questions (NO REDIRECT)
+  const handleImprove = async () => {
+    const questions = testData.questions || [];
+    const wrongQuestions: any[] = [];
+    
+    // Collect wrong answers
+    questions.forEach((question: any, index: number) => {
+      if (answers[index] !== question.answer) {
+        wrongQuestions.push(question);
+      }
+    });
+
+    const contextTopic = lastUsedContext.topic || extractTopicString(testData?.topics) || testData?.subjects?.[0];
+    const contextSubject = lastUsedContext.subject || testData?.subjects?.[0];
+    const contextDiff = lastUsedContext.difficultyLevels?.[0] || testData?.difficulty_levels?.[0] || "Medium";
+    const contextTimeLimit = lastUsedContext.timeLimit || testData?.time_limit || 30;
+    
+    // Calculate how many fresh questions to add
+    const wrongCount = wrongQuestions.length;
+    const freshCount = Math.max(5, Math.ceil(wrongCount * 0.5)); // At least 5 fresh, or 50% more
+    const totalNeeded = wrongCount + freshCount;
+
+    console.log("🔧 Smart Remedial:", { 
+      wrongCount, 
+      freshCount, 
+      totalNeeded,
+      topic: contextTopic 
+    });
+
+    if (!contextTopic) {
+      toast.error("Cannot generate: Topic context missing.");
+      return;
+    }
+
+    setIsImproving(true);
+
+    try {
+      // Fetch fresh questions (forceNew to avoid duplicates)
+      const { data, error } = await supabase.functions.invoke("generate-test", {
+        body: {
+          topic: contextTopic,
+          difficulty: contextDiff,
+          subject: contextSubject ?? null,
+          question_count: freshCount,
+          forceNew: true, // Skip cache to get different questions
+        },
+      });
+
+      if (error) throw error;
+
+      const freshQuestions = data?.questions || [];
+      
+      // Combine wrong questions + fresh questions
+      const combinedQuestions = [...wrongQuestions, ...freshQuestions];
+      
+      // Shuffle the combined questions
+      for (let i = combinedQuestions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [combinedQuestions[i], combinedQuestions[j]] = [combinedQuestions[j], combinedQuestions[i]];
+      }
+
+      // Reset UI and start new test (NO REDIRECT - stays on same page)
+      setTestData((prev: any) => ({
+        ...(prev ?? {}),
+        questions: combinedQuestions,
+        session_name: `${contextSubject || contextTopic} - Focused Practice`,
+      }));
+      
+      setTimeRemaining(contextTimeLimit * 60);
+      setExpectedTotal(combinedQuestions.length);
+      setRemainingCount(0);
+      setCurrentQuestion(0);
+      setScore(0);
+      setAnswers({});
+      setFlaggedQuestions(new Set());
+      setIsSubmitted(false);
+      
+      toast.success(`Starting focused practice: ${wrongCount} review + ${freshQuestions.length} fresh questions!`);
+    } catch (error) {
+      console.error("Improve generation failed:", error);
+      toast.error("Failed to generate improvement quiz. Try again.");
+    } finally {
+      setIsImproving(false);
+    }
+  };
+
+  // Smart Return: Go back to source page
+  const handleCreateAnother = () => {
+    const returnPath = lastUsedContext.returnPath || "/custom-syllabus";
+    navigate(returnPath);
   };
 
   const questions = testData.questions || [];
@@ -685,6 +785,8 @@ const TestSession = () => {
                 testType="custom_quiz"
                 onRetry={handleRetry}
                 onGenerateNew={handleGenerateNew}
+                onImprove={handleImprove}
+                isImproving={isImproving}
               />
 
               {/* Answer Review */}
@@ -722,7 +824,7 @@ const TestSession = () => {
               </div>
 
               <div className="flex gap-3 justify-center mt-6 flex-wrap">
-                <Button size="sm" onClick={() => navigate("/custom-syllabus")}>Create Another Quiz</Button>
+                <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
                 <Button size="sm" variant="outline" onClick={() => navigate("/dashboard")}>
                   Dashboard
                 </Button>
