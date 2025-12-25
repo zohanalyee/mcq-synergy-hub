@@ -43,6 +43,14 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
     setGeneratingTestId(test.id);
     
     try {
+      // Get current user first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in to start a test");
+        navigate("/auth");
+        return;
+      }
+
       const settings = customSettings || {
         difficulty: test.difficulty || 'Medium',
         questionCount: test.questions || 20,
@@ -62,7 +70,8 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         subject: test.title,
         topic,
         difficulty: settings.difficulty,
-        questionCount: settings.questionCount
+        questionCount: settings.questionCount,
+        userId: user.id
       });
 
       // Call AI Test Engine
@@ -81,7 +90,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         throw new Error("No questions generated");
       }
 
-      // Create session in DB
+      // Create session in DB with user_id
       const { data: session, error: sessionError } = await supabase
         .from("custom_test_sessions")
         .insert({
@@ -92,6 +101,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
           question_count: data.questions.length,
           time_limit: settings.duration,
           questions: data.questions,
+          user_id: user.id,
         })
         .select()
         .single();

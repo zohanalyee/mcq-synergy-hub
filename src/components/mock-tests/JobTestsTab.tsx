@@ -30,6 +30,14 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
     setGeneratingTestId(test.id);
     
     try {
+      // Get current user first
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Please log in to start a test");
+        navigate("/auth");
+        return;
+      }
+
       const settings = customSettings || {
         difficulty: "Medium",
         questionCount: test.questions || 20,
@@ -47,7 +55,8 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
         topic: test.title,
         subjects: syllabusSubjects,
         timeLimit: settings.duration,
-        questionCount: settings.questionCount
+        questionCount: settings.questionCount,
+        userId: user.id
       });
 
       // Call AI Test Engine with job test context
@@ -66,7 +75,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
         throw new Error("No questions generated");
       }
 
-      // Create session in DB
+      // Create session in DB with user_id
       const { data: session, error: sessionError } = await supabase
         .from("custom_test_sessions")
         .insert({
@@ -77,6 +86,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
           question_count: data.questions.length,
           time_limit: settings.duration,
           questions: data.questions,
+          user_id: user.id,
         })
         .select()
         .single();
