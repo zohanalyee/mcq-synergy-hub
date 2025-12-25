@@ -60,7 +60,7 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       .from('content_items')
       .select('*')
       .eq('category', 'mcq')
-      .eq('status', 'question_bank');
+      .eq('status', 'approved');
 
     // Apply filters - only if arrays have items
     if (filters.subjects?.length && filters.subjects.length > 0) {
