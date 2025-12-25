@@ -423,25 +423,34 @@ const TestSession = () => {
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // Retry the same test without re-fetching data
+  // FIX #4: Retry the same test with PRESERVED time limit
   const handleRetry = () => {
+    const originalTimeLimit = lastUsedContext.timeLimit || testData?.time_limit || 30;
+    
     setCurrentQuestion(0);
     setScore(0);
     setIsSubmitted(false);
     setAnswers({});
     setFlaggedQuestions(new Set());
-    setTimeRemaining(testData.time_limit * 60);
+    setTimeRemaining(originalTimeLimit * 60); // USE PRESERVED TIME LIMIT
     toast.info("Test reset! Good luck on your retry.");
   };
 
-  // Generate fresh questions from the Hybrid Engine (fail-safe: never spend credits on unknown context)
+  // FIX #4: Generate fresh questions using SAME SETTINGS from lastUsedContext
   const handleGenerateNew = async () => {
-    // STEP 1: Capture Data (extract BEFORE touching state)
-    const contextTopic = extractTopicString(testData?.topics) || testData?.subjects?.[0];
-    const contextSubject = testData?.subjects?.[0];
-    const contextDiff = testData?.difficulty_levels?.[0] || "Medium";
+    // STEP 1: Capture Data from lastUsedContext (preserves original settings)
+    const contextTopic = lastUsedContext.topic || extractTopicString(testData?.topics) || testData?.subjects?.[0];
+    const contextSubject = lastUsedContext.subject || testData?.subjects?.[0];
+    const contextDiff = lastUsedContext.difficultyLevels?.[0] || testData?.difficulty_levels?.[0] || "Medium";
+    const contextQuestionCount = lastUsedContext.questionCount || testData?.question_count || 10;
+    const contextTimeLimit = lastUsedContext.timeLimit || testData?.time_limit || 30;
 
-    console.log("🎯 Capturing Context:", { contextTopic, contextSubject });
+    console.log("🎯 Retake with SAME Settings:", { 
+      topic: contextTopic, 
+      difficulty: contextDiff, 
+      questionCount: contextQuestionCount,
+      timeLimit: contextTimeLimit 
+    });
 
     // CRITICAL SAFETY CHECK: never spend credits if context is missing
     if (!contextTopic) {
@@ -454,22 +463,24 @@ const TestSession = () => {
     setScore(0);
     setCurrentQuestion(0);
     setAnswers({});
+    setFlaggedQuestions(new Set());
     setIsSubmitted(false);
 
     try {
-      // STEP 3: Call API (stay on page)
+      // STEP 3: Call API with PRESERVED settings
       const { data, error } = await supabase.functions.invoke("generate-test", {
         body: {
           topic: contextTopic,
           difficulty: contextDiff,
           subject: contextSubject ?? null,
-          question_count: 10,
+          question_count: contextQuestionCount, // USE ORIGINAL SETTING
+          partial_mode: contextQuestionCount > 20,
         },
       });
 
       if (error) throw error;
 
-      // STEP 4: Update State (replace questions instantly)
+      // STEP 4: Update State with PRESERVED time limit
       if (data?.questions) {
         setTestData((prev: any) => ({
           ...(prev ?? {}),
@@ -477,8 +488,13 @@ const TestSession = () => {
           questions: data.questions,
         }));
 
-        setTimeRemaining((testData?.time_limit || 30) * 60);
+        // USE ORIGINAL TIME LIMIT
+        setTimeRemaining(contextTimeLimit * 60);
+        setExpectedTotal(contextQuestionCount);
+        setRemainingCount(Math.max(0, contextQuestionCount - (data.questions?.length || 0)));
         setIsLoading(false);
+        
+        toast.success(`New quiz started with ${data.questions.length} questions!`);
       } else {
         setIsLoading(false);
         toast.error("Failed to generate. Try again.");

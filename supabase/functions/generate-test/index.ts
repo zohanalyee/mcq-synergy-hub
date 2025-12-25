@@ -28,20 +28,58 @@ function sanitizeTopic(topic: string): string {
   return topic.replace(/\s*\([^)]*\)\s*/g, '').trim();
 }
 
-// ========== SYLLABUS ENGINE ==========
+// ========== FIX #1: Escape special chars that break PostgREST .or() parsing ==========
+// PostgREST cannot parse commas, colons, semicolons, parentheses inside wildcards
+function escapePostgrestValue(value: string): string {
+  return value
+    .replace(/[(),;:]/g, ' ')  // Replace problematic chars with spaces
+    .replace(/\s+/g, ' ')       // Normalize whitespace
+    .trim();
+}
+
+// Extract meaningful keywords from a compound topic string
+function extractKeywords(topic: string): string[] {
+  const escaped = escapePostgrestValue(topic);
+  // Split on spaces and filter out short/common words
+  const words = escaped.split(' ').filter(w => w.length > 2);
+  // Take unique meaningful keywords (first 5 to avoid query explosion)
+  const unique = [...new Set(words)].slice(0, 5);
+  return unique;
+}
+
+// ========== SYLLABUS ENGINE (FIX #3: Expanded Map) ==========
 // Map job tests to their core syllabus subjects for cross-question reuse
 const JOB_SYLLABUS_MAP: Record<string, string[]> = {
+  // Banking/Finance
   "Banking Officer": ["English", "Economics", "Finance", "Quantitative", "IT", "Pakistan Affairs", "Current Affairs"],
   "OG-2": ["English", "Economics", "Finance", "Quantitative", "IT", "Pakistan Affairs", "Current Affairs"],
   "OG-3": ["English", "Economics", "Finance", "Quantitative", "IT", "Pakistan Affairs", "Current Affairs"],
+  
+  // Legal
   "Civil Judge": ["Civil Law", "Criminal Law", "Constitutional Law", "English", "Islamic Law", "Pakistan Affairs"],
+  
+  // Election
   "Election Officer": ["English", "Constitution", "Election Act", "Islamiyat", "Pakistan Affairs", "General Knowledge"],
+  
+  // Administrative
   "Assistant Director": ["English", "General Knowledge", "Pakistan Affairs", "Islamic Studies", "Reasoning", "Current Affairs"],
+  
+  // Lecturers (General + Subject-Specific)
   "Lecturer": ["English", "General Knowledge", "Pakistan Affairs", "Islamic Studies", "Education"],
+  "Physics Lecturer": ["Physics", "English", "General Knowledge", "Education", "Mechanics", "Optics"],
+  "Chemistry Lecturer": ["Chemistry", "English", "General Knowledge", "Education", "Organic Chemistry"],
+  "Biology Lecturer": ["Biology", "English", "General Knowledge", "Education", "Botany", "Zoology"],
+  "English Lecturer": ["English", "English Literature", "Grammar", "Education", "Literature Analysis"],
+  "Math Lecturer": ["Mathematics", "English", "General Knowledge", "Education", "Algebra", "Calculus"],
+  "Computer Lecturer": ["Computer Science", "IT", "English", "Education", "Programming"],
+  
+  // Competitive Exams
   "PMS": ["English", "Pakistan Affairs", "Current Affairs", "Islamic Studies", "General Knowledge", "Essay Writing"],
   "CSS": ["English", "Pakistan Affairs", "Current Affairs", "Islamic Studies", "General Knowledge", "Essay Writing"],
   "PPSC": ["English", "Pakistan Affairs", "General Knowledge", "Islamic Studies", "Current Affairs"],
   "FPSC": ["English", "Pakistan Affairs", "General Knowledge", "Islamic Studies", "Current Affairs"],
+  
+  // Entry Tests
   "NTS": ["English", "Quantitative", "Analytical", "General Knowledge"],
   "ECAT": ["Physics", "Chemistry", "Mathematics", "English"],
   "MDCAT": ["Biology", "Chemistry", "Physics", "English"],
@@ -70,20 +108,27 @@ function getSyllabusSubjects(topic: string): string[] {
 }
 
 // Build broader search conditions for syllabus-aware matching
-// IMPORTANT: PostgREST uses * for wildcards in .or() filters, NOT %
+// FIX #1: Escape special characters and use individual keywords for robust matching
 function buildSyllabusSearchConditions(topic: string, sanitizedTopic: string, syllabusSubjects: string[]): string {
   const conditions: string[] = [];
   
-  // Add sanitized topic (without parentheses) - this is the key for matching
-  if (sanitizedTopic) {
-    conditions.push(`topic.ilike.*${sanitizedTopic}*`);
-    conditions.push(`subject.ilike.*${sanitizedTopic}*`);
+  // CRITICAL: Extract individual keywords from sanitized topic for broader matching
+  // This fixes the cache miss when topic contains commas, colons, etc.
+  const topicKeywords = extractKeywords(sanitizedTopic);
+  
+  // Add each keyword as a separate search condition
+  for (const keyword of topicKeywords) {
+    conditions.push(`topic.ilike.*${keyword}*`);
+    conditions.push(`subject.ilike.*${keyword}*`);
   }
   
-  // Add all syllabus subjects to the search
+  // Add all syllabus subjects to the search (these are already clean single words)
   for (const subject of syllabusSubjects) {
-    conditions.push(`topic.ilike.*${subject}*`);
-    conditions.push(`subject.ilike.*${subject}*`);
+    const cleanSubject = escapePostgrestValue(subject);
+    if (cleanSubject) {
+      conditions.push(`topic.ilike.*${cleanSubject}*`);
+      conditions.push(`subject.ilike.*${cleanSubject}*`);
+    }
   }
   
   // Remove duplicates
@@ -395,17 +440,23 @@ serve(async (req) => {
     const syllabusSubjects = getSyllabusSubjects(topic);
     const hasSyllabus = syllabusSubjects.length > 0;
     
+    // FIX #3: Verification logging for syllabus logic
     if (hasSyllabus) {
-      console.log(`📚 SYLLABUS ENGINE: Found ${syllabusSubjects.length} core subjects: [${syllabusSubjects.join(', ')}]`);
+      console.log(`📚 SYLLABUS ACTIVE for "${topic}" → Searching: [${syllabusSubjects.join(', ')}]`);
     } else {
-      console.log(`📘 Single subject mode: "${sanitizedTopic}"`);
+      console.log(`📘 DIRECT MODE for "${sanitizedTopic}" (no syllabus expansion)`);
     }
 
     // Build search conditions (syllabus-aware OR simple)
-    // IMPORTANT: PostgREST uses * for wildcards in .or() filters, NOT %
+    // FIX #1: Use escaped keywords for simple mode too
+    const simpleKeywords = extractKeywords(sanitizedTopic);
+    const simpleConditions = simpleKeywords.length > 0
+      ? simpleKeywords.flatMap(kw => [`topic.ilike.*${kw}*`, `subject.ilike.*${kw}*`]).join(',')
+      : `topic.ilike.*${escapePostgrestValue(sanitizedTopic)}*,subject.ilike.*${escapePostgrestValue(sanitizedTopic)}*`;
+    
     const searchConditions = hasSyllabus 
       ? buildSyllabusSearchConditions(topic, sanitizedTopic, syllabusSubjects)
-      : `topic.ilike.*${sanitizedTopic}*,subject.ilike.*${sanitizedTopic}*`;
+      : simpleConditions;
 
     // STEP 1: Database Check (Cache Layer) - SYLLABUS-AWARE FUZZY MATCHING
     console.log('Step 1: Checking database for existing questions...');
@@ -635,23 +686,31 @@ serve(async (req) => {
           })
         }));
 
-        try {
-          const { error: insertError } = await supabase
-            .from('content_items')
-            .insert(questionsToInsert);
+        // FIX #2: Insert questions one by one to skip duplicates silently
+        let savedCount = 0;
+        let skippedCount = 0;
+        
+        for (const question of questionsToInsert) {
+          try {
+            const { error: insertError } = await supabase
+              .from('content_items')
+              .insert(question);
 
-          if (insertError) {
-            if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
-              console.log('Some questions already exist (duplicate), continuing...');
+            if (insertError) {
+              if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
+                skippedCount++;
+              } else {
+                console.error('Failed to save question:', insertError.message);
+              }
             } else {
-              console.error('Failed to save questions:', insertError);
+              savedCount++;
             }
-          } else {
-            console.log(`✅ Successfully saved ${questionsToInsert.length} questions (auto-approved)`);
+          } catch (saveErr) {
+            console.error('Error saving question:', saveErr);
           }
-        } catch (saveErr) {
-          console.error('Error saving to database:', saveErr);
         }
+        
+        console.log(`✅ Saved ${savedCount} questions (skipped ${skippedCount} duplicates)`)
       } else {
         // Use background task for large batches to prevent timeout
         console.log(`Large batch (${newAIQuestions.length}): Using background task to save`);
