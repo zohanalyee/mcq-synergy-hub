@@ -1,13 +1,12 @@
-
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { BookOpen, Sparkles, Search } from "lucide-react";
 import Header from "@/components/Header";
-import SubjectsHeader from "@/components/subjects/SubjectsHeader";
-import SubjectsSearch from "@/components/subjects/SubjectsSearch";
 import CategoryFilter from "@/components/subjects/CategoryFilter";
 import PurposeFilter from "@/components/subjects/PurposeFilter";
 import FilterSummary from "@/components/subjects/FilterSummary";
 import SubjectGrid from "@/components/subjects/SubjectGrid";
+import { Input } from "@/components/ui/input";
 import { subjects as initialSubjects } from "@/data/subjectsData";
 import { getSubjects } from "@/services/adminService";
 
@@ -55,17 +54,52 @@ const Subjects = () => {
   return (
     <Header>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-10">
-        <SubjectsHeader />
+        {/* Enhanced Header Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="mb-6 text-center"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
+            <Sparkles className="w-4 h-4" />
+            <span>Explore & Learn</span>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-2">
+            <span className="text-gradient">Subjects</span>
+          </h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            Browse subjects, read content, and practice with MCQs. Choose Read Mode for memorization or Practice Mode for self-testing.
+          </p>
+        </motion.div>
         
-        <div className="mb-3">
-          <SubjectsSearch 
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
-          />
-        </div>
+        {/* Search Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="mb-4"
+        >
+          <div className="relative max-w-2xl mx-auto">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search subjects by name or description..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-12 pr-4 py-6 text-base rounded-xl bg-background/80 backdrop-blur-sm border-border/50 focus:border-primary shadow-sm"
+            />
+          </div>
+        </motion.div>
         
-        <div className="mb-4">
-          <div className="flex flex-col gap-3 sm:flex-row justify-between">
+        {/* Filters */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2 }}
+          className="mb-4"
+        >
+          <div className="flex flex-col gap-3 sm:flex-row justify-between items-start sm:items-center">
             <CategoryFilter 
               categories={getCategories()} 
               selectedCategory={selectedCategory} 
@@ -78,7 +112,7 @@ const Subjects = () => {
               setSelectedPurpose={setSelectedPurpose} 
             />
           </div>
-        </div>
+        </motion.div>
 
         <FilterSummary 
           count={filteredSubjects.length} 

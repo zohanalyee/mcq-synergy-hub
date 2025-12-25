@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, useSidebar } from "@/components/ui/sidebar";
-import { BookOpen, FileText, Users, Briefcase, Target, Clock, PenTool, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight } from 'lucide-react';
+import { BookOpen, FileText, Users, Briefcase, Target, Clock, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import logo from '@/assets/logo.png';
@@ -21,9 +21,6 @@ const getIcon = (title: string) => {
     },
     'Subjects': { 
       icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-purple-500" />
-    },
-    'MCQs': { 
-      icon: <PenTool size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-green-500" />
     },
     'Quizzes': { 
       icon: <Target size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-red-500" />
