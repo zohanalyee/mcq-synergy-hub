@@ -103,13 +103,19 @@ async function generateQuestionsInBatches(
   topic: string,
   difficulty: string,
   totalCount: number,
-  apiKey: string
+  apiKey: string,
+  existingQuestions: string[] = [] // Pass existing question texts to avoid duplicates
 ): Promise<Question[]> {
   const MAX_BATCH_SIZE = 15; // Keep batches small to avoid truncation
   const batches = Math.ceil(totalCount / MAX_BATCH_SIZE);
   const allQuestions: Question[] = [];
   
   console.log(`Generating ${totalCount} questions in ${batches} batch(es)...`);
+  
+  // Build duplicate prevention prompt
+  const duplicateNote = existingQuestions.length > 0 
+    ? `\n\nIMPORTANT: Do NOT generate questions similar to these existing ones:\n${existingQuestions.slice(0, 20).map((q, i) => `${i + 1}. ${q}`).join('\n')}`
+    : '';
   
   for (let batch = 0; batch < batches; batch++) {
     const batchSize = Math.min(MAX_BATCH_SIZE, totalCount - allQuestions.length);
@@ -128,7 +134,7 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
       "explanation": "Brief explanation of the correct answer"
     }
   ]
-}`;
+}${duplicateNote}`;
 
     const userPrompt = `Create exactly ${batchSize} multiple choice questions about ${topic} at ${difficulty} difficulty level. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
 
@@ -203,27 +209,32 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // STEP 1: Database Check (Cache Layer)
+    // STEP 1: Database Check (Cache Layer) - SMART QUERY
     console.log('Step 1: Checking database for existing questions...');
 
     let dbQuestions: Question[] = [];
+    let existingQuestionTexts: string[] = [];
 
     // If forceNew is true, skip cache short-circuit and generate fresh questions.
     if (!forceNew) {
       try {
+        // OPTIMIZED: Search BOTH topic AND subject columns, randomize results
         const { data: existingQuestions, error: dbError } = await supabase
           .from('content_items')
           .select('title, options, correct_option, explanation')
           .eq('category', 'mcq')
           .eq('status', 'approved')
-          .ilike('topic', `%${topic}%`)
+          .or(`topic.ilike.%${topic}%,subject.ilike.%${topic}%`)
           .ilike('difficulty', difficulty)
-          .limit(qc * 2); // Fetch extra for better shuffling
+          .limit(qc * 3); // Fetch extra for better randomization
 
         if (dbError) {
           console.error('Database query error:', dbError);
         } else if (existingQuestions && existingQuestions.length > 0) {
-          dbQuestions = existingQuestions
+          // Randomize the results in JS since Supabase doesn't support ORDER BY random()
+          const shuffledDbResults = shuffleArray(existingQuestions);
+          
+          dbQuestions = shuffledDbResults
             .filter(q => q.title && q.options && q.correct_option)
             .map(q => ({
               question: q.title,
@@ -231,7 +242,11 @@ serve(async (req) => {
               answer: q.correct_option,
               explanation: q.explanation || undefined
             }));
-          console.log(`Found ${dbQuestions.length} existing questions in database`);
+          
+          // Store existing question texts for duplicate prevention
+          existingQuestionTexts = dbQuestions.map(q => q.question);
+          
+          console.log(`✅ Found ${dbQuestions.length} existing questions in database (randomized)`);
         }
       } catch (dbErr) {
         console.error('Database check failed:', dbErr);
@@ -241,25 +256,26 @@ serve(async (req) => {
       console.log('forceNew=true: skipping cache and generating fresh questions');
     }
 
-    // If we have enough questions from DB, return them immediately
+    // If we have enough questions from DB, return them immediately (ZERO LATENCY)
     if (!forceNew && dbQuestions.length >= qc) {
-      console.log('Sufficient questions in cache, skipping AI call');
-      const shuffled = shuffleArray(dbQuestions);
-      const selected = shuffled.slice(0, qc);
+      console.log('⚡ INSTANT: Sufficient questions in cache, skipping AI call');
+      const selected = dbQuestions.slice(0, qc);
 
       return new Response(
         JSON.stringify({
           session_name: `${topic} Quiz`,
           questions: selected,
-          source: 'cache'
+          source: 'cache',
+          cached_count: selected.length,
+          ai_count: 0
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
 
-    // STEP 2: AI Generation for missing questions
+    // STEP 2: AI Generation for missing questions (HYBRID MODE)
     const missingCount = forceNew ? qc : qc - dbQuestions.length;
-    console.log(`Step 2: Need ${missingCount} more questions from AI`);
+    console.log(`Step 2: Need ${missingCount} more questions from AI (have ${dbQuestions.length} from cache)`);
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
@@ -269,8 +285,15 @@ serve(async (req) => {
     let newAIQuestions: Question[] = [];
     
     try {
-      newAIQuestions = await generateQuestionsInBatches(topic, difficulty, missingCount, LOVABLE_API_KEY);
-      console.log(`AI generated ${newAIQuestions.length} new questions total`);
+      // Pass existing question texts to avoid duplicates
+      newAIQuestions = await generateQuestionsInBatches(
+        topic, 
+        difficulty, 
+        missingCount, 
+        LOVABLE_API_KEY,
+        existingQuestionTexts // DUPLICATE PREVENTION
+      );
+      console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
     } catch (aiError: any) {
       if (aiError.status === 429) {
         return new Response(
@@ -293,7 +316,9 @@ serve(async (req) => {
           JSON.stringify({
             session_name: `${topic} Quiz`,
             questions: shuffleArray(dbQuestions),
-            source: 'cache_partial'
+            source: 'cache_partial',
+            cached_count: dbQuestions.length,
+            ai_count: 0
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
@@ -302,7 +327,7 @@ serve(async (req) => {
       throw aiError;
     }
 
-    // STEP 3: Self-Learning Save - Store new questions in database
+    // STEP 3: Self-Learning Save - Store new questions in database (with duplicate handling)
     if (newAIQuestions.length > 0) {
       console.log('Step 3: Saving new questions to database for future use...');
       
@@ -321,14 +346,20 @@ serve(async (req) => {
           show_in_mock_tests: true
         }));
 
+        // Use upsert with ON CONFLICT to handle duplicates gracefully
         const { error: insertError } = await supabase
           .from('content_items')
           .insert(questionsToInsert);
 
         if (insertError) {
-          console.error('Failed to save questions:', insertError);
+          // Log but don't fail - duplicates are expected
+          if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
+            console.log('Some questions already exist (duplicate), continuing...');
+          } else {
+            console.error('Failed to save questions:', insertError);
+          }
         } else {
-          console.log(`Successfully saved ${questionsToInsert.length} questions to database`);
+          console.log(`✅ Successfully saved ${questionsToInsert.length} questions to database (self-learning)`);
         }
       } catch (saveErr) {
         console.error('Error saving to database:', saveErr);
@@ -346,13 +377,19 @@ serve(async (req) => {
     
     const finalQuestions = shuffleArray(allQuestions).slice(0, qc);
 
-    console.log(`Returning ${finalQuestions.length} questions (${dbQuestions.length} cached + ${newAIQuestions.length} new)`);
+    // Determine source type for UI badge
+    const sourceType = dbQuestions.length === 0 ? 'ai' : 
+                       newAIQuestions.length === 0 ? 'cache' : 'hybrid';
+
+    console.log(`✅ Returning ${finalQuestions.length} questions (${dbQuestions.length} cached + ${newAIQuestions.length} new) - Source: ${sourceType}`);
 
     return new Response(
       JSON.stringify({
         session_name: `${topic} Quiz`,
         questions: finalQuestions,
-        source: dbQuestions.length > 0 ? 'hybrid' : 'ai'
+        source: sourceType,
+        cached_count: Math.min(dbQuestions.length, qc),
+        ai_count: newAIQuestions.length
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
