@@ -51,24 +51,18 @@ const SubjectCard = ({
       return;
     }
     
-    if (purpose === "reading") {
-      navigate(`/subject-content/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"))}`, { 
-        state: { 
-          title,
-          purpose,
-          color,
-          icon: null,
-          topicCount
-        } 
-      });
-    } else {
-      navigate(`/custom-quizzes`, { 
-        state: { 
-          preselectedSubject: title,
-          purpose
-        } 
-      });
-    }
+    // Navigate to subject-content for BOTH reading and MCQs
+    navigate(`/subject-content/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"))}`, { 
+      state: { 
+        title,
+        id: title,
+        mode: purpose === "reading" ? "read" : "practice",
+        purpose,
+        color,
+        icon: null,
+        topicCount
+      } 
+    });
   };
   
   return (
