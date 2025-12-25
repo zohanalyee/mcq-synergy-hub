@@ -264,10 +264,11 @@ serve(async (req) => {
   }
 
   try {
-    const { topic, difficulty, question_count, forceNew, requestId } = await req.json();
+    const { topic, difficulty, question_count, forceNew, requestId, partial_mode } = await req.json();
 
     const qc = Number(question_count) || 10;
-    console.log('Request received:', { topic, difficulty, question_count: qc, forceNew: !!forceNew, requestId });
+    const usePartialMode = partial_mode === true;
+    console.log('Request received:', { topic, difficulty, question_count: qc, forceNew: !!forceNew, partial_mode: usePartialMode, requestId });
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -336,7 +337,53 @@ serve(async (req) => {
           questions: selected,
           source: 'cache',
           cached_count: selected.length,
-          ai_count: 0
+          ai_count: 0,
+          remaining_count: 0,
+          total_requested: qc
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+      );
+    }
+
+    // PARTIAL MODE: Return available DB questions immediately and generate rest in background
+    if (usePartialMode && dbQuestions.length > 0) {
+      const missingCount = qc - dbQuestions.length;
+      console.log(`⚡ PARTIAL MODE: Returning ${dbQuestions.length} cached, triggering background generation for ${missingCount}`);
+      
+      // Start background generation if needed
+      if (missingCount > 0) {
+        const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+        if (LOVABLE_API_KEY) {
+          EdgeRuntime.waitUntil(
+            (async () => {
+              try {
+                const newQuestions = await generateQuestionsInBatches(
+                  topic, 
+                  difficulty, 
+                  missingCount, 
+                  LOVABLE_API_KEY,
+                  existingQuestionTexts
+                );
+                if (newQuestions.length > 0) {
+                  await saveQuestionsInBackground(newQuestions, topic, sanitizedTopic, difficulty, supabase);
+                }
+              } catch (err) {
+                console.error('Background generation failed:', err);
+              }
+            })()
+          );
+        }
+      }
+
+      return new Response(
+        JSON.stringify({
+          session_name: `${topic} Quiz`,
+          questions: dbQuestions,
+          source: 'cache_partial',
+          cached_count: dbQuestions.length,
+          ai_count: 0,
+          remaining_count: missingCount,
+          total_requested: qc
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
@@ -474,7 +521,9 @@ serve(async (req) => {
         questions: finalQuestions,
         source: sourceType,
         cached_count: Math.min(dbQuestions.length, qc),
-        ai_count: newAIQuestions.length
+        ai_count: newAIQuestions.length,
+        remaining_count: 0,
+        total_requested: qc
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );

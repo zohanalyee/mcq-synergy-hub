@@ -40,6 +40,11 @@ const TestSession = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [score, setScore] = useState(0);
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
+  
+  // Smart Background Loading state
+  const [totalExpected, setTotalExpected] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [remainingCount, setRemainingCount] = useState(0);
 
   // Persist the context of the just-finished test so "Practice New Questions" never falls back to defaults.
   const [, setLastUsedContext] = useState<LastUsedTestContext>({
@@ -61,6 +66,52 @@ const TestSession = () => {
     }
     if (typeof value === "string" && value.trim()) return [value.trim()];
     return [];
+  };
+
+  // Background fetch for remaining questions
+  const fetchRemainingQuestions = async (topic: string, difficulty: string, count: number, currentData: any) => {
+    try {
+      console.log(`🔄 Fetching ${count} remaining questions in background...`);
+      
+      const { data, error } = await supabase.functions.invoke("generate-test", {
+        body: {
+          topic,
+          difficulty,
+          question_count: count,
+          forceNew: false, // Use cache first
+        },
+      });
+
+      if (error) {
+        console.error("Background fetch error:", error);
+        setIsLoadingMore(false);
+        return;
+      }
+
+      if (data?.questions && data.questions.length > 0) {
+        // Seamlessly append new questions to existing ones
+        setTestData((prev: any) => {
+          const existingQuestions = prev?.questions || [];
+          const newQuestions = data.questions.filter((q: any) => 
+            !existingQuestions.some((eq: any) => eq.question === q.question)
+          );
+          
+          console.log(`✅ Appended ${newQuestions.length} new questions`);
+          
+          return {
+            ...prev,
+            questions: [...existingQuestions, ...newQuestions]
+          };
+        });
+        
+        setRemainingCount(0);
+        toast.success(`Loaded ${data.questions.length} more questions`, { duration: 2000 });
+      }
+    } catch (err) {
+      console.error("Background fetch failed:", err);
+    } finally {
+      setIsLoadingMore(false);
+    }
   };
 
   useEffect(() => {
@@ -94,6 +145,20 @@ const TestSession = () => {
         const safeQuestionCount = typeof data.question_count === "number" ? data.question_count : Number(data.question_count) || 10;
         const safeTimeLimit = typeof data.time_limit === "number" ? data.time_limit : Number(data.time_limit) || 30;
         const safeTotalQuestions = Array.isArray(data.questions) ? data.questions.length : 0;
+        
+        // Set expected total (use question_count as the total expected)
+        const expectedTotal = safeQuestionCount;
+        setTotalExpected(expectedTotal);
+        
+        // Check if we got partial data (fewer questions than expected)
+        const remaining = Math.max(0, expectedTotal - safeTotalQuestions);
+        setRemainingCount(remaining);
+        
+        // Start background fetch if there are remaining questions
+        if (remaining > 0 && topicsArr[0]) {
+          setIsLoadingMore(true);
+          fetchRemainingQuestions(topicsArr[0], difficultyArr[0] || "Medium", remaining, data);
+        }
 
         // Persist context for "Practice New Questions" (robust against missing topics array)
         setLastUsedContext({
@@ -313,13 +378,15 @@ const TestSession = () => {
   };
 
   const questions = testData.questions || [];
-  const progress = ((currentQuestion + 1) / questions.length) * 100;
+  const displayTotal = totalExpected > 0 ? Math.max(totalExpected, questions.length) : questions.length;
+  const progress = ((currentQuestion + 1) / displayTotal) * 100;
   const answeredCount = Object.keys(answers).length;
 
   // Determine source badge
   const getSourceBadge = () => {
     const source = testData?.source;
     if (source === 'cache') return { icon: '⚡', text: 'From Bank', variant: 'default' as const };
+    if (source === 'cache_partial') return { icon: '⏳', text: 'Partial + Loading', variant: 'secondary' as const };
     if (source === 'hybrid') return { icon: '🔀', text: 'Mixed', variant: 'secondary' as const };
     if (source === 'ai') return { icon: '🤖', text: 'AI Generated', variant: 'outline' as const };
     return null;
@@ -339,12 +406,17 @@ const TestSession = () => {
                 {sourceBadge.icon} {sourceBadge.text}
               </Badge>
             )}
+            {isLoadingMore && (
+              <Badge variant="outline" className="text-xs animate-pulse">
+                🔄 Loading more...
+              </Badge>
+            )}
             <Badge variant="outline" className="flex items-center gap-1.5 text-xs">
               <Clock className="h-3.5 w-3.5" />
               {formatTime(timeRemaining)}
             </Badge>
             <Badge variant="outline" className="text-xs">
-              Q {currentQuestion + 1}/{questions.length}
+              Q {currentQuestion + 1}/{questions.length}{remainingCount > 0 ? ` (+${remainingCount})` : ''}
             </Badge>
             <Badge variant="outline" className="text-xs">
               Answered: {answeredCount}/{questions.length}
