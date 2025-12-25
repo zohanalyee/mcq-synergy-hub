@@ -69,12 +69,16 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
       const topic = finalTopics.length > 0 ? finalTopics[0] : `General ${test.title}`;
 
+      // Determine if we should use partial mode (for large requests)
+      const usePartialMode = settings.questionCount > 20;
+
       console.log("🎯 Subject Test - Calling AI Engine:", {
         mode: 'subject_test',
         subject: test.title,
         topic,
         difficulty: settings.difficulty,
         questionCount: settings.questionCount,
+        partial_mode: usePartialMode,
         userId: user.id
       });
 
@@ -85,6 +89,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
           difficulty: settings.difficulty,
           subject: test.title,
           question_count: settings.questionCount,
+          partial_mode: usePartialMode, // Enable partial mode for large requests
         },
       });
 
@@ -94,7 +99,9 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         throw new Error("No questions generated");
       }
 
-      // Create session in DB with user_id
+      console.log(`📊 Subject Test Response: ${data.questions.length} questions, remaining: ${data.remaining_count || 0}, source: ${data.source}`);
+
+      // CRITICAL: Save REQUESTED total as question_count, not returned partial count
       const { data: session, error: sessionError } = await supabase
         .from("custom_test_sessions")
         .insert({
@@ -102,7 +109,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
           subjects: [test.title],
           topics: finalTopics.length > 0 ? finalTopics : [topic],
           difficulty_levels: [settings.difficulty],
-          question_count: data.questions.length,
+          question_count: settings.questionCount, // REQUESTED TOTAL (not data.questions.length)
           time_limit: settings.duration,
           questions: data.questions,
           user_id: user.id,
@@ -113,8 +120,11 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
       if (sessionError) throw sessionError;
 
       // Show source-based toast
-      const sourceIcon = data.source === 'cache' ? '⚡' : data.source === 'hybrid' ? '🔀' : '🤖';
+      const sourceIcon = data.source === 'cache' ? '⚡' : 
+                         data.source === 'cache_partial' ? '⏳' :
+                         data.source === 'hybrid' ? '🔀' : '🤖';
       const sourceText = data.source === 'cache' ? 'Loaded from Bank' : 
+                         data.source === 'cache_partial' ? `${data.cached_count} loaded, ${data.remaining_count} loading...` :
                          data.source === 'hybrid' ? `${data.cached_count} cached + ${data.ai_count} new` : 
                          'AI Generated';
       
