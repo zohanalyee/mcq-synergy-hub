@@ -12,7 +12,7 @@ import MCQControls from "@/components/subject-content/MCQControls";
 import { TestGenerationLoader } from "@/components/mock-tests/TestGenerationLoader";
 import { mockTopics } from "@/data/topicsData";
 import { supabase } from "@/integrations/supabase/client";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -276,7 +276,7 @@ const SubjectContent = () => {
         topicName={selectedTopic !== "all" ? selectedTopic : title} 
       />
       
-      <div className="container mx-auto px-4 pt-28 pb-16">
+      <div className="container mx-auto px-4 pt-20 pb-16">
         <BackButton />
         
         <motion.div
@@ -311,126 +311,104 @@ const SubjectContent = () => {
             </div>
           </div>
           
-          <Tabs defaultValue="topics" className="mb-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2 mx-auto mb-6">
-              <TabsTrigger value="topics">Topics & Chapters</TabsTrigger>
-              <TabsTrigger value="mcqs" className="relative">
-                MCQ Questions
-                {mcqs.length > 0 && (
-                  <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary/20 text-primary">
-                    {mcqs.length}
-                  </span>
-                )}
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="topics">
-              {isLoaded && (
-                <TopicsList topics={topics} purpose={purpose || "reading"} />
-              )}
-            </TabsContent>
-            
-            <TabsContent value="mcqs">
-              {/* MCQ Controls Panel */}
-              <MCQControls
-                questionCount={questionCount}
-                difficulty={difficulty}
-                onQuestionCountChange={handleQuestionCountChange}
-                onDifficultyChange={handleDifficultyChange}
-                onRefresh={handleRefresh}
-                onGenerate={handleGenerateNew}
-                isLoading={isLoadingMCQs}
-                questionSource={questionSource}
-                totalQuestions={mcqs.length}
-                cachedCount={cachedCount}
-                aiCount={aiCount}
-              />
-              
-              {/* Topic Filter for MCQs */}
-              {mcqTopics.length > 1 && (
-                <div className="mb-6 flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedTopic("all")}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      selectedTopic === "all"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                    }`}
-                  >
-                    All Topics ({mcqs.length})
-                  </button>
-                  {mcqTopics.map(topic => (
-                    <button
-                      key={topic}
-                      onClick={() => setSelectedTopic(topic)}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedTopic === topic
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                      }`}
-                    >
-                      {topic} ({mcqs.filter(m => m.topic === topic).length})
-                    </button>
-                  ))}
-                </div>
-              )}
-              
-              {/* Loading State */}
-              {isLoadingMCQs && !isGenerating ? (
-                <div className="flex items-center justify-center py-12">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                  <span className="ml-3 text-muted-foreground">Loading questions...</span>
-                </div>
-              ) : loadError ? (
-                /* Error State */
-                <div className="text-center py-12">
-                  <AlertCircle className="w-16 h-16 mx-auto text-destructive/60 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Failed to Load Questions</h3>
-                  <p className="text-muted-foreground mb-6">{loadError}</p>
-                  <div className="flex gap-3 justify-center">
-                    <Button variant="outline" onClick={handleRefresh}>
-                      Try Again
-                    </Button>
-                    <Button onClick={handleGenerateNew} className="gap-2">
-                      <Sparkles className="w-4 h-4" />
-                      Generate with AI
-                    </Button>
-                  </div>
-                </div>
-              ) : filteredMCQs.length > 0 ? (
-                /* MCQ List */
-                <div className="space-y-4">
-                  {filteredMCQs.map((mcq, index) => (
-                    <PracticeMCQCard
-                      key={mcq.id}
-                      id={mcq.id}
-                      title={mcq.title}
-                      question={mcq.question}
-                      options={mcq.options}
-                      correctOption={mcq.correctOption}
-                      explanation={mcq.explanation}
-                      difficulty={mcq.difficulty}
-                      mode={studyMode}
-                      index={index}
-                    />
-                  ))}
-                </div>
-              ) : (
-                /* Empty State with Generate Button */
-                <div className="text-center py-12">
-                  <Book className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
-                  <h3 className="text-lg font-medium mb-2">No MCQs Available Yet</h3>
-                  <p className="text-muted-foreground mb-6">
-                    Generate practice questions using AI for "{selectedTopic !== "all" ? selectedTopic : title}"
-                  </p>
-                  <Button onClick={handleGenerateNew} size="lg" className="gap-2">
-                    <Sparkles className="w-5 h-5" />
-                    Generate {questionCount} Questions
-                  </Button>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+          {/* MCQ Controls Panel */}
+          <MCQControls
+            questionCount={questionCount}
+            difficulty={difficulty}
+            onQuestionCountChange={handleQuestionCountChange}
+            onDifficultyChange={handleDifficultyChange}
+            onRefresh={handleRefresh}
+            onGenerate={handleGenerateNew}
+            isLoading={isLoadingMCQs}
+            questionSource={questionSource}
+            totalQuestions={mcqs.length}
+            cachedCount={cachedCount}
+            aiCount={aiCount}
+          />
+          
+          {/* Topic Filter for MCQs */}
+          {mcqTopics.length > 1 && (
+            <div className="mb-6 flex flex-wrap gap-2">
+              <button
+                onClick={() => setSelectedTopic("all")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                  selectedTopic === "all"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                }`}
+              >
+                All Topics ({mcqs.length})
+              </button>
+              {mcqTopics.map(topic => (
+                <button
+                  key={topic}
+                  onClick={() => setSelectedTopic(topic)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    selectedTopic === topic
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                  }`}
+                >
+                  {topic} ({mcqs.filter(m => m.topic === topic).length})
+                </button>
+              ))}
+            </div>
+          )}
+          
+          {/* Loading State */}
+          {isLoadingMCQs && !isGenerating ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <span className="ml-3 text-muted-foreground">Loading questions...</span>
+            </div>
+          ) : loadError ? (
+            /* Error State */
+            <div className="text-center py-12">
+              <AlertCircle className="w-16 h-16 mx-auto text-destructive/60 mb-4" />
+              <h3 className="text-lg font-medium mb-2">Failed to Load Questions</h3>
+              <p className="text-muted-foreground mb-6">{loadError}</p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" onClick={handleRefresh}>
+                  Try Again
+                </Button>
+                <Button onClick={handleGenerateNew} className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Generate with AI
+                </Button>
+              </div>
+            </div>
+          ) : filteredMCQs.length > 0 ? (
+            /* MCQ List */
+            <div className="space-y-4">
+              {filteredMCQs.map((mcq, index) => (
+                <PracticeMCQCard
+                  key={mcq.id}
+                  id={mcq.id}
+                  title={mcq.title}
+                  question={mcq.question}
+                  options={mcq.options}
+                  correctOption={mcq.correctOption}
+                  explanation={mcq.explanation}
+                  difficulty={mcq.difficulty}
+                  mode={studyMode}
+                  index={index}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Empty State with Generate Button */
+            <div className="text-center py-12">
+              <Book className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
+              <h3 className="text-lg font-medium mb-2">No MCQs Available Yet</h3>
+              <p className="text-muted-foreground mb-6">
+                Generate practice questions using AI for "{selectedTopic !== "all" ? selectedTopic : title}"
+              </p>
+              <Button onClick={handleGenerateNew} size="lg" className="gap-2">
+                <Sparkles className="w-5 h-5" />
+                Generate {questionCount} Questions
+              </Button>
+            </div>
+          )}
         </motion.div>
       </div>
     </>

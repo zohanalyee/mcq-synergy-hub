@@ -51,10 +51,8 @@ const QuestionBank = () => {
         getSubjectsWithQuestions()
       ]);
       
-      // Filter questions to only show those with valid subject/topic relationships
-      const validQuestions = questionsData.filter(q => 
-        validSubjects.includes(q.subject)
-      );
+      // Show all approved MCQs that have either subject OR topic
+      const validQuestions = questionsData.filter(q => q.subject || q.topic);
       
       setQuestions(validQuestions);
       setStats(statsData);
