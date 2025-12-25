@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { TestCard } from "./TestCard";
 import { CategoryFilter } from "./CategoryFilter";
+import { TestGenerationLoader } from "./TestGenerationLoader";
+import { CustomizeTestDialog } from "./CustomizeTestDialog";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,7 +22,8 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
   const [customizeTest, setCustomizeTest] = useState<number | null>(null);
   const [selectedTopics, setSelectedTopics] = useState<Record<number, string[]>>({});
   const [generatingTestId, setGeneratingTestId] = useState<number | null>(null);
-
+  const [generatingTopicName, setGeneratingTopicName] = useState<string>("");
+  const [dialogTest, setDialogTest] = useState<any | null>(null);
   const getCategories = () => {
     if (!allMockTests || allMockTests.length === 0) {
       return ["all"];
@@ -41,6 +44,8 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
   
   const handleStartTest = async (test: any, customSettings?: any) => {
     setGeneratingTestId(test.id);
+    setGeneratingTopicName(test.title);
+    setDialogTest(null); // Close dialog
     
     try {
       // Get current user first
@@ -48,6 +53,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
       if (!user) {
         toast.error("Please log in to start a test");
         navigate("/auth");
+        setGeneratingTestId(null);
         return;
       }
 
@@ -62,8 +68,6 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
       const finalTopics = topicsForTest && topicsForTest.length > 0 ? topicsForTest : [];
 
       const topic = finalTopics.length > 0 ? finalTopics[0] : `General ${test.title}`;
-
-      toast.info(`Generating ${settings.difficulty} questions for: ${test.title}`);
 
       console.log("🎯 Subject Test - Calling AI Engine:", {
         mode: 'subject_test',
@@ -108,8 +112,14 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
       if (sessionError) throw sessionError;
 
-      toast.success(`Test ready!`, {
-        description: `${data.questions.length} AI-generated questions loaded`
+      // Show source-based toast
+      const sourceIcon = data.source === 'cache' ? '⚡' : data.source === 'hybrid' ? '🔀' : '🤖';
+      const sourceText = data.source === 'cache' ? 'Loaded from Bank' : 
+                         data.source === 'hybrid' ? `${data.cached_count} cached + ${data.ai_count} new` : 
+                         'AI Generated';
+      
+      toast.success(`${sourceIcon} Test ready!`, {
+        description: `${data.questions.length} questions - ${sourceText}`
       });
 
       navigate(`/test-session/${session.id}`);
@@ -120,6 +130,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
       });
     } finally {
       setGeneratingTestId(null);
+      setGeneratingTopicName("");
     }
   };
   
@@ -142,11 +153,15 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
   const toggleCustomizeTest = (testId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (customizeTest === testId) {
-      setCustomizeTest(null);
-    } else {
-      setCustomizeTest(testId);
-      setExpandedTest(null); // Close any open topic panel
+    const test = allMockTests.find(t => t.id === testId);
+    if (test) {
+      setDialogTest(test);
+    }
+  };
+
+  const handleDialogStart = (settings: { difficulty: "easy" | "medium" | "hard"; questionCount: number; duration: number }) => {
+    if (dialogTest) {
+      handleStartTest(dialogTest, settings);
     }
   };
 
@@ -189,6 +204,24 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
   return (
     <>
+      {/* Full-screen Loader */}
+      <TestGenerationLoader 
+        isVisible={generatingTestId !== null} 
+        topicName={generatingTopicName} 
+      />
+
+      {/* Customize Dialog */}
+      <CustomizeTestDialog
+        isOpen={dialogTest !== null}
+        onClose={() => setDialogTest(null)}
+        testTitle={dialogTest?.title || ""}
+        defaultQuestions={dialogTest?.questions || 20}
+        defaultDuration={dialogTest?.duration || 30}
+        defaultDifficulty={dialogTest?.difficulty || "medium"}
+        onStart={handleDialogStart}
+        isGenerating={generatingTestId === dialogTest?.id}
+      />
+
       <CategoryFilter 
         categories={getCategories()} 
         activeFilter={filter}
@@ -207,7 +240,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
               <TestCard
                 test={test}
                 expandedTest={expandedTest}
-                customizeTest={customizeTest}
+                customizeTest={null}
                 selectedTopics={selectedTopics}
                 toggleExpandTest={toggleExpandTest}
                 toggleCustomizeTest={toggleCustomizeTest}

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { JobTestCard } from "./JobTestCard";
+import { TestGenerationLoader } from "./TestGenerationLoader";
+import { CustomizeTestDialog } from "./CustomizeTestDialog";
 import { toast } from "sonner";
 import { JobTest } from "@/data/jobTestsData";
 import { useNavigate } from "react-router-dom";
@@ -18,6 +20,8 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
   const [expandedJobTest, setExpandedJobTest] = useState<number | null>(null);
   const [customizeJobTest, setCustomizeJobTest] = useState<number | null>(null);
   const [generatingTestId, setGeneratingTestId] = useState<number | null>(null);
+  const [generatingTopicName, setGeneratingTopicName] = useState<string>("");
+  const [dialogTest, setDialogTest] = useState<JobTest | null>(null);
   
   const filteredJobTests = jobTests.filter(test => 
     !searchQuery || 
@@ -28,6 +32,8 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
   
   const handleStartJobTest = async (test: JobTest, customSettings?: any) => {
     setGeneratingTestId(test.id);
+    setGeneratingTopicName(test.title);
+    setDialogTest(null); // Close dialog
     
     try {
       // Get current user first
@@ -35,6 +41,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
       if (!user) {
         toast.error("Please log in to start a test");
         navigate("/auth");
+        setGeneratingTestId(null);
         return;
       }
 
@@ -47,8 +54,6 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
       // Extract subjects from syllabus
       const syllabusSubjects: string[] = test.syllabus?.map(item => item.topic) || 
         ['General Knowledge', 'English', 'Current Affairs'];
-
-      toast.info(`Generating ${test.title} test...`);
 
       console.log("🎯 Job Test - Calling AI Engine:", {
         mode: 'job_test',
@@ -93,8 +98,14 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
 
       if (sessionError) throw sessionError;
 
-      toast.success(`${test.title} ready!`, {
-        description: `${data.questions.length} AI-generated questions loaded`
+      // Show source-based toast
+      const sourceIcon = data.source === 'cache' ? '⚡' : data.source === 'hybrid' ? '🔀' : '🤖';
+      const sourceText = data.source === 'cache' ? 'Loaded from Bank' : 
+                         data.source === 'hybrid' ? `${data.cached_count} cached + ${data.ai_count} new` : 
+                         'AI Generated';
+      
+      toast.success(`${sourceIcon} ${test.title} ready!`, {
+        description: `${data.questions.length} questions - ${sourceText}`
       });
 
       navigate(`/test-session/${session.id}`);
@@ -105,6 +116,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
       });
     } finally {
       setGeneratingTestId(null);
+      setGeneratingTopicName("");
     }
   };
   
@@ -119,11 +131,15 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
   
   const toggleCustomizeJobTest = (testId: number, event: React.MouseEvent) => {
     event.stopPropagation();
-    if (customizeJobTest === testId) {
-      setCustomizeJobTest(null);
-    } else {
-      setCustomizeJobTest(testId);
-      setExpandedJobTest(null); // Close any open syllabus panel
+    const test = jobTests.find(t => t.id === testId);
+    if (test) {
+      setDialogTest(test);
+    }
+  };
+
+  const handleDialogStart = (settings: { difficulty: "easy" | "medium" | "hard"; questionCount: number; duration: number }) => {
+    if (dialogTest) {
+      handleStartJobTest(dialogTest, settings);
     }
   };
   
@@ -142,6 +158,24 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
 
   return (
     <>
+      {/* Full-screen Loader */}
+      <TestGenerationLoader 
+        isVisible={generatingTestId !== null} 
+        topicName={generatingTopicName} 
+      />
+
+      {/* Customize Dialog */}
+      <CustomizeTestDialog
+        isOpen={dialogTest !== null}
+        onClose={() => setDialogTest(null)}
+        testTitle={dialogTest?.title || ""}
+        defaultQuestions={dialogTest?.questions || 20}
+        defaultDuration={dialogTest?.duration || 90}
+        defaultDifficulty="medium"
+        onStart={handleDialogStart}
+        isGenerating={generatingTestId === dialogTest?.id}
+      />
+
       {filteredJobTests.length > 0 ? (
         <motion.div 
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-start"
@@ -154,7 +188,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
               <JobTestCard
                 test={test}
                 expandedJobTest={expandedJobTest}
-                customizeJobTest={customizeJobTest}
+                customizeJobTest={null}
                 toggleExpandJobTest={toggleExpandJobTest}
                 toggleCustomizeJobTest={toggleCustomizeJobTest}
                 handleStartJobTest={handleStartJobTest}
