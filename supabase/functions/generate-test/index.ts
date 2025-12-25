@@ -28,6 +28,65 @@ function sanitizeTopic(topic: string): string {
   return topic.replace(/\s*\([^)]*\)\s*/g, '').trim();
 }
 
+// ========== SYLLABUS ENGINE ==========
+// Map job tests to their core syllabus subjects for cross-question reuse
+const JOB_SYLLABUS_MAP: Record<string, string[]> = {
+  "Banking Officer": ["English", "Economics", "Finance", "Quantitative", "IT", "Pakistan Affairs", "Current Affairs"],
+  "OG-2": ["English", "Economics", "Finance", "Quantitative", "IT", "Pakistan Affairs", "Current Affairs"],
+  "OG-3": ["English", "Economics", "Finance", "Quantitative", "IT", "Pakistan Affairs", "Current Affairs"],
+  "Civil Judge": ["Civil Law", "Criminal Law", "Constitutional Law", "English", "Islamic Law", "Pakistan Affairs"],
+  "Election Officer": ["English", "Constitution", "Election Act", "Islamiyat", "Pakistan Affairs", "General Knowledge"],
+  "Assistant Director": ["English", "General Knowledge", "Pakistan Affairs", "Islamic Studies", "Reasoning", "Current Affairs"],
+  "Lecturer": ["English", "General Knowledge", "Pakistan Affairs", "Islamic Studies", "Education"],
+  "PMS": ["English", "Pakistan Affairs", "Current Affairs", "Islamic Studies", "General Knowledge", "Essay Writing"],
+  "CSS": ["English", "Pakistan Affairs", "Current Affairs", "Islamic Studies", "General Knowledge", "Essay Writing"],
+  "PPSC": ["English", "Pakistan Affairs", "General Knowledge", "Islamic Studies", "Current Affairs"],
+  "FPSC": ["English", "Pakistan Affairs", "General Knowledge", "Islamic Studies", "Current Affairs"],
+  "NTS": ["English", "Quantitative", "Analytical", "General Knowledge"],
+  "ECAT": ["Physics", "Chemistry", "Mathematics", "English"],
+  "MDCAT": ["Biology", "Chemistry", "Physics", "English"],
+  "GAT": ["English", "Quantitative", "Analytical"],
+};
+
+// Get syllabus subjects for a job/test topic
+function getSyllabusSubjects(topic: string): string[] {
+  const sanitized = sanitizeTopic(topic).toLowerCase();
+  
+  // Check each key in the map
+  for (const [jobKey, subjects] of Object.entries(JOB_SYLLABUS_MAP)) {
+    if (sanitized.includes(jobKey.toLowerCase()) || jobKey.toLowerCase().includes(sanitized)) {
+      return subjects;
+    }
+  }
+  
+  // Check if topic contains any key
+  for (const [jobKey, subjects] of Object.entries(JOB_SYLLABUS_MAP)) {
+    if (topic.toLowerCase().includes(jobKey.toLowerCase())) {
+      return subjects;
+    }
+  }
+  
+  return []; // No syllabus found - treat as single subject
+}
+
+// Build broader search conditions for syllabus-aware matching
+function buildSyllabusSearchConditions(topic: string, sanitizedTopic: string, syllabusSubjects: string[]): string {
+  const conditions = [
+    `topic.ilike.%${topic}%`,
+    `topic.ilike.%${sanitizedTopic}%`,
+    `subject.ilike.%${topic}%`,
+    `subject.ilike.%${sanitizedTopic}%`,
+  ];
+  
+  // Add all syllabus subjects to the search
+  for (const subject of syllabusSubjects) {
+    conditions.push(`topic.ilike.%${subject}%`);
+    conditions.push(`subject.ilike.%${subject}%`);
+  }
+  
+  return conditions.join(',');
+}
+
 // Robust JSON parser with repair logic for truncated responses
 function parseAIResponse(text: string): Question[] {
   let jsonText = text.trim();
@@ -279,8 +338,25 @@ serve(async (req) => {
     const sanitizedTopic = sanitizeTopic(topic);
     console.log(`Topic: "${topic}" → Sanitized: "${sanitizedTopic}"`);
 
-    // STEP 1: Database Check (Cache Layer) - FUZZY MATCHING
+    // ========== SYLLABUS-AWARE SEARCH ==========
+    // Get syllabus subjects for this topic (if it's a job test)
+    const syllabusSubjects = getSyllabusSubjects(topic);
+    const hasSyllabus = syllabusSubjects.length > 0;
+    
+    if (hasSyllabus) {
+      console.log(`📚 SYLLABUS ENGINE: Found ${syllabusSubjects.length} core subjects: [${syllabusSubjects.join(', ')}]`);
+    } else {
+      console.log(`📘 Single subject mode: "${sanitizedTopic}"`);
+    }
+
+    // Build search conditions (syllabus-aware OR simple)
+    const searchConditions = hasSyllabus 
+      ? buildSyllabusSearchConditions(topic, sanitizedTopic, syllabusSubjects)
+      : `topic.ilike.%${topic}%,topic.ilike.%${sanitizedTopic}%,subject.ilike.%${topic}%,subject.ilike.%${sanitizedTopic}%`;
+
+    // STEP 1: Database Check (Cache Layer) - SYLLABUS-AWARE FUZZY MATCHING
     console.log('Step 1: Checking database for existing questions...');
+    console.log(`Search conditions: ${searchConditions.substring(0, 200)}...`);
 
     let dbQuestions: Question[] = [];
     let existingQuestionTexts: string[] = [];
@@ -288,20 +364,24 @@ serve(async (req) => {
     // If forceNew is true, skip cache short-circuit and generate fresh questions.
     if (!forceNew) {
       try {
-        // FUZZY MATCHING: Search both original topic AND sanitized version
+        // SYLLABUS-AWARE MATCHING: Search job topic AND all syllabus subjects
         const { data: existingQuestions, error: dbError } = await supabase
           .from('content_items')
-          .select('title, options, correct_option, explanation')
+          .select('title, options, correct_option, explanation, topic, subject')
           .eq('category', 'mcq')
           .eq('status', 'approved')
-          .or(`topic.ilike.%${topic}%,topic.ilike.%${sanitizedTopic}%,subject.ilike.%${topic}%,subject.ilike.%${sanitizedTopic}%`)
+          .or(searchConditions)
           .ilike('difficulty', difficulty)
           .limit(qc * 3); // Fetch extra for better randomization
 
         if (dbError) {
           console.error('Database query error:', dbError);
         } else if (existingQuestions && existingQuestions.length > 0) {
-          // Randomize the results in JS since Supabase doesn't support ORDER BY random()
+          // Log what subjects/topics we found
+          const foundTopics = [...new Set(existingQuestions.map(q => q.topic || q.subject).filter(Boolean))];
+          console.log(`📊 Found questions from: [${foundTopics.slice(0, 5).join(', ')}${foundTopics.length > 5 ? '...' : ''}]`);
+          
+          // Shuffle results to mix questions from different subjects
           const shuffledDbResults = shuffleArray(existingQuestions);
           
           dbQuestions = shuffledDbResults
@@ -316,7 +396,7 @@ serve(async (req) => {
           // Store existing question texts for duplicate prevention
           existingQuestionTexts = dbQuestions.map(q => q.question);
           
-          console.log(`✅ Found ${dbQuestions.length} existing questions in database (fuzzy match)`);
+          console.log(`✅ Found ${dbQuestions.length} existing questions in database (syllabus-aware)`);
         }
       } catch (dbErr) {
         console.error('Database check failed:', dbErr);

@@ -138,12 +138,14 @@ const SubjectContent = () => {
         forceNew 
       });
       
+      const requestedCount = parseInt(questionCount);
       const { data, error } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: topicToFetch,
           difficulty: difficulty,
-          question_count: parseInt(questionCount),
+          question_count: requestedCount,
           forceNew: forceNew,
+          partial_mode: requestedCount > 20, // Enable streaming for large requests
         }
       });
 
@@ -276,8 +278,10 @@ const SubjectContent = () => {
         topicName={selectedTopic !== "all" ? selectedTopic : title} 
       />
       
-      <div className="container mx-auto px-4 pt-20 pb-16">
-        <BackButton />
+      <div className="container mx-auto px-4 pt-4 pb-24">
+        <div className="mt-16">
+          <BackButton />
+        </div>
         
         <motion.div
           initial={{ opacity: 0, y: 20 }}
