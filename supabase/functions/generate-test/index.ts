@@ -23,6 +23,170 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+// Robust JSON parser with repair logic for truncated responses
+function parseAIResponse(text: string): Question[] {
+  let jsonText = text.trim();
+  
+  // Remove markdown code blocks
+  if (jsonText.startsWith('```json')) {
+    jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
+  } else if (jsonText.startsWith('```')) {
+    jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
+  }
+  
+  // Try parsing as-is first
+  try {
+    const parsed = JSON.parse(jsonText);
+    return parsed.questions || [];
+  } catch (e) {
+    console.log('Initial JSON parse failed, attempting repair...');
+  }
+  
+  // Try to repair truncated JSON by finding the last complete question
+  try {
+    // Find the questions array start
+    const questionsStart = jsonText.indexOf('"questions"');
+    if (questionsStart === -1) {
+      throw new Error('No questions array found');
+    }
+    
+    const arrayStart = jsonText.indexOf('[', questionsStart);
+    if (arrayStart === -1) {
+      throw new Error('No array start found');
+    }
+    
+    // Extract just the array content
+    let arrayContent = jsonText.substring(arrayStart);
+    
+    // Find all complete question objects by matching balanced braces
+    const questions: Question[] = [];
+    let depth = 0;
+    let objStart = -1;
+    
+    for (let i = 0; i < arrayContent.length; i++) {
+      const char = arrayContent[i];
+      if (char === '{') {
+        if (depth === 0) objStart = i;
+        depth++;
+      } else if (char === '}') {
+        depth--;
+        if (depth === 0 && objStart !== -1) {
+          const objStr = arrayContent.substring(objStart, i + 1);
+          try {
+            const q = JSON.parse(objStr);
+            if (q.question && q.options && q.answer) {
+              questions.push({
+                question: q.question,
+                options: Array.isArray(q.options) ? q.options : [],
+                answer: q.answer,
+                explanation: q.explanation || undefined
+              });
+            }
+          } catch {
+            // Skip malformed question
+          }
+          objStart = -1;
+        }
+      }
+    }
+    
+    console.log(`Repaired JSON: extracted ${questions.length} valid questions`);
+    return questions;
+  } catch (repairError) {
+    console.error('JSON repair failed:', repairError);
+    return [];
+  }
+}
+
+// Generate questions in batches to avoid truncation
+async function generateQuestionsInBatches(
+  topic: string,
+  difficulty: string,
+  totalCount: number,
+  apiKey: string
+): Promise<Question[]> {
+  const MAX_BATCH_SIZE = 15; // Keep batches small to avoid truncation
+  const batches = Math.ceil(totalCount / MAX_BATCH_SIZE);
+  const allQuestions: Question[] = [];
+  
+  console.log(`Generating ${totalCount} questions in ${batches} batch(es)...`);
+  
+  for (let batch = 0; batch < batches; batch++) {
+    const batchSize = Math.min(MAX_BATCH_SIZE, totalCount - allQuestions.length);
+    if (batchSize <= 0) break;
+    
+    console.log(`Batch ${batch + 1}/${batches}: Generating ${batchSize} questions...`);
+    
+    const systemPrompt = `You are a strict JSON generator for educational quizzes. Create high-quality multiple choice questions.
+Output ONLY raw JSON in this exact structure (no markdown, no explanations):
+{
+  "questions": [
+    {
+      "question": "Question text here?",
+      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
+      "answer": "The exact text of the correct option",
+      "explanation": "Brief explanation of the correct answer"
+    }
+  ]
+}`;
+
+    const userPrompt = `Create exactly ${batchSize} multiple choice questions about ${topic} at ${difficulty} difficulty level. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
+
+    try {
+      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt }
+          ],
+          max_tokens: 8000, // Limit response size
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Batch ${batch + 1} failed:`, response.status, errorText);
+        
+        if (response.status === 429) {
+          throw { status: 429, message: 'Rate limit exceeded' };
+        }
+        if (response.status === 402) {
+          throw { status: 402, message: 'AI credits depleted' };
+        }
+        continue; // Skip failed batch but continue with others
+      }
+
+      const data = await response.json();
+      const generatedText = data.choices?.[0]?.message?.content;
+      
+      if (generatedText) {
+        const batchQuestions = parseAIResponse(generatedText);
+        allQuestions.push(...batchQuestions);
+        console.log(`Batch ${batch + 1} completed: ${batchQuestions.length} questions`);
+      }
+    } catch (batchError: any) {
+      if (batchError.status === 429 || batchError.status === 402) {
+        throw batchError; // Re-throw rate limit/payment errors
+      }
+      console.error(`Batch ${batch + 1} error:`, batchError);
+      // Continue with other batches
+    }
+    
+    // Small delay between batches to avoid rate limiting
+    if (batch < batches - 1) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+  
+  return allQuestions;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -102,50 +266,20 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are a strict JSON generator for educational quizzes. Create high-quality multiple choice questions.
-Output ONLY raw JSON in this exact structure:
-{
-  "questions": [
-    {
-      "question": "Question text here?",
-      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-      "answer": "The exact text of the correct option",
-      "explanation": "Brief explanation of the correct answer"
-    }
-  ]
-}`;
-
-    const userPrompt = `Create exactly ${missingCount} multiple choice questions about ${topic} at ${difficulty} difficulty level. Each question must have exactly 4 options and include an explanation.`;
-
-    console.log('Calling Lovable AI Gateway...');
-
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      
-      if (response.status === 429) {
+    let newAIQuestions: Question[] = [];
+    
+    try {
+      newAIQuestions = await generateQuestionsInBatches(topic, difficulty, missingCount, LOVABLE_API_KEY);
+      console.log(`AI generated ${newAIQuestions.length} new questions total`);
+    } catch (aiError: any) {
+      if (aiError.status === 429) {
         return new Response(
           JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.', details: 'Too many requests' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
         );
       }
       
-      if (response.status === 402) {
+      if (aiError.status === 402) {
         return new Response(
           JSON.stringify({ error: 'AI credits depleted. Please add credits to your workspace.', details: 'Payment required' }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
@@ -165,27 +299,8 @@ Output ONLY raw JSON in this exact structure:
         );
       }
       
-      throw new Error(`AI Gateway error: ${response.status} - ${errorText}`);
+      throw aiError;
     }
-
-    const data = await response.json();
-    const generatedText = data.choices?.[0]?.message?.content;
-    
-    if (!generatedText) {
-      throw new Error('No content generated from AI');
-    }
-
-    // Parse AI response
-    let jsonText = generatedText.trim();
-    if (jsonText.startsWith('```json')) {
-      jsonText = jsonText.replace(/```json\n?/, '').replace(/\n?```$/, '');
-    } else if (jsonText.startsWith('```')) {
-      jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
-    }
-
-    const aiData = JSON.parse(jsonText);
-    const newAIQuestions: Question[] = aiData.questions || [];
-    console.log(`AI generated ${newAIQuestions.length} new questions`);
 
     // STEP 3: Self-Learning Save - Store new questions in database
     if (newAIQuestions.length > 0) {
@@ -223,6 +338,12 @@ Output ONLY raw JSON in this exact structure:
 
     // STEP 4: Combine and return
     const allQuestions = [...dbQuestions, ...newAIQuestions];
+    
+    // If we still don't have enough, return what we have
+    if (allQuestions.length === 0) {
+      throw new Error('No questions could be generated');
+    }
+    
     const finalQuestions = shuffleArray(allQuestions).slice(0, qc);
 
     console.log(`Returning ${finalQuestions.length} questions (${dbQuestions.length} cached + ${newAIQuestions.length} new)`);
