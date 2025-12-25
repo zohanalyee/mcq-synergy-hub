@@ -316,6 +316,17 @@ const TestSession = () => {
   const progress = ((currentQuestion + 1) / questions.length) * 100;
   const answeredCount = Object.keys(answers).length;
 
+  // Determine source badge
+  const getSourceBadge = () => {
+    const source = testData?.source;
+    if (source === 'cache') return { icon: '⚡', text: 'From Bank', variant: 'default' as const };
+    if (source === 'hybrid') return { icon: '🔀', text: 'Mixed', variant: 'secondary' as const };
+    if (source === 'ai') return { icon: '🤖', text: 'AI Generated', variant: 'outline' as const };
+    return null;
+  };
+
+  const sourceBadge = getSourceBadge();
+
   return (
     <Header>
       <div className="max-w-4xl mx-auto px-4 pt-6 pb-12">
@@ -323,6 +334,11 @@ const TestSession = () => {
         <div className="mb-6 text-center">
           <h1 className="text-2xl font-bold mb-2 text-foreground">{testData.session_name}</h1>
           <div className="flex flex-wrap gap-2 items-center justify-center">
+            {sourceBadge && (
+              <Badge variant={sourceBadge.variant} className="text-xs">
+                {sourceBadge.icon} {sourceBadge.text}
+              </Badge>
+            )}
             <Badge variant="outline" className="flex items-center gap-1.5 text-xs">
               <Clock className="h-3.5 w-3.5" />
               {formatTime(timeRemaining)}
