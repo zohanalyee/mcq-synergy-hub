@@ -96,9 +96,8 @@ const Achievements = () => {
   const totalCount = badges.length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 pt-4 pb-24 max-w-4xl">
+    <Header>
+      <section className="container mx-auto px-4 pt-4 pb-24 max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -185,8 +184,8 @@ const Achievements = () => {
             </CardContent>
           </Card>
         </motion.div>
-      </main>
-    </div>
+      </section>
+    </Header>
   );
 };
 
