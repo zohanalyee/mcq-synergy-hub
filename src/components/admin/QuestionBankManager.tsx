@@ -37,6 +37,7 @@ const QuestionBankManager = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   
   // Stats state - fetched from database
   const [stats, setStats] = useState({
@@ -44,7 +45,10 @@ const QuestionBankManager = () => {
     easyQuestions: 0,
     mediumQuestions: 0,
     hardQuestions: 0,
-    mixQuestions: 0
+    mixQuestions: 0,
+    pendingCount: 0,
+    approvedCount: 0,
+    rejectedCount: 0
   });
 
   // Map database row to ContentItem interface
@@ -95,10 +99,13 @@ const QuestionBankManager = () => {
         .select('*', { count: 'exact', head: true });
 
       // Apply category filter
-      if (categoryFilter === "all") {
-        countQuery = countQuery.in('category', ['mcq', 'quiz']);
-      } else {
+      if (categoryFilter !== "all") {
         countQuery = countQuery.eq('category', categoryFilter);
+      }
+
+      // Apply status filter
+      if (statusFilter !== "all") {
+        countQuery = countQuery.eq('status', statusFilter);
       }
 
       // Apply search filter
@@ -119,10 +126,12 @@ const QuestionBankManager = () => {
         .select('*');
 
       // Apply same filters
-      if (categoryFilter === "all") {
-        dataQuery = dataQuery.in('category', ['mcq', 'quiz']);
-      } else {
+      if (categoryFilter !== "all") {
         dataQuery = dataQuery.eq('category', categoryFilter);
+      }
+
+      if (statusFilter !== "all") {
+        dataQuery = dataQuery.eq('status', statusFilter);
       }
 
       if (searchQuery.trim()) {
@@ -154,8 +163,7 @@ const QuestionBankManager = () => {
     try {
       const { data, error } = await supabase
         .from('content_items')
-        .select('difficulty')
-        .in('category', ['mcq', 'quiz']);
+        .select('difficulty, status');
       
       if (error) {
         console.error('Error fetching stats:', error);
@@ -163,10 +171,13 @@ const QuestionBankManager = () => {
       }
       
       let easy = 0, medium = 0, hard = 0, mix = 0;
+      let pending = 0, approved = 0, rejected = 0;
       
       (data || []).forEach(item => {
         const d = item.difficulty?.toLowerCase()?.trim();
+        const s = item.status?.toLowerCase()?.trim();
         
+        // Count by difficulty
         if (!d || d === '' || d === 'mix' || d === 'mixed' || d.includes(',')) {
           mix++;
         } else if (d === 'easy') {
@@ -176,9 +187,13 @@ const QuestionBankManager = () => {
         } else if (d === 'hard') {
           hard++;
         } else {
-          // Any other value counts as Mix
           mix++;
         }
+        
+        // Count by status
+        if (s === 'pending') pending++;
+        else if (s === 'approved') approved++;
+        else if (s === 'rejected') rejected++;
       });
       
       setStats({
@@ -186,7 +201,10 @@ const QuestionBankManager = () => {
         easyQuestions: easy,
         mediumQuestions: medium,
         hardQuestions: hard,
-        mixQuestions: mix
+        mixQuestions: mix,
+        pendingCount: pending,
+        approvedCount: approved,
+        rejectedCount: rejected
       });
     } catch (error) {
       console.error('Error in fetchStats:', error);
@@ -196,6 +214,11 @@ const QuestionBankManager = () => {
   // Fetch on mount and when filters/page change
   useEffect(() => {
     fetchQuestions();
+  }, [currentPage, categoryFilter, statusFilter]);
+
+  // Fetch stats on mount
+  useEffect(() => {
+    fetchStats();
   }, [currentPage, categoryFilter]);
 
   // Fetch stats on mount
@@ -366,9 +389,20 @@ const QuestionBankManager = () => {
                   className="pl-10"
                 />
               </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="pending">Pending ({stats.pendingCount})</SelectItem>
+                  <SelectItem value="approved">Approved ({stats.approvedCount})</SelectItem>
+                  <SelectItem value="rejected">Rejected ({stats.rejectedCount})</SelectItem>
+                </SelectContent>
+              </Select>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Filter by category" />
+                <SelectTrigger className="w-full md:w-[150px]">
+                  <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
