@@ -78,10 +78,10 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
           
           <div className="flex-1 flex flex-col w-full">
             <header 
-              className={`sticky top-0 z-40 transition-all duration-300 ${
+              className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
                 scrolled 
-                  ? 'py-2 glass backdrop-blur-xl bg-white/70 dark:bg-background/80 border-b border-white/30 dark:border-border/40 shadow-sm' 
-                  : 'py-2 bg-white/50 dark:bg-background/40 backdrop-blur-md'
+                  ? 'py-2 glass backdrop-blur-xl bg-white/90 dark:bg-background/90 border-b border-white/30 dark:border-border/40 shadow-sm' 
+                  : 'py-2 bg-white/70 dark:bg-background/60 backdrop-blur-md'
               }`}
             >
               <div className="container px-4 mx-auto max-w-7xl">
@@ -103,7 +103,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
                 </div>
               </div>
             </header>
-            <main className="flex-1 overflow-x-hidden pb-mobile-nav">
+            <main className="flex-1 overflow-x-hidden pb-mobile-nav mt-14">
               {children}
             </main>
           </div>
