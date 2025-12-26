@@ -98,7 +98,7 @@ const Achievements = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
+      <main className="container mx-auto px-4 pt-4 pb-24 max-w-4xl">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
