@@ -154,7 +154,7 @@ const SubjectsMasteryTab = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: index * 0.05 }}
         >
-          <Link to={`/subjects/${encodeURIComponent(subject.name)}`}>
+          <Link to={`/subject/${subject.id}`}>
             <Card className="hover:shadow-md transition-all cursor-pointer group">
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
