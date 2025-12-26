@@ -5,6 +5,7 @@ import JobTestManager from "./JobTestManager";
 import QuestionBankManager from "./QuestionBankManager";
 import AdminContentSubmission from "./AdminContentSubmission";
 import { DataMigrationUtility } from "./DataMigrationUtility";
+import AdminAnalyticsDashboard from "./analytics/AdminAnalyticsDashboard";
 import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -129,13 +130,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       
       {/* Analytics Tab */}
       <TabsContent value="analytics">
-        <div className="p-6 bg-card rounded-lg border">
-          <h3 className="text-lg font-semibold mb-4">Analytics Dashboard</h3>
-          <p className="text-muted-foreground">
-            Comprehensive analytics and reporting tools for question usage, user performance, 
-            and content effectiveness will be available here.
-          </p>
-        </div>
+        <AdminAnalyticsDashboard />
       </TabsContent>
       
       {/* Content Management */}
