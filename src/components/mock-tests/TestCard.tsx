@@ -89,8 +89,8 @@ export const TestCard = ({
   };
 
   return (
-    <Card className="min-h-[160px] hover:shadow-md transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary/60">
-      <CardContent className="p-3 sm:p-4">
+    <Card className="hover:shadow-md transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary/60">
+      <CardContent className="p-3">
         {/* Header Section */}
         <div className="flex justify-between items-start mb-2">
           <div className="flex-1 min-w-0">

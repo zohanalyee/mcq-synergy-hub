@@ -13,14 +13,14 @@ const FloatingFeedbackButton = () => {
 
   return (
     <>
-      {/* Floating Button */}
-      <div className="fixed bottom-6 right-6 z-50">
+      {/* Floating Button - positioned above mobile bottom nav */}
+      <div className="fixed bottom-20 right-4 z-40 sm:bottom-6 sm:right-6">
         <Button
           onClick={() => setIsOpen(true)}
-          className="rounded-full h-14 w-14 shadow-lg hover:shadow-xl transition-all duration-200"
+          className="rounded-full h-12 w-12 shadow-lg hover:shadow-xl transition-all duration-200"
           size="icon"
         >
-          <MessageSquare className="h-6 w-6" />
+          <MessageSquare className="h-5 w-5" />
         </Button>
       </div>
 
