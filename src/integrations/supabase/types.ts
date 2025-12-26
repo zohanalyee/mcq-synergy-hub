@@ -779,12 +779,53 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_daily_activity_stats: {
+        Args: { days_back?: number }
+        Returns: {
+          activity_date: string
+          test_count: number
+          user_count: number
+        }[]
+      }
+      get_hourly_activity_distribution: {
+        Args: never
+        Returns: {
+          hour_of_day: number
+          test_count: number
+          user_count: number
+        }[]
+      }
+      get_power_users: {
+        Args: { limit_count?: number }
+        Returns: {
+          avg_score: number
+          last_active: string
+          total_tests: number
+          total_time_spent: number
+          user_id: string
+          username: string
+        }[]
+      }
+      get_recently_active_users: {
+        Args: { minutes_ago?: number }
+        Returns: number
+      }
       get_student_weaknesses: {
         Args: { target_user_id: string }
         Returns: {
           average_score: number
           subject: string
           tests_count: number
+        }[]
+      }
+      get_user_retention_stats: {
+        Args: never
+        Returns: {
+          active_users: number
+          avg_session_time: number
+          bounce_rate: number
+          total_tests: number
+          total_users: number
         }[]
       }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
