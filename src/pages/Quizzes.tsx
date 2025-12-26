@@ -211,17 +211,17 @@ const Quizzes = () => {
               transition={{ duration: 0.3 }}
             >
               <Card className="max-w-lg mx-auto">
-                <CardHeader className="text-center pb-2">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                    <Shuffle className="h-6 w-6 text-primary" />
+                <CardHeader className="text-center pb-1 pt-4">
+                  <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
+                    <Shuffle className="h-5 w-5 text-primary" />
                   </div>
-                  <CardTitle>Subject-Wise Quiz</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg">Subject-Wise Quiz</CardTitle>
+                  <CardDescription className="text-xs">
                     Random questions from any topic under your selected subject
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4 pt-2">
                   {isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-10 w-full" />
@@ -253,13 +253,13 @@ const Quizzes = () => {
                       </div>
                       
                       {/* Question Count */}
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-2">
-                            <HelpCircle className="h-4 w-4" />
+                          <Label className="flex items-center gap-1.5 text-sm">
+                            <HelpCircle className="h-3.5 w-3.5" />
                             Questions
                           </Label>
-                          <Badge variant="secondary">{questionCountA}</Badge>
+                          <Badge variant="secondary" className="text-xs">{questionCountA}</Badge>
                         </div>
                         <Slider
                           value={[questionCountA]}
@@ -276,13 +276,13 @@ const Quizzes = () => {
                       </div>
                       
                       {/* Time Limit */}
-                      <div className="space-y-3">
+                      <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
+                          <Label className="flex items-center gap-1.5 text-sm">
+                            <Clock className="h-3.5 w-3.5" />
                             Time Limit
                           </Label>
-                          <Badge variant="secondary">{timeLimitA} min</Badge>
+                          <Badge variant="secondary" className="text-xs">{timeLimitA} min</Badge>
                         </div>
                         <Slider
                           value={[timeLimitA]}
@@ -332,17 +332,17 @@ const Quizzes = () => {
               transition={{ duration: 0.3 }}
             >
               <Card className="max-w-lg mx-auto">
-                <CardHeader className="text-center pb-2">
-                  <div className="mx-auto w-12 h-12 rounded-full bg-accent/10 flex items-center justify-center mb-3">
-                    <Target className="h-6 w-6 text-accent-foreground" />
+                <CardHeader className="text-center pb-1 pt-4">
+                  <div className="mx-auto w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mb-2">
+                    <Target className="h-5 w-5 text-accent-foreground" />
                   </div>
-                  <CardTitle>Topic-Wise Quiz</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-lg">Topic-Wise Quiz</CardTitle>
+                  <CardDescription className="text-xs">
                     Focused questions from a specific topic you want to master
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="space-y-6">
+                <CardContent className="space-y-4 pt-2">
                   {isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-10 w-full" />

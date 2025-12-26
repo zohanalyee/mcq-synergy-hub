@@ -275,7 +275,7 @@ const EnhancedContentTable = ({
       {/* Enhanced Table */}
       {filteredAndSortedContent.length > 0 ? (
         <div className="rounded-md border">
-          <Table>
+          <Table className="[&_td]:py-2 [&_th]:py-2">
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12">
@@ -332,8 +332,8 @@ const EnhancedContentTable = ({
                     <div>
                       <div className="font-medium">{item.title}</div>
                       <div className="text-sm text-muted-foreground hidden md:block">
-                        {item.description.length > 50 
-                          ? `${item.description.substring(0, 50)}...` 
+                        {item.description.length > 40 
+                          ? `${item.description.substring(0, 40)}...` 
                           : item.description}
                       </div>
                       <ContentDetails item={item} />
@@ -358,42 +358,42 @@ const EnhancedContentTable = ({
                     <StatusBadge status={item.status} />
                   </TableCell>
                   <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
+                    <div className="flex justify-end gap-1.5">
                       {item.status === "pending" && (
                         <>
                           <Button 
                             size="icon" 
                             variant="default" 
-                            className="bg-green-600 hover:bg-green-700 h-8 w-8"
+                            className="bg-green-600 hover:bg-green-700 h-7 w-7"
                             onClick={() => onUpdateStatus(item.id, "approved")}
                           >
-                            <Check className="h-4 w-4" />
+                            <Check className="h-3.5 w-3.5" />
                           </Button>
                           <Button 
                             size="icon" 
                             variant="destructive"
-                            className="h-8 w-8"
+                            className="h-7 w-7"
                             onClick={() => onUpdateStatus(item.id, "rejected")}
                           >
-                            <X className="h-4 w-4" />
+                            <X className="h-3.5 w-3.5" />
                           </Button>
                         </>
                       )}
                       <Button 
                         size="icon" 
                         variant="outline"
-                        className="h-8 w-8"
+                        className="h-7 w-7"
                         onClick={() => onEditClick(item)}
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-3.5 w-3.5" />
                       </Button>
                       <Button 
                         size="icon" 
                         variant="outline"
-                        className="h-8 w-8"
+                        className="h-7 w-7"
                         onClick={() => onDelete(item.id)}
                       >
-                        <Trash className="h-4 w-4" />
+                        <Trash className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </TableCell>

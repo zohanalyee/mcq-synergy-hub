@@ -17,41 +17,41 @@ interface AppSidebarProps {
 const getIcon = (title: string) => {
   const icons: Record<string, { icon: React.ReactNode }> = {
     'Home': { 
-      icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-blue-500" />
+      icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-blue-500" />
     },
     'Subjects': { 
-      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-purple-500" />
+      icon: <FileText size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-purple-500" />
     },
     'Quizzes': { 
-      icon: <Target size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-red-500" />
+      icon: <Target size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-red-500" />
     },
     'Mock Tests': { 
-      icon: <Clock size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-orange-500" />
+      icon: <Clock size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-500" />
     },
     'Custom Syllabus': { 
-      icon: <GraduationCap size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-indigo-500" />
+      icon: <GraduationCap size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-indigo-500" />
     },
     'Scholarships': { 
-      icon: <Users size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-pink-500" />
+      icon: <Users size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-pink-500" />
     },
     'Jobs': { 
-      icon: <Briefcase size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-teal-500" />
+      icon: <Briefcase size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-teal-500" />
     },
     'Past Papers': { 
-      icon: <FileText size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-amber-500" />
+      icon: <FileText size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-amber-500" />
     },
     'Analytics': { 
-      icon: <TrendingUp size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-cyan-500" />
+      icon: <TrendingUp size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
     },
     'Feedback': { 
-      icon: <MessageSquare size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-lime-500" />
+      icon: <MessageSquare size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-lime-500" />
     },
     'Question Bank': { 
-      icon: <Database size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-violet-500" />
+      icon: <Database size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500" />
     }
   };
   return icons[title] || { 
-    icon: <BookOpen size={20} strokeWidth={2.5} absoluteStrokeWidth className="w-5 h-5 text-gray-500" />
+    icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-gray-500" />
   };
 };
 export function AppSidebar({
@@ -68,9 +68,9 @@ export function AppSidebar({
   } = useSidebar();
   const expanded = open || (isMobile && openMobile);
   return <Sidebar collapsible="icon" className="border-r border-border/40 transition-all duration-300">
-      <SidebarHeader className="border-b border-border/40 p-3">
-        <div className={cn("flex items-center gap-3 transition-all duration-300", !expanded && "justify-center")}>
-          <img src={logo} alt="MCQs Point" className={cn("object-contain transition-all duration-300", expanded ? "h-8" : "h-8")} />
+      <SidebarHeader className="border-b border-border/40 p-2">
+        <div className={cn("flex items-center gap-2 transition-all duration-300", !expanded && "justify-center")}>
+          <img src={logo} alt="MCQs Point" className={cn("object-contain transition-all duration-300", expanded ? "h-7" : "h-7")} />
         </div>
       </SidebarHeader>
 
@@ -90,14 +90,14 @@ export function AppSidebar({
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-8",
+                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
                         isActive(item.path) && "shadow-sm",
-                        !expanded && "justify-center px-0 w-10 h-10 mx-auto"
+                        !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
                         {iconData.icon}
-                      {expanded && <span className="font-medium animate-fade-in ml-2 text-sm">{item.title}</span>}
-                      {isActive(item.path) && expanded && <ChevronRight className="ml-auto w-3.5 h-3.5 animate-fade-in" />}
+                      {expanded && <span className="font-medium animate-fade-in ml-1.5 text-sm">{item.title}</span>}
+                      {isActive(item.path) && expanded && <ChevronRight className="ml-auto w-3 h-3 animate-fade-in" />}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -121,13 +121,13 @@ export function AppSidebar({
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-8",
+                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
                         isActive(item.path) && "shadow-sm",
-                        !expanded && "justify-center px-0 w-10 h-10 mx-auto"
+                        !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
                         {iconData.icon}
-                      {expanded && <span className="font-medium animate-fade-in ml-2 text-sm">{item.title}</span>}
+                      {expanded && <span className="font-medium animate-fade-in ml-1.5 text-sm">{item.title}</span>}
                       {item.title === 'Question Bank' && isAdmin && expanded && (
                         <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 animate-fade-in">
                           Admin
