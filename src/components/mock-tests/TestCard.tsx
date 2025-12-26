@@ -89,35 +89,35 @@ export const TestCard = ({
   };
 
   return (
-    <Card className="min-h-[220px] hover:shadow-lg transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary/60">
-      <CardContent className="p-3 sm:p-6">
+    <Card className="min-h-[160px] hover:shadow-md transition-all duration-300 border-l-4 border-l-primary/20 hover:border-l-primary/60">
+      <CardContent className="p-3 sm:p-4">
         {/* Header Section */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-2">
           <div className="flex-1 min-w-0">
-            <h3 className="text-lg sm:text-xl font-semibold line-clamp-2 mb-2 leading-tight">{test.title}</h3>
-            <p className="text-sm sm:text-base text-muted-foreground line-clamp-2 leading-relaxed">{test.description}</p>
+            <h3 className="text-base sm:text-lg font-semibold line-clamp-2 mb-1 leading-tight">{test.title}</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">{test.description}</p>
           </div>
-          <Badge variant="outline" className={cn("ml-3 shrink-0 text-xs font-medium", getDifficultyColor(test.difficulty))}>
+          <Badge variant="outline" className={cn("ml-2 shrink-0 text-xs font-medium", getDifficultyColor(test.difficulty))}>
             {test.difficulty}
           </Badge>
         </div>
 
         {/* Stats Section */}
-        <div className="flex flex-wrap gap-3 sm:gap-4 mb-4 text-sm">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <HelpCircle className="h-4 w-4" />
+        <div className="flex flex-wrap gap-2 sm:gap-3 mb-3 text-xs sm:text-sm">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <HelpCircle className="h-3.5 w-3.5" />
             <span className="font-medium">{test.questions}</span>
             <span className="hidden sm:inline">Questions</span>
             <span className="sm:hidden">Q</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Clock className="h-3.5 w-3.5" />
             <span className="font-medium">{test.duration}</span>
             <span className="hidden sm:inline">Minutes</span>
             <span className="sm:hidden">Min</span>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <CheckCircle2 className="h-4 w-4" />
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <CheckCircle2 className="h-3.5 w-3.5" />
             <span className="font-medium">{test.topics.length}</span>
             <span className="hidden sm:inline">Topics</span>
             <span className="sm:hidden">T</span>
@@ -125,14 +125,14 @@ export const TestCard = ({
         </div>
 
         {/* Action Buttons */}
-        <div className="flex flex-col lg:flex-row flex-wrap gap-2 mb-4">
+        <div className="flex flex-col lg:flex-row flex-wrap gap-1.5 mb-3">
           <Button 
             onClick={() => toggleExpandTest(test.id)}
             variant="outline" 
             size="sm"
-            className="flex-1 justify-center text-xs sm:text-sm px-2 sm:px-4"
+            className="flex-1 justify-center text-xs h-8 px-2 sm:px-3"
           >
-            {isExpanded ? <ChevronUp className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" /> : <ChevronDown className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />}
+            {isExpanded ? <ChevronUp className="h-3 w-3 mr-1" /> : <ChevronDown className="h-3 w-3 mr-1" />}
             <span>Topics ({selectedTestTopics.length})</span>
           </Button>
           
@@ -140,9 +140,9 @@ export const TestCard = ({
             onClick={(e) => toggleCustomizeTest(test.id, e)}
             variant="outline" 
             size="sm"
-            className="flex-1 justify-center text-xs sm:text-sm px-2 sm:px-4"
+            className="flex-1 justify-center text-xs h-8 px-2 sm:px-3"
           >
-            <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+            <Settings className="h-3 w-3 mr-1" />
             <span>Customize</span>
           </Button>
           
@@ -151,17 +151,16 @@ export const TestCard = ({
               onClick={handleQuickStart}
               size="sm"
               disabled={isGenerating}
-              className="flex-1 justify-center text-xs sm:text-sm font-medium px-2 sm:px-4"
+              className="flex-1 justify-center text-xs font-medium h-8 px-2 sm:px-3"
             >
               {isGenerating ? (
                 <>
-                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2 animate-spin" />
-                  <span className="hidden sm:inline">Start Test</span>
-                  <span className="sm:hidden">Start</span>
+                  <Loader2 className="h-3 w-3 mr-1 animate-spin" />
+                  <span>Start</span>
                 </>
               ) : (
                 <>
-                  <Play className="h-3 w-3 sm:h-4 sm:w-4 mr-1 sm:mr-2" />
+                  <Play className="h-3 w-3 mr-1" />
                   <span>Start Test</span>
                 </>
               )}
