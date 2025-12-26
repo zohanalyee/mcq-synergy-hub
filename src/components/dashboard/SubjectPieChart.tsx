@@ -1,11 +1,9 @@
-
 import {
   PieChart,
   ResponsiveContainer,
   Pie,
   Cell,
   Tooltip,
-  Legend
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
@@ -28,30 +26,59 @@ const SubjectPieChart = ({ data }: SubjectPieChartProps) => {
         transition: { duration: 0.3 }
       }
     }}>
-      <Card>
+      <Card className="h-full">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">Subject Performance</CardTitle>
+          <CardTitle className="text-sm font-medium">Subject Performance</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={2}
-                dataKey="value"
-              >
-                {data.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip />
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
+          <div className="flex flex-col lg:flex-row items-center gap-4">
+            {/* Donut Chart */}
+            <div className="flex-shrink-0">
+              <ResponsiveContainer width={160} height={160}>
+                <PieChart>
+                  <Pie
+                    data={data}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={45}
+                    outerRadius={70}
+                    paddingAngle={2}
+                    dataKey="value"
+                  >
+                    {data.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip 
+                    formatter={(value: number) => [`${value}%`, 'Score']}
+                    contentStyle={{ 
+                      backgroundColor: 'hsl(var(--card))',
+                      border: '1px solid hsl(var(--border))',
+                      borderRadius: '8px'
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+            
+            {/* Legend */}
+            <div className="flex-1 space-y-1.5 max-h-40 overflow-y-auto">
+              {data.map((entry, index) => (
+                <div key={index} className="flex items-center gap-2 text-xs">
+                  <div 
+                    className="w-3 h-3 rounded-full flex-shrink-0" 
+                    style={{ backgroundColor: entry.color }}
+                  />
+                  <span className="text-muted-foreground truncate flex-1">
+                    {entry.name}
+                  </span>
+                  <span className="font-medium text-foreground">
+                    {entry.value}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </motion.div>

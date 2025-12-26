@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
-import DashboardHeader from "@/components/dashboard/DashboardHeader";
 import DashboardTabs from "@/components/dashboard/DashboardTabs";
 import WeeklyProgressChart from "@/components/dashboard/WeeklyProgressChart";
 import SubjectPieChart from "@/components/dashboard/SubjectPieChart";
@@ -10,6 +9,7 @@ import SubjectBarChart from "@/components/dashboard/SubjectBarChart";
 import WeaknessSection from "@/components/dashboard/WeaknessSection";
 import EmptyDashboard from "@/components/dashboard/EmptyDashboard";
 import RecentAchievements from "@/components/dashboard/RecentAchievements";
+import SubjectsMasteryTab from "@/components/dashboard/SubjectsMasteryTab";
 import StreakCounter from "@/components/gamification/StreakCounter";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { subjectData, weeklyProgressData } from "@/data/dashboardData";
@@ -47,6 +47,75 @@ const Dashboard = () => {
     ? weeklyProgress 
     : weeklyProgressData;
 
+  const renderTabContent = () => {
+    if (loading) {
+      return (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="pb-1">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-[120px] w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      );
+    }
+
+    if (!user) {
+      return <EmptyDashboard />;
+    }
+
+    switch (activeTab) {
+      case "overview":
+        return (
+          <>
+            <motion.div
+              variants={container}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3"
+            >
+              <WeeklyProgressChart data={chartWeeklyData} />
+              <RecentActivity />
+              <RecentAchievements />
+            </motion.div>
+
+            {/* Weakness Section for Overview */}
+            {hasData && <WeaknessSection weaknesses={weaknesses} />}
+          </>
+        );
+
+      case "performance":
+        if (!hasData) {
+          return <EmptyDashboard />;
+        }
+        return (
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
+            {/* Charts Row */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <SubjectPieChart data={chartSubjectData} />
+              <SubjectBarChart data={chartSubjectData} />
+            </div>
+          </motion.div>
+        );
+
+      case "subjects":
+        return <SubjectsMasteryTab />;
+
+      default:
+        return null;
+    }
+  };
+
   return (
     <Header>
       <div className="container mx-auto px-4 pt-4 pb-12">
@@ -74,51 +143,7 @@ const Dashboard = () => {
           setActiveTab={setActiveTab} 
         />
 
-        {loading ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <Card key={i}>
-                <CardHeader className="pb-1">
-                  <Skeleton className="h-4 w-24" />
-                </CardHeader>
-                <CardContent>
-                  <Skeleton className="h-[120px] w-full" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : !user ? (
-          <EmptyDashboard />
-        ) : !hasData ? (
-          <EmptyDashboard />
-        ) : (
-          <>
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-2 lg:grid-cols-4 gap-3"
-            >
-              <WeeklyProgressChart data={chartWeeklyData} />
-              <SubjectPieChart data={chartSubjectData} />
-              <RecentActivity />
-              <RecentAchievements />
-            </motion.div>
-
-            {/* Second Row */}
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-3"
-            >
-              <SubjectBarChart data={chartSubjectData} />
-            </motion.div>
-
-            {/* Weakness Section */}
-            <WeaknessSection weaknesses={weaknesses} />
-          </>
-        )}
+        {renderTabContent()}
       </div>
     </Header>
   );

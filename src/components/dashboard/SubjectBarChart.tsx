@@ -30,20 +30,36 @@ const SubjectBarChart = ({ data }: SubjectBarChartProps) => {
         y: 0,
         transition: { duration: 0.3 }
       }
-    }} className="lg:col-span-3">
-      <Card>
+    }}>
+      <Card className="h-full">
         <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium">Subject Scores Comparison</CardTitle>
+          <CardTitle className="text-sm font-medium">Subject Scores Comparison</CardTitle>
         </CardHeader>
         <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={data} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+          <ResponsiveContainer width="100%" height={250}>
+            <BarChart data={data} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="value" name="Score">
+              <XAxis 
+                dataKey="name" 
+                tick={{ fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis 
+                tick={{ fontSize: 11 }}
+                tickLine={false}
+                axisLine={false}
+                domain={[0, 100]}
+              />
+              <Tooltip 
+                formatter={(value: number) => [`${value}%`, 'Score']}
+                contentStyle={{ 
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
+                  borderRadius: '8px'
+                }}
+              />
+              <Bar dataKey="value" name="Score" radius={[4, 4, 0, 0]}>
                 {data.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
