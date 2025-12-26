@@ -30,6 +30,7 @@ import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
+import Achievements from "./pages/Achievements";
 
 import Quizzes from "./pages/Quizzes";
 import SubmitContent from "./pages/SubmitContent";
@@ -81,6 +82,7 @@ const App = () => {
                 <Route path="/custom-syllabus" element={<CustomSyllabus />} />
                 <Route path="/leaderboard" element={<Leaderboard />} />
                 <Route path="/feedback" element={<Feedback />} />
+                <Route path="/achievements" element={<Achievements />} />
                 <Route path="/subject/:id" element={<SubjectContent />} />
                 <Route path="/subject-content/:id" element={<SubjectContent />} />
                 <Route path="/jobs" element={<Jobs />} />
