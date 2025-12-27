@@ -6,7 +6,8 @@ import QuestionBankManager from "./QuestionBankManager";
 import AdminContentSubmission from "./AdminContentSubmission";
 import { DataMigrationUtility } from "./DataMigrationUtility";
 import AdminAnalyticsDashboard from "./analytics/AdminAnalyticsDashboard";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase } from "lucide-react";
+import AIContentFactory from "./AIContentFactory";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -66,56 +67,61 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
 
       {/* Dashboard Tab */}
       <TabsContent value="dashboard">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {/* AI Content Factory - Featured */}
+          <div className="md:col-span-2 lg:col-span-1">
+            <AIContentFactory />
+          </div>
+          
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <Database className="h-5 w-5 text-primary" />
                 Question Bank
               </CardTitle>
-              <CardDescription>Manage all questions in one place</CardDescription>
+              <CardDescription className="text-xs">Manage all questions</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => setActiveTab("question-bank")} className="w-full">
+              <Button onClick={() => setActiveTab("question-bank")} className="w-full" size="sm">
                 Open Question Bank
               </Button>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <FileText className="h-5 w-5 text-primary" />
                 Content Management
               </CardTitle>
-              <CardDescription>Submit and upload content</CardDescription>
+              <CardDescription className="text-xs">Submit and upload content</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" onClick={() => setActiveTab("submit-content")} className="w-full">
+              <Button variant="outline" onClick={() => setActiveTab("submit-content")} className="w-full" size="sm">
                 Submit Content
               </Button>
-              <Button variant="outline" onClick={() => setActiveTab("bulk-upload")} className="w-full">
+              <Button variant="outline" onClick={() => setActiveTab("bulk-upload")} className="w-full" size="sm">
                 Bulk Upload
               </Button>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
                 <Settings className="h-5 w-5 text-primary" />
                 Configuration
               </CardTitle>
-              <CardDescription>Manage subjects, topics & tests</CardDescription>
+              <CardDescription className="text-xs">Manage subjects, topics & tests</CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" onClick={() => setActiveTab("subjects")} className="w-full">
+              <Button variant="outline" onClick={() => setActiveTab("subjects")} className="w-full" size="sm">
                 Subjects
               </Button>
-              <Button variant="outline" onClick={() => setActiveTab("topics")} className="w-full">
+              <Button variant="outline" onClick={() => setActiveTab("topics")} className="w-full" size="sm">
                 Topics
               </Button>
-              <Button variant="outline" onClick={() => setActiveTab("job-tests")} className="w-full">
+              <Button variant="outline" onClick={() => setActiveTab("job-tests")} className="w-full" size="sm">
                 Job Tests
               </Button>
             </CardContent>

@@ -14,6 +14,48 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_usage_logs: {
+        Row: {
+          created_at: string
+          difficulty: string | null
+          id: string
+          metadata: Json | null
+          questions_fetched: number
+          questions_requested: number
+          questions_saved: number
+          source_type: string
+          subject: string | null
+          topic: string | null
+          triggered_by_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          metadata?: Json | null
+          questions_fetched?: number
+          questions_requested?: number
+          questions_saved?: number
+          source_type: string
+          subject?: string | null
+          topic?: string | null
+          triggered_by_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          difficulty?: string | null
+          id?: string
+          metadata?: Json | null
+          questions_fetched?: number
+          questions_requested?: number
+          questions_saved?: number
+          source_type?: string
+          subject?: string | null
+          topic?: string | null
+          triggered_by_user_id?: string | null
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           category: string | null
