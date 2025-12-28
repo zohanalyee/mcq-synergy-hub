@@ -103,7 +103,7 @@ const AIContentFactory = () => {
           requested: batchQuantity,
           generated: data.questions_generated || 0,
           saved: data.questions_saved || 0,
-          duplicates: data.duplicates_skipped || 0
+          duplicates: data.duplicates_flagged || 0
         };
 
         accumulatedSaved += batchResult.saved;
@@ -125,7 +125,12 @@ const AIContentFactory = () => {
     }
 
     setIsGenerating(false);
-    toast.success(`Generation complete! Saved ${accumulatedSaved} questions`);
+    
+    if (accumulatedDuplicates > 0) {
+      toast.success(`Generation complete! Saved ${accumulatedSaved} questions, ${accumulatedDuplicates} flagged for review`);
+    } else {
+      toast.success(`Generation complete! Saved ${accumulatedSaved} questions`);
+    }
   };
 
   return (
@@ -239,8 +244,8 @@ const AIContentFactory = () => {
                   Saved: {totalSaved}
                 </span>
                 <span className="flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Duplicates: {totalDuplicates}
+                  <AlertCircle className="h-3 w-3 text-yellow-500" />
+                  Flagged for Review: {totalDuplicates}
                 </span>
               </div>
             </motion.div>
@@ -265,7 +270,7 @@ const AIContentFactory = () => {
                 </div>
                 <div className="p-2 bg-background/50 rounded">
                   <div className="text-lg font-bold text-yellow-600">{totalDuplicates}</div>
-                  <div className="text-xs text-muted-foreground">Duplicates</div>
+                  <div className="text-xs text-muted-foreground">Flagged</div>
                 </div>
                 <div className="p-2 bg-background/50 rounded">
                   <div className="text-lg font-bold">{results.length}</div>

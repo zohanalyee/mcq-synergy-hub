@@ -7,7 +7,8 @@ import AdminContentSubmission from "./AdminContentSubmission";
 import { DataMigrationUtility } from "./DataMigrationUtility";
 import AdminAnalyticsDashboard from "./analytics/AdminAnalyticsDashboard";
 import AIContentFactory from "./AIContentFactory";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory } from "lucide-react";
+import DuplicateReviewQueue from "./DuplicateReviewQueue";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -28,6 +29,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="question-bank" className="flex items-center gap-2 border-2 border-primary/20">
           <Database className="h-4 w-4" />
           Question Bank ⭐
+        </TabsTrigger>
+        <TabsTrigger value="review-duplicates" className="flex items-center gap-2">
+          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          Review Duplicates
         </TabsTrigger>
         <TabsTrigger value="analytics" className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4" />
