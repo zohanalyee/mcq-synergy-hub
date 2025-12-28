@@ -313,7 +313,47 @@ async function logAIUsage(supabase: any, entry: UsageLogEntry): Promise<void> {
   }
 }
 
+// Check if a question is a duplicate (text similarity)
+async function checkDuplicate(supabase: any, questionText: string): Promise<{ isDuplicate: boolean; originalId?: string; originalTitle?: string }> {
+  try {
+    // Exact match check
+    const { data: exactMatch } = await supabase
+      .from('content_items')
+      .select('id, title')
+      .eq('category', 'mcq')
+      .neq('status', 'flagged_duplicate')
+      .eq('title', questionText)
+      .limit(1)
+      .maybeSingle();
+    
+    if (exactMatch) {
+      return { isDuplicate: true, originalId: exactMatch.id, originalTitle: exactMatch.title };
+    }
+    
+    // Fuzzy match: Check if first 50 chars match (catches minor variations)
+    const prefix = questionText.slice(0, 50);
+    const { data: fuzzyMatch } = await supabase
+      .from('content_items')
+      .select('id, title')
+      .eq('category', 'mcq')
+      .neq('status', 'flagged_duplicate')
+      .ilike('title', `${prefix}%`)
+      .limit(1)
+      .maybeSingle();
+    
+    if (fuzzyMatch) {
+      return { isDuplicate: true, originalId: fuzzyMatch.id, originalTitle: fuzzyMatch.title };
+    }
+    
+    return { isDuplicate: false };
+  } catch (err) {
+    console.error('Duplicate check error:', err);
+    return { isDuplicate: false };
+  }
+}
+
 // Background task to save remaining questions after returning response
+// Now with Human-in-the-Loop duplicate handling - flags duplicates instead of discarding
 async function saveQuestionsInBackground(
   questions: Question[],
   topic: string,
@@ -321,59 +361,63 @@ async function saveQuestionsInBackground(
   difficulty: string,
   supabase: any,
   sourceTag: string = 'ai'
-): Promise<number> {
-  console.log(`📦 Background task: Saving ${questions.length} questions...`);
+): Promise<{ saved: number; flagged: number }> {
+  console.log(`📦 Background task: Saving ${questions.length} questions with duplicate detection...`);
   
-  const BATCH_SIZE = 20;
-  const batches = Math.ceil(questions.length / BATCH_SIZE);
   let totalSaved = 0;
+  let totalFlagged = 0;
   
-  for (let i = 0; i < batches; i++) {
-    const batch = questions.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-    
-    const questionsToInsert = batch.map(q => ({
-      title: q.question,
-      description: q.explanation || '',
-      category: 'mcq',
-      subject: sanitizedTopic,
-      topic: topic,
-      difficulty: difficulty.toLowerCase(),
-      options: q.options,
-      correct_option: q.answer,
-      explanation: q.explanation || '',
-      status: 'approved',
-      show_in_subjects: true,
-      show_in_mock_tests: true,
-      reference_material: JSON.stringify({
-        source_role: topic,
-        original_topic: sanitizedTopic,
-        generated_at: new Date().toISOString(),
-        generator: sourceTag
-      })
-    }));
-
+  for (const q of questions) {
     try {
+      // Check for duplicates first
+      const dupCheck = await checkDuplicate(supabase, q.question);
+      
+      const questionData = {
+        title: q.question,
+        description: q.explanation || '',
+        category: 'mcq',
+        subject: sanitizedTopic,
+        topic: topic,
+        difficulty: difficulty.toLowerCase(),
+        options: q.options,
+        correct_option: q.answer,
+        explanation: q.explanation || '',
+        status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
+        show_in_subjects: !dupCheck.isDuplicate,
+        show_in_mock_tests: !dupCheck.isDuplicate,
+        reference_material: JSON.stringify({
+          source_role: topic,
+          original_topic: sanitizedTopic,
+          generated_at: new Date().toISOString(),
+          generator: sourceTag,
+          ...(dupCheck.isDuplicate && {
+            duplicate_of_id: dupCheck.originalId,
+            duplicate_of_title: dupCheck.originalTitle
+          })
+        })
+      };
+
       const { error: insertError } = await supabase
         .from('content_items')
-        .insert(questionsToInsert);
+        .insert(questionData);
 
       if (insertError) {
-        if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
-          console.log(`📦 Background batch ${i + 1}: Some duplicates skipped`);
-        } else {
-          console.error(`📦 Background batch ${i + 1} error:`, insertError);
-        }
+        console.error('Insert error:', insertError.message);
       } else {
-        totalSaved += batch.length;
-        console.log(`📦 Background batch ${i + 1}/${batches}: Saved ${batch.length} questions`);
+        if (dupCheck.isDuplicate) {
+          totalFlagged++;
+          console.log(`🚩 Flagged duplicate: "${q.question.slice(0, 40)}..."`);
+        } else {
+          totalSaved++;
+        }
       }
     } catch (err) {
-      console.error(`📦 Background batch ${i + 1} failed:`, err);
+      console.error('Save error:', err);
     }
   }
   
-  console.log('📦 Background task completed');
-  return totalSaved;
+  console.log(`📦 Background task completed: ${totalSaved} saved, ${totalFlagged} flagged as duplicates`);
+  return { saved: totalSaved, flagged: totalFlagged };
 }
 
 // Background generation + saving (combined for EdgeRuntime.waitUntil)
@@ -402,8 +446,9 @@ async function backgroundGenerateAndSave(
     console.log(`🚀 BACKGROUND: Generated ${newQuestions.length} questions`);
     
     let savedCount = 0;
+    let flaggedCount = 0;
     if (newQuestions.length > 0) {
-      savedCount = await saveQuestionsInBackground(
+      const result = await saveQuestionsInBackground(
         newQuestions, 
         topic, 
         sanitizedTopic, 
@@ -411,6 +456,8 @@ async function backgroundGenerateAndSave(
         supabase,
         sourceType === 'admin_bulk_generator' ? 'admin_bulk' : 'ai'
       );
+      savedCount = result.saved;
+      flaggedCount = result.flagged;
     }
     
     // Log the usage
@@ -423,7 +470,7 @@ async function backgroundGenerateAndSave(
       questions_requested: missingCount,
       questions_fetched: newQuestions.length,
       questions_saved: savedCount,
-      metadata: { background: true }
+      metadata: { background: true, flagged_duplicates: flaggedCount }
     });
     
     console.log(`🚀 BACKGROUND: Complete - ${newQuestions.length} questions saved to DB`);
@@ -567,7 +614,7 @@ serve(async (req) => {
     }
 
     // BANK_ONLY MODE (Admin Bulk Generator)
-    // Generate questions and insert directly to content_items, no test session
+    // Generate questions and insert directly to content_items with duplicate detection
     if (isBankOnly) {
       console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank`);
       
@@ -587,12 +634,15 @@ serve(async (req) => {
 
       console.log(`🏭 Generated ${newQuestions.length} new questions`);
 
-      // Save all questions with admin_bulk source tag
+      // Save all questions with Human-in-the-Loop duplicate detection
       let savedCount = 0;
-      let skippedCount = 0;
+      let flaggedCount = 0;
 
       for (const q of newQuestions) {
         try {
+          // Check for duplicates
+          const dupCheck = await checkDuplicate(supabase, q.question);
+          
           const { error: insertError } = await supabase
             .from('content_items')
             .insert({
@@ -605,32 +655,37 @@ serve(async (req) => {
               options: q.options,
               correct_option: q.answer,
               explanation: q.explanation || '',
-              status: 'approved',
-              show_in_subjects: true,
-              show_in_mock_tests: true,
+              status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
+              show_in_subjects: !dupCheck.isDuplicate,
+              show_in_mock_tests: !dupCheck.isDuplicate,
               reference_material: JSON.stringify({
                 source_role: topic,
                 original_topic: sanitizedTopic,
                 generated_at: new Date().toISOString(),
-                generator: 'admin_bulk'
+                generator: 'admin_bulk',
+                ...(dupCheck.isDuplicate && {
+                  duplicate_of_id: dupCheck.originalId,
+                  duplicate_of_title: dupCheck.originalTitle
+                })
               })
             });
 
           if (insertError) {
-            if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
-              skippedCount++;
-            } else {
-              console.error('Insert error:', insertError.message);
-            }
+            console.error('Insert error:', insertError.message);
           } else {
-            savedCount++;
+            if (dupCheck.isDuplicate) {
+              flaggedCount++;
+              console.log(`🚩 Flagged: "${q.question.slice(0, 40)}..."`);
+            } else {
+              savedCount++;
+            }
           }
         } catch (err) {
           console.error('Save error:', err);
         }
       }
 
-      console.log(`🏭 Saved ${savedCount} questions (${skippedCount} duplicates skipped)`);
+      console.log(`🏭 Complete: ${savedCount} approved, ${flaggedCount} flagged for review`);
 
       // Log AI usage
       await logAIUsage(supabase, {
@@ -642,7 +697,7 @@ serve(async (req) => {
         questions_requested: qc,
         questions_fetched: newQuestions.length,
         questions_saved: savedCount,
-        metadata: { skipped_duplicates: skippedCount }
+        metadata: { flagged_duplicates: flaggedCount }
       });
 
       return new Response(
@@ -652,7 +707,7 @@ serve(async (req) => {
           questions_requested: qc,
           questions_generated: newQuestions.length,
           questions_saved: savedCount,
-          duplicates_skipped: skippedCount,
+          duplicates_flagged: flaggedCount,
           topic: topic,
           difficulty: difficulty
         }),
@@ -790,14 +845,18 @@ serve(async (req) => {
     let savedCount = 0;
     let skippedCount = 0;
     
+    let flaggedCount = 0;
     if (newAIQuestions.length > 0) {
-      console.log('Step 3: Saving new questions to database...');
+      console.log('Step 3: Saving new questions to database with duplicate detection...');
       
       const IMMEDIATE_LIMIT = 20;
       
       if (newAIQuestions.length <= IMMEDIATE_LIMIT) {
         for (const q of newAIQuestions) {
           try {
+            // Check for duplicates
+            const dupCheck = await checkDuplicate(supabase, q.question);
+            
             const { error: insertError } = await supabase
               .from('content_items')
               .insert({
@@ -810,32 +869,36 @@ serve(async (req) => {
                 options: q.options,
                 correct_option: q.answer,
                 explanation: q.explanation || '',
-                status: 'approved',
-                show_in_subjects: true,
-                show_in_mock_tests: true,
+                status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
+                show_in_subjects: !dupCheck.isDuplicate,
+                show_in_mock_tests: !dupCheck.isDuplicate,
                 reference_material: JSON.stringify({
                   source_role: topic,
                   original_topic: sanitizedTopic,
                   generated_at: new Date().toISOString(),
-                  generator: 'ai'
+                  generator: 'ai',
+                  ...(dupCheck.isDuplicate && {
+                    duplicate_of_id: dupCheck.originalId,
+                    duplicate_of_title: dupCheck.originalTitle
+                  })
                 })
               });
 
             if (insertError) {
-              if (insertError.message?.includes('duplicate') || insertError.code === '23505') {
-                skippedCount++;
-              } else {
-                console.error('Failed to save question:', insertError.message);
-              }
+              console.error('Failed to save question:', insertError.message);
             } else {
-              savedCount++;
+              if (dupCheck.isDuplicate) {
+                flaggedCount++;
+              } else {
+                savedCount++;
+              }
             }
           } catch (saveErr) {
             console.error('Error saving question:', saveErr);
           }
         }
         
-        console.log(`✅ Saved ${savedCount} questions (skipped ${skippedCount} duplicates)`);
+        console.log(`✅ Saved ${savedCount} questions, flagged ${flaggedCount} for review`);
       } else {
         console.log(`Large batch (${newAIQuestions.length}): Using background task to save`);
         EdgeRuntime.waitUntil(
@@ -855,7 +918,7 @@ serve(async (req) => {
       questions_requested: qc,
       questions_fetched: newAIQuestions.length,
       questions_saved: savedCount,
-      metadata: { cache_used: dbQuestions.length, skipped_duplicates: skippedCount }
+      metadata: { cache_used: dbQuestions.length, flagged_duplicates: flaggedCount }
     });
 
     // Combine and return
