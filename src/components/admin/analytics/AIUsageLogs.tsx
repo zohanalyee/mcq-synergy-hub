@@ -19,13 +19,7 @@ interface AIUsageLog {
   questions_requested: number;
   questions_fetched: number;
   questions_saved: number;
-  metadata: Record<string, any>;
-  created_at: string;
-}
-  questions_requested: number;
-  questions_fetched: number;
-  questions_saved: number;
-  metadata: Record<string, any>;
+  metadata: unknown;
   created_at: string;
 }
 
