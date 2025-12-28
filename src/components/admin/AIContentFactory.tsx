@@ -162,12 +162,12 @@ const AIContentFactory = () => {
 
           <div className="space-y-1">
             <Label className="text-xs">Topic (Optional)</Label>
-            <Select value={selectedTopic} onValueChange={setSelectedTopic}>
+            <Select value={selectedTopic || "all"} onValueChange={(v) => setSelectedTopic(v === "all" ? "" : v)}>
               <SelectTrigger className="h-9">
                 <SelectValue placeholder="Any topic" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Any topic</SelectItem>
+                <SelectItem value="all">Any topic</SelectItem>
                 {filteredTopics.map(t => (
                   <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                 ))}
