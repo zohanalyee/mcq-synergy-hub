@@ -1,7 +1,7 @@
 
 export type ContentCategory = 'scholarship' | 'job' | 'mcq' | 'past_paper' | 'quiz';
 
-export type ContentStatus = 'pending' | 'approved' | 'rejected' | 'question_bank';
+export type ContentStatus = 'pending' | 'approved' | 'rejected' | 'question_bank' | 'flagged_duplicate';
 
 export interface ContentItem {
   id: string;

@@ -144,6 +144,11 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <AdminAnalyticsDashboard />
       </TabsContent>
       
+      {/* Review Duplicates Tab */}
+      <TabsContent value="review-duplicates">
+        <DuplicateReviewQueue />
+      </TabsContent>
+      
       {/* Content Management */}
       <TabsContent value="submit-content">
         <AdminContentSubmission />
