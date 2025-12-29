@@ -158,53 +158,58 @@ const QuestionBankManager = () => {
     }
   };
 
-  // Fetch total stats from database (independent of pagination)
+  // Fetch total stats from database using count queries (avoids 1000-row limit)
   const fetchStats = async () => {
     try {
-      const { data, error } = await supabase
+      // Get total count
+      const { count: totalCount } = await supabase
         .from('content_items')
-        .select('difficulty, status');
-      
-      if (error) {
-        console.error('Error fetching stats:', error);
-        return;
-      }
-      
-      let easy = 0, medium = 0, hard = 0, mix = 0;
-      let pending = 0, approved = 0, rejected = 0;
-      
-      (data || []).forEach(item => {
-        const d = item.difficulty?.toLowerCase()?.trim();
-        const s = item.status?.toLowerCase()?.trim();
-        
-        // Count by difficulty
-        if (!d || d === '' || d === 'mix' || d === 'mixed' || d.includes(',')) {
-          mix++;
-        } else if (d === 'easy') {
-          easy++;
-        } else if (d === 'medium') {
-          medium++;
-        } else if (d === 'hard') {
-          hard++;
-        } else {
-          mix++;
-        }
-        
-        // Count by status
-        if (s === 'pending') pending++;
-        else if (s === 'approved') approved++;
-        else if (s === 'rejected') rejected++;
-      });
-      
+        .select('id', { count: 'exact', head: true });
+
+      // Get counts by difficulty
+      const { count: easyCount } = await supabase
+        .from('content_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('difficulty', 'easy');
+
+      const { count: mediumCount } = await supabase
+        .from('content_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('difficulty', 'medium');
+
+      const { count: hardCount } = await supabase
+        .from('content_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('difficulty', 'hard');
+
+      // Get counts by status
+      const { count: pendingCount } = await supabase
+        .from('content_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+
+      const { count: approvedCount } = await supabase
+        .from('content_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'approved');
+
+      const { count: rejectedCount } = await supabase
+        .from('content_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'rejected');
+
+      // Calculate mix (everything else)
+      const mixCount = (totalCount || 0) - (easyCount || 0) - (mediumCount || 0) - (hardCount || 0);
+
       setStats({
-        totalQuestions: data?.length || 0,
-        easyQuestions: easy,
-        mediumQuestions: medium,
-        hardQuestions: hard,
-        mixQuestions: mix,
-        pendingCount: pending,
-        approvedCount: approved,
-        rejectedCount: rejected
+        totalQuestions: totalCount || 0,
+        easyQuestions: easyCount || 0,
+        mediumQuestions: mediumCount || 0,
+        hardQuestions: hardCount || 0,
+        mixQuestions: mixCount,
+        pendingCount: pendingCount || 0,
+        approvedCount: approvedCount || 0,
+        rejectedCount: rejectedCount || 0
       });
     } catch (error) {
       console.error('Error in fetchStats:', error);
@@ -216,12 +221,7 @@ const QuestionBankManager = () => {
     fetchQuestions();
   }, [currentPage, categoryFilter, statusFilter]);
 
-  // Fetch stats on mount
-  useEffect(() => {
-    fetchStats();
-  }, [currentPage, categoryFilter]);
-
-  // Fetch stats on mount
+  // Fetch stats on mount only (not on filter changes to avoid redundant calls)
   useEffect(() => {
     fetchStats();
   }, []);
