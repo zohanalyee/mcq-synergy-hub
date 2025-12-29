@@ -614,68 +614,118 @@ serve(async (req) => {
     }
 
     // BANK_ONLY MODE (Admin Bulk Generator)
-    // Generate questions and insert directly to content_items with duplicate detection
+    // Generate questions and insert directly to content_items - ZERO DATA LOSS
+    // All questions are saved: approved or flagged_duplicate with modified title
     if (isBankOnly) {
-      console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank`);
+      console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank (ZERO LOSS)`);
       
       const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
       if (!LOVABLE_API_KEY) {
         throw new Error('LOVABLE_API_KEY is not configured');
       }
 
-      // Generate questions
+      // Generate questions - DO NOT filter duplicates in memory
       const newQuestions = await generateQuestionsInBatches(
         topic,
         difficulty,
         qc,
         LOVABLE_API_KEY,
-        existingQuestionTexts
+        [] // Don't pass existing questions - we want ALL generated questions
       );
 
-      console.log(`🏭 Generated ${newQuestions.length} new questions`);
+      console.log(`🏭 Generated ${newQuestions.length} new questions - saving ALL to database`);
 
-      // Save all questions with Human-in-the-Loop duplicate detection
+      // Track questions inserted in this batch to detect intra-batch duplicates
+      const batchInsertedTitles = new Set<string>();
       let savedCount = 0;
       let flaggedCount = 0;
 
       for (const q of newQuestions) {
         try {
-          // Check for duplicates
-          const dupCheck = await checkDuplicate(supabase, q.question);
+          // Check if this is a duplicate within the current batch
+          const isIntraBatchDuplicate = batchInsertedTitles.has(q.question.toLowerCase().trim());
           
+          // Check for duplicates in existing DB
+          const dupCheck = await checkDuplicate(supabase, q.question);
+          const isDuplicate = isIntraBatchDuplicate || dupCheck.isDuplicate;
+          
+          // Determine title - modify if duplicate to bypass unique constraint
+          const finalTitle = isDuplicate 
+            ? `[POTENTIAL DUPLICATE] ${q.question}`
+            : q.question;
+          
+          const questionData = {
+            title: finalTitle,
+            description: q.explanation || '',
+            category: 'mcq',
+            subject: sanitizedTopic,
+            topic: topic,
+            difficulty: difficulty.toLowerCase(),
+            options: q.options,
+            correct_option: q.answer,
+            explanation: q.explanation || '',
+            status: isDuplicate ? 'flagged_duplicate' : 'approved',
+            show_in_subjects: !isDuplicate,
+            show_in_mock_tests: !isDuplicate,
+            reference_material: JSON.stringify({
+              source_role: topic,
+              original_topic: sanitizedTopic,
+              generated_at: new Date().toISOString(),
+              generator: 'admin_bulk',
+              original_title: q.question, // Always store original for comparison
+              ...(dupCheck.isDuplicate && {
+                duplicate_of_id: dupCheck.originalId,
+                duplicate_of_title: dupCheck.originalTitle
+              }),
+              ...(isIntraBatchDuplicate && {
+                intra_batch_duplicate: true
+              })
+            })
+          };
+
+          // Try to insert
           const { error: insertError } = await supabase
             .from('content_items')
-            .insert({
-              title: q.question,
-              description: q.explanation || '',
-              category: 'mcq',
-              subject: sanitizedTopic,
-              topic: topic,
-              difficulty: difficulty.toLowerCase(),
-              options: q.options,
-              correct_option: q.answer,
-              explanation: q.explanation || '',
-              status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
-              show_in_subjects: !dupCheck.isDuplicate,
-              show_in_mock_tests: !dupCheck.isDuplicate,
-              reference_material: JSON.stringify({
-                source_role: topic,
-                original_topic: sanitizedTopic,
-                generated_at: new Date().toISOString(),
-                generator: 'admin_bulk',
-                ...(dupCheck.isDuplicate && {
-                  duplicate_of_id: dupCheck.originalId,
-                  duplicate_of_title: dupCheck.originalTitle
-                })
-              })
-            });
+            .insert(questionData);
 
           if (insertError) {
-            console.error('Insert error:', insertError.message);
+            // If unique constraint violation, retry with modified title
+            if (insertError.message?.includes('unique') || insertError.message?.includes('duplicate')) {
+              console.log(`⚠️ Unique constraint hit, retrying with modified title...`);
+              
+              const retryData = {
+                ...questionData,
+                title: `[POTENTIAL DUPLICATE] ${q.question}`,
+                status: 'flagged_duplicate',
+                show_in_subjects: false,
+                show_in_mock_tests: false,
+                reference_material: JSON.stringify({
+                  ...JSON.parse(questionData.reference_material),
+                  retry_reason: 'unique_constraint_violation',
+                  original_title: q.question
+                })
+              };
+              
+              const { error: retryError } = await supabase
+                .from('content_items')
+                .insert(retryData);
+              
+              if (retryError) {
+                console.error('Retry insert failed:', retryError.message);
+              } else {
+                flaggedCount++;
+                console.log(`🚩 Saved as flagged (retry): "${q.question.slice(0, 40)}..."`);
+              }
+            } else {
+              console.error('Insert error:', insertError.message);
+            }
           } else {
-            if (dupCheck.isDuplicate) {
+            // Track this title for intra-batch duplicate detection
+            batchInsertedTitles.add(q.question.toLowerCase().trim());
+            
+            if (isDuplicate) {
               flaggedCount++;
-              console.log(`🚩 Flagged: "${q.question.slice(0, 40)}..."`);
+              console.log(`🚩 Saved as flagged: "${q.question.slice(0, 40)}..."`);
             } else {
               savedCount++;
             }
@@ -685,7 +735,8 @@ serve(async (req) => {
         }
       }
 
-      console.log(`🏭 Complete: ${savedCount} approved, ${flaggedCount} flagged for review`);
+      const totalSaved = savedCount + flaggedCount;
+      console.log(`🏭 ZERO LOSS Complete: ${totalSaved}/${newQuestions.length} saved (${savedCount} approved, ${flaggedCount} flagged)`);
 
       // Log AI usage
       await logAIUsage(supabase, {
@@ -696,8 +747,8 @@ serve(async (req) => {
         difficulty: difficulty,
         questions_requested: qc,
         questions_fetched: newQuestions.length,
-        questions_saved: savedCount,
-        metadata: { flagged_duplicates: flaggedCount }
+        questions_saved: totalSaved,
+        metadata: { approved: savedCount, flagged_duplicates: flaggedCount }
       });
 
       return new Response(
@@ -706,7 +757,8 @@ serve(async (req) => {
           mode: 'bank_only',
           questions_requested: qc,
           questions_generated: newQuestions.length,
-          questions_saved: savedCount,
+          questions_saved: totalSaved,
+          questions_approved: savedCount,
           duplicates_flagged: flaggedCount,
           topic: topic,
           difficulty: difficulty
