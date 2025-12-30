@@ -8,7 +8,8 @@ import { DataMigrationUtility } from "./DataMigrationUtility";
 import AdminAnalyticsDashboard from "./analytics/AdminAnalyticsDashboard";
 import AIContentFactory from "./AIContentFactory";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle } from "lucide-react";
+import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -56,6 +57,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <div className="w-px h-8 bg-border mx-2" />
         
         {/* Configuration Group */}
+        <TabsTrigger value="lms-structure" className="flex items-center gap-2 border-2 border-green-500/20">
+          <Layers className="h-4 w-4" />
+          LMS Structure 🆕
+        </TabsTrigger>
         <TabsTrigger value="subjects" className="flex items-center gap-2">
           <BookOpen className="h-4 w-4" />
           Subjects
@@ -159,6 +164,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       </TabsContent>
       
       {/* Configuration */}
+      <TabsContent value="lms-structure">
+        <LMSStructureManager />
+      </TabsContent>
+      
       <TabsContent value="subjects">
         <SubjectManager />
       </TabsContent>
