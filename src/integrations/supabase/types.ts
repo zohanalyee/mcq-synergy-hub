@@ -446,6 +446,33 @@ export type Database = {
         }
         Relationships: []
       }
+      educational_systems: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          type: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          type: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          type?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string | null
@@ -497,8 +524,41 @@ export type Database = {
         }
         Relationships: []
       }
+      levels: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          order_index: number | null
+          system_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          order_index?: number | null
+          system_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          order_index?: number | null
+          system_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "levels_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "educational_systems"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
+          active_learning_context: Json | null
           avatar_url: string | null
           created_at: string | null
           id: string
@@ -506,6 +566,7 @@ export type Database = {
           username: string | null
         }
         Insert: {
+          active_learning_context?: Json | null
           avatar_url?: string | null
           created_at?: string | null
           id: string
@@ -513,6 +574,7 @@ export type Database = {
           username?: string | null
         }
         Update: {
+          active_learning_context?: Json | null
           avatar_url?: string | null
           created_at?: string | null
           id?: string
@@ -552,6 +614,7 @@ export type Database = {
           description: string | null
           icon: string | null
           id: string
+          level_id: string | null
           name: string
         }
         Insert: {
@@ -560,6 +623,7 @@ export type Database = {
           description?: string | null
           icon?: string | null
           id?: string
+          level_id?: string | null
           name: string
         }
         Update: {
@@ -568,9 +632,18 @@ export type Database = {
           description?: string | null
           icon?: string | null
           id?: string
+          level_id?: string | null
           name?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "subjects_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subtopics: {
         Row: {
