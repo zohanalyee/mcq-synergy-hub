@@ -224,45 +224,81 @@ export const assignSubjectToLevel = async (
 export const bulkImportSyllabus = async (
   levelId: string,
   syllabusData: SyllabusImportItem[]
-): Promise<{ subjects: number; topics: number; errors: string[] }> => {
-  const result = { subjects: 0, topics: 0, errors: [] as string[] };
+): Promise<{ subjects: number; topics: number; skippedSubjects: number; skippedTopics: number; errors: string[] }> => {
+  const result = { 
+    subjects: 0, 
+    topics: 0, 
+    skippedSubjects: 0,
+    skippedTopics: 0,
+    errors: [] as string[] 
+  };
 
   for (const item of syllabusData) {
-    // Create subject
-    const { data: subjectData, error: subjectError } = await supabase
+    let subjectId: string;
+    
+    // Step 1: Check if subject already exists in this level
+    const { data: existingSubject } = await supabase
       .from('subjects')
-      .insert([{
-        name: item.subject,
-        description: `Subject: ${item.subject}`,
-        level_id: levelId
-      }])
-      .select()
-      .single();
+      .select('id')
+      .eq('name', item.subject)
+      .eq('level_id', levelId)
+      .maybeSingle();
 
-    if (subjectError) {
-      result.errors.push(`Failed to create subject "${item.subject}": ${subjectError.message}`);
-      continue;
+    if (existingSubject) {
+      // Subject exists - use it
+      subjectId = existingSubject.id;
+      result.skippedSubjects++;
+    } else {
+      // Create new subject
+      const { data: newSubject, error: subjectError } = await supabase
+        .from('subjects')
+        .insert([{
+          name: item.subject,
+          description: `Subject: ${item.subject}`,
+          level_id: levelId
+        }])
+        .select('id')
+        .single();
+
+      if (subjectError) {
+        result.errors.push(`Failed to create subject "${item.subject}": ${subjectError.message}`);
+        continue;
+      }
+      
+      subjectId = newSubject.id;
+      result.subjects++;
     }
 
-    result.subjects++;
-
-    // Create topics for this subject
+    // Step 2: Process topics for this subject
     if (item.topics && item.topics.length > 0) {
-      const topicsToInsert = item.topics.map(topicName => ({
-        name: topicName,
-        description: `Topic: ${topicName}`,
-        subject_id: subjectData.id
-      }));
+      for (const topicName of item.topics) {
+        // Check if topic already exists
+        const { data: existingTopic } = await supabase
+          .from('topics')
+          .select('id')
+          .eq('name', topicName)
+          .eq('subject_id', subjectId)
+          .maybeSingle();
 
-      const { error: topicsError, data: topicsData } = await supabase
-        .from('topics')
-        .insert(topicsToInsert)
-        .select();
+        if (existingTopic) {
+          result.skippedTopics++;
+          continue;
+        }
 
-      if (topicsError) {
-        result.errors.push(`Failed to create topics for "${item.subject}": ${topicsError.message}`);
-      } else {
-        result.topics += topicsData?.length || 0;
+        // Create new topic
+        const { error: topicError } = await supabase
+          .from('topics')
+          .insert([{
+            name: topicName,
+            description: `Topic: ${topicName}`,
+            subject_id: subjectId
+          }]);
+
+        if (topicError) {
+          result.errors.push(`Failed to create topic "${topicName}": ${topicError.message}`);
+        } else {
+          result.topics++;
+        }
       }
     }
   }
