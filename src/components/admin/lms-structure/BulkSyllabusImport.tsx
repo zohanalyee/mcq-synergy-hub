@@ -38,6 +38,8 @@ export function BulkSyllabusImport({ open, onOpenChange, level, onSuccess }: Bul
   const [importResult, setImportResult] = useState<{
     subjects: number;
     topics: number;
+    skippedSubjects: number;
+    skippedTopics: number;
     errors: string[];
   } | null>(null);
 
@@ -89,7 +91,10 @@ export function BulkSyllabusImport({ open, onOpenChange, level, onSuccess }: Bul
     setImportResult(result);
 
     if (result.errors.length === 0) {
-      toast.success(`Imported ${result.subjects} subjects and ${result.topics} topics`);
+      const skippedMsg = result.skippedSubjects > 0 || result.skippedTopics > 0
+        ? ` (skipped ${result.skippedSubjects} existing subjects, ${result.skippedTopics} existing topics)`
+        : '';
+      toast.success(`Created ${result.subjects} subjects and ${result.topics} topics${skippedMsg}`);
       onSuccess();
     } else {
       toast.warning(`Imported with ${result.errors.length} errors`);
@@ -199,6 +204,11 @@ export function BulkSyllabusImport({ open, onOpenChange, level, onSuccess }: Bul
                 <p className="font-medium">Import Complete!</p>
                 <p className="text-sm mt-1">
                   Created {importResult.subjects} subjects and {importResult.topics} topics.
+                  {(importResult.skippedSubjects > 0 || importResult.skippedTopics > 0) && (
+                    <span className="text-muted-foreground ml-1">
+                      (Skipped {importResult.skippedSubjects} existing subjects, {importResult.skippedTopics} existing topics)
+                    </span>
+                  )}
                 </p>
                 {importResult.errors.length > 0 && (
                   <div className="mt-2 text-sm text-destructive">
