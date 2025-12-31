@@ -8,7 +8,11 @@ import FeatureCard from '@/components/FeatureCard';
 import TestCategoryCard from '@/components/TestCategoryCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import TestimonialCard from '@/components/TestimonialCard';
+import WelcomeScreen from '@/components/dashboard/WelcomeScreen';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLearning } from '@/contexts/LearningContext';
+import { getSubjectsByLevel } from '@/services/lmsStructureService';
 import { 
   BookOpen, 
   BrainCircuit, 
@@ -36,10 +40,35 @@ const Home = () => {
   const { theme, setTheme } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { activeContext, activeLevel, activeSystem, loading: learningLoading } = useLearning();
+  const [levelSubjects, setLevelSubjects] = useState<any[]>([]);
+  const [loadingSubjects, setLoadingSubjects] = useState(false);
 
   useEffect(() => {
     setIsLoaded(true);
   }, []);
+
+  // Fetch subjects for the active level
+  useEffect(() => {
+    const fetchSubjects = async () => {
+      if (activeContext?.level_id) {
+        setLoadingSubjects(true);
+        try {
+          const subjects = await getSubjectsByLevel(activeContext.level_id);
+          setLevelSubjects(subjects);
+        } catch (error) {
+          console.error('Error fetching subjects:', error);
+        } finally {
+          setLoadingSubjects(false);
+        }
+      } else {
+        setLevelSubjects([]);
+      }
+    };
+
+    fetchSubjects();
+  }, [activeContext?.level_id]);
 
   const fadeInUpVariants = {
     hidden: { opacity: 0, y: 20 },
@@ -162,6 +191,28 @@ const Home = () => {
     }
   ];
 
+  // Show welcome screen for logged-in users without active context
+  const showWelcomeScreen = user && !learningLoading && !activeContext?.level_id;
+
+  // Get display subjects - from level if context is set, otherwise default
+  const displaySubjects = activeContext?.level_id && levelSubjects.length > 0
+    ? levelSubjects.map((s: any) => ({
+        title: s.name,
+        icon: <BookOpen size={24} className="text-primary" />,
+        description: s.description || `${s.topicCount || 0} topics`,
+        topicCount: s.topicCount || 0,
+        color: '#6366f1'
+      }))
+    : subjects;
+
+  if (showWelcomeScreen) {
+    return (
+      <Header theme={theme} setTheme={setTheme}>
+        <WelcomeScreen />
+      </Header>
+    );
+  }
+
   return (
     <Header theme={theme} setTheme={setTheme}>
       <div className={`min-h-screen bg-background ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
@@ -269,7 +320,7 @@ const Home = () => {
               transition={{ duration: 0.5 }}
               className="text-2xl font-bold mb-2"
             >
-              Popular Subjects
+              {activeLevel ? `${activeLevel.name} Subjects` : 'Popular Subjects'}
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -278,23 +329,35 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-sm text-muted-foreground max-w-xl mx-auto"
             >
-              Explore our comprehensive collection of subjects and topics
+              {activeSystem 
+                ? `Subjects for ${activeSystem.name} • ${activeLevel?.name}`
+                : 'Explore our comprehensive collection of subjects and topics'}
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {subjects.map((subject, index) => (
-              <SubjectCard
-                key={subject.title}
-                title={subject.title}
-                icon={subject.icon}
-                description={subject.description}
-                topicCount={subject.topicCount}
-                color={subject.color}
-                onClick={() => navigate(`/subjects/${subject.title.toLowerCase()}`)}
-              />
-            ))}
-          </div>
+          {loadingSubjects ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+          ) : displaySubjects.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No subjects available for this level yet.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {displaySubjects.map((subject, index) => (
+                <SubjectCard
+                  key={subject.title}
+                  title={subject.title}
+                  icon={subject.icon}
+                  description={subject.description}
+                  topicCount={subject.topicCount}
+                  color={subject.color}
+                  onClick={() => navigate(`/subject/${subject.title.toLowerCase()}`)}
+                />
+              ))}
+            </div>
+          )}
           
           <div className="mt-8 text-center">
             <Button variant="outline" size="sm" onClick={() => navigate('/subjects')}>
