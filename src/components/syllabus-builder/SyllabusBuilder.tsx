@@ -11,16 +11,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 
 import { useSyllabusData } from './hooks/useSyllabusData';
+import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
 import { FilterSidebar } from './FilterSidebar';
 import { SubjectGrid } from './SubjectGrid';
 import { SelectionSummary } from './SelectionSummary';
-import { SyllabusSubject, QuizSettings } from './interfaces';
+import { SyllabusSubject, QuizSettings, SavedSyllabusTemplate } from './interfaces';
+
+const MAX_SUBJECTS = 10;
 
 export const SyllabusBuilder = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [syllabusName, setSyllabusName] = useState('My Custom Quiz');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [quizSettings, setQuizSettings] = useState<QuizSettings>({
     timeLimit: 30,
     questionsCount: 20,
@@ -38,55 +42,119 @@ export const SyllabusBuilder = () => {
     toggleSystemFilter,
     toggleLevelFilter,
     setSearchQuery,
-    clearFilters
+    clearFilters,
+    setFilterState
   } = useSyllabusData();
 
+  const { templates, loading: loadingTemplates, saveTemplate, deleteTemplate } = useSyllabusTemplates(user?.id);
+
   // Calculate selection counts
-  const { selectedSubjectsCount, selectedTopicsCount } = useMemo(() => {
+  const { selectedSubjectsCount, selectedTopicsCount, selectedTopicIds } = useMemo(() => {
     let subjectsCount = 0;
     let topicsCount = 0;
+    const topicIds: string[] = [];
     
     rawSubjects.forEach(subject => {
-      const selectedTopics = subject.topics.filter(t => t.isSelected).length;
-      if (selectedTopics > 0) {
+      const selectedTopics = subject.topics.filter(t => t.isSelected);
+      if (selectedTopics.length > 0) {
         subjectsCount++;
-        topicsCount += selectedTopics;
+        topicsCount += selectedTopics.length;
+        selectedTopics.forEach(t => topicIds.push(t.id));
       }
     });
 
-    return { selectedSubjectsCount: subjectsCount, selectedTopicsCount: topicsCount };
+    return { selectedSubjectsCount: subjectsCount, selectedTopicsCount: topicsCount, selectedTopicIds: topicIds };
+  }, [rawSubjects]);
+
+  // Check if adding a subject would exceed the limit
+  const wouldExceedLimit = useCallback((subjectId: string) => {
+    const currentlySelectedSubjects = rawSubjects.filter(s => 
+      s.id !== subjectId && s.topics.some(t => t.isSelected)
+    );
+    return currentlySelectedSubjects.length >= MAX_SUBJECTS;
   }, [rawSubjects]);
 
   // Toggle subject selection (select/deselect all topics)
   const handleToggleSubject = useCallback((subjectId: string) => {
-    setRawSubjects(prev => prev.map(subject => {
-      if (subject.id === subjectId) {
-        const allSelected = subject.topics.every(t => t.isSelected);
-        return {
-          ...subject,
-          isSelected: !allSelected,
-          topics: subject.topics.map(t => ({ ...t, isSelected: !allSelected }))
-        };
+    setRawSubjects(prev => {
+      const subject = prev.find(s => s.id === subjectId);
+      if (!subject) return prev;
+
+      const allSelected = subject.topics.every(t => t.isSelected);
+      const isSelecting = !allSelected;
+
+      // Check limit when selecting
+      if (isSelecting) {
+        const currentlySelectedCount = prev.filter(s => 
+          s.id !== subjectId && s.topics.some(t => t.isSelected)
+        ).length;
+        
+        if (currentlySelectedCount >= MAX_SUBJECTS) {
+          toast({
+            title: "Maximum Subjects Reached",
+            description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
+            variant: "destructive"
+          });
+          return prev;
+        }
       }
-      return subject;
-    }));
+
+      return prev.map(s => {
+        if (s.id === subjectId) {
+          return {
+            ...s,
+            isSelected: !allSelected,
+            topics: s.topics.map(t => ({ ...t, isSelected: !allSelected }))
+          };
+        }
+        return s;
+      });
+    });
   }, [setRawSubjects]);
 
   // Toggle individual topic selection
   const handleToggleTopic = useCallback((subjectId: string, topicId: string) => {
-    setRawSubjects(prev => prev.map(subject => {
-      if (subject.id === subjectId) {
-        const newTopics = subject.topics.map(t => 
-          t.id === topicId ? { ...t, isSelected: !t.isSelected } : t
-        );
-        return {
-          ...subject,
-          topics: newTopics,
-          isSelected: newTopics.some(t => t.isSelected)
-        };
+    setRawSubjects(prev => {
+      const subject = prev.find(s => s.id === subjectId);
+      if (!subject) return prev;
+
+      const topic = subject.topics.find(t => t.id === topicId);
+      if (!topic) return prev;
+
+      // Check if this is a new subject being added
+      const isSubjectCurrentlySelected = subject.topics.some(t => t.isSelected);
+      const isSelectingTopic = !topic.isSelected;
+
+      // If selecting a topic in a new subject, check limit
+      if (isSelectingTopic && !isSubjectCurrentlySelected) {
+        const currentlySelectedCount = prev.filter(s => 
+          s.id !== subjectId && s.topics.some(t => t.isSelected)
+        ).length;
+        
+        if (currentlySelectedCount >= MAX_SUBJECTS) {
+          toast({
+            title: "Maximum Subjects Reached",
+            description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
+            variant: "destructive"
+          });
+          return prev;
+        }
       }
-      return subject;
-    }));
+
+      return prev.map(s => {
+        if (s.id === subjectId) {
+          const newTopics = s.topics.map(t => 
+            t.id === topicId ? { ...t, isSelected: !t.isSelected } : t
+          );
+          return {
+            ...s,
+            topics: newTopics,
+            isSelected: newTopics.some(t => t.isSelected)
+          };
+        }
+        return s;
+      });
+    });
   }, [setRawSubjects]);
 
   // Toggle subject expansion
@@ -112,7 +180,65 @@ export const SyllabusBuilder = () => {
     setQuizSettings(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  // Generate quiz
+  // Save template handler
+  const handleSaveTemplate = async (templateName: string): Promise<boolean> => {
+    if (!user) {
+      toast({
+        title: "Sign in Required",
+        description: "Please sign in to save templates.",
+        variant: "destructive"
+      });
+      return false;
+    }
+
+    setIsSavingTemplate(true);
+    try {
+      const success = await saveTemplate(templateName, filterState, selectedTopicIds, quizSettings);
+      return success;
+    } finally {
+      setIsSavingTemplate(false);
+    }
+  };
+
+  // Load template handler
+  const handleLoadTemplate = useCallback((template: SavedSyllabusTemplate) => {
+    // Restore filter state
+    if (setFilterState && template.filter_state) {
+      setFilterState(template.filter_state);
+    }
+
+    // Restore quiz settings
+    if (template.quiz_settings) {
+      setQuizSettings(template.quiz_settings);
+    }
+
+    // Restore topic selections
+    const selectedIds = new Set(template.selected_topic_ids);
+    setRawSubjects(prev => prev.map(subject => {
+      const newTopics = subject.topics.map(t => ({
+        ...t,
+        isSelected: selectedIds.has(t.id)
+      }));
+      return {
+        ...subject,
+        topics: newTopics,
+        isSelected: newTopics.some(t => t.isSelected),
+        isExpanded: newTopics.some(t => t.isSelected)
+      };
+    }));
+
+    toast({
+      title: "Template Loaded",
+      description: `"${template.name}" has been applied.`
+    });
+  }, [setFilterState, setRawSubjects]);
+
+  // Delete template handler
+  const handleDeleteTemplate = useCallback(async (templateId: string) => {
+    await deleteTemplate(templateId);
+  }, [deleteTemplate]);
+
+  // Generate quiz with smart AI prompting
   const handleGenerateQuiz = async () => {
     if (!user) {
       toast({
@@ -135,8 +261,23 @@ export const SyllabusBuilder = () => {
     setIsGenerating(true);
 
     try {
-      // Gather selected topics
+      // Gather selected subjects and topics
       const selectedSubjects = rawSubjects.filter(s => s.topics.some(t => t.isSelected));
+      
+      // Build structured subject_topic_map for enhanced AI prompting
+      const subjectTopicMap = selectedSubjects.map(subject => ({
+        subject: subject.name,
+        topics: subject.topics.filter(t => t.isSelected).map(t => t.name)
+      }));
+
+      // Build system instruction for balanced distribution
+      let systemInstruction = '';
+      if (selectedSubjects.length > 1) {
+        const subjectList = selectedSubjects.map(s => s.name).join(', ');
+        systemInstruction = `Create a balanced test distributing the ${quizSettings.questionsCount} questions among the selected subjects: ${subjectList}. Each subject should get approximately equal representation.`;
+      }
+
+      // Legacy topic string for backward compatibility
       const selectedTopicsString = selectedSubjects
         .map(subject => {
           const topics = subject.topics.filter(t => t.isSelected).map(t => t.name).join(', ');
@@ -146,10 +287,12 @@ export const SyllabusBuilder = () => {
 
       const usePartialMode = quizSettings.questionsCount > 20;
 
-      // Call AI to generate test
+      // Call AI to generate test with enhanced payload
       const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: selectedTopicsString,
+          subject_topic_map: subjectTopicMap,
+          system_instruction: systemInstruction,
           difficulty: quizSettings.difficulty,
           question_count: quizSettings.questionsCount,
           partial_mode: usePartialMode
@@ -252,6 +395,7 @@ export const SyllabusBuilder = () => {
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <Badge variant="secondary" className="px-2 py-1 text-xs">
             <span className="text-primary font-bold mr-1">{selectedSubjectsCount}</span> Subjects
+            {selectedSubjectsCount >= MAX_SUBJECTS && <span className="text-destructive ml-1">(max)</span>}
           </Badge>
           <Badge variant="secondary" className="px-2 py-1 text-xs">
             <span className="text-primary font-bold mr-1">{selectedTopicsCount}</span> Topics
@@ -271,6 +415,11 @@ export const SyllabusBuilder = () => {
               toggleSystemFilter={toggleSystemFilter}
               toggleLevelFilter={toggleLevelFilter}
               clearFilters={clearFilters}
+              templates={templates}
+              loadingTemplates={loadingTemplates}
+              onLoadTemplate={handleLoadTemplate}
+              onDeleteTemplate={handleDeleteTemplate}
+              isAuthenticated={!!user}
             />
           </Card>
         </div>
@@ -312,6 +461,8 @@ export const SyllabusBuilder = () => {
               onClearSelection={handleClearSelection}
               onGenerateQuiz={handleGenerateQuiz}
               isGenerating={isGenerating}
+              onSaveTemplate={handleSaveTemplate}
+              isSavingTemplate={isSavingTemplate}
             />
           </div>
         </div>
