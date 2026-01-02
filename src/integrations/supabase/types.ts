@@ -607,6 +607,39 @@ export type Database = {
         }
         Relationships: []
       }
+      saved_syllabus_templates: {
+        Row: {
+          created_at: string | null
+          filter_state: Json
+          id: string
+          name: string
+          quiz_settings: Json
+          selected_topic_ids: string[]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          filter_state?: Json
+          id?: string
+          name: string
+          quiz_settings?: Json
+          selected_topic_ids?: string[]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          filter_state?: Json
+          id?: string
+          name?: string
+          quiz_settings?: Json
+          selected_topic_ids?: string[]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           category: string | null

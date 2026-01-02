@@ -210,6 +210,7 @@ export const useSyllabusData = () => {
     loading,
     error,
     filterState,
+    setFilterState,
     toggleSystemFilter,
     toggleLevelFilter,
     setSearchQuery,

@@ -44,3 +44,14 @@ export interface EducationalSystemWithLevels {
     order_index: number;
   }[];
 }
+
+export interface SavedSyllabusTemplate {
+  id: string;
+  user_id: string;
+  name: string;
+  filter_state: FilterState;
+  selected_topic_ids: string[];
+  quiz_settings: QuizSettings;
+  created_at: string;
+  updated_at: string;
+}
