@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +7,9 @@ import { useState } from "react";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LearningProvider } from "./contexts/LearningContext";
+import { LoadingProvider } from "./contexts/LoadingContext";
+import PageLoader from "./components/PageLoader";
+import NavigationLoader from "./components/NavigationLoader";
 import Index from "./pages/Index";
 import Subjects from "./pages/Subjects";
 import Dashboard from "./pages/Dashboard";
@@ -44,10 +46,13 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
-        <AuthProvider>
-          <UserRoleProvider>
-            <LearningProvider>
-              <TooltipProvider>
+        <LoadingProvider>
+          <AuthProvider>
+            <UserRoleProvider>
+              <LearningProvider>
+                <TooltipProvider>
+                  <PageLoader />
+                  <NavigationLoader />
                 <Toaster />
                 <Sonner 
                   position="top-right"
@@ -101,7 +106,8 @@ const App = () => {
             </LearningProvider>
           </UserRoleProvider>
         </AuthProvider>
-      </Router>
+      </LoadingProvider>
+    </Router>
     </QueryClientProvider>
   );
 };
