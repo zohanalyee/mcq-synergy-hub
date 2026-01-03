@@ -10,6 +10,7 @@ import WeaknessSection from "@/components/dashboard/WeaknessSection";
 import EmptyDashboard from "@/components/dashboard/EmptyDashboard";
 import RecentAchievements from "@/components/dashboard/RecentAchievements";
 import SubjectsMasteryTab from "@/components/dashboard/SubjectsMasteryTab";
+import { SavedTestsList } from "@/components/dashboard/SavedTestsList";
 import StreakCounter from "@/components/gamification/StreakCounter";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { subjectData, weeklyProgressData } from "@/data/dashboardData";
@@ -83,6 +84,9 @@ const Dashboard = () => {
               <RecentActivity />
               <RecentAchievements />
             </motion.div>
+
+            {/* Saved Tests Section */}
+            <SavedTestsList />
 
             {/* Weakness Section for Overview */}
             {hasData && <WeaknessSection weaknesses={weaknesses} />}

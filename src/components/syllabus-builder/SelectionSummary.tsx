@@ -61,16 +61,16 @@ export const SelectionSummary = ({
   return (
     <>
       <Card className="p-4 space-y-4">
-        {/* Quiz Name */}
+        {/* Test Name */}
         <div>
           <Label htmlFor="syllabusName" className="text-sm font-medium">
-            Quiz Name
+            Test Name
           </Label>
           <Input
             id="syllabusName"
             value={syllabusName}
             onChange={(e) => setSyllabusName(e.target.value)}
-            placeholder="My Custom Quiz"
+            placeholder="My Custom Test"
             className="mt-1.5"
           />
         </div>
@@ -96,12 +96,12 @@ export const SelectionSummary = ({
           )}
         </div>
 
-        {/* Quiz Settings */}
+        {/* Test Settings */}
         <Collapsible open={settingsOpen} onOpenChange={setSettingsOpen}>
           <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium hover:text-primary transition-colors">
             <span className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
-              Quiz Settings
+              Test Settings
             </span>
             <ChevronDown className={cn("h-4 w-4 transition-transform", settingsOpen && "rotate-180")} />
           </CollapsibleTrigger>
@@ -170,7 +170,7 @@ export const SelectionSummary = ({
             ) : (
               <>
                 <Sparkles className="h-4 w-4 mr-2" />
-                Generate Quiz
+                Generate Test
               </>
             )}
           </Button>

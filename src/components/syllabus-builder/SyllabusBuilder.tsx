@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -21,8 +21,9 @@ const MAX_SUBJECTS = 10;
 
 export const SyllabusBuilder = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
-  const [syllabusName, setSyllabusName] = useState('My Custom Quiz');
+  const [syllabusName, setSyllabusName] = useState('My Custom Test');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
   const [quizSettings, setQuizSettings] = useState<QuizSettings>({
@@ -46,7 +47,17 @@ export const SyllabusBuilder = () => {
     setFilterState
   } = useSyllabusData();
 
-  const { templates, loading: loadingTemplates, saveTemplate, deleteTemplate } = useSyllabusTemplates(user?.id);
+  const { saveTemplate } = useSyllabusTemplates(user?.id);
+
+  // Handle template loading from navigation state (from Dashboard)
+  useEffect(() => {
+    const templateToLoad = location.state?.templateToLoad as SavedSyllabusTemplate | undefined;
+    if (templateToLoad) {
+      handleLoadTemplate(templateToLoad);
+      // Clear the state to prevent re-loading on subsequent renders
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   // Calculate selection counts
   const { selectedSubjectsCount, selectedTopicsCount, selectedTopicIds } = useMemo(() => {
@@ -233,10 +244,7 @@ export const SyllabusBuilder = () => {
     });
   }, [setFilterState, setRawSubjects]);
 
-  // Delete template handler
-  const handleDeleteTemplate = useCallback(async (templateId: string) => {
-    await deleteTemplate(templateId);
-  }, [deleteTemplate]);
+  // Generate test with smart AI prompting
 
   // Generate quiz with smart AI prompting
   const handleGenerateQuiz = async () => {
@@ -252,7 +260,7 @@ export const SyllabusBuilder = () => {
     if (selectedTopicsCount === 0) {
       toast({
         title: "Selection Required",
-        description: "Please select at least one topic for your quiz.",
+        description: "Please select at least one topic for your test.",
         variant: "destructive"
       });
       return;
@@ -316,7 +324,7 @@ export const SyllabusBuilder = () => {
         } else {
           toast({
             title: "Generation Failed",
-            description: "Failed to generate quiz. Please try again.",
+            description: "Failed to generate test. Please try again.",
             variant: "destructive"
           });
         }
@@ -354,14 +362,14 @@ export const SyllabusBuilder = () => {
       if (dbError) {
         toast({
           title: "Save Failed",
-          description: "Failed to save your quiz. Please try again.",
+          description: "Failed to save your test. Please try again.",
           variant: "destructive"
         });
         return;
       }
 
       toast({
-        title: "Quiz Created!",
+        title: "Test Created!",
         description: `${aiResponse.questions.length} questions ready`,
       });
 
@@ -390,7 +398,7 @@ export const SyllabusBuilder = () => {
           Syllabus Builder
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-2">
-          Select subjects and topics from your syllabus to create a personalized quiz
+          Select subjects and topics from your syllabus to create a personalized test
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <Badge variant="secondary" className="px-2 py-1 text-xs">
@@ -415,11 +423,6 @@ export const SyllabusBuilder = () => {
               toggleSystemFilter={toggleSystemFilter}
               toggleLevelFilter={toggleLevelFilter}
               clearFilters={clearFilters}
-              templates={templates}
-              loadingTemplates={loadingTemplates}
-              onLoadTemplate={handleLoadTemplate}
-              onDeleteTemplate={handleDeleteTemplate}
-              isAuthenticated={!!user}
             />
           </Card>
         </div>
@@ -476,7 +479,7 @@ export const SyllabusBuilder = () => {
             className="w-full h-10"
             disabled={isGenerating}
           >
-            {isGenerating ? 'Generating...' : `Generate Quiz (${selectedTopicsCount} Topics)`}
+            {isGenerating ? 'Generating...' : `Generate Test (${selectedTopicsCount} Topics)`}
           </Button>
         </div>
       )}
