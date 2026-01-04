@@ -53,7 +53,7 @@ export const FilterSidebar = ({
 
       {/* Educational Systems Section */}
       <Collapsible open={systemsOpen} onOpenChange={setSystemsOpen}>
-        <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium hover:text-primary transition-colors">
+        <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 px-2 text-sm font-semibold rounded-md hover:bg-muted/50 hover:text-primary transition-all duration-200">
           <span className="flex items-center gap-2">
             Educational Systems
             {filterState.selectedSystemIds.length > 0 && (
@@ -64,34 +64,39 @@ export const FilterSidebar = ({
           </span>
           <ChevronDown className={cn("h-4 w-4 transition-transform", systemsOpen && "rotate-180")} />
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-2 pt-2">
-          {systems.map(system => (
-            <label
-              key={system.id}
-              className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-            >
-              <Checkbox
-                checked={filterState.selectedSystemIds.includes(system.id)}
-                onCheckedChange={() => toggleSystemFilter(system.id)}
-              />
-              <span className="flex items-center gap-2 text-sm">
-                {getSystemIcon(system.type)}
-                {system.name}
-              </span>
-              <Badge variant="outline" className="ml-auto h-5 px-1.5 text-xs">
-                {system.levels.length}
-              </Badge>
-            </label>
-          ))}
+        <CollapsibleContent className="pt-2">
+          <div className="max-h-[250px] overflow-y-auto scrollbar-thin space-y-0.5 pr-1">
+            {systems.map(system => (
+              <label
+                key={system.id}
+                className="flex items-center gap-2 py-1 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors text-sm"
+              >
+                <Checkbox
+                  checked={filterState.selectedSystemIds.includes(system.id)}
+                  onCheckedChange={() => toggleSystemFilter(system.id)}
+                />
+                <span className="flex items-center gap-2">
+                  {getSystemIcon(system.type)}
+                  {system.name}
+                </span>
+                <Badge variant="outline" className="ml-auto h-5 px-1.5 text-xs">
+                  {system.levels.length}
+                </Badge>
+              </label>
+            ))}
+          </div>
           {systems.length === 0 && (
             <p className="text-xs text-muted-foreground py-2">No systems available</p>
           )}
         </CollapsibleContent>
       </Collapsible>
 
+      {/* Divider between sections */}
+      <div className="border-t border-border/50 my-2" />
+
       {/* Levels Section */}
       <Collapsible open={levelsOpen} onOpenChange={setLevelsOpen}>
-        <CollapsibleTrigger className="flex items-center justify-between w-full py-2 text-sm font-medium hover:text-primary transition-colors">
+        <CollapsibleTrigger className="flex items-center justify-between w-full py-2.5 px-2 text-sm font-semibold rounded-md hover:bg-muted/50 hover:text-primary transition-all duration-200">
           <span className="flex items-center gap-2">
             Levels / Classes
             {filterState.selectedLevelIds.length > 0 && (
@@ -102,20 +107,22 @@ export const FilterSidebar = ({
           </span>
           <ChevronDown className={cn("h-4 w-4 transition-transform", levelsOpen && "rotate-180")} />
         </CollapsibleTrigger>
-        <CollapsibleContent className="space-y-2 pt-2">
-          {availableLevels.map(level => (
-            <label
-              key={level.id}
-              className="flex items-center gap-2 py-1.5 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors"
-            >
-              <Checkbox
-                checked={filterState.selectedLevelIds.includes(level.id)}
-                onCheckedChange={() => toggleLevelFilter(level.id)}
-              />
-              <span className="text-sm">{level.name}</span>
-              <span className="text-xs text-muted-foreground ml-auto">{level.systemName}</span>
-            </label>
-          ))}
+        <CollapsibleContent className="pt-2">
+          <div className="max-h-[250px] overflow-y-auto scrollbar-thin space-y-0.5 pr-1">
+            {availableLevels.map(level => (
+              <label
+                key={level.id}
+                className="flex items-center gap-2 py-1 px-2 rounded-md hover:bg-muted/50 cursor-pointer transition-colors text-sm"
+              >
+                <Checkbox
+                  checked={filterState.selectedLevelIds.includes(level.id)}
+                  onCheckedChange={() => toggleLevelFilter(level.id)}
+                />
+                <span>{level.name}</span>
+                <span className="text-xs text-muted-foreground ml-auto">{level.systemName}</span>
+              </label>
+            ))}
+          </div>
           {availableLevels.length === 0 && (
             <p className="text-xs text-muted-foreground py-2">
               {filterState.selectedSystemIds.length > 0 
