@@ -1,4 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+
+export type PerformanceMode = 'auto' | 'high-quality' | 'performance';
+
+const STORAGE_KEY = 'app_performance_mode';
 
 export interface DeviceCapability {
   isHighEnd: boolean;
@@ -9,17 +13,32 @@ export interface DeviceCapability {
   prefersReducedMotion: boolean;
   isTouchDevice: boolean;
   cpuCores: number;
+  performanceMode: PerformanceMode;
+  setPerformanceMode: (mode: PerformanceMode) => void;
 }
+
+const getStoredMode = (): PerformanceMode => {
+  if (typeof window === 'undefined') return 'auto';
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored === 'high-quality' || stored === 'performance') return stored;
+  return 'auto';
+};
 
 export const useDeviceCapability = (): DeviceCapability => {
   const [windowWidth, setWindowWidth] = useState(
     typeof window !== 'undefined' ? window.innerWidth : 1024
   );
+  const [performanceMode, setPerformanceModeState] = useState<PerformanceMode>(getStoredMode);
 
   useEffect(() => {
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const setPerformanceMode = useCallback((mode: PerformanceMode) => {
+    setPerformanceModeState(mode);
+    localStorage.setItem(STORAGE_KEY, mode);
   }, []);
 
   const capability = useMemo(() => {
@@ -43,12 +62,21 @@ export const useDeviceCapability = (): DeviceCapability => {
       ? navigator.hardwareConcurrency
       : 4;
 
-    // Determine device capability tier
-    // Low-end: mobile, tablet, touch device, reduced motion preference, or < 4 cores
-    const isLowEnd = isMobile || isTablet || isTouchDevice || prefersReducedMotion || cpuCores < 4;
-    
-    // High-end: desktop, non-touch, no reduced motion, >= 4 cores
-    const isHighEnd = isDesktop && !isTouchDevice && !prefersReducedMotion && cpuCores >= 4;
+    // Auto-detected capability tier
+    const autoIsLowEnd = isMobile || isTablet || isTouchDevice || prefersReducedMotion || cpuCores < 4;
+    const autoIsHighEnd = isDesktop && !isTouchDevice && !prefersReducedMotion && cpuCores >= 4;
+
+    // Apply manual override
+    let isLowEnd = autoIsLowEnd;
+    let isHighEnd = autoIsHighEnd;
+
+    if (performanceMode === 'high-quality') {
+      isLowEnd = false;
+      isHighEnd = true;
+    } else if (performanceMode === 'performance') {
+      isLowEnd = true;
+      isHighEnd = false;
+    }
 
     return {
       isHighEnd,
@@ -59,8 +87,10 @@ export const useDeviceCapability = (): DeviceCapability => {
       prefersReducedMotion,
       isTouchDevice,
       cpuCores,
+      performanceMode,
+      setPerformanceMode,
     };
-  }, [windowWidth]);
+  }, [windowWidth, performanceMode, setPerformanceMode]);
 
   return capability;
 };
