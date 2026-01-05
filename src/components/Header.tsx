@@ -8,12 +8,15 @@ import HeaderActions from './header/HeaderActions';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
+import { StaticBackground } from './StaticBackground';
+import { useDeviceCapability } from '@/hooks/useDeviceCapability';
 
 const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const { userRole, isAdmin } = useUserRole();
   const { user, profile, signOut } = useAuth();
+  const { isLowEnd } = useDeviceCapability();
   
   let navigate;
   try {
@@ -63,9 +66,19 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     return location.pathname === path;
   };
 
+  // Adaptive blur classes based on device capability
+  const headerBlurClass = isLowEnd
+    ? scrolled 
+      ? 'py-2 bg-white/95 dark:bg-background/95 border-b border-white/30 dark:border-border/40 shadow-sm' 
+      : 'py-2 bg-white/90 dark:bg-background/80'
+    : scrolled 
+      ? 'py-2 glass backdrop-blur-xl bg-white/90 dark:bg-background/90 border-b border-white/30 dark:border-border/40 shadow-sm' 
+      : 'py-2 bg-white/70 dark:bg-background/60 backdrop-blur-md';
+
   return (
     <>
-      <LiquidBackground speed={20} intensity={1} blobCount={5} />
+      {/* Adaptive background: Full effects on high-end, static gradient on low-end */}
+      {isLowEnd ? <StaticBackground /> : <LiquidBackground speed={20} intensity={1} blobCount={5} />}
       <SidebarProvider defaultOpen={false}>
         <div className="min-h-screen flex w-full relative">
           <AppSidebar 
@@ -78,11 +91,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
           
           <div className="flex-1 flex flex-col w-full">
             <header 
-              className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-                scrolled 
-                  ? 'py-2 glass backdrop-blur-xl bg-white/90 dark:bg-background/90 border-b border-white/30 dark:border-border/40 shadow-sm' 
-                  : 'py-2 bg-white/70 dark:bg-background/60 backdrop-blur-md'
-              }`}
+              className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBlurClass}`}
             >
               <div className="container px-4 mx-auto max-w-7xl">
                 <div className="flex items-center justify-between gap-3">

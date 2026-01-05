@@ -2,6 +2,32 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Reduced motion support for accessibility and low-power devices */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.1s !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Performance utility classes */
+.no-blur {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.blur-lite {
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
 /* Thin scrollbar utility */
 .scrollbar-thin {
   scrollbar-width: thin;
@@ -194,6 +220,21 @@
     @apply bg-black/40 border-white/10 backdrop-blur-xl;
   }
 
+  /* Adaptive glass for mobile/tablet - reduced blur for performance */
+  @media (max-width: 1024px), (hover: none) {
+    .glass {
+      @apply bg-white/95 border border-white/40 shadow-sm;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    
+    .dark .glass {
+      @apply bg-black/90 border-white/10;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+  }
+
   /* Premium glass cards for light mode */
   .glass-card {
     @apply bg-white/80 backdrop-blur-sm border border-white/40 shadow-sm;
@@ -201,6 +242,21 @@
 
   .dark .glass-card {
     @apply bg-card border-border;
+  }
+
+  /* Adaptive glass-card for mobile/tablet */
+  @media (max-width: 1024px), (hover: none) {
+    .glass-card {
+      @apply bg-white/95 border border-white/30 shadow-sm;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+    }
+    
+    .dark .glass-card {
+      @apply bg-card border-border;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+    }
   }
   
   .neo {

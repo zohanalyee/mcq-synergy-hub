@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { motion } from "framer-motion";
+import { useDeviceCapability } from "@/hooks/useDeviceCapability";
 
 interface LiquidBackgroundProps {
   speed?: number;
@@ -13,18 +14,17 @@ export const LiquidBackground = ({
   blobCount = 5 
 }: LiquidBackgroundProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const { isLowEnd, isTouchDevice } = useDeviceCapability();
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
-    };
+  // Don't render on low-end devices - let StaticBackground handle it
+  if (isLowEnd) {
+    return null;
+  }
 
-    window.addEventListener("mousemove", handleMouseMove);
-    return () => window.removeEventListener("mousemove", handleMouseMove);
-  }, []);
+  // Reduce blob count on medium devices (touch but high-power)
+  const effectiveBlobCount = isTouchDevice ? Math.min(blobCount, 3) : blobCount;
 
-  const blobs = Array.from({ length: blobCount }, (_, i) => ({
+  const blobs = Array.from({ length: effectiveBlobCount }, (_, i) => ({
     id: i,
     color: i % 4 === 0 ? "liquid-blue" : 
            i % 4 === 1 ? "liquid-violet" : 
@@ -41,10 +41,7 @@ export const LiquidBackground = ({
         background: "hsl(var(--background))",
       }}
     >
-      {/* Backdrop blur layer */}
-      <div className="absolute inset-0 backdrop-blur-[100px]" />
-      
-      {/* Animated gradient blobs */}
+      {/* Animated gradient blobs - no backdrop blur for performance */}
       {blobs.map((blob) => (
         <motion.div
           key={blob.id}
@@ -54,6 +51,7 @@ export const LiquidBackground = ({
             height: blob.size * intensity,
             left: `${20 + blob.id * 15}%`,
             top: `${10 + blob.id * 12}%`,
+            willChange: 'transform',
           }}
           animate={{
             x: [0, 100, -50, 0],
@@ -67,20 +65,6 @@ export const LiquidBackground = ({
           }}
         />
       ))}
-
-      {/* Interactive cursor glow */}
-      <motion.div
-        className="absolute w-96 h-96 rounded-full blur-3xl opacity-20 mix-blend-screen liquid-cyan pointer-events-none"
-        animate={{
-          x: mousePos.x - 192,
-          y: mousePos.y - 192,
-        }}
-        transition={{
-          type: "spring",
-          damping: 30,
-          stiffness: 200,
-        }}
-      />
     </div>
   );
 };
