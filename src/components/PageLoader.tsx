@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoading } from '@/contexts/LoadingContext';
+import { useDeviceCapability } from '@/hooks/useDeviceCapability';
 
 const PageLoader = () => {
   const { isLoading } = useLoading();
+  const { isLowEnd } = useDeviceCapability();
 
   return (
     <AnimatePresence>
@@ -14,49 +16,21 @@ const PageLoader = () => {
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-[9999] flex items-center justify-center"
         >
-          {/* Glassmorphism backdrop */}
-          <div className="absolute inset-0 bg-background/60 backdrop-blur-md" />
+          {/* Adaptive backdrop: minimal blur on low-end, full blur on high-end */}
+          <div className={`absolute inset-0 ${isLowEnd ? 'bg-background/80' : 'bg-background/60 backdrop-blur-sm'}`} />
           
           {/* Loader content */}
-          <div className="relative flex flex-col items-center gap-6">
-            {/* Animated rings */}
-            <div className="relative w-20 h-20">
-              {/* Outer pulsing ring */}
-              <motion.div
-                className="absolute inset-0 rounded-full border-2 border-primary/30"
-                animate={{
-                  scale: [1, 1.4, 1],
-                  opacity: [0.5, 0, 0.5],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              
-              {/* Middle pulsing ring */}
-              <motion.div
-                className="absolute inset-2 rounded-full border-2 border-primary/40"
-                animate={{
-                  scale: [1, 1.3, 1],
-                  opacity: [0.6, 0.1, 0.6],
-                }}
-                transition={{
-                  duration: 1.5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 0.2,
-                }}
-              />
-              
-              {/* Gradient spinning ring */}
+          <div className="relative flex flex-col items-center gap-4">
+            {/* Simplified loader for low-end devices */}
+            <div className="relative w-16 h-16" style={{ transform: 'translateZ(0)' }}>
+              {/* Single gradient spinning ring */}
               <motion.div
                 className="absolute inset-0 rounded-full"
                 style={{
                   background: 'conic-gradient(from 0deg, transparent, hsl(var(--primary)), transparent)',
-                  maskImage: 'radial-gradient(transparent 60%, black 61%, black 100%)',
-                  WebkitMaskImage: 'radial-gradient(transparent 60%, black 61%, black 100%)',
+                  maskImage: 'radial-gradient(transparent 55%, black 56%, black 100%)',
+                  WebkitMaskImage: 'radial-gradient(transparent 55%, black 56%, black 100%)',
+                  willChange: 'transform',
                 }}
                 animate={{ rotate: 360 }}
                 transition={{
@@ -66,38 +40,20 @@ const PageLoader = () => {
                 }}
               />
               
-              {/* Center dot */}
-              <motion.div
-                className="absolute inset-0 m-auto w-4 h-4 rounded-full bg-gradient-to-br from-primary to-primary/60"
-                animate={{
-                  scale: [1, 1.2, 1],
-                }}
-                transition={{
-                  duration: 0.8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            </div>
-
-            {/* Bouncing dots */}
-            <div className="flex items-center gap-1.5">
-              {[0, 1, 2].map((i) => (
+              {/* Center dot - static on low-end */}
+              {isLowEnd ? (
+                <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-primary" />
+              ) : (
                 <motion.div
-                  key={i}
-                  className="w-2 h-2 rounded-full bg-primary/70"
-                  animate={{
-                    y: [0, -8, 0],
-                    opacity: [0.5, 1, 0.5],
-                  }}
+                  className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-gradient-to-br from-primary to-primary/60"
+                  animate={{ scale: [1, 1.2, 1] }}
                   transition={{
-                    duration: 0.6,
+                    duration: 0.8,
                     repeat: Infinity,
                     ease: "easeInOut",
-                    delay: i * 0.15,
                   }}
                 />
-              ))}
+              )}
             </div>
           </div>
         </motion.div>
