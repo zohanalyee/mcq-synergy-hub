@@ -7,13 +7,29 @@ export interface FileUploadResult {
 }
 
 export class FileUploadService {
-  // Upload file to Supabase Storage
+  // Get current user ID for file path organization
+  private static async getCurrentUserId(): Promise<string | null> {
+    const { data: { user } } = await supabase.auth.getUser();
+    return user?.id || null;
+  }
+
+  // Upload file to Supabase Storage with user-scoped path
   static async uploadFile(file: File, bucket: string = 'content-files'): Promise<FileUploadResult | null> {
     try {
-      // Generate unique file name
+      const userId = await this.getCurrentUserId();
+      if (!userId) {
+        toast.error('Authentication required', {
+          description: 'You must be logged in to upload files.',
+          duration: 4000,
+        });
+        return null;
+      }
+
+      // Generate unique file name with user folder for RLS enforcement
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `uploads/${fileName}`;
+      // Path structure: {userId}/uploads/{fileName} - userId first for RLS policy
+      const filePath = `${userId}/uploads/${fileName}`;
 
       console.log(`Uploading file: ${file.name} to ${bucket}/${filePath}`);
 
@@ -34,15 +50,24 @@ export class FileUploadService {
         throw error;
       }
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
+      // Get signed URL (bucket is now private)
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from(bucket)
-        .getPublicUrl(filePath);
+        .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-      console.log(`File uploaded successfully: ${publicUrl}`);
+      if (signedUrlError || !signedUrlData?.signedUrl) {
+        console.error('Failed to generate signed URL:', signedUrlError);
+        // Return path anyway so URL can be regenerated later
+        return {
+          url: '',
+          path: filePath
+        };
+      }
+
+      console.log(`File uploaded successfully with signed URL`);
 
       return {
-        url: publicUrl,
+        url: signedUrlData.signedUrl,
         path: filePath
       };
     } catch (error) {
@@ -51,6 +76,25 @@ export class FileUploadService {
         description: 'Failed to upload file. Please try again.',
         duration: 4000,
       });
+      return null;
+    }
+  }
+
+  // Get a fresh signed URL for an existing file
+  static async getSignedUrl(filePath: string, bucket: string = 'content-files', expiresIn: number = 3600): Promise<string | null> {
+    try {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(filePath, expiresIn);
+
+      if (error || !data?.signedUrl) {
+        console.error('Failed to generate signed URL:', error);
+        return null;
+      }
+
+      return data.signedUrl;
+    } catch (error) {
+      console.error('Error generating signed URL:', error);
       return null;
     }
   }
