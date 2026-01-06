@@ -56,6 +56,41 @@ function extractKeywords(topic: string): string[] {
   return unique;
 }
 
+// ============= HYBRID DEDUPLICATION SYSTEM =============
+
+// Generate a semantic fingerprint for duplicate detection
+// Extracts key content words, sorts them for order-independent matching
+function generateQuestionFingerprint(questionText: string): string {
+  const stopWords = new Set(['what', 'which', 'when', 'where', 'who', 'how', 'does', 'the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'has', 'have', 'been', 'from', 'they', 'will', 'would', 'there', 'their', 'that', 'this', 'with', 'could', 'into', 'than', 'then', 'being', 'about', 'after', 'before', 'between', 'following', 'true', 'false', 'correct', 'incorrect', 'statement', 'option']);
+  
+  return questionText
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, '') // Remove punctuation
+    .split(/\s+/)
+    .filter(word => word.length > 3 && !stopWords.has(word)) // Keep significant words
+    .sort() // Sort for order-independent matching
+    .slice(0, 8) // Take top 8 keywords
+    .join('|');
+}
+
+// Check if a question is semantically similar to existing fingerprints
+function isDuplicateByFingerprint(questionText: string, existingFingerprints: Set<string>): boolean {
+  const newFingerprint = generateQuestionFingerprint(questionText);
+  if (!newFingerprint || newFingerprint.split('|').length < 3) {
+    return false; // Too short to reliably fingerprint
+  }
+  return existingFingerprints.has(newFingerprint);
+}
+
+// Normalize question text for comparison (handles minor variations)
+function normalizeQuestionText(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 // Map job tests to their core syllabus subjects for cross-question reuse
 const JOB_SYLLABUS_MAP: Record<string, string[]> = {
   "Banking Officer": ["English", "Economics", "Finance", "Quantitative", "IT", "Pakistan Affairs", "Current Affairs"],
@@ -194,7 +229,8 @@ function parseAIResponse(text: string): Question[] {
   }
 }
 
-// Generate questions in batches to avoid truncation
+// Generate questions in batches with HYBRID DEDUPLICATION
+// Prevents internal duplicates through fingerprinting + cross-batch memory
 async function generateQuestionsInBatches(
   topic: string,
   difficulty: string,
@@ -206,19 +242,50 @@ async function generateQuestionsInBatches(
   const batches = Math.ceil(totalCount / MAX_BATCH_SIZE);
   const allQuestions: Question[] = [];
   
-  console.log(`Generating ${totalCount} questions in ${batches} batch(es)...`);
+  // ============= HYBRID DEDUPLICATION: Intra-run memory =============
+  const generatedInThisRun: string[] = []; // Track all questions generated in this run
+  const fingerprints = new Set<string>(); // Semantic fingerprints for near-duplicate detection
+  const normalizedTexts = new Set<string>(); // Normalized text for exact-ish duplicate detection
   
-  const duplicateNote = existingQuestions.length > 0 
-    ? `\n\nIMPORTANT: Do NOT generate questions similar to these existing ones:\n${existingQuestions.slice(0, 20).map((q, i) => `${i + 1}. ${q}`).join('\n')}`
-    : '';
+  // Pre-populate fingerprints from existing questions
+  for (const existingQ of existingQuestions) {
+    fingerprints.add(generateQuestionFingerprint(existingQ));
+    normalizedTexts.add(normalizeQuestionText(existingQ));
+  }
+  
+  console.log(`🧠 Generating ${totalCount} questions in ${batches} batch(es) with HYBRID DEDUPLICATION...`);
+  console.log(`   Pre-loaded ${existingQuestions.length} existing questions into memory`);
   
   for (let batch = 0; batch < batches; batch++) {
     const batchSize = Math.min(MAX_BATCH_SIZE, totalCount - allQuestions.length);
     if (batchSize <= 0) break;
     
-    console.log(`Batch ${batch + 1}/${batches}: Generating ${batchSize} questions...`);
+    console.log(`📦 Batch ${batch + 1}/${batches}: Generating ${batchSize} questions...`);
     
-    const systemPrompt = `You are a strict JSON generator for educational quizzes. Create high-quality multiple choice questions.
+    // Build avoid list: existing DB questions + already generated in this run (last 30)
+    const avoidList = [...existingQuestions.slice(-15), ...generatedInThisRun.slice(-15)];
+    
+    // ============= ENHANCED PROMPT WITH DIVERSITY REQUIREMENTS =============
+    const avoidSection = avoidList.length > 0 
+      ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
+      : '';
+    
+    const systemPrompt = `You are a strict JSON generator for educational quizzes. Create high-quality, UNIQUE multiple choice questions.
+
+🎯 CRITICAL DIVERSITY REQUIREMENTS:
+1. Each question MUST cover a DIFFERENT sub-concept or aspect of the topic
+2. Use VARIED question formats across the batch:
+   - Definition questions (What is...?)
+   - Application questions (How would you...?)
+   - Comparison questions (What is the difference between...?)
+   - Calculation/Analysis (Calculate..., Analyze...)
+   - True reasoning (Which statement is correct about...?)
+   - Cause/Effect (What happens when...?)
+3. NEVER repeat the same concept even with different wording
+4. NEVER generate questions that are paraphrases of each other
+5. If the topic has limited scope, explore edge cases, exceptions, and advanced scenarios
+6. Each question should test a DISTINCT piece of knowledge
+
 Output ONLY raw JSON in this exact structure (no markdown, no explanations):
 {
   "questions": [
@@ -229,9 +296,11 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
       "explanation": "Brief explanation of the correct answer"
     }
   ]
-}${duplicateNote}`;
+}${avoidSection}`;
 
-    const userPrompt = `Create exactly ${batchSize} multiple choice questions about ${topic} at ${difficulty} difficulty level. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
+    const userPrompt = `Create exactly ${batchSize} UNIQUE and DIVERSE multiple choice questions about "${topic}" at ${difficulty} difficulty level. 
+
+REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicates or paraphrases allowed. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
 
     try {
       const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
@@ -268,8 +337,38 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
       
       if (generatedText) {
         const batchQuestions = parseAIResponse(generatedText);
-        allQuestions.push(...batchQuestions);
-        console.log(`Batch ${batch + 1} completed: ${batchQuestions.length} questions`);
+        
+        // ============= POST-GENERATION DEDUPLICATION LAYER =============
+        let acceptedCount = 0;
+        let skippedCount = 0;
+        
+        for (const q of batchQuestions) {
+          const normalized = normalizeQuestionText(q.question);
+          const fp = generateQuestionFingerprint(q.question);
+          
+          // Check for exact-ish duplicate (normalized text match)
+          if (normalizedTexts.has(normalized)) {
+            console.log(`🔄 Skipping exact duplicate: "${q.question.slice(0, 50)}..."`);
+            skippedCount++;
+            continue;
+          }
+          
+          // Check for semantic duplicate (fingerprint match)
+          if (fp && fp.split('|').length >= 3 && fingerprints.has(fp)) {
+            console.log(`🔄 Skipping semantic duplicate: "${q.question.slice(0, 50)}..."`);
+            skippedCount++;
+            continue;
+          }
+          
+          // Accept this question
+          allQuestions.push(q);
+          generatedInThisRun.push(q.question);
+          normalizedTexts.add(normalized);
+          if (fp) fingerprints.add(fp);
+          acceptedCount++;
+        }
+        
+        console.log(`✅ Batch ${batch + 1} completed: ${acceptedCount} accepted, ${skippedCount} duplicates skipped`);
       }
     } catch (batchError: any) {
       if (batchError.status === 429 || batchError.status === 402) {
@@ -283,6 +382,7 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
     }
   }
   
+  console.log(`🧠 HYBRID DEDUP COMPLETE: ${allQuestions.length}/${totalCount} unique questions generated`);
   return allQuestions;
 }
 
@@ -650,20 +750,39 @@ serve(async (req) => {
     // Generate questions and insert directly to content_items - ZERO DATA LOSS
     // All questions are saved: approved or flagged_duplicate with modified title
     if (isBankOnly) {
-      console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank (ZERO LOSS)`);
+      console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank with HYBRID DEDUP`);
       
       const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
       if (!LOVABLE_API_KEY) {
         throw new Error('LOVABLE_API_KEY is not configured');
       }
 
-      // Generate questions - DO NOT filter duplicates in memory
+      // ============= FIX: Fetch existing questions for deduplication =============
+      // This prevents the AI from generating duplicates of existing DB content
+      let existingTitlesForDedup: string[] = [];
+      try {
+        const { data: recentQuestions } = await supabase
+          .from('content_items')
+          .select('title')
+          .eq('category', 'mcq')
+          .eq('status', 'approved')
+          .or(`topic.ilike.*${escapePostgrestValue(sanitizedTopic)}*,subject.ilike.*${escapePostgrestValue(sanitizedTopic)}*`)
+          .order('created_at', { ascending: false })
+          .limit(100);
+        
+        existingTitlesForDedup = recentQuestions?.map(q => q.title).filter(Boolean) || [];
+        console.log(`🧠 Loaded ${existingTitlesForDedup.length} existing questions for deduplication`);
+      } catch (err) {
+        console.error('Failed to load existing questions for dedup:', err);
+      }
+
+      // Generate questions with HYBRID DEDUPLICATION (intra-batch + cross-DB)
       const newQuestions = await generateQuestionsInBatches(
         topic,
         difficulty,
         qc,
         LOVABLE_API_KEY,
-        [] // Don't pass existing questions - we want ALL generated questions
+        existingTitlesForDedup // NOW passing existing questions!
       );
 
       console.log(`🏭 Generated ${newQuestions.length} new questions - saving ALL to database`);
