@@ -94,7 +94,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
               className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBlurClass}`}
             >
               <div className="container px-4 mx-auto max-w-7xl">
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-2 sm:gap-3">
                   <div className="flex items-center gap-2">
                     <SidebarTrigger className="h-9 w-9 rounded-lg bg-white/60 dark:bg-primary/20 hover:bg-white/80 dark:hover:bg-primary/30 backdrop-blur-sm border border-white/40 dark:border-primary/30 transition-all duration-300 hover:scale-105 shadow-sm" />
                     <HeaderLogo onNavigate={handleNavigation} />
