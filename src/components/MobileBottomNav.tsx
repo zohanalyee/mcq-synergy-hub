@@ -8,7 +8,7 @@ const navItems = [
   { icon: BookOpen, label: 'Subjects', path: '/subjects' },
   { icon: ClipboardList, label: 'Tests', path: '/mock-tests' },
   { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
-  { icon: User, label: 'Dashboard', path: '/dashboard' },
+  { icon: User, label: 'Dashboard', path: '/profile' },
 ];
 
 const MobileBottomNav = () => {
