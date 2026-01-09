@@ -3,8 +3,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { FileText, CheckSquare } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 
@@ -88,28 +87,9 @@ const SubjectCard = ({
               <div className="p-1.5 rounded-md" style={{ backgroundColor: `${color}20` }}>
                 {renderDisplayIcon()}
               </div>
-              <div className="flex flex-col gap-1 items-end">
-                <span className="text-[10px] font-medium text-muted-foreground">
-                  {topicCount} Topics
-                </span>
-                <Badge 
-                  variant={purpose === "reading" ? "outline" : "default"}
-                  className={cn(
-                    "flex items-center gap-0.5 text-[10px] h-4 px-1",
-                    purpose === "reading" ? "border-blue-500 text-blue-600" : "bg-green-500 hover:bg-green-600"
-                  )}
-                >
-                  {purpose === "reading" ? (
-                    <>
-                      <FileText className="h-2.5 w-2.5" /> Read
-                    </>
-                  ) : (
-                    <>
-                      <CheckSquare className="h-2.5 w-2.5" /> MCQs
-                    </>
-                  )}
-                </Badge>
-              </div>
+              <span className="text-[10px] font-medium text-muted-foreground">
+                {topicCount} Topics
+              </span>
             </div>
             
             <h3 className="text-sm font-semibold mb-1 line-clamp-1 leading-tight">{title}</h3>
