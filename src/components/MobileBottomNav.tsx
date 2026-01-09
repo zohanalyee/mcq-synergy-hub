@@ -1,14 +1,12 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, ClipboardList, User, Trophy } from 'lucide-react';
+import { Home, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
-  { icon: Home, label: 'Home', path: '/' },
-  { icon: BookOpen, label: 'Subjects', path: '/subjects' },
-  { icon: ClipboardList, label: 'Tests', path: '/mock-tests' },
-  { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
-  { icon: User, label: 'Dashboard', path: '/profile' },
+  { icon: Home, label: 'Dashboard', path: '/dashboard' },
+  { icon: User, label: 'Profile', path: '/profile' },
+  { icon: Settings, label: 'Settings', path: '/settings' },
 ];
 
 const MobileBottomNav = () => {
