@@ -64,13 +64,15 @@ const HeaderActions = ({
   return (
     <div className="flex items-center gap-1 sm:gap-2">
       {user && <StreakCounter />}
+      {/* Theme toggle - visible on all screens */}
       <ThemeToggle />
 
-      {/* User menu or sign in button */}
+      {/* User menu - hidden on mobile, visible on desktop */}
+
       {user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full overflow-hidden h-8 w-8">
+            <Button variant="ghost" size="icon" className="hidden md:flex rounded-full overflow-hidden h-8 w-8">
               <Avatar className="h-7 w-7">
                 <AvatarImage src={profile?.avatar_url || ''} />
                 <AvatarFallback className="text-xs">{getInitials(user.email)}</AvatarFallback>
@@ -131,7 +133,7 @@ const HeaderActions = ({
       ) : (
         <Button 
           size="sm"
-          className="h-8 text-xs backdrop-blur-sm bg-primary hover:bg-primary/90" 
+          className="hidden md:flex h-8 text-xs backdrop-blur-sm bg-primary hover:bg-primary/90" 
           onClick={() => onNavigate('/sign-in')}
         >
           Sign In
