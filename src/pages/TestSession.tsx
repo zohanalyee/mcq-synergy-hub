@@ -318,24 +318,22 @@ const TestSession = () => {
   if (isLoading) {
     return (
       <Header>
-        <div className="max-w-4xl mx-auto px-4 pt-6 pb-12">
-          <div className="mb-6 text-center">
-            <Skeleton className="h-8 w-48 mx-auto mb-3" />
-            <div className="flex gap-3 justify-center">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-5 w-28" />
-              <Skeleton className="h-5 w-24" />
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-2 test-container">
+          <div className="mb-2">
+            <div className="flex items-center justify-between gap-2 mb-1.5">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-5 w-16" />
             </div>
-            <Skeleton className="h-2 w-full mt-3" />
+            <Skeleton className="h-1.5 w-full" />
           </div>
           <Card>
-            <CardContent className="p-4 space-y-3">
-              <Skeleton className="h-6 w-3/4" />
-              <div className="space-y-2 mt-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
+            <CardContent className="p-2.5 sm:p-3 space-y-2">
+              <Skeleton className="h-5 w-3/4" />
+              <div className="space-y-1.5">
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
               </div>
             </CardContent>
           </Card>
@@ -629,139 +627,183 @@ const TestSession = () => {
 
   return (
     <Header>
-      <div className="max-w-4xl mx-auto px-4 pt-6 pb-12">
-        {/* Test Header */}
-        <div className="mb-6 text-center">
-          <h1 className="text-2xl font-bold mb-2 text-foreground">{testData.session_name}</h1>
-          <div className="flex flex-wrap gap-2 items-center justify-center">
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 pt-2 sm:pt-3 pb-2 test-container">
+        {/* Compact Test Header */}
+        <div className="mb-2 sm:mb-3">
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <h1 className="text-sm sm:text-base font-bold text-foreground truncate flex-1">
+              {testData.session_name}
+            </h1>
+            <Badge variant="outline" className="flex items-center gap-1 text-[10px] sm:text-xs shrink-0 py-0.5 px-1.5">
+              <Clock className="h-3 w-3" />
+              {formatTime(timeRemaining)}
+            </Badge>
+          </div>
+          <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+            <span className="text-[10px] sm:text-xs text-muted-foreground">
+              Q {currentQuestion + 1}/{questions.length}
+            </span>
+            <span className="text-[10px] sm:text-xs text-muted-foreground">
+              • {answeredCount} answered
+            </span>
             {sourceBadge && (
-              <Badge variant={sourceBadge.variant} className="text-xs">
+              <Badge variant={sourceBadge.variant} className="text-[10px] py-0 px-1">
                 {sourceBadge.icon} {sourceBadge.text}
               </Badge>
             )}
             {isLoadingMore && (
-              <Badge variant="outline" className="text-xs animate-pulse flex items-center gap-1">
-                <Loader2 className="h-3 w-3 animate-spin" />
-                Loading {remainingCount} more...
+              <Badge variant="outline" className="text-[10px] py-0 px-1 flex items-center gap-0.5 animate-pulse">
+                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                +{remainingCount}
               </Badge>
             )}
-            <Badge variant="outline" className="flex items-center gap-1.5 text-xs">
-              <Clock className="h-3.5 w-3.5" />
-              {formatTime(timeRemaining)}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              Q {currentQuestion + 1}/{questions.length}{remainingCount > 0 ? ` (+${remainingCount})` : ''}
-            </Badge>
-            <Badge variant="outline" className="text-xs">
-              Answered: {answeredCount}/{questions.length}
-            </Badge>
           </div>
-          <Progress value={progress} className="mt-3" />
+          <Progress value={progress} className="h-1.5" />
         </div>
 
         {!isSubmitted ? (
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentQuestion}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
-            >
-              <Card className="glass-card">
-                <CardContent className="p-4">
-                  {/* Question */}
-                  <div className="mb-4">
-                    <div className="flex justify-between items-start mb-3 gap-2">
-                      <h2 className="text-base font-semibold leading-tight">
-                        {questions[currentQuestion].question}
-                      </h2>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className={`h-7 w-7 p-0 shrink-0 ${flaggedQuestions.has(currentQuestion) ? "text-yellow-600" : ""}`}
-                        onClick={() => toggleFlag(currentQuestion)}
-                      >
-                        <Flag className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* Options */}
-                  <RadioGroup
-                    value={answers[currentQuestion] || ""}
-                    onValueChange={(value) => handleAnswerChange(currentQuestion, value)}
-                  >
-                    {questions[currentQuestion].options.map((option: string, idx: number) => (
-                      <div
-                        key={idx}
-                        className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent/50 transition-colors glass-card"
-                      >
-                        <RadioGroupItem value={option} id={`option-${idx}`} />
-                        <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer text-sm">
-                          {option}
-                        </Label>
+          <div className="flex-1 flex flex-col min-h-0">
+            {/* Scrollable Question Area */}
+            <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-thin">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentQuestion}
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Card className="glass-card">
+                    <CardContent className="p-2.5 sm:p-3">
+                      {/* Question with scroll for long text */}
+                      <div className="mb-2">
+                        <div className="flex justify-between items-start gap-2">
+                          <div className="flex-1 max-h-[22vh] overflow-y-auto scrollbar-thin pr-1">
+                            <h2 className="text-sm sm:text-base font-semibold leading-snug">
+                              {questions[currentQuestion].question}
+                            </h2>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className={`h-6 w-6 p-0 shrink-0 ${flaggedQuestions.has(currentQuestion) ? "text-yellow-600" : ""}`}
+                            onClick={() => toggleFlag(currentQuestion)}
+                          >
+                            <Flag className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
-                    ))}
-                  </RadioGroup>
 
-                  {/* Navigation */}
-                  <div className="flex justify-between mt-4">
-                    <Button
-                      variant="outline"
-                      onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
-                      disabled={currentQuestion === 0}
-                    >
-                      <ArrowLeft className="h-4 w-4 mr-2" />
-                      Previous
-                    </Button>
+                      {/* Compact Options */}
+                      <RadioGroup
+                        value={answers[currentQuestion] || ""}
+                        onValueChange={(value) => handleAnswerChange(currentQuestion, value)}
+                        className="space-y-1.5"
+                      >
+                        {questions[currentQuestion].options.map((option: string, idx: number) => (
+                          <div
+                            key={idx}
+                            className="flex items-center space-x-2 p-2 sm:p-2.5 rounded-md border hover:bg-accent/50 transition-colors glass-card"
+                          >
+                            <RadioGroupItem value={option} id={`option-${idx}`} className="h-4 w-4" />
+                            <Label htmlFor={`option-${idx}`} className="flex-1 cursor-pointer text-xs sm:text-sm leading-tight">
+                              {option}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </CardContent>
+                  </Card>
 
-                    {currentQuestion === questions.length - 1 ? (
-                      <Button 
-                        onClick={handleSubmit}
-                        disabled={!canSubmit}
-                        title={!canSubmit ? `Waiting for ${remainingCount} more questions to load...` : undefined}
-                      >
-                        {!canSubmit && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                        {canSubmit ? 'Submit Test' : 'Loading...'}
-                      </Button>
-                    ) : (
-                      <Button
-                        onClick={() =>
-                          setCurrentQuestion((prev) => Math.min(questions.length - 1, prev + 1))
-                        }
-                      >
-                        Next
-                        <ArrowRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                  {/* Question Navigator - Collapsible on mobile */}
+                  <details className="mt-2 sm:hidden">
+                    <summary className="text-[10px] text-muted-foreground cursor-pointer py-1 px-1">
+                      ▸ Question Navigator
+                    </summary>
+                    <div className="grid grid-cols-10 gap-1 mt-1 p-1.5 bg-card rounded-lg border">
+                      {questions.map((_: any, index: number) => (
+                        <Button
+                          key={index}
+                          variant={currentQuestion === index ? "default" : answers[index] ? "outline" : "ghost"}
+                          size="sm"
+                          className="relative h-6 w-6 p-0 text-[10px]"
+                          onClick={() => setCurrentQuestion(index)}
+                        >
+                          {index + 1}
+                          {flaggedQuestions.has(index) && (
+                            <Flag className="h-2 w-2 absolute -top-0.5 -right-0.5 text-yellow-600" />
+                          )}
+                        </Button>
+                      ))}
+                    </div>
+                  </details>
 
-              <Card className="mt-3">
-                <CardContent className="p-3">
-                  <h3 className="font-semibold mb-2 text-sm">Question Navigator</h3>
-                  <div className="grid grid-cols-10 gap-1.5">
-                    {questions.map((_: any, index: number) => (
-                      <Button
-                        key={index}
-                        variant={currentQuestion === index ? "default" : answers[index] ? "outline" : "ghost"}
-                        size="sm"
-                        className="relative h-7 w-7 p-0 text-xs"
-                        onClick={() => setCurrentQuestion(index)}
-                      >
-                        {index + 1}
-                        {flaggedQuestions.has(index) && (
-                          <Flag className="h-2.5 w-2.5 absolute -top-0.5 -right-0.5 text-yellow-600" />
-                        )}
-                      </Button>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </AnimatePresence>
+                  {/* Desktop Navigator */}
+                  <Card className="mt-2 hidden sm:block">
+                    <CardContent className="p-2">
+                      <h3 className="font-medium mb-1.5 text-xs">Navigator</h3>
+                      <div className="grid grid-cols-10 gap-1">
+                        {questions.map((_: any, index: number) => (
+                          <Button
+                            key={index}
+                            variant={currentQuestion === index ? "default" : answers[index] ? "outline" : "ghost"}
+                            size="sm"
+                            className="relative h-6 w-6 p-0 text-xs"
+                            onClick={() => setCurrentQuestion(index)}
+                          >
+                            {index + 1}
+                            {flaggedQuestions.has(index) && (
+                              <Flag className="h-2 w-2 absolute -top-0.5 -right-0.5 text-yellow-600" />
+                            )}
+                          </Button>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            {/* Fixed Navigation Bar - Always visible at bottom */}
+            <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t pt-2 pb-safe mt-auto z-10">
+              <div className="flex justify-between gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
+                  disabled={currentQuestion === 0}
+                  className="h-9"
+                >
+                  <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+                  <span className="hidden xs:inline">Prev</span>
+                </Button>
+
+                {currentQuestion === questions.length - 1 ? (
+                  <Button 
+                    size="sm"
+                    onClick={handleSubmit}
+                    disabled={!canSubmit}
+                    title={!canSubmit ? `Waiting for ${remainingCount} more questions to load...` : undefined}
+                    className="h-9"
+                  >
+                    {!canSubmit && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+                    {canSubmit ? 'Submit' : 'Loading...'}
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    onClick={() =>
+                      setCurrentQuestion((prev) => Math.min(questions.length - 1, prev + 1))
+                    }
+                    className="h-9"
+                  >
+                    <span className="hidden xs:inline">Next</span>
+                    <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
         ) : (
           /* Results */
           <Card>
