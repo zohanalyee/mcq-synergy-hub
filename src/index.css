@@ -242,6 +242,27 @@ body::-webkit-scrollbar-thumb:hover {
     }
   }
 
+  /* Test Interface Compact Mode */
+  .test-container {
+    min-height: calc(100vh - 56px);
+    min-height: calc(100dvh - 56px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* For mobile with bottom nav */
+  @media (max-width: 767px) {
+    .test-container {
+      min-height: calc(100vh - 56px - 64px);
+      min-height: calc(100dvh - 56px - 64px);
+    }
+  }
+
+  /* Safe area padding for sticky nav */
+  .pb-safe {
+    padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
+  }
+
   .glass {
     @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-glass;
   }
