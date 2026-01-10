@@ -81,8 +81,8 @@ const Home = () => {
 
   const testCategories = [
     {
-      title: "Timed Mock Tests",
-      description: "Simulate real exam conditions with time constraints",
+      title: "Competitive Exams",
+      description: "Practice full-length job recruitment and exam simulations",
       icon: <Timer size={32} className="text-white" />,
       bgClass: "bg-gradient-to-br from-blue-600 to-blue-400 text-white",
       route: "/mock-tests"
@@ -472,7 +472,7 @@ const Home = () => {
               <ul className="space-y-1">
                 <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Home</a></li>
                 <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Subjects</a></li>
-                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Mock Tests</a></li>
+                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Recruitment Tests</a></li>
                 <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Analytics</a></li>
               </ul>
             </div>

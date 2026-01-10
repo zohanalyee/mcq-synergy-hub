@@ -6,7 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 const navItems = [
   { icon: Home, label: 'Home', path: '/' },
   { icon: BookOpen, label: 'Subjects', path: '/subjects' },
-  { icon: ClipboardList, label: 'Tests', path: '/mock-tests' },
+  { icon: ClipboardList, label: 'Exams', path: '/mock-tests' },
   { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
   { icon: User, label: 'Dashboard', path: '/profile' },
 ];
