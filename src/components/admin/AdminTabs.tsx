@@ -6,10 +6,11 @@ import QuestionBankManager from "./QuestionBankManager";
 import AdminContentSubmission from "./AdminContentSubmission";
 import { DataMigrationUtility } from "./DataMigrationUtility";
 import AdminAnalyticsDashboard from "./analytics/AdminAnalyticsDashboard";
+import ContentInventory from "./analytics/ContentInventory";
 import AIContentFactory from "./AIContentFactory";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
 import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers } from "lucide-react";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -38,6 +39,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="analytics" className="flex items-center gap-2">
           <BarChart3 className="h-4 w-4" />
           Analytics
+        </TabsTrigger>
+        <TabsTrigger value="inventory" className="flex items-center gap-2">
+          <Archive className="h-4 w-4" />
+          Inventory
         </TabsTrigger>
         
         {/* Separator */}
@@ -147,6 +152,11 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Analytics Tab */}
       <TabsContent value="analytics">
         <AdminAnalyticsDashboard />
+      </TabsContent>
+      
+      {/* Content Inventory Tab */}
+      <TabsContent value="inventory">
+        <ContentInventory />
       </TabsContent>
       
       {/* Review Duplicates Tab */}
