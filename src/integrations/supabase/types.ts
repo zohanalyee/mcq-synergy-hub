@@ -118,6 +118,7 @@ export type Database = {
       }
       content_items: {
         Row: {
+          apply_link: string | null
           cadre: string | null
           category: string
           correct_option: string | null
@@ -137,6 +138,7 @@ export type Database = {
           institution: string | null
           is_featured: boolean | null
           last_used_at: string | null
+          location: string | null
           marks: number | null
           meta_description: string | null
           meta_keywords: string | null
@@ -160,6 +162,7 @@ export type Database = {
           usage_count: number | null
         }
         Insert: {
+          apply_link?: string | null
           cadre?: string | null
           category: string
           correct_option?: string | null
@@ -179,6 +182,7 @@ export type Database = {
           institution?: string | null
           is_featured?: boolean | null
           last_used_at?: string | null
+          location?: string | null
           marks?: number | null
           meta_description?: string | null
           meta_keywords?: string | null
@@ -202,6 +206,7 @@ export type Database = {
           usage_count?: number | null
         }
         Update: {
+          apply_link?: string | null
           cadre?: string | null
           category?: string
           correct_option?: string | null
@@ -221,6 +226,7 @@ export type Database = {
           institution?: string | null
           is_featured?: boolean | null
           last_used_at?: string | null
+          location?: string | null
           marks?: number | null
           meta_description?: string | null
           meta_keywords?: string | null
@@ -283,6 +289,7 @@ export type Database = {
       }
       content_submissions: {
         Row: {
+          apply_link: string | null
           cadre: string | null
           category: string
           correct_option: string | null
@@ -300,6 +307,7 @@ export type Database = {
           id: string
           image_url: string | null
           institution: string | null
+          location: string | null
           marks: number | null
           meta_description: string | null
           meta_keywords: string | null
@@ -321,6 +329,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          apply_link?: string | null
           cadre?: string | null
           category: string
           correct_option?: string | null
@@ -338,6 +347,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           institution?: string | null
+          location?: string | null
           marks?: number | null
           meta_description?: string | null
           meta_keywords?: string | null
@@ -359,6 +369,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          apply_link?: string | null
           cadre?: string | null
           category?: string
           correct_option?: string | null
@@ -376,6 +387,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           institution?: string | null
+          location?: string | null
           marks?: number | null
           meta_description?: string | null
           meta_keywords?: string | null
