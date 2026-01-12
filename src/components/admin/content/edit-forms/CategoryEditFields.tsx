@@ -47,6 +47,24 @@ const CategoryEditFields = ({ category, formData, onChange }: CategoryEditFields
           </div>
 
           <div className="space-y-2">
+            <Label>Location</Label>
+            <Input
+              value={formData.location || ""}
+              onChange={(e) => onChange('location', e.target.value)}
+              placeholder="e.g., Islamabad, Lahore"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Apply Link</Label>
+            <Input
+              value={formData.applyLink || ""}
+              onChange={(e) => onChange('applyLink', e.target.value)}
+              placeholder="https://..."
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label>Government Level</Label>
             <Select 
               value={formData.governmentLevel || ""} 

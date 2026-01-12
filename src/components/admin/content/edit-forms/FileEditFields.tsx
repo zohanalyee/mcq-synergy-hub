@@ -1,10 +1,11 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Upload, ExternalLink, X } from "lucide-react";
+import { Upload, ExternalLink, X, Loader2 } from "lucide-react";
 import { ContentItem } from "@/interfaces/content";
 import { useState } from "react";
+import { FileUploadService } from "@/services/fileUploadService";
+import { toast } from "sonner";
 
 interface FileEditFieldsProps {
   formData: Partial<ContentItem>;
@@ -16,22 +17,46 @@ const FileEditFields = ({ formData, onChange }: FileEditFieldsProps) => {
   const [documentName, setDocumentName] = useState<string | null>(
     formData.fileUrl ? 'Current document' : null
   );
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setImagePreview(url);
-      onChange('imageUrl', url);
+    if (!file) return;
+
+    // Validate file
+    if (!FileUploadService.validateFile(file, 'image')) {
+      return;
+    }
+
+    setUploadingImage(true);
+    const result = await FileUploadService.uploadImage(file);
+    setUploadingImage(false);
+
+    if (result) {
+      setImagePreview(result.url);
+      onChange('imageUrl', result.url);
+      toast.success('Image uploaded successfully');
     }
   };
 
-  const handleDocumentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleDocumentChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
+    if (!file) return;
+
+    // Validate file
+    if (!FileUploadService.validateFile(file, 'document')) {
+      return;
+    }
+
+    setUploadingDocument(true);
+    const result = await FileUploadService.uploadDocument(file);
+    setUploadingDocument(false);
+
+    if (result) {
       setDocumentName(file.name);
-      onChange('fileUrl', url);
+      onChange('fileUrl', result.url);
+      toast.success('Document uploaded successfully');
     }
   };
 
@@ -78,24 +103,33 @@ const FileEditFields = ({ formData, onChange }: FileEditFieldsProps) => {
             </div>
           ) : (
             <div className="text-center">
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-              <div className="mt-4">
-                <Label htmlFor="image-upload" className="cursor-pointer">
-                  <Button variant="outline" asChild>
-                    <span>Choose Image</span>
-                  </Button>
-                </Label>
-                <Input
-                  id="image-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageChange}
-                />
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                PNG, JPG, GIF up to 10MB
-              </p>
+              {uploadingImage ? (
+                <>
+                  <Loader2 className="mx-auto h-12 w-12 text-muted-foreground animate-spin" />
+                  <p className="mt-4 text-sm text-muted-foreground">Uploading image...</p>
+                </>
+              ) : (
+                <>
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <div className="mt-4">
+                    <Label htmlFor="image-upload" className="cursor-pointer">
+                      <Button variant="outline" asChild>
+                        <span>Choose Image</span>
+                      </Button>
+                    </Label>
+                    <Input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    PNG, JPG, GIF up to 10MB
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -133,24 +167,33 @@ const FileEditFields = ({ formData, onChange }: FileEditFieldsProps) => {
             </div>
           ) : (
             <div className="text-center">
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-              <div className="mt-4">
-                <Label htmlFor="document-upload" className="cursor-pointer">
-                  <Button variant="outline" asChild>
-                    <span>Choose Document</span>
-                  </Button>
-                </Label>
-                <Input
-                  id="document-upload"
-                  type="file"
-                  accept=".pdf,.doc,.docx,.txt"
-                  className="hidden"
-                  onChange={handleDocumentChange}
-                />
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground">
-                PDF, DOC, DOCX, TXT up to 25MB
-              </p>
+              {uploadingDocument ? (
+                <>
+                  <Loader2 className="mx-auto h-12 w-12 text-muted-foreground animate-spin" />
+                  <p className="mt-4 text-sm text-muted-foreground">Uploading document...</p>
+                </>
+              ) : (
+                <>
+                  <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <div className="mt-4">
+                    <Label htmlFor="document-upload" className="cursor-pointer">
+                      <Button variant="outline" asChild>
+                        <span>Choose Document</span>
+                      </Button>
+                    </Label>
+                    <Input
+                      id="document-upload"
+                      type="file"
+                      accept=".pdf,.doc,.docx,.txt"
+                      className="hidden"
+                      onChange={handleDocumentChange}
+                    />
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    PDF, DOC, DOCX, TXT up to 25MB
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>

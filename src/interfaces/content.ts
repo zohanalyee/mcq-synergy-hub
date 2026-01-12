@@ -19,6 +19,8 @@ export interface ContentItem {
   department?: string;
   governmentLevel?: string;
   cadre?: string;
+  location?: string;
+  applyLink?: string;
   scholarshipType?: string;
   institution?: string;
   examType?: string;
@@ -83,6 +85,8 @@ export interface ContentSubmission {
   department?: string;
   governmentLevel?: string;
   cadre?: string;
+  location?: string;
+  applyLink?: string;
   scholarshipType?: string;
   institution?: string;
   examType?: string;

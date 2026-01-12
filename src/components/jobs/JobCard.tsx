@@ -29,8 +29,17 @@ const JobCard = ({ job, index }: JobCardProps) => {
       transition={{ duration: 0.3, delay: index * 0.03 }}
       className="h-full"
     >
-      <Card className="h-full glass-card hover:shadow-md transition-shadow rounded-lg flex flex-col">
-        <CardContent className="p-3 flex flex-col flex-1">
+      <Card className="h-full glass-card hover:shadow-md transition-shadow rounded-lg flex flex-col overflow-hidden">
+        {job.imageUrl && (
+          <div className="relative h-32 overflow-hidden">
+            <img 
+              src={job.imageUrl} 
+              alt={job.title}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        )}
+        <CardContent className={`p-3 flex flex-col flex-1 ${job.imageUrl ? '' : ''}`}>
           <h2 className="text-sm font-semibold mb-1 line-clamp-1 break-words">{job.title}</h2>
           
           <div className="flex flex-wrap items-center text-muted-foreground text-xs mb-2 gap-1.5">

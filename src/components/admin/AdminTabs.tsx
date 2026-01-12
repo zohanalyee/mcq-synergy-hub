@@ -10,7 +10,8 @@ import ContentInventory from "./analytics/ContentInventory";
 import AIContentFactory from "./AIContentFactory";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
 import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive } from "lucide-react";
+import { JobsManager } from "./jobs/JobsManager";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive, BriefcaseBusiness } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -43,6 +44,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="inventory" className="flex items-center gap-2">
           <Archive className="h-4 w-4" />
           Inventory
+        </TabsTrigger>
+        <TabsTrigger value="jobs" className="flex items-center gap-2">
+          <BriefcaseBusiness className="h-4 w-4" />
+          Jobs
         </TabsTrigger>
         
         {/* Separator */}
@@ -157,6 +162,11 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Content Inventory Tab */}
       <TabsContent value="inventory">
         <ContentInventory />
+      </TabsContent>
+      
+      {/* Jobs Tab */}
+      <TabsContent value="jobs">
+        <JobsManager />
       </TabsContent>
       
       {/* Review Duplicates Tab */}
