@@ -86,14 +86,20 @@ export function AppSidebar({
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
+                        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
                         isActive(item.path) && "shadow-sm",
                         !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
                         {iconData.icon}
-                      {expanded && <span className="font-medium animate-fade-in ml-1.5 text-sm">{item.title}</span>}
-                      {isActive(item.path) && expanded && <ChevronRight className="ml-auto w-3 h-3 animate-fade-in" />}
+                      <span className={cn(
+                        "font-medium ml-1.5 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        expanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 absolute"
+                      )}>{item.title}</span>
+                      <ChevronRight className={cn(
+                        "ml-auto w-3 h-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        isActive(item.path) && expanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 absolute right-2"
+                      )} />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -117,15 +123,21 @@ export function AppSidebar({
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-200 hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
+                        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
                         isActive(item.path) && "shadow-sm",
                         !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
                         {iconData.icon}
-                      {expanded && <span className="font-medium animate-fade-in ml-1.5 text-sm">{item.title}</span>}
-                      {item.title === 'Question Bank' && isAdmin && expanded && (
-                        <Badge variant="secondary" className="ml-auto text-[10px] px-1.5 py-0 animate-fade-in">
+                      <span className={cn(
+                        "font-medium ml-1.5 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        expanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 absolute"
+                      )}>{item.title}</span>
+                      {item.title === 'Question Bank' && isAdmin && (
+                        <Badge variant="secondary" className={cn(
+                          "ml-auto text-[10px] px-1.5 py-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                          expanded ? "opacity-100 scale-100" : "opacity-0 scale-75 absolute right-2"
+                        )}>
                           Admin
                         </Badge>
                       )}

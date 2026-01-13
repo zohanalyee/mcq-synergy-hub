@@ -245,7 +245,7 @@ const Sidebar = React.forwardRef<
         {/* This is what handles the sidebar gap on desktop */}
         <div
           className={cn(
-            "duration-200 relative h-[calc(100svh-3.5rem)] mt-14 w-[--sidebar-width] bg-transparent transition-[width] ease-linear",
+            "relative h-[calc(100svh-3.5rem)] mt-14 w-[--sidebar-width] bg-transparent transition-[width] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
             "group-data-[collapsible=offcanvas]:w-0",
             "group-data-[side=right]:rotate-180",
             variant === "floating" || variant === "inset"
@@ -255,7 +255,7 @@ const Sidebar = React.forwardRef<
         />
         <div
           className={cn(
-            "duration-200 fixed top-14 bottom-0 z-10 transition-[left,right,width] ease-linear flex",
+            "fixed top-14 bottom-0 z-10 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex",
             "w-[280px] md:w-[--sidebar-width]", // Mobile optimized width
             side === "left"
               ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
@@ -462,7 +462,7 @@ const SidebarGroupLabel = React.forwardRef<
       ref={ref}
       data-sidebar="group-label"
       className={cn(
-        "duration-200 flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-[margin,opa] ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
+        "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0",
         "group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
         className
       )}
