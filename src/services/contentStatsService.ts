@@ -19,31 +19,26 @@ export interface AggregatedStats {
 }
 
 export const fetchContentStats = async (): Promise<AggregatedStats> => {
-  // Fetch approved MCQ content grouped by subject and topic
-  const { data, error } = await supabase
-    .from("content_items")
-    .select("subject, topic")
-    .eq("category", "mcq")
-    .eq("status", "approved");
+  // Use RPC to get aggregated data (bypasses 1000-row limit)
+  const { data, error } = await supabase.rpc('get_content_inventory_stats');
 
   if (error) {
     console.error("Error fetching content stats:", error);
     throw error;
   }
 
-  // Aggregate data in JavaScript
+  // Process the already-aggregated data from database
   const statsMap = new Map<string, Map<string, number>>();
 
-  (data || []).forEach((item) => {
-    const subject = item.subject || "Uncategorized";
-    const topic = item.topic || "General";
+  (data || []).forEach((row: { subject: string; topic: string; approved_count: number }) => {
+    const subject = row.subject;
+    const topic = row.topic;
 
     if (!statsMap.has(subject)) {
       statsMap.set(subject, new Map());
     }
 
-    const topicMap = statsMap.get(subject)!;
-    topicMap.set(topic, (topicMap.get(topic) || 0) + 1);
+    statsMap.get(subject)!.set(topic, row.approved_count);
   });
 
   // Convert to structured format

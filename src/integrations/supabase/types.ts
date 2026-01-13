@@ -939,6 +939,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_content_inventory_stats: {
+        Args: never
+        Returns: {
+          approved_count: number
+          subject: string
+          topic: string
+        }[]
+      }
       get_daily_activity_stats: {
         Args: { days_back?: number }
         Returns: {
