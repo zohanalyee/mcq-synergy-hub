@@ -68,11 +68,7 @@ export function AppSidebar({
   } = useSidebar();
   const expanded = open || (isMobile && openMobile);
   return <Sidebar collapsible="icon" className="border-r border-border/40 transition-all duration-300">
-      <SidebarHeader className="border-b border-border/40 p-2">
-        <div className={cn("flex items-center gap-2 transition-all duration-300", !expanded && "justify-center")}>
-          <img src={logo} alt="MCQs Point" className={cn("object-contain transition-all duration-300", expanded ? "h-7" : "h-7")} />
-        </div>
-      </SidebarHeader>
+      {/* Header removed - logo is already shown in main header */}
 
       <SidebarContent>
         <SidebarGroup>
