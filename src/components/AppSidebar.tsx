@@ -3,6 +3,7 @@ import { BookOpen, FileText, Users, Briefcase, Target, Clock, GraduationCap, Tre
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
+import { useNewScholarshipsCount } from '@/hooks/useNewScholarshipsCount';
 interface NavItem {
   title: string;
   path: string;
@@ -68,6 +69,7 @@ export function AppSidebar({
   } = useSidebar();
   const expanded = open || (isMobile && openMobile);
   const { data: newJobsCount = 0 } = useNewJobsCount();
+  const { data: newScholarshipsCount = 0 } = useNewScholarshipsCount();
   return <Sidebar collapsible="icon" className="border-r border-border/40 transition-all duration-300">
       {/* Header removed - logo is already shown in main header */}
 
@@ -108,9 +110,20 @@ export function AppSidebar({
                           {newJobsCount > 99 ? '99+' : newJobsCount}
                         </Badge>
                       )}
+                      {item.title === 'Scholarships' && newScholarshipsCount > 0 && (
+                        <Badge 
+                          variant="default" 
+                          className={cn(
+                            "ml-auto text-[10px] px-1.5 py-0 min-w-[18px] h-[18px] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] animate-pulse bg-pink-500 hover:bg-pink-600",
+                            expanded ? "opacity-100 scale-100" : "opacity-0 scale-75 absolute right-2"
+                          )}
+                        >
+                          {newScholarshipsCount > 99 ? '99+' : newScholarshipsCount}
+                        </Badge>
+                      )}
                       <ChevronRight className={cn(
                         "ml-auto w-3 h-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                        isActive(item.path) && expanded && !(item.title === 'Jobs' && newJobsCount > 0) ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 absolute right-2"
+                        isActive(item.path) && expanded && !(item.title === 'Jobs' && newJobsCount > 0) && !(item.title === 'Scholarships' && newScholarshipsCount > 0) ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 absolute right-2"
                       )} />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
