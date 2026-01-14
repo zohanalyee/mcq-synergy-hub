@@ -53,6 +53,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     { title: 'Subjects', path: '/subjects' },
     { title: 'Quizzes', path: '/quizzes' },
     { title: 'Recruitment Tests', path: '/mock-tests' },
+    { title: 'Jobs', path: '/jobs' },
     { title: 'Custom Syllabus', path: '/custom-syllabus' },
     { title: 'Scholarships', path: '/scholarships' },
   ];
