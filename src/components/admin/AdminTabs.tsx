@@ -11,7 +11,8 @@ import AIContentFactory from "./AIContentFactory";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
 import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
 import { JobsManager } from "./jobs/JobsManager";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive, BriefcaseBusiness } from "lucide-react";
+import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -48,6 +49,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="jobs" className="flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4" />
           Jobs
+        </TabsTrigger>
+        <TabsTrigger value="scholarships" className="flex items-center gap-2">
+          <GraduationCap className="h-4 w-4" />
+          Scholarships
         </TabsTrigger>
         
         {/* Separator */}
@@ -167,6 +172,11 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Jobs Tab */}
       <TabsContent value="jobs">
         <JobsManager />
+      </TabsContent>
+      
+      {/* Scholarships Tab */}
+      <TabsContent value="scholarships">
+        <ScholarshipsManager />
       </TabsContent>
       
       {/* Review Duplicates Tab */}
