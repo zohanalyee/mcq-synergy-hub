@@ -2,7 +2,7 @@ import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGrou
 import { BookOpen, FileText, Users, Briefcase, Target, Clock, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
-import logo from '@/assets/logo.png';
+import { useNewJobsCount } from '@/hooks/useNewJobsCount';
 interface NavItem {
   title: string;
   path: string;
@@ -67,6 +67,7 @@ export function AppSidebar({
     isMobile
   } = useSidebar();
   const expanded = open || (isMobile && openMobile);
+  const { data: newJobsCount = 0 } = useNewJobsCount();
   return <Sidebar collapsible="icon" className="border-r border-border/40 transition-all duration-300">
       {/* Header removed - logo is already shown in main header */}
 
@@ -96,9 +97,20 @@ export function AppSidebar({
                         "font-medium ml-1.5 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                         expanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 absolute"
                       )}>{item.title}</span>
+                      {item.title === 'Jobs' && newJobsCount > 0 && (
+                        <Badge 
+                          variant="destructive" 
+                          className={cn(
+                            "ml-auto text-[10px] px-1.5 py-0 min-w-[18px] h-[18px] flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] animate-pulse",
+                            expanded ? "opacity-100 scale-100" : "opacity-0 scale-75 absolute right-2"
+                          )}
+                        >
+                          {newJobsCount > 99 ? '99+' : newJobsCount}
+                        </Badge>
+                      )}
                       <ChevronRight className={cn(
                         "ml-auto w-3 h-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-                        isActive(item.path) && expanded ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 absolute right-2"
+                        isActive(item.path) && expanded && !(item.title === 'Jobs' && newJobsCount > 0) ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 absolute right-2"
                       )} />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
