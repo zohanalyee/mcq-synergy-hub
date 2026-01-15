@@ -127,7 +127,7 @@ export function JobsManager() {
             </div>
             <Button onClick={() => setImportDialogOpen(true)} className="gap-2">
               <Upload className="h-4 w-4" />
-              Bulk Upload Jobs (JSON)
+              Bulk Import Jobs
             </Button>
           </div>
         </CardHeader>
