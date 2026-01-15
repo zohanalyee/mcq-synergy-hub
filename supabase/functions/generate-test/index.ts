@@ -618,6 +618,33 @@ serve(async (req) => {
   }
 
   try {
+    // ============= JWT AUTHENTICATION =============
+    // Verify user identity and extract verified user_id from token
+    const authHeader = req.headers.get('Authorization');
+    let verified_user_id: string | undefined;
+    
+    if (authHeader?.startsWith('Bearer ')) {
+      // Initialize auth client for verification
+      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      
+      const token = authHeader.replace('Bearer ', '');
+      const { data, error } = await authClient.auth.getClaims(token);
+      
+      if (!error && data?.claims?.sub) {
+        verified_user_id = data.claims.sub;
+        console.log('🔐 Authenticated user:', verified_user_id);
+      } else {
+        console.log('⚠️ JWT validation failed:', error?.message || 'Invalid token');
+      }
+    } else {
+      console.log('⚠️ No Authorization header provided - anonymous request');
+    }
+    // ============= END JWT AUTHENTICATION =============
+
     const { 
       topic, 
       difficulty, 
@@ -626,9 +653,12 @@ serve(async (req) => {
       requestId, 
       partial_mode, 
       fetch_only,
-      mode, // NEW: 'bank_only' for admin bulk generator
-      user_id // NEW: for logging
+      mode, // 'bank_only' for admin bulk generator
+      // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
+
+    // Use verified user ID from JWT, not from request body
+    const user_id = verified_user_id;
 
     const qc = Number(question_count) || 10;
     const usePartialMode = partial_mode === true;
@@ -647,10 +677,11 @@ serve(async (req) => {
       fetch_only: isFetchOnly,
       mode: mode || 'default',
       auto_partial: autoPartial,
-      requestId 
+      requestId,
+      authenticated: !!verified_user_id
     });
 
-    // Initialize Supabase client
+    // Initialize Supabase client with service role for database operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
