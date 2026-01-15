@@ -1,5 +1,7 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Progress } from "@/components/ui/progress";
@@ -11,9 +13,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { bulkImportJobs, parseJobsJson, JobImportItem } from "@/services/bulkJobService";
+import { 
+  bulkImportJobs, 
+  parseJobsJson, 
+  JobImportItem 
+} from "@/services/bulkJobService";
 import { toast } from "sonner";
-import { AlertCircle, CheckCircle2, Upload, FileJson, Briefcase } from "lucide-react";
+import { AlertCircle, CheckCircle2, Briefcase, FileJson } from "lucide-react";
 
 interface BulkJobImportDialogProps {
   open: boolean;
@@ -29,83 +35,88 @@ const EXAMPLE_JSON = `[
     "deadline": "2026-03-15",
     "description": "Full time government job...",
     "apply_link": "https://fpsc.gov.pk"
+  },
+  {
+    "title": "Deputy Commissioner",
+    "department": "Punjab Public Service Commission",
+    "location": "Lahore",
+    "deadline": "2026-04-01"
   }
 ]`;
 
-export function BulkJobImportDialog({ open, onOpenChange, onSuccess }: BulkJobImportDialogProps) {
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [parsedJobs, setParsedJobs] = useState<JobImportItem[] | null>(null);
-  const [parseErrors, setParseErrors] = useState<string[]>([]);
+export function BulkJobImportDialog({ 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}: BulkJobImportDialogProps) {
+  const [jsonInput, setJsonInput] = useState("");
+  const [parsedData, setParsedData] = useState<JobImportItem[] | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState<{
     inserted: number;
     errors: string[];
   } | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setFileName(file.name);
-    setParsedJobs(null);
-    setParseErrors([]);
+  const handleJsonChange = (value: string) => {
+    setJsonInput(value);
+    setParseError(null);
+    setParsedData(null);
     setImportResult(null);
 
-    try {
-      const text = await file.text();
-      const data = JSON.parse(text);
+    if (!value.trim()) return;
 
+    try {
+      const data = JSON.parse(value);
+      
       if (!Array.isArray(data)) {
-        setParseErrors(["File must contain a JSON array"]);
+        setParseError("Input must be an array");
         return;
       }
 
       const { jobs, errors } = parseJobsJson(data);
       
       if (errors.length > 0 && jobs.length === 0) {
-        setParseErrors(errors);
+        setParseError(errors[0]);
         return;
       }
 
-      setParsedJobs(jobs);
-      if (errors.length > 0) {
-        setParseErrors(errors);
+      if (jobs.length === 0) {
+        setParseError("No valid jobs found in the JSON");
+        return;
       }
-    } catch (error) {
-      setParseErrors(["Invalid JSON format - please check your file"]);
+
+      setParsedData(jobs);
+    } catch (e) {
+      setParseError("Invalid JSON format");
     }
   };
 
   const handleImport = async () => {
-    if (!parsedJobs || parsedJobs.length === 0) return;
+    if (!parsedData || parsedData.length === 0) return;
 
     setImporting(true);
-    const result = await bulkImportJobs(parsedJobs);
+    const result = await bulkImportJobs(parsedData);
     setImporting(false);
     setImportResult(result);
 
     if (result.errors.length === 0) {
-      toast.success(`${result.inserted} Jobs Added Successfully`);
-      onSuccess();
-    } else if (result.inserted > 0) {
-      toast.warning(`Imported ${result.inserted} jobs with ${result.errors.length} errors`);
+      toast.success(`Successfully imported ${result.inserted} jobs`);
       onSuccess();
     } else {
-      toast.error("Import failed - no jobs were added");
+      toast.warning(`Imported ${result.inserted} jobs with ${result.errors.length} errors`);
     }
   };
 
   const handleClose = () => {
-    setFileName(null);
-    setParsedJobs(null);
-    setParseErrors([]);
+    setJsonInput("");
+    setParsedData(null);
+    setParseError(null);
     setImportResult(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
     onOpenChange(false);
   };
+
+  const totalJobs = parsedData?.length || 0;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -116,7 +127,7 @@ export function BulkJobImportDialog({ open, onOpenChange, onSuccess }: BulkJobIm
             Bulk Import Jobs
           </DialogTitle>
           <DialogDescription>
-            Upload a JSON file containing job listings to import them in bulk.
+            Import jobs using JSON format. Paste your JSON array below.
           </DialogDescription>
         </DialogHeader>
         
@@ -132,51 +143,30 @@ export function BulkJobImportDialog({ open, onOpenChange, onSuccess }: BulkJobIm
             </p>
           </div>
 
-          {/* File Upload */}
-          <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6">
-            <div className="text-center">
-              <Upload className="mx-auto h-12 w-12 text-muted-foreground" />
-              <div className="mt-4">
-                <Button 
-                  variant="outline" 
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={importing || !!importResult}
-                >
-                  {fileName ? "Choose Different File" : "Select JSON File"}
-                </Button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".json,application/json"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-              </div>
-              {fileName && (
-                <p className="mt-2 text-sm font-medium text-primary">{fileName}</p>
-              )}
-            </div>
+          {/* JSON Input */}
+          <div className="grid gap-2">
+            <Label htmlFor="json">Paste JSON Here</Label>
+            <Textarea
+              id="json"
+              placeholder="Paste your JSON array here..."
+              value={jsonInput}
+              onChange={(e) => handleJsonChange(e.target.value)}
+              rows={8}
+              className="font-mono text-sm"
+              disabled={importing || !!importResult}
+            />
           </div>
 
-          {/* Parse Errors */}
-          {parseErrors.length > 0 && !parsedJobs && (
+          {/* Parse Error */}
+          {parseError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                <ul className="list-disc list-inside">
-                  {parseErrors.slice(0, 5).map((err, i) => (
-                    <li key={i}>{err}</li>
-                  ))}
-                  {parseErrors.length > 5 && (
-                    <li>...and {parseErrors.length - 5} more errors</li>
-                  )}
-                </ul>
-              </AlertDescription>
+              <AlertDescription>{parseError}</AlertDescription>
             </Alert>
           )}
 
           {/* Preview */}
-          {parsedJobs && !importResult && (
+          {parsedData && !importResult && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-green-500" />
@@ -185,28 +175,20 @@ export function BulkJobImportDialog({ open, onOpenChange, onSuccess }: BulkJobIm
               <div className="flex gap-3">
                 <Badge variant="secondary">
                   <Briefcase className="h-3 w-3 mr-1" />
-                  {parsedJobs.length} Jobs ready to import
+                  {totalJobs} Jobs
                 </Badge>
               </div>
-              {parseErrors.length > 0 && (
-                <p className="text-xs text-amber-600">
-                  {parseErrors.length} items skipped due to validation errors
-                </p>
-              )}
               <div className="p-3 bg-muted/50 rounded-lg max-h-40 overflow-y-auto">
-                {parsedJobs.slice(0, 5).map((job, i) => (
+                {parsedData.map((item, i) => (
                   <div key={i} className="text-sm mb-2 last:mb-0">
-                    <span className="font-medium">{job.title}</span>
+                    <span className="font-medium">{item.title}</span>
                     <span className="text-muted-foreground ml-2">
-                      ({job.department}{job.location ? `, ${job.location}` : ''})
+                      ({item.department}
+                      {item.location && ` • ${item.location}`}
+                      {item.deadline && ` • Due: ${item.deadline}`})
                     </span>
                   </div>
                 ))}
-                {parsedJobs.length > 5 && (
-                  <p className="text-sm text-muted-foreground">
-                    ...and {parsedJobs.length - 5} more jobs
-                  </p>
-                )}
               </div>
             </div>
           )}
@@ -223,15 +205,12 @@ export function BulkJobImportDialog({ open, onOpenChange, onSuccess }: BulkJobIm
 
           {/* Import Result */}
           {importResult && (
-            <Alert 
-              variant={importResult.errors.length > 0 ? "default" : "default"} 
-              className={importResult.inserted > 0 ? "border-green-500/50 bg-green-500/10" : "border-destructive/50 bg-destructive/10"}
-            >
-              <CheckCircle2 className={`h-4 w-4 ${importResult.inserted > 0 ? 'text-green-500' : 'text-destructive'}`} />
+            <Alert variant={importResult.errors.length > 0 ? "default" : "default"} className="border-green-500/50 bg-green-500/10">
+              <CheckCircle2 className="h-4 w-4 text-green-500" />
               <AlertDescription>
                 <p className="font-medium">Import Complete!</p>
                 <p className="text-sm mt-1">
-                  {importResult.inserted} jobs imported successfully.
+                  Successfully imported {importResult.inserted} jobs.
                 </p>
                 {importResult.errors.length > 0 && (
                   <div className="mt-2 text-sm text-destructive">
@@ -258,9 +237,9 @@ export function BulkJobImportDialog({ open, onOpenChange, onSuccess }: BulkJobIm
           {!importResult && (
             <Button 
               onClick={handleImport} 
-              disabled={!parsedJobs || parsedJobs.length === 0 || importing}
+              disabled={!parsedData || parsedData.length === 0 || importing}
             >
-              {importing ? "Importing..." : `Import ${parsedJobs?.length || 0} Jobs`}
+              {importing ? "Importing..." : `Import ${totalJobs} Jobs`}
             </Button>
           )}
         </DialogFooter>
