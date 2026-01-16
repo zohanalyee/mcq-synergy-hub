@@ -47,8 +47,8 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
       initial="hidden"
       animate={isLoaded ? "show" : "hidden"}
     >
-      {subjects.map((subject) => (
-        <motion.div key={subject.title} variants={item}>
+      {subjects.map((subject, index) => (
+        <motion.div key={subject.id || `${subject.title}-${index}`} variants={item}>
           <SubjectCard
             title={subject.title}
             icon={subject.icon}
@@ -56,6 +56,9 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
             topicCount={subject.topicCount || 0}
             color={subject.color}
             purpose={subject.purpose}
+            id={subject.id}
+            levelId={subject.levelId}
+            systemId={subject.systemId}
           />
         </motion.div>
       ))}

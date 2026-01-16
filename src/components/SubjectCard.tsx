@@ -15,6 +15,9 @@ interface SubjectCardProps {
   color: string;
   purpose?: "reading" | "mcqs";
   onClick?: () => void;
+  id?: string;        // database UUID for LMS subjects
+  levelId?: string;   // LMS level UUID
+  systemId?: string;  // LMS system UUID
 }
 
 const SubjectCard = ({ 
@@ -24,7 +27,10 @@ const SubjectCard = ({
   topicCount,
   color,
   purpose = "mcqs",
-  onClick 
+  onClick,
+  id,
+  levelId,
+  systemId
 }: SubjectCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
@@ -50,16 +56,21 @@ const SubjectCard = ({
       return;
     }
     
+    // Use database ID if available (LMS subjects), otherwise fallback to title-based slug
+    const urlSlug = id || encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"));
+    
     // Navigate to subject-content for BOTH reading and MCQs
-    navigate(`/subject-content/${encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"))}`, { 
+    navigate(`/subject-content/${urlSlug}`, { 
       state: { 
         title,
-        id: title,
+        id: id || title,
         mode: purpose === "reading" ? "read" : "practice",
         purpose,
         color,
         icon: null,
-        topicCount
+        topicCount,
+        levelId,
+        systemId
       } 
     });
   };
