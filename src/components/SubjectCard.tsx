@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { FileText } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -17,7 +18,9 @@ interface SubjectCardProps {
   onClick?: () => void;
   id?: string;        // database UUID for LMS subjects
   levelId?: string;   // LMS level UUID
+  levelName?: string; // e.g., "Class 9"
   systemId?: string;  // LMS system UUID
+  systemName?: string; // e.g., "Sindh Board"
 }
 
 const SubjectCard = ({ 
@@ -30,7 +33,9 @@ const SubjectCard = ({
   onClick,
   id,
   levelId,
-  systemId
+  levelName,
+  systemId,
+  systemName
 }: SubjectCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const navigate = useNavigate();
@@ -64,13 +69,16 @@ const SubjectCard = ({
       state: { 
         title,
         id: id || title,
+        subjectId: id, // Pass the actual database UUID
         mode: purpose === "reading" ? "read" : "practice",
         purpose,
         color,
         icon: null,
         topicCount,
         levelId,
-        systemId
+        levelName,
+        systemId,
+        systemName
       } 
     });
   };
@@ -98,9 +106,20 @@ const SubjectCard = ({
               <div className="p-1.5 rounded-md" style={{ backgroundColor: `${color}20` }}>
                 {renderDisplayIcon()}
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground">
-                {topicCount} Topics
-              </span>
+              <div className="flex flex-col items-end gap-1">
+                {systemName && (
+                  <Badge 
+                    variant="secondary" 
+                    className="text-[9px] px-1.5 py-0 h-4 font-medium truncate max-w-[80px]"
+                    title={systemName}
+                  >
+                    {systemName}
+                  </Badge>
+                )}
+                <span className="text-[10px] font-medium text-muted-foreground">
+                  {topicCount} Topics
+                </span>
+              </div>
             </div>
             
             <h3 className="text-sm font-semibold mb-1 line-clamp-1 leading-tight">{title}</h3>

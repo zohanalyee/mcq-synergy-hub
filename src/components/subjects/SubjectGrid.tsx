@@ -58,7 +58,9 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
             purpose={subject.purpose}
             id={subject.id}
             levelId={subject.levelId}
+            levelName={subject.levelName}
             systemId={subject.systemId}
+            systemName={subject.systemName}
           />
         </motion.div>
       ))}
