@@ -1,48 +1,42 @@
-import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles, Search } from "lucide-react";
+import { Sparkles, Search, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
-import CategoryFilter from "@/components/subjects/CategoryFilter";
+import SystemLevelFilter from "@/components/subjects/SystemLevelFilter";
 import FilterSummary from "@/components/subjects/FilterSummary";
 import SubjectGrid from "@/components/subjects/SubjectGrid";
 import { Input } from "@/components/ui/input";
-import { subjects as initialSubjects } from "@/data/subjectsData";
-import { getSubjects } from "@/services/adminService";
+import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Subjects = () => {
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<string>("All");
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [subjects, setSubjects] = useState(initialSubjects);
-  
-  useEffect(() => {
-    // Load subjects from localStorage if available, otherwise use initial data
-    const managedSubjects = getSubjects();
-    if (managedSubjects.length > 0) {
-      setSubjects(managedSubjects);
-    }
-    setIsLoaded(true);
-  }, []);
+  const {
+    systems,
+    availableLevels,
+    subjects,
+    loading,
+    error,
+    filterState,
+    toggleSystemFilter,
+    toggleLevelFilter,
+    setSearchQuery,
+    clearFilters,
+    isFiltered,
+    totalCount
+  } = useSubjectsPageData();
 
-  const getCategories = () => {
-    const categories = subjects.map(subject => subject.category);
-    return ["All", ...Array.from(new Set(categories))];
-  };
-
-  const filteredSubjects = subjects.filter(subject => {
-    const categoryMatch = selectedCategory === "All" || subject.category === selectedCategory;
-    const searchMatch = subject.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                       subject.description.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    return categoryMatch && searchMatch;
-  });
-  
-  const isFiltered = searchQuery !== "" || selectedCategory !== "All";
-  
-  const clearFilters = () => {
-    setSearchQuery("");
-    setSelectedCategory("All");
-  };
+  // Map subjects to the format expected by SubjectGrid
+  const mappedSubjects = subjects.map(s => ({
+    title: s.title,
+    icon: s.icon,
+    description: s.description,
+    topicCount: s.topicCount,
+    color: s.color,
+    category: s.category,
+    purpose: s.purpose,
+    id: s.id,
+    levelId: s.levelId,
+    systemId: s.systemId
+  }));
 
   return (
     <Header>
@@ -62,7 +56,7 @@ const Subjects = () => {
             <span className="text-gradient">Subjects</span>
           </h1>
           <p className="text-muted-foreground max-w-2xl mx-auto">
-            Browse subjects, read content, and practice with MCQs. Choose Read Mode for memorization or Practice Mode for self-testing.
+            Browse subjects from your curriculum, read content, and practice with MCQs. Choose Read Mode for memorization or Practice Mode for self-testing.
           </p>
         </motion.div>
         
@@ -78,39 +72,67 @@ const Subjects = () => {
             <Input
               type="text"
               placeholder="Search subjects by name or description..."
-              value={searchQuery}
+              value={filterState.searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-12 pr-4 py-6 text-base rounded-xl bg-background/80 backdrop-blur-sm border-border/50 focus:border-primary shadow-sm"
             />
           </div>
         </motion.div>
         
-        {/* Filters */}
+        {/* System & Level Filters */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.2 }}
           className="mb-4"
         >
-          <div className="flex flex-col gap-3 sm:flex-row justify-between items-start sm:items-center">
-            <CategoryFilter 
-              categories={getCategories()} 
-              selectedCategory={selectedCategory} 
-              setSelectedCategory={setSelectedCategory} 
+          {loading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full max-w-md" />
+              <Skeleton className="h-8 w-full max-w-lg" />
+            </div>
+          ) : (
+            <SystemLevelFilter
+              systems={systems}
+              availableLevels={availableLevels}
+              selectedSystemIds={filterState.selectedSystemIds}
+              selectedLevelIds={filterState.selectedLevelIds}
+              toggleSystemFilter={toggleSystemFilter}
+              toggleLevelFilter={toggleLevelFilter}
             />
-          </div>
+          )}
         </motion.div>
 
         <FilterSummary 
-          count={filteredSubjects.length} 
+          count={subjects.length} 
           isFiltered={isFiltered} 
           clearFilters={clearFilters} 
         />
 
-        <SubjectGrid 
-          subjects={filteredSubjects} 
-          isLoaded={isLoaded} 
-        />
+        {/* Loading State */}
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading subjects from your curriculum...</p>
+          </div>
+        ) : error ? (
+          <div className="text-center py-12">
+            <p className="text-destructive mb-2">{error}</p>
+            <p className="text-muted-foreground text-sm">Please try refreshing the page</p>
+          </div>
+        ) : totalCount === 0 ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground mb-2">No subjects found in your LMS.</p>
+            <p className="text-sm text-muted-foreground">
+              Go to Admin Panel → LMS Structure to add educational systems, levels, and subjects.
+            </p>
+          </div>
+        ) : (
+          <SubjectGrid 
+            subjects={mappedSubjects} 
+            isLoaded={!loading} 
+          />
+        )}
       </div>
     </Header>
   );
