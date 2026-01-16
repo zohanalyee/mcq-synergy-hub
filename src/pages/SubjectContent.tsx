@@ -10,8 +10,10 @@ import ModeToggle, { StudyMode } from "@/components/subject-content/ModeToggle";
 import PracticeMCQCard from "@/components/subject-content/PracticeMCQCard";
 import MCQControls from "@/components/subject-content/MCQControls";
 import { TestGenerationLoader } from "@/components/mock-tests/TestGenerationLoader";
+import { Badge } from "@/components/ui/badge";
 import { mockTopics } from "@/data/topicsData";
 import { supabase } from "@/integrations/supabase/client";
+import { getTopicsBySubject } from "@/services/supabaseTopicService";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -51,7 +53,18 @@ const SubjectContent = () => {
   const [aiCount, setAiCount] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   
-  const { title, purpose, color, topicCount } = location.state || {};
+  // Extract all LMS context from location state
+  const { 
+    title, 
+    purpose, 
+    color, 
+    topicCount,
+    subjectId,    // Database UUID for LMS subjects
+    levelId,
+    levelName,
+    systemId,
+    systemName
+  } = location.state || {};
   
   // Normalize the title for lookup in our mock data
   const normalizedTitle = title ? title.toLowerCase() : "";
@@ -75,14 +88,29 @@ const SubjectContent = () => {
     setIsLoaded(true);
     loadTopicsFromDB();
     loadMCQs();
-  }, [title, navigate]);
+  }, [title, navigate, subjectId]);
 
   // Load topics from database for this subject
   const loadTopicsFromDB = async () => {
     if (!title) return;
     
     try {
-      // First, try to find the subject in the subjects table
+      // If we have a subjectId (LMS subject), use it directly
+      if (subjectId) {
+        console.log('Loading topics for LMS subject:', subjectId);
+        const topics = await getTopicsBySubject(subjectId);
+        
+        if (topics && topics.length > 0) {
+          setDbTopics(topics.map(t => ({
+            id: t.id || t.name,
+            name: t.name,
+            description: t.description
+          })));
+          return;
+        }
+      }
+      
+      // Fallback: Try to find the subject by name in the subjects table
       const { data: subjectData } = await supabase
         .from('subjects')
         .select('id')
@@ -103,7 +131,7 @@ const SubjectContent = () => {
         }
       }
       
-      // Fallback: Get distinct topics from content_items for this subject
+      // Final fallback: Get distinct topics from content_items for this subject
       const { data: mcqTopics } = await supabase
         .from('content_items')
         .select('topic')
@@ -291,6 +319,22 @@ const SubjectContent = () => {
             icon={defaultIcon}
             topicCount={topicCount || topics.length}
           />
+          
+          {/* Educational System/Level Badge */}
+          {(systemName || levelName) && (
+            <div className="flex flex-wrap gap-2 mb-4 -mt-2">
+              {systemName && (
+                <Badge variant="outline" className="text-xs">
+                  {systemName}
+                </Badge>
+              )}
+              {levelName && (
+                <Badge variant="secondary" className="text-xs">
+                  {levelName}
+                </Badge>
+              )}
+            </div>
+          )}
           
           {/* Mode Toggle Section */}
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
