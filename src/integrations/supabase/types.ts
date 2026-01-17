@@ -158,6 +158,7 @@ export type Database = {
           time_limit: number | null
           title: string
           topic: string | null
+          topic_id: string | null
           updated_at: string
           usage_count: number | null
         }
@@ -202,6 +203,7 @@ export type Database = {
           time_limit?: number | null
           title: string
           topic?: string | null
+          topic_id?: string | null
           updated_at?: string
           usage_count?: number | null
         }
@@ -246,10 +248,19 @@ export type Database = {
           time_limit?: number | null
           title?: string
           topic?: string | null
+          topic_id?: string | null
           updated_at?: string
           usage_count?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "content_items_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       content_question_tags: {
         Row: {
@@ -722,6 +733,33 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          description: string | null
+          id: string
+          key: string
+          updated_at: string | null
+          updated_by: string | null
+          value: Json
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          key: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value: Json
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          key?: string
+          updated_at?: string | null
+          updated_by?: string | null
+          value?: Json
+        }
+        Relationships: []
+      }
       test_attempts: {
         Row: {
           answers: Json | null
@@ -939,6 +977,29 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_ai_usage_today: {
+        Args: never
+        Returns: {
+          daily_limit: number
+          remaining_requests: number
+          total_questions_requested: number
+          total_questions_saved: number
+          total_requests: number
+        }[]
+      }
+      get_autofill_queue: {
+        Args: { limit_count?: number }
+        Returns: {
+          current_count: number
+          level_name: string
+          questions_needed: number
+          subject_id: string
+          subject_name: string
+          system_name: string
+          topic_id: string
+          topic_name: string
+        }[]
+      }
       get_content_inventory_stats: {
         Args: never
         Returns: {
@@ -961,6 +1022,18 @@ export type Database = {
           hour_of_day: number
           test_count: number
           user_count: number
+        }[]
+      }
+      get_lms_content_inventory: {
+        Args: never
+        Returns: {
+          is_low_content: boolean
+          level_name: string
+          question_count: number
+          subject_name: string
+          system_name: string
+          topic_id: string
+          topic_name: string
         }[]
       }
       get_power_users: {
