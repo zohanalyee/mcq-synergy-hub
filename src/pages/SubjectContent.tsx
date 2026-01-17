@@ -1,11 +1,12 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Book, Sparkles, AlertCircle } from "lucide-react";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { useEffect, useState, ReactNode } from "react";
 import Header from "@/components/Header";
 import SubjectHeader from "@/components/subject-content/SubjectHeader";
 import TopicsList from "@/components/subject-content/TopicsList";
-import BackButton from "@/components/subject-content/BackButton";
+
 import ModeToggle, { StudyMode } from "@/components/subject-content/ModeToggle";
 import PracticeMCQCard from "@/components/subject-content/PracticeMCQCard";
 import MCQControls from "@/components/subject-content/MCQControls";
@@ -305,7 +306,28 @@ const SubjectContent = () => {
       />
       
       <div className="container mx-auto px-4 py-4">
-        <BackButton />
+        {/* Breadcrumb Navigation: System > Level > Subject */}
+        <PageBreadcrumb 
+          items={[
+            ...(systemName ? [{
+              title: systemName,
+              href: `/subjects?system=${encodeURIComponent(systemId || '')}`,
+              isCurrent: false
+            }] : []),
+            ...(levelName ? [{
+              title: levelName,
+              href: `/subjects?system=${encodeURIComponent(systemId || '')}&level=${encodeURIComponent(levelId || '')}`,
+              isCurrent: false
+            }] : []),
+            {
+              title: title || 'Subject',
+              href: '#',
+              isCurrent: true
+            }
+          ]}
+          showBackButton={true}
+          showHomeButton={false}
+        />
         
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -319,22 +341,6 @@ const SubjectContent = () => {
             icon={defaultIcon}
             topicCount={topicCount || topics.length}
           />
-          
-          {/* Educational System/Level Badge */}
-          {(systemName || levelName) && (
-            <div className="flex flex-wrap gap-2 mb-4 -mt-2">
-              {systemName && (
-                <Badge variant="outline" className="text-xs">
-                  {systemName}
-                </Badge>
-              )}
-              {levelName && (
-                <Badge variant="secondary" className="text-xs">
-                  {levelName}
-                </Badge>
-              )}
-            </div>
-          )}
           
           {/* Mode Toggle Section */}
           <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
