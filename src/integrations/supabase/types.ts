@@ -977,6 +977,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      backfill_topic_ids: {
+        Args: never
+        Returns: {
+          matched_topics: string[]
+          updated_count: number
+        }[]
+      }
       get_ai_usage_today: {
         Args: never
         Returns: {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { type AutoFillQueueItem, getAutoFillQueue } from "@/services/autoFillService";
+import { type AutoFillQueueItem, getAutoFillQueue, getAutoFillConfig, generateForTopic } from "@/services/autoFillService";
 
 interface ContentGapQueueProps {
   topPriorityTopics: AutoFillQueueItem[];
@@ -38,17 +38,35 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
   const handleGenerateForTopic = async (topic: AutoFillQueueItem) => {
     setGeneratingTopicId(topic.topic_id);
     
-    // TODO: Integrate with actual AI generation edge function
-    toast.info(`Generation for "${topic.topic_name}" would start here`, {
-      description: 'This will be connected to the AI generation endpoint'
-    });
-    
-    // Simulate delay for demo
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    setGeneratingTopicId(null);
-    
-    // Refresh the queue after generation
-    onRefresh();
+    try {
+      // Get batch size from config
+      const config = await getAutoFillConfig();
+      const batchSize = config?.batch_size || 20;
+      
+      const result = await generateForTopic({
+        topic_id: topic.topic_id,
+        topic_name: topic.topic_name,
+        subject_name: topic.subject_name,
+        count: Math.min(batchSize, topic.questions_needed),
+        difficulty: 'medium'
+      });
+      
+      if (result.success) {
+        toast.success(`Generated ${result.saved} questions for "${topic.topic_name}"`, {
+          description: result.duplicates > 0 
+            ? `${result.duplicates} duplicates flagged for review` 
+            : undefined
+        });
+      } else {
+        toast.error(`Generation failed: ${result.error}`);
+      }
+    } catch (error) {
+      toast.error('Failed to generate questions');
+      console.error('Generation error:', error);
+    } finally {
+      setGeneratingTopicId(null);
+      onRefresh();
+    }
   };
 
   const getUrgencyColor = (currentCount: number): string => {

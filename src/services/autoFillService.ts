@@ -208,3 +208,64 @@ export async function getAutoFillStats(): Promise<{
     topPriorityTopics: queue
   };
 }
+
+// Generate questions for a specific topic with FK link
+export async function generateForTopic(params: {
+  topic_id: string;
+  topic_name: string;
+  subject_name: string;
+  difficulty?: string;
+  count: number;
+}): Promise<{
+  success: boolean;
+  generated: number;
+  saved: number;
+  duplicates: number;
+  error?: string;
+}> {
+  const { data, error } = await supabase.functions.invoke('generate-test', {
+    body: {
+      topic: `${params.topic_name} (${params.subject_name})`,
+      topic_id: params.topic_id,
+      difficulty: params.difficulty || 'medium',
+      question_count: params.count,
+      mode: 'bank_only',
+      source: 'auto_fill',
+      forceNew: true
+    }
+  });
+
+  if (error) {
+    console.error('Generate for topic error:', error);
+    return { success: false, generated: 0, saved: 0, duplicates: 0, error: error.message };
+  }
+
+  return {
+    success: true,
+    generated: data?.questions_generated || 0,
+    saved: data?.questions_saved || 0,
+    duplicates: data?.duplicates_flagged || 0
+  };
+}
+
+// Backfill topic_id for existing content_items
+export async function backfillTopicIds(): Promise<{
+  success: boolean;
+  updated_count: number;
+  matched_topics: string[];
+  error?: string;
+}> {
+  const { data, error } = await supabase.rpc('backfill_topic_ids');
+  
+  if (error) {
+    console.error('Backfill error:', error);
+    return { success: false, updated_count: 0, matched_topics: [], error: error.message };
+  }
+  
+  const result = data?.[0] || { updated_count: 0, matched_topics: [] };
+  return {
+    success: true,
+    updated_count: result.updated_count,
+    matched_topics: result.matched_topics || []
+  };
+}
