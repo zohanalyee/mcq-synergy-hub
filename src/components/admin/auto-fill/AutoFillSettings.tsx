@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Save, X } from "lucide-react";
+import { Save, X, Database, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +16,7 @@ import {
   getAutoFillConfig,
   getAILimitConfig,
   getLowContentThreshold,
+  backfillTopicIds,
   type AutoFillConfig 
 } from "@/services/autoFillService";
 
@@ -37,6 +38,7 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
   const [warningThreshold, setWarningThreshold] = useState(10);
   const [criticalThreshold, setCriticalThreshold] = useState(5);
   const [isSaving, setIsSaving] = useState(false);
+  const [isBackfilling, setIsBackfilling] = useState(false);
 
   // Load additional settings on mount
   useState(() => {
@@ -76,6 +78,27 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
       toast.error('Failed to save settings');
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleBackfill = async () => {
+    setIsBackfilling(true);
+    try {
+      const result = await backfillTopicIds();
+      if (result.success) {
+        toast.success(`Backfill complete! Updated ${result.updated_count} questions`, {
+          description: result.matched_topics.length > 0 
+            ? `Matched topics: ${result.matched_topics.slice(0, 5).join(', ')}${result.matched_topics.length > 5 ? '...' : ''}`
+            : 'No matches found'
+        });
+      } else {
+        toast.error(`Backfill failed: ${result.error}`);
+      }
+    } catch (error) {
+      toast.error('Backfill operation failed');
+      console.error('Backfill error:', error);
+    } finally {
+      setIsBackfilling(false);
     }
   };
 
@@ -213,6 +236,33 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
                   How to prioritize topics in the queue
                 </p>
               </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Data Maintenance Section */}
+          <div className="space-y-4">
+            <h4 className="font-medium text-sm">Data Maintenance</h4>
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+              <div>
+                <p className="font-medium text-sm">Backfill Topic Links</p>
+                <p className="text-xs text-muted-foreground">
+                  Link existing questions to LMS topics for accurate inventory counts
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                onClick={handleBackfill}
+                disabled={isBackfilling}
+              >
+                {isBackfilling ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Database className="h-4 w-4 mr-2" />
+                )}
+                {isBackfilling ? 'Processing...' : 'Run Backfill'}
+              </Button>
             </div>
           </div>
 

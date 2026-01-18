@@ -15,7 +15,7 @@ interface Question {
 
 interface UsageLogEntry {
   triggered_by_user_id?: string;
-  source_type: 'user_test_session' | 'admin_bulk_generator';
+  source_type: 'user_test_session' | 'admin_bulk_generator' | 'auto_fill';
   subject?: string;
   topic?: string;
   difficulty?: string;
@@ -654,6 +654,8 @@ serve(async (req) => {
       partial_mode, 
       fetch_only,
       mode, // 'bank_only' for admin bulk generator
+      source, // 'auto_fill' for auto-fill feature
+      topic_id, // UUID for FK link to topics table
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
 
@@ -664,9 +666,11 @@ serve(async (req) => {
     const usePartialMode = partial_mode === true;
     const isFetchOnly = fetch_only === true;
     const isBankOnly = mode === 'bank_only'; // Admin bulk mode - no test session
+    const isAutoFill = source === 'auto_fill'; // Auto-fill feature
     const isLargeRequest = qc > 20;
     const autoPartial = usePartialMode || isLargeRequest;
-    const sourceType = isBankOnly ? 'admin_bulk_generator' : 'user_test_session';
+    const sourceType: 'user_test_session' | 'admin_bulk_generator' | 'auto_fill' = 
+      isAutoFill ? 'auto_fill' : (isBankOnly ? 'admin_bulk_generator' : 'user_test_session');
     
     console.log('📥 Request received:', { 
       topic, 
@@ -676,6 +680,8 @@ serve(async (req) => {
       partial_mode: usePartialMode,
       fetch_only: isFetchOnly,
       mode: mode || 'default',
+      source: source || 'user',
+      topic_id: topic_id || null,
       auto_partial: autoPartial,
       requestId,
       authenticated: !!verified_user_id
@@ -851,6 +857,7 @@ serve(async (req) => {
           category: 'mcq',
           subject: sanitizedTopic,
           topic: topic,
+          topic_id: topic_id || null, // FK link to topics table
           difficulty: difficulty.toLowerCase(),
           options: q.options,
           correct_option: q.answer,
@@ -862,8 +869,9 @@ serve(async (req) => {
             source_role: topic,
             original_topic: sanitizedTopic,
             generated_at: new Date().toISOString(),
-            generator: 'admin_bulk',
+            generator: isAutoFill ? 'auto_fill' : 'admin_bulk',
             original_title: q.question,
+            ...(topic_id && { topic_id_linked: topic_id }),
             ...(dupCheck.isDuplicate && {
               duplicate_of_id: dupCheck.originalId,
               duplicate_of_title: dupCheck.originalTitle
