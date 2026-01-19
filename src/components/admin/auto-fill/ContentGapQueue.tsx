@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, Sparkles, ChevronRight, Loader2 } from "lucide-react";
+import { AlertCircle, Sparkles, ChevronRight, Loader2, Zap } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { type AutoFillQueueItem, getAutoFillQueue, getAutoFillConfig, generateForTopic } from "@/services/autoFillService";
+import { type AutoFillQueueItem, getAutoFillQueue, getAutoFillConfig, generateForTopic, getAIUsageToday } from "@/services/autoFillService";
 
 interface ContentGapQueueProps {
   topPriorityTopics: AutoFillQueueItem[];
@@ -19,8 +19,13 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [generatingTopicId, setGeneratingTopicId] = useState<string | null>(null);
-  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
-  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, topicName: '' });
+  const [isAutoPilotRunning, setIsAutoPilotRunning] = useState(false);
+  const [autoPilotProgress, setAutoPilotProgress] = useState({
+    topicsProcessed: 0,
+    totalQuestionsSaved: 0,
+    currentTopicName: '',
+    status: ''
+  });
 
   const displayedTopics = isExpanded ? expandedQueue : topPriorityTopics;
 
@@ -41,7 +46,6 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
     setGeneratingTopicId(topic.topic_id);
     
     try {
-      // Get batch size from config
       const config = await getAutoFillConfig();
       const batchSize = config?.batch_size || 20;
       
@@ -71,86 +75,115 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
     }
   };
 
-  const handleGenerateAll = async () => {
-    const topicsToProcess = displayedTopics.slice(0, 5);
-    
-    if (topicsToProcess.length === 0) {
-      toast.warning('No topics in queue to generate');
-      return;
-    }
+  const handleAutoPilot = async () => {
+    setIsAutoPilotRunning(true);
+    setAutoPilotProgress({ 
+      topicsProcessed: 0, 
+      totalQuestionsSaved: 0, 
+      currentTopicName: '', 
+      status: 'Starting auto-pilot...' 
+    });
 
-    setIsBulkGenerating(true);
-    setBulkProgress({ current: 0, total: topicsToProcess.length, topicName: '' });
-
-    let totalSaved = 0;
-    let totalDuplicates = 0;
-    let successfulTopics = 0;
-    let stoppedEarly = false;
+    let topicsProcessed = 0;
+    let totalQuestionsSaved = 0;
 
     try {
       const config = await getAutoFillConfig();
       const batchSize = config?.batch_size || 20;
 
-      for (let i = 0; i < topicsToProcess.length; i++) {
-        const topic = topicsToProcess[i];
+      // CONTINUOUS LOOP - runs until limit hit or no gaps
+      while (true) {
+        // Step 1: Check daily usage quota
+        setAutoPilotProgress(prev => ({ 
+          ...prev, 
+          status: 'Checking API quota...' 
+        }));
         
-        setBulkProgress({ 
-          current: i + 1, 
-          total: topicsToProcess.length, 
-          topicName: topic.topic_name 
+        const usage = await getAIUsageToday();
+        
+        if (!usage || usage.remaining_requests <= 0) {
+          toast.warning('Daily Limit Reached!', {
+            description: `Auto-pilot stopped automatically. Processed ${topicsProcessed} topics, saved ${totalQuestionsSaved} questions.`
+          });
+          break;
+        }
+
+        // Step 2: Fetch the SINGLE top-priority gap
+        setAutoPilotProgress(prev => ({ 
+          ...prev, 
+          status: 'Finding next content gap...' 
+        }));
+        
+        const queue = await getAutoFillQueue(1);
+        
+        if (queue.length === 0) {
+          toast.success('All Topics Fully Stocked!', {
+            description: `Mission complete! Processed ${topicsProcessed} topics, saved ${totalQuestionsSaved} questions.`
+          });
+          break;
+        }
+
+        const topic = queue[0];
+
+        // Step 3: Generate for this topic
+        setAutoPilotProgress({
+          topicsProcessed,
+          totalQuestionsSaved,
+          currentTopicName: topic.topic_name,
+          status: `Generating for "${topic.topic_name}"...`
         });
 
-        try {
-          const result = await generateForTopic({
-            topic_id: topic.topic_id,
-            topic_name: topic.topic_name,
-            subject_name: topic.subject_name,
-            count: Math.min(batchSize, topic.questions_needed),
-            difficulty: 'medium'
-          });
+        const result = await generateForTopic({
+          topic_id: topic.topic_id,
+          topic_name: topic.topic_name,
+          subject_name: topic.subject_name,
+          count: Math.min(batchSize, topic.questions_needed),
+          difficulty: 'medium'
+        });
 
-          if (result.success) {
-            totalSaved += result.saved;
-            totalDuplicates += result.duplicates;
-            successfulTopics++;
-          } else {
-            if (result.error?.toLowerCase().includes('limit') || 
-                result.error?.toLowerCase().includes('quota')) {
-              toast.warning('Daily limit reached', {
-                description: `Stopped after processing ${i + 1} of ${topicsToProcess.length} topics`
-              });
-              stoppedEarly = true;
-              break;
-            }
-            console.error(`Failed for topic ${topic.topic_name}:`, result.error);
-          }
-        } catch (error: any) {
-          if (error?.message?.toLowerCase().includes('limit')) {
-            toast.warning('Daily limit reached', {
-              description: `Stopped after processing ${i + 1} topics`
+        if (result.success) {
+          topicsProcessed++;
+          totalQuestionsSaved += result.saved;
+          
+          setAutoPilotProgress({
+            topicsProcessed,
+            totalQuestionsSaved,
+            currentTopicName: topic.topic_name,
+            status: `✓ Filled gap for "${topic.topic_name}"... Checking next...`
+          });
+        } else {
+          // Check for limit errors
+          if (result.error?.toLowerCase().includes('limit') || 
+              result.error?.toLowerCase().includes('quota')) {
+            toast.warning('Daily Limit Reached!', {
+              description: `Auto-pilot stopped. Processed ${topicsProcessed} topics, saved ${totalQuestionsSaved} questions.`
             });
-            stoppedEarly = true;
             break;
           }
-          console.error(`Error generating for ${topic.topic_name}:`, error);
+          // Log other errors but continue to next topic
+          console.error(`Failed for ${topic.topic_name}:`, result.error);
         }
+
+        // Small delay to prevent hammering the API
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
 
-      if (!stoppedEarly) {
-        toast.success(`Bulk generation complete!`, {
-          description: `Generated ${totalSaved} questions across ${successfulTopics} topics` +
-            (totalDuplicates > 0 ? `. ${totalDuplicates} duplicates flagged.` : '')
+    } catch (error: any) {
+      if (error?.message?.toLowerCase().includes('limit')) {
+        toast.warning('Daily Limit Reached!');
+      } else {
+        toast.error('Auto-pilot encountered an error', {
+          description: error?.message || 'Unknown error'
         });
       }
-
-    } catch (error) {
-      toast.error('Bulk generation failed', {
-        description: 'An unexpected error occurred'
-      });
-      console.error('Bulk generation error:', error);
     } finally {
-      setIsBulkGenerating(false);
-      setBulkProgress({ current: 0, total: 0, topicName: '' });
+      setIsAutoPilotRunning(false);
+      setAutoPilotProgress({ 
+        topicsProcessed: 0, 
+        totalQuestionsSaved: 0, 
+        currentTopicName: '', 
+        status: '' 
+      });
       onRefresh();
     }
   };
@@ -197,39 +230,52 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
             </CardDescription>
           </div>
           <Button 
-            variant="default" 
+            variant={isAutoPilotRunning ? "outline" : "default"}
             size="sm"
-            onClick={handleGenerateAll}
-            disabled={generatingTopicId !== null || isBulkGenerating}
+            onClick={handleAutoPilot}
+            disabled={generatingTopicId !== null || isAutoPilotRunning}
+            className={isAutoPilotRunning ? "border-amber-500 text-amber-500" : ""}
           >
-            {isBulkGenerating ? (
+            {isAutoPilotRunning ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                {bulkProgress.current}/{bulkProgress.total}...
+                Running...
               </>
             ) : (
               <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate All
+                <Zap className="h-4 w-4 mr-2" />
+                Start Auto-Pilot
               </>
             )}
           </Button>
         </div>
       </CardHeader>
       <CardContent>
-        {isBulkGenerating && (
-          <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
-            <div className="flex items-center gap-2 text-sm">
-              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-              <span>
-                Processing topic {bulkProgress.current} of {bulkProgress.total}: 
-                <span className="font-medium ml-1">{bulkProgress.topicName}</span>
+        {isAutoPilotRunning && (
+          <div className="mb-4 p-4 bg-gradient-to-r from-amber-500/10 to-primary/10 rounded-lg border border-amber-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="relative">
+                <Loader2 className="h-5 w-5 animate-spin text-amber-500" />
+              </div>
+              <span className="font-semibold text-amber-600 dark:text-amber-400">
+                Auto-Pilot Active
               </span>
             </div>
-            <Progress 
-              value={(bulkProgress.current / bulkProgress.total) * 100} 
-              className="h-1.5 mt-2" 
-            />
+            
+            <p className="text-sm text-muted-foreground mb-3">
+              {autoPilotProgress.status}
+            </p>
+            
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div className="p-2 bg-background/50 rounded">
+                <div className="text-xs text-muted-foreground">Topics Filled</div>
+                <div className="text-lg font-bold">{autoPilotProgress.topicsProcessed}</div>
+              </div>
+              <div className="p-2 bg-background/50 rounded">
+                <div className="text-xs text-muted-foreground">Questions Saved</div>
+                <div className="text-lg font-bold">{autoPilotProgress.totalQuestionsSaved}</div>
+              </div>
+            </div>
           </div>
         )}
         <div className="space-y-3">
@@ -269,7 +315,7 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
                 size="sm"
                 className="ml-4 shrink-0"
                 onClick={() => handleGenerateForTopic(topic)}
-                disabled={generatingTopicId !== null || isBulkGenerating}
+                disabled={generatingTopicId !== null || isAutoPilotRunning}
               >
                 {generatingTopicId === topic.topic_id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -290,7 +336,7 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
             <Button 
               variant="ghost" 
               onClick={handleLoadMore}
-              disabled={isLoadingMore}
+              disabled={isLoadingMore || isAutoPilotRunning}
             >
               {isLoadingMore ? (
                 <Loader2 className="h-4 w-4 animate-spin mr-2" />
@@ -307,6 +353,7 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
             <Button 
               variant="ghost" 
               onClick={() => setIsExpanded(false)}
+              disabled={isAutoPilotRunning}
             >
               Show less
             </Button>
