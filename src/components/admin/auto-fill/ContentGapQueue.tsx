@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { AlertCircle, Sparkles, ChevronRight, Loader2, Zap } from "lucide-react";
+import { AlertCircle, Sparkles, ChevronRight, Loader2, Zap, StopCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,9 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
     currentTopicName: '',
     status: ''
   });
+  
+  // Ref to track if auto-pilot should be stopped
+  const shouldStopAutoPilot = useRef(false);
 
   const displayedTopics = isExpanded ? expandedQueue : topPriorityTopics;
 
@@ -75,7 +78,19 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
     }
   };
 
+  const handleStopAutoPilot = () => {
+    shouldStopAutoPilot.current = true;
+    setAutoPilotProgress(prev => ({
+      ...prev,
+      status: 'Stopping auto-pilot...'
+    }));
+    toast.info('Stopping auto-pilot...', {
+      description: 'Will stop after the current topic completes.'
+    });
+  };
+
   const handleAutoPilot = async () => {
+    shouldStopAutoPilot.current = false;
     setIsAutoPilotRunning(true);
     setAutoPilotProgress({ 
       topicsProcessed: 0, 
@@ -91,8 +106,16 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
       const config = await getAutoFillConfig();
       const batchSize = config?.batch_size || 20;
 
-      // CONTINUOUS LOOP - runs until limit hit or no gaps
+      // CONTINUOUS LOOP - runs until limit hit, no gaps, or manually stopped
       while (true) {
+        // Check if manually stopped
+        if (shouldStopAutoPilot.current) {
+          toast.success('Auto-Pilot Stopped', {
+            description: `Manually stopped. Processed ${topicsProcessed} topics, saved ${totalQuestionsSaved} questions.`
+          });
+          break;
+        }
+
         // Step 1: Check daily usage quota
         setAutoPilotProgress(prev => ({ 
           ...prev, 
@@ -177,6 +200,7 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
         });
       }
     } finally {
+      shouldStopAutoPilot.current = false;
       setIsAutoPilotRunning(false);
       setAutoPilotProgress({ 
         topicsProcessed: 0, 
@@ -229,25 +253,28 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
               Topics that need content generation ({totalCount} total)
             </CardDescription>
           </div>
-          <Button 
-            variant={isAutoPilotRunning ? "outline" : "default"}
-            size="sm"
-            onClick={handleAutoPilot}
-            disabled={generatingTopicId !== null || isAutoPilotRunning}
-            className={isAutoPilotRunning ? "border-amber-500 text-amber-500" : ""}
-          >
+          <div className="flex items-center gap-2">
             {isAutoPilotRunning ? (
-              <>
-                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                Running...
-              </>
+              <Button 
+                variant="destructive"
+                size="sm"
+                onClick={handleStopAutoPilot}
+              >
+                <StopCircle className="h-4 w-4 mr-2" />
+                Stop Auto-Pilot
+              </Button>
             ) : (
-              <>
+              <Button 
+                variant="default"
+                size="sm"
+                onClick={handleAutoPilot}
+                disabled={generatingTopicId !== null}
+              >
                 <Zap className="h-4 w-4 mr-2" />
                 Start Auto-Pilot
-              </>
+              </Button>
             )}
-          </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
