@@ -19,6 +19,8 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
   const [isExpanded, setIsExpanded] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [generatingTopicId, setGeneratingTopicId] = useState<string | null>(null);
+  const [isBulkGenerating, setIsBulkGenerating] = useState(false);
+  const [bulkProgress, setBulkProgress] = useState({ current: 0, total: 0, topicName: '' });
 
   const displayedTopics = isExpanded ? expandedQueue : topPriorityTopics;
 
@@ -69,6 +71,90 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
     }
   };
 
+  const handleGenerateAll = async () => {
+    const topicsToProcess = displayedTopics.slice(0, 5);
+    
+    if (topicsToProcess.length === 0) {
+      toast.warning('No topics in queue to generate');
+      return;
+    }
+
+    setIsBulkGenerating(true);
+    setBulkProgress({ current: 0, total: topicsToProcess.length, topicName: '' });
+
+    let totalSaved = 0;
+    let totalDuplicates = 0;
+    let successfulTopics = 0;
+    let stoppedEarly = false;
+
+    try {
+      const config = await getAutoFillConfig();
+      const batchSize = config?.batch_size || 20;
+
+      for (let i = 0; i < topicsToProcess.length; i++) {
+        const topic = topicsToProcess[i];
+        
+        setBulkProgress({ 
+          current: i + 1, 
+          total: topicsToProcess.length, 
+          topicName: topic.topic_name 
+        });
+
+        try {
+          const result = await generateForTopic({
+            topic_id: topic.topic_id,
+            topic_name: topic.topic_name,
+            subject_name: topic.subject_name,
+            count: Math.min(batchSize, topic.questions_needed),
+            difficulty: 'medium'
+          });
+
+          if (result.success) {
+            totalSaved += result.saved;
+            totalDuplicates += result.duplicates;
+            successfulTopics++;
+          } else {
+            if (result.error?.toLowerCase().includes('limit') || 
+                result.error?.toLowerCase().includes('quota')) {
+              toast.warning('Daily limit reached', {
+                description: `Stopped after processing ${i + 1} of ${topicsToProcess.length} topics`
+              });
+              stoppedEarly = true;
+              break;
+            }
+            console.error(`Failed for topic ${topic.topic_name}:`, result.error);
+          }
+        } catch (error: any) {
+          if (error?.message?.toLowerCase().includes('limit')) {
+            toast.warning('Daily limit reached', {
+              description: `Stopped after processing ${i + 1} topics`
+            });
+            stoppedEarly = true;
+            break;
+          }
+          console.error(`Error generating for ${topic.topic_name}:`, error);
+        }
+      }
+
+      if (!stoppedEarly) {
+        toast.success(`Bulk generation complete!`, {
+          description: `Generated ${totalSaved} questions across ${successfulTopics} topics` +
+            (totalDuplicates > 0 ? `. ${totalDuplicates} duplicates flagged.` : '')
+        });
+      }
+
+    } catch (error) {
+      toast.error('Bulk generation failed', {
+        description: 'An unexpected error occurred'
+      });
+      console.error('Bulk generation error:', error);
+    } finally {
+      setIsBulkGenerating(false);
+      setBulkProgress({ current: 0, total: 0, topicName: '' });
+      onRefresh();
+    }
+  };
+
   const getUrgencyColor = (currentCount: number): string => {
     if (currentCount === 0) return 'text-destructive';
     if (currentCount < 5) return 'text-yellow-500';
@@ -113,14 +199,39 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
           <Button 
             variant="default" 
             size="sm"
-            disabled={generatingTopicId !== null}
+            onClick={handleGenerateAll}
+            disabled={generatingTopicId !== null || isBulkGenerating}
           >
-            <Sparkles className="h-4 w-4 mr-2" />
-            Generate All
+            {isBulkGenerating ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                {bulkProgress.current}/{bulkProgress.total}...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Generate All
+              </>
+            )}
           </Button>
         </div>
       </CardHeader>
       <CardContent>
+        {isBulkGenerating && (
+          <div className="mb-4 p-3 bg-primary/10 rounded-lg border border-primary/20">
+            <div className="flex items-center gap-2 text-sm">
+              <Loader2 className="h-4 w-4 animate-spin text-primary" />
+              <span>
+                Processing topic {bulkProgress.current} of {bulkProgress.total}: 
+                <span className="font-medium ml-1">{bulkProgress.topicName}</span>
+              </span>
+            </div>
+            <Progress 
+              value={(bulkProgress.current / bulkProgress.total) * 100} 
+              className="h-1.5 mt-2" 
+            />
+          </div>
+        )}
         <div className="space-y-3">
           {displayedTopics.map((topic, index) => (
             <motion.div
@@ -158,7 +269,7 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
                 size="sm"
                 className="ml-4 shrink-0"
                 onClick={() => handleGenerateForTopic(topic)}
-                disabled={generatingTopicId !== null}
+                disabled={generatingTopicId !== null || isBulkGenerating}
               >
                 {generatingTopicId === topic.topic_id ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
