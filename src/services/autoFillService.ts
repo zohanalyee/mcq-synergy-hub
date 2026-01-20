@@ -30,11 +30,18 @@ export interface LMSInventoryItem {
   is_low_content: boolean;
 }
 
+export interface DifficultyWeights {
+  easy: number;
+  medium: number;
+  hard: number;
+}
+
 export interface AutoFillConfig {
   enabled: boolean;
   min_threshold: number;
   batch_size: number;
   priority: 'lowest_first' | 'random';
+  difficulty_weights?: DifficultyWeights;
 }
 
 export interface AILimitConfig {
