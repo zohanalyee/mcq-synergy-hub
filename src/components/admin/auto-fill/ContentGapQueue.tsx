@@ -30,6 +30,14 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
   // Ref to track if auto-pilot should be stopped
   const shouldStopAutoPilot = useRef(false);
 
+  // Difficulty levels for random selection
+  const DIFFICULTY_LEVELS = ['easy', 'medium', 'hard'] as const;
+  type DifficultyLevel = typeof DIFFICULTY_LEVELS[number];
+
+  const getRandomDifficulty = (): DifficultyLevel => {
+    return DIFFICULTY_LEVELS[Math.floor(Math.random() * DIFFICULTY_LEVELS.length)];
+  };
+
   const displayedTopics = isExpanded ? expandedQueue : topPriorityTopics;
 
   const handleLoadMore = async () => {
@@ -51,17 +59,19 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
     try {
       const config = await getAutoFillConfig();
       const batchSize = config?.batch_size || 20;
+      const randomDifficulty = getRandomDifficulty();
       
       const result = await generateForTopic({
         topic_id: topic.topic_id,
         topic_name: topic.topic_name,
         subject_name: topic.subject_name,
         count: Math.min(batchSize, topic.questions_needed),
-        difficulty: 'medium'
+        difficulty: randomDifficulty
       });
       
       if (result.success) {
-        toast.success(`Generated ${result.saved} questions for "${topic.topic_name}"`, {
+        const difficultyLabel = randomDifficulty.charAt(0).toUpperCase() + randomDifficulty.slice(1);
+        toast.success(`Generated ${result.saved} ${difficultyLabel} questions for "${topic.topic_name}"`, {
           description: result.duplicates > 0 
             ? `${result.duplicates} duplicates flagged for review` 
             : undefined
@@ -148,12 +158,16 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
 
         const topic = queue[0];
 
-        // Step 3: Generate for this topic
+        // Randomly select difficulty for variety
+        const randomDifficulty = getRandomDifficulty();
+        const difficultyLabel = randomDifficulty.charAt(0).toUpperCase() + randomDifficulty.slice(1);
+
+        // Step 3: Generate for this topic with random difficulty
         setAutoPilotProgress({
           topicsProcessed,
           totalQuestionsSaved,
           currentTopicName: topic.topic_name,
-          status: `Generating for "${topic.topic_name}"...`
+          status: `Generating (${difficultyLabel}) for "${topic.topic_name}"...`
         });
 
         const result = await generateForTopic({
@@ -161,7 +175,7 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
           topic_name: topic.topic_name,
           subject_name: topic.subject_name,
           count: Math.min(batchSize, topic.questions_needed),
-          difficulty: 'medium'
+          difficulty: randomDifficulty
         });
 
         if (result.success) {
@@ -172,7 +186,7 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
             topicsProcessed,
             totalQuestionsSaved,
             currentTopicName: topic.topic_name,
-            status: `✓ Filled gap for "${topic.topic_name}"... Checking next...`
+            status: `✓ Filled gap (${difficultyLabel}) for "${topic.topic_name}"... Checking next...`
           });
         } else {
           // Check for limit errors
