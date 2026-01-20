@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Save, X, Database, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,11 +14,11 @@ import {
   updateAutoFillConfig, 
   updateAILimitConfig,
   updateLowContentThreshold,
-  getAutoFillConfig,
   getAILimitConfig,
   getLowContentThreshold,
   backfillTopicIds,
-  type AutoFillConfig 
+  type AutoFillConfig,
+  type DifficultyWeights
 } from "@/services/autoFillService";
 
 interface AutoFillSettingsProps {
@@ -26,19 +27,28 @@ interface AutoFillSettingsProps {
   onClose: () => void;
 }
 
+const DEFAULT_WEIGHTS: DifficultyWeights = { easy: 20, medium: 60, hard: 20 };
+
 const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsProps) => {
   const [localConfig, setLocalConfig] = useState<AutoFillConfig>(config || {
     enabled: false,
     min_threshold: 10,
     batch_size: 20,
-    priority: 'lowest_first'
+    priority: 'lowest_first',
+    difficulty_weights: DEFAULT_WEIGHTS
   });
   
   const [dailyLimit, setDailyLimit] = useState(50);
   const [warningThreshold, setWarningThreshold] = useState(10);
   const [criticalThreshold, setCriticalThreshold] = useState(5);
+  const [difficultyWeights, setDifficultyWeights] = useState<DifficultyWeights>(
+    config?.difficulty_weights || DEFAULT_WEIGHTS
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isBackfilling, setIsBackfilling] = useState(false);
+  
+  const weightsTotal = difficultyWeights.easy + difficultyWeights.medium + difficultyWeights.hard;
+  const isWeightsValid = weightsTotal === 100;
 
   // Load additional settings on mount
   useState(() => {
@@ -58,18 +68,25 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
   });
 
   const handleSave = async () => {
+    if (!isWeightsValid) {
+      toast.error('Difficulty weights must sum to 100%');
+      return;
+    }
+    
     setIsSaving(true);
     
     try {
+      const configWithWeights = { ...localConfig, difficulty_weights: difficultyWeights };
+      
       const results = await Promise.all([
-        updateAutoFillConfig(localConfig),
+        updateAutoFillConfig(configWithWeights),
         updateAILimitConfig({ max_requests: dailyLimit }),
         updateLowContentThreshold({ warning: warningThreshold, critical: criticalThreshold })
       ]);
       
       if (results.every(r => r)) {
         toast.success('Settings saved successfully');
-        onConfigUpdate(localConfig);
+        onConfigUpdate(configWithWeights);
         onClose();
       } else {
         toast.error('Some settings failed to save');
@@ -79,6 +96,10 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
     } finally {
       setIsSaving(false);
     }
+  };
+  
+  const handleWeightChange = (level: keyof DifficultyWeights, value: number) => {
+    setDifficultyWeights(prev => ({ ...prev, [level]: value }));
   };
 
   const handleBackfill = async () => {
@@ -237,6 +258,80 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
                 </p>
               </div>
             </div>
+          </div>
+
+          <Separator />
+
+          {/* Difficulty Distribution Section */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 className="font-medium text-sm">Difficulty Distribution</h4>
+              <Badge variant={isWeightsValid ? "outline" : "destructive"}>
+                Total: {weightsTotal}%
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Control the probability of each difficulty level during auto-generation
+            </p>
+            
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="weight-easy" className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-green-500" />
+                  Easy
+                </Label>
+                <Input
+                  id="weight-easy"
+                  type="number"
+                  value={difficultyWeights.easy}
+                  onChange={(e) => handleWeightChange('easy', parseInt(e.target.value) || 0)}
+                  min={0}
+                  max={100}
+                  className="text-center"
+                />
+                <p className="text-xs text-center text-muted-foreground">{difficultyWeights.easy}%</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="weight-medium" className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-yellow-500" />
+                  Medium
+                </Label>
+                <Input
+                  id="weight-medium"
+                  type="number"
+                  value={difficultyWeights.medium}
+                  onChange={(e) => handleWeightChange('medium', parseInt(e.target.value) || 0)}
+                  min={0}
+                  max={100}
+                  className="text-center"
+                />
+                <p className="text-xs text-center text-muted-foreground">{difficultyWeights.medium}%</p>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="weight-hard" className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-red-500" />
+                  Hard
+                </Label>
+                <Input
+                  id="weight-hard"
+                  type="number"
+                  value={difficultyWeights.hard}
+                  onChange={(e) => handleWeightChange('hard', parseInt(e.target.value) || 0)}
+                  min={0}
+                  max={100}
+                  className="text-center"
+                />
+                <p className="text-xs text-center text-muted-foreground">{difficultyWeights.hard}%</p>
+              </div>
+            </div>
+            
+            {!isWeightsValid && (
+              <p className="text-xs text-destructive">
+                ⚠️ Weights must sum to 100%. Currently: {weightsTotal}%
+              </p>
+            )}
           </div>
 
           <Separator />

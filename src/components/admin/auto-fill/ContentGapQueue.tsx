@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
-import { type AutoFillQueueItem, getAutoFillQueue, getAutoFillConfig, generateForTopic, getAIUsageToday } from "@/services/autoFillService";
+import { type AutoFillQueueItem, type DifficultyWeights, getAutoFillQueue, getAutoFillConfig, generateForTopic, getAIUsageToday } from "@/services/autoFillService";
 
 interface ContentGapQueueProps {
   topPriorityTopics: AutoFillQueueItem[];
@@ -30,12 +30,19 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
   // Ref to track if auto-pilot should be stopped
   const shouldStopAutoPilot = useRef(false);
 
-  // Difficulty levels for random selection
+  // Difficulty levels for weighted random selection
   const DIFFICULTY_LEVELS = ['easy', 'medium', 'hard'] as const;
   type DifficultyLevel = typeof DIFFICULTY_LEVELS[number];
 
-  const getRandomDifficulty = (): DifficultyLevel => {
-    return DIFFICULTY_LEVELS[Math.floor(Math.random() * DIFFICULTY_LEVELS.length)];
+  const DEFAULT_WEIGHTS: DifficultyWeights = { easy: 20, medium: 60, hard: 20 };
+
+  const getWeightedRandomDifficulty = (weights: DifficultyWeights = DEFAULT_WEIGHTS): DifficultyLevel => {
+    const totalWeight = weights.easy + weights.medium + weights.hard;
+    const random = Math.random() * totalWeight;
+    
+    if (random < weights.easy) return 'easy';
+    if (random < weights.easy + weights.medium) return 'medium';
+    return 'hard';
   };
 
   const displayedTopics = isExpanded ? expandedQueue : topPriorityTopics;
@@ -59,7 +66,8 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
     try {
       const config = await getAutoFillConfig();
       const batchSize = config?.batch_size || 20;
-      const randomDifficulty = getRandomDifficulty();
+      const weights = config?.difficulty_weights || DEFAULT_WEIGHTS;
+      const randomDifficulty = getWeightedRandomDifficulty(weights);
       
       const result = await generateForTopic({
         topic_id: topic.topic_id,
@@ -158,8 +166,9 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
 
         const topic = queue[0];
 
-        // Randomly select difficulty for variety
-        const randomDifficulty = getRandomDifficulty();
+        // Weighted random difficulty selection
+        const weights = config?.difficulty_weights || DEFAULT_WEIGHTS;
+        const randomDifficulty = getWeightedRandomDifficulty(weights);
         const difficultyLabel = randomDifficulty.charAt(0).toUpperCase() + randomDifficulty.slice(1);
 
         // Step 3: Generate for this topic with random difficulty
