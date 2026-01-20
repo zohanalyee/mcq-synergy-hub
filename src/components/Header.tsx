@@ -5,7 +5,7 @@ import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import HeaderLogo from './header/HeaderLogo';
 import HeaderActions from './header/HeaderActions';
-import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
@@ -81,45 +81,103 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
       {/* Adaptive background: Full effects on high-end, static gradient on low-end */}
       {isLowEnd ? <StaticBackground /> : <LiquidBackground speed={20} intensity={1} blobCount={5} />}
       <SidebarProvider defaultOpen={false}>
-        <div className="min-h-screen flex w-full relative">
-          <AppSidebar 
-            navItems={navItems}
-            secondaryNavItems={secondaryNavItems}
-            isActive={isActive}
-            onNavigate={handleNavigation}
-            isAdmin={isAdmin}
-          />
-          
-          <div className="flex-1 flex flex-col w-full">
-            <header 
-              className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${headerBlurClass}`}
-            >
-              <div className="container px-4 mx-auto max-w-7xl">
-                <div className="flex items-center justify-between gap-2 sm:gap-3">
-                  <div className="flex items-center gap-2">
-                    <SidebarTrigger className="h-9 w-9 rounded-lg bg-white/60 dark:bg-primary/20 hover:bg-white/80 dark:hover:bg-primary/30 backdrop-blur-sm border border-white/40 dark:border-primary/30 transition-all duration-300 hover:scale-105 shadow-sm" />
-                    <HeaderLogo onNavigate={handleNavigation} />
-                  </div>
-
-                  <HeaderActions 
-                    theme={theme}
-                    user={user}
-                    profile={profile}
-                    isAdmin={isAdmin}
-                    onToggleTheme={toggleTheme}
-                    onNavigate={handleNavigation}
-                    onSignOut={signOut}
-                  />
-                </div>
-              </div>
-            </header>
-            <main className="flex-1 overflow-x-hidden pb-mobile-nav mt-14">
-              {children}
-            </main>
-          </div>
-        </div>
+        <HeaderContent 
+          navItems={navItems}
+          secondaryNavItems={secondaryNavItems}
+          isActive={isActive}
+          handleNavigation={handleNavigation}
+          isAdmin={isAdmin}
+          headerBlurClass={headerBlurClass}
+          theme={theme}
+          user={user}
+          profile={profile}
+          onToggleTheme={toggleTheme}
+          onSignOut={signOut}
+        >
+          {children}
+        </HeaderContent>
       </SidebarProvider>
     </>
+  );
+};
+
+// Separate component to use useSidebar hook inside SidebarProvider
+const HeaderContent = ({ 
+  navItems, 
+  secondaryNavItems, 
+  isActive, 
+  handleNavigation, 
+  isAdmin, 
+  headerBlurClass, 
+  theme, 
+  user, 
+  profile, 
+  onToggleTheme, 
+  onSignOut,
+  children 
+}: {
+  navItems: { title: string; path: string }[];
+  secondaryNavItems: { title: string; path: string }[];
+  isActive: (path: string) => boolean;
+  handleNavigation: (path: string) => void;
+  isAdmin: boolean;
+  headerBlurClass: string;
+  theme?: string;
+  user: any;
+  profile: any;
+  onToggleTheme: () => void;
+  onSignOut: () => Promise<void>;
+  children?: React.ReactNode;
+}) => {
+  const { state, isMobile } = useSidebar();
+  const isExpanded = state === 'expanded';
+  
+  // Calculate left offset based on sidebar state - only on desktop
+  const sidebarExpandedWidth = 'var(--sidebar-width)';
+  const sidebarCollapsedWidth = 'var(--sidebar-width-icon)';
+  const headerLeft = isMobile ? '0' : (isExpanded ? sidebarExpandedWidth : sidebarCollapsedWidth);
+  
+  return (
+    <div className="min-h-screen flex w-full relative">
+      <AppSidebar 
+        navItems={navItems}
+        secondaryNavItems={secondaryNavItems}
+        isActive={isActive}
+        onNavigate={handleNavigation}
+        isAdmin={isAdmin}
+      />
+      
+      <div className="flex-1 flex flex-col w-full">
+        <header 
+          className={`fixed top-0 right-0 z-50 transition-all duration-300 ${headerBlurClass}`}
+          style={{ 
+            left: headerLeft,
+          }}
+        >
+          <div className="px-4 mx-auto max-w-7xl">
+            <div className="flex items-center justify-between gap-2 sm:gap-3">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger className="h-9 w-9 rounded-lg bg-white/60 dark:bg-primary/20 hover:bg-white/80 dark:hover:bg-primary/30 backdrop-blur-sm border border-white/40 dark:border-primary/30 transition-all duration-300 hover:scale-105 shadow-sm" />
+                <HeaderLogo onNavigate={handleNavigation} />
+              </div>
+
+              <HeaderActions 
+                theme={theme}
+                user={user}
+                profile={profile}
+                isAdmin={isAdmin}
+                onToggleTheme={onToggleTheme}
+                onNavigate={handleNavigation}
+                onSignOut={onSignOut}
+              />
+            </div>
+          </div>
+        </header>
+        <main className="flex-1 overflow-x-hidden pb-mobile-nav mt-14">
+          {children}
+        </main>
+      </div>
+    </div>
   );
 };
 
