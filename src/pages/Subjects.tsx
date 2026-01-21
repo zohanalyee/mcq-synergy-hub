@@ -1,14 +1,17 @@
 import { motion } from "framer-motion";
-import { Sparkles, Search, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Sparkles, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
 import SystemLevelFilter from "@/components/subjects/SystemLevelFilter";
 import FilterSummary from "@/components/subjects/FilterSummary";
 import SubjectGrid from "@/components/subjects/SubjectGrid";
-import { Input } from "@/components/ui/input";
+import { SmartSearchInput } from "@/components/ui/SmartSearchInput";
+import { GlobalSearchResult } from "@/services/globalSearchService";
 import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Subjects = () => {
+  const navigate = useNavigate();
   const {
     systems,
     availableLevels,
@@ -23,6 +26,16 @@ const Subjects = () => {
     isFiltered,
     totalCount
   } = useSubjectsPageData();
+
+  // Handle smart search selection - navigate to subject or topic
+  const handleSmartSearchSelect = (item: GlobalSearchResult) => {
+    if (item.result_type === 'subject') {
+      navigate(`/subjects/${item.id}`);
+    } else {
+      // Navigate to subject with topic highlighted
+      navigate(`/subjects/${item.subject_id}?topic=${item.id}`);
+    }
+  };
 
   // Map subjects to the format expected by SubjectGrid
   const mappedSubjects = subjects.map(s => ({
@@ -60,21 +73,17 @@ const Subjects = () => {
           </p>
         </motion.div>
         
-        {/* Search Bar */}
+        {/* Smart Search Bar */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
           className="mb-4"
         >
-          <div className="relative max-w-2xl mx-auto">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input
-              type="text"
+          <div className="max-w-2xl mx-auto">
+            <SmartSearchInput
               placeholder="Search subjects by name or description..."
-              value={filterState.searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-12 pr-4 py-6 text-base rounded-xl bg-background/80 backdrop-blur-sm border-border/50 focus:border-primary shadow-sm"
+              onSelect={handleSmartSearchSelect}
             />
           </div>
         </motion.div>

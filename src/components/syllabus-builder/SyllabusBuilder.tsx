@@ -1,14 +1,14 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { SmartSearchInput } from '@/components/ui/SmartSearchInput';
+import { GlobalSearchResult } from '@/services/globalSearchService';
 
 import { useSyllabusData } from './hooks/useSyllabusData';
 import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
@@ -244,6 +244,90 @@ export const SyllabusBuilder = () => {
     });
   }, [setFilterState, setRawSubjects]);
 
+  // Handle smart search selection - auto-select topic or expand subject
+  const handleSmartSearchSelect = useCallback((item: GlobalSearchResult) => {
+    if (item.result_type === 'topic') {
+      // Find the subject and topic, then select it
+      setRawSubjects(prev => {
+        // Check if this would exceed the limit
+        const subject = prev.find(s => s.id === item.subject_id);
+        if (!subject) return prev;
+
+        const isSubjectCurrentlySelected = subject.topics.some(t => t.isSelected);
+        
+        if (!isSubjectCurrentlySelected) {
+          const currentlySelectedCount = prev.filter(s => 
+            s.id !== item.subject_id && s.topics.some(t => t.isSelected)
+          ).length;
+          
+          if (currentlySelectedCount >= MAX_SUBJECTS) {
+            toast({
+              title: "Maximum Subjects Reached",
+              description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
+              variant: "destructive"
+            });
+            return prev;
+          }
+        }
+
+        return prev.map(s => {
+          if (s.id === item.subject_id) {
+            const newTopics = s.topics.map(t => 
+              t.id === item.id ? { ...t, isSelected: true } : t
+            );
+            return {
+              ...s,
+              topics: newTopics,
+              isSelected: newTopics.some(t => t.isSelected),
+              isExpanded: true
+            };
+          }
+          return s;
+        });
+      });
+
+      toast({
+        title: "Topic Added",
+        description: `"${item.name}" has been added to your selection.`
+      });
+    } else {
+      // For subjects, expand and select all topics
+      const subject = rawSubjects.find(s => s.id === item.id);
+      if (subject) {
+        // Check limit
+        const currentlySelectedCount = rawSubjects.filter(s => 
+          s.id !== item.id && s.topics.some(t => t.isSelected)
+        ).length;
+        
+        if (currentlySelectedCount >= MAX_SUBJECTS && !subject.topics.some(t => t.isSelected)) {
+          toast({
+            title: "Maximum Subjects Reached",
+            description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
+            variant: "destructive"
+          });
+          return;
+        }
+
+        setRawSubjects(prev => prev.map(s => {
+          if (s.id === item.id) {
+            return {
+              ...s,
+              isSelected: true,
+              isExpanded: true,
+              topics: s.topics.map(t => ({ ...t, isSelected: true }))
+            };
+          }
+          return s;
+        }));
+
+        toast({
+          title: "Subject Added",
+          description: `All topics from "${item.name}" have been added.`
+        });
+      }
+    }
+  }, [rawSubjects, setRawSubjects]);
+
   // Generate test with smart AI prompting
 
   // Generate quiz with smart AI prompting
@@ -429,16 +513,11 @@ export const SyllabusBuilder = () => {
 
         {/* Center - Subject Grid */}
         <div className="lg:col-span-2 space-y-3">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search subjects or topics..."
-              value={filterState.searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
+          {/* Smart Search Bar */}
+          <SmartSearchInput
+            placeholder="Search subjects or topics..."
+            onSelect={handleSmartSearchSelect}
+          />
 
           {/* Subject Cards */}
           <SubjectGrid
