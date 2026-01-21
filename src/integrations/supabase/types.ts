@@ -1076,6 +1076,22 @@ export type Database = {
           total_users: number
         }[]
       }
+      global_context_search: {
+        Args: { result_limit?: number; search_query: string }
+        Returns: {
+          id: string
+          level_id: string
+          level_name: string
+          name: string
+          result_type: string
+          subject_id: string
+          subject_name: string
+          system_id: string
+          system_name: string
+          system_type: string
+          topic_count: number
+        }[]
+      }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
     }
     Enums: {

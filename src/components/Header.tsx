@@ -10,6 +10,7 @@ import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
 import { useDeviceCapability } from '@/hooks/useDeviceCapability';
+import { GlobalSearchTrigger } from './global-search';
 
 const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -159,6 +160,7 @@ const HeaderContent = ({
               <div className="flex items-center gap-2">
                 <SidebarTrigger className="h-9 w-9 rounded-lg bg-white/60 dark:bg-primary/20 hover:bg-white/80 dark:hover:bg-primary/30 backdrop-blur-sm border border-white/40 dark:border-primary/30 transition-all duration-300 hover:scale-105 shadow-sm" />
                 <HeaderLogo onNavigate={handleNavigation} />
+                <GlobalSearchTrigger />
               </div>
 
               <HeaderActions 
