@@ -30,10 +30,10 @@ const Subjects = () => {
   // Handle smart search selection - navigate to subject or topic
   const handleSmartSearchSelect = (item: GlobalSearchResult) => {
     if (item.result_type === 'subject') {
-      navigate(`/subjects/${item.id}`);
+      navigate(`/subject/${item.id}`);
     } else {
       // Navigate to subject with topic highlighted
-      navigate(`/subjects/${item.subject_id}?topic=${item.id}`);
+      navigate(`/subject/${item.subject_id}?topic=${item.id}`);
     }
   };
 
