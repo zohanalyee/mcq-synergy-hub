@@ -204,10 +204,18 @@ const SubjectContent = () => {
 
       if (error) {
         console.error('Edge function error:', error);
+        // Check for specific error types
+        if (error.message?.includes('402') || error.message?.includes('credits')) {
+          throw new Error('AI credits depleted. Please add credits to your Lovable workspace in Settings → Workspace → Usage.');
+        }
         throw new Error(error.message || 'Failed to load questions');
       }
 
       if (!data || !data.questions) {
+        // Check if data contains an error message (from 402/429 responses)
+        if (data?.error) {
+          throw new Error(data.error);
+        }
         throw new Error('No questions returned from the server');
       }
 
