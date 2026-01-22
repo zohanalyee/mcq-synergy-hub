@@ -180,18 +180,17 @@ const SubjectContent = () => {
     setIsLoadingMCQs(true);
     setIsGenerating(true);
     setLoadError(null);
+
+    const topicToFetch = selectedTopic !== "all" ? selectedTopic : title;
+    const requestedCount = parseInt(questionCount);
     
     try {
-      const topicToFetch = selectedTopic !== "all" ? selectedTopic : title;
-      
       console.log('Calling generate-test edge function:', { 
         topic: topicToFetch, 
         difficulty, 
-        question_count: parseInt(questionCount),
+        question_count: requestedCount,
         forceNew 
       });
-      
-      const requestedCount = parseInt(questionCount);
       const { data, error } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: topicToFetch,
@@ -204,11 +203,36 @@ const SubjectContent = () => {
 
       if (error) {
         console.error('Edge function error:', error);
-        // Check for specific error types
-        if (error.message?.includes('402') || error.message?.includes('credits')) {
-          throw new Error('AI credits depleted. Please add credits to your Lovable workspace in Settings → Workspace → Usage.');
+
+        // supabase-js throws FunctionsHttpError on non-2xx and stores the Response in error.context
+        const res = (error as any)?.context as Response | undefined;
+        const status = res?.status;
+
+        // Try to read the function's JSON error payload (e.g. { error, details })
+        let serverPayload: any = null;
+        try {
+          if (res) serverPayload = await res.clone().json();
+        } catch {
+          // ignore
         }
-        throw new Error(error.message || 'Failed to load questions');
+
+        const serverMessage =
+          serverPayload?.error ||
+          serverPayload?.message ||
+          (typeof serverPayload === 'string' ? serverPayload : null);
+
+        if (status === 402) {
+          throw new Error(
+            serverMessage ||
+              'AI credits are depleted. Add credits in Settings → Workspace → Usage, or use cached questions.'
+          );
+        }
+
+        if (status === 429) {
+          throw new Error(serverMessage || 'You are being rate-limited. Please try again in a moment.');
+        }
+
+        throw new Error(serverMessage || (error as any)?.message || 'Failed to load questions');
       }
 
       if (!data || !data.questions) {
@@ -287,6 +311,76 @@ const SubjectContent = () => {
       
     } catch (error: any) {
       console.error("Error loading MCQs:", error);
+
+      // If AI credits are depleted (402), retry in DB-only mode to avoid a hard stop.
+      const msg = String(error?.message || '').toLowerCase();
+      if (msg.includes('credits') || msg.includes('payment required')) {
+        try {
+          const { data: cacheData, error: cacheErr } = await supabase.functions.invoke('generate-test', {
+            body: {
+              topic: topicToFetch,
+              difficulty: difficulty,
+              question_count: requestedCount,
+              forceNew: false,
+              partial_mode: false,
+              fetch_only: true,
+            }
+          });
+
+          if (!cacheErr && cacheData?.questions) {
+            const transformedMCQs: MCQItem[] = cacheData.questions.map((q: any, index: number) => {
+              let options: { key: string; text: string }[] = [];
+
+              if (Array.isArray(q.options)) {
+                options = q.options.map((opt: string, i: number) => ({
+                  key: ['A', 'B', 'C', 'D'][i] || String.fromCharCode(65 + i),
+                  text: opt
+                }));
+              } else if (typeof q.options === 'object' && q.options !== null) {
+                options = ['A', 'B', 'C', 'D']
+                  .filter(key => q.options[key])
+                  .map(key => ({ key, text: q.options[key] }));
+              }
+
+              let correctOption = 'A';
+              if (q.answer) {
+                const matchIndex = options.findIndex(opt => opt.text === q.answer);
+                if (matchIndex !== -1) correctOption = options[matchIndex].key;
+                else if (['A', 'B', 'C', 'D'].includes(q.answer)) correctOption = q.answer;
+              } else if (q.correct_option) {
+                correctOption = q.correct_option;
+              }
+
+              return {
+                id: q.id || `mcq-${index}-${Date.now()}`,
+                title: q.question || q.title || '',
+                question: q.question || q.title || '',
+                options,
+                correctOption,
+                explanation: q.explanation || undefined,
+                difficulty: (q.difficulty as "Easy" | "Medium" | "Hard") || (difficulty as "Easy" | "Medium" | "Hard"),
+                topic: q.topic || topicToFetch,
+              };
+            });
+
+            setMcqs(transformedMCQs);
+            setQuestionSource('cache');
+            setCachedCount(cacheData.cached_count || transformedMCQs.length);
+            setAiCount(0);
+            setLoadError(null);
+
+            toast({
+              title: 'AI credits depleted',
+              description: 'Showing cached questions only.',
+            });
+
+            return;
+          }
+        } catch (e) {
+          console.error('Cache-only fallback failed:', e);
+        }
+      }
+
       setLoadError(error.message || 'Failed to load questions');
       setMcqs([]);
       
