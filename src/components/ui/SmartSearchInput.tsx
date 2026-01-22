@@ -1,9 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Search, BookOpen, FileText, Loader2, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { useGlobalSearch } from '@/hooks/useGlobalSearch';
 import { GlobalSearchResult } from '@/services/globalSearchService';
@@ -67,7 +66,7 @@ export const SmartSearchInput = ({
         sideOffset={4}
         onOpenAutoFocus={(e) => e.preventDefault()}
       >
-        <ScrollArea className="max-h-[320px]">
+        <div className="max-h-80 overflow-y-auto">
           {isLoading ? (
             <div className="flex items-center justify-center py-6">
               <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -115,7 +114,7 @@ export const SmartSearchInput = ({
               )}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
