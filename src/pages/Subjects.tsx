@@ -27,13 +27,23 @@ const Subjects = () => {
     totalCount
   } = useSubjectsPageData();
 
-  // Handle smart search selection - navigate to subject or topic
+  // Handle smart search selection - navigate to subject content page
   const handleSmartSearchSelect = (item: GlobalSearchResult) => {
+    const statePayload = {
+      title: item.result_type === 'subject' ? item.name : item.subject_name,
+      subjectId: item.result_type === 'subject' ? item.id : item.subject_id,
+      levelId: item.level_id,
+      levelName: item.level_name,
+      systemId: item.system_id,
+      systemName: item.system_name,
+      color: '#3b82f6'
+    };
+
     if (item.result_type === 'subject') {
-      navigate(`/subject/${item.id}`);
+      navigate(`/subject-content/${item.id}`, { state: statePayload });
     } else {
-      // Navigate to subject with topic highlighted
-      navigate(`/subject/${item.subject_id}?topic=${item.id}`);
+      // Navigate to subject with topic pre-selected
+      navigate(`/subject-content/${item.subject_id}?topic=${item.id}`, { state: statePayload });
     }
   };
 

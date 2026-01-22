@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Book, Sparkles, AlertCircle } from "lucide-react";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
@@ -39,6 +39,7 @@ interface TopicFromDB {
 const SubjectContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [isLoaded, setIsLoaded] = useState(false);
   const [studyMode, setStudyMode] = useState<StudyMode>("read");
@@ -53,6 +54,10 @@ const SubjectContent = () => {
   const [cachedCount, setCachedCount] = useState(0);
   const [aiCount, setAiCount] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [highlightedTopicId, setHighlightedTopicId] = useState<string | null>(null);
+  
+  // Get topic ID from URL query parameter (for deep linking from search)
+  const topicIdFromUrl = searchParams.get('topic');
   
   // Extract all LMS context from location state
   const { 
@@ -90,6 +95,25 @@ const SubjectContent = () => {
     loadTopicsFromDB();
     loadMCQs();
   }, [title, navigate, subjectId]);
+
+  // Auto-select topic from URL query parameter after topics are loaded
+  useEffect(() => {
+    if (topicIdFromUrl && dbTopics.length > 0) {
+      const matchingTopic = dbTopics.find(t => t.id === topicIdFromUrl);
+      if (matchingTopic) {
+        setSelectedTopic(matchingTopic.name);
+        setHighlightedTopicId(topicIdFromUrl);
+        
+        toast({
+          title: "📚 Topic Selected",
+          description: `Showing MCQs for "${matchingTopic.name}"`,
+        });
+        
+        // Clear highlight after a few seconds
+        setTimeout(() => setHighlightedTopicId(null), 3000);
+      }
+    }
+  }, [topicIdFromUrl, dbTopics]);
 
   // Load topics from database for this subject
   const loadTopicsFromDB = async () => {
@@ -389,19 +413,24 @@ const SubjectContent = () => {
               >
                 All Topics ({mcqs.length})
               </button>
-              {mcqTopics.map(topic => (
-                <button
-                  key={topic}
-                  onClick={() => setSelectedTopic(topic)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    selectedTopic === topic
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                  }`}
-                >
-                  {topic} ({mcqs.filter(m => m.topic === topic).length})
-                </button>
-              ))}
+              {mcqTopics.map(topic => {
+                const matchingDbTopic = dbTopics.find(t => t.name === topic);
+                const isHighlighted = matchingDbTopic && matchingDbTopic.id === highlightedTopicId;
+                
+                return (
+                  <button
+                    key={topic}
+                    onClick={() => setSelectedTopic(topic)}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                      selectedTopic === topic
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    } ${isHighlighted ? "ring-2 ring-primary ring-offset-2 animate-pulse" : ""}`}
+                  >
+                    {topic} ({mcqs.filter(m => m.topic === topic).length})
+                  </button>
+                );
+              })}
             </div>
           )}
           
