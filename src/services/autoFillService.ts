@@ -229,30 +229,109 @@ export async function generateForTopic(params: {
   saved: number;
   duplicates: number;
   error?: string;
+  errorType?: 'auth' | 'quota' | 'timeout' | 'gateway' | 'unknown';
 }> {
-  const { data, error } = await supabase.functions.invoke('generate-test', {
-    body: {
-      topic: `${params.topic_name} (${params.subject_name})`,
-      topic_id: params.topic_id,
-      difficulty: params.difficulty || 'medium',
-      question_count: params.count,
-      mode: 'bank_only',
-      source: 'auto_fill',
-      forceNew: true
+  try {
+    const { data, error } = await supabase.functions.invoke('generate-test', {
+      body: {
+        topic: `${params.topic_name} (${params.subject_name})`,
+        topic_id: params.topic_id,
+        difficulty: params.difficulty || 'medium',
+        question_count: params.count,
+        mode: 'bank_only',
+        source: 'auto_fill',
+        forceNew: true
+      }
+    });
+
+    // Handle Supabase invoke errors (network, auth, etc.)
+    if (error) {
+      console.error('[generateForTopic] Supabase invoke error:', error);
+      
+      // Determine error type for better UI feedback
+      const errorMessage = error.message || String(error);
+      let errorType: 'auth' | 'quota' | 'timeout' | 'gateway' | 'unknown' = 'unknown';
+      
+      if (errorMessage.includes('401') || errorMessage.toLowerCase().includes('unauthorized')) {
+        errorType = 'auth';
+      } else if (errorMessage.includes('402') || errorMessage.toLowerCase().includes('payment') || errorMessage.toLowerCase().includes('credit')) {
+        errorType = 'quota';
+      } else if (errorMessage.includes('429') || errorMessage.toLowerCase().includes('rate') || errorMessage.toLowerCase().includes('limit')) {
+        errorType = 'quota';
+      } else if (errorMessage.includes('504') || errorMessage.includes('408') || errorMessage.toLowerCase().includes('timeout')) {
+        errorType = 'timeout';
+      } else if (errorMessage.includes('502') || errorMessage.includes('503') || errorMessage.toLowerCase().includes('gateway')) {
+        errorType = 'gateway';
+      }
+
+      return { 
+        success: false, 
+        generated: 0, 
+        saved: 0, 
+        duplicates: 0, 
+        error: `Edge Function Error: ${errorMessage}`,
+        errorType
+      };
     }
-  });
 
-  if (error) {
-    console.error('Generate for topic error:', error);
-    return { success: false, generated: 0, saved: 0, duplicates: 0, error: error.message };
+    // Check for error in response body (edge function returned 200 but with error payload)
+    if (data?.error) {
+      console.error('[generateForTopic] Edge function returned error in body:', data.error);
+      
+      const errorMessage = data.error;
+      const details = data.details || '';
+      let errorType: 'auth' | 'quota' | 'timeout' | 'gateway' | 'unknown' = 'unknown';
+      
+      if (errorMessage.toLowerCase().includes('credit') || errorMessage.toLowerCase().includes('payment') || details.toLowerCase().includes('402')) {
+        errorType = 'quota';
+      } else if (errorMessage.toLowerCase().includes('rate') || errorMessage.toLowerCase().includes('limit')) {
+        errorType = 'quota';
+      } else if (errorMessage.toLowerCase().includes('timeout')) {
+        errorType = 'timeout';
+      } else if (errorMessage.toLowerCase().includes('gateway') || errorMessage.toLowerCase().includes('api key')) {
+        errorType = 'gateway';
+      }
+
+      return {
+        success: false,
+        generated: 0,
+        saved: 0,
+        duplicates: 0,
+        error: `${errorMessage}${details ? ` (${details})` : ''}`,
+        errorType
+      };
+    }
+
+    // Check for ai_unavailable flag (graceful degradation)
+    if (data?.ai_unavailable) {
+      console.warn('[generateForTopic] AI unavailable, using cached data:', data.error_notice);
+      return {
+        success: false,
+        generated: 0,
+        saved: 0,
+        duplicates: 0,
+        error: data.error_notice || 'AI temporarily unavailable',
+        errorType: 'quota'
+      };
+    }
+
+    return {
+      success: true,
+      generated: data?.questions_generated || 0,
+      saved: data?.questions_saved || 0,
+      duplicates: data?.duplicates_flagged || 0
+    };
+  } catch (unexpectedError: any) {
+    console.error('[generateForTopic] Unexpected error:', unexpectedError);
+    return {
+      success: false,
+      generated: 0,
+      saved: 0,
+      duplicates: 0,
+      error: `Unexpected Error: ${unexpectedError?.message || String(unexpectedError)}`,
+      errorType: 'unknown'
+    };
   }
-
-  return {
-    success: true,
-    generated: data?.questions_generated || 0,
-    saved: data?.questions_saved || 0,
-    duplicates: data?.duplicates_flagged || 0
-  };
 }
 
 // Backfill topic_id for existing content_items
