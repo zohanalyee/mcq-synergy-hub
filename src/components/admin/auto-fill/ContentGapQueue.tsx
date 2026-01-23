@@ -85,11 +85,25 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
             : undefined
         });
       } else {
-        toast.error(`Generation failed: ${result.error}`);
+        // Show detailed error with type indication
+        const errorIcon = result.errorType === 'quota' ? '💳' 
+          : result.errorType === 'timeout' ? '⏱️' 
+          : result.errorType === 'gateway' ? '🔌' 
+          : result.errorType === 'auth' ? '🔐' 
+          : '❌';
+        
+        toast.error(`${errorIcon} Generation Failed`, {
+          description: result.error,
+          duration: 8000, // Keep visible longer for debugging
+        });
+        console.error('[Manual Generation] Error details:', { topic: topic.topic_name, ...result });
       }
-    } catch (error) {
-      toast.error('Failed to generate questions');
-      console.error('Generation error:', error);
+    } catch (error: any) {
+      toast.error('❌ Unexpected Error', {
+        description: error?.message || 'Failed to generate questions',
+        duration: 8000,
+      });
+      console.error('[Manual Generation] Unexpected error:', error);
     } finally {
       setGeneratingTopicId(null);
       onRefresh();
@@ -198,16 +212,63 @@ const ContentGapQueue = ({ topPriorityTopics, totalCount, onRefresh }: ContentGa
             status: `✓ Filled gap (${difficultyLabel}) for "${topic.topic_name}"... Checking next...`
           });
         } else {
-          // Check for limit errors
-          if (result.error?.toLowerCase().includes('limit') || 
-              result.error?.toLowerCase().includes('quota')) {
-            toast.warning('Daily Limit Reached!', {
-              description: `Auto-pilot stopped. Processed ${topicsProcessed} topics, saved ${totalQuestionsSaved} questions.`
+          // Detailed error handling with type-specific messages
+          const errorIcon = result.errorType === 'quota' ? '💳' 
+            : result.errorType === 'timeout' ? '⏱️' 
+            : result.errorType === 'gateway' ? '🔌' 
+            : result.errorType === 'auth' ? '🔐' 
+            : '❌';
+
+          // Check for limit/quota errors - stop auto-pilot
+          if (result.errorType === 'quota' || 
+              result.error?.toLowerCase().includes('limit') || 
+              result.error?.toLowerCase().includes('quota') ||
+              result.error?.toLowerCase().includes('credit')) {
+            toast.error(`${errorIcon} Credits/Quota Exhausted`, {
+              description: result.error,
+              duration: 10000,
             });
+            setAutoPilotProgress(prev => ({
+              ...prev,
+              status: `⛔ Stopped: ${result.error}`
+            }));
             break;
           }
-          // Log other errors but continue to next topic
-          console.error(`Failed for ${topic.topic_name}:`, result.error);
+
+          // Check for gateway/timeout errors - show error, retry after delay
+          if (result.errorType === 'gateway' || result.errorType === 'timeout') {
+            toast.error(`${errorIcon} API Error - Retrying`, {
+              description: `${result.error}. Retrying in 5s...`,
+              duration: 5000,
+            });
+            setAutoPilotProgress(prev => ({
+              ...prev,
+              status: `⚠️ Error: ${result.error}. Retrying in 5s...`
+            }));
+            // Wait 5 seconds before retry
+            await new Promise(resolve => setTimeout(resolve, 5000));
+            continue; // Retry same topic
+          }
+
+          // Auth errors - stop immediately
+          if (result.errorType === 'auth') {
+            toast.error(`${errorIcon} Authentication Failed`, {
+              description: result.error,
+              duration: 10000,
+            });
+            setAutoPilotProgress(prev => ({
+              ...prev,
+              status: `🔐 Auth Error: ${result.error}`
+            }));
+            break;
+          }
+
+          // Unknown errors - log and continue to next topic
+          toast.warning(`${errorIcon} Skipping Topic`, {
+            description: `${topic.topic_name}: ${result.error}`,
+            duration: 5000,
+          });
+          console.error(`[Auto-Pilot] Failed for ${topic.topic_name}:`, result);
         }
 
         // Small delay to prevent hammering the API
