@@ -9,11 +9,19 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 
+interface TopicOption {
+  id: string;
+  name: string;
+}
+
 interface MCQControlsProps {
   questionCount: string;
   difficulty: string;
+  selectedTopicId: string;
+  topics: TopicOption[];
   onQuestionCountChange: (value: string) => void;
   onDifficultyChange: (value: string) => void;
+  onTopicChange: (value: string) => void;
   onRefresh: () => void;
   onGenerate: () => void;
   isLoading: boolean;
@@ -26,8 +34,11 @@ interface MCQControlsProps {
 const MCQControls = ({
   questionCount,
   difficulty,
+  selectedTopicId,
+  topics,
   onQuestionCountChange,
   onDifficultyChange,
+  onTopicChange,
   onRefresh,
   onGenerate,
   isLoading,
@@ -69,6 +80,21 @@ const MCQControls = ({
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 p-4 rounded-xl bg-secondary/30 border border-border/50">
       <div className="flex flex-wrap items-center gap-3">
+        {/* Topic Selector */}
+        <Select value={selectedTopicId} onValueChange={onTopicChange}>
+          <SelectTrigger className="w-[160px] bg-background">
+            <SelectValue placeholder="Select Topic" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Topics</SelectItem>
+            {topics.map((topic) => (
+              <SelectItem key={topic.id} value={topic.id}>
+                {topic.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
         <Select value={questionCount} onValueChange={onQuestionCountChange}>
           <SelectTrigger className="w-[130px] bg-background">
             <SelectValue placeholder="Questions" />

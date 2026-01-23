@@ -47,6 +47,7 @@ const SubjectContent = () => {
   const [isLoadingMCQs, setIsLoadingMCQs] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
+  const [selectedTopicId, setSelectedTopicId] = useState<string>("all");
   const [dbTopics, setDbTopics] = useState<TopicFromDB[]>([]);
   const [questionCount, setQuestionCount] = useState<string>("20");
   const [difficulty, setDifficulty] = useState<string>("Medium");
@@ -54,7 +55,7 @@ const SubjectContent = () => {
   const [cachedCount, setCachedCount] = useState(0);
   const [aiCount, setAiCount] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [highlightedTopicId, setHighlightedTopicId] = useState<string | null>(null);
+  
   
   // Get topic ID from URL query parameter (for deep linking from search)
   const topicIdFromUrl = searchParams.get('topic');
@@ -101,16 +102,13 @@ const SubjectContent = () => {
     if (topicIdFromUrl && dbTopics.length > 0) {
       const matchingTopic = dbTopics.find(t => t.id === topicIdFromUrl);
       if (matchingTopic) {
+        setSelectedTopicId(topicIdFromUrl);
         setSelectedTopic(matchingTopic.name);
-        setHighlightedTopicId(topicIdFromUrl);
         
         toast({
           title: "📚 Topic Selected",
           description: `Showing MCQs for "${matchingTopic.name}"`,
         });
-        
-        // Clear highlight after a few seconds
-        setTimeout(() => setHighlightedTopicId(null), 3000);
       }
     }
   }, [topicIdFromUrl, dbTopics]);
@@ -415,10 +413,25 @@ const SubjectContent = () => {
     setDifficulty(value);
   };
 
-  // Get unique topics from MCQs for filtering
-  const mcqTopics = Array.from(new Set(mcqs.map(m => m.topic).filter(Boolean))) as string[];
-  
-  // Filter MCQs by selected topic
+  // Handle topic selection change - update state and refetch questions
+  const handleTopicChange = (value: string) => {
+    setSelectedTopicId(value);
+    if (value === "all") {
+      setSelectedTopic("all");
+    } else {
+      const topic = dbTopics.find(t => t.id === value);
+      setSelectedTopic(topic?.name || "all");
+    }
+  };
+
+  // Re-fetch MCQs when topic selection changes
+  useEffect(() => {
+    if (title && isLoaded) {
+      loadMCQs(false);
+    }
+  }, [selectedTopicId]);
+
+  // Filter MCQs by selected topic (client-side filtering for already loaded MCQs)
   const filteredMCQs = selectedTopic === "all" 
     ? mcqs 
     : mcqs.filter(m => m.topic === selectedTopic);
@@ -491,8 +504,11 @@ const SubjectContent = () => {
           <MCQControls
             questionCount={questionCount}
             difficulty={difficulty}
+            selectedTopicId={selectedTopicId}
+            topics={dbTopics.map(t => ({ id: t.id, name: t.name }))}
             onQuestionCountChange={handleQuestionCountChange}
             onDifficultyChange={handleDifficultyChange}
+            onTopicChange={handleTopicChange}
             onRefresh={handleRefresh}
             onGenerate={handleGenerateNew}
             isLoading={isLoadingMCQs}
@@ -501,40 +517,6 @@ const SubjectContent = () => {
             cachedCount={cachedCount}
             aiCount={aiCount}
           />
-          
-          {/* Topic Filter for MCQs */}
-          {mcqTopics.length > 1 && (
-            <div className="mb-6 flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedTopic("all")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                  selectedTopic === "all"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
-              >
-                All Topics ({mcqs.length})
-              </button>
-              {mcqTopics.map(topic => {
-                const matchingDbTopic = dbTopics.find(t => t.name === topic);
-                const isHighlighted = matchingDbTopic && matchingDbTopic.id === highlightedTopicId;
-                
-                return (
-                  <button
-                    key={topic}
-                    onClick={() => setSelectedTopic(topic)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      selectedTopic === topic
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                    } ${isHighlighted ? "ring-2 ring-primary ring-offset-2 animate-pulse" : ""}`}
-                  >
-                    {topic} ({mcqs.filter(m => m.topic === topic).length})
-                  </button>
-                );
-              })}
-            </div>
-          )}
           
           {/* Loading State */}
           {isLoadingMCQs && !isGenerating ? (
