@@ -1074,9 +1074,60 @@ serve(async (req) => {
       }
       
       if (aiError.status === 402) {
+        // IMPORTANT: Avoid non-2xx here.
+        // supabase-js treats non-2xx as an exception which can blank-screen the app.
+        // When AI credits are depleted, fall back to cached questions and return 200.
+        console.log('💳 AI credits depleted. Returning cache-only response (HTTP 200).');
+
+        // If forceNew=true, we may have skipped cache lookup earlier. Try a cache read now.
+        if (dbQuestions.length === 0) {
+          try {
+            const { data: existingQuestions, error: dbError } = await supabase
+              .from('content_items')
+              .select('title, options, correct_option, explanation, topic, subject, difficulty')
+              .eq('category', 'mcq')
+              .eq('status', 'approved')
+              .or(searchConditions)
+              .limit(qc * 3);
+
+            if (dbError) {
+              console.error('❌ Cache fallback query error:', dbError);
+            } else if (existingQuestions && existingQuestions.length > 0) {
+              const shuffledDbResults = shuffleArray(existingQuestions);
+              dbQuestions = shuffledDbResults
+                .filter(q => q.title && q.options && q.correct_option)
+                .map(q => ({
+                  question: q.title,
+                  options: Array.isArray(q.options) ? q.options : [],
+                  answer: q.correct_option,
+                  explanation: q.explanation || undefined
+                }));
+
+              existingQuestionTexts = dbQuestions.map(q => q.question);
+              console.log(`✅ Cache fallback: found ${dbQuestions.length} questions`);
+            } else {
+              console.log('🔎 Cache fallback: no questions found');
+            }
+          } catch (dbErr) {
+            console.error('Cache fallback failed:', dbErr);
+          }
+        }
+
+        const returnedQuestions = shuffleArray(dbQuestions).slice(0, qc);
+
         return new Response(
-          JSON.stringify({ error: 'AI credits depleted. Please add credits to your workspace.', details: 'Payment required' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 402 }
+          JSON.stringify({
+            session_name: `${topic} Quiz`,
+            questions: returnedQuestions,
+            source: 'cache',
+            cached_count: returnedQuestions.length,
+            ai_count: 0,
+            remaining_count: Math.max(0, qc - returnedQuestions.length),
+            total_requested: qc,
+            ai_unavailable: true,
+            error_notice: 'AI credits depleted. Showing cached questions only.'
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
       }
       
