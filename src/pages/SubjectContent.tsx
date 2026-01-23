@@ -396,6 +396,14 @@ const SubjectContent = () => {
 
   // Handle generate new questions (force AI generation)
   const handleGenerateNew = () => {
+    const topicName = selectedTopic !== "all" ? selectedTopic : title;
+    
+    // Show immediate feedback toast
+    toast({
+      title: "🚀 Starting AI Generation",
+      description: `Generating ${questionCount} questions for "${topicName}"...`,
+    });
+    
     loadMCQs(true); // forceNew = true
   };
 
