@@ -831,13 +831,36 @@ serve(async (req) => {
       }
 
       // Generate questions with HYBRID DEDUPLICATION (intra-batch + cross-DB)
-      const newQuestions = await generateQuestionsInBatches(
-        topic,
-        difficulty,
-        qc,
-        GEMINI_API_KEY,
-        existingTitlesForDedup // NOW passing existing questions!
-      );
+      let newQuestions: Question[] = [];
+      try {
+        newQuestions = await generateQuestionsInBatches(
+          topic,
+          difficulty,
+          qc,
+          GEMINI_API_KEY,
+          existingTitlesForDedup // NOW passing existing questions!
+        );
+      } catch (genError: any) {
+        // Handle quota/rate limit errors gracefully for bank_only mode
+        if (genError.status === 429 || genError.status === 403) {
+          console.error(`🚫 BANK_ONLY: AI quota exhausted (${genError.status}). Returning error response.`);
+          return new Response(
+            JSON.stringify({
+              success: false,
+              mode: 'bank_only',
+              error: genError.status === 429 
+                ? 'Google AI quota exceeded. Please wait or upgrade your plan.'
+                : 'API key invalid or quota exceeded.',
+              error_type: genError.status === 429 ? 'quota' : 'auth',
+              questions_requested: qc,
+              questions_generated: 0,
+              questions_saved: 0
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          );
+        }
+        throw genError; // Re-throw unexpected errors
+      }
 
       console.log(`🏭 Generated ${newQuestions.length} new questions - saving ALL to database`);
 
@@ -1083,18 +1106,11 @@ serve(async (req) => {
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
     } catch (aiError: any) {
-      if (aiError.status === 429) {
-        return new Response(
-          JSON.stringify({ error: 'Rate limit exceeded. Please try again in a moment.', details: 'Too many requests' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 429 }
-        );
-      }
-      
-      if (aiError.status === 402 || aiError.status === 403) {
-        // IMPORTANT: Avoid non-2xx here.
-        // supabase-js treats non-2xx as an exception which can blank-screen the app.
-        // When AI quota is exhausted or API key is invalid, fall back to cached questions and return 200.
-        console.log('🔑 AI quota exhausted or API key invalid. Returning cache-only response (HTTP 200).');
+      // Handle all quota/auth errors with cache fallback (return 200 to prevent client exceptions)
+      if (aiError.status === 429 || aiError.status === 402 || aiError.status === 403) {
+        const errorType = aiError.status === 429 ? 'quota_exceeded' : 
+                          aiError.status === 403 ? 'auth_error' : 'credits_depleted';
+        console.log(`🔑 AI unavailable (${errorType}). Returning cache-only response (HTTP 200).`);
 
         // If forceNew=true, we may have skipped cache lookup earlier. Try a cache read now.
         if (dbQuestions.length === 0) {
@@ -1131,6 +1147,11 @@ serve(async (req) => {
         }
 
         const returnedQuestions = shuffleArray(dbQuestions).slice(0, qc);
+        const errorNotice = aiError.status === 429 
+          ? 'Google AI quota exceeded. Showing cached questions only.'
+          : aiError.status === 403 
+            ? 'API key invalid or quota exceeded. Showing cached questions only.'
+            : 'AI credits exhausted. Showing cached questions only.';
 
         return new Response(
           JSON.stringify({
@@ -1142,9 +1163,8 @@ serve(async (req) => {
             remaining_count: Math.max(0, qc - returnedQuestions.length),
             total_requested: qc,
             ai_unavailable: true,
-            error_notice: aiError.status === 403 
-              ? 'API key invalid or quota exceeded. Showing cached questions only.'
-              : 'AI quota exhausted. Showing cached questions only.'
+            error_type: errorType,
+            error_notice: errorNotice
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
