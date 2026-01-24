@@ -199,20 +199,18 @@ export async function getAutoFillStats(): Promise<{
   queueCount: number;
   topPriorityTopics: AutoFillQueueItem[];
 }> {
+  // Single parallel fetch - no duplicate queue calls
   const [usage, config, queue] = await Promise.all([
     getAIUsageToday(),
     getAutoFillConfig(),
-    getAutoFillQueue(5)
+    getAutoFillQueue(100) // Single call with reasonable limit for count
   ]);
-  
-  // Get total queue count separately
-  const fullQueue = await getAutoFillQueue(1000);
   
   return {
     usage,
     config,
-    queueCount: fullQueue.length,
-    topPriorityTopics: queue
+    queueCount: queue.length, // Count from same call
+    topPriorityTopics: queue.slice(0, 5) // Top 5 from same data
   };
 }
 
