@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Search, Award, Calendar, ExternalLink, Upload, AlertCircle } from "lucide-react";
+import { Search, Award, Calendar, ExternalLink, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,9 +10,12 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { getContentByCategory } from "@/services/contentService";
+import { getApprovedOpportunities } from "@/services/externalOpportunitiesService";
+import { ExternalOpportunity } from "@/types/externalOpportunities";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { useAuth } from "@/contexts/AuthContext";
 import QuickSubmissionDialog from "@/components/admin/QuickSubmissionDialog";
+import ExternalOpportunitiesSection from "@/components/external/ExternalOpportunitiesSection";
 
 const Scholarships = () => {
   const navigate = useNavigate();
@@ -21,6 +23,7 @@ const Scholarships = () => {
   const { isAdmin } = useUserRole();
   const { user } = useAuth();
   const [scholarships, setScholarships] = useState<ContentItem[]>([]);
+  const [externalScholarships, setExternalScholarships] = useState<ExternalOpportunity[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   
@@ -28,9 +31,13 @@ const Scholarships = () => {
     const fetchScholarships = async () => {
       try {
         setIsLoading(true);
-        const items = await getContentByCategory('scholarship');
+        const [items, externalData] = await Promise.all([
+          getContentByCategory('scholarship'),
+          getApprovedOpportunities('scholarship')
+        ]);
         console.log("Fetched scholarships from Supabase:", items);
         setScholarships(items);
+        setExternalScholarships(externalData);
       } catch (error) {
         console.error("Error fetching scholarships:", error);
         toast({
@@ -54,6 +61,11 @@ const Scholarships = () => {
     item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const filteredExternalScholarships = externalScholarships.filter(item =>
+    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (item.organization && item.organization.toLowerCase().includes(searchQuery.toLowerCase()))
+  );
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return "No deadline";
@@ -228,6 +240,13 @@ const Scholarships = () => {
               </div>
             )}
           </div>
+
+          {/* External Scholarships Section */}
+          <ExternalOpportunitiesSection 
+            opportunities={filteredExternalScholarships}
+            isLoading={isLoading}
+            type="scholarship"
+          />
         </div>
     </Header>
   );

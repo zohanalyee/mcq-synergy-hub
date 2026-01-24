@@ -27,6 +27,7 @@ import CustomSyllabus from "./pages/CustomSyllabus";
 import SubjectContent from "./pages/SubjectContent";
 import CustomQuizzes from "./pages/CustomQuizzes";
 import AdminPanel from "./pages/AdminPanel";
+import ExternalCuration from "./pages/admin/ExternalCuration";
 import NotFound from "./pages/NotFound";
 import NoticeBoard from "@/components/NoticeBoard";
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
@@ -80,6 +81,7 @@ const App = () => {
                   <Route path="/get-started" element={<GetStarted />} />
                   
                   <Route path="/admin" element={<AdminPanel />} />
+                  <Route path="/admin/curation" element={<ExternalCuration />} />
                   <Route path="/subjects" element={<Subjects />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/profile" element={<Profile />} />
