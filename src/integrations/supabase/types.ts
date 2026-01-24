@@ -496,6 +496,63 @@ export type Database = {
         }
         Relationships: []
       }
+      external_opportunities: {
+        Row: {
+          apply_url: string
+          created_at: string
+          deadline_date: string | null
+          description: string | null
+          id: string
+          image_url: string | null
+          location: string | null
+          metadata: Json | null
+          organization: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source_name: string
+          status: string
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          apply_url: string
+          created_at?: string
+          deadline_date?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          metadata?: Json | null
+          organization?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_name: string
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          apply_url?: string
+          created_at?: string
+          deadline_date?: string | null
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string | null
+          metadata?: Json | null
+          organization?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source_name?: string
+          status?: string
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string | null

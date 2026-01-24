@@ -13,7 +13,8 @@ import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
 import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Zap } from "lucide-react";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Zap, Globe } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -59,6 +60,12 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
           <GraduationCap className="h-4 w-4" />
           Scholarships
         </TabsTrigger>
+        <Link to="/admin/curation">
+          <Button variant="outline" size="sm" className="flex items-center gap-2 border-2 border-blue-500/20">
+            <Globe className="h-4 w-4 text-blue-500" />
+            External Curation 🌐
+          </Button>
+        </Link>
         
         {/* Separator */}
         <div className="w-px h-8 bg-border mx-2" />
