@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { RefreshCw, Check, X, ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap } from "lucide-react";
+import { RefreshCw, Check, X, ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap, Sparkles, Globe, Building } from "lucide-react";
 import Header from "@/components/Header";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,6 +15,7 @@ import {
   getExternalOpportunities,
   updateOpportunityStatus,
   syncMockExternalData,
+  syncAIExternalData,
   getOpportunityCounts
 } from "@/services/externalOpportunitiesService";
 import { ExternalOpportunity, OpportunityStatus } from "@/types/externalOpportunities";
@@ -27,6 +28,7 @@ const ExternalCuration = () => {
   const [opportunities, setOpportunities] = useState<ExternalOpportunity[]>([]);
   const [counts, setCounts] = useState<Record<OpportunityStatus, number>>({ pending: 0, approved: 0, rejected: 0 });
   const [isLoading, setIsLoading] = useState(true);
+  const [isAISyncing, setIsAISyncing] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
 
   // Security check
@@ -86,6 +88,30 @@ const ExternalCuration = () => {
     }
   };
 
+  const handleAISync = async (searchType: 'jobs' | 'scholarships') => {
+    setIsAISyncing(true);
+    try {
+      const result = await syncAIExternalData(searchType);
+      if (result.success) {
+        if (result.added > 0) {
+          toast.success(`AI found ${result.added} new ${searchType} for review`);
+          loadData();
+        } else if (result.duplicates > 0) {
+          toast.info(`No new ${searchType} (${result.duplicates} duplicates skipped)`);
+        } else {
+          toast.info(`AI couldn't find new ${searchType}`);
+        }
+      } else {
+        toast.error(result.error || "AI sync failed");
+      }
+    } catch (error) {
+      console.error("Error AI syncing:", error);
+      toast.error("Failed to sync AI data. Check if EXTERNAL_JOBS_GEMINI_KEY is configured.");
+    } finally {
+      setIsAISyncing(false);
+    }
+  };
+
   const handleApprove = async (id: string) => {
     if (!user) return;
     try {
@@ -139,14 +165,34 @@ const ExternalCuration = () => {
                 Review and curate jobs & scholarships from external sources
               </p>
             </div>
-            <Button
-              onClick={handleSync}
-              disabled={isSyncing}
-              className="gap-2"
-            >
-              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
-              {isSyncing ? "Syncing..." : "Sync External Data"}
-            </Button>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={handleSync}
+                disabled={isSyncing || isAISyncing}
+                variant="outline"
+                className="gap-2"
+              >
+                <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+                {isSyncing ? "Syncing..." : "Sync Mock Data"}
+              </Button>
+              <Button
+                onClick={() => handleAISync('jobs')}
+                disabled={isSyncing || isAISyncing}
+                className="gap-2"
+              >
+                <Sparkles className={`h-4 w-4 ${isAISyncing ? 'animate-pulse' : ''}`} />
+                {isAISyncing ? "Fetching..." : "AI Fetch Jobs"}
+              </Button>
+              <Button
+                onClick={() => handleAISync('scholarships')}
+                disabled={isSyncing || isAISyncing}
+                variant="secondary"
+                className="gap-2"
+              >
+                <Sparkles className={`h-4 w-4 ${isAISyncing ? 'animate-pulse' : ''}`} />
+                {isAISyncing ? "Fetching..." : "AI Fetch Scholarships"}
+              </Button>
+            </div>
           </div>
         </motion.div>
 
@@ -226,6 +272,40 @@ interface OpportunityCardProps {
 
 const OpportunityCard = ({ opportunity, onApprove, onReject, formatDate }: OpportunityCardProps) => {
   const TypeIcon = opportunity.type === "job" ? Briefcase : GraduationCap;
+
+  const getSectorBadge = () => {
+    if (!opportunity.sector) return null;
+    return (
+      <Badge variant={opportunity.sector === 'government' ? 'default' : 'secondary'} className="gap-1 text-xs">
+        <Building className="h-3 w-3" />
+        {opportunity.sector === 'government' ? 'Govt' : 'Private'}
+      </Badge>
+    );
+  };
+
+  const getRegionBadge = () => {
+    if (!opportunity.region || opportunity.region === 'other') return null;
+    const regionLabels: Record<string, string> = {
+      sindh: 'Sindh', punjab: 'Punjab', kpk: 'KPK', 
+      balochistan: 'Balochistan', federal: 'Federal', international: 'International'
+    };
+    return (
+      <Badge variant="outline" className="gap-1 text-xs">
+        <MapPin className="h-3 w-3" />
+        {regionLabels[opportunity.region] || opportunity.region}
+      </Badge>
+    );
+  };
+
+  const getScopeBadge = () => {
+    if (!opportunity.scholarship_scope) return null;
+    return (
+      <Badge variant={opportunity.scholarship_scope === 'international' ? 'default' : 'secondary'} className="gap-1 text-xs">
+        <Globe className="h-3 w-3" />
+        {opportunity.scholarship_scope === 'international' ? 'International' : 'National'}
+      </Badge>
+    );
+  };
   
   return (
     <motion.div
@@ -236,15 +316,16 @@ const OpportunityCard = ({ opportunity, onApprove, onReject, formatDate }: Oppor
       <Card className="h-full hover:shadow-lg transition-shadow">
         <CardHeader className="pb-3">
           <div className="flex items-start gap-3">
-            {opportunity.image_url && (
-              <img
-                src={opportunity.image_url}
-                alt={opportunity.title}
-                className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
-              />
-            )}
+            <img
+              src={opportunity.image_url || '/placeholder.svg'}
+              alt={opportunity.title}
+              className="w-16 h-16 rounded-lg object-cover flex-shrink-0 bg-muted"
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = '/placeholder.svg';
+              }}
+            />
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                 <Badge variant={opportunity.type === "job" ? "default" : "secondary"} className="gap-1">
                   <TypeIcon className="h-3 w-3" />
                   {opportunity.type === "job" ? "Job" : "Scholarship"}
@@ -256,9 +337,16 @@ const OpportunityCard = ({ opportunity, onApprove, onReject, formatDate }: Oppor
           </div>
         </CardHeader>
         <CardContent className="pt-0">
-          <CardDescription className="line-clamp-2 mb-4">
+          <CardDescription className="line-clamp-2 mb-3">
             {opportunity.description || "No description available"}
           </CardDescription>
+
+          {/* Tags Section */}
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {opportunity.type === 'job' && getSectorBadge()}
+            {opportunity.type === 'scholarship' && getScopeBadge()}
+            {getRegionBadge()}
+          </div>
 
           <div className="space-y-2 text-sm text-muted-foreground mb-4">
             {opportunity.organization && (

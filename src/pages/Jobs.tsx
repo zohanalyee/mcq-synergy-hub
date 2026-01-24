@@ -4,10 +4,11 @@ import Header from "@/components/Header";
 import JobsHeader from "@/components/jobs/JobsHeader";
 import JobsFilters from "@/components/jobs/JobsFilters";
 import JobsGrid from "@/components/jobs/JobsGrid";
+import ExternalFilters from "@/components/external/ExternalFilters";
 import { getContentByCategory } from "@/services/contentService";
 import { getApprovedOpportunities } from "@/services/externalOpportunitiesService";
 import { ContentItem } from "@/interfaces/content";
-import { ExternalOpportunity } from "@/types/externalOpportunities";
+import { ExternalOpportunity, ExternalOpportunityFilters } from "@/types/externalOpportunities";
 import ExternalOpportunitiesSection from "@/components/external/ExternalOpportunitiesSection";
 
 const Jobs = () => {
@@ -15,6 +16,10 @@ const Jobs = () => {
   const [externalJobs, setExternalJobs] = useState<ExternalOpportunity[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isLoading, setIsLoading] = useState(true);
+  const [externalFilters, setExternalFilters] = useState<ExternalOpportunityFilters>({
+    sector: 'all',
+    region: 'all'
+  });
 
   useEffect(() => {
     const loadJobs = async () => {
@@ -22,7 +27,7 @@ const Jobs = () => {
         setIsLoading(true);
         const [jobsData, externalData] = await Promise.all([
           getContentByCategory("job"),
-          getApprovedOpportunities("job")
+          getApprovedOpportunities("job", externalFilters)
         ]);
         setJobs(jobsData);
         setExternalJobs(externalData);
@@ -34,7 +39,7 @@ const Jobs = () => {
     };
 
     loadJobs();
-  }, []);
+  }, [externalFilters]);
 
   const filteredJobs = jobs.filter(job =>
     job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -56,25 +61,39 @@ const Jobs = () => {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
         />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-4"
-        >
-          <JobsGrid 
-            jobs={filteredJobs}
-            isLoading={isLoading}
-            searchQuery={searchQuery}
-          />
-        </motion.div>
+        
+        <div className="flex flex-col lg:flex-row gap-6 mt-4">
+          {/* Filter Sidebar */}
+          <div className="w-full lg:w-64 flex-shrink-0">
+            <ExternalFilters 
+              filters={externalFilters}
+              onFiltersChange={setExternalFilters}
+              type="job"
+            />
+          </div>
 
-        {/* External Opportunities Section */}
-        <ExternalOpportunitiesSection 
-          opportunities={filteredExternalJobs}
-          isLoading={isLoading}
-          type="job"
-        />
+          {/* Main Content */}
+          <div className="flex-1">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <JobsGrid 
+                jobs={filteredJobs}
+                isLoading={isLoading}
+                searchQuery={searchQuery}
+              />
+            </motion.div>
+
+            {/* External Opportunities Section */}
+            <ExternalOpportunitiesSection 
+              opportunities={filteredExternalJobs}
+              isLoading={isLoading}
+              type="job"
+            />
+          </div>
+        </div>
       </div>
     </Header>
   );

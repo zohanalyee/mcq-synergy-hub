@@ -1,5 +1,14 @@
 import { supabase } from "@/integrations/supabase/client";
-import { ExternalOpportunity, ExternalOpportunityInsert, OpportunityStatus, OpportunityType } from "@/types/externalOpportunities";
+import { 
+  ExternalOpportunity, 
+  ExternalOpportunityInsert, 
+  OpportunityStatus, 
+  OpportunityType,
+  ExternalOpportunityFilters,
+  SectorType,
+  RegionType,
+  ScholarshipScope
+} from "@/types/externalOpportunities";
 
 // Fetch opportunities by status (for admin)
 export const getExternalOpportunities = async (status?: OpportunityStatus): Promise<ExternalOpportunity[]> => {
@@ -22,14 +31,29 @@ export const getExternalOpportunities = async (status?: OpportunityStatus): Prom
   return (data || []) as ExternalOpportunity[];
 };
 
-// Get approved opportunities for public pages
-export const getApprovedOpportunities = async (type: OpportunityType): Promise<ExternalOpportunity[]> => {
-  const { data, error } = await supabase
+// Get approved opportunities for public pages with optional filters
+export const getApprovedOpportunities = async (
+  type: OpportunityType,
+  filters?: ExternalOpportunityFilters
+): Promise<ExternalOpportunity[]> => {
+  let query = supabase
     .from('external_opportunities')
     .select('*')
     .eq('status', 'approved')
-    .eq('type', type)
-    .order('deadline_date', { ascending: true });
+    .eq('type', type);
+  
+  // Apply filters
+  if (filters?.sector && filters.sector !== 'all') {
+    query = query.eq('sector', filters.sector);
+  }
+  if (filters?.region && filters.region !== 'all') {
+    query = query.eq('region', filters.region);
+  }
+  if (filters?.scholarship_scope && filters.scholarship_scope !== 'all') {
+    query = query.eq('scholarship_scope', filters.scholarship_scope);
+  }
+  
+  const { data, error } = await query.order('deadline_date', { ascending: true });
   
   if (error) {
     console.error('Error fetching approved opportunities:', error);
@@ -64,6 +88,30 @@ export const updateOpportunityStatus = async (
   return data as ExternalOpportunity;
 };
 
+// Update opportunity sector/region tags
+export const updateOpportunityTags = async (
+  id: string,
+  updates: {
+    sector?: SectorType | null;
+    region?: RegionType | null;
+    scholarship_scope?: ScholarshipScope | null;
+  }
+): Promise<ExternalOpportunity | null> => {
+  const { data, error } = await supabase
+    .from('external_opportunities')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  
+  if (error) {
+    console.error('Error updating opportunity tags:', error);
+    throw error;
+  }
+  
+  return data as ExternalOpportunity;
+};
+
 // Get counts by status (for admin dashboard)
 export const getOpportunityCounts = async (): Promise<Record<OpportunityStatus, number>> => {
   const { data, error } = await supabase
@@ -88,7 +136,27 @@ export const getOpportunityCounts = async (): Promise<Record<OpportunityStatus, 
   return counts;
 };
 
-// Mock data for testing the sync feature
+// Sync AI-generated opportunities via edge function
+export const syncAIExternalData = async (searchType: 'jobs' | 'scholarships' = 'jobs'): Promise<{ 
+  success: boolean;
+  added: number; 
+  duplicates: number;
+  total_parsed?: number;
+  error?: string;
+}> => {
+  const { data, error } = await supabase.functions.invoke('fetch-external-jobs', {
+    body: { searchType }
+  });
+  
+  if (error) {
+    console.error('Error calling fetch-external-jobs:', error);
+    throw error;
+  }
+  
+  return data;
+};
+
+// Mock data for testing the sync feature (kept for backward compatibility)
 const mockOpportunities: ExternalOpportunityInsert[] = [
   {
     title: "Software Engineer at Tech Corp",
@@ -99,7 +167,9 @@ const mockOpportunities: ExternalOpportunityInsert[] = [
     type: "job",
     deadline_date: "2026-02-15",
     organization: "Tech Corp Inc.",
-    location: "Remote"
+    location: "Karachi",
+    sector: "private",
+    region: "sindh"
   },
   {
     title: "HEC Indigenous Scholarship 2026",
@@ -110,18 +180,22 @@ const mockOpportunities: ExternalOpportunityInsert[] = [
     type: "scholarship",
     deadline_date: "2026-03-01",
     organization: "Higher Education Commission",
-    location: "Pakistan"
+    location: "Pakistan",
+    scholarship_scope: "national",
+    region: "federal"
   },
   {
-    title: "Data Analyst at Global Finance",
-    description: "Analyze financial data and create insights for executive decision-making. Strong SQL and Python skills required.",
-    apply_url: "https://indeed.com/jobs/data-analyst-global-finance-67890",
+    title: "FPSC CSS Examination 2026",
+    description: "Central Superior Services examination for federal government positions. Multiple posts available across various ministries.",
+    apply_url: "https://fpsc.gov.pk/css-2026",
     image_url: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=400",
-    source_name: "Indeed",
+    source_name: "FPSC",
     type: "job",
     deadline_date: "2026-02-28",
-    organization: "Global Finance Ltd.",
-    location: "New York, USA"
+    organization: "Federal Public Service Commission",
+    location: "Islamabad",
+    sector: "government",
+    region: "federal"
   },
   {
     title: "Fulbright Scholarship Program",
@@ -132,7 +206,9 @@ const mockOpportunities: ExternalOpportunityInsert[] = [
     type: "scholarship",
     deadline_date: "2026-04-15",
     organization: "Fulbright Commission",
-    location: "United States"
+    location: "United States",
+    scholarship_scope: "international",
+    region: "international"
   }
 ];
 

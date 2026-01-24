@@ -1,5 +1,8 @@
 export type OpportunityType = 'job' | 'scholarship';
 export type OpportunityStatus = 'pending' | 'approved' | 'rejected';
+export type SectorType = 'government' | 'private';
+export type RegionType = 'sindh' | 'punjab' | 'kpk' | 'balochistan' | 'federal' | 'international' | 'other';
+export type ScholarshipScope = 'national' | 'international';
 
 export interface ExternalOpportunity {
   id: string;
@@ -13,6 +16,9 @@ export interface ExternalOpportunity {
   deadline_date: string | null;
   location: string | null;
   organization: string | null;
+  sector: SectorType | null;
+  region: RegionType | null;
+  scholarship_scope: ScholarshipScope | null;
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;
@@ -31,5 +37,14 @@ export interface ExternalOpportunityInsert {
   deadline_date?: string;
   location?: string;
   organization?: string;
+  sector?: SectorType;
+  region?: RegionType;
+  scholarship_scope?: ScholarshipScope;
   metadata?: Record<string, any>;
+}
+
+export interface ExternalOpportunityFilters {
+  sector?: SectorType | 'all';
+  region?: RegionType | 'all';
+  scholarship_scope?: ScholarshipScope | 'all';
 }

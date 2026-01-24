@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap } from "lucide-react";
+import { ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap, Globe, Building } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +27,50 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
   const description = type === "job" 
     ? "Curated job opportunities from LinkedIn, Indeed, and more"
     : "Curated scholarships from HEC, Fulbright, and more";
+
+  const getSectorBadge = (sector: string | null) => {
+    if (!sector) return null;
+    return (
+      <Badge 
+        variant={sector === 'government' ? 'default' : 'secondary'} 
+        className="text-xs gap-1"
+      >
+        <Building className="h-3 w-3" />
+        {sector === 'government' ? 'Govt' : 'Private'}
+      </Badge>
+    );
+  };
+
+  const getRegionBadge = (region: string | null) => {
+    if (!region || region === 'other') return null;
+    const regionLabels: Record<string, string> = {
+      sindh: 'Sindh',
+      punjab: 'Punjab',
+      kpk: 'KPK',
+      balochistan: 'Balochistan',
+      federal: 'Federal',
+      international: 'International'
+    };
+    return (
+      <Badge variant="outline" className="text-xs gap-1">
+        <MapPin className="h-3 w-3" />
+        {regionLabels[region] || region}
+      </Badge>
+    );
+  };
+
+  const getScopeBadge = (scope: string | null) => {
+    if (!scope) return null;
+    return (
+      <Badge 
+        variant={scope === 'international' ? 'default' : 'secondary'} 
+        className="text-xs gap-1"
+      >
+        <Globe className="h-3 w-3" />
+        {scope === 'international' ? 'International' : 'National'}
+      </Badge>
+    );
+  };
 
   if (isLoading) {
     return (
@@ -86,18 +130,21 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
             <Card className="h-full hover:shadow-lg transition-shadow group">
               <CardHeader className="pb-3">
                 <div className="flex items-start gap-3">
-                  {opp.image_url && (
-                    <img
-                      src={opp.image_url}
-                      alt={opp.title}
-                      className="w-12 h-12 rounded-lg object-cover flex-shrink-0"
-                    />
-                  )}
+                  <img
+                    src={opp.image_url || '/placeholder.svg'}
+                    alt={opp.title}
+                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-muted"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
                       <Badge variant="outline" className="text-xs">
                         {opp.source_name}
                       </Badge>
+                      {type === 'job' && getSectorBadge(opp.sector)}
+                      {type === 'scholarship' && getScopeBadge(opp.scholarship_scope)}
                     </div>
                     <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors">
                       {opp.title}
@@ -117,12 +164,11 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                       <span className="truncate">{opp.organization}</span>
                     </div>
                   )}
-                  {opp.location && (
-                    <div className="flex items-center gap-1.5">
-                      <MapPin className="h-3 w-3" />
-                      <span>{opp.location}</span>
-                    </div>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    <MapPin className="h-3 w-3" />
+                    <span>{opp.location || 'Location not specified'}</span>
+                    {getRegionBadge(opp.region)}
+                  </div>
                   <div className="flex items-center gap-1.5">
                     <Calendar className="h-3 w-3" />
                     <span>Deadline: {formatDate(opp.deadline_date)}</span>
