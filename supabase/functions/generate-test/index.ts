@@ -303,37 +303,54 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
 REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicates or paraphrases allowed. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
 
     try {
-      const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt }
-          ],
-          max_tokens: 8000,
-        }),
-      });
+      // Direct Google Gemini API call
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
+              }
+            ],
+            generationConfig: {
+              maxOutputTokens: 8000,
+              temperature: 0.7
+            },
+            safetySettings: [
+              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+            ]
+          }),
+        }
+      );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`Batch ${batch + 1} failed:`, response.status, errorText);
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || 'Unknown error';
+        console.error(`Batch ${batch + 1} failed:`, response.status, errorMessage);
         
         if (response.status === 429) {
           throw { status: 429, message: 'Rate limit exceeded' };
         }
-        if (response.status === 402) {
-          throw { status: 402, message: 'AI credits depleted' };
+        if (response.status === 403) {
+          throw { status: 403, message: 'API key invalid or quota exceeded' };
+        }
+        if (response.status === 400) {
+          console.error('Bad request - check prompt format:', errorMessage);
         }
         continue;
       }
 
       const data = await response.json();
-      const generatedText = data.choices?.[0]?.message?.content;
+      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       
       if (generatedText) {
         const batchQuestions = parseAIResponse(generatedText);
@@ -789,9 +806,9 @@ serve(async (req) => {
     if (isBankOnly) {
       console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank with HYBRID DEDUP`);
       
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        throw new Error('LOVABLE_API_KEY is not configured');
+      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+      if (!GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY is not configured');
       }
 
       // ============= FIX: Fetch existing questions for deduplication =============
@@ -818,7 +835,7 @@ serve(async (req) => {
         topic,
         difficulty,
         qc,
-        LOVABLE_API_KEY,
+        GEMINI_API_KEY,
         existingTitlesForDedup // NOW passing existing questions!
       );
 
@@ -1013,8 +1030,8 @@ serve(async (req) => {
       console.log(`⚡ PARTIAL MODE ACTIVE: Returning ${returnedQuestions.length} questions, Generating ${missingCount} in background`);
       
       if (missingCount > 0) {
-        const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-        if (LOVABLE_API_KEY) {
+        const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+        if (GEMINI_API_KEY) {
           EdgeRuntime.waitUntil(
             backgroundGenerateAndSave(
               topic,
@@ -1022,7 +1039,7 @@ serve(async (req) => {
               difficulty,
               missingCount,
               existingQuestionTexts,
-              LOVABLE_API_KEY,
+              GEMINI_API_KEY,
               supabase,
               user_id,
               sourceType
@@ -1049,9 +1066,9 @@ serve(async (req) => {
     const missingCount = forceNew ? qc : qc - dbQuestions.length;
     console.log(`Step 2: Need ${missingCount} questions from AI (have ${dbQuestions.length} from cache)`);
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY is not configured');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY is not configured');
     }
 
     let newAIQuestions: Question[] = [];
@@ -1061,7 +1078,7 @@ serve(async (req) => {
         topic, 
         difficulty, 
         missingCount, 
-        LOVABLE_API_KEY,
+        GEMINI_API_KEY,
         existingQuestionTexts
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
@@ -1073,11 +1090,11 @@ serve(async (req) => {
         );
       }
       
-      if (aiError.status === 402) {
+      if (aiError.status === 402 || aiError.status === 403) {
         // IMPORTANT: Avoid non-2xx here.
         // supabase-js treats non-2xx as an exception which can blank-screen the app.
-        // When AI credits are depleted, fall back to cached questions and return 200.
-        console.log('💳 AI credits depleted. Returning cache-only response (HTTP 200).');
+        // When AI quota is exhausted or API key is invalid, fall back to cached questions and return 200.
+        console.log('🔑 AI quota exhausted or API key invalid. Returning cache-only response (HTTP 200).');
 
         // If forceNew=true, we may have skipped cache lookup earlier. Try a cache read now.
         if (dbQuestions.length === 0) {
@@ -1125,7 +1142,9 @@ serve(async (req) => {
             remaining_count: Math.max(0, qc - returnedQuestions.length),
             total_requested: qc,
             ai_unavailable: true,
-            error_notice: 'AI credits depleted. Showing cached questions only.'
+            error_notice: aiError.status === 403 
+              ? 'API key invalid or quota exceeded. Showing cached questions only.'
+              : 'AI quota exhausted. Showing cached questions only.'
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
         );
