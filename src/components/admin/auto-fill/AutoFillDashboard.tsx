@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Zap, AlertTriangle, CheckCircle, Settings, RefreshCw, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,20 +25,33 @@ const AutoFillDashboard = () => {
   const [topPriorityTopics, setTopPriorityTopics] = useState<AutoFillQueueItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Guard against duplicate fetches
+  const hasFetchedRef = useRef(false);
+  const isFetchingRef = useRef(false);
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
+    // Prevent duplicate concurrent fetches
+    if (isFetchingRef.current) return;
+    // Prevent auto-refetch if already loaded (unless forced by manual refresh)
+    if (!force && hasFetchedRef.current) return;
+    
+    isFetchingRef.current = true;
     setIsLoading(true);
+    
     try {
       const stats = await getAutoFillStats();
       setUsage(stats.usage);
       setConfig(stats.config);
       setQueueCount(stats.queueCount);
       setTopPriorityTopics(stats.topPriorityTopics);
+      hasFetchedRef.current = true;
     } catch (error) {
       console.error('Error loading auto-fill stats:', error);
       toast.error('Failed to load auto-fill data');
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
   };
 
@@ -98,7 +111,7 @@ const AutoFillDashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm" onClick={loadData}>
+          <Button variant="outline" size="sm" onClick={() => loadData(true)}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>

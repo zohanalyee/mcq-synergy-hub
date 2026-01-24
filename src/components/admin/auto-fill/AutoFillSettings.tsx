@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Save, X, Database, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,8 +50,8 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
   const weightsTotal = difficultyWeights.easy + difficultyWeights.medium + difficultyWeights.hard;
   const isWeightsValid = weightsTotal === 100;
 
-  // Load additional settings on mount
-  useState(() => {
+  // Load additional settings on mount - useEffect runs only once
+  useEffect(() => {
     const loadSettings = async () => {
       const [limitConfig, thresholdConfig] = await Promise.all([
         getAILimitConfig(),
@@ -65,7 +65,7 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
       }
     };
     loadSettings();
-  });
+  }, []); // Empty dependency array = run only on mount
 
   const handleSave = async () => {
     if (!isWeightsValid) {
