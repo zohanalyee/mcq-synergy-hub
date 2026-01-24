@@ -507,8 +507,11 @@ export type Database = {
           location: string | null
           metadata: Json | null
           organization: string | null
+          region: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          scholarship_scope: string | null
+          sector: string | null
           source_name: string
           status: string
           title: string
@@ -525,8 +528,11 @@ export type Database = {
           location?: string | null
           metadata?: Json | null
           organization?: string | null
+          region?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          scholarship_scope?: string | null
+          sector?: string | null
           source_name: string
           status?: string
           title: string
@@ -543,8 +549,11 @@ export type Database = {
           location?: string | null
           metadata?: Json | null
           organization?: string | null
+          region?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          scholarship_scope?: string | null
+          sector?: string | null
           source_name?: string
           status?: string
           title?: string
