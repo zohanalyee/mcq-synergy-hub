@@ -303,7 +303,11 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
 REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicates or paraphrases allowed. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
 
     try {
-      // Direct Google Gemini API call
+      // Direct Google Gemini API call with diagnostic logging
+      console.log(`📤 Calling Google Gemini API for batch ${batch + 1}...`);
+      console.log(`📤 Endpoint: generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash`);
+      console.log(`🔑 API Key prefix: ${apiKey ? apiKey.substring(0, 8) + '...' : 'MISSING!'}`);
+      
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
         {
@@ -332,19 +336,28 @@ REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicate
         }
       );
 
+      console.log(`📥 Google API Response Status: ${response.status}`);
+
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error?.message || 'Unknown error';
-        console.error(`Batch ${batch + 1} failed:`, response.status, errorMessage);
+        const errorText = await response.text();
+        console.error(`❌ Google API Error [${response.status}]: ${errorText}`);
+        
+        // Parse error for detailed logging
+        try {
+          const errorJson = JSON.parse(errorText);
+          console.error(`❌ Error code: ${errorJson.error?.code}`);
+          console.error(`❌ Error message: ${errorJson.error?.message}`);
+          console.error(`❌ Error status: ${errorJson.error?.status}`);
+        } catch {}
         
         if (response.status === 429) {
-          throw { status: 429, message: 'Rate limit exceeded' };
+          throw { status: 429, message: 'Google API rate limit exceeded', source: 'google_gemini', raw: errorText };
         }
         if (response.status === 403) {
-          throw { status: 403, message: 'API key invalid or quota exceeded' };
+          throw { status: 403, message: 'Google API key invalid or quota exceeded', source: 'google_gemini', raw: errorText };
         }
         if (response.status === 400) {
-          console.error('Bad request - check prompt format:', errorMessage);
+          console.error('Bad request - check prompt format');
         }
         continue;
       }
@@ -388,10 +401,12 @@ REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicate
         console.log(`✅ Batch ${batch + 1} completed: ${acceptedCount} accepted, ${skippedCount} duplicates skipped`);
       }
     } catch (batchError: any) {
-      if (batchError.status === 429 || batchError.status === 402) {
+      // Propagate quota/auth errors to caller (no longer checking 402 - Lovable-specific)
+      if (batchError.status === 429 || batchError.status === 403) {
+        console.error(`🚫 Batch ${batch + 1} quota/auth error - propagating to caller`);
         throw batchError;
       }
-      console.error(`Batch ${batch + 1} error:`, batchError);
+      console.error(`Batch ${batch + 1} error:`, JSON.stringify(batchError));
     }
     
     if (batch < batches - 1) {
@@ -1090,8 +1105,17 @@ serve(async (req) => {
     console.log(`Step 2: Need ${missingCount} questions from AI (have ${dbQuestions.length} from cache)`);
 
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    console.log(`🔑 GEMINI_API_KEY configured: ${GEMINI_API_KEY ? 'Yes (' + GEMINI_API_KEY.substring(0, 8) + '...)' : 'NO - MISSING!'}`);
+    
     if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not configured');
+      return new Response(
+        JSON.stringify({
+          error: 'GEMINI_API_KEY not configured',
+          error_type: 'config_error',
+          details: 'Please add your Google Gemini API key to Supabase secrets'
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      );
     }
 
     let newAIQuestions: Question[] = [];
@@ -1106,11 +1130,13 @@ serve(async (req) => {
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
     } catch (aiError: any) {
-      // Handle all quota/auth errors with cache fallback (return 200 to prevent client exceptions)
-      if (aiError.status === 429 || aiError.status === 402 || aiError.status === 403) {
-        const errorType = aiError.status === 429 ? 'quota_exceeded' : 
-                          aiError.status === 403 ? 'auth_error' : 'credits_depleted';
-        console.log(`🔑 AI unavailable (${errorType}). Returning cache-only response (HTTP 200).`);
+      console.error(`🚨 AI Generation Error:`, JSON.stringify(aiError));
+      
+      // Handle Google API quota/auth errors with cache fallback (return 200 to prevent client exceptions)
+      // Note: 402 removed - that was Lovable Gateway specific, we now use Google Gemini directly
+      if (aiError.status === 429 || aiError.status === 403) {
+        const errorType = aiError.status === 429 ? 'google_quota_exceeded' : 'google_auth_error';
+        console.log(`🔑 Google AI unavailable (${errorType}). Returning cache-only response (HTTP 200).`);
 
         // If forceNew=true, we may have skipped cache lookup earlier. Try a cache read now.
         if (dbQuestions.length === 0) {
