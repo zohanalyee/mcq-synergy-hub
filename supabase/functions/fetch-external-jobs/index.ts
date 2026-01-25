@@ -8,11 +8,11 @@ const corsHeaders = {
 
 // ============= MODEL FALLBACK CONFIGURATION =============
 // Ordered by preference - will try each until one works
+// Using stable model names without deprecated suffixes
 const PREFERRED_MODELS = [
   'gemini-2.0-flash',
-  'gemini-1.5-flash-latest',
-  'gemini-1.5-pro-latest',
-  'gemini-pro'
+  'gemini-1.5-flash',
+  'gemini-1.5-pro'
 ];
 
 // Call Gemini API with automatic model fallback
