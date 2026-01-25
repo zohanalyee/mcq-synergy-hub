@@ -2,7 +2,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Book, Sparkles, AlertCircle } from "lucide-react";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
-import { useEffect, useState, ReactNode } from "react";
+import { useEffect, useState, ReactNode, useRef } from "react";
 import Header from "@/components/Header";
 import SubjectHeader from "@/components/subject-content/SubjectHeader";
 import TopicsList from "@/components/subject-content/TopicsList";
@@ -56,6 +56,10 @@ const SubjectContent = () => {
   const [aiCount, setAiCount] = useState(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   
+  // Debounce ref to prevent rapid API calls
+  const lastFetchTimeRef = useRef<number>(0);
+  const DEBOUNCE_MS = 2000; // 2 seconds minimum between calls
+  
   
   // Get topic ID from URL query parameter (for deep linking from search)
   const topicIdFromUrl = searchParams.get('topic');
@@ -94,7 +98,8 @@ const SubjectContent = () => {
     
     setIsLoaded(true);
     loadTopicsFromDB();
-    loadMCQs();
+    // OPTIMIZATION: Initial load is DB-only (fetchOnly=true) to prevent quota drain
+    loadMCQs(false, true);
   }, [title, navigate, subjectId]);
 
   // Auto-select topic from URL query parameter after topics are loaded
@@ -172,11 +177,20 @@ const SubjectContent = () => {
   };
 
   // Load MCQs using the generate-test edge function (hybrid: bank + AI)
-  const loadMCQs = async (forceNew = false) => {
+  // fetchOnly = true means only check database cache, no AI generation
+  const loadMCQs = async (forceNew = false, fetchOnly = false) => {
     if (!title) return;
     
+    // DEBOUNCING: Prevent rapid API calls unless forceNew is explicitly true
+    const now = Date.now();
+    if (!forceNew && now - lastFetchTimeRef.current < DEBOUNCE_MS) {
+      console.log('⏳ Debounced: Too soon since last fetch (wait 2s)');
+      return;
+    }
+    lastFetchTimeRef.current = now;
+    
     setIsLoadingMCQs(true);
-    setIsGenerating(true);
+    setIsGenerating(!fetchOnly); // Only show generating loader if not fetch-only
     setLoadError(null);
 
     const topicToFetch = selectedTopic !== "all" ? selectedTopic : title;
@@ -187,7 +201,8 @@ const SubjectContent = () => {
         topic: topicToFetch, 
         difficulty, 
         question_count: requestedCount,
-        forceNew 
+        forceNew,
+        fetchOnly
       });
       const { data, error } = await supabase.functions.invoke('generate-test', {
         body: {
@@ -195,7 +210,8 @@ const SubjectContent = () => {
           difficulty: difficulty,
           question_count: requestedCount,
           forceNew: forceNew,
-          partial_mode: requestedCount > 20, // Enable streaming for large requests
+          fetch_only: fetchOnly, // Pass fetchOnly to edge function
+          partial_mode: !fetchOnly && requestedCount > 20, // Only enable partial mode if not fetch-only
         }
       });
 
@@ -432,10 +448,22 @@ const SubjectContent = () => {
     }
   };
 
-  // Re-fetch MCQs when topic selection changes
+  // SMART TOPIC SWITCHING: Check local cache first before API call
   useEffect(() => {
-    if (title && isLoaded) {
-      loadMCQs(false);
+    if (title && isLoaded && selectedTopicId !== "all") {
+      // First check if we already have questions for this topic in memory
+      const existingForTopic = mcqs.filter(m => m.topic === selectedTopic);
+      
+      // Only fetch from DB if we have very few cached questions locally
+      if (existingForTopic.length < 3) {
+        console.log(`📦 Topic "${selectedTopic}" has ${existingForTopic.length} cached, fetching from DB...`);
+        loadMCQs(false, true); // fetchOnly = true (DB only, no AI)
+      } else {
+        console.log(`✅ Topic "${selectedTopic}" has ${existingForTopic.length} cached, using local filter`);
+      }
+    } else if (title && isLoaded && selectedTopicId === "all") {
+      // When switching back to "all", just use client-side filtering
+      console.log('📋 Showing all topics from local cache');
     }
   }, [selectedTopicId]);
 
