@@ -25,6 +25,15 @@ interface UsageLogEntry {
   metadata?: Record<string, any>;
 }
 
+// ============= MODEL FALLBACK CONFIGURATION =============
+// Ordered by preference - will try each until one works
+const PREFERRED_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro-latest',
+  'gemini-pro'
+];
+
 // Shuffle array using Fisher-Yates algorithm
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
@@ -33,6 +42,63 @@ function shuffleArray<T>(array: T[]): T[] {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   return shuffled;
+}
+
+// Call Gemini API with automatic model fallback
+async function callGeminiWithFallback(
+  apiKey: string,
+  contents: any,
+  generationConfig: any,
+  safetySettings: any
+): Promise<{ success: boolean; data?: any; modelUsed?: string; error?: string; status?: number }> {
+  
+  for (const model of PREFERRED_MODELS) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    console.log(`🔄 Trying model: ${model}`);
+    
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents, generationConfig, safetySettings }),
+      });
+
+      console.log(`📥 ${model} Response Status: ${response.status}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log(`✅ Success with model: ${model}`);
+        return { success: true, data, modelUsed: model };
+      }
+
+      // Handle specific error codes
+      if (response.status === 429) {
+        console.warn(`⚠️ Rate limit on ${model}, trying next model...`);
+        continue; // Try next model
+      }
+      if (response.status === 404 || response.status === 400) {
+        const errorText = await response.text();
+        console.warn(`⚠️ Model ${model} unavailable (${response.status}): ${errorText.slice(0, 100)}`);
+        continue; // Model not found or bad request, try next
+      }
+      if (response.status === 403 || response.status === 401) {
+        // Auth error - don't try other models, the key is bad
+        return { success: false, error: 'AUTH_ERROR', status: response.status };
+      }
+      
+      // Other error - try next model
+      console.warn(`⚠️ ${model} returned ${response.status}, trying next...`);
+      continue;
+      
+    } catch (fetchError) {
+      console.error(`❌ Network error with ${model}:`, fetchError);
+      continue; // Network error, try next model
+    }
+  }
+
+  // All models failed
+  console.error('❌ ALL_MODELS_FAILED: Exhausted all fallback options');
+  return { success: false, error: 'ALL_MODELS_FAILED', status: 503 };
 }
 
 // Sanitize topic for flexible matching - removes brackets and extra whitespace
@@ -303,67 +369,41 @@ Output ONLY raw JSON in this exact structure (no markdown, no explanations):
 REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicates or paraphrases allowed. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
 
     try {
-      // Direct Google Gemini API call with diagnostic logging
-      console.log(`📤 Calling Google Gemini API for batch ${batch + 1}...`);
-      console.log(`📤 Endpoint: generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash`);
+      // Use the robust fallback mechanism
+      console.log(`📤 Calling Gemini API for batch ${batch + 1} with model fallback...`);
       console.log(`🔑 API Key prefix: ${apiKey ? apiKey.substring(0, 8) + '...' : 'MISSING!'}`);
       
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      const contents = [
         {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            contents: [
-              {
-                role: 'user',
-                parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
-              }
-            ],
-            generationConfig: {
-              maxOutputTokens: 8000,
-              temperature: 0.7
-            },
-            safetySettings: [
-              { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-              { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
-            ]
-          }),
+          role: 'user',
+          parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
         }
-      );
+      ];
+      const generationConfig = {
+        maxOutputTokens: 8000,
+        temperature: 0.7
+      };
+      const safetySettings = [
+        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+      ];
 
-      console.log(`📥 Google API Response Status: ${response.status}`);
+      const result = await callGeminiWithFallback(apiKey, contents, generationConfig, safetySettings);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`❌ Google API Error [${response.status}]: ${errorText}`);
-        
-        // Parse error for detailed logging
-        try {
-          const errorJson = JSON.parse(errorText);
-          console.error(`❌ Error code: ${errorJson.error?.code}`);
-          console.error(`❌ Error message: ${errorJson.error?.message}`);
-          console.error(`❌ Error status: ${errorJson.error?.status}`);
-        } catch {}
-        
-        if (response.status === 429) {
-          throw { status: 429, message: 'Google API rate limit exceeded', source: 'google_gemini', raw: errorText };
+      if (!result.success) {
+        if (result.error === 'AUTH_ERROR') {
+          throw { status: 403, message: 'Google API key invalid', source: 'google_gemini' };
         }
-        if (response.status === 403) {
-          throw { status: 403, message: 'Google API key invalid or quota exceeded', source: 'google_gemini', raw: errorText };
-        }
-        if (response.status === 400) {
-          console.error('Bad request - check prompt format');
+        if (result.error === 'ALL_MODELS_FAILED') {
+          throw { status: 429, message: 'All Gemini models exhausted (rate limited)', source: 'google_gemini' };
         }
         continue;
       }
 
-      const data = await response.json();
-      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      console.log(`✅ Batch ${batch + 1} generated with model: ${result.modelUsed}`);
+      const generatedText = result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
       
       if (generatedText) {
         const batchQuestions = parseAIResponse(generatedText);
