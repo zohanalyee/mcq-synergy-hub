@@ -84,16 +84,22 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured.");
+    const EXTERNAL_JOBS_GEMINI_KEY = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
+    if (!EXTERNAL_JOBS_GEMINI_KEY) {
+      return new Response(
+        JSON.stringify({ success: false, error: "AUTH_ERROR" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SERVICE_ROLE_KEY");
     
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-      throw new Error("Supabase configuration missing");
+      return new Response(
+        JSON.stringify({ success: false, error: "AUTH_ERROR" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
@@ -131,47 +137,58 @@ Return ONLY the JSON array, no explanations.`
 
 Return ONLY the JSON array, no explanations.`;
 
-    console.log("Calling Lovable AI Gateway for:", searchType);
+    console.log("Calling Google Gemini API for:", searchType);
 
-    // Call Lovable AI Gateway instead of direct Gemini API
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
-        messages: [
-          { role: "system", content: "You are a helpful assistant that returns only valid JSON arrays. No explanations or markdown." },
-          { role: "user", content: prompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 4096,
-      })
-    });
-
-    if (!aiResponse.ok) {
-      const errorText = await aiResponse.text();
-      console.error("Lovable AI Gateway error:", aiResponse.status, errorText);
-      
-      if (aiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Rate limit exceeded. Please try again later." }),
-          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ success: false, error: "AI credits depleted. Please add funds to your workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`AI Gateway error: ${aiResponse.status}`);
+    // Call Google Gemini API directly using EXTERNAL_JOBS_GEMINI_KEY
+    let geminiResponse;
+    try {
+      geminiResponse = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${EXTERNAL_JOBS_GEMINI_KEY}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 4096,
+            }
+          })
+        }
+      );
+    } catch (fetchError) {
+      console.error("Network error calling Gemini:", fetchError);
+      return new Response(
+        JSON.stringify({ success: false, error: "NETWORK_ERROR" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    const aiData = await aiResponse.json();
-    const aiText = aiData.choices?.[0]?.message?.content || "";
+    // Handle specific error codes with HTTP 200 and error payload
+    if (!geminiResponse.ok) {
+      const errorText = await geminiResponse.text();
+      console.error("Gemini API error:", geminiResponse.status, errorText);
+      
+      if (geminiResponse.status === 429) {
+        return new Response(
+          JSON.stringify({ success: false, error: "RATE_LIMIT_EXCEEDED" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (geminiResponse.status === 401 || geminiResponse.status === 403) {
+        return new Response(
+          JSON.stringify({ success: false, error: "AUTH_ERROR" }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      return new Response(
+        JSON.stringify({ success: false, error: `API_ERROR_${geminiResponse.status}` }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const geminiData = await geminiResponse.json();
+    const aiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
     
     console.log("AI Response received, parsing...");
     const opportunities = parseAIResponse(aiText);
