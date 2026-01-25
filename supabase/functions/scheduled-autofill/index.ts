@@ -41,9 +41,23 @@ Deno.serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
+    // ============= AUTHORIZATION GUARD =============
+    // Only allow scheduled cron calls or explicit admin triggers
+    const authHeader = req.headers.get('Authorization');
+    const isScheduledCall = authHeader?.includes(supabaseServiceKey);
+    const isAdminCall = req.headers.get('x-admin-trigger') === 'true';
+
+    if (!isScheduledCall && !isAdminCall) {
+      console.log('[Scheduled Auto-Fill] ⛔ Blocked: Not a valid scheduled or admin call');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized: This function can only be called by scheduled jobs or admin triggers' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    console.log('[Scheduled Auto-Fill] Starting nightly auto-fill job...');
+    console.log('[Scheduled Auto-Fill] ✅ Authorized. Starting nightly auto-fill job...');
 
     // Check if auto-fill is enabled
     const { data: configData } = await supabase
