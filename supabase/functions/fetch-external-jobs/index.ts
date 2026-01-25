@@ -6,6 +6,75 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// ============= MODEL FALLBACK CONFIGURATION =============
+// Ordered by preference - will try each until one works
+const PREFERRED_MODELS = [
+  'gemini-2.0-flash',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro-latest',
+  'gemini-pro'
+];
+
+// Call Gemini API with automatic model fallback
+async function callGeminiWithFallback(
+  apiKey: string,
+  prompt: string
+): Promise<{ success: boolean; text?: string; modelUsed?: string; error?: string }> {
+  
+  for (const model of PREFERRED_MODELS) {
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+    console.log(`🔄 Trying model: ${model}`);
+    
+    try {
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 4096,
+          }
+        })
+      });
+
+      console.log(`📥 ${model} Response Status: ${response.status}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        console.log(`✅ Success with model: ${model}`);
+        return { success: true, text, modelUsed: model };
+      }
+
+      // Handle specific error codes
+      if (response.status === 429) {
+        console.warn(`⚠️ Rate limit on ${model}, trying next model...`);
+        continue;
+      }
+      if (response.status === 404 || response.status === 400) {
+        const errorText = await response.text();
+        console.warn(`⚠️ Model ${model} unavailable (${response.status}): ${errorText.slice(0, 100)}`);
+        continue;
+      }
+      if (response.status === 403 || response.status === 401) {
+        return { success: false, error: 'AUTH_ERROR' };
+      }
+      
+      console.warn(`⚠️ ${model} returned ${response.status}, trying next...`);
+      continue;
+      
+    } catch (fetchError) {
+      console.error(`❌ Network error with ${model}:`, fetchError);
+      continue;
+    }
+  }
+
+  // All models failed
+  console.error('❌ ALL_MODELS_FAILED: Exhausted all fallback options');
+  return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
+}
+
 type SectorType = 'government' | 'private';
 type RegionType = 'sindh' | 'punjab' | 'kpk' | 'balochistan' | 'federal' | 'international' | 'other';
 type ScholarshipScope = 'national' | 'international';
@@ -137,58 +206,21 @@ Return ONLY the JSON array, no explanations.`
 
 Return ONLY the JSON array, no explanations.`;
 
-    console.log("Calling Google Gemini API for:", searchType);
+    console.log("Calling Gemini API with model fallback for:", searchType);
 
-    // Call Google Gemini API directly using EXTERNAL_JOBS_GEMINI_KEY
-    let geminiResponse;
-    try {
-      geminiResponse = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${EXTERNAL_JOBS_GEMINI_KEY}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 4096,
-            }
-          })
-        }
-      );
-    } catch (fetchError) {
-      console.error("Network error calling Gemini:", fetchError);
+    // Use the robust fallback mechanism
+    const result = await callGeminiWithFallback(EXTERNAL_JOBS_GEMINI_KEY, prompt);
+
+    if (!result.success) {
+      console.error("All Gemini models failed:", result.error);
       return new Response(
-        JSON.stringify({ success: false, error: "NETWORK_ERROR" }),
+        JSON.stringify({ success: false, error: result.error }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Handle specific error codes with HTTP 200 and error payload
-    if (!geminiResponse.ok) {
-      const errorText = await geminiResponse.text();
-      console.error("Gemini API error:", geminiResponse.status, errorText);
-      
-      if (geminiResponse.status === 429) {
-        return new Response(
-          JSON.stringify({ success: false, error: "RATE_LIMIT_EXCEEDED" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      if (geminiResponse.status === 401 || geminiResponse.status === 403) {
-        return new Response(
-          JSON.stringify({ success: false, error: "AUTH_ERROR" }),
-          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      return new Response(
-        JSON.stringify({ success: false, error: `API_ERROR_${geminiResponse.status}` }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const geminiData = await geminiResponse.json();
-    const aiText = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "";
+    console.log(`AI Response received using model: ${result.modelUsed}`);
+    const aiText = result.text || "";
     
     console.log("AI Response received, parsing...");
     const opportunities = parseAIResponse(aiText);
