@@ -102,11 +102,20 @@ const ExternalCuration = () => {
           toast.info(`AI couldn't find new ${searchType}`);
         }
       } else {
-        toast.error(result.error || "AI sync failed");
+        // Handle specific error codes
+        if (result.error === "RATE_LIMIT_EXCEEDED") {
+          toast.error("AI is Busy (Quota Full). Please wait 15 minutes.");
+        } else if (result.error === "AUTH_ERROR") {
+          toast.error("Configuration Error. Check API Key.");
+        } else if (result.error === "NETWORK_ERROR") {
+          toast.error("Network Error. Please check your connection.");
+        } else {
+          toast.error(result.error || "AI sync failed");
+        }
       }
     } catch (error) {
       console.error("Error AI syncing:", error);
-      toast.error("Failed to sync AI data. Check if EXTERNAL_JOBS_GEMINI_KEY is configured.");
+      toast.error("Connection failed. Please try again.");
     } finally {
       setIsAISyncing(false);
     }
