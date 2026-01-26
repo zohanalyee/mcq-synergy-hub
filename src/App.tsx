@@ -8,8 +8,10 @@ import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LearningProvider } from "./contexts/LearningContext";
 import { LoadingProvider } from "./contexts/LoadingContext";
+import { FloatingToolsProvider } from "./contexts/FloatingToolsContext";
 import PageLoader from "./components/PageLoader";
 import NavigationLoader from "./components/NavigationLoader";
+import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import Index from "./pages/Index";
 import Subjects from "./pages/Subjects";
 import Dashboard from "./pages/Dashboard";
@@ -60,75 +62,78 @@ const App = () => {
           <AuthProvider>
             <UserRoleProvider>
               <LearningProvider>
-                <TooltipProvider>
-                  <PageLoader />
-                  <NavigationLoader />
-                <Toaster />
-                <Sonner 
-                  position="top-right"
-                  expand={true}
-                  richColors={true}
-                  closeButton={true}
-                  toastOptions={{
-                    duration: 3000,
-                    style: {
-                      maxWidth: '400px'
-                    }
-                  }}
-                  visibleToasts={5}
-                />
-                <NoticeBoard />
-                <FloatingFeedbackButton />
-                <MobileBottomNav />
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/signin" element={<SignIn />} />
-                  <Route path="/sign-in" element={<SignIn />} />
-                  <Route path="/signup" element={<SignUp />} />
-                  <Route path="/sign-up" element={<SignUp />} />
-                  <Route path="/get-started" element={<GetStarted />} />
-                  
-                  <Route path="/admin" element={<AdminPanel />} />
-                  <Route path="/admin/curation" element={<ExternalCuration />} />
-                  <Route path="/subjects" element={<Subjects />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/profile" element={<Profile />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/mock-tests" element={<MockTests />} />
-                  <Route path="/custom-quizzes" element={<CustomQuizzes />} />
-                  <Route path="/custom-syllabus" element={<CustomSyllabus />} />
-                  <Route path="/leaderboard" element={<Leaderboard />} />
-                  <Route path="/feedback" element={<Feedback />} />
-                  <Route path="/achievements" element={<Achievements />} />
-                  <Route path="/subject/:id" element={<SubjectContent />} />
-                  <Route path="/subject-content/:id" element={<SubjectContent />} />
-                  <Route path="/jobs" element={<Jobs />} />
-                  <Route path="/scholarships" element={<Scholarships />} />
-                  <Route path="/past-papers" element={<PastPapers />} />
-                  
-                  <Route path="/quizzes" element={<Quizzes />} />
-                  <Route path="/question-bank" element={<QuestionBank />} />
-                  <Route path="/submit-content" element={<SubmitContent />} />
-                  <Route path="/test-session/:id" element={<TestSession />} />
-                  
-                  {/* Tool Routes */}
-                  <Route path="/tools/calendar" element={<CalendarTool />} />
-                  <Route path="/tools/math" element={<MathTool />} />
-                  <Route path="/tools/age-calculator" element={<AgeCalculator />} />
-                  <Route path="/tools/timer" element={<TimerTool />} />
-                  <Route path="/tools/gpa-calculator" element={<GPACalculator />} />
-                  <Route path="/tools/units" element={<UnitConverter />} />
-                  <Route path="/tools/notes" element={<NotesTool />} />
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </TooltipProvider>
-            </LearningProvider>
-          </UserRoleProvider>
-        </AuthProvider>
-      </LoadingProvider>
-    </Router>
+                <FloatingToolsProvider>
+                  <TooltipProvider>
+                    <PageLoader />
+                    <NavigationLoader />
+                    <Toaster />
+                    <Sonner 
+                      position="top-right"
+                      expand={true}
+                      richColors={true}
+                      closeButton={true}
+                      toastOptions={{
+                        duration: 3000,
+                        style: {
+                          maxWidth: '400px'
+                        }
+                      }}
+                      visibleToasts={5}
+                    />
+                    <NoticeBoard />
+                    <FloatingFeedbackButton />
+                    <MobileBottomNav />
+                    <FloatingToolsRenderer />
+                    <Routes>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/auth" element={<Auth />} />
+                      <Route path="/signin" element={<SignIn />} />
+                      <Route path="/sign-in" element={<SignIn />} />
+                      <Route path="/signup" element={<SignUp />} />
+                      <Route path="/sign-up" element={<SignUp />} />
+                      <Route path="/get-started" element={<GetStarted />} />
+                      
+                      <Route path="/admin" element={<AdminPanel />} />
+                      <Route path="/admin/curation" element={<ExternalCuration />} />
+                      <Route path="/subjects" element={<Subjects />} />
+                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/profile" element={<Profile />} />
+                      <Route path="/analytics" element={<Analytics />} />
+                      <Route path="/mock-tests" element={<MockTests />} />
+                      <Route path="/custom-quizzes" element={<CustomQuizzes />} />
+                      <Route path="/custom-syllabus" element={<CustomSyllabus />} />
+                      <Route path="/leaderboard" element={<Leaderboard />} />
+                      <Route path="/feedback" element={<Feedback />} />
+                      <Route path="/achievements" element={<Achievements />} />
+                      <Route path="/subject/:id" element={<SubjectContent />} />
+                      <Route path="/subject-content/:id" element={<SubjectContent />} />
+                      <Route path="/jobs" element={<Jobs />} />
+                      <Route path="/scholarships" element={<Scholarships />} />
+                      <Route path="/past-papers" element={<PastPapers />} />
+                      
+                      <Route path="/quizzes" element={<Quizzes />} />
+                      <Route path="/question-bank" element={<QuestionBank />} />
+                      <Route path="/submit-content" element={<SubmitContent />} />
+                      <Route path="/test-session/:id" element={<TestSession />} />
+                      
+                      {/* Tool Routes */}
+                      <Route path="/tools/calendar" element={<CalendarTool />} />
+                      <Route path="/tools/math" element={<MathTool />} />
+                      <Route path="/tools/age-calculator" element={<AgeCalculator />} />
+                      <Route path="/tools/timer" element={<TimerTool />} />
+                      <Route path="/tools/gpa-calculator" element={<GPACalculator />} />
+                      <Route path="/tools/units" element={<UnitConverter />} />
+                      <Route path="/tools/notes" element={<NotesTool />} />
+                      
+                      <Route path="*" element={<NotFound />} />
+                    </Routes>
+                  </TooltipProvider>
+                </FloatingToolsProvider>
+              </LearningProvider>
+            </UserRoleProvider>
+          </AuthProvider>
+        </LoadingProvider>
+      </Router>
     </QueryClientProvider>
   );
 };

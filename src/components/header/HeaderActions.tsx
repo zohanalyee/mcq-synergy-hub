@@ -1,4 +1,4 @@
-import { Shield, LogOut, Sparkles, Zap, Settings2, Bell } from 'lucide-react';
+import { Shield, LogOut, Sparkles, Zap, Settings2, Bell, LayoutGrid } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -17,6 +17,8 @@ import {
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import StreakCounter from '@/components/gamification/StreakCounter';
 import { useDeviceCapability, PerformanceMode } from '@/hooks/useDeviceCapability';
+import { useFloatingTools } from '@/contexts/FloatingToolsContext';
+import { toolsConfig, ToolId } from '@/components/tools/FloatingToolsRenderer';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 
@@ -40,8 +42,9 @@ const HeaderActions = ({
   onSignOut
 }: HeaderActionsProps) => {
   const { performanceMode, setPerformanceMode } = useDeviceCapability();
+  const { openTool } = useFloatingTools();
   const { toast } = useToast();
-  const [hasNotifications] = useState(true); // Placeholder for notification state
+  const [hasNotifications] = useState(true);
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -52,11 +55,6 @@ const HeaderActions = ({
     if (profile?.username) return profile.username;
     if (user?.email) return user.email.split('@')[0];
     return 'User';
-  };
-
-  const getUserTier = () => {
-    // Placeholder - could be based on streak, badges, or activity
-    return 'GOLD TIER';
   };
 
   const handleModeChange = (mode: string) => {
@@ -74,11 +72,43 @@ const HeaderActions = ({
     });
   };
 
+  const toolsList = Object.entries(toolsConfig).map(([id, config]) => ({
+    id: id as ToolId,
+    ...config,
+  }));
+
   return (
     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
       {user && <StreakCounter />}
       <ThemeToggle />
       
+      {/* Tools Menu */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
+          >
+            <LayoutGrid className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-48 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border">
+          <DropdownMenuLabel className="text-xs">Tools</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {toolsList.map((tool) => (
+            <DropdownMenuItem 
+              key={tool.id} 
+              onClick={() => openTool(tool.id)}
+              className="text-sm py-1.5 cursor-pointer"
+            >
+              <span style={{ color: tool.color }} className="mr-2">{tool.icon}</span>
+              {tool.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       {/* Notification Bell */}
       {user && (
         <Button 
@@ -98,21 +128,27 @@ const HeaderActions = ({
       {user ? (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 dark:bg-card/80 backdrop-blur-sm border border-border/40 cursor-pointer hover:bg-white/90 dark:hover:bg-card/90 transition-all duration-200 group">
-              <div className="hidden sm:flex flex-col items-end">
-                <span className="text-sm font-medium text-foreground leading-tight">{getDisplayName()}</span>
-                <span className="text-[10px] font-semibold text-primary leading-tight">{getUserTier()}</span>
-              </div>
-              <Avatar className="h-8 w-8 ring-2 ring-primary/20 group-hover:ring-primary/40 transition-all">
+            <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
+              <AvatarImage src={profile?.avatar_url || ''} />
+              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-medium">
+                {getInitials(user.email)}
+              </AvatarFallback>
+            </Avatar>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-52 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border">
+            {/* User info in dropdown header */}
+            <DropdownMenuLabel className="flex items-center gap-3 py-3">
+              <Avatar className="h-10 w-10">
                 <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-medium">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-medium">
                   {getInitials(user.email)}
                 </AvatarFallback>
               </Avatar>
-            </div>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border">
-            <DropdownMenuLabel className="text-xs">My Account</DropdownMenuLabel>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium">{getDisplayName()}</span>
+                <span className="text-xs text-muted-foreground truncate max-w-[120px]">{user?.email}</span>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-1.5">
               Dashboard
