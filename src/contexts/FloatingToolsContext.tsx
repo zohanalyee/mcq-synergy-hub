@@ -54,9 +54,9 @@ export const FloatingToolsProvider = ({ children }: { children: ReactNode }) => 
   );
 };
 
-export const useFloatingTools = () => {
+export const useFloatingTools = (): FloatingToolsContextType => {
   const context = useContext(FloatingToolsContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error('useFloatingTools must be used within a FloatingToolsProvider');
   }
   return context;
