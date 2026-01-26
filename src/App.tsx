@@ -41,6 +41,15 @@ import SubmitContent from "./pages/SubmitContent";
 import QuestionBank from "./pages/QuestionBank";
 import TestSession from "./pages/TestSession";
 
+// Tool Pages
+import CalendarTool from "./pages/tools/CalendarTool";
+import MathTool from "./pages/tools/MathTool";
+import AgeCalculator from "./pages/tools/AgeCalculator";
+import TimerTool from "./pages/tools/TimerTool";
+import GPACalculator from "./pages/tools/GPACalculator";
+import UnitConverter from "./pages/tools/UnitConverter";
+import NotesTool from "./pages/tools/NotesTool";
+
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
@@ -102,6 +111,16 @@ const App = () => {
                   <Route path="/question-bank" element={<QuestionBank />} />
                   <Route path="/submit-content" element={<SubmitContent />} />
                   <Route path="/test-session/:id" element={<TestSession />} />
+                  
+                  {/* Tool Routes */}
+                  <Route path="/tools/calendar" element={<CalendarTool />} />
+                  <Route path="/tools/math" element={<MathTool />} />
+                  <Route path="/tools/age-calculator" element={<AgeCalculator />} />
+                  <Route path="/tools/timer" element={<TimerTool />} />
+                  <Route path="/tools/gpa-calculator" element={<GPACalculator />} />
+                  <Route path="/tools/units" element={<UnitConverter />} />
+                  <Route path="/tools/notes" element={<NotesTool />} />
+                  
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </TooltipProvider>

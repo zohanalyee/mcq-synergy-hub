@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { BookOpen, FileText, Users, Briefcase, Target, Clock, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, Menu } from 'lucide-react';
+import { BookOpen, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, Calendar, Calculator, Cake, Timer, Ruler, StickyNote } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
@@ -53,6 +53,28 @@ const getIcon = (title: string) => {
     },
     'Question Bank': { 
       icon: <Database size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500" />
+    },
+    // New Tool Icons with animations
+    'Calendar': { 
+      icon: <Calendar size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-sky-500 group-hover:animate-pulse transition-all" />
+    },
+    'Math': { 
+      icon: <Calculator size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-500 group-hover:scale-110 transition-transform" />
+    },
+    'Age Calculator': { 
+      icon: <Cake size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-rose-500 group-hover:rotate-12 transition-transform" />
+    },
+    'Timer': { 
+      icon: <Timer size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-amber-500 group-hover:scale-110 transition-transform" />
+    },
+    'GPA Calculator': { 
+      icon: <GraduationCap size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500 group-hover:scale-110 transition-transform" />
+    },
+    'Unit Converter': { 
+      icon: <Ruler size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-blue-500 group-hover:rotate-45 transition-transform" />
+    },
+    'Notes': { 
+      icon: <StickyNote size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-yellow-500 group-hover:scale-105 transition-transform" />
     }
   };
   return icons[title] || { 
