@@ -57,7 +57,12 @@ export const toolsConfig = {
 export type ToolId = keyof typeof toolsConfig;
 
 const FloatingToolsRenderer = () => {
-  const { openTools, closeTool, toggleMinimize, bringToFront } = useFloatingTools();
+  const { openTools, closeTool, toggleMinimize, bringToFront, openTool } = useFloatingTools();
+
+  const handleRestore = (toolId: string) => {
+    // Re-open the tool which will unminimize it
+    openTool(toolId);
+  };
 
   return (
     <>
@@ -86,6 +91,7 @@ const FloatingToolsRenderer = () => {
             onMinimize={() => toggleMinimize(tool.id)}
             onClose={() => closeTool(tool.id)}
             onFocus={() => bringToFront(tool.id)}
+            onRestore={() => handleRestore(tool.id)}
           >
             <Component />
           </FloatingToolWindow>
