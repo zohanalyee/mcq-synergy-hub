@@ -2,6 +2,7 @@ import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
+import { useAppearance } from '@/contexts/AppearanceContext';
 import HeaderLogo from './header/HeaderLogo';
 import HeaderActions from './header/HeaderActions';
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
@@ -16,6 +17,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   const { userRole, isAdmin } = useUserRole();
   const { user, profile, signOut } = useAuth();
   const { isLowEnd } = useDeviceCapability();
+  const { settings } = useAppearance();
   
   let navigate;
   try {
@@ -66,14 +68,17 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     return location.pathname === path;
   };
 
+  // Calculate interface opacity from settings
+  const interfaceOpacityValue = settings.interfaceOpacity / 100;
+  
   // Adaptive blur classes based on device capability
   const headerBlurClass = isLowEnd
     ? scrolled 
-      ? 'bg-white/95 dark:bg-background/95 border-b border-border/40 shadow-sm' 
-      : 'bg-white/90 dark:bg-background/80'
+      ? 'border-b border-border/40 shadow-sm' 
+      : ''
     : scrolled 
-      ? 'glass backdrop-blur-xl bg-white/90 dark:bg-background/90 border-b border-border/40 shadow-sm' 
-      : 'bg-white/70 dark:bg-background/60 backdrop-blur-md';
+      ? 'glass backdrop-blur-xl border-b border-border/40 shadow-sm' 
+      : 'backdrop-blur-md';
 
   return (
     <>
@@ -87,6 +92,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
           handleNavigation={handleNavigation}
           isAdmin={isAdmin}
           headerBlurClass={headerBlurClass}
+          interfaceOpacity={interfaceOpacityValue}
           theme={theme}
           user={user}
           profile={profile}
@@ -108,6 +114,7 @@ const HeaderContent = ({
   handleNavigation, 
   isAdmin, 
   headerBlurClass, 
+  interfaceOpacity,
   theme, 
   user, 
   profile, 
@@ -121,6 +128,7 @@ const HeaderContent = ({
   handleNavigation: (path: string) => void;
   isAdmin: boolean;
   headerBlurClass: string;
+  interfaceOpacity: number;
   theme?: string;
   user: any;
   profile: any;
@@ -151,7 +159,10 @@ const HeaderContent = ({
         {/* Top Header Bar */}
         <header 
           className={`fixed top-0 right-0 z-40 h-14 flex items-center transition-all duration-300 ${headerBlurClass}`}
-          style={{ left: headerLeft }}
+          style={{ 
+            left: headerLeft,
+            backgroundColor: `rgba(255, 255, 255, ${interfaceOpacity})`,
+          }}
         >
           <div className="px-4 w-full">
             <div className="flex items-center justify-between gap-2 sm:gap-3">
