@@ -94,17 +94,14 @@ export function AppSidebar({
         {expanded && (
           <div className="flex items-center justify-between w-full">
             <div 
-              className="flex items-center gap-2 cursor-pointer transition-all duration-300"
+              className="flex items-center justify-center gap-2 cursor-pointer transition-all duration-300"
               onClick={() => onNavigate('/')}
             >
               <img 
                 src={logoImage} 
                 alt="Logo" 
-                className="h-8 w-8 object-contain"
+                className="h-10 w-10 object-contain"
               />
-              <span className="font-bold text-lg text-primary">
-                
-              </span>
             </div>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
           </div>
