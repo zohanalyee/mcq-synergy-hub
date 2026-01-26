@@ -60,6 +60,14 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   const secondaryNavItems = [
     { title: 'Analytics', path: '/analytics' },
     { title: 'Feedback', path: '/feedback' },
+    // Tools
+    { title: 'Calendar', path: '/tools/calendar' },
+    { title: 'Math', path: '/tools/math' },
+    { title: 'Age Calculator', path: '/tools/age-calculator' },
+    { title: 'Timer', path: '/tools/timer' },
+    { title: 'GPA Calculator', path: '/tools/gpa-calculator' },
+    { title: 'Unit Converter', path: '/tools/units' },
+    { title: 'Notes', path: '/tools/notes' },
   ];
 
   const isActive = (path: string) => {
