@@ -1,21 +1,29 @@
-
 import * as React from "react"
-
 import { cn } from "@/lib/utils"
+import { useAppearance } from "@/contexts/AppearanceContext"
 
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-lg border bg-white/80 dark:bg-card text-card-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md",
-      className
-    )}
-    {...props}
-  />
-))
+>(({ className, style, ...props }, ref) => {
+  const { settings } = useAppearance();
+  const opacity = settings.cardsOpacity / 100;
+
+  return (
+    <div
+      ref={ref}
+      style={{
+        backgroundColor: `rgba(255, 255, 255, ${opacity})`,
+        ...style,
+      }}
+      className={cn(
+        "rounded-lg border text-card-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md dark:bg-card/80",
+        className
+      )}
+      {...props}
+    />
+  );
+})
 Card.displayName = "Card"
 
 const CardHeader = React.forwardRef<

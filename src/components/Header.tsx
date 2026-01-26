@@ -162,6 +162,7 @@ const HeaderContent = ({
           style={{ 
             left: headerLeft,
             backgroundColor: `rgba(255, 255, 255, ${interfaceOpacity})`,
+            backdropFilter: interfaceOpacity < 1 ? 'blur(12px)' : 'none',
           }}
         >
           <div className="px-4 w-full">
