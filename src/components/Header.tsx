@@ -1,11 +1,10 @@
-
 import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import HeaderLogo from './header/HeaderLogo';
 import HeaderActions from './header/HeaderActions';
-import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
@@ -70,11 +69,11 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   // Adaptive blur classes based on device capability
   const headerBlurClass = isLowEnd
     ? scrolled 
-      ? 'py-2 bg-white/95 dark:bg-background/95 border-b border-white/30 dark:border-border/40 shadow-sm' 
-      : 'py-2 bg-white/90 dark:bg-background/80'
+      ? 'bg-white/95 dark:bg-background/95 border-b border-border/40 shadow-sm' 
+      : 'bg-white/90 dark:bg-background/80'
     : scrolled 
-      ? 'py-2 glass backdrop-blur-xl bg-white/90 dark:bg-background/90 border-b border-white/30 dark:border-border/40 shadow-sm' 
-      : 'py-2 bg-white/70 dark:bg-background/60 backdrop-blur-md';
+      ? 'glass backdrop-blur-xl bg-white/90 dark:bg-background/90 border-b border-border/40 shadow-sm' 
+      : 'bg-white/70 dark:bg-background/60 backdrop-blur-md';
 
   return (
     <>
@@ -139,6 +138,7 @@ const HeaderContent = ({
   
   return (
     <div className="min-h-screen flex w-full relative">
+      {/* Sidebar - Full height, flush to top-left */}
       <AppSidebar 
         navItems={navItems}
         secondaryNavItems={secondaryNavItems}
@@ -148,19 +148,14 @@ const HeaderContent = ({
       />
       
       <div className="flex-1 flex flex-col w-full">
+        {/* Top Header Bar */}
         <header 
-          className={`fixed top-0 right-0 z-50 transition-all duration-300 ${headerBlurClass}`}
-          style={{ 
-            left: headerLeft,
-          }}
+          className={`fixed top-0 right-0 z-40 h-14 flex items-center transition-all duration-300 ${headerBlurClass}`}
+          style={{ left: headerLeft }}
         >
-          <div className="px-4 mx-auto max-w-7xl">
+          <div className="px-4 w-full">
             <div className="flex items-center justify-between gap-2 sm:gap-3">
-              <div className="flex items-center gap-2">
-                <SidebarTrigger className="h-9 w-9 rounded-lg bg-white/60 dark:bg-primary/20 hover:bg-white/80 dark:hover:bg-primary/30 backdrop-blur-sm border border-white/40 dark:border-primary/30 transition-all duration-300 hover:scale-105 shadow-sm" />
-                <HeaderLogo onNavigate={handleNavigation} />
-              </div>
-
+              <HeaderLogo onNavigate={handleNavigation} />
               <HeaderActions 
                 theme={theme}
                 user={user}
@@ -173,6 +168,8 @@ const HeaderContent = ({
             </div>
           </div>
         </header>
+        
+        {/* Main Content - Below header */}
         <main className="flex-1 overflow-x-hidden pb-mobile-nav mt-14">
           {children}
         </main>

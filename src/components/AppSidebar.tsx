@@ -1,13 +1,16 @@
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, useSidebar } from "@/components/ui/sidebar";
-import { BookOpen, FileText, Users, Briefcase, Target, Clock, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight } from 'lucide-react';
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { BookOpen, FileText, Users, Briefcase, Target, Clock, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, Menu } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
 import { useNewScholarshipsCount } from '@/hooks/useNewScholarshipsCount';
+import logoImage from '@/assets/logo.png';
+
 interface NavItem {
   title: string;
   path: string;
 }
+
 interface AppSidebarProps {
   navItems: NavItem[];
   secondaryNavItems: NavItem[];
@@ -15,6 +18,7 @@ interface AppSidebarProps {
   onNavigate: (path: string) => void;
   isAdmin?: boolean;
 }
+
 const getIcon = (title: string) => {
   const icons: Record<string, { icon: React.ReactNode }> = {
     'Home': { 
@@ -55,6 +59,7 @@ const getIcon = (title: string) => {
     icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-gray-500" />
   };
 };
+
 export function AppSidebar({
   navItems,
   secondaryNavItems,
@@ -70,10 +75,42 @@ export function AppSidebar({
   const expanded = open || (isMobile && openMobile);
   const { data: newJobsCount = 0 } = useNewJobsCount();
   const { data: newScholarshipsCount = 0 } = useNewScholarshipsCount();
-  return <Sidebar collapsible="icon" className="border-r border-border/40 transition-all duration-300">
-      {/* Header removed - logo is already shown in main header */}
 
-      <SidebarContent>
+  return (
+    <Sidebar 
+      collapsible="icon" 
+      className="border-r border-border/40 transition-all duration-300 h-screen fixed top-0 left-0 z-50"
+    >
+      {/* Sidebar Header with Logo and Toggle */}
+      <SidebarHeader className="h-14 flex items-center justify-between px-3 border-b border-border/40 bg-background/95 backdrop-blur-sm">
+        <div 
+          className={cn(
+            "flex items-center gap-2 cursor-pointer transition-all duration-300",
+            !expanded && "justify-center w-full"
+          )}
+          onClick={() => onNavigate('/')}
+        >
+          <img 
+            src={logoImage} 
+            alt="Logo" 
+            className="h-8 w-8 object-contain"
+          />
+          <span className={cn(
+            "font-bold text-lg text-primary transition-all duration-300",
+            expanded ? "opacity-100" : "opacity-0 absolute"
+          )}>
+            MCQs Point
+          </span>
+        </div>
+        <SidebarTrigger 
+          className={cn(
+            "h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0",
+            !expanded && "absolute -right-3 top-3 bg-background border border-border shadow-sm"
+          )} 
+        />
+      </SidebarHeader>
+
+      <SidebarContent className="pt-2">
         <SidebarGroup>
           <SidebarGroupLabel className={cn(!expanded && "sr-only")}>
             Main Navigation
@@ -89,14 +126,14 @@ export function AppSidebar({
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
-                        isActive(item.path) && "shadow-sm",
+                        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-9",
+                        isActive(item.path) && "shadow-sm bg-primary/10",
                         !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
                         {iconData.icon}
                       <span className={cn(
-                        "font-medium ml-1.5 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        "font-medium ml-2 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                         expanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 absolute"
                       )}>{item.title}</span>
                       {item.title === 'Jobs' && newJobsCount > 0 && (
@@ -148,14 +185,14 @@ export function AppSidebar({
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
-                        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-7",
-                        isActive(item.path) && "shadow-sm",
+                        "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-9",
+                        isActive(item.path) && "shadow-sm bg-primary/10",
                         !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
                         {iconData.icon}
                       <span className={cn(
-                        "font-medium ml-1.5 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                        "font-medium ml-2 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                         expanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 absolute"
                       )}>{item.title}</span>
                       {item.title === 'Question Bank' && isAdmin && (
@@ -184,5 +221,6 @@ export function AppSidebar({
           <p className="animate-fade-in">© 2025 MCQs Point</p>
         </div>
       </SidebarFooter>
-    </Sidebar>;
+    </Sidebar>
+  );
 }
