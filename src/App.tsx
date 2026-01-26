@@ -9,6 +9,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { LearningProvider } from "./contexts/LearningContext";
 import { LoadingProvider } from "./contexts/LoadingContext";
 import { FloatingToolsProvider } from "./contexts/FloatingToolsContext";
+import { AppearanceProvider } from "./contexts/AppearanceContext";
 import PageLoader from "./components/PageLoader";
 import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
@@ -62,8 +63,9 @@ const App = () => {
           <AuthProvider>
             <UserRoleProvider>
               <LearningProvider>
-                <FloatingToolsProvider>
-                  <TooltipProvider>
+                <AppearanceProvider>
+                  <FloatingToolsProvider>
+                    <TooltipProvider>
                     <PageLoader />
                     <NavigationLoader />
                     <Toaster />
@@ -127,8 +129,9 @@ const App = () => {
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
-                  </TooltipProvider>
-                </FloatingToolsProvider>
+                    </TooltipProvider>
+                  </FloatingToolsProvider>
+                </AppearanceProvider>
               </LearningProvider>
             </UserRoleProvider>
           </AuthProvider>
