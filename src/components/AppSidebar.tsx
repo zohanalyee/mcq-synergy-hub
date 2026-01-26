@@ -103,7 +103,7 @@ export function AppSidebar({
                 className="h-8 w-8 object-contain"
               />
               <span className="font-bold text-lg text-primary">
-                MCQs Point
+                
               </span>
             </div>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
