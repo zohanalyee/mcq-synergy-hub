@@ -155,8 +155,11 @@ const HeaderContent = ({
         >
           <div className="px-4 w-full">
             <div className="flex items-center justify-between gap-2 sm:gap-3">
-              <HeaderLogo onNavigate={handleNavigation} />
-              <HeaderActions 
+              {/* Only show HeaderLogo when sidebar is collapsed OR on mobile */}
+              {(!isExpanded || isMobile) && (
+                <HeaderLogo onNavigate={handleNavigation} />
+              )}
+              <HeaderActions
                 theme={theme}
                 user={user}
                 profile={profile}

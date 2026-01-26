@@ -82,32 +82,33 @@ export function AppSidebar({
       className="border-r border-border/40 transition-all duration-300 h-screen fixed top-0 left-0 z-50"
     >
       {/* Sidebar Header with Logo and Toggle */}
-      <SidebarHeader className="h-14 flex items-center justify-between px-3 border-b border-border/40 bg-background/95 backdrop-blur-sm">
-        <div 
-          className={cn(
-            "flex items-center gap-2 cursor-pointer transition-all duration-300",
-            !expanded && "justify-center w-full"
-          )}
-          onClick={() => onNavigate('/')}
-        >
-          <img 
-            src={logoImage} 
-            alt="Logo" 
-            className="h-8 w-8 object-contain"
-          />
-          <span className={cn(
-            "font-bold text-lg text-primary transition-all duration-300",
-            expanded ? "opacity-100" : "opacity-0 absolute"
-          )}>
-            MCQs Point
-          </span>
-        </div>
-        <SidebarTrigger 
-          className={cn(
-            "h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0",
-            !expanded && "absolute -right-3 top-3 bg-background border border-border shadow-sm"
-          )} 
-        />
+      <SidebarHeader className="h-14 flex items-center px-3 border-b border-border/40 bg-background/95 backdrop-blur-sm">
+        {/* When collapsed: Show only toggle button centered */}
+        {!expanded && (
+          <div className="w-full flex justify-center">
+            <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300" />
+          </div>
+        )}
+        
+        {/* When expanded: Show logo + name + toggle on the right */}
+        {expanded && (
+          <div className="flex items-center justify-between w-full">
+            <div 
+              className="flex items-center gap-2 cursor-pointer transition-all duration-300"
+              onClick={() => onNavigate('/')}
+            >
+              <img 
+                src={logoImage} 
+                alt="Logo" 
+                className="h-8 w-8 object-contain"
+              />
+              <span className="font-bold text-lg text-primary">
+                MCQs Point
+              </span>
+            </div>
+            <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
+          </div>
+        )}
       </SidebarHeader>
 
       <SidebarContent className="pt-2">
