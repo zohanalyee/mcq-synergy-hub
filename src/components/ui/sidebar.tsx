@@ -5,6 +5,7 @@ import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDeviceCapability } from "@/hooks/useDeviceCapability"
+import { useAppearance } from "@/contexts/AppearanceContext"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -213,11 +214,16 @@ const Sidebar = React.forwardRef<
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { isLowEnd } = useDeviceCapability();
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    const { settings } = useAppearance();
+    
+    // Calculate sidebar opacity from settings
+    const sidebarOpacity = settings.sidebarOpacity / 100;
     
     // Adaptive blur: full blur on high-end, reduced on low-end
     const sidebarBlurClass = isLowEnd
-      ? "bg-sidebar-background/98 border-r-2 border-white/10 shadow-lg"
-      : "backdrop-blur-2xl bg-gradient-to-br from-sidebar-background/95 via-primary/5 to-accent/5 border-r-2 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none";
+      ? "border-r-2 border-white/10 shadow-lg"
+      : "backdrop-blur-2xl border-r-2 border-white/10 shadow-[0_8px_32px_rgba(0,0,0,0.12)] relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/5 before:via-transparent before:to-transparent before:pointer-events-none";
 
     return (
       <>
@@ -271,6 +277,9 @@ const Sidebar = React.forwardRef<
           <div
             data-sidebar="sidebar"
             className={cn("flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg", sidebarBlurClass)}
+            style={{
+              backgroundColor: `rgba(255, 255, 255, ${sidebarOpacity})`,
+            }}
           >
             {children}
           </div>
