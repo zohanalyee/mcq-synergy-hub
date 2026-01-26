@@ -226,6 +226,30 @@ body::-webkit-scrollbar-thumb:hover {
   }
 }
 
+/* ========================================
+   APPEARANCE ENGINE - Dynamic Theming
+   ======================================== */
+
+/* Atmosphere Modes */
+[data-atmosphere="solid"] .liquid-blob {
+  display: none !important;
+}
+
+[data-atmosphere="flow"] .liquid-blob {
+  opacity: 0.3;
+}
+
+[data-atmosphere="aero"] .liquid-blob {
+  opacity: 0.5;
+  filter: blur(80px);
+}
+
+[data-atmosphere="aero"] .glass,
+[data-atmosphere="aero"] .glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
 @layer utilities {
   /* Safe area for mobile bottom nav */
   .safe-area-pb {
