@@ -12,14 +12,14 @@ const Card = React.forwardRef<
   return (
     <div
       ref={ref}
-      style={{
-        backgroundColor: `rgba(255, 255, 255, ${opacity})`,
-        ...style,
-      }}
       className={cn(
-        "rounded-lg border text-card-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md dark:bg-card/80",
+        "rounded-lg border text-card-foreground shadow-sm backdrop-blur-sm transition-all duration-200 hover:shadow-md",
         className
       )}
+      style={{
+        backgroundColor: `rgba(var(--card-rgb), ${opacity})`,
+        ...style,
+      }}
       {...props}
     />
   );

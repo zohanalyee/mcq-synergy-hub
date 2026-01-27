@@ -278,7 +278,7 @@ const Sidebar = React.forwardRef<
             data-sidebar="sidebar"
             className={cn("flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg", sidebarBlurClass)}
             style={{
-              backgroundColor: `rgba(255, 255, 255, ${sidebarOpacity})`,
+              backgroundColor: `rgba(var(--sidebar-rgb), ${sidebarOpacity})`,
             }}
           >
             {children}

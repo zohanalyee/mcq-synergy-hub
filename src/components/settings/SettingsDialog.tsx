@@ -43,58 +43,58 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-background/95 backdrop-blur-xl">
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto bg-background/95 backdrop-blur-xl">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5 text-primary" />
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Settings className="h-4 w-4 text-primary" />
             Settings
           </DialogTitle>
         </DialogHeader>
         
         <Tabs defaultValue="appearance" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="appearance" className="flex items-center gap-2">
-              <Palette className="h-4 w-4" />
+          <TabsList className="grid w-full grid-cols-2 h-8">
+            <TabsTrigger value="appearance" className="flex items-center gap-1.5 text-xs">
+              <Palette className="h-3.5 w-3.5" />
               Appearance
             </TabsTrigger>
-            <TabsTrigger value="quality" className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4" />
+            <TabsTrigger value="quality" className="flex items-center gap-1.5 text-xs">
+              <Sparkles className="h-3.5 w-3.5" />
               Quality
             </TabsTrigger>
           </TabsList>
           
-          <TabsContent value="appearance" className="mt-4">
+          <TabsContent value="appearance" className="mt-3">
             <AppearanceSettings />
           </TabsContent>
           
-          <TabsContent value="quality" className="mt-4 space-y-4">
-            <div className="text-center pb-2">
-              <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+          <TabsContent value="quality" className="mt-3 space-y-3">
+            <div className="text-center pb-1">
+              <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
                 Visual Quality
               </h3>
             </div>
             
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {qualityModes.map((mode) => (
                 <button
                   key={mode.id}
                   onClick={() => handleModeChange(mode.id)}
                   className={cn(
-                    "w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left",
+                    "w-full flex items-center gap-2.5 p-2.5 rounded-md border transition-all text-left",
                     performanceMode === mode.id
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50 hover:bg-muted/50"
                   )}
                 >
                   <div className={cn(
-                    "p-2 rounded-md",
+                    "p-1.5 rounded",
                     performanceMode === mode.id ? "bg-primary text-primary-foreground" : "bg-muted"
                   )}>
                     {mode.icon}
                   </div>
                   <div>
-                    <p className="font-medium text-sm">{mode.label}</p>
-                    <p className="text-xs text-muted-foreground">{mode.description}</p>
+                    <p className="font-medium text-xs">{mode.label}</p>
+                    <p className="text-[10px] text-muted-foreground">{mode.description}</p>
                   </div>
                 </button>
               ))}
