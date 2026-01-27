@@ -44,134 +44,30 @@ const Quizzes = () => {
     setSelectedTopicB("");
   }, [selectedSubjectB]);
 
+  // DISABLED: AI features paused
   const handleStartSubjectQuiz = async () => {
     if (!selectedSubjectA) {
       toast.error("Please select a subject");
       return;
     }
     
-    if (!user) {
-      toast.error("Please sign in to start a quiz");
-      navigate("/auth");
-      return;
-    }
-    
-    setIsGeneratingA(true);
-    
-    try {
-      // Call generate-test with subject only (random mix from any topic)
-      const { data, error } = await supabase.functions.invoke("generate-test", {
-        body: {
-          mode: "quiz",
-          subject: selectedSubjectA,
-          topic: `General ${selectedSubjectA}`, // Broad topic for random mix
-          difficulty: "Medium",
-          question_count: questionCountA,
-          partial_mode: questionCountA > 20,
-        },
-      });
-      
-      if (error) throw error;
-      
-      if (!data?.questions || data.questions.length === 0) {
-        toast.error("No questions available for this subject");
-        return;
-      }
-      
-      // Create session in database
-      const { data: session, error: sessionError } = await supabase
-        .from("custom_test_sessions")
-        .insert({
-          user_id: user.id,
-          session_name: `${selectedSubjectA} Quiz`,
-          subjects: [selectedSubjectA],
-          topics: [],
-          difficulty_levels: ["Medium"],
-          question_count: data.questions.length,
-          time_limit: timeLimitA,
-          questions: data.questions,
-          is_active: true,
-        })
-        .select()
-        .single();
-        
-      if (sessionError) throw sessionError;
-      
-      toast.success(`Starting ${selectedSubjectA} Quiz!`);
-      // Pass returnPath for Smart Return feature
-      navigate(`/test-session/${session.id}`, { state: { returnPath: '/quizzes' } });
-      
-    } catch (error) {
-      console.error("Error generating subject quiz:", error);
-      toast.error("Failed to generate quiz. Please try again.");
-    } finally {
-      setIsGeneratingA(false);
-    }
+    // AI generation temporarily disabled
+    toast.error("AI Quiz Generation Temporarily Unavailable", {
+      description: "Quiz generation is paused. Please use the Question Bank or Custom Syllabus page to practice with existing questions.",
+    });
   };
 
+  // DISABLED: AI features paused  
   const handleStartTopicQuiz = async () => {
     if (!selectedSubjectB || !selectedTopicB) {
       toast.error("Please select both subject and topic");
       return;
     }
     
-    if (!user) {
-      toast.error("Please sign in to start a quiz");
-      navigate("/auth");
-      return;
-    }
-    
-    setIsGeneratingB(true);
-    
-    try {
-      // Call generate-test with specific topic (focused questions)
-      const { data, error } = await supabase.functions.invoke("generate-test", {
-        body: {
-          mode: "quiz",
-          subject: selectedSubjectB,
-          topic: selectedTopicB,
-          difficulty: "Medium",
-          question_count: questionCountB,
-          partial_mode: questionCountB > 20,
-        },
-      });
-      
-      if (error) throw error;
-      
-      if (!data?.questions || data.questions.length === 0) {
-        toast.error("No questions available for this topic");
-        return;
-      }
-      
-      // Create session in database
-      const { data: session, error: sessionError } = await supabase
-        .from("custom_test_sessions")
-        .insert({
-          user_id: user.id,
-          session_name: `${selectedTopicB} Quiz`,
-          subjects: [selectedSubjectB],
-          topics: [selectedTopicB],
-          difficulty_levels: ["Medium"],
-          question_count: data.questions.length,
-          time_limit: timeLimitB,
-          questions: data.questions,
-          is_active: true,
-        })
-        .select()
-        .single();
-        
-      if (sessionError) throw sessionError;
-      
-      toast.success(`Starting ${selectedTopicB} Quiz!`);
-      // Pass returnPath for Smart Return feature
-      navigate(`/test-session/${session.id}`, { state: { returnPath: '/quizzes' } });
-      
-    } catch (error) {
-      console.error("Error generating topic quiz:", error);
-      toast.error("Failed to generate quiz. Please try again.");
-    } finally {
-      setIsGeneratingB(false);
-    }
+    // AI generation temporarily disabled
+    toast.error("AI Quiz Generation Temporarily Unavailable", {
+      description: "Quiz generation is paused. Please use the Question Bank or Custom Syllabus page to practice with existing questions.",
+    });
   };
 
   const isLoading = subjectsLoading || topicsLoading;

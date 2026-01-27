@@ -7,13 +7,11 @@ import AdminContentSubmission from "./AdminContentSubmission";
 import { DataMigrationUtility } from "./DataMigrationUtility";
 import AdminAnalyticsDashboard from "./analytics/AdminAnalyticsDashboard";
 import ContentInventory from "./analytics/ContentInventory";
-import AIContentFactory from "./AIContentFactory";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
 import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
 import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
-import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, Factory, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Zap, Globe } from "lucide-react";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +25,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
       <TabsList className="mb-6 flex flex-wrap gap-2">
-        {/* Main Navigation - 5 Items */}
+        {/* Main Navigation */}
         <TabsTrigger value="dashboard" className="flex items-center gap-2">
           <LayoutDashboard className="h-4 w-4" />
           Dashboard
@@ -37,7 +35,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
           Question Bank ⭐
         </TabsTrigger>
         <TabsTrigger value="review-duplicates" className="flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          <AlertTriangle className="h-4 w-4 text-warning" />
           Review Duplicates
         </TabsTrigger>
         <TabsTrigger value="analytics" className="flex items-center gap-2">
@@ -48,10 +46,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
           <Archive className="h-4 w-4" />
           Inventory
         </TabsTrigger>
-        <TabsTrigger value="auto-fill" className="flex items-center gap-2 border-2 border-yellow-500/20">
-          <Zap className="h-4 w-4 text-yellow-500" />
-          Auto-Fill ⚡
-        </TabsTrigger>
+        {/* Auto-Fill tab removed - AI features paused */}
         <TabsTrigger value="jobs" className="flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4" />
           Jobs
@@ -61,8 +56,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
           Scholarships
         </TabsTrigger>
         <Link to="/admin/curation">
-          <Button variant="outline" size="sm" className="flex items-center gap-2 border-2 border-blue-500/20">
-            <Globe className="h-4 w-4 text-blue-500" />
+          <Button variant="outline" size="sm" className="flex items-center gap-2 border-2 border-primary/20">
+            <Globe className="h-4 w-4 text-primary" />
             External Curation 🌐
           </Button>
         </Link>
@@ -84,7 +79,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <div className="w-px h-8 bg-border mx-2" />
         
         {/* Configuration Group */}
-        <TabsTrigger value="lms-structure" className="flex items-center gap-2 border-2 border-green-500/20">
+        <TabsTrigger value="lms-structure" className="flex items-center gap-2 border-2 border-primary/20">
           <Layers className="h-4 w-4" />
           LMS Structure 🆕
         </TabsTrigger>
@@ -105,10 +100,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Dashboard Tab */}
       <TabsContent value="dashboard">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* AI Content Factory - Featured */}
-          <div className="md:col-span-2 lg:col-span-1">
-            <AIContentFactory />
-          </div>
+          {/* AI Content Factory removed - AI features paused */}
           
           <Card>
             <CardHeader className="pb-2">
@@ -181,10 +173,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <ContentInventory />
       </TabsContent>
       
-      {/* Auto-Fill Tab */}
-      <TabsContent value="auto-fill">
-        <AutoFillDashboard />
-      </TabsContent>
+      {/* Auto-Fill Tab removed - AI features paused */}
       
       {/* Jobs Tab */}
       <TabsContent value="jobs">

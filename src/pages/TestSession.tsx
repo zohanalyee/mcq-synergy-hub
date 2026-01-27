@@ -443,159 +443,19 @@ const TestSession = () => {
   };
 
   // "Retake (Same Settings)" - Generate fresh questions using SAME SETTINGS
+  // DISABLED: AI features paused
   const handleGenerateNew = async () => {
-    // STEP 1: Capture Data from lastUsedContext (preserves original settings)
-    const contextTopic = lastUsedContext.topic || extractTopicString(testData?.topics) || testData?.subjects?.[0];
-    const contextSubject = lastUsedContext.subject || testData?.subjects?.[0];
-    const contextDiff = lastUsedContext.difficultyLevels?.[0] || testData?.difficulty_levels?.[0] || "Medium";
-    const contextQuestionCount = lastUsedContext.questionCount || testData?.question_count || 10;
-    const contextTimeLimit = lastUsedContext.timeLimit || testData?.time_limit || 30;
-
-    console.log("🎯 Retake with SAME Settings:", { 
-      topic: contextTopic, 
-      difficulty: contextDiff, 
-      questionCount: contextQuestionCount,
-      timeLimit: contextTimeLimit 
+    toast.error("AI Quiz Generation Temporarily Unavailable", {
+      description: "New quiz generation is paused. Please start a new test from Custom Syllabus or Quizzes page.",
     });
-
-    // CRITICAL SAFETY CHECK: never spend credits if context is missing
-    if (!contextTopic) {
-      toast.error("Cannot regenerate: Topic context missing.");
-      return;
-    }
-
-    // STEP 2: Reset UI (stay on this page; don't null testData)
-    setIsLoading(true);
-    setScore(0);
-    setCurrentQuestion(0);
-    setAnswers({});
-    setFlaggedQuestions(new Set());
-    setIsSubmitted(false);
-
-    try {
-      // STEP 3: Call API with PRESERVED settings
-      const { data, error } = await supabase.functions.invoke("generate-test", {
-        body: {
-          topic: contextTopic,
-          difficulty: contextDiff,
-          subject: contextSubject ?? null,
-          question_count: contextQuestionCount, // USE ORIGINAL SETTING
-          partial_mode: contextQuestionCount > 20,
-        },
-      });
-
-      if (error) throw error;
-
-      // STEP 4: Update State with PRESERVED time limit
-      if (data?.questions) {
-        setTestData((prev: any) => ({
-          ...(prev ?? {}),
-          ...data,
-          questions: data.questions,
-        }));
-
-        // USE ORIGINAL TIME LIMIT
-        setTimeRemaining(contextTimeLimit * 60);
-        setExpectedTotal(contextQuestionCount);
-        setRemainingCount(Math.max(0, contextQuestionCount - (data.questions?.length || 0)));
-        setIsLoading(false);
-        
-        toast.success(`New quiz started with ${data.questions.length} questions!`);
-      } else {
-        setIsLoading(false);
-        toast.error("Failed to generate. Try again.");
-      }
-    } catch (error) {
-      console.error("Generation failed:", error);
-      setIsLoading(false);
-      toast.error("Failed to generate. Try again.");
-    }
   };
 
   // NEW: "Improve [Subject]" - Smart Remedial: Generate new test with wrong answers + fresh questions (NO REDIRECT)
+  // DISABLED: AI features paused
   const handleImprove = async () => {
-    const questions = testData.questions || [];
-    const wrongQuestions: any[] = [];
-    
-    // Collect wrong answers
-    questions.forEach((question: any, index: number) => {
-      if (answers[index] !== question.answer) {
-        wrongQuestions.push(question);
-      }
+    toast.error("AI Improvement Quiz Temporarily Unavailable", {
+      description: "This feature is paused while we upgrade our AI system. Please start a new test from Custom Syllabus.",
     });
-
-    const contextTopic = lastUsedContext.topic || extractTopicString(testData?.topics) || testData?.subjects?.[0];
-    const contextSubject = lastUsedContext.subject || testData?.subjects?.[0];
-    const contextDiff = lastUsedContext.difficultyLevels?.[0] || testData?.difficulty_levels?.[0] || "Medium";
-    const contextTimeLimit = lastUsedContext.timeLimit || testData?.time_limit || 30;
-    
-    // Calculate how many fresh questions to add
-    const wrongCount = wrongQuestions.length;
-    const freshCount = Math.max(5, Math.ceil(wrongCount * 0.5)); // At least 5 fresh, or 50% more
-    const totalNeeded = wrongCount + freshCount;
-
-    console.log("🔧 Smart Remedial:", { 
-      wrongCount, 
-      freshCount, 
-      totalNeeded,
-      topic: contextTopic 
-    });
-
-    if (!contextTopic) {
-      toast.error("Cannot generate: Topic context missing.");
-      return;
-    }
-
-    setIsImproving(true);
-
-    try {
-      // Fetch fresh questions (forceNew to avoid duplicates)
-      const { data, error } = await supabase.functions.invoke("generate-test", {
-        body: {
-          topic: contextTopic,
-          difficulty: contextDiff,
-          subject: contextSubject ?? null,
-          question_count: freshCount,
-          forceNew: true, // Skip cache to get different questions
-        },
-      });
-
-      if (error) throw error;
-
-      const freshQuestions = data?.questions || [];
-      
-      // Combine wrong questions + fresh questions
-      const combinedQuestions = [...wrongQuestions, ...freshQuestions];
-      
-      // Shuffle the combined questions
-      for (let i = combinedQuestions.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [combinedQuestions[i], combinedQuestions[j]] = [combinedQuestions[j], combinedQuestions[i]];
-      }
-
-      // Reset UI and start new test (NO REDIRECT - stays on same page)
-      setTestData((prev: any) => ({
-        ...(prev ?? {}),
-        questions: combinedQuestions,
-        session_name: `${contextSubject || contextTopic} - Focused Practice`,
-      }));
-      
-      setTimeRemaining(contextTimeLimit * 60);
-      setExpectedTotal(combinedQuestions.length);
-      setRemainingCount(0);
-      setCurrentQuestion(0);
-      setScore(0);
-      setAnswers({});
-      setFlaggedQuestions(new Set());
-      setIsSubmitted(false);
-      
-      toast.success(`Starting focused practice: ${wrongCount} review + ${freshQuestions.length} fresh questions!`);
-    } catch (error) {
-      console.error("Improve generation failed:", error);
-      toast.error("Failed to generate improvement quiz. Try again.");
-    } finally {
-      setIsImproving(false);
-    }
   };
 
   // Smart Return: Go back to source page

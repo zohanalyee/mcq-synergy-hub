@@ -329,8 +329,7 @@ export const SyllabusBuilder = () => {
   }, [rawSubjects, setRawSubjects]);
 
   // Generate test with smart AI prompting
-
-  // Generate quiz with smart AI prompting
+  // DISABLED: AI features paused
   const handleGenerateQuiz = async () => {
     if (!user) {
       toast({
@@ -350,123 +349,12 @@ export const SyllabusBuilder = () => {
       return;
     }
 
-    setIsGenerating(true);
-
-    try {
-      // Gather selected subjects and topics
-      const selectedSubjects = rawSubjects.filter(s => s.topics.some(t => t.isSelected));
-      
-      // Build structured subject_topic_map for enhanced AI prompting
-      const subjectTopicMap = selectedSubjects.map(subject => ({
-        subject: subject.name,
-        topics: subject.topics.filter(t => t.isSelected).map(t => t.name)
-      }));
-
-      // Build system instruction for balanced distribution
-      let systemInstruction = '';
-      if (selectedSubjects.length > 1) {
-        const subjectList = selectedSubjects.map(s => s.name).join(', ');
-        systemInstruction = `Create a balanced test distributing the ${quizSettings.questionsCount} questions among the selected subjects: ${subjectList}. Each subject should get approximately equal representation.`;
-      }
-
-      // Legacy topic string for backward compatibility
-      const selectedTopicsString = selectedSubjects
-        .map(subject => {
-          const topics = subject.topics.filter(t => t.isSelected).map(t => t.name).join(', ');
-          return `${subject.name}: ${topics}`;
-        })
-        .join('; ');
-
-      const usePartialMode = quizSettings.questionsCount > 20;
-
-      // Call AI to generate test with enhanced payload
-      const { data: aiResponse, error: aiError } = await supabase.functions.invoke('generate-test', {
-        body: {
-          topic: selectedTopicsString,
-          subject_topic_map: subjectTopicMap,
-          system_instruction: systemInstruction,
-          difficulty: quizSettings.difficulty,
-          question_count: quizSettings.questionsCount,
-          partial_mode: usePartialMode
-        }
-      });
-
-      if (aiError) {
-        const errorMessage = aiError.message || '';
-        if (errorMessage.includes('Rate limit') || errorMessage.includes('429')) {
-          toast({
-            title: "Too Many Requests",
-            description: "Please wait a moment and try again.",
-            variant: "destructive"
-          });
-        } else if (errorMessage.includes('credits') || errorMessage.includes('402')) {
-          toast({
-            title: "Credits Depleted",
-            description: "AI credits are depleted. Please add credits in Settings.",
-            variant: "destructive"
-          });
-        } else {
-          toast({
-            title: "Generation Failed",
-            description: "Failed to generate test. Please try again.",
-            variant: "destructive"
-          });
-        }
-        return;
-      }
-
-      if (!aiResponse?.questions?.length) {
-        toast({
-          title: "Generation Failed",
-          description: "AI generated an invalid response. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Save to database
-      const { data: sessionData, error: dbError } = await supabase
-        .from('custom_test_sessions')
-        .insert({
-          user_id: user.id,
-          session_name: syllabusName,
-          question_count: quizSettings.questionsCount,
-          time_limit: quizSettings.timeLimit,
-          difficulty_levels: [quizSettings.difficulty],
-          questions: aiResponse.questions,
-          subjects: selectedSubjects.map(s => s.name),
-          topics: selectedSubjects.map(subject => ({
-            subject: subject.name,
-            topics: subject.topics.filter(t => t.isSelected).map(t => t.name)
-          }))
-        })
-        .select()
-        .single();
-
-      if (dbError) {
-        toast({
-          title: "Save Failed",
-          description: "Failed to save your test. Please try again.",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      toast({
-        title: "Test Created!",
-        description: `${aiResponse.questions.length} questions ready`,
-      });
-
-      navigate(`/test-session/${sessionData.id}`, { state: { returnPath: '/custom-syllabus' } });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsGenerating(false);
-    }
+    // AI generation temporarily disabled
+    toast({
+      title: "AI Quiz Generation Temporarily Unavailable",
+      description: "Quiz generation is paused while we upgrade our AI system. Please check back later.",
+      variant: "destructive"
+    });
   };
 
   return (

@@ -177,30 +177,14 @@ const ExternalCuration = () => {
             <div className="flex flex-wrap gap-2">
               <Button
                 onClick={handleSync}
-                disabled={isSyncing || isAISyncing}
+                disabled={isSyncing}
                 variant="outline"
                 className="gap-2"
               >
                 <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
                 {isSyncing ? "Syncing..." : "Sync Mock Data"}
               </Button>
-              <Button
-                onClick={() => handleAISync('jobs')}
-                disabled={isSyncing || isAISyncing}
-                className="gap-2"
-              >
-                <Sparkles className={`h-4 w-4 ${isAISyncing ? 'animate-pulse' : ''}`} />
-                {isAISyncing ? "Fetching..." : "AI Fetch Jobs"}
-              </Button>
-              <Button
-                onClick={() => handleAISync('scholarships')}
-                disabled={isSyncing || isAISyncing}
-                variant="secondary"
-                className="gap-2"
-              >
-                <Sparkles className={`h-4 w-4 ${isAISyncing ? 'animate-pulse' : ''}`} />
-                {isAISyncing ? "Fetching..." : "AI Fetch Scholarships"}
-              </Button>
+              {/* AI Fetch buttons removed - AI features paused */}
             </div>
           </div>
         </motion.div>
