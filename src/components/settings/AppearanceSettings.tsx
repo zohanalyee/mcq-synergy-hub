@@ -4,6 +4,7 @@ import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import LivePreviewCard from './LivePreviewCard';
 
 const accentColors: { id: AccentColor; color: string; label: string }[] = [
   { id: 'blue', color: 'bg-blue-500', label: 'Blue' },
@@ -16,8 +17,8 @@ const accentColors: { id: AccentColor; color: string; label: string }[] = [
 
 const atmosphereModes: { id: AtmosphereMode; icon: React.ReactNode; label: string; description: string }[] = [
   { id: 'solid', icon: <Sparkles className="h-4 w-4" />, label: 'Solid', description: 'No animation' },
-  { id: 'flow', icon: <span className="text-lg">☽</span>, label: 'Flow', description: 'Subtle motion' },
-  { id: 'aero', icon: <span className="text-lg">◇</span>, label: 'Aero', description: 'Full effects' },
+  { id: 'flow', icon: <span className="text-sm">☽</span>, label: 'Flow', description: 'Subtle motion' },
+  { id: 'aero', icon: <span className="text-sm">◇</span>, label: 'Aero', description: 'Full effects' },
 ];
 
 const colorMixPresets: { id: ColorMix; label: string }[] = [
@@ -66,21 +67,24 @@ const AppearanceSettings = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="text-center pb-2">
-        <h3 className="text-sm font-semibold tracking-wider text-muted-foreground uppercase">
+    <div className="space-y-4">
+      <div className="text-center pb-1">
+        <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
           Appearance Engine
         </h3>
-        <p className="text-xs text-muted-foreground mt-1">All changes are saved automatically</p>
+        <p className="text-[10px] text-muted-foreground">All changes are saved automatically</p>
       </div>
 
+      {/* Live Preview */}
+      <LivePreviewCard />
+
       {/* Global Accent */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Palette className="h-4 w-4 text-primary" />
+      <div className="space-y-2">
+        <div className="flex items-center gap-2 text-xs font-medium">
+          <Palette className="h-3.5 w-3.5 text-primary" />
           <span>Global Accent</span>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 flex-wrap">
           {accentColors.map((color) => (
             <button
               key={color.id}
@@ -89,10 +93,10 @@ const AppearanceSettings = () => {
                 toast.success(`Accent color changed to ${color.label}`);
               }}
               className={cn(
-                "w-9 h-9 rounded-lg transition-all",
+                "w-7 h-7 rounded-md transition-all",
                 color.color,
                 settings.accentColor === color.id
-                  ? "ring-2 ring-offset-2 ring-primary scale-110"
+                  ? "ring-2 ring-offset-1 ring-primary scale-110"
                   : "hover:scale-105"
               )}
               title={color.label}
@@ -101,15 +105,15 @@ const AppearanceSettings = () => {
         </div>
       </div>
 
-      {/* Opacity Sliders - Full 0-100 range */}
-      <div className="space-y-4">
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <Monitor className="h-4 w-4 text-muted-foreground" />
+      {/* Opacity Sliders - Compact */}
+      <div className="space-y-2.5">
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5">
+              <Monitor className="h-3.5 w-3.5 text-muted-foreground" />
               <span>Interface</span>
             </div>
-            <span className="text-muted-foreground font-mono text-xs">{settings.interfaceOpacity}%</span>
+            <span className="text-muted-foreground font-mono text-[10px]">{settings.interfaceOpacity}%</span>
           </div>
           <Slider
             value={[settings.interfaceOpacity]}
@@ -117,17 +121,17 @@ const AppearanceSettings = () => {
             min={0}
             max={100}
             step={1}
-            className="cursor-pointer"
+            className="cursor-pointer h-1.5"
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <Layout className="h-4 w-4 text-muted-foreground" />
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5">
+              <Layout className="h-3.5 w-3.5 text-muted-foreground" />
               <span>Sidebar</span>
             </div>
-            <span className="text-muted-foreground font-mono text-xs">{settings.sidebarOpacity}%</span>
+            <span className="text-muted-foreground font-mono text-[10px]">{settings.sidebarOpacity}%</span>
           </div>
           <Slider
             value={[settings.sidebarOpacity]}
@@ -135,17 +139,17 @@ const AppearanceSettings = () => {
             min={0}
             max={100}
             step={1}
-            className="cursor-pointer"
+            className="cursor-pointer h-1.5"
           />
         </div>
 
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
+        <div className="space-y-1">
+          <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-1.5">
+              <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
               <span>Cards</span>
             </div>
-            <span className="text-muted-foreground font-mono text-xs">{settings.cardsOpacity}%</span>
+            <span className="text-muted-foreground font-mono text-[10px]">{settings.cardsOpacity}%</span>
           </div>
           <Slider
             value={[settings.cardsOpacity]}
@@ -153,18 +157,18 @@ const AppearanceSettings = () => {
             min={0}
             max={100}
             step={1}
-            className="cursor-pointer"
+            className="cursor-pointer h-1.5"
           />
         </div>
       </div>
 
       {/* Atmosphere Mode */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Sparkles className="h-4 w-4 text-primary" />
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-xs font-medium">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
           <span>Atmosphere</span>
         </div>
-        <div className="flex gap-2 p-1 bg-muted/50 rounded-lg">
+        <div className="flex gap-1 p-0.5 bg-muted/50 rounded-md">
           {atmosphereModes.map((mode) => (
             <button
               key={mode.id}
@@ -173,7 +177,7 @@ const AppearanceSettings = () => {
                 toast.success(`Atmosphere set to ${mode.label}`);
               }}
               className={cn(
-                "flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-md text-sm font-medium transition-all",
+                "flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-all",
                 settings.atmosphereMode === mode.id
                   ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -188,12 +192,12 @@ const AppearanceSettings = () => {
       </div>
 
       {/* Color Mix Library */}
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium">
-          <Droplets className="h-4 w-4 text-primary" />
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-xs font-medium">
+          <Droplets className="h-3.5 w-3.5 text-primary" />
           <span>Mix Library</span>
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {colorMixPresets.map((preset) => {
             const colors = mixLibrary[preset.id];
             return (
@@ -201,30 +205,29 @@ const AppearanceSettings = () => {
                 key={preset.id}
                 onClick={() => handleColorMixChange(preset.id)}
                 className={cn(
-                  "relative p-3 rounded-lg border transition-all overflow-hidden",
+                  "relative p-2 rounded-md border transition-all overflow-hidden",
                   settings.colorMix === preset.id
-                    ? "ring-2 ring-primary border-primary"
+                    ? "ring-1 ring-primary border-primary"
                     : "border-border hover:border-primary/50"
                 )}
               >
-                {/* Gradient preview */}
                 <div 
                   className="absolute inset-0 opacity-30"
                   style={{
                     background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`
                   }}
                 />
-                <div className="relative flex items-center gap-2">
-                  <div className="flex -space-x-1">
+                <div className="relative flex items-center gap-1.5">
+                  <div className="flex -space-x-0.5">
                     {colors.map((color, i) => (
                       <div
                         key={i}
-                        className="w-4 h-4 rounded-full border-2 border-background"
+                        className="w-3 h-3 rounded-full border border-background"
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
-                  <span className="text-xs font-medium">{preset.label}</span>
+                  <span className="text-[10px] font-medium">{preset.label}</span>
                 </div>
               </button>
             );
@@ -232,13 +235,13 @@ const AppearanceSettings = () => {
         </div>
 
         {/* Custom Color Pickers */}
-        <div className="space-y-2 pt-2">
+        <div className="space-y-1.5 pt-1">
           <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">Custom Mix</span>
+            <span className="text-[10px] text-muted-foreground">Custom Mix</span>
             <button
               onClick={() => handleColorMixChange('custom')}
               className={cn(
-                "text-xs px-2 py-1 rounded",
+                "text-[10px] px-1.5 py-0.5 rounded",
                 settings.colorMix === 'custom'
                   ? "bg-primary text-primary-foreground"
                   : "bg-muted hover:bg-muted/80"
@@ -247,15 +250,15 @@ const AppearanceSettings = () => {
               Use Custom
             </button>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             {settings.customMixColors.map((color, index) => (
               <div key={index} className="flex-1">
-                <label className="block text-xs text-muted-foreground mb-1">Color {index + 1}</label>
+                <label className="block text-[9px] text-muted-foreground mb-0.5">Color {index + 1}</label>
                 <input
                   type="color"
                   value={color}
                   onChange={(e) => handleCustomColorChange(index as 0 | 1 | 2, e.target.value)}
-                  className="w-full h-8 rounded cursor-pointer border border-border"
+                  className="w-full h-6 rounded cursor-pointer border border-border"
                 />
               </div>
             ))}
@@ -267,10 +270,10 @@ const AppearanceSettings = () => {
       <Button
         variant="outline"
         size="sm"
-        className="w-full"
+        className="w-full h-8 text-xs"
         onClick={resetToDefaults}
       >
-        <RotateCcw className="h-4 w-4 mr-2" />
+        <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
         Reset to Defaults
       </Button>
     </div>

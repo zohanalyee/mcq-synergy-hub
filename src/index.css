@@ -59,6 +59,7 @@
 
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
+    --card-rgb: 255, 255, 255;
 
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
@@ -100,6 +101,10 @@
     --glass-bg: 0 0% 100% / 0.8;
     --glass-border: 0 0% 100% / 0.4;
 
+    /* RGB values for opacity support */
+    --sidebar-rgb: 255, 255, 255;
+    --interface-rgb: 255, 255, 255;
+
     --sidebar-background: 0 0% 100% / 0.8;
     --sidebar-foreground: 222 47% 11%;
     --sidebar-primary: 214 90% 52%;
@@ -116,6 +121,7 @@
 
     --card: 224 71% 8%;
     --card-foreground: 213 31% 91%;
+    --card-rgb: 15, 23, 42;
 
     --popover: 224 71% 8%;
     --popover-foreground: 213 31% 91%;
@@ -148,6 +154,10 @@
     --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.4);
     --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.5);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* RGB values for opacity support in dark mode */
+    --sidebar-rgb: 15, 23, 42;
+    --interface-rgb: 15, 23, 42;
 
     --sidebar-background: 224 71% 8%;
     --sidebar-foreground: 213 31% 91%;

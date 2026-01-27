@@ -161,7 +161,7 @@ const HeaderContent = ({
           className={`fixed top-0 right-0 z-40 h-14 flex items-center transition-all duration-300 ${headerBlurClass}`}
           style={{ 
             left: headerLeft,
-            backgroundColor: `rgba(255, 255, 255, ${interfaceOpacity})`,
+            backgroundColor: `rgba(var(--interface-rgb), ${interfaceOpacity})`,
             backdropFilter: interfaceOpacity < 1 ? 'blur(12px)' : 'none',
           }}
         >
