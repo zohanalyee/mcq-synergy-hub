@@ -46,9 +46,9 @@ export const GlassCard = ({
     >
       <div
         className="h-full rounded-3xl p-4 border border-white/50 dark:border-white/20 shadow-sm 
-                   hover:shadow-xl transition-all duration-300 flex flex-col min-h-[160px]"
+                   hover:shadow-xl transition-all duration-300 flex flex-col min-h-[160px] themed-card glass-card"
         style={{
-          background: `linear-gradient(135deg, ${pastelColor} 0%, rgba(255, 255, 255, 0.95) 100%)`,
+          background: `linear-gradient(135deg, ${pastelColor} 0%, rgba(var(--card-rgb), var(--cards-opacity, 0.95)) 100%)`,
         }}
       >
         {/* Icon Squircle - Top Left */}

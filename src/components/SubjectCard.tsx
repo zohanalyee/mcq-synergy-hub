@@ -146,10 +146,10 @@ const SubjectCard = ({
           border border-white/50 dark:border-white/20
           shadow-sm hover:shadow-xl
           transition-all duration-300
-          backdrop-blur-sm
+          backdrop-blur-sm glass-card themed-card
         `}
         style={{ 
-          background: `linear-gradient(135deg, ${theme.pastel} 0%, rgba(255, 255, 255, 0.95) 100%)`,
+          background: `linear-gradient(135deg, ${theme.pastel} 0%, rgba(var(--card-rgb), var(--cards-opacity, 0.95)) 100%)`,
         }}
       >
         {/* Dark mode overlay */}

@@ -79,10 +79,10 @@ export function AppSidebar({
   return (
     <Sidebar 
       collapsible="icon" 
-      className="border-r border-border/40 transition-all duration-300 h-screen fixed top-0 left-0 z-50"
+      className="border-r border-border/40 transition-all duration-300 h-screen fixed top-0 left-0 z-50 themed-sidebar"
     >
       {/* Sidebar Header with Logo and Toggle */}
-      <SidebarHeader className="h-14 flex items-center px-3 border-b border-border/40 bg-background/95 backdrop-blur-sm">
+      <SidebarHeader className="h-14 flex items-center px-3 border-b border-border/40 themed-interface backdrop-blur-sm">
         {/* When collapsed: Show only toggle button centered */}
         {!expanded && (
           <div className="w-full flex justify-center">
