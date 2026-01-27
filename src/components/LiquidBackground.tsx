@@ -1,7 +1,7 @@
 import { useRef } from "react";
 import { motion } from "framer-motion";
 import { useDeviceCapability } from "@/hooks/useDeviceCapability";
-import { useAppearance } from "@/contexts/AppearanceContext";
+import { useAppearance, mixLibrary } from "@/contexts/AppearanceContext";
 
 interface LiquidBackgroundProps {
   speed?: number;
@@ -16,7 +16,7 @@ export const LiquidBackground = ({
 }: LiquidBackgroundProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isLowEnd, isTouchDevice } = useDeviceCapability();
-  const { settings, getMixColors } = useAppearance();
+  const { settings } = useAppearance();
 
   // Don't render on low-end devices - let StaticBackground handle it
   if (isLowEnd) {
@@ -28,8 +28,10 @@ export const LiquidBackground = ({
     return null;
   }
 
-  // Get dynamic colors from Mix Library
-  const mixColors = getMixColors();
+  // Get dynamic colors directly from settings to ensure re-render on changes
+  const mixColors: [string, string, string] = settings.colorMix === 'custom' 
+    ? settings.customMixColors 
+    : mixLibrary[settings.colorMix];
 
   // Reduce blob count on medium devices (touch but high-power)
   const effectiveBlobCount = isTouchDevice ? Math.min(blobCount, 3) : blobCount;
