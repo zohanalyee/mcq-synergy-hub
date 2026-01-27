@@ -13,6 +13,8 @@ interface AppearanceSettings {
   atmosphereMode: AtmosphereMode;
   colorMix: ColorMix;
   customMixColors: [string, string, string];
+  interfaceScale: number;
+  borderRadius: number;
 }
 
 interface AppearanceContextType {
@@ -24,6 +26,8 @@ interface AppearanceContextType {
   updateAtmosphereMode: (mode: AtmosphereMode) => void;
   updateColorMix: (mix: ColorMix) => void;
   updateCustomMixColors: (colors: [string, string, string]) => void;
+  updateInterfaceScale: (scale: number) => void;
+  updateBorderRadius: (radius: number) => void;
   resetToDefaults: () => void;
   getMixColors: () => [string, string, string];
 }
@@ -36,6 +40,8 @@ const defaultSettings: AppearanceSettings = {
   atmosphereMode: 'flow',
   colorMix: 'default',
   customMixColors: ['#8b5cf6', '#f472b6', '#38bdf8'],
+  interfaceScale: 100,
+  borderRadius: 12,
 };
 
 // Mix Library presets
@@ -83,7 +89,13 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     root.style.setProperty('--sidebar-opacity', `${s.sidebarOpacity / 100}`);
     root.style.setProperty('--cards-opacity', `${s.cardsOpacity / 100}`);
     
-    // Apply atmosphere mode
+    // Apply interface scale
+    root.style.setProperty('--interface-scale', `${s.interfaceScale / 100}`);
+    
+    // Apply border radius
+    root.style.setProperty('--radius', `${s.borderRadius}px`);
+    
+    // Apply atmosphere mode as data attribute on root element
     root.setAttribute('data-atmosphere', s.atmosphereMode);
     
     // Apply mix colors as CSS variables
@@ -127,6 +139,14 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     setSettings(prev => ({ ...prev, customMixColors: colors, colorMix: 'custom' }));
   };
 
+  const updateInterfaceScale = (scale: number) => {
+    setSettings(prev => ({ ...prev, interfaceScale: scale }));
+  };
+
+  const updateBorderRadius = (radius: number) => {
+    setSettings(prev => ({ ...prev, borderRadius: radius }));
+  };
+
   const resetToDefaults = () => {
     setSettings(defaultSettings);
     toast.success('Appearance reset to defaults');
@@ -142,6 +162,8 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
       updateAtmosphereMode,
       updateColorMix,
       updateCustomMixColors,
+      updateInterfaceScale,
+      updateBorderRadius,
       resetToDefaults,
       getMixColors,
     }}>

@@ -168,7 +168,7 @@ const HeaderContent = ({
       <div className="flex-1 flex flex-col w-full">
         {/* Top Header Bar */}
         <header 
-          className={`fixed top-0 right-0 z-40 h-14 flex items-center transition-all duration-300 ${headerBlurClass}`}
+          className={`fixed top-0 right-0 z-40 h-14 flex items-center transition-all duration-300 themed-interface ${headerBlurClass}`}
           style={{ 
             left: headerLeft,
             backgroundColor: `rgba(var(--interface-rgb), ${interfaceOpacity})`,
