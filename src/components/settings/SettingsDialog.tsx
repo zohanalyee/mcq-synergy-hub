@@ -43,11 +43,15 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto bg-background/95 backdrop-blur-xl">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-lg w-[95vw] bg-background/95 backdrop-blur-xl p-4">
+        <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Settings className="h-4 w-4 text-primary" />
             Settings
+            <span className="ml-auto text-[10px] font-normal text-muted-foreground flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+              Auto-saving
+            </span>
           </DialogTitle>
         </DialogHeader>
         

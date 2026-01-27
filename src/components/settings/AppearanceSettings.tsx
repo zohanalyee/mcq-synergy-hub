@@ -67,14 +67,7 @@ const AppearanceSettings = () => {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="text-center pb-1">
-        <h3 className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-          Appearance Engine
-        </h3>
-        <p className="text-[10px] text-muted-foreground">All changes are saved automatically</p>
-      </div>
-
+    <div className="space-y-3">
       {/* Live Preview */}
       <LivePreviewCard />
 
@@ -163,12 +156,12 @@ const AppearanceSettings = () => {
       </div>
 
       {/* Atmosphere Mode */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 text-xs font-medium">
           <Sparkles className="h-3.5 w-3.5 text-primary" />
           <span>Atmosphere</span>
         </div>
-        <div className="flex gap-1 p-0.5 bg-muted/50 rounded-md">
+        <div className="flex gap-0.5 p-0.5 bg-muted/50 rounded">
           {atmosphereModes.map((mode) => (
             <button
               key={mode.id}
@@ -177,7 +170,7 @@ const AppearanceSettings = () => {
                 toast.success(`Atmosphere set to ${mode.label}`);
               }}
               className={cn(
-                "flex-1 flex items-center justify-center gap-1 py-1.5 px-2 rounded text-xs font-medium transition-all",
+                "flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[10px] font-medium transition-all",
                 settings.atmosphereMode === mode.id
                   ? "bg-background shadow-sm text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -192,12 +185,12 @@ const AppearanceSettings = () => {
       </div>
 
       {/* Color Mix Library */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center gap-1.5 text-xs font-medium">
           <Droplets className="h-3.5 w-3.5 text-primary" />
           <span>Mix Library</span>
         </div>
-        <div className="grid grid-cols-2 gap-1.5">
+        <div className="grid grid-cols-4 gap-1">
           {colorMixPresets.map((preset) => {
             const colors = mixLibrary[preset.id];
             return (
@@ -205,7 +198,7 @@ const AppearanceSettings = () => {
                 key={preset.id}
                 onClick={() => handleColorMixChange(preset.id)}
                 className={cn(
-                  "relative p-2 rounded-md border transition-all overflow-hidden",
+                  "relative p-1.5 rounded border transition-all overflow-hidden",
                   settings.colorMix === preset.id
                     ? "ring-1 ring-primary border-primary"
                     : "border-border hover:border-primary/50"
@@ -217,52 +210,49 @@ const AppearanceSettings = () => {
                     background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`
                   }}
                 />
-                <div className="relative flex items-center gap-1.5">
+                <div className="relative flex flex-col items-center gap-0.5">
                   <div className="flex -space-x-0.5">
                     {colors.map((color, i) => (
                       <div
                         key={i}
-                        className="w-3 h-3 rounded-full border border-background"
+                        className="w-2.5 h-2.5 rounded-full border border-background"
                         style={{ backgroundColor: color }}
                       />
                     ))}
                   </div>
-                  <span className="text-[10px] font-medium">{preset.label}</span>
+                  <span className="text-[8px] font-medium">{preset.label}</span>
                 </div>
               </button>
             );
           })}
         </div>
 
-        {/* Custom Color Pickers */}
-        <div className="space-y-1.5 pt-1">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground">Custom Mix</span>
-            <button
-              onClick={() => handleColorMixChange('custom')}
-              className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded",
-                settings.colorMix === 'custom'
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/80"
-              )}
-            >
-              Use Custom
-            </button>
-          </div>
-          <div className="flex gap-1.5">
+        {/* Custom Color Pickers - Inline */}
+        <div className="flex items-center gap-2 pt-1">
+          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Custom:</span>
+          <div className="flex gap-1 flex-1">
             {settings.customMixColors.map((color, index) => (
-              <div key={index} className="flex-1">
-                <label className="block text-[9px] text-muted-foreground mb-0.5">Color {index + 1}</label>
-                <input
-                  type="color"
-                  value={color}
-                  onChange={(e) => handleCustomColorChange(index as 0 | 1 | 2, e.target.value)}
-                  className="w-full h-6 rounded cursor-pointer border border-border"
-                />
-              </div>
+              <input
+                key={index}
+                type="color"
+                value={color}
+                onChange={(e) => handleCustomColorChange(index as 0 | 1 | 2, e.target.value)}
+                className="flex-1 h-5 rounded cursor-pointer border border-border"
+                title={`Color ${index + 1}`}
+              />
             ))}
           </div>
+          <button
+            onClick={() => handleColorMixChange('custom')}
+            className={cn(
+              "text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap",
+              settings.colorMix === 'custom'
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/80"
+            )}
+          >
+            Apply
+          </button>
         </div>
       </div>
 
