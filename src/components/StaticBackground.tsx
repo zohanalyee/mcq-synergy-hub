@@ -1,4 +1,4 @@
-import { useAppearance } from '@/contexts/AppearanceContext';
+import { useAppearance, mixLibrary } from '@/contexts/AppearanceContext';
 
 /**
  * StaticBackground - A performant static gradient background for low-end devices
@@ -6,7 +6,7 @@ import { useAppearance } from '@/contexts/AppearanceContext';
  * Respects atmosphere mode and Mix Library colors from AppearanceContext
  */
 export const StaticBackground = () => {
-  const { settings, getMixColors } = useAppearance();
+  const { settings } = useAppearance();
 
   // For solid mode, use a simple solid background
   if (settings.atmosphereMode === 'solid') {
@@ -20,8 +20,10 @@ export const StaticBackground = () => {
     );
   }
 
-  // Get dynamic colors from Mix Library
-  const mixColors = getMixColors();
+  // Get dynamic colors directly from settings to ensure re-render on changes
+  const mixColors: [string, string, string] = settings.colorMix === 'custom' 
+    ? settings.customMixColors 
+    : mixLibrary[settings.colorMix];
 
   // Adjust gradient intensity based on atmosphere mode
   const gradientIntensity = settings.atmosphereMode === 'aero' ? 0.25 : 0.15;
