@@ -8,25 +8,17 @@ import { useAppearance, mixLibrary } from '@/contexts/AppearanceContext';
 export const StaticBackground = () => {
   const { settings } = useAppearance();
 
-  // For solid mode, use a simple solid background
-  if (settings.atmosphereMode === 'solid') {
-    return (
-      <div 
-        className="fixed inset-0 -z-10 overflow-hidden pointer-events-none"
-        style={{
-          background: 'hsl(var(--background))',
-        }}
-      />
-    );
-  }
-
   // Get dynamic colors directly from settings to ensure re-render on changes
   const mixColors: [string, string, string] = settings.colorMix === 'custom' 
     ? settings.customMixColors 
     : mixLibrary[settings.colorMix];
 
   // Adjust gradient intensity based on atmosphere mode
-  const gradientIntensity = settings.atmosphereMode === 'aero' ? 0.25 : 0.15;
+  // Solid = no animation, but still allow Mix Library colors to be visible.
+  const gradientIntensity =
+    settings.atmosphereMode === 'aero' ? 0.25 :
+    settings.atmosphereMode === 'flow' ? 0.15 :
+    0.15;
 
   // Convert hex to rgba for gradient use
   const hexToRgba = (hex: string, alpha: number) => {

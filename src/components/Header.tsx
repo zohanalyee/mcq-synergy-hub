@@ -80,10 +80,20 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
       ? 'glass backdrop-blur-xl border-b border-border/40 shadow-sm' 
       : 'backdrop-blur-md';
 
+  // Force background remount when Mix Library / atmosphere changes.
+  // This avoids any caching/optimization that may prevent visual updates.
+  const backgroundKey = `${settings.atmosphereMode}-${settings.colorMix}-${settings.customMixColors.join('-')}`;
+
   return (
     <>
-      {/* Adaptive background: Full effects on high-end, static gradient on low-end */}
-      {isLowEnd ? <StaticBackground /> : <LiquidBackground speed={20} intensity={1} blobCount={5} />}
+      {/* Adaptive background:
+          - Low-end devices: static gradient
+          - Solid atmosphere: static gradient (no blobs) so Mix Library still applies
+          - Flow/Aero on capable devices: animated blobs
+      */}
+      {(isLowEnd || settings.atmosphereMode === 'solid')
+        ? <StaticBackground key={backgroundKey} />
+        : <LiquidBackground key={backgroundKey} speed={20} intensity={1} blobCount={5} />}
       <SidebarProvider defaultOpen={false}>
         <HeaderContent 
           navItems={navItems}
