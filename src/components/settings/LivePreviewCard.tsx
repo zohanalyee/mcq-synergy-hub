@@ -11,11 +11,11 @@ const LivePreviewCard = () => {
   const cardsOpacity = settings.cardsOpacity / 100;
 
   return (
-    <div className="space-y-2">
-      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Live Preview</span>
+    <div className="space-y-1">
+      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Live Preview</span>
       
       <div 
-        className="relative rounded-lg border border-border overflow-hidden h-32"
+        className="relative rounded-md border border-border overflow-hidden h-24"
         style={{
           background: `linear-gradient(135deg, ${mixColors[0]}, ${mixColors[1]}, ${mixColors[2]})`,
         }}
