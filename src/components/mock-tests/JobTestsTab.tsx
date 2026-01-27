@@ -30,105 +30,12 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
     test.organization.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
+  // DISABLED: AI features paused
   const handleStartJobTest = async (test: JobTest, customSettings?: any) => {
-    setGeneratingTestId(test.id);
-    setGeneratingTopicName(test.title);
-    setDialogTest(null); // Close dialog
-    
-    try {
-      // Get current user first
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please log in to start a test");
-        navigate("/auth");
-        setGeneratingTestId(null);
-        return;
-      }
-
-      const settings = customSettings || {
-        difficulty: "Medium",
-        questionCount: test.questions || 20,
-        duration: test.duration || 90
-      };
-
-      // Extract subjects from syllabus
-      const syllabusSubjects: string[] = test.syllabus?.map(item => item.topic) || 
-        ['General Knowledge', 'English', 'Current Affairs'];
-
-      // Determine if we should use partial mode (for large requests)
-      const usePartialMode = settings.questionCount > 20;
-
-      console.log("🎯 Job Test - Calling AI Engine:", {
-        mode: 'job_test',
-        topic: test.title,
-        subjects: syllabusSubjects,
-        timeLimit: settings.duration,
-        questionCount: settings.questionCount,
-        partial_mode: usePartialMode,
-        userId: user.id
-      });
-
-      // Call AI Test Engine with job test context
-      const { data, error } = await supabase.functions.invoke("generate-test", {
-        body: {
-          topic: test.title,
-          difficulty: settings.difficulty,
-          subject: syllabusSubjects[0], // Primary subject
-          question_count: settings.questionCount,
-          partial_mode: usePartialMode, // Enable partial mode for large requests
-        },
-      });
-
-      if (error) throw error;
-
-      if (!data?.questions || data.questions.length === 0) {
-        throw new Error("No questions generated");
-      }
-
-      console.log(`📊 Job Test Response: ${data.questions.length} questions, remaining: ${data.remaining_count || 0}, source: ${data.source}`);
-
-      // CRITICAL: Save REQUESTED total as question_count, not returned partial count
-      const { data: session, error: sessionError } = await supabase
-        .from("custom_test_sessions")
-        .insert({
-          session_name: `Job Test: ${test.title}`,
-          subjects: syllabusSubjects,
-          topics: [test.title],
-          difficulty_levels: [settings.difficulty],
-          question_count: settings.questionCount, // REQUESTED TOTAL (not data.questions.length)
-          time_limit: settings.duration,
-          questions: data.questions,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (sessionError) throw sessionError;
-
-      // Show source-based toast
-      const sourceIcon = data.source === 'cache' ? '⚡' : 
-                         data.source === 'cache_partial' ? '⏳' :
-                         data.source === 'hybrid' ? '🔀' : '🤖';
-      const sourceText = data.source === 'cache' ? 'Loaded from Bank' : 
-                         data.source === 'cache_partial' ? `${data.cached_count} loaded, ${data.remaining_count} loading...` :
-                         data.source === 'hybrid' ? `${data.cached_count} cached + ${data.ai_count} new` : 
-                         'AI Generated';
-      
-      toast.success(`${sourceIcon} ${test.title} ready!`, {
-        description: `${data.questions.length} questions - ${sourceText}`
-      });
-
-      // Pass returnPath for Smart Return feature
-      navigate(`/test-session/${session.id}`, { state: { returnPath: '/mock-tests' } });
-    } catch (error) {
-      console.error('Error generating job test:', error);
-      toast.error('Failed to generate test', {
-        description: error instanceof Error ? error.message : 'Please try again'
-      });
-    } finally {
-      setGeneratingTestId(null);
-      setGeneratingTopicName("");
-    }
+    // AI generation temporarily disabled
+    toast.error("AI Test Generation Temporarily Unavailable", {
+      description: "Test generation is paused while we upgrade our AI system. Please use existing questions from the Question Bank.",
+    });
   };
   
   const toggleExpandJobTest = (testId: number) => {

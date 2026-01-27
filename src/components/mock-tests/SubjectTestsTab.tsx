@@ -42,107 +42,12 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
     return categoryMatch && searchMatch;
   });
   
+  // DISABLED: AI features paused
   const handleStartTest = async (test: any, customSettings?: any) => {
-    setGeneratingTestId(test.id);
-    setGeneratingTopicName(test.title);
-    setDialogTest(null); // Close dialog
-    
-    try {
-      // Get current user first
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        toast.error("Please log in to start a test");
-        navigate("/auth");
-        setGeneratingTestId(null);
-        return;
-      }
-
-      const settings = customSettings || {
-        difficulty: test.difficulty || 'Medium',
-        questionCount: test.questions || 20,
-        duration: test.duration || 30
-      };
-
-      // Get topics - if user selected specific topics use those
-      const topicsForTest = customSettings?.selectedTopics || selectedTopics[test.id];
-      const finalTopics = topicsForTest && topicsForTest.length > 0 ? topicsForTest : [];
-
-      const topic = finalTopics.length > 0 ? finalTopics[0] : `General ${test.title}`;
-
-      // Determine if we should use partial mode (for large requests)
-      const usePartialMode = settings.questionCount > 20;
-
-      console.log("🎯 Subject Test - Calling AI Engine:", {
-        mode: 'subject_test',
-        subject: test.title,
-        topic,
-        difficulty: settings.difficulty,
-        questionCount: settings.questionCount,
-        partial_mode: usePartialMode,
-        userId: user.id
-      });
-
-      // Call AI Test Engine
-      const { data, error } = await supabase.functions.invoke("generate-test", {
-        body: {
-          topic: topic,
-          difficulty: settings.difficulty,
-          subject: test.title,
-          question_count: settings.questionCount,
-          partial_mode: usePartialMode, // Enable partial mode for large requests
-        },
-      });
-
-      if (error) throw error;
-
-      if (!data?.questions || data.questions.length === 0) {
-        throw new Error("No questions generated");
-      }
-
-      console.log(`📊 Subject Test Response: ${data.questions.length} questions, remaining: ${data.remaining_count || 0}, source: ${data.source}`);
-
-      // CRITICAL: Save REQUESTED total as question_count, not returned partial count
-      const { data: session, error: sessionError } = await supabase
-        .from("custom_test_sessions")
-        .insert({
-          session_name: `Test: ${test.title}`,
-          subjects: [test.title],
-          topics: finalTopics.length > 0 ? finalTopics : [topic],
-          difficulty_levels: [settings.difficulty],
-          question_count: settings.questionCount, // REQUESTED TOTAL (not data.questions.length)
-          time_limit: settings.duration,
-          questions: data.questions,
-          user_id: user.id,
-        })
-        .select()
-        .single();
-
-      if (sessionError) throw sessionError;
-
-      // Show source-based toast
-      const sourceIcon = data.source === 'cache' ? '⚡' : 
-                         data.source === 'cache_partial' ? '⏳' :
-                         data.source === 'hybrid' ? '🔀' : '🤖';
-      const sourceText = data.source === 'cache' ? 'Loaded from Bank' : 
-                         data.source === 'cache_partial' ? `${data.cached_count} loaded, ${data.remaining_count} loading...` :
-                         data.source === 'hybrid' ? `${data.cached_count} cached + ${data.ai_count} new` : 
-                         'AI Generated';
-      
-      toast.success(`${sourceIcon} Test ready!`, {
-        description: `${data.questions.length} questions - ${sourceText}`
-      });
-
-      // Pass returnPath for Smart Return feature
-      navigate(`/test-session/${session.id}`, { state: { returnPath: '/mock-tests' } });
-    } catch (error) {
-      console.error('Error generating test:', error);
-      toast.error('Failed to generate test', {
-        description: error instanceof Error ? error.message : 'Please try again'
-      });
-    } finally {
-      setGeneratingTestId(null);
-      setGeneratingTopicName("");
-    }
+    // AI generation temporarily disabled
+    toast.error("AI Test Generation Temporarily Unavailable", {
+      description: "Test generation is paused while we upgrade our AI system. Please use existing questions from the Question Bank.",
+    });
   };
   
   const toggleExpandTest = (testId: number) => {

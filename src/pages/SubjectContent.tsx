@@ -176,42 +176,41 @@ const SubjectContent = () => {
     }
   };
 
-  // Load MCQs using the generate-test edge function (hybrid: bank + AI)
-  // fetchOnly = true means only check database cache, no AI generation
-  const loadMCQs = async (forceNew = false, fetchOnly = false) => {
+  // Load MCQs from database cache only (AI generation disabled)
+  const loadMCQs = async (forceNew = false, fetchOnly = true) => {
     if (!title) return;
     
-    // DEBOUNCING: Prevent rapid API calls unless forceNew is explicitly true
+    // DEBOUNCING: Prevent rapid API calls
     const now = Date.now();
-    if (!forceNew && now - lastFetchTimeRef.current < DEBOUNCE_MS) {
+    if (now - lastFetchTimeRef.current < DEBOUNCE_MS) {
       console.log('⏳ Debounced: Too soon since last fetch (wait 2s)');
       return;
     }
     lastFetchTimeRef.current = now;
     
     setIsLoadingMCQs(true);
-    setIsGenerating(!fetchOnly); // Only show generating loader if not fetch-only
+    setIsGenerating(false); // AI generation is disabled
     setLoadError(null);
 
     const topicToFetch = selectedTopic !== "all" ? selectedTopic : title;
     const requestedCount = parseInt(questionCount);
     
     try {
-      console.log('Calling generate-test edge function:', { 
+      console.log('Fetching from database (AI disabled):', { 
         topic: topicToFetch, 
         difficulty, 
-        question_count: requestedCount,
-        forceNew,
-        fetchOnly
+        question_count: requestedCount
       });
+      
+      // AI GENERATION DISABLED: Always use fetch_only mode
       const { data, error } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: topicToFetch,
           difficulty: difficulty,
           question_count: requestedCount,
-          forceNew: forceNew,
-          fetch_only: fetchOnly, // Pass fetchOnly to edge function
-          partial_mode: !fetchOnly && requestedCount > 20, // Only enable partial mode if not fetch-only
+          forceNew: false, // Never trigger AI
+          fetch_only: true, // Always fetch from cache only
+          partial_mode: false,
         }
       });
 
@@ -411,16 +410,13 @@ const SubjectContent = () => {
   };
 
   // Handle generate new questions (force AI generation)
+  // DISABLED: AI features paused - show message instead
   const handleGenerateNew = () => {
-    const topicName = selectedTopic !== "all" ? selectedTopic : title;
-    
-    // Show immediate feedback toast
     toast({
-      title: "🚀 Starting AI Generation",
-      description: `Generating ${questionCount} questions for "${topicName}"...`,
+      variant: "destructive",
+      title: "AI Generation Temporarily Unavailable",
+      description: "Please add questions manually through the Admin Panel. AI features will return soon.",
     });
-    
-    loadMCQs(true); // forceNew = true
   };
 
   // Handle refresh (use cache first)
