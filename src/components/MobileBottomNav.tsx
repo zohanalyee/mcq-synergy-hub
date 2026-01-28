@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, ClipboardList, Trophy, Shield, LogOut, Settings, User, MessageSquare, LayoutDashboard } from 'lucide-react';
+import { Home, BookOpen, ClipboardList, Trophy, Shield, LogOut, Settings, User, MessageSquare, LayoutDashboard, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -13,7 +13,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet';
 import { Separator } from '@/components/ui/separator';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 
 const MobileBottomNav = () => {
@@ -24,6 +24,24 @@ const MobileBottomNav = () => {
   const { isAdmin } = useUserRole();
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [theme, setTheme] = useState<string>(() => {
+    if (typeof window === 'undefined') return 'light';
+    return localStorage.getItem('theme') || 'light';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   if (!isMobile) return null;
 
@@ -196,6 +214,21 @@ const MobileBottomNav = () => {
                 >
                   <Settings className="h-5 w-5 text-muted-foreground" />
                   <span className="text-sm font-medium">Settings</span>
+                </button>
+                
+                {/* Theme Toggle */}
+                <button
+                  onClick={toggleTheme}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  {theme === 'dark' ? (
+                    <Sun className="h-5 w-5 text-primary" />
+                  ) : (
+                    <Moon className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <span className="text-sm font-medium">
+                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+                  </span>
                 </button>
                 
                 <Separator className="my-2" />

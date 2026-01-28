@@ -62,7 +62,8 @@ const HeaderActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
       {user && <StreakCounter />}
-      <ThemeToggle />
+      {/* Hide ThemeToggle on mobile - it's in the Profile sheet instead */}
+      {!isMobile && <ThemeToggle />}
       
       {/* Tools Menu */}
       <DropdownMenu>
