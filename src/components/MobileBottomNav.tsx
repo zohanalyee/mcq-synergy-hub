@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, ClipboardList, Trophy, Shield, LogOut, Settings, User, MessageSquare, LayoutDashboard, Sun, Moon } from 'lucide-react';
+import { Home, BookOpen, Briefcase, ListChecks, Shield, LogOut, Settings, User, MessageSquare, LayoutDashboard, Sun, Moon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -15,6 +15,35 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
+
+// Color configuration for each tab
+const TAB_COLORS = {
+  home: {
+    active: 'text-blue-500',
+    bg: 'bg-blue-500/10',
+    ring: 'ring-blue-500',
+  },
+  subjects: {
+    active: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
+    ring: 'ring-emerald-500',
+  },
+  recruitment: {
+    active: 'text-orange-500',
+    bg: 'bg-orange-500/10',
+    ring: 'ring-orange-500',
+  },
+  syllabus: {
+    active: 'text-purple-500',
+    bg: 'bg-purple-500/10',
+    ring: 'ring-purple-500',
+  },
+  profile: {
+    active: 'text-indigo-500',
+    bg: 'bg-indigo-500/10',
+    ring: 'ring-indigo-500',
+  },
+} as const;
 
 const MobileBottomNav = () => {
   const location = useLocation();
@@ -71,46 +100,49 @@ const MobileBottomNav = () => {
     setSettingsOpen(true);
   };
 
-  // Define nav items - Profile uses avatar instead of icon
+  // Updated nav items with color keys
   const navItems = [
-    { icon: Home, label: 'Home', path: '/' },
-    { icon: BookOpen, label: 'Subjects', path: '/subjects' },
-    { icon: ClipboardList, label: 'Exams', path: '/mock-tests' },
-    { icon: Trophy, label: 'Leaderboard', path: '/leaderboard' },
+    { icon: Home, label: 'Home', path: '/', colorKey: 'home' as const },
+    { icon: BookOpen, label: 'Subjects', path: '/subjects', colorKey: 'subjects' as const },
+    { icon: Briefcase, label: 'Tests', path: '/mock-tests', colorKey: 'recruitment' as const },
+    { icon: ListChecks, label: 'Syllabus', path: '/custom-syllabus', colorKey: 'syllabus' as const },
   ];
 
   const isProfileActive = location.pathname === '/profile' || location.pathname === '/dashboard';
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-pb">
-        <div className="flex items-center justify-around h-16 px-2">
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/40 safe-area-pb">
+        <div className="flex items-center justify-around h-16 px-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
+            const colors = TAB_COLORS[item.colorKey];
+            
             return (
               <button
                 key={item.path}
                 onClick={() => navigate(item.path)}
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-200",
-                  isActive 
-                    ? "text-primary" 
-                    : "text-muted-foreground hover:text-foreground"
+                  "relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-300",
+                  isActive ? colors.active : "text-slate-400"
                 )}
               >
+                {/* Background pill glow for active state */}
+                <div className={cn(
+                  "absolute inset-x-2 top-1.5 bottom-1.5 rounded-xl transition-all duration-300",
+                  isActive ? colors.bg : "bg-transparent"
+                )} />
+                
                 <item.icon className={cn(
-                  "h-5 w-5 transition-transform duration-200",
+                  "relative z-10 h-5 w-5 transition-all duration-300",
                   isActive && "scale-110"
                 )} />
                 <span className={cn(
-                  "text-[10px] font-medium",
+                  "relative z-10 text-[10px] font-medium transition-all duration-300",
                   isActive && "font-semibold"
                 )}>
                   {item.label}
                 </span>
-                {isActive && (
-                  <div className="absolute bottom-1 w-8 h-0.5 bg-primary rounded-full" />
-                )}
               </button>
             );
           })}
@@ -120,37 +152,38 @@ const MobileBottomNav = () => {
             <SheetTrigger asChild>
               <button
                 className={cn(
-                  "flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-200",
-                  isProfileActive 
-                    ? "text-primary" 
-                    : "text-muted-foreground hover:text-foreground"
+                  "relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-300",
+                  isProfileActive ? TAB_COLORS.profile.active : "text-slate-400"
                 )}
               >
+                {/* Background pill glow for active state */}
+                <div className={cn(
+                  "absolute inset-x-2 top-1.5 bottom-1.5 rounded-xl transition-all duration-300",
+                  isProfileActive ? TAB_COLORS.profile.bg : "bg-transparent"
+                )} />
+                
                 <Avatar className={cn(
-                  "h-6 w-6 transition-all duration-200",
+                  "relative z-10 h-6 w-6 transition-all duration-300",
                   isProfileActive 
-                    ? "ring-2 ring-primary ring-offset-2 ring-offset-background scale-110" 
-                    : "ring-1 ring-border"
+                    ? "ring-2 ring-indigo-500 ring-offset-1 ring-offset-background scale-110" 
+                    : "ring-1 ring-slate-300 dark:ring-slate-600"
                 )}>
                   <AvatarImage src={profile?.avatar_url || ''} />
                   <AvatarFallback className={cn(
                     "text-[10px] font-medium",
                     isProfileActive 
-                      ? "bg-gradient-to-br from-primary to-primary/80 text-primary-foreground"
-                      : "bg-muted text-muted-foreground"
+                      ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white"
+                      : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
                   )}>
                     {getInitials(user?.email)}
                   </AvatarFallback>
                 </Avatar>
                 <span className={cn(
-                  "text-[10px] font-medium",
+                  "relative z-10 text-[10px] font-medium transition-all duration-300",
                   isProfileActive && "font-semibold"
                 )}>
                   Profile
                 </span>
-                {isProfileActive && (
-                  <div className="absolute bottom-1 w-8 h-0.5 bg-primary rounded-full" />
-                )}
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="rounded-t-3xl pb-safe">
