@@ -2,9 +2,8 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import JobsHeader from "@/components/jobs/JobsHeader";
-import JobsFilters from "@/components/jobs/JobsFilters";
+import GlassJobsFilters from "@/components/jobs/GlassJobsFilters";
 import JobsGrid from "@/components/jobs/JobsGrid";
-import ExternalFilters from "@/components/external/ExternalFilters";
 import { getContentByCategory } from "@/services/contentService";
 import { getApprovedOpportunities } from "@/services/externalOpportunitiesService";
 import { ContentItem } from "@/interfaces/content";
@@ -57,43 +56,37 @@ const Jobs = () => {
     <Header>
       <div className="container mx-auto px-4 pt-4 pb-10">
         <JobsHeader />
-        <JobsFilters 
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-        />
         
-        <div className="flex flex-col lg:flex-row gap-6 mt-4">
-          {/* Filter Sidebar */}
-          <div className="w-full lg:w-64 flex-shrink-0">
-            <ExternalFilters 
-              filters={externalFilters}
-              onFiltersChange={setExternalFilters}
-              type="job"
-            />
-          </div>
-
-          {/* Main Content */}
-          <div className="flex-1">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <JobsGrid 
-                jobs={filteredJobs}
-                isLoading={isLoading}
-                searchQuery={searchQuery}
-              />
-            </motion.div>
-
-            {/* External Opportunities Section */}
-            <ExternalOpportunitiesSection 
-              opportunities={filteredExternalJobs}
-              isLoading={isLoading}
-              type="job"
-            />
-          </div>
+        {/* Glass Search & Filter Bar */}
+        <div className="mt-4">
+          <GlassJobsFilters 
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={externalFilters}
+            onFiltersChange={setExternalFilters}
+          />
         </div>
+        
+        {/* Full-width Content */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-6"
+        >
+          <JobsGrid 
+            jobs={filteredJobs}
+            isLoading={isLoading}
+            searchQuery={searchQuery}
+          />
+        </motion.div>
+
+        {/* External Opportunities Section */}
+        <ExternalOpportunitiesSection 
+          opportunities={filteredExternalJobs}
+          isLoading={isLoading}
+          type="job"
+        />
       </div>
     </Header>
   );
