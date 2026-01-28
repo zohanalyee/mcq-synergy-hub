@@ -28,15 +28,15 @@ const CompetitiveExams = () => {
   
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-4 pb-10">
+      <div className="max-w-6xl mx-auto px-4 pt-4 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           className="mb-4 text-center"
         >
-          <h1 className="text-2xl font-bold mb-1 text-gradient">Competitive Exams</h1>
-          <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+          <h1 className="text-xl font-bold mb-1 text-gradient">Competitive Exams</h1>
+          <p className="text-xs text-muted-foreground max-w-xl mx-auto">
             Practice full-length job recruitment and competitive exam simulations.
           </p>
         </motion.div>
