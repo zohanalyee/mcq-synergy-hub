@@ -4,7 +4,6 @@ import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
 import { useNewScholarshipsCount } from '@/hooks/useNewScholarshipsCount';
-import logoImage from '@/assets/logo.png';
 
 interface NavItem {
   title: string;
@@ -90,18 +89,17 @@ export function AppSidebar({
           </div>
         )}
         
-        {/* When expanded: Show logo + name + toggle on the right */}
+        {/* When expanded: Show icon + name + toggle on the right */}
         {expanded && (
           <div className="flex items-center justify-between w-full">
             <div 
-              className="flex items-center justify-center gap-2 cursor-pointer transition-all duration-300"
+              className="flex items-center gap-2 cursor-pointer transition-all duration-300"
               onClick={() => onNavigate('/')}
             >
-              <img 
-                src={logoImage} 
-                alt="Logo" 
-                className="h-10 w-10 object-contain"
-              />
+              <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1.5">
+                <BookOpen className="h-5 w-5 text-white" />
+              </div>
+              <span className="text-base font-bold text-foreground">MCQs Point</span>
             </div>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
           </div>
