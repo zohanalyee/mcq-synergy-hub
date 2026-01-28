@@ -1,18 +1,17 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { SmartSearchInput } from '@/components/ui/SmartSearchInput';
+import { GlassSearchInput } from '@/components/ui/GlassSearchInput';
 import { GlobalSearchResult } from '@/services/globalSearchService';
 
 import { useSyllabusData } from './hooks/useSyllabusData';
 import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
-import { FilterSidebar } from './FilterSidebar';
+import { GlassFilterSidebar } from './GlassFilterSidebar';
 import { SubjectGrid } from './SubjectGrid';
 import { SelectionSummary } from './SelectionSummary';
 import { SyllabusSubject, QuizSettings, SavedSyllabusTemplate } from './interfaces';
@@ -385,10 +384,10 @@ export const SyllabusBuilder = () => {
 
       {/* Main Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-        {/* Left Sidebar - Filters */}
+        {/* Left Sidebar - Glass Filters */}
         <div className="lg:col-span-1">
-          <Card className="p-4 sticky top-20">
-            <FilterSidebar
+          <div className="sticky top-20">
+            <GlassFilterSidebar
               systems={systems}
               availableLevels={availableLevels}
               filterState={filterState}
@@ -396,13 +395,13 @@ export const SyllabusBuilder = () => {
               toggleLevelFilter={toggleLevelFilter}
               clearFilters={clearFilters}
             />
-          </Card>
+          </div>
         </div>
 
         {/* Center - Subject Grid */}
-        <div className="lg:col-span-2 space-y-3">
-          {/* Smart Search Bar */}
-          <SmartSearchInput
+        <div className="lg:col-span-2 space-y-4">
+          {/* Glass Search Bar */}
+          <GlassSearchInput
             placeholder="Search subjects or topics..."
             onSelect={handleSmartSearchSelect}
           />
