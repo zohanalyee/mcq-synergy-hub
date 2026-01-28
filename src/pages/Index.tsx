@@ -8,6 +8,7 @@ import FeatureCard from '@/components/FeatureCard';
 import TestCategoryCard from '@/components/TestCategoryCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import TestimonialCard from '@/components/TestimonialCard';
+import HeroStatsSection from '@/components/home/HeroStatsSection';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -202,10 +203,11 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-8"
+              className="mb-6"
             >
-              <h2 className="text-xl font-bold mb-4">Prepare Your Way</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <h2 className="text-base md:text-xl font-bold mb-3">Prepare Your Way</h2>
+              {/* Hero Cards - Stack on mobile, row on desktop */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
                 {testCategories.map((category, index) => (
                   <TestCategoryCard
                     key={category.title}
@@ -217,6 +219,9 @@ const Home = () => {
                   />
                 ))}
               </div>
+              
+              {/* Stats Section - 2x2 on mobile, 4 columns on desktop */}
+              <HeroStatsSection />
             </motion.div>
             
             <motion.div
