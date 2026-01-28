@@ -29,16 +29,16 @@ interface SyllabusSubjectCardProps {
 }
 
 const iconMap: Record<string, React.ReactNode> = {
-  'atom': <Atom className="h-5 w-5 text-white" />,
-  'calculator': <Calculator className="h-5 w-5 text-white" />,
-  'beaker': <Beaker className="h-5 w-5 text-white" />,
-  'globe': <Globe className="h-5 w-5 text-white" />,
-  'scale': <Scale className="h-5 w-5 text-white" />,
-  'brain': <Brain className="h-5 w-5 text-white" />,
-  'stethoscope': <Stethoscope className="h-5 w-5 text-white" />,
-  'landmark': <Landmark className="h-5 w-5 text-white" />,
-  'cpu': <Cpu className="h-5 w-5 text-white" />,
-  'book-open': <BookOpen className="h-5 w-5 text-white" />,
+  'atom': <Atom className="h-4 w-4 text-white" />,
+  'calculator': <Calculator className="h-4 w-4 text-white" />,
+  'beaker': <Beaker className="h-4 w-4 text-white" />,
+  'globe': <Globe className="h-4 w-4 text-white" />,
+  'scale': <Scale className="h-4 w-4 text-white" />,
+  'brain': <Brain className="h-4 w-4 text-white" />,
+  'stethoscope': <Stethoscope className="h-4 w-4 text-white" />,
+  'landmark': <Landmark className="h-4 w-4 text-white" />,
+  'cpu': <Cpu className="h-4 w-4 text-white" />,
+  'book-open': <BookOpen className="h-4 w-4 text-white" />,
 };
 
 export const SyllabusSubjectCard = ({
@@ -58,19 +58,19 @@ export const SyllabusSubjectCard = ({
     if (subject.icon && iconMap[subject.icon.toLowerCase()]) {
       return iconMap[subject.icon.toLowerCase()];
     }
-    return <BookOpen className="h-5 w-5 text-white" />;
+    return <BookOpen className="h-4 w-4 text-white" />;
   };
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className="cursor-pointer group h-full"
     >
       <div
         className={cn(
-          "h-full rounded-3xl border border-white/50 dark:border-white/20 shadow-sm",
-          "hover:shadow-xl transition-all duration-300",
+          "h-full rounded-2xl border border-white/50 dark:border-white/20 shadow-sm",
+          "hover:shadow-lg transition-all duration-300",
           (allTopicsSelected || someTopicsSelected) && "ring-2 ring-primary/50"
         )}
         style={{
@@ -78,22 +78,22 @@ export const SyllabusSubjectCard = ({
         }}
       >
         <Collapsible open={subject.isExpanded} onOpenChange={() => onToggleExpand(subject.id)}>
-          {/* Card Header */}
-          <div className="p-4">
-            <div className="flex items-start gap-3">
+          {/* Card Header - Compact */}
+          <div className="p-3">
+            <div className="flex items-start gap-2">
               {/* Subject Checkbox */}
               <Checkbox
                 checked={allTopicsSelected}
                 // @ts-ignore - indeterminate is valid but not in types
                 ref={(el) => el && (el.indeterminate = someTopicsSelected)}
                 onCheckedChange={() => onToggleSubject(subject.id)}
-                className="mt-1"
+                className="mt-0.5 h-4 w-4"
                 onClick={(e) => e.stopPropagation()}
               />
               
-              {/* Icon Squircle */}
+              {/* Icon Squircle - Smaller */}
               <div
-                className="w-11 h-11 rounded-2xl shadow-md flex items-center justify-center shrink-0
+                className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center shrink-0
                            group-hover:scale-105 transition-transform duration-200"
                 style={{ backgroundColor: theme.main }}
               >
@@ -102,27 +102,27 @@ export const SyllabusSubjectCard = ({
 
               {/* Subject Info */}
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 truncate mb-0.5">
+                <h4 className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate leading-tight">
                   {subject.name}
                 </h4>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {subject.topics.length} Topics Available
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                  {subject.topics.length} Topics
                 </p>
               </div>
             </div>
 
-            {/* Badges */}
-            <div className="flex items-center gap-2 flex-wrap mt-3">
+            {/* Badges - Compact */}
+            <div className="flex items-center gap-1.5 flex-wrap mt-2">
               <Badge 
                 variant="secondary" 
-                className="text-[10px] h-5 bg-white/60 dark:bg-slate-800/60"
+                className="text-[9px] h-4 px-1.5 bg-white/60 dark:bg-slate-800/60"
               >
                 {subject.levelName}
               </Badge>
               {selectedTopicsCount > 0 && (
                 <Badge 
                   variant="default" 
-                  className="text-[10px] h-5"
+                  className="text-[9px] h-4 px-1.5"
                   style={{ backgroundColor: theme.main }}
                 >
                   {selectedTopicsCount} selected
@@ -130,22 +130,22 @@ export const SyllabusSubjectCard = ({
               )}
             </div>
 
-            {/* Action Row - Bottom */}
-            <div className="flex items-center justify-between mt-4 pt-3 border-t border-slate-100 dark:border-slate-700">
+            {/* Action Row - Compact */}
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 dark:border-slate-700">
               <CollapsibleTrigger asChild>
                 <button 
                   className="flex items-center gap-1 group/trigger"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <span
-                    className="text-[10px] font-bold uppercase tracking-wide"
+                    className="text-[9px] font-bold uppercase tracking-wide"
                     style={{ color: theme.main }}
                   >
-                    {subject.isExpanded ? "HIDE TOPICS" : "VIEW TOPICS"}
+                    {subject.isExpanded ? "HIDE" : "VIEW TOPICS"}
                   </span>
                   <ChevronDown 
                     className={cn(
-                      "h-3.5 w-3.5 transition-transform",
+                      "h-3 w-3 transition-transform",
                       subject.isExpanded && "rotate-180"
                     )} 
                     style={{ color: theme.main }}
@@ -154,40 +154,41 @@ export const SyllabusSubjectCard = ({
               </CollapsibleTrigger>
               
               <motion.div
-                className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm 
+                className="w-6 h-6 rounded-full flex items-center justify-center shadow-sm 
                            group-hover:shadow-md transition-shadow"
                 style={{ backgroundColor: theme.main }}
                 whileHover={{ rotate: -45 }}
                 transition={{ duration: 0.2 }}
               >
-                <ArrowRight className="w-3.5 h-3.5 text-white" />
+                <ArrowRight className="w-3 h-3 text-white" />
               </motion.div>
             </div>
           </div>
 
-          {/* Topics List */}
+          {/* Topics List - Compact */}
           <CollapsibleContent>
-            <div className="px-4 pb-4 pt-0 border-t border-slate-100 dark:border-slate-700">
-              <div className="pt-3 space-y-1 max-h-48 overflow-y-auto">
+            <div className="px-3 pb-3 pt-0 border-t border-slate-100 dark:border-slate-700">
+              <div className="pt-2 space-y-0.5 max-h-36 overflow-y-auto scrollbar-thin">
                 {subject.topics.length > 0 ? (
                   subject.topics.map(topic => (
                     <label
                       key={topic.id}
-                      className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-white/50 
+                      className="flex items-center gap-1.5 py-1 px-1.5 rounded-lg hover:bg-white/50 
                                  dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Checkbox
                         checked={topic.isSelected}
                         onCheckedChange={() => onToggleTopic(subject.id, topic.id)}
+                        className="h-3.5 w-3.5"
                       />
-                      <span className="text-xs text-slate-700 dark:text-slate-300 truncate">
+                      <span className="text-[10px] text-slate-700 dark:text-slate-300 truncate">
                         {topic.name}
                       </span>
                     </label>
                   ))
                 ) : (
-                  <p className="text-xs text-muted-foreground py-2 text-center">
+                  <p className="text-[10px] text-muted-foreground py-2 text-center">
                     No topics available
                   </p>
                 )}

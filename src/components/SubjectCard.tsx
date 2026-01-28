@@ -92,17 +92,17 @@ const SubjectCard = ({
   // Render icon with white color for the squircle container
   const renderIcon = () => {
     if (!icon) {
-      return <BookOpen className="w-6 h-6 text-white" />;
+      return <BookOpen className="w-4 h-4 text-white" />;
     }
     
     if (React.isValidElement(icon)) {
       return React.cloneElement(icon as React.ReactElement<any>, { 
-        className: "w-6 h-6 text-white",
+        className: "w-4 h-4 text-white",
         style: { color: 'white' }
       });
     }
     
-    return <BookOpen className="w-6 h-6 text-white" />;
+    return <BookOpen className="w-4 h-4 text-white" />;
   };
   
   const handleClick = () => {
@@ -133,7 +133,7 @@ const SubjectCard = ({
   
   return (
     <motion.div
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -3 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
@@ -142,9 +142,9 @@ const SubjectCard = ({
     >
       <div 
         className={`
-          rounded-3xl p-5 min-h-[180px] flex flex-col
+          rounded-2xl p-3 min-h-[120px] flex flex-col
           border border-white/50 dark:border-white/20
-          shadow-sm hover:shadow-xl
+          shadow-sm hover:shadow-lg
           transition-all duration-300
           backdrop-blur-sm glass-card themed-card
         `}
@@ -154,45 +154,45 @@ const SubjectCard = ({
       >
         {/* Dark mode overlay */}
         <div 
-          className="absolute inset-0 rounded-3xl opacity-0 dark:opacity-100 pointer-events-none -z-10"
+          className="absolute inset-0 rounded-2xl opacity-0 dark:opacity-100 pointer-events-none -z-10"
           style={{
             background: `linear-gradient(135deg, ${theme.pastelDark} 0%, rgba(15, 23, 42, 0.95) 100%)`
           }}
         />
         
-        {/* Icon Squircle - Top Left */}
+        {/* Icon Squircle - Compact */}
         <div 
-          className="w-12 h-12 rounded-2xl shadow-md flex items-center justify-center mb-4 transition-transform duration-300 group-hover:scale-105"
+          className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-105"
           style={{ backgroundColor: theme.main }}
         >
           {renderIcon()}
         </div>
         
         {/* Content */}
-        <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 mb-1 line-clamp-1">
+        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-0.5 line-clamp-1 leading-tight">
           {title}
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mb-4 line-clamp-2 flex-1">
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 flex-1">
           {description}
         </p>
         
         {/* Action Row */}
-        <div className="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-700">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
           <span 
-            className="text-xs font-bold uppercase tracking-wide"
+            className="text-[9px] font-bold uppercase tracking-wide"
             style={{ color: theme.main }}
           >
             {topicCount} Chapters
           </span>
           <div 
             className={`
-              w-8 h-8 rounded-full flex items-center justify-center
+              w-6 h-6 rounded-full flex items-center justify-center
               transition-transform duration-300
               ${isHovered ? 'rotate-[-45deg]' : ''}
             `}
             style={{ backgroundColor: theme.main }}
           >
-            <ArrowRight className="w-4 h-4 text-white" />
+            <ArrowRight className="w-3 h-3 text-white" />
           </div>
         </div>
       </div>
