@@ -28,8 +28,14 @@ const SystemLevelFilter = ({
           <GraduationCap className="h-4 w-4" />
           <span>Educational Boards</span>
         </div>
-        <div className="overflow-x-auto pb-2">
-          <div className="flex gap-2 min-w-max">
+        <div 
+          className="overflow-x-auto pb-2 scrollbar-thin"
+          style={{
+            maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+          }}
+        >
+          <div className="flex gap-2 min-w-max px-2">
             <motion.button
               onClick={() => {
                 // Clear all system selections (show all)
@@ -75,8 +81,14 @@ const SystemLevelFilter = ({
             <Layers className="h-4 w-4" />
             <span>Classes / Levels</span>
           </div>
-          <div className="overflow-x-auto pb-2">
-            <div className="flex gap-2 min-w-max">
+          <div 
+            className="overflow-x-auto pb-2 scrollbar-thin"
+            style={{
+              maskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+              WebkitMaskImage: 'linear-gradient(to right, transparent, black 5%, black 95%, transparent)',
+            }}
+          >
+            <div className="flex gap-2 min-w-max px-2">
               <motion.button
                 onClick={() => {
                   // Clear all level selections
