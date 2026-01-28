@@ -16,6 +16,7 @@ import { toolsConfig, ToolId } from '@/components/tools/FloatingToolsRenderer';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderActionsProps {
   theme?: string;
@@ -40,6 +41,7 @@ const HeaderActions = ({
   const { toast } = useToast();
   const [hasNotifications] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -104,62 +106,64 @@ const HeaderActions = ({
         </Button>
       )}
 
-      {/* User menu or sign in button */}
+      {/* User menu or sign in button - hidden on mobile (avatar moves to bottom nav) */}
       {user ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
-              <AvatarImage src={profile?.avatar_url || ''} />
-              <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-medium">
-                {getInitials(user.email)}
-              </AvatarFallback>
-            </Avatar>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border">
-            {/* User info in dropdown header */}
-            <DropdownMenuLabel className="flex items-center gap-3 py-3">
-              <Avatar className="h-10 w-10">
+        !isMobile && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Avatar className="h-8 w-8 cursor-pointer ring-2 ring-primary/20 hover:ring-primary/40 transition-all">
                 <AvatarImage src={profile?.avatar_url || ''} />
-                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-medium">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-xs font-medium">
                   {getInitials(user.email)}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col">
-                <span className="text-sm font-medium">{getDisplayName()}</span>
-                <span className="text-xs text-muted-foreground truncate max-w-[120px]">{user?.email}</span>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-1.5">
-              Dashboard
-            </DropdownMenuItem>
-            {isAdmin && (
-              <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-1.5">
-                <Shield className="mr-2 h-3.5 w-3.5 text-primary" />
-                Admin Panel
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border">
+              {/* User info in dropdown header */}
+              <DropdownMenuLabel className="flex items-center gap-3 py-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarImage src={profile?.avatar_url || ''} />
+                  <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-medium">
+                    {getInitials(user.email)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium">{getDisplayName()}</span>
+                  <span className="text-xs text-muted-foreground truncate max-w-[120px]">{user?.email}</span>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-1.5">
+                Dashboard
               </DropdownMenuItem>
-            )}
-            <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-1.5">
-              Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-1.5">
-              Feedback
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            
-            {/* Settings */}
-            <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-1.5">
-              <Settings className="mr-2 h-3.5 w-3.5" />
-              Settings
-            </DropdownMenuItem>
-            
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-1.5">
-              <LogOut className="mr-2 h-3.5 w-3.5" />
-              <span>Sign Out</span>
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              {isAdmin && (
+                <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-1.5">
+                  <Shield className="mr-2 h-3.5 w-3.5 text-primary" />
+                  Admin Panel
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-1.5">
+                Profile
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-1.5">
+                Feedback
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              
+              {/* Settings */}
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-1.5">
+                <Settings className="mr-2 h-3.5 w-3.5" />
+                Settings
+              </DropdownMenuItem>
+              
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-1.5">
+                <LogOut className="mr-2 h-3.5 w-3.5" />
+                <span>Sign Out</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )
       ) : (
         <Button 
           size="sm"
