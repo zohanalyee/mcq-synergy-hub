@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { Clock, CheckCircle, Target, HelpCircle } from "lucide-react";
+import { useUserStats } from "@/hooks/useUserStats";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -7,9 +9,11 @@ interface StatCardProps {
   label: string;
   color: string;
   delay: number;
+  progress: number;
+  loading?: boolean;
 }
 
-const StatCard = ({ icon, value, label, color, delay }: StatCardProps) => (
+const StatCard = ({ icon, value, label, color, delay, progress, loading }: StatCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
@@ -35,8 +39,17 @@ const StatCard = ({ icon, value, label, color, delay }: StatCardProps) => (
       
       {/* Text */}
       <div className="min-w-0">
-        <p className="text-lg md:text-xl font-bold text-foreground truncate">{value}</p>
-        <p className="text-[10px] md:text-xs text-muted-foreground truncate">{label}</p>
+        {loading ? (
+          <>
+            <Skeleton className="h-5 w-12 mb-1" />
+            <Skeleton className="h-3 w-16" />
+          </>
+        ) : (
+          <>
+            <p className="text-lg md:text-xl font-bold text-foreground truncate">{value}</p>
+            <p className="text-[10px] md:text-xs text-muted-foreground truncate">{label}</p>
+          </>
+        )}
       </div>
     </div>
     
@@ -44,7 +57,7 @@ const StatCard = ({ icon, value, label, color, delay }: StatCardProps) => (
     <div className="mt-2 h-1 rounded-full bg-muted/50 overflow-hidden">
       <motion.div
         initial={{ width: 0 }}
-        animate={{ width: "75%" }}
+        animate={{ width: `${Math.min(progress, 100)}%` }}
         transition={{ duration: 1, delay: delay + 0.3 }}
         className="h-full rounded-full"
         style={{ backgroundColor: color }}
@@ -53,31 +66,50 @@ const StatCard = ({ icon, value, label, color, delay }: StatCardProps) => (
   </motion.div>
 );
 
+// Helper function to format study time
+const formatStudyTime = (minutes: number): string => {
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  if (remainingMinutes === 0) {
+    return `${hours}h`;
+  }
+  return `${hours}h ${remainingMinutes}m`;
+};
+
 const HeroStatsSection = () => {
+  const { totalStudyMinutes, testsCompleted, accuracyRate, questionsAnswered, loading } = useUserStats();
+
   const stats = [
     {
       icon: <Clock className="w-4 h-4 md:w-5 md:h-5" />,
-      value: "22h",
+      value: formatStudyTime(totalStudyMinutes),
       label: "Total Study Time",
-      color: "#3b82f6" // Blue
+      color: "#3b82f6", // Blue
+      progress: Math.min((totalStudyMinutes / 600) * 100, 100) // 10 hours = 100%
     },
     {
       icon: <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />,
-      value: "127",
+      value: testsCompleted.toString(),
       label: "Tests Completed",
-      color: "#10b981" // Emerald
+      color: "#10b981", // Emerald
+      progress: Math.min((testsCompleted / 50) * 100, 100) // 50 tests = 100%
     },
     {
       icon: <Target className="w-4 h-4 md:w-5 md:h-5" />,
-      value: "85%",
+      value: `${accuracyRate}%`,
       label: "Accuracy Rate",
-      color: "#f59e0b" // Amber
+      color: "#f59e0b", // Amber
+      progress: accuracyRate
     },
     {
       icon: <HelpCircle className="w-4 h-4 md:w-5 md:h-5" />,
-      value: "240",
+      value: questionsAnswered.toString(),
       label: "Questions Answered",
-      color: "#8b5cf6" // Purple
+      color: "#8b5cf6", // Purple
+      progress: Math.min((questionsAnswered / 500) * 100, 100) // 500 questions = 100%
     }
   ];
 
@@ -97,6 +129,8 @@ const HeroStatsSection = () => {
             label={stat.label}
             color={stat.color}
             delay={index * 0.1}
+            progress={stat.progress}
+            loading={loading}
           />
         ))}
       </div>
