@@ -116,26 +116,24 @@
   }
 
   .dark {
-    /* Deep Blue Night Theme - #020617 base */
-    --background: 222 47% 2%;
+    --background: 224 71% 4%;
     --foreground: 213 31% 91%;
 
-    /* Semi-transparent card for glass effect */
-    --card: 222 47% 7%;
+    --card: 224 71% 8%;
     --card-foreground: 213 31% 91%;
     --card-rgb: 15, 23, 42;
 
-    --popover: 222 47% 5%;
+    --popover: 224 71% 8%;
     --popover-foreground: 213 31% 91%;
 
     --primary: 214 90% 52%;
     --primary-glow: 214 90% 65%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 222 47% 11%;
+    --secondary: 222 47% 15%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 47% 11%;
+    --muted: 223 47% 15%;
     --muted-foreground: 215 20.2% 65.1%;
 
     --accent: 243 75% 59%;
@@ -145,29 +143,29 @@
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 222 47% 15%;
-    --input: 222 47% 12%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
     --ring: 214 90% 52%;
 
     /* Enhanced dark theme tokens */
     --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
     --gradient-accent: linear-gradient(135deg, hsl(var(--accent)), hsl(var(--accent-glow)));
-    --gradient-subtle: linear-gradient(180deg, hsl(222 47% 2%), hsl(222 47% 6%));
+    --gradient-subtle: linear-gradient(180deg, hsl(var(--background)), hsl(var(--secondary)));
     --shadow-elegant: 0 10px 30px -10px hsl(var(--primary) / 0.4);
     --shadow-glow: 0 0 40px hsl(var(--primary-glow) / 0.5);
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-    /* RGB values for opacity support in dark mode - Slate 900 base */
+    /* RGB values for opacity support in dark mode */
     --sidebar-rgb: 15, 23, 42;
     --interface-rgb: 15, 23, 42;
 
-    --sidebar-background: 222 47% 5%;
+    --sidebar-background: 224 71% 8%;
     --sidebar-foreground: 213 31% 91%;
     --sidebar-primary: 214 90% 52%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 222 47% 11%;
+    --sidebar-accent: 222 47% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 47% 15%;
+    --sidebar-border: 217 33% 17%;
     --sidebar-ring: 214 90% 52%;
   }
 }
@@ -215,14 +213,9 @@ body::-webkit-scrollbar-thumb:hover {
     background-attachment: fixed;
   }
 
-  /* Deep Blue Night - #020617 Slate 950 */
-  .dark body {
-    background: #020617;
-    background-attachment: fixed;
-  }
-
-  html.dark {
-    background: #020617;
+  .dark body,
+  body.dark {
+    background: hsl(224 71% 4%);
   }
   
   /* Liquid background color blobs */
@@ -301,33 +294,12 @@ body::-webkit-scrollbar-thumb:hover {
   background: rgba(var(--card-rgb), var(--cards-opacity, 0.95));
 }
 
-/* Deep Blue Night Glass Cards - Universal */
-.dark .themed-card {
-  background: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-}
-
 .themed-interface {
   background: rgba(var(--interface-rgb), var(--interface-opacity, 0.85));
 }
 
-.dark .themed-interface {
-  background: rgba(15, 23, 42, 0.7);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-}
-
 .themed-sidebar {
   background: rgba(var(--sidebar-rgb), var(--sidebar-opacity, 0.9));
-}
-
-.dark .themed-sidebar {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 @layer utilities {
@@ -367,16 +339,12 @@ body::-webkit-scrollbar-thumb:hover {
     padding-bottom: max(8px, env(safe-area-inset-bottom, 8px));
   }
 
-  /* Universal Glass Effect */
   .glass {
     @apply bg-white/80 backdrop-blur-xl border border-white/40 shadow-glass;
   }
   
   .dark .glass {
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    @apply bg-black/40 border-white/10 backdrop-blur-xl;
   }
 
   /* Adaptive glass for mobile/tablet - reduced blur for performance */
@@ -388,23 +356,19 @@ body::-webkit-scrollbar-thumb:hover {
     }
     
     .dark .glass {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      @apply bg-black/90 border-white/10;
       backdrop-filter: blur(4px);
       -webkit-backdrop-filter: blur(4px);
     }
   }
 
-  /* Premium Glass Cards - Deep Blue Night */
+  /* Premium glass cards for light mode */
   .glass-card {
     @apply bg-white/80 backdrop-blur-sm border border-white/40 shadow-sm;
   }
 
   .dark .glass-card {
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
+    @apply bg-card border-border;
   }
 
   /* Adaptive glass-card for mobile/tablet */
@@ -416,10 +380,9 @@ body::-webkit-scrollbar-thumb:hover {
     }
     
     .dark .glass-card {
-      background: rgba(15, 23, 42, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(4px);
-      -webkit-backdrop-filter: blur(4px);
+      @apply bg-card border-border;
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
     }
   }
   

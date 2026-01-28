@@ -8,8 +8,10 @@ import FeatureCard from '@/components/FeatureCard';
 import TestCategoryCard from '@/components/TestCategoryCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
 import TestimonialCard from '@/components/TestimonialCard';
+import MobileDashboard from '@/components/mobile/MobileDashboard';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { 
   BookOpen, 
   BrainCircuit, 
@@ -31,6 +33,7 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -159,6 +162,11 @@ const Home = () => {
 
   // Use default subjects for display
   const displaySubjects = subjects;
+
+  // Show mobile dashboard on mobile devices
+  if (isMobile) {
+    return <MobileDashboard />;
+  }
 
   return (
     <Header theme={theme} setTheme={setTheme}>
