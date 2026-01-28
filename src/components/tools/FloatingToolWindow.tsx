@@ -47,9 +47,7 @@ const FloatingToolWindow = ({
     }
   }, [style, position, isMinimized]);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.button !== 0) return;
-    e.preventDefault();
+  const handleDragStart = (clientX: number, clientY: number) => {
     onFocus();
     
     const rect = dragRef.current?.getBoundingClientRect();
@@ -58,20 +56,33 @@ const FloatingToolWindow = ({
     dragStartRef.current = {
       x: position?.x ?? rect.left,
       y: position?.y ?? rect.top,
-      startX: e.clientX,
-      startY: e.clientY,
+      startX: clientX,
+      startY: clientY,
     };
     setIsDragging(true);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    handleDragStart(e.clientX, e.clientY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    handleDragStart(touch.clientX, touch.clientY);
   };
 
   useEffect(() => {
     if (!isDragging) return;
 
-    const handleMouseMove = (e: MouseEvent) => {
+    const handleMove = (clientX: number, clientY: number) => {
       if (!dragStartRef.current) return;
       
-      const deltaX = e.clientX - dragStartRef.current.startX;
-      const deltaY = e.clientY - dragStartRef.current.startY;
+      const deltaX = clientX - dragStartRef.current.startX;
+      const deltaY = clientY - dragStartRef.current.startY;
       
       const newX = dragStartRef.current.x + deltaX;
       const newY = dragStartRef.current.y + deltaY;
@@ -86,17 +97,34 @@ const FloatingToolWindow = ({
       });
     };
 
-    const handleMouseUp = () => {
+    const handleMouseMove = (e: MouseEvent) => {
+      handleMove(e.clientX, e.clientY);
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      handleMove(touch.clientX, touch.clientY);
+    };
+
+    const handleEnd = () => {
       setIsDragging(false);
       dragStartRef.current = null;
     };
 
     document.addEventListener('mousemove', handleMouseMove);
-    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('mouseup', handleEnd);
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    document.addEventListener('touchend', handleEnd);
+    document.addEventListener('touchcancel', handleEnd);
 
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('mouseup', handleEnd);
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', handleEnd);
+      document.removeEventListener('touchcancel', handleEnd);
     };
   }, [isDragging, isMinimized]);
 
@@ -124,12 +152,13 @@ const FloatingToolWindow = ({
       {/* Header - Draggable */}
       <div 
         className={cn(
-          "flex items-center justify-between px-3 py-2 border-b bg-muted/30 select-none",
+          "flex items-center justify-between px-3 py-2 border-b bg-muted/30 select-none touch-none",
           isMinimized ? "cursor-pointer hover:bg-muted/50" : "cursor-grab",
           isDragging && "cursor-grabbing"
         )}
         style={{ borderTopLeftRadius: 'inherit', borderTopRightRadius: 'inherit' }}
         onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
         onClick={handleHeaderClick}
       >
         <div className="flex items-center gap-2">
