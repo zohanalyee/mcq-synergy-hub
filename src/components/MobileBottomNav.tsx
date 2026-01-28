@@ -16,7 +16,8 @@ const MobileBottomNav = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  if (!isMobile) return null;
+  // Hide on home page since MobileDashboard has its own nav
+  if (!isMobile || location.pathname === '/') return null;
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-xl border-t border-border/50 safe-area-pb">
