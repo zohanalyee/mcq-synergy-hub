@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAppearance } from '@/contexts/AppearanceContext';
 import HeaderLogo from './header/HeaderLogo';
 import HeaderActions from './header/HeaderActions';
-import { SidebarProvider, useSidebar } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
@@ -177,6 +177,10 @@ const HeaderContent = ({
         >
           <div className="px-4 w-full">
             <div className="flex items-center justify-between gap-2 sm:gap-3">
+              {/* Show sidebar toggle on mobile */}
+              {isMobile && (
+                <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
+              )}
               {/* Only show HeaderLogo when sidebar is collapsed OR on mobile */}
               {(!isExpanded || isMobile) && (
                 <HeaderLogo onNavigate={handleNavigation} />
