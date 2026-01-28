@@ -39,21 +39,21 @@ export const GlassCard = ({
 
   return (
     <motion.div
-      whileHover={{ y: -4 }}
+      whileHover={{ y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       className={cn("cursor-pointer group h-full", className)}
       onClick={onClick}
     >
       <div
-        className="h-full rounded-3xl p-4 border border-white/50 dark:border-white/20 shadow-sm 
-                   hover:shadow-xl transition-all duration-300 flex flex-col min-h-[160px] themed-card glass-card"
+        className="h-full rounded-2xl p-3 border border-white/50 dark:border-white/20 shadow-sm 
+                   hover:shadow-lg transition-all duration-300 flex flex-col min-h-[130px] themed-card glass-card"
         style={{
           background: `linear-gradient(135deg, ${pastelColor} 0%, rgba(var(--card-rgb), var(--cards-opacity, 0.95)) 100%)`,
         }}
       >
-        {/* Icon Squircle - Top Left */}
+        {/* Icon Squircle - Compact */}
         <div
-          className="w-11 h-11 rounded-2xl shadow-md flex items-center justify-center mb-3 
+          className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center mb-2 
                      group-hover:scale-105 transition-transform duration-200"
           style={{ backgroundColor: themeColor }}
         >
@@ -61,21 +61,21 @@ export const GlassCard = ({
         </div>
 
         {/* Content */}
-        <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100 mb-0.5 line-clamp-2">
+        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-0.5 line-clamp-2 leading-tight">
           {title}
         </h3>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
+        <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-1">
           {subtitle}
         </p>
 
         {/* Optional children content */}
-        {children && <div className="flex-1 mb-3">{children}</div>}
+        {children && <div className="flex-1 mb-2">{children}</div>}
 
         {/* Action Row - Bottom */}
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-slate-100 dark:border-slate-700">
-          <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between mt-auto pt-2 border-t border-slate-100 dark:border-slate-700">
+          <div className="flex items-center gap-1.5">
             <span
-              className="text-[10px] font-bold uppercase tracking-wide"
+              className="text-[9px] font-bold uppercase tracking-wide"
               style={{ color: themeColor }}
             >
               {actionText}
@@ -83,13 +83,13 @@ export const GlassCard = ({
             {rightContent}
           </div>
           <motion.div
-            className="w-7 h-7 rounded-full flex items-center justify-center shadow-sm 
+            className="w-6 h-6 rounded-full flex items-center justify-center shadow-sm 
                        group-hover:shadow-md transition-shadow"
             style={{ backgroundColor: themeColor }}
             whileHover={{ rotate: -45 }}
             transition={{ duration: 0.2 }}
           >
-            <ArrowRight className="w-3.5 h-3.5 text-white" />
+            <ArrowRight className="w-3 h-3 text-white" />
           </motion.div>
         </div>
       </div>

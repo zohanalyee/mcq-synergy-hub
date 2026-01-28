@@ -13,21 +13,18 @@ interface JobsGridProps {
 const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <Card key={index} className="animate-pulse">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
+        {Array.from({ length: 12 }).map((_, index) => (
+          <Card key={index} className="animate-pulse rounded-2xl">
             <CardContent className="p-0">
               <div className="p-3">
-                <div className="h-4 bg-muted rounded-md w-3/4 mb-1.5"></div>
-                <div className="h-2.5 bg-muted rounded-md w-1/4 mb-2"></div>
-                <div className="h-2.5 bg-muted rounded-md w-full mb-1"></div>
-                <div className="h-2.5 bg-muted rounded-md w-2/3 mb-2"></div>
-                <div className="flex gap-1 mb-2">
+                <div className="h-9 w-9 bg-muted rounded-xl mb-2"></div>
+                <div className="h-3 bg-muted rounded-md w-3/4 mb-1"></div>
+                <div className="h-2 bg-muted rounded-md w-1/2 mb-2"></div>
+                <div className="h-2 bg-muted rounded-md w-full mb-1"></div>
+                <div className="flex gap-1 mt-2">
+                  <div className="h-4 bg-muted rounded-full w-10"></div>
                   <div className="h-4 bg-muted rounded-full w-12"></div>
-                  <div className="h-4 bg-muted rounded-full w-14"></div>
-                </div>
-                <div className="flex justify-end">
-                  <div className="h-7 bg-muted rounded-md w-16"></div>
                 </div>
               </div>
             </CardContent>
@@ -39,7 +36,7 @@ const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
 
   if (jobs.length > 0) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
         {jobs.map((job, index) => (
           <JobCard key={job.id} job={job} index={index} />
         ))}

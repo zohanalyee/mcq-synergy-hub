@@ -44,11 +44,11 @@ export const SubjectGrid = ({
 
   if (subjects.length === 0) {
     return (
-      <Card className="p-8 text-center">
-        <p className="text-muted-foreground mb-4">
+      <Card className="p-6 text-center rounded-2xl">
+        <p className="text-sm text-muted-foreground mb-3">
           No subjects found matching your filters.
         </p>
-        <Button onClick={onClearFilters}>Clear Filters</Button>
+        <Button size="sm" onClick={onClearFilters}>Clear Filters</Button>
       </Card>
     );
   }
@@ -58,7 +58,7 @@ export const SubjectGrid = ({
       variants={container}
       initial="hidden"
       animate="show"
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
+      className="grid grid-cols-2 sm:grid-cols-3 gap-3"
     >
       {subjects.map(subject => (
         <motion.div key={subject.id} variants={item}>
