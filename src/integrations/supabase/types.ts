@@ -469,6 +469,83 @@ export type Database = {
         }
         Relationships: []
       }
+      document_sections: {
+        Row: {
+          content: string
+          created_at: string
+          document_id: string
+          embedding: string | null
+          id: string
+          page_number: number | null
+          section_index: number
+          token_count: number | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          document_id: string
+          embedding?: string | null
+          id?: string
+          page_number?: number | null
+          section_index?: number
+          token_count?: number | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          document_id?: string
+          embedding?: string | null
+          id?: string
+          page_number?: number | null
+          section_index?: number
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_sections_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          created_at: string
+          file_url: string
+          filename: string
+          id: string
+          page_count: number | null
+          status: string
+          title: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_url: string
+          filename: string
+          id?: string
+          page_count?: number | null
+          status?: string
+          title: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_url?: string
+          filename?: string
+          id?: string
+          page_count?: number | null
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       educational_systems: {
         Row: {
           created_at: string | null
@@ -1159,6 +1236,21 @@ export type Database = {
         }[]
       }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
+      match_document_sections: {
+        Args: {
+          filter_document_id?: string
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          content: string
+          document_id: string
+          id: string
+          page_number: number
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
