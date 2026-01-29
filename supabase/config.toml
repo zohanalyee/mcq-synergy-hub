@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.fetch-external-jobs]
 verify_jwt = false
+
+[functions.process-book]
+verify_jwt = false
