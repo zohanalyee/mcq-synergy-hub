@@ -11,7 +11,8 @@ import DuplicateReviewQueue from "./DuplicateReviewQueue";
 import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
 import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe } from "lucide-react";
+import DocumentLibrary from "./documents/DocumentLibrary";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
           <Archive className="h-4 w-4" />
           Inventory
         </TabsTrigger>
-        {/* Auto-Fill tab removed - AI features paused */}
+        <TabsTrigger value="documents" className="flex items-center gap-2 border-2 border-primary/20">
+          <Library className="h-4 w-4" />
+          Documents 📚
+        </TabsTrigger>
         <TabsTrigger value="jobs" className="flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4" />
           Jobs
@@ -171,6 +175,11 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Content Inventory Tab */}
       <TabsContent value="inventory">
         <ContentInventory />
+      </TabsContent>
+      
+      {/* Document Library Tab - RAG Pipeline */}
+      <TabsContent value="documents">
+        <DocumentLibrary />
       </TabsContent>
       
       {/* Auto-Fill Tab removed - AI features paused */}
