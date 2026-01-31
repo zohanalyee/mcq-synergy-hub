@@ -1236,21 +1236,37 @@ export type Database = {
         }[]
       }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
-      match_document_sections: {
-        Args: {
-          filter_document_id?: string
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          content: string
-          document_id: string
-          id: string
-          page_number: number
-          similarity: number
-        }[]
-      }
+      match_document_sections:
+        | {
+            Args: {
+              filter_document_id?: string
+              match_count?: number
+              match_threshold?: number
+              query_embedding: string
+            }
+            Returns: {
+              content: string
+              document_id: string
+              id: string
+              page_number: number
+              similarity: number
+            }[]
+          }
+        | {
+            Args: {
+              filter_document_id?: string
+              match_count?: number
+              match_threshold?: number
+              query_embedding: string
+            }
+            Returns: {
+              content: string
+              document_id: string
+              id: string
+              page_number: number
+              similarity: number
+            }[]
+          }
     }
     Enums: {
       [_ in never]: never
