@@ -1,7 +1,7 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-// Configure PDF.js worker
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Disable worker to avoid CDN loading issues
+pdfjsLib.GlobalWorkerOptions.workerSrc = "";
 
 export interface ExtractionProgress {
   currentPage: number;
