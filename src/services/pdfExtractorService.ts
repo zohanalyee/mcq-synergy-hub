@@ -1,7 +1,7 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-// Disable worker to avoid CDN loading issues
-pdfjsLib.GlobalWorkerOptions.workerSrc = "";
+// Fully disable worker to avoid CDN loading issues on mobile + Lovable environment
+(pdfjsLib as any).disableWorker = true;
 
 export interface ExtractionProgress {
   currentPage: number;
