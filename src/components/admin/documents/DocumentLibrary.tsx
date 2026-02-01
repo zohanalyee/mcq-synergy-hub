@@ -41,7 +41,6 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { documentService, Document, UploadProgress } from "@/services/documentService";
-import { pdfExtractorService } from "@/services/pdfExtractorService";
 import { format } from "date-fns";
 
 const DocumentLibrary = () => {
@@ -112,7 +111,7 @@ const DocumentLibrary = () => {
       setUploadProgress({
         stage: "uploading",
         message: "Uploading PDF to storage...",
-        progress: 10,
+        progress: 20,
       });
       
       const fileUrl = await documentService.uploadToStorage(selectedFile);
@@ -121,7 +120,7 @@ const DocumentLibrary = () => {
       setUploadProgress({
         stage: "uploading",
         message: "Creating document record...",
-        progress: 20,
+        progress: 40,
       });
       
       const docRecord = await documentService.createDocument(
@@ -131,51 +130,16 @@ const DocumentLibrary = () => {
       );
       documentId = docRecord.id;
 
-      // Step 3: Extract text from PDF
-      setUploadProgress({
-        stage: "extracting",
-        message: "Extracting text from PDF...",
-        progress: 30,
-        currentPage: 0,
-        totalPages: 0,
-      });
-
-      const extractionResult = await pdfExtractorService.extractText(
-        selectedFile,
-        (progress) => {
-          const extractProgress = 30 + (progress.currentPage / progress.totalPages) * 40;
-          setUploadProgress({
-            stage: "extracting",
-            message: `Extracting text from page ${progress.currentPage} of ${progress.totalPages}...`,
-            progress: extractProgress,
-            currentPage: progress.currentPage,
-            totalPages: progress.totalPages,
-          });
-        }
-      );
-
-      // Check text size
-      if (extractionResult.text.length > documentService.MAX_TEXT_LENGTH) {
-        throw new Error(
-          `Extracted text is too large (${Math.round(extractionResult.text.length / 1024)}KB). ` +
-          `Maximum allowed is ${documentService.MAX_TEXT_LENGTH / 1024}KB.`
-        );
-      }
-
-      // Step 4: Process with Edge Function
+      // Step 3: Trigger server-side processing
       setUploadProgress({
         stage: "processing",
-        message: "Generating embeddings with AI...",
-        progress: 75,
+        message: "Processing PDF on server (extracting text & generating embeddings)...",
+        progress: 60,
       });
 
-      await documentService.processDocument(
-        docRecord.id,
-        title.trim(),
-        extractionResult.text
-      );
+      await documentService.processDocument(docRecord.id, title.trim(), fileUrl);
 
-      // Step 5: Completed
+      // Step 4: Completed
       setUploadProgress({
         stage: "completed",
         message: "Document processed successfully!",
@@ -294,7 +258,7 @@ const DocumentLibrary = () => {
             Upload New Document
           </CardTitle>
           <CardDescription>
-            Upload a PDF document to extract text and generate embeddings for AI-powered search
+            Upload a PDF document — text extraction and embedding generation happens on the server
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -414,7 +378,7 @@ const DocumentLibrary = () => {
                 <TableRow>
                   <TableHead>Title</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Pages</TableHead>
+                  <TableHead>Chunks</TableHead>
                   <TableHead>Uploaded</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
