@@ -13,15 +13,12 @@ export interface Document {
 }
 
 export interface UploadProgress {
-  stage: "uploading" | "extracting" | "processing" | "completed" | "failed";
+  stage: "uploading" | "processing" | "completed" | "failed";
   message: string;
   progress?: number;
-  currentPage?: number;
-  totalPages?: number;
 }
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
-const MAX_TEXT_LENGTH = 500000; // ~500KB text limit for edge function payload
 
 export const documentService = {
   // Fetch all documents
@@ -100,21 +97,13 @@ export const documentService = {
     if (error) throw error;
   },
 
-  // Call process-book edge function
-  async processDocument(documentId: string, title: string, text: string): Promise<void> {
-    // Check text size
-    if (text.length > MAX_TEXT_LENGTH) {
-      throw new Error(
-        `Extracted text is too large (${Math.round(text.length / 1024)}KB). ` +
-        `Maximum allowed is ${MAX_TEXT_LENGTH / 1024}KB. Consider using a smaller PDF.`
-      );
-    }
-
+  // Trigger server-side PDF processing (Edge Function handles extraction + embeddings)
+  async processDocument(documentId: string, title: string, fileUrl: string): Promise<void> {
     const { data, error } = await supabase.functions.invoke("process-book", {
       body: {
         documentId,
         title,
-        text,
+        fileUrl,
       },
     });
 
@@ -163,5 +152,4 @@ export const documentService = {
   },
 
   MAX_FILE_SIZE,
-  MAX_TEXT_LENGTH,
 };

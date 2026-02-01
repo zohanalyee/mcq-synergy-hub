@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { getDocument } from "https://esm.sh/pdfjs-serverless@0.4.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,11 +11,61 @@ const corsHeaders = {
 const CHUNK_SIZE = 1000; // characters per chunk
 const CHUNK_OVERLAP = 200; // overlap between chunks
 const EMBEDDING_MODEL = "text-embedding-004"; // Google's 768-dim model
+const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25MB
 
 interface ProcessRequest {
   documentId: string;
-  text: string;
+  fileUrl: string;
   title?: string;
+}
+
+// Fetch and parse PDF from URL
+async function extractTextFromPdf(fileUrl: string): Promise<{ text: string; pageCount: number }> {
+  console.log(`Fetching PDF from: ${fileUrl}`);
+  
+  const response = await fetch(fileUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+  }
+
+  const contentLength = response.headers.get("content-length");
+  if (contentLength && parseInt(contentLength) > MAX_PDF_SIZE) {
+    throw new Error(`PDF file too large (${Math.round(parseInt(contentLength) / 1024 / 1024)}MB). Maximum is ${MAX_PDF_SIZE / 1024 / 1024}MB.`);
+  }
+
+  const arrayBuffer = await response.arrayBuffer();
+  const data = new Uint8Array(arrayBuffer);
+  
+  console.log(`PDF downloaded: ${data.length} bytes`);
+
+  // Parse PDF with pdfjs-serverless
+  const doc = await getDocument(data).promise;
+  const pageCount = doc.numPages;
+  
+  console.log(`PDF has ${pageCount} pages`);
+
+  let fullText = "";
+  
+  for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
+    const page = await doc.getPage(pageNum);
+    const textContent = await page.getTextContent();
+    
+    const pageText = textContent.items
+      .map((item: { str?: string }) => item.str || "")
+      .join(" ");
+    
+    fullText += pageText + "\n\n";
+    
+    // Log progress for debugging
+    if (pageNum % 10 === 0) {
+      console.log(`Extracted text from page ${pageNum}/${pageCount}`);
+    }
+  }
+
+  return {
+    text: fullText.trim(),
+    pageCount,
+  };
 }
 
 // Split text into overlapping chunks
@@ -72,8 +123,7 @@ async function generateEmbedding(text: string, apiKey: string): Promise<number[]
 // Batch generate embeddings with rate limiting
 async function generateEmbeddingsBatch(
   chunks: string[],
-  apiKey: string,
-  onProgress?: (current: number, total: number) => void
+  apiKey: string
 ): Promise<number[][]> {
   const embeddings: number[][] = [];
   
@@ -81,8 +131,9 @@ async function generateEmbeddingsBatch(
     const embedding = await generateEmbedding(chunks[i], apiKey);
     embeddings.push(embedding);
     
-    if (onProgress) {
-      onProgress(i + 1, chunks.length);
+    // Log progress
+    if ((i + 1) % 10 === 0) {
+      console.log(`Generated embeddings: ${i + 1}/${chunks.length}`);
     }
     
     // Rate limiting: 60 requests per minute for free tier
@@ -112,16 +163,17 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    const { documentId, text, title } = await req.json() as ProcessRequest;
+    const { documentId, fileUrl, title } = await req.json() as ProcessRequest;
 
-    if (!documentId || !text) {
+    if (!documentId || !fileUrl) {
       return new Response(
-        JSON.stringify({ error: "documentId and text are required" }),
+        JSON.stringify({ error: "documentId and fileUrl are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`Processing document: ${documentId}, text length: ${text.length}`);
+    console.log(`Processing document: ${documentId}`);
+    console.log(`File URL: ${fileUrl}`);
 
     // Update document status to processing
     await supabase
@@ -129,7 +181,15 @@ serve(async (req) => {
       .update({ status: "processing" })
       .eq("id", documentId);
 
-    // Chunk the text
+    // Step 1: Fetch and extract text from PDF (server-side)
+    const { text, pageCount } = await extractTextFromPdf(fileUrl);
+    console.log(`Extracted ${text.length} characters from ${pageCount} pages`);
+
+    if (!text || text.length < 100) {
+      throw new Error("PDF appears to be empty or contains very little extractable text");
+    }
+
+    // Step 2: Chunk the text
     const chunks = chunkText(text, CHUNK_SIZE, CHUNK_OVERLAP);
     console.log(`Created ${chunks.length} chunks`);
 
@@ -137,12 +197,12 @@ serve(async (req) => {
       throw new Error("No valid text chunks could be extracted");
     }
 
-    // Generate embeddings for all chunks
+    // Step 3: Generate embeddings for all chunks
     console.log("Generating embeddings with Gemini...");
     const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
     console.log(`Generated ${embeddings.length} embeddings`);
 
-    // Prepare sections for insertion
+    // Step 4: Prepare sections for insertion
     const sections = chunks.map((content, index) => ({
       document_id: documentId,
       content,
@@ -151,7 +211,7 @@ serve(async (req) => {
       token_count: Math.ceil(content.length / 4), // Rough token estimate
     }));
 
-    // Insert sections into database
+    // Step 5: Insert sections into database
     const { error: insertError } = await supabase
       .from("document_sections")
       .insert(sections);
@@ -161,7 +221,7 @@ serve(async (req) => {
       throw new Error(`Failed to insert sections: ${insertError.message}`);
     }
 
-    // Update document status to completed
+    // Step 6: Update document status to completed
     await supabase
       .from("documents")
       .update({ 
@@ -176,6 +236,7 @@ serve(async (req) => {
       JSON.stringify({
         success: true,
         documentId,
+        pagesExtracted: pageCount,
         chunksProcessed: chunks.length,
         embeddingDimension: embeddings[0]?.length || 768,
       }),
@@ -183,6 +244,23 @@ serve(async (req) => {
     );
   } catch (error) {
     console.error("Process book error:", error);
+    
+    // Try to update document status to failed
+    try {
+      const body = await req.clone().json();
+      if (body?.documentId) {
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const supabase = createClient(supabaseUrl, supabaseServiceKey);
+        
+        await supabase
+          .from("documents")
+          .update({ status: "failed" })
+          .eq("id", body.documentId);
+      }
+    } catch {
+      // Ignore errors when updating status
+    }
     
     return new Response(
       JSON.stringify({ 
