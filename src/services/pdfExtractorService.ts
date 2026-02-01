@@ -1,8 +1,5 @@
 import * as pdfjsLib from "pdfjs-dist";
 
-// Fully disable worker to avoid CDN loading issues on mobile + Lovable environment
-(pdfjsLib as any).disableWorker = true;
-
 export interface ExtractionProgress {
   currentPage: number;
   totalPages: number;
@@ -26,7 +23,10 @@ export const pdfExtractorService = {
     onProgress?: (progress: ExtractionProgress) => void
   ): Promise<ExtractionResult> {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    // Disable PDF.js worker per-document (prevents CDN worker loading issues)
+    const pdf = await pdfjsLib
+      .getDocument({ data: arrayBuffer, disableWorker: true } as any)
+      .promise;
     
     const totalPages = pdf.numPages;
     let fullText = "";
@@ -71,7 +71,9 @@ export const pdfExtractorService = {
    */
   async getPdfInfo(file: File): Promise<{ pageCount: number }> {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const pdf = await pdfjsLib
+      .getDocument({ data: arrayBuffer, disableWorker: true } as any)
+      .promise;
     return { pageCount: pdf.numPages };
   },
 };
