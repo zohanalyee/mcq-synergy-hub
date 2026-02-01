@@ -1,4 +1,16 @@
-import * as pdfjsLib from "pdfjs-dist";
+import * as pdfjsLib from "pdfjs-dist/legacy/build/pdf.mjs";
+
+// Use the legacy PDF.js build + explicitly unset workerSrc to avoid worker initialization
+// in bundled / no-worker environments (Lovable + mobile).
+try {
+  const pdfjsAny = pdfjsLib as any;
+  if (pdfjsAny?.PDFWorkerUtil) {
+    pdfjsAny.PDFWorkerUtil.isWorkerDisabled = true;
+  }
+  pdfjsLib.GlobalWorkerOptions.workerSrc = undefined as unknown as string;
+} catch {
+  // Never crash the app if PDF.js internals differ across builds.
+}
 
 export interface ExtractionProgress {
   currentPage: number;
@@ -23,10 +35,7 @@ export const pdfExtractorService = {
     onProgress?: (progress: ExtractionProgress) => void
   ): Promise<ExtractionResult> {
     const arrayBuffer = await file.arrayBuffer();
-    // Disable PDF.js worker per-document (prevents CDN worker loading issues)
-    const pdf = await pdfjsLib
-      .getDocument({ data: arrayBuffer, disableWorker: true } as any)
-      .promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     
     const totalPages = pdf.numPages;
     let fullText = "";
@@ -71,9 +80,7 @@ export const pdfExtractorService = {
    */
   async getPdfInfo(file: File): Promise<{ pageCount: number }> {
     const arrayBuffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib
-      .getDocument({ data: arrayBuffer, disableWorker: true } as any)
-      .promise;
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     return { pageCount: pdf.numPages };
   },
 };
