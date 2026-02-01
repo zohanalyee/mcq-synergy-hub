@@ -1,107 +1,151 @@
 
-# Fix Night Mode / Dark Theme Implementation
+# Server-Side PDF Processing Architecture
 
-## Problem Analysis
+## Summary
+Move ALL PDF parsing to the `process-book` Edge Function. The client will only upload files to Supabase Storage and trigger processing - no PDF.js in frontend at all.
 
-Based on your reference screenshot (the 10:45 AM version), you want the **desktop Home page in dark mode** to look exactly as shown - with the dark sidebar, dark header, gradient cards, and proper dark theme styling.
+## Architecture Overview
 
-The previous implementation created a completely **separate** `MobileDashboard.tsx` component with hardcoded dark colors that:
-1. Only shows on mobile devices
-2. Has a completely different layout than the desktop Home page
-3. Uses hardcoded colors (`bg-slate-950`) instead of theme-aware classes
-4. Doesn't integrate with the existing Light/Dark theme toggle system
-
-## Solution
-
-### Phase 1: Remove the Separate Mobile Dashboard
-
-**File: `src/pages/Index.tsx`**
-- Remove the conditional rendering that shows `MobileDashboard` on mobile
-- The Home page should show the same layout on both desktop and mobile (with responsive adjustments)
-- This ensures the theme toggle affects the entire page consistently
-
-### Phase 2: Keep MobileDashboard as Optional (or Delete)
-
-**File: `src/components/mobile/MobileDashboard.tsx`**
-- Option A: Delete this component entirely if not needed
-- Option B: Keep it but make it theme-aware by replacing hardcoded colors with CSS variables (`bg-background`, `text-foreground`, etc.)
-
-### Phase 3: Verify Dark Mode Styling
-
-**File: `src/index.css`**
-- Ensure the dark mode CSS variables are properly defined
-- The `.dark` class on `<html>` should trigger all dark mode styles
-- Background should be `hsl(224 71% 4%)` (deep slate/navy)
-- Cards should use `bg-card` which maps to dark colors in `.dark` mode
-
-### Phase 4: Verify Theme Toggle Works
-
-**File: `src/components/ThemeSwitcher.tsx`**
-- The `useTheme` hook already toggles the `dark` class on `document.documentElement`
-- When user selects "Dark" from the theme dropdown, the entire app should switch themes
-- The theme is persisted in localStorage
-
----
-
-## Technical Changes
-
-### 1. Update `src/pages/Index.tsx`
-
-Remove lines 166-169:
-```tsx
-// Remove this conditional:
-if (isMobile) {
-  return <MobileDashboard />;
-}
+```text
+┌─────────────────────────────────────────────────────────────────┐
+│                         CLIENT (React)                          │
+│  ┌──────────────────┐    ┌──────────────────┐                   │
+│  │ Select PDF File  │───>│ Upload to Storage│                   │
+│  └──────────────────┘    └────────┬─────────┘                   │
+│                                   │                             │
+│                          ┌────────▼─────────┐                   │
+│                          │ Create Document  │                   │
+│                          │ Record (pending) │                   │
+│                          └────────┬─────────┘                   │
+│                                   │                             │
+│                          ┌────────▼─────────┐                   │
+│                          │ Invoke process-  │                   │
+│                          │ book (file URL)  │                   │
+│                          └──────────────────┘                   │
+└─────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                    EDGE FUNCTION (process-book)                 │
+│  ┌──────────────────┐    ┌──────────────────┐                   │
+│  │ Fetch PDF from   │───>│ Parse with       │                   │
+│  │ Storage URL      │    │ pdfjs-serverless │                   │
+│  └──────────────────┘    └────────┬─────────┘                   │
+│                                   │                             │
+│                          ┌────────▼─────────┐                   │
+│                          │ Chunk Text       │                   │
+│                          └────────┬─────────┘                   │
+│                                   │                             │
+│                          ┌────────▼─────────┐                   │
+│                          │ Generate Gemini  │                   │
+│                          │ Embeddings       │                   │
+│                          └────────┬─────────┘                   │
+│                                   │                             │
+│                          ┌────────▼─────────┐                   │
+│                          │ Store Sections   │                   │
+│                          │ + Update Status  │                   │
+│                          └──────────────────┘                   │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-This will make the Home page render the same content on mobile and desktop, just with responsive styling.
+## Changes Required
 
-### 2. Delete or Archive MobileDashboard
+### 1. Delete from Frontend (Remove Crash Source)
+**File: `src/services/pdfExtractorService.ts`**
+- DELETE this entire file
+- This removes all `pdfjs-dist` imports from the client bundle
+- No PDF.js = no worker crash
 
-Either:
-- Delete `src/components/mobile/MobileDashboard.tsx` entirely
-- Or keep it for future use but remove the import from Index.tsx
+### 2. Update Document Library Component
+**File: `src/components/admin/documents/DocumentLibrary.tsx`**
+- Remove import of `pdfExtractorService`
+- Simplify `handleUpload()` to only:
+  1. Upload PDF to Supabase Storage
+  2. Create document record with `pending` status
+  3. Call `process-book` edge function with `{ documentId, fileUrl }` (no text)
+- Remove all client-side text extraction progress UI
+- Add simpler progress: "Uploading..." then "Processing on server..."
 
-### 3. Verify Dark Mode Classes Work
+### 3. Update Document Service
+**File: `src/services/documentService.ts`**
+- Update `processDocument()` to accept `fileUrl` instead of `text`
+- Remove `MAX_TEXT_LENGTH` check (server handles this now)
 
-The existing Index.tsx already uses theme-aware classes:
-- `bg-background` - maps to dark background in dark mode
-- `text-foreground` - maps to light text in dark mode  
-- The gradient cards use explicit color classes which work in both modes
+### 4. Rewrite Process-Book Edge Function
+**File: `supabase/functions/process-book/index.ts`**
+- Add `pdfjs-serverless` import from ESM CDN
+- Change input from `{ documentId, text }` to `{ documentId, fileUrl }`
+- Add PDF fetch and parsing logic:
+  1. Fetch PDF binary from Storage URL
+  2. Parse with `pdfjs-serverless`
+  3. Extract text from all pages
+  4. Chunk, embed, and store (existing logic)
+- Add better error handling for large PDFs
 
-### 4. Test the Theme Toggle
+## Technical Details
 
-After changes:
-1. Click the Moon icon in the header
-2. Select "Dark" from the dropdown
-3. The entire page should switch to dark mode matching your screenshot:
-   - Dark sidebar
-   - Dark header
-   - Dark background
-   - Same gradient cards (Blue, Purple, Amber)
-   - Gradient text on "Precision" and "Confidence"
+### PDF Library for Edge Functions
+Use `pdfjs-serverless` which is designed for serverless/Deno environments:
+```typescript
+import { getDocument } from "https://esm.sh/pdfjs-serverless@0.6.0";
+```
 
----
+### New process-book Flow
+```typescript
+// 1. Fetch PDF from storage
+const response = await fetch(fileUrl);
+const arrayBuffer = await response.arrayBuffer();
+const data = new Uint8Array(arrayBuffer);
 
-## Expected Result
+// 2. Parse PDF
+const doc = await getDocument(data).promise;
 
-After implementation:
-- **Light Mode**: Current light glassmorphism look
-- **Dark Mode**: Matches your 10:45 AM screenshot exactly - dark sidebar, dark header, dark background, colorful gradient cards
-- **Mobile**: Same Home page layout (responsive), not a separate component
-- **Theme Toggle**: Works consistently across all pages
+// 3. Extract text from all pages
+let text = "";
+for (let i = 1; i <= doc.numPages; i++) {
+  const page = await doc.getPage(i);
+  const content = await page.getTextContent();
+  text += content.items.map((item: any) => item.str).join(" ") + "\n";
+}
 
----
+// 4. Continue with existing chunking + embedding logic
+```
+
+### Updated DocumentLibrary Upload Flow
+```typescript
+// Step 1: Upload to storage (unchanged)
+const fileUrl = await documentService.uploadToStorage(selectedFile);
+
+// Step 2: Create document record (unchanged)
+const docRecord = await documentService.createDocument(title, filename, fileUrl);
+
+// Step 3: Trigger server-side processing (simplified)
+setUploadProgress({ stage: "processing", message: "Processing PDF on server..." });
+await documentService.processDocument(docRecord.id, fileUrl);
+
+// Done - no client-side PDF parsing at all
+```
 
 ## Files to Modify
 
-1. `src/pages/Index.tsx` - Remove mobile dashboard conditional
-2. `src/components/mobile/MobileDashboard.tsx` - Delete or keep for reference
-3. `src/components/MobileBottomNav.tsx` - Remove the home page exclusion check (line 20)
+| File | Action | Purpose |
+|------|--------|---------|
+| `src/services/pdfExtractorService.ts` | DELETE | Remove PDF.js from frontend |
+| `src/components/admin/documents/DocumentLibrary.tsx` | MODIFY | Remove PDF.js import, simplify upload flow |
+| `src/services/documentService.ts` | MODIFY | Change processDocument signature |
+| `supabase/functions/process-book/index.ts` | REWRITE | Add server-side PDF parsing |
 
-## Files to Verify (No Changes Needed)
+## Benefits of This Architecture
 
-- `src/components/ThemeSwitcher.tsx` - Theme toggle logic (already correct)
-- `src/index.css` - Dark mode CSS variables (already defined correctly)
-- `src/components/ui/theme-toggle.tsx` - Theme dropdown component (already correct)
+1. **No client-side crashes** - PDF.js completely removed from frontend bundle
+2. **Works on all devices** - Mobile, desktop, Lovable preview all work identically
+3. **Scalable** - Server handles heavy PDF processing
+4. **Simpler client code** - Just upload and wait
+5. **Better error handling** - Server can handle edge cases gracefully
+6. **Future-proof** - Easy to add support for other document types (DOCX, etc.)
+
+## Limitations to Consider
+
+- Larger PDFs may take longer (server-side processing)
+- Edge function timeout (default 60s) may need monitoring for very large files
+- No client-side page-by-page progress (but overall progress still shown)
