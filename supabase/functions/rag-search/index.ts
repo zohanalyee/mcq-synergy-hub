@@ -1,0 +1,313 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+const EMBEDDING_MODEL = "text-embedding-004";
+const GEMINI_CHAT_MODEL = "gemini-2.0-flash";
+const MAX_QUERY_LENGTH = 500;
+const DEFAULT_TOP_K = 5;
+const MATCH_THRESHOLD = 0.70;
+
+interface SearchRequest {
+  query: string;
+  documentIds?: string[];
+  topK?: number;
+}
+
+interface SearchResult {
+  content: string;
+  document_id: string;
+  similarity: number;
+  page_number: number | null;
+  title: string;
+}
+
+// Generate embedding using Google Gemini API
+async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: `models/${EMBEDDING_MODEL}`,
+        content: { parts: [{ text }] },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Gemini embedding error:", error);
+    throw new Error(`Embedding API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  if (!data.embedding?.values) {
+    throw new Error("No embedding returned from Gemini API");
+  }
+
+  return data.embedding.values;
+}
+
+// Generate answer using Gemini chat model
+async function generateAnswer(
+  query: string,
+  context: string,
+  apiKey: string
+): Promise<string> {
+  const systemPrompt = `You are an academic assistant helping students understand their course material.
+
+STRICT RULES:
+1. Answer ONLY using the provided document context below
+2. Do NOT add any external knowledge or information
+3. If the answer is not present in the context, respond exactly with: "This information is not available in the uploaded documents."
+4. Be concise, clear, and student-friendly
+5. If partially relevant information exists, share it but note any limitations
+
+CONTEXT FROM UPLOADED DOCUMENTS:
+${context}`;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_CHAT_MODEL}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: "user",
+            parts: [{ text: `Question: ${query}\n\nPlease answer based only on the document context provided.` }],
+          },
+        ],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }],
+        },
+        generationConfig: {
+          temperature: 0.3,
+          maxOutputTokens: 1024,
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.text();
+    console.error("Gemini chat error:", error);
+    throw new Error(`Chat API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  
+  if (!answer) {
+    throw new Error("No answer generated from Gemini API");
+  }
+
+  return answer;
+}
+
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  const startTime = Date.now();
+
+  try {
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
+      throw new Error("GEMINI_API_KEY is not configured");
+    }
+
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const body = await req.json() as SearchRequest;
+    const { query, documentIds, topK = DEFAULT_TOP_K } = body;
+
+    // Validation
+    if (!query || typeof query !== "string") {
+      return new Response(
+        JSON.stringify({ error: "Query is required and must be a string" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const trimmedQuery = query.trim();
+
+    if (trimmedQuery.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Query cannot be empty" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    if (trimmedQuery.length > MAX_QUERY_LENGTH) {
+      return new Response(
+        JSON.stringify({ 
+          error: `Query too long. Maximum ${MAX_QUERY_LENGTH} characters allowed.`,
+          currentLength: trimmedQuery.length
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`RAG query: "${trimmedQuery.substring(0, 50)}..." (${trimmedQuery.length} chars)`);
+
+    // Step 1: Generate embedding for user query
+    console.log("Generating query embedding...");
+    const queryEmbedding = await generateEmbedding(trimmedQuery, GEMINI_API_KEY);
+    console.log(`Generated embedding with ${queryEmbedding.length} dimensions`);
+
+    // Step 2: Vector similarity search
+    console.log("Performing vector search...");
+    
+    // Use the existing match_document_sections RPC or direct query
+    let sections: any[] = [];
+    
+    if (documentIds && documentIds.length > 0) {
+      // Filter by specific documents
+      for (const docId of documentIds) {
+        const { data, error } = await supabase.rpc(
+          "match_document_sections",
+          {
+            query_embedding: JSON.stringify(queryEmbedding),
+            match_threshold: MATCH_THRESHOLD,
+            match_count: topK,
+            filter_document_id: docId,
+          }
+        );
+        if (data && !error) {
+          sections.push(...data);
+        }
+      }
+      // Sort by similarity and take top K
+      sections.sort((a, b) => b.similarity - a.similarity);
+      sections = sections.slice(0, topK);
+    } else {
+      // Search across all documents
+      const { data, error } = await supabase.rpc(
+        "match_document_sections",
+        {
+          query_embedding: JSON.stringify(queryEmbedding),
+          match_threshold: MATCH_THRESHOLD,
+          match_count: topK,
+          filter_document_id: null,
+        }
+      );
+      if (error) {
+        console.error("Search error:", error);
+        throw new Error(`Vector search failed: ${error.message}`);
+      }
+      sections = data || [];
+    }
+
+    // Step 3: Check if we found relevant chunks
+    if (!sections || sections.length === 0) {
+      console.log("No matching sections found");
+      
+      // Log the failed search
+      await supabase.from("ai_usage_logs").insert({
+        source_type: "rag_search",
+        questions_requested: 1,
+        questions_fetched: 0,
+        questions_saved: 0,
+        metadata: {
+          query: trimmedQuery.substring(0, 100),
+          topK,
+          resultsFound: 0,
+          status: "no_matches",
+          duration_ms: Date.now() - startTime,
+        },
+      });
+
+      return new Response(
+        JSON.stringify({ 
+          answer: "This information is not available in the uploaded documents. Please try rephrasing your question or check if the relevant document has been uploaded.",
+          sources: [],
+          query: trimmedQuery,
+          searchTime: Date.now() - startTime,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Step 4: Fetch document titles
+    const documentIdSet = [...new Set(sections.map((s: any) => s.document_id))];
+    const { data: documents } = await supabase
+      .from("documents")
+      .select("id, title")
+      .in("id", documentIdSet);
+
+    const titleMap = new Map(documents?.map((d: any) => [d.id, d.title]) || []);
+
+    // Step 5: Build context from retrieved chunks
+    const contextParts = sections.map((section: any, index: number) => {
+      const title = titleMap.get(section.document_id) || "Unknown Document";
+      const pageInfo = section.page_number ? ` (Page ${section.page_number})` : "";
+      return `[Source ${index + 1}: ${title}${pageInfo}]\n${section.content}`;
+    });
+    
+    const context = contextParts.join("\n\n---\n\n");
+    console.log(`Built context from ${sections.length} chunks (${context.length} chars)`);
+
+    // Step 6: Generate answer using Gemini
+    console.log("Generating answer...");
+    const answer = await generateAnswer(trimmedQuery, context, GEMINI_API_KEY);
+    console.log(`Generated answer: ${answer.length} chars`);
+
+    // Step 7: Format sources for response
+    const sources = sections.map((section: any) => ({
+      documentId: section.document_id,
+      title: titleMap.get(section.document_id) || "Unknown Document",
+      pageNumber: section.page_number,
+      similarity: Math.round(section.similarity * 100) / 100,
+      excerpt: section.content.substring(0, 150) + (section.content.length > 150 ? "..." : ""),
+    }));
+
+    // Step 8: Log successful search
+    await supabase.from("ai_usage_logs").insert({
+      source_type: "rag_search",
+      questions_requested: 1,
+      questions_fetched: sections.length,
+      questions_saved: 1,
+      metadata: {
+        query: trimmedQuery.substring(0, 100),
+        topK,
+        resultsFound: sections.length,
+        topSimilarity: sections[0]?.similarity || 0,
+        answerLength: answer.length,
+        status: "success",
+        duration_ms: Date.now() - startTime,
+      },
+    });
+
+    return new Response(
+      JSON.stringify({
+        answer,
+        sources,
+        query: trimmedQuery,
+        searchTime: Date.now() - startTime,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (error) {
+    console.error("RAG search error:", error);
+    
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error",
+        details: "Failed to process your question. Please try again."
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});

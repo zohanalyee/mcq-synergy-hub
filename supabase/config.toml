@@ -17,3 +17,6 @@ verify_jwt = false
 
 [functions.search-documents]
 verify_jwt = false
+
+[functions.rag-search]
+verify_jwt = false

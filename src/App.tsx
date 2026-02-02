@@ -43,6 +43,7 @@ import Achievements from "./pages/Achievements";
 import Quizzes from "./pages/Quizzes";
 import SubmitContent from "./pages/SubmitContent";
 import QuestionBank from "./pages/QuestionBank";
+import AskDocument from "./pages/AskDocument";
 import TestSession from "./pages/TestSession";
 
 // Tool Pages
@@ -118,6 +119,7 @@ const App = () => {
                       <Route path="/quizzes" element={<Quizzes />} />
                       <Route path="/question-bank" element={<QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
+                      <Route path="/ask-document" element={<AskDocument />} />
                       <Route path="/test-session/:id" element={<TestSession />} />
                       
                       {/* Tool Routes */}
