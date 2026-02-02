@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { getDocument } from "https://esm.sh/pdfjs-serverless@0.4.1";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,7 +19,7 @@ interface ProcessRequest {
   title?: string;
 }
 
-// Fetch and parse PDF from URL
+// Fetch and parse PDF from URL using unpdf
 async function extractTextFromPdf(fileUrl: string): Promise<{ text: string; pageCount: number }> {
   console.log(`Fetching PDF from: ${fileUrl}`);
   
@@ -38,29 +38,16 @@ async function extractTextFromPdf(fileUrl: string): Promise<{ text: string; page
   
   console.log(`PDF downloaded: ${data.length} bytes`);
 
-  // Parse PDF with pdfjs-serverless
-  const doc = await getDocument(data).promise;
-  const pageCount = doc.numPages;
+  // Parse PDF with unpdf
+  const pdf = await getDocumentProxy(data);
+  const pageCount = pdf.numPages;
   
   console.log(`PDF has ${pageCount} pages`);
 
-  let fullText = "";
-  
-  for (let pageNum = 1; pageNum <= pageCount; pageNum++) {
-    const page = await doc.getPage(pageNum);
-    const textContent = await page.getTextContent();
-    
-    const pageText = textContent.items
-      .map((item: { str?: string }) => item.str || "")
-      .join(" ");
-    
-    fullText += pageText + "\n\n";
-    
-    // Log progress for debugging
-    if (pageNum % 10 === 0) {
-      console.log(`Extracted text from page ${pageNum}/${pageCount}`);
-    }
-  }
+  // Extract all text using unpdf's extractText
+  const { text: fullText } = await extractText(pdf, { mergePages: true });
+
+  console.log(`Extracted ${fullText.length} characters from ${pageCount} pages`);
 
   return {
     text: fullText.trim(),
