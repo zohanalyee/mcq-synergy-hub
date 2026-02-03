@@ -1,151 +1,220 @@
 
-# Server-Side PDF Processing Architecture
 
-## Summary
-Move ALL PDF parsing to the `process-book` Edge Function. The client will only upload files to Supabase Storage and trigger processing - no PDF.js in frontend at all.
+# Project Architecture Analysis & Remaining Work Plan
 
-## Architecture Overview
+## What Is Done (Confirmed Working)
 
-```text
-┌─────────────────────────────────────────────────────────────────┐
-│                         CLIENT (React)                          │
-│  ┌──────────────────┐    ┌──────────────────┐                   │
-│  │ Select PDF File  │───>│ Upload to Storage│                   │
-│  └──────────────────┘    └────────┬─────────┘                   │
-│                                   │                             │
-│                          ┌────────▼─────────┐                   │
-│                          │ Create Document  │                   │
-│                          │ Record (pending) │                   │
-│                          └────────┬─────────┘                   │
-│                                   │                             │
-│                          ┌────────▼─────────┐                   │
-│                          │ Invoke process-  │                   │
-│                          │ book (file URL)  │                   │
-│                          └──────────────────┘                   │
-└─────────────────────────────────────────────────────────────────┘
-                                    │
-                                    ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    EDGE FUNCTION (process-book)                 │
-│  ┌──────────────────┐    ┌──────────────────┐                   │
-│  │ Fetch PDF from   │───>│ Parse with       │                   │
-│  │ Storage URL      │    │ pdfjs-serverless │                   │
-│  └──────────────────┘    └────────┬─────────┘                   │
-│                                   │                             │
-│                          ┌────────▼─────────┐                   │
-│                          │ Chunk Text       │                   │
-│                          └────────┬─────────┘                   │
-│                                   │                             │
-│                          ┌────────▼─────────┐                   │
-│                          │ Generate Gemini  │                   │
-│                          │ Embeddings       │                   │
-│                          └────────┬─────────┘                   │
-│                                   │                             │
-│                          ┌────────▼─────────┐                   │
-│                          │ Store Sections   │                   │
-│                          │ + Update Status  │                   │
-│                          └──────────────────┘                   │
-└─────────────────────────────────────────────────────────────────┘
+### LMS Structure
+- **Educational Systems Table**: AKU-EB, Cambridge/Oxford, Punjab, Sindh boards - all defined
+- **Levels**: Classes 4-12 with proper hierarchy
+- **Subjects & Topics**: Fully linked with foreign keys (level_id, subject_id)
+- **Admin UI**: LMS Structure Manager, Subject Manager, Topic Manager all functional
+- **Bulk Syllabus Import**: JSON-based import into any level
+
+### RAG Pipeline (End-to-End Working)
+- **PDF Upload**: Admin → Storage bucket (`course_books`) → Document record
+- **Server-Side Processing**: `process-book` Edge Function uses `unpdf` (no client crashes)
+- **Text Chunking**: 1000 chars with 200 overlap
+- **Embeddings**: Gemini `text-embedding-004` (768 dimensions)
+- **Vector Storage**: `document_sections` table with pgvector HNSW index
+- **Search RPC**: `match_document_sections` with similarity threshold
+- **Student Q&A**: `/ask-document` page calling `rag-search` Edge Function with strict grounding
+
+### Question Bank & Tests
+- **Question Bank Service**: Filters by subject, topic, subtopic, difficulty
+- **Custom Test Generation**: Pulls from `content_items` (MCQ category)
+- **Usage Tracking**: `usage_count`, `last_used_at` fields updated on use
+- **Test Sessions**: Saved to `custom_test_sessions` table per user
+
+### AI Generation (Implemented but Paused)
+- **`generate-test` Edge Function**: Full MCQ generation with model fallback (gemini-2.0-flash → gemini-1.5-flash → gemini-1.5-pro)
+- **Hybrid Deduplication**: Fingerprinting + normalized text matching
+- **Job/Syllabus Mapping**: Maps job tests to core subjects for cross-question reuse
+- **Database-First Recovery**: Falls back to cached questions on 429/403 errors
+
+### Auto-Fill System (Implemented)
+- **`scheduled-autofill` Edge Function**: Nightly cron job ready
+- **Content Gap Detection**: `get_autofill_queue` RPC finds topics below threshold
+- **Dashboard UI**: Shows daily quota, content gaps, priority queue
+- **Settings**: Configurable batch size, threshold, priority (lowest_first/random)
+
+### External Opportunities (Implemented but Paused)
+- **`fetch-external-jobs` Edge Function**: Generates mock jobs/scholarships via Gemini
+- **Auto-Tagging**: Sector detection (govt/private), region detection, scholarship scope
+- **Admin Curation**: Pending/Approved/Rejected workflow
+
+---
+
+## What Is Pending (Not Yet Built)
+
+### Critical Gap: RAG → MCQ Auto-Generator
+| Component | Status | Description |
+|-----------|--------|-------------|
+| RAG → MCQ Pipeline | **NOT BUILT** | No function converts document chunks into MCQs |
+| Topic-Document Linking | **NOT BUILT** | PDFs not linked to LMS topics (missing `topic_id` in documents table) |
+| Auto-Generation Trigger | **NOT BUILT** | No trigger to populate Question Bank from RAG |
+| Difficulty Distribution | **PARTIAL** | Config exists but not applied to RAG-to-MCQ flow |
+
+### Missing Pieces
+1. **Document-to-LMS Mapping**: When admin uploads PDF, no UI to tag it with board/class/subject/topic
+2. **RAG-to-MCQ Edge Function**: New function needed to:
+   - Take topic_id as input
+   - Query RAG for relevant chunks
+   - Generate MCQs using Gemini with RAG context
+   - Save to content_items with proper FK links
+3. **Syllabus Builder RAG Fallback**: Currently pulls only from DB; no fallback to RAG if content missing
+
+---
+
+## Architectural Improvements Recommended
+
+### 1. Add Document-to-LMS Linking
+```sql
+-- Add to documents table
+ALTER TABLE documents ADD COLUMN IF NOT EXISTS 
+  topic_id UUID REFERENCES topics(id),
+  subject_id UUID REFERENCES subjects(id),
+  level_id UUID REFERENCES levels(id),
+  system_id UUID REFERENCES educational_systems(id);
 ```
 
-## Changes Required
+### 2. Create RAG-to-MCQ Generation Function
+New Edge Function: `generate-from-rag`
 
-### 1. Delete from Frontend (Remove Crash Source)
-**File: `src/services/pdfExtractorService.ts`**
-- DELETE this entire file
-- This removes all `pdfjs-dist` imports from the client bundle
-- No PDF.js = no worker crash
-
-### 2. Update Document Library Component
-**File: `src/components/admin/documents/DocumentLibrary.tsx`**
-- Remove import of `pdfExtractorService`
-- Simplify `handleUpload()` to only:
-  1. Upload PDF to Supabase Storage
-  2. Create document record with `pending` status
-  3. Call `process-book` edge function with `{ documentId, fileUrl }` (no text)
-- Remove all client-side text extraction progress UI
-- Add simpler progress: "Uploading..." then "Processing on server..."
-
-### 3. Update Document Service
-**File: `src/services/documentService.ts`**
-- Update `processDocument()` to accept `fileUrl` instead of `text`
-- Remove `MAX_TEXT_LENGTH` check (server handles this now)
-
-### 4. Rewrite Process-Book Edge Function
-**File: `supabase/functions/process-book/index.ts`**
-- Add `pdfjs-serverless` import from ESM CDN
-- Change input from `{ documentId, text }` to `{ documentId, fileUrl }`
-- Add PDF fetch and parsing logic:
-  1. Fetch PDF binary from Storage URL
-  2. Parse with `pdfjs-serverless`
-  3. Extract text from all pages
-  4. Chunk, embed, and store (existing logic)
-- Add better error handling for large PDFs
-
-## Technical Details
-
-### PDF Library for Edge Functions
-Use `pdfjs-serverless` which is designed for serverless/Deno environments:
-```typescript
-import { getDocument } from "https://esm.sh/pdfjs-serverless@0.6.0";
-```
-
-### New process-book Flow
-```typescript
-// 1. Fetch PDF from storage
-const response = await fetch(fileUrl);
-const arrayBuffer = await response.arrayBuffer();
-const data = new Uint8Array(arrayBuffer);
-
-// 2. Parse PDF
-const doc = await getDocument(data).promise;
-
-// 3. Extract text from all pages
-let text = "";
-for (let i = 1; i <= doc.numPages; i++) {
-  const page = await doc.getPage(i);
-  const content = await page.getTextContent();
-  text += content.items.map((item: any) => item.str).join(" ") + "\n";
+**Input:**
+```json
+{
+  "topic_id": "uuid",
+  "difficulty": "easy|medium|hard",
+  "count": 10
 }
-
-// 4. Continue with existing chunking + embedding logic
 ```
 
-### Updated DocumentLibrary Upload Flow
-```typescript
-// Step 1: Upload to storage (unchanged)
-const fileUrl = await documentService.uploadToStorage(selectedFile);
+**Flow:**
+1. Fetch topic name and related document sections via vector search
+2. Build prompt with RAG context
+3. Generate MCQs using Gemini (one-time)
+4. Save to content_items with topic_id FK
+5. Mark as "rag_generated" source
 
-// Step 2: Create document record (unchanged)
-const docRecord = await documentService.createDocument(title, filename, fileUrl);
+### 3. Tiered AI Strategy (Cost Optimization)
 
-// Step 3: Trigger server-side processing (simplified)
-setUploadProgress({ stage: "processing", message: "Processing PDF on server..." });
-await documentService.processDocument(docRecord.id, fileUrl);
+| Task | When to Use AI | Runtime AI? |
+|------|----------------|-------------|
+| MCQ Generation | Once on admin trigger or nightly cron | NO - cached in DB |
+| Student Q&A | Per query (unavoidable) | YES - lightweight |
+| Jobs/Scholarships | Once on sync (admin trigger) | NO - cached in external_opportunities |
+| Syllabus Content | DB first, RAG fallback only if empty | RARE |
 
-// Done - no client-side PDF parsing at all
+---
+
+## Moltbolt/OpenClaw Integration Strategy
+
+Based on the OpenClaw AI capabilities, here's where it fits:
+
+### Best Use Cases for Moltbolt/OpenClaw
+
+| Feature | Why OpenClaw Works | Implementation |
+|---------|-------------------|----------------|
+| **Jobs Automation** | Web scraping + summarization is OpenClaw's strength | Replace `fetch-external-jobs` Gemini call with OpenClaw agent that scrapes real job boards |
+| **Scholarships Automation** | Same pattern - scrape HEC, Fulbright, etc. | Scheduled agent writes directly to `external_opportunities` table |
+| **Content Enrichment** | Generate explanations, summaries for existing MCQs | Batch job - enrich content_items with better explanations |
+
+### What Should NOT Use External AI
+
+| Task | Why Keep Local/Cached |
+|------|----------------------|
+| Quiz Delivery | Must be instant - serve from DB |
+| Test Sessions | Already pulled from cache |
+| LMS Navigation | Pure DB queries |
+| Student Dashboard | Analytics from DB |
+
+### OpenClaw Implementation Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    SCHEDULED CRON (Daily 2 AM)                  │
+│  ┌──────────────────┐                                           │
+│  │ Trigger OpenClaw │                                           │
+│  │ via Webhook      │                                           │
+│  └────────┬─────────┘                                           │
+│           │                                                     │
+│           ▼                                                     │
+│  ┌──────────────────┐                                           │
+│  │ OpenClaw Agent   │ ← Scrapes LinkedIn, Rozee.pk, HEC, etc.   │
+│  │ (Jobs Task)      │                                           │
+│  └────────┬─────────┘                                           │
+│           │                                                     │
+│           ▼                                                     │
+│  ┌──────────────────┐                                           │
+│  │ OpenClaw writes  │                                           │
+│  │ to Supabase via  │ → external_opportunities (status:pending) │
+│  │ REST API         │                                           │
+│  └──────────────────┘                                           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-## Files to Modify
+**Key Principle**: OpenClaw runs on schedule → writes to DB → never called at runtime
 
-| File | Action | Purpose |
-|------|--------|---------|
-| `src/services/pdfExtractorService.ts` | DELETE | Remove PDF.js from frontend |
-| `src/components/admin/documents/DocumentLibrary.tsx` | MODIFY | Remove PDF.js import, simplify upload flow |
-| `src/services/documentService.ts` | MODIFY | Change processDocument signature |
-| `supabase/functions/process-book/index.ts` | REWRITE | Add server-side PDF parsing |
+---
 
-## Benefits of This Architecture
+## Execution Order (Prioritized Tasks)
 
-1. **No client-side crashes** - PDF.js completely removed from frontend bundle
-2. **Works on all devices** - Mobile, desktop, Lovable preview all work identically
-3. **Scalable** - Server handles heavy PDF processing
-4. **Simpler client code** - Just upload and wait
-5. **Better error handling** - Server can handle edge cases gracefully
-6. **Future-proof** - Easy to add support for other document types (DOCX, etc.)
+### Phase 1: Complete RAG-to-Question Bank Pipeline (Highest Priority)
 
-## Limitations to Consider
+1. **Add LMS columns to documents table** (migration)
+2. **Update DocumentLibrary UI** to select board/class/subject/topic when uploading
+3. **Create `generate-from-rag` Edge Function**
+4. **Add "Generate MCQs from Document" button** in Admin Panel
+5. **Test end-to-end**: Upload PDF → Tag with topic → Generate MCQs → Verify in Question Bank
 
-- Larger PDFs may take longer (server-side processing)
-- Edge function timeout (default 60s) may need monitoring for very large files
-- No client-side page-by-page progress (but overall progress still shown)
+### Phase 2: Integrate OpenClaw for Jobs/Scholarships
+
+1. **Sign up for OpenClaw** and get API credentials
+2. **Create webhook endpoint** in Supabase (or simple edge function)
+3. **Configure OpenClaw agent** with:
+   - Task: "Scrape Pakistan job boards for latest government and private jobs"
+   - Output: JSON matching `external_opportunities` schema
+   - Schedule: Daily or twice-weekly
+4. **Disable Gemini-based `fetch-external-jobs`** (or keep as fallback)
+
+### Phase 3: Scale-Ready Optimizations
+
+1. **Implement question pooling**: Pre-generate 100+ questions per topic during off-peak
+2. **Add similarity threshold check** before saving new questions (prevent near-duplicates)
+3. **Create tiered difficulty generation**: Auto-fill generates mix (40% easy, 40% medium, 20% hard)
+4. **Add usage analytics**: Track which topics are most accessed, prioritize those for auto-fill
+
+---
+
+## Quota Protection Summary
+
+| Protection Layer | Implementation |
+|------------------|----------------|
+| Daily Limit Tracking | `ai_usage_logs` table + `get_ai_usage_today` RPC |
+| Model Fallback | Cycles through 3 Gemini models on 429 |
+| Database-First | All quiz delivery from cache |
+| Scheduled Generation | Nightly cron, not on-demand |
+| RAG Rate Limiting | 100ms delay between embedding calls |
+| Student Q&A Throttle | Max 500 char query, top-5 chunks only |
+
+---
+
+## Summary Checklist
+
+| Category | Status |
+|----------|--------|
+| LMS Structure | DONE |
+| RAG Upload + Processing | DONE |
+| RAG Search + Q&A | DONE |
+| Question Bank CRUD | DONE |
+| MCQ Generation (Gemini) | DONE (paused) |
+| RAG → MCQ Auto-Generation | NOT BUILT |
+| Document-to-LMS Tagging | NOT BUILT |
+| Syllabus Builder RAG Fallback | NOT BUILT |
+| OpenClaw Integration | NOT STARTED |
+| Scheduled Auto-Fill | DONE (ready to enable) |
+| Quota Protection | DONE |
+
+The next logical step is **Phase 1**: Build the RAG-to-MCQ pipeline so uploaded documents actually populate the Question Bank automatically.
+
