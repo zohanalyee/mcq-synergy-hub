@@ -151,6 +151,8 @@ export type Database = {
           show_in_mock_tests: boolean | null
           show_in_subjects: boolean | null
           show_in_syllabus: boolean | null
+          source_document_id: string | null
+          source_type: string | null
           status: string
           subject: string | null
           subtopic: string | null
@@ -196,6 +198,8 @@ export type Database = {
           show_in_mock_tests?: boolean | null
           show_in_subjects?: boolean | null
           show_in_syllabus?: boolean | null
+          source_document_id?: string | null
+          source_type?: string | null
           status?: string
           subject?: string | null
           subtopic?: string | null
@@ -241,6 +245,8 @@ export type Database = {
           show_in_mock_tests?: boolean | null
           show_in_subjects?: boolean | null
           show_in_syllabus?: boolean | null
+          source_document_id?: string | null
+          source_type?: string | null
           status?: string
           subject?: string | null
           subtopic?: string | null
@@ -253,6 +259,13 @@ export type Database = {
           usage_count?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "content_items_source_document_id_fkey"
+            columns: ["source_document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "content_items_topic_id_fkey"
             columns: ["topic_id"]
@@ -516,9 +529,13 @@ export type Database = {
           file_url: string
           filename: string
           id: string
+          level_id: string | null
           page_count: number | null
           status: string
+          subject_id: string | null
+          system_id: string | null
           title: string
+          topic_id: string | null
           updated_at: string
           user_id: string | null
         }
@@ -527,9 +544,13 @@ export type Database = {
           file_url: string
           filename: string
           id?: string
+          level_id?: string | null
           page_count?: number | null
           status?: string
+          subject_id?: string | null
+          system_id?: string | null
           title: string
+          topic_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -538,13 +559,46 @@ export type Database = {
           file_url?: string
           filename?: string
           id?: string
+          level_id?: string | null
           page_count?: number | null
           status?: string
+          subject_id?: string | null
+          system_id?: string | null
           title?: string
+          topic_id?: string | null
           updated_at?: string
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_level_id_fkey"
+            columns: ["level_id"]
+            isOneToOne: false
+            referencedRelation: "levels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_subject_id_fkey"
+            columns: ["subject_id"]
+            isOneToOne: false
+            referencedRelation: "subjects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "educational_systems"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       educational_systems: {
         Row: {

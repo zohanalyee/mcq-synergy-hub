@@ -10,6 +10,18 @@ export interface Document {
   created_at: string;
   updated_at: string;
   user_id: string | null;
+  // LMS hierarchy fields
+  system_id: string | null;
+  level_id: string | null;
+  subject_id: string | null;
+  topic_id: string | null;
+}
+
+export interface DocumentLMSMetadata {
+  system_id?: string;
+  level_id?: string;
+  subject_id?: string;
+  topic_id?: string;
 }
 
 export interface UploadProgress {
@@ -59,7 +71,12 @@ export const documentService = {
   },
 
   // Create document record
-  async createDocument(title: string, filename: string, fileUrl: string): Promise<Document> {
+  async createDocument(
+    title: string, 
+    filename: string, 
+    fileUrl: string,
+    lmsMetadata?: DocumentLMSMetadata
+  ): Promise<Document> {
     const { data: userData } = await supabase.auth.getUser();
     
     const { data, error } = await supabase
@@ -70,12 +87,60 @@ export const documentService = {
         file_url: fileUrl,
         status: "pending",
         user_id: userData?.user?.id || null,
+        system_id: lmsMetadata?.system_id || null,
+        level_id: lmsMetadata?.level_id || null,
+        subject_id: lmsMetadata?.subject_id || null,
+        topic_id: lmsMetadata?.topic_id || null,
       })
       .select()
       .single();
 
     if (error) throw error;
     return data as Document;
+  },
+
+  // Update document LMS metadata
+  async updateLMSMetadata(documentId: string, lmsMetadata: DocumentLMSMetadata): Promise<void> {
+    const { error } = await supabase
+      .from("documents")
+      .update({
+        system_id: lmsMetadata.system_id || null,
+        level_id: lmsMetadata.level_id || null,
+        subject_id: lmsMetadata.subject_id || null,
+        topic_id: lmsMetadata.topic_id || null,
+      })
+      .eq("id", documentId);
+
+    if (error) throw error;
+  },
+
+  // Get documents with LMS hierarchy info
+  async getDocumentsWithLMS(): Promise<(Document & {
+    system_name?: string;
+    level_name?: string;
+    subject_name?: string;
+    topic_name?: string;
+  })[]> {
+    const { data, error } = await supabase
+      .from("documents")
+      .select(`
+        *,
+        educational_systems:system_id(name),
+        levels:level_id(name),
+        subjects:subject_id(name),
+        topics:topic_id(name)
+      `)
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+    
+    return (data || []).map(doc => ({
+      ...doc,
+      system_name: doc.educational_systems?.name,
+      level_name: doc.levels?.name,
+      subject_name: doc.subjects?.name,
+      topic_name: doc.topics?.name,
+    })) as any;
   },
 
   // Update document status
