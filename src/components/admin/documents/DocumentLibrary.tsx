@@ -26,6 +26,12 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { 
   Upload, 
@@ -38,21 +44,34 @@ import {
   Clock, 
   Loader2,
   BookOpen,
-  AlertTriangle
+  AlertTriangle,
+  Sparkles,
+  Link2
 } from "lucide-react";
-import { documentService, Document, UploadProgress } from "@/services/documentService";
+import { documentService, Document, UploadProgress, DocumentLMSMetadata } from "@/services/documentService";
 import { format } from "date-fns";
+import DocumentLMSSelector, { LMSSelection } from "./DocumentLMSSelector";
+import { supabase } from "@/integrations/supabase/client";
+
+interface DocumentWithLMS extends Document {
+  system_name?: string;
+  level_name?: string;
+  subject_name?: string;
+  topic_name?: string;
+}
 
 const DocumentLibrary = () => {
-  const [documents, setDocuments] = useState<Document[]>([]);
+  const [documents, setDocuments] = useState<DocumentWithLMS[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
+  const [generatingMCQs, setGeneratingMCQs] = useState<string | null>(null);
   
   // Form state
   const [title, setTitle] = useState("");
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [lmsSelection, setLmsSelection] = useState<LMSSelection>({});
 
   // Fetch documents on mount
   useEffect(() => {
@@ -62,7 +81,7 @@ const DocumentLibrary = () => {
   const fetchDocuments = async () => {
     try {
       setIsLoading(true);
-      const docs = await documentService.getDocuments();
+      const docs = await documentService.getDocumentsWithLMS();
       setDocuments(docs);
     } catch (error) {
       toast.error("Failed to fetch documents");
@@ -116,17 +135,25 @@ const DocumentLibrary = () => {
       
       const fileUrl = await documentService.uploadToStorage(selectedFile);
 
-      // Step 2: Create document record
+      // Step 2: Create document record with LMS metadata
       setUploadProgress({
         stage: "uploading",
         message: "Creating document record...",
         progress: 40,
       });
       
+      const lmsMetadata: DocumentLMSMetadata = {
+        system_id: lmsSelection.systemId,
+        level_id: lmsSelection.levelId,
+        subject_id: lmsSelection.subjectId,
+        topic_id: lmsSelection.topicId,
+      };
+      
       const docRecord = await documentService.createDocument(
         title.trim(),
         selectedFile.name,
-        fileUrl
+        fileUrl,
+        lmsMetadata
       );
       documentId = docRecord.id;
 
@@ -151,6 +178,7 @@ const DocumentLibrary = () => {
       // Reset form
       setTitle("");
       setSelectedFile(null);
+      setLmsSelection({});
       const fileInput = document.getElementById("pdf-upload") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
       
@@ -183,7 +211,7 @@ const DocumentLibrary = () => {
     }
   };
 
-  const handleDelete = async (doc: Document) => {
+  const handleDelete = async (doc: DocumentWithLMS) => {
     try {
       await documentService.deleteDocument(doc.id, doc.file_url);
       toast.success("Document deleted");
@@ -192,6 +220,60 @@ const DocumentLibrary = () => {
       toast.error("Failed to delete document");
       console.error(error);
     }
+  };
+
+  const handleGenerateMCQs = async (doc: DocumentWithLMS) => {
+    if (!doc.topic_id) {
+      toast.error("Document must be linked to a topic to generate MCQs");
+      return;
+    }
+
+    setGeneratingMCQs(doc.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-from-rag", {
+        body: {
+          document_id: doc.id,
+          topic_id: doc.topic_id,
+          subject: doc.subject_name,
+          topic: doc.topic_name,
+          count: 10,
+          difficulty_distribution: { easy: 4, medium: 4, hard: 2 },
+        },
+      });
+
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      toast.success(`Generated ${data.questions_saved || 0} MCQs from document!`);
+    } catch (error) {
+      console.error("MCQ generation error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate MCQs");
+    } finally {
+      setGeneratingMCQs(null);
+    }
+  };
+
+  const getLMSBadge = (doc: DocumentWithLMS) => {
+    if (doc.topic_name) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <Badge variant="secondary" className="gap-1 max-w-32 truncate">
+                <Link2 className="h-3 w-3" />
+                {doc.topic_name}
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="text-xs">
+                {doc.system_name} → {doc.level_name} → {doc.subject_name} → {doc.topic_name}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+    return <span className="text-muted-foreground text-sm">Not linked</span>;
   };
 
   const getStatusBadge = (status: Document["status"]) => {
@@ -294,6 +376,13 @@ const DocumentLibrary = () => {
             </div>
           </div>
 
+          {/* LMS Selector */}
+          <DocumentLMSSelector
+            value={lmsSelection}
+            onChange={setLmsSelection}
+            disabled={isUploading}
+          />
+
           {/* Upload Progress */}
           {uploadProgress && (
             <Alert
@@ -377,6 +466,7 @@ const DocumentLibrary = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Title</TableHead>
+                  <TableHead>LMS Link</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Chunks</TableHead>
                   <TableHead>Uploaded</TableHead>
@@ -387,6 +477,7 @@ const DocumentLibrary = () => {
                 {documents.map((doc) => (
                   <TableRow key={doc.id}>
                     <TableCell className="font-medium">{doc.title}</TableCell>
+                    <TableCell>{getLMSBadge(doc)}</TableCell>
                     <TableCell>{getStatusBadge(doc.status)}</TableCell>
                     <TableCell>
                       {doc.page_count ? `${doc.page_count} chunks` : "-"}
@@ -395,7 +486,36 @@ const DocumentLibrary = () => {
                       {format(new Date(doc.created_at), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1">
+                        {/* Generate MCQs Button */}
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleGenerateMCQs(doc)}
+                                disabled={doc.status !== "completed" || !doc.topic_id || generatingMCQs === doc.id}
+                              >
+                                {generatingMCQs === doc.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Sparkles className="h-4 w-4 text-primary" />
+                                )}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {!doc.topic_id 
+                                ? "Link document to a topic first"
+                                : doc.status !== "completed"
+                                ? "Document still processing"
+                                : "Generate MCQs from this document"
+                              }
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        
+                        {/* View Document */}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -409,6 +529,8 @@ const DocumentLibrary = () => {
                             <ExternalLink className="h-4 w-4" />
                           </a>
                         </Button>
+                        
+                        {/* Delete Document */}
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon">
