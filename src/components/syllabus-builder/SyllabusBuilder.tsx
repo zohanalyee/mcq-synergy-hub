@@ -5,9 +5,11 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { GlassSearchInput } from '@/components/ui/GlassSearchInput';
 import { GlobalSearchResult } from '@/services/globalSearchService';
+import { getQuestionsWithFallbackInfo, generateFromRAGForSyllabus } from '@/services/syllabusRAGFallback';
 
 import { useSyllabusData } from './hooks/useSyllabusData';
 import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
@@ -21,6 +23,7 @@ const MAX_SUBJECTS = 10;
 export const SyllabusBuilder = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { isAdmin } = useUserRole();
   const { user } = useAuth();
   const [syllabusName, setSyllabusName] = useState('My Custom Test');
   const [isGenerating, setIsGenerating] = useState(false);
@@ -327,13 +330,12 @@ export const SyllabusBuilder = () => {
     }
   }, [rawSubjects, setRawSubjects]);
 
-  // Generate test with smart AI prompting
-  // DISABLED: AI features paused
+  // Generate test with DB-first fallback logic
   const handleGenerateQuiz = async () => {
     if (!user) {
       toast({
         title: "Sign in to Continue",
-        description: "Please sign in to generate personalized AI tests.",
+        description: "Please sign in to generate personalized tests.",
       });
       navigate('/auth');
       return;
@@ -348,12 +350,181 @@ export const SyllabusBuilder = () => {
       return;
     }
 
-    // AI generation temporarily disabled
-    toast({
-      title: "AI Quiz Generation Temporarily Unavailable",
-      description: "Quiz generation is paused while we upgrade our AI system. Please check back later.",
-      variant: "destructive"
-    });
+    setIsGenerating(true);
+
+    try {
+      // Step 1: Check existing questions in DB
+      const fallbackInfo = await getQuestionsWithFallbackInfo({
+        topicIds: selectedTopicIds,
+        requestedCount: quizSettings.questionsCount,
+        difficulty: quizSettings.difficulty
+      });
+
+      // Step 2: If we have enough questions, create test from DB
+      if (fallbackInfo.hasEnough) {
+        // Create test session from cached questions
+        const { data: session, error: sessionError } = await supabase
+          .from('custom_test_sessions')
+          .insert({
+            user_id: user.id,
+            session_name: syllabusName,
+            question_count: fallbackInfo.questions.length,
+            time_limit: quizSettings.timeLimit,
+            topics: selectedTopicIds,
+            difficulty_levels: [quizSettings.difficulty],
+            questions: fallbackInfo.questions.map(q => ({
+              id: q.id,
+              question: q.title,
+              options: q.options,
+              correctOption: q.correctOption,
+              explanation: q.explanation,
+              difficulty: q.difficulty,
+              subject: q.subject,
+              topic: q.topic
+            })),
+            is_active: true
+          })
+          .select('id')
+          .single();
+
+        if (sessionError) throw sessionError;
+
+        toast({
+          title: "Test Ready!",
+          description: `${fallbackInfo.questions.length} questions loaded from Question Bank.`
+        });
+
+        navigate(`/test-session/${session.id}`);
+        return;
+      }
+
+      // Step 3: Not enough questions - check if admin can generate from RAG
+      if (!isAdmin) {
+        toast({
+          title: "Not Enough Questions",
+          description: `Only ${fallbackInfo.questions.length} questions available for these topics. Please try different topics or reduce the question count.`,
+          variant: "destructive"
+        });
+        setIsGenerating(false);
+        return;
+      }
+
+      // Step 4: Admin path - offer RAG generation if documents exist
+      if (!fallbackInfo.ragAvailable) {
+        toast({
+          title: "No Course Materials Available",
+          description: `Found ${fallbackInfo.questions.length} questions, but no PDF documents are linked to these topics. Please upload course materials first.`,
+          variant: "destructive"
+        });
+        setIsGenerating(false);
+        return;
+      }
+
+      // Step 5: Admin can generate from RAG
+      toast({
+        title: "Generating from Course Materials...",
+        description: `Found ${fallbackInfo.ragDocumentCount} documents. Generating ${fallbackInfo.shortage} additional questions.`
+      });
+
+      const ragResult = await generateFromRAGForSyllabus({
+        topicIds: selectedTopicIds,
+        count: fallbackInfo.shortage,
+        difficulty: quizSettings.difficulty
+      });
+
+      if (!ragResult.success || ragResult.saved === 0) {
+        // Fall back to partial test if we have some questions
+        if (fallbackInfo.questions.length > 0) {
+          toast({
+            title: "Partial Test Created",
+            description: `RAG generation incomplete. Created test with ${fallbackInfo.questions.length} available questions.`
+          });
+          
+          const { data: session } = await supabase
+            .from('custom_test_sessions')
+            .insert({
+              user_id: user.id,
+              session_name: syllabusName,
+              question_count: fallbackInfo.questions.length,
+              time_limit: quizSettings.timeLimit,
+              topics: selectedTopicIds,
+              difficulty_levels: [quizSettings.difficulty],
+              questions: fallbackInfo.questions.map(q => ({
+                id: q.id,
+                question: q.title,
+                options: q.options,
+                correctOption: q.correctOption,
+                explanation: q.explanation,
+                difficulty: q.difficulty,
+                subject: q.subject,
+                topic: q.topic
+              })),
+              is_active: true
+            })
+            .select('id')
+            .single();
+
+          if (session) navigate(`/test-session/${session.id}`);
+          return;
+        }
+
+        toast({
+          title: "Generation Failed",
+          description: ragResult.error || "Could not generate questions. Please try again.",
+          variant: "destructive"
+        });
+        setIsGenerating(false);
+        return;
+      }
+
+      // Step 6: Re-fetch questions after RAG generation and create test
+      const updatedInfo = await getQuestionsWithFallbackInfo({
+        topicIds: selectedTopicIds,
+        requestedCount: quizSettings.questionsCount,
+        difficulty: quizSettings.difficulty
+      });
+
+      const { data: session } = await supabase
+        .from('custom_test_sessions')
+        .insert({
+          user_id: user.id,
+          session_name: syllabusName,
+          question_count: updatedInfo.questions.length,
+          time_limit: quizSettings.timeLimit,
+          topics: selectedTopicIds,
+          difficulty_levels: [quizSettings.difficulty],
+          questions: updatedInfo.questions.map(q => ({
+            id: q.id,
+            question: q.title,
+            options: q.options,
+            correctOption: q.correctOption,
+            explanation: q.explanation,
+            difficulty: q.difficulty,
+            subject: q.subject,
+            topic: q.topic
+          })),
+          is_active: true
+        })
+        .select('id')
+        .single();
+
+      toast({
+        title: "Test Generated!",
+        description: `Created test with ${updatedInfo.questions.length} questions (${ragResult.saved} newly generated).`
+      });
+
+      if (session) navigate(`/test-session/${session.id}`);
+
+    } catch (error) {
+      console.error('Quiz generation error:', error);
+      toast({
+        title: "Generation Failed",
+        description: "An error occurred. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (

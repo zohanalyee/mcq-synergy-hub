@@ -215,7 +215,9 @@ export async function getAutoFillStats(): Promise<{
 }
 
 // Generate questions for a specific topic with FK link
-// DISABLED: AI features paused - manual data entry only
+// Re-enabled with hard safety limits and RAG-first priority
+const MAX_QUESTIONS_PER_CALL = 5; // Hard safety limit
+
 export async function generateForTopic(params: {
   topic_id: string;
   topic_name: string;
@@ -230,15 +232,92 @@ export async function generateForTopic(params: {
   error?: string;
   errorType?: 'auth' | 'quota' | 'timeout' | 'gateway' | 'unknown';
 }> {
-  // AI features are temporarily disabled
-  return {
-    success: false,
-    generated: 0,
-    saved: 0,
-    duplicates: 0,
-    error: 'AI generation is temporarily disabled. Please add questions manually.',
-    errorType: 'unknown'
-  };
+  // Enforce hard limit
+  const safeCount = Math.min(params.count, MAX_QUESTIONS_PER_CALL);
+
+  // Check daily quota before proceeding
+  const usage = await getAIUsageToday();
+  if (!usage || usage.remaining_requests <= 0) {
+    return {
+      success: false,
+      generated: 0,
+      saved: 0,
+      duplicates: 0,
+      error: 'Daily AI quota reached. Try again tomorrow.',
+      errorType: 'quota'
+    };
+  }
+
+  try {
+    // Check if topic has RAG documents - use generate-from-rag if available
+    const { data: documents } = await supabase
+      .from('documents')
+      .select('id')
+      .eq('topic_id', params.topic_id)
+      .eq('status', 'completed')
+      .limit(1);
+
+    const hasRAGDocuments = documents && documents.length > 0;
+    const endpoint = hasRAGDocuments ? 'generate-from-rag' : 'generate-test';
+
+    const response = await supabase.functions.invoke(endpoint, {
+      body: {
+        topic_id: params.topic_id,
+        topic: `${params.topic_name} (${params.subject_name})`,
+        topic_name: params.topic_name,
+        subject_name: params.subject_name,
+        difficulty: params.difficulty || 'medium',
+        question_count: safeCount,
+        count: safeCount,
+        mode: 'bank_only',
+        source: 'auto_fill',
+        forceNew: true
+      }
+    });
+
+    if (response.error) {
+      const errorMsg = response.error.message || 'Unknown error';
+      let errorType: 'auth' | 'quota' | 'timeout' | 'gateway' | 'unknown' = 'unknown';
+      
+      if (errorMsg.includes('429') || errorMsg.toLowerCase().includes('quota') || errorMsg.toLowerCase().includes('limit')) {
+        errorType = 'quota';
+      } else if (errorMsg.includes('401') || errorMsg.includes('403')) {
+        errorType = 'auth';
+      } else if (errorMsg.includes('timeout')) {
+        errorType = 'timeout';
+      } else if (errorMsg.includes('502') || errorMsg.includes('504')) {
+        errorType = 'gateway';
+      }
+
+      return {
+        success: false,
+        generated: 0,
+        saved: 0,
+        duplicates: 0,
+        error: errorMsg,
+        errorType
+      };
+    }
+
+    const result = response.data;
+    return {
+      success: true,
+      generated: result?.generated || result?.questions_generated || 0,
+      saved: result?.saved || result?.questions_saved || 0,
+      duplicates: result?.duplicates || 0
+    };
+
+  } catch (error) {
+    console.error('generateForTopic error:', error);
+    return {
+      success: false,
+      generated: 0,
+      saved: 0,
+      duplicates: 0,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      errorType: 'unknown'
+    };
+  }
 }
 
 // Backfill topic_id for existing content_items

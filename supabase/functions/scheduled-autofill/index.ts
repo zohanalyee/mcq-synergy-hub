@@ -76,13 +76,19 @@ Deno.serve(async (req) => {
       );
     }
 
-    const batchSize = config.batch_size || 20;
+    // Hard safety limits
+    const HARD_BATCH_LIMIT = 5; // Max questions per topic
+    const HARD_NIGHTLY_LIMIT = 50; // Max total questions per night
+    
+    const batchSize = Math.min(config.batch_size || 5, HARD_BATCH_LIMIT);
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
     let stopReason = '';
 
+    console.log(`[Scheduled Auto-Fill] Safety limits: batch=${batchSize}, nightly=${HARD_NIGHTLY_LIMIT}`);
+
     // Continuous loop until limit hit or no gaps
-    while (true) {
+    while (totalQuestionsSaved < HARD_NIGHTLY_LIMIT) {
       // Check daily usage quota
       const { data: usageData } = await supabase.rpc('get_ai_usage_today');
       const usage = usageData?.[0] as AIUsageToday | null;
@@ -109,8 +115,25 @@ Deno.serve(async (req) => {
       const topic = queue[0];
       console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})`);
 
-      // Call the generate-test function
-      const generateResponse = await fetch(`${supabaseUrl}/functions/v1/generate-test`, {
+      // Check if topic has RAG documents - prefer generate-from-rag
+      const { data: documents } = await supabase
+        .from('documents')
+        .select('id')
+        .eq('topic_id', topic.topic_id)
+        .eq('status', 'completed')
+        .limit(1);
+
+      const hasRAGDocuments = documents && documents.length > 0;
+      const endpoint = hasRAGDocuments ? 'generate-from-rag' : 'generate-test';
+      
+      console.log(`[Scheduled Auto-Fill] Using ${endpoint} (RAG: ${hasRAGDocuments})`);
+
+      // Calculate safe question count
+      const remainingQuota = HARD_NIGHTLY_LIMIT - totalQuestionsSaved;
+      const questionsToRequest = Math.min(batchSize, topic.questions_needed, remainingQuota);
+
+      // Call the appropriate function
+      const generateResponse = await fetch(`${supabaseUrl}/functions/v1/${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,8 +142,11 @@ Deno.serve(async (req) => {
         body: JSON.stringify({
           topic: `${topic.topic_name} (${topic.subject_name})`,
           topic_id: topic.topic_id,
+          topic_name: topic.topic_name,
+          subject_name: topic.subject_name,
           difficulty: 'medium',
-          question_count: Math.min(batchSize, topic.questions_needed),
+          question_count: questionsToRequest,
+          count: questionsToRequest,
           mode: 'bank_only',
           source: 'scheduled_auto_fill',
           forceNew: true
@@ -129,9 +155,10 @@ Deno.serve(async (req) => {
 
       if (generateResponse.ok) {
         const result = await generateResponse.json();
+        const saved = result.questions_saved || result.saved || 0;
         topicsProcessed++;
-        totalQuestionsSaved += result.questions_saved || 0;
-        console.log(`[Scheduled Auto-Fill] ✓ Generated ${result.questions_saved} questions for "${topic.topic_name}"`);
+        totalQuestionsSaved += saved;
+        console.log(`[Scheduled Auto-Fill] ✓ Generated ${saved} questions for "${topic.topic_name}" (total: ${totalQuestionsSaved})`);
       } else {
         const errorText = await generateResponse.text();
         console.error(`[Scheduled Auto-Fill] Failed for ${topic.topic_name}:`, errorText);
@@ -143,8 +170,15 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Check nightly limit
+      if (totalQuestionsSaved >= HARD_NIGHTLY_LIMIT) {
+        stopReason = 'Nightly limit reached (safety cap)';
+        console.log(`[Scheduled Auto-Fill] ${stopReason}`);
+        break;
+      }
+
       // Small delay to prevent hammering the API
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 1500));
     }
 
     // Log the run result
