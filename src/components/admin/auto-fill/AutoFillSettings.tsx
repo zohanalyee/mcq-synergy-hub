@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Save, X, Database, Loader2 } from "lucide-react";
+import { Save, X, Database, Loader2, Play, AlertTriangle, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,9 @@ import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { 
   updateAutoFillConfig, 
   updateAILimitConfig,
@@ -17,6 +19,7 @@ import {
   getAILimitConfig,
   getLowContentThreshold,
   backfillTopicIds,
+  getAIUsageToday,
   type AutoFillConfig,
   type DifficultyWeights
 } from "@/services/autoFillService";
@@ -46,16 +49,23 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
   );
   const [isSaving, setIsSaving] = useState(false);
   const [isBackfilling, setIsBackfilling] = useState(false);
+  const [isManualRunning, setIsManualRunning] = useState(false);
+  const [todayUsage, setTodayUsage] = useState<{ requests: number; saved: number } | null>(null);
   
   const weightsTotal = difficultyWeights.easy + difficultyWeights.medium + difficultyWeights.hard;
   const isWeightsValid = weightsTotal === 100;
 
+  // Hard safety limits
+  const HARD_BATCH_LIMIT = 5;
+  const HARD_NIGHTLY_LIMIT = 50;
+
   // Load additional settings on mount - useEffect runs only once
   useEffect(() => {
     const loadSettings = async () => {
-      const [limitConfig, thresholdConfig] = await Promise.all([
+      const [limitConfig, thresholdConfig, usage] = await Promise.all([
         getAILimitConfig(),
-        getLowContentThreshold()
+        getLowContentThreshold(),
+        getAIUsageToday()
       ]);
       
       if (limitConfig) setDailyLimit(limitConfig.max_requests);
@@ -63,9 +73,43 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
         setWarningThreshold(thresholdConfig.warning);
         setCriticalThreshold(thresholdConfig.critical);
       }
+      if (usage) {
+        setTodayUsage({ requests: usage.total_requests, saved: usage.total_questions_saved });
+      }
     };
     loadSettings();
   }, []); // Empty dependency array = run only on mount
+
+  const handleManualRun = async () => {
+    setIsManualRunning(true);
+    try {
+      const response = await supabase.functions.invoke('scheduled-autofill', {
+        headers: { 'x-admin-trigger': 'true' }
+      });
+
+      if (response.error) {
+        toast.error(`Manual run failed: ${response.error.message}`);
+        return;
+      }
+
+      const result = response.data;
+      if (result.success) {
+        toast.success(`Auto-fill completed: ${result.questions_saved} questions saved`, {
+          description: `Topics processed: ${result.topics_processed}. ${result.stop_reason}`
+        });
+        // Refresh usage stats
+        const usage = await getAIUsageToday();
+        if (usage) setTodayUsage({ requests: usage.total_requests, saved: usage.total_questions_saved });
+      } else {
+        toast.error(result.error || 'Auto-fill failed');
+      }
+    } catch (error) {
+      toast.error('Failed to trigger auto-fill');
+      console.error('Manual run error:', error);
+    } finally {
+      setIsManualRunning(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!isWeightsValid) {
@@ -143,6 +187,41 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          {/* Safety Warning */}
+          <Alert>
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Safety Limits Active</AlertTitle>
+            <AlertDescription>
+              Hard limits enforced: Max {HARD_BATCH_LIMIT} questions per topic, {HARD_NIGHTLY_LIMIT} questions per night.
+              RAG documents are used first when available.
+            </AlertDescription>
+          </Alert>
+
+          {/* Today's Usage */}
+          {todayUsage && (
+            <div className="flex items-center justify-between p-3 border rounded-lg bg-muted/30">
+              <div>
+                <p className="font-medium text-sm">Today's Generation</p>
+                <p className="text-xs text-muted-foreground">
+                  {todayUsage.requests} requests • {todayUsage.saved} questions saved
+                </p>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleManualRun}
+                disabled={isManualRunning}
+              >
+                {isManualRunning ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Play className="h-4 w-4 mr-2" />
+                )}
+                {isManualRunning ? 'Running...' : 'Manual Run'}
+              </Button>
+            </div>
+          )}
+
           {/* Daily Limit Section */}
           <div className="space-y-4">
             <h4 className="font-medium text-sm">Daily AI Limits</h4>
@@ -223,17 +302,23 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Batch Size</Label>
-                  <span className="text-sm font-medium">{localConfig.batch_size} questions</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium">{Math.min(localConfig.batch_size, HARD_BATCH_LIMIT)} questions</span>
+                    {localConfig.batch_size > HARD_BATCH_LIMIT && (
+                      <Badge variant="secondary" className="text-xs">capped</Badge>
+                    )}
+                  </div>
                 </div>
                 <Slider
                   value={[localConfig.batch_size]}
                   onValueChange={([value]) => setLocalConfig({ ...localConfig, batch_size: value })}
-                  min={5}
-                  max={50}
-                  step={5}
+                  min={1}
+                  max={10}
+                  step={1}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Questions generated per topic per request
+                <p className="text-xs text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3" />
+                  Hard limit: {HARD_BATCH_LIMIT} max per topic for safety
                 </p>
               </div>
 

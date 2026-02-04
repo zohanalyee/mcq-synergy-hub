@@ -6,126 +6,120 @@ Complete the pending features to enable the full RAG-to-MCQ caching strategy whi
 
 ---
 
-## Task 1: Syllabus Builder Fallback Order (Priority: HIGH)
+## ✅ Task 1: Syllabus Builder Fallback Order (COMPLETED)
 
-### Current State
-- Syllabus Builder UI works for topic selection
-- Quiz generation is completely disabled (line 352-357 in SyllabusBuilder.tsx)
-- `testGenerationService.ts` only queries DB, no fallback logic
+### Implementation Summary
+- **File: `src/services/syllabusRAGFallback.ts`** - Created new service with:
+  - `checkRAGAvailability()` - Checks if documents exist for topics
+  - `getQuestionsWithFallbackInfo()` - Queries DB with shortage/RAG info
+  - `generateFromRAGForSyllabus()` - Triggers RAG generation for admins
 
-### Changes Required
+- **File: `src/components/syllabus-builder/SyllabusBuilder.tsx`** - Re-enabled quiz generation with:
+  - DB-first query for existing MCQs
+  - Admin-only RAG generation when documents exist
+  - User-friendly error messages for non-admins when content is insufficient
+  - Partial test creation fallback
 
-**File: `src/components/syllabus-builder/SyllabusBuilder.tsx`**
-- Re-enable `handleGenerateQuiz()` function
-- Add DB-first logic: query `content_items` for selected topics
-- If insufficient questions → show option to generate from RAG (admin-only)
-- If user is not admin → show "Not enough questions, please try different topics"
-
-**File: `src/services/testGenerationService.ts`**
-- Add `generateWithFallback()` function that:
-  1. Query DB for existing MCQs matching topics
-  2. If `questions.length >= requestedCount` → return from DB
-  3. If insufficient AND user is admin → offer RAG generation
-  4. For regular users → throw user-friendly error
-
-**New File: `src/services/syllabusRAGFallback.ts`**
-- `checkRAGAvailability(topicIds: string[])` - check if documents exist for topics
-- `generateFromRAGForSyllabus(topicIds: string[], count: number)` - call generate-from-rag for each topic
-- Save all generated MCQs to DB before returning
-
-### Flow Diagram
-```text
-User clicks "Generate Test"
-         │
-         ▼
-┌────────────────────────┐
-│ Query content_items    │
-│ for selected topics    │
-└──────────┬─────────────┘
-           │
-           ▼
-     ┌─────────────┐
-     │ Enough MCQs?│
-     └─────┬───────┘
-       Yes │    │ No
-           │    │
-           ▼    ▼
-┌──────────────┐ ┌─────────────────────┐
-│ Return from  │ │ Is user admin?      │
-│ DB (instant) │ └────────┬────────────┘
-└──────────────┘      Yes │    │ No
-                          │    │
-                          ▼    ▼
-           ┌──────────────────┐ ┌─────────────────────┐
-           │ Offer RAG option │ │ Show "Not enough    │
-           │ → Generate → DB  │ │ questions" message  │
-           └──────────────────┘ └─────────────────────┘
+### Flow
+```
+User clicks Generate → Query DB → Enough? → Create test from cache
+                              ↓ No
+                     Is Admin? → No → "Not enough questions" error
+                              ↓ Yes
+                     Has RAG Docs? → No → "Upload documents first" error
+                              ↓ Yes
+                     Generate from RAG → Save to DB → Create test
 ```
 
 ---
 
-## Task 2: Auto-Fill Safe Re-enable (Priority: MEDIUM)
+## ✅ Task 2: Auto-Fill Safe Re-enable (COMPLETED)
 
-### Current State
-- `AutoFillDashboard.tsx` UI exists with enable/disable toggle
-- `scheduled-autofill` Edge Function exists but never triggered
-- `generateForTopic()` in `autoFillService.ts` is hardcoded to return failure
+### Implementation Summary
+- **File: `src/services/autoFillService.ts`** - Re-enabled `generateForTopic()` with:
+  - Hard limit: 5 questions per topic per call
+  - Daily quota check before proceeding
+  - RAG-first priority (uses `generate-from-rag` if documents exist)
+  - Fallback to `generate-test` when no documents
 
-### Changes Required
+- **File: `supabase/functions/scheduled-autofill/index.ts`** - Updated with:
+  - Hard batch limit: 5 questions per topic
+  - Hard nightly limit: 50 questions total
+  - RAG-first document check
+  - 1.5s delay between topics
 
-**File: `src/services/autoFillService.ts`**
-- Re-enable `generateForTopic()` function
-- Add hard limits:
-  - Max 5 questions per topic per call (override any batch_size > 5)
-  - Check daily quota before proceeding
-- Add priority order:
-  1. Check if topic has RAG documents → use generate-from-rag
-  2. If no documents → use generate-test (Gemini direct)
+- **File: `src/components/admin/auto-fill/AutoFillSettings.tsx`** - Enhanced with:
+  - Safety warning alert showing hard limits
+  - Today's generation counter
+  - Manual Run button for testing
+  - Updated batch slider (1-10, capped at 5)
 
-**File: `supabase/functions/scheduled-autofill/index.ts`**
-- Add hard batch size cap: `Math.min(batchSize, 5)`
-- Add daily run limit: max 50 questions per night
-- Add RAG-first priority check before calling generate-test
-
-**File: `src/components/admin/auto-fill/AutoFillSettings.tsx`**
-- Add UI warning: "Max 5 questions per batch for safety"
-- Add daily generation counter display
-- Add manual trigger button for testing
-
-### Safety Constraints
-| Setting | Value | Reason |
-|---------|-------|--------|
-| Batch size | Max 5 | Prevent quota exhaustion |
-| Daily limit | 50 questions | Hard cap for nightly cron |
-| Priority | RAG-first | Leverage uploaded documents |
-| Fallback | Gemini | Only when no documents exist |
+### Safety Constraints Enforced
+| Setting | Value |
+|---------|-------|
+| Batch size | Max 5 per topic |
+| Nightly limit | Max 50 questions |
+| Priority | RAG-first, Gemini fallback |
+| Delay | 1.5s between topics |
 
 ---
 
-## Task 3: Jobs & Scholarships Strategy Change (Priority: LOW)
+## ✅ Task 3: Jobs & Scholarships Strategy Change (COMPLETED)
 
-### Current State
-- `fetch-external-jobs` uses Gemini to generate fake/mock opportunities
-- No webhook endpoint for external agents
-- External Opportunities curation workflow exists (pending/approved/rejected)
+### Implementation Summary
+- **File: `supabase/functions/external-agent-webhook/index.ts`** - Created webhook with:
+  - API key authentication via `EXTERNAL_AGENT_API_KEY` secret
+  - Payload validation (title, apply_url, type, source_name required)
+  - Duplicate detection by apply_url
+  - All entries marked `status: 'pending'` for admin review
+  - Batch size limit: 100 per request
 
-### Changes Required
+- **File: `supabase/config.toml`** - Added function config
 
-**New File: `supabase/functions/external-agent-webhook/index.ts`**
-- Accept POST requests with opportunities data
-- Validate payload schema matches `external_opportunities` table
-- Insert with `status: 'pending'` for admin review
-- Return success/failure count
-- Require API key in header for security
+- **File: `src/pages/admin/ExternalCuration.tsx`** - Added:
+  - Info banner explaining webhook integration
+  - Endpoint documentation
+  - Secret configuration guidance
 
-**File: `supabase/config.toml`**
-- Add function config for `external-agent-webhook`
-- Set `verify_jwt = false` (uses API key instead)
+### Webhook Schema
+```json
+POST /functions/v1/external-agent-webhook
+Headers: { "x-api-key": "YOUR_KEY" }
+Body: {
+  "opportunities": [
+    {
+      "title": "Job Title",
+      "apply_url": "https://...",
+      "type": "job|scholarship",
+      "source_name": "OpenClaw",
+      "description": "...",
+      "organization": "...",
+      "location": "...",
+      "deadline_date": "2026-02-28",
+      "sector": "government|private",
+      "region": "sindh|punjab|kpk|balochistan|federal|international|other",
+      "scholarship_scope": "national|international"
+    }
+  ]
+}
+```
 
-**File: `src/pages/admin/ExternalCuration.tsx`**
-- Add info banner: "Opportunities are synced from external agents"
-- Remove "Sync with AI" button (or mark as deprecated)
-- Keep manual entry option
+---
+
+## Success Criteria (All Met)
+
+1. ✅ **Syllabus Builder**: Students can generate tests from DB; admins can trigger RAG generation
+2. ✅ **Auto-Fill**: Nightly cron with max 50 questions safely; RAG used when documents exist
+3. ✅ **External Webhook**: OpenClaw can POST opportunities directly to DB for admin review
+
+---
+
+## Next Steps (Optional Future Work)
+
+1. **Set up cron schedule**: Add pg_cron job for `scheduled-autofill` (2 AM UTC recommended)
+2. **Configure OpenClaw**: Get EXTERNAL_AGENT_API_KEY and set up scraping agents
+3. **Monitor usage**: Review ai_usage_logs table for quota optimization
+4. **Expand RAG coverage**: Upload more course PDFs to increase DB-cached questions
 
 ### Webhook Schema
 ```json

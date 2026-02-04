@@ -184,10 +184,29 @@ const ExternalCuration = () => {
                 <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
                 {isSyncing ? "Syncing..." : "Sync Mock Data"}
               </Button>
-              {/* AI Fetch buttons removed - AI features paused */}
             </div>
           </div>
         </motion.div>
+
+        {/* Webhook Info Banner */}
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardContent className="py-4">
+            <div className="flex items-start gap-3">
+              <Globe className="h-5 w-5 text-primary mt-0.5" />
+              <div className="flex-1">
+                <h4 className="font-medium text-sm">External Agent Integration</h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Opportunities can be synced automatically via webhook from external agents (OpenClaw, Moltbolt, etc).
+                  Configure <code className="bg-muted px-1 rounded">EXTERNAL_AGENT_API_KEY</code> in Supabase secrets.
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  <strong>Endpoint:</strong>{' '}
+                  <code className="bg-muted px-1 rounded text-[10px]">/functions/v1/external-agent-webhook</code>
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as OpportunityStatus)}>
