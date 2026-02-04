@@ -1,128 +1,189 @@
 
-# Project Architecture Analysis & Remaining Work Plan
+# Implementation Plan: Remaining Pending Work
 
-## What Is Done (Confirmed Working)
-
-### LMS Structure
-- **Educational Systems Table**: AKU-EB, Cambridge/Oxford, Punjab, Sindh boards - all defined
-- **Levels**: Classes 4-12 with proper hierarchy
-- **Subjects & Topics**: Fully linked with foreign keys (level_id, subject_id)
-- **Admin UI**: LMS Structure Manager, Subject Manager, Topic Manager all functional
-- **Bulk Syllabus Import**: JSON-based import into any level
-
-### RAG Pipeline (End-to-End Working)
-- **PDF Upload**: Admin → Storage bucket (`course_books`) → Document record
-- **Server-Side Processing**: `process-book` Edge Function uses `unpdf` (no client crashes)
-- **Text Chunking**: 1000 chars with 200 overlap
-- **Embeddings**: Gemini `text-embedding-004` (768 dimensions)
-- **Vector Storage**: `document_sections` table with pgvector HNSW index
-- **Search RPC**: `match_document_sections` with similarity threshold
-- **Student Q&A**: `/ask-document` page calling `rag-search` Edge Function with strict grounding
-- ✅ **Document-to-LMS Linking**: PDFs can now be tagged with board/class/subject/topic on upload
-- ✅ **RAG-to-MCQ Generation**: `generate-from-rag` Edge Function converts document chunks to MCQs
-
-### Question Bank & Tests
-- **Question Bank Service**: Filters by subject, topic, subtopic, difficulty
-- **Custom Test Generation**: Pulls from `content_items` (MCQ category)
-- **Usage Tracking**: `usage_count`, `last_used_at` fields updated on use
-- **Test Sessions**: Saved to `custom_test_sessions` table per user
-- ✅ **RAG-Generated MCQs**: Questions marked with `source_type: 'rag_generated'` and linked to source document
-
-### AI Generation (Implemented but Paused)
-- **`generate-test` Edge Function**: Full MCQ generation with model fallback (gemini-2.0-flash → gemini-1.5-flash → gemini-1.5-pro)
-- **Hybrid Deduplication**: Fingerprinting + normalized text matching
-- **Job/Syllabus Mapping**: Maps job tests to core subjects for cross-question reuse
-- **Database-First Recovery**: Falls back to cached questions on 429/403 errors
-
-### Auto-Fill System (Implemented)
-- **`scheduled-autofill` Edge Function**: Nightly cron job ready
-- **Content Gap Detection**: `get_autofill_queue` RPC finds topics below threshold
-- **Dashboard UI**: Shows daily quota, content gaps, priority queue
-- **Settings**: Configurable batch size, threshold, priority (lowest_first/random)
-
-### External Opportunities (Implemented but Paused)
-- **`fetch-external-jobs` Edge Function**: Generates mock jobs/scholarships via Gemini
-- **Auto-Tagging**: Sector detection (govt/private), region detection, scholarship scope
-- **Admin Curation**: Pending/Approved/Rejected workflow
+## Overview
+Complete the pending features to enable the full RAG-to-MCQ caching strategy while ensuring cost safety and scalability.
 
 ---
 
-## Phase 1 Complete ✅
+## Task 1: Syllabus Builder Fallback Order (Priority: HIGH)
 
-### RAG → MCQ Auto-Generator (DONE)
-| Component | Status | Description |
-|-----------|--------|-------------|
-| RAG → MCQ Pipeline | ✅ DONE | `generate-from-rag` Edge Function converts document chunks into MCQs |
-| Topic-Document Linking | ✅ DONE | Documents table has `topic_id`, `subject_id`, `level_id`, `system_id` columns |
-| Auto-Generation Trigger | ✅ DONE | "Generate MCQs" button in Document Library |
-| Difficulty Distribution | ✅ DONE | 40% Easy, 40% Medium, 20% Hard distribution |
-| Source Tracking | ✅ DONE | `source_type` and `source_document_id` columns added to `content_items` |
+### Current State
+- Syllabus Builder UI works for topic selection
+- Quiz generation is completely disabled (line 352-357 in SyllabusBuilder.tsx)
+- `testGenerationService.ts` only queries DB, no fallback logic
 
-### Document Library Updates
-- ✅ LMS selector dropdowns (Board → Class → Subject → Topic)
-- ✅ Documents table shows LMS link badge with full hierarchy tooltip
-- ✅ Generate MCQs button (Sparkles icon) - disabled until document is linked to topic
-- ✅ Documents fetched with joined LMS hierarchy names
+### Changes Required
 
----
+**File: `src/components/syllabus-builder/SyllabusBuilder.tsx`**
+- Re-enable `handleGenerateQuiz()` function
+- Add DB-first logic: query `content_items` for selected topics
+- If insufficient questions → show option to generate from RAG (admin-only)
+- If user is not admin → show "Not enough questions, please try different topics"
 
-## What Is Pending (Not Yet Built)
+**File: `src/services/testGenerationService.ts`**
+- Add `generateWithFallback()` function that:
+  1. Query DB for existing MCQs matching topics
+  2. If `questions.length >= requestedCount` → return from DB
+  3. If insufficient AND user is admin → offer RAG generation
+  4. For regular users → throw user-friendly error
 
-### Remaining Tasks
-1. **Syllabus Builder RAG Fallback**: Currently pulls only from DB; no fallback to RAG if content missing
-2. **OpenClaw Integration**: For automated job/scholarship scraping
-3. **Batch RAG Generation**: Trigger MCQ generation for multiple documents at once
+**New File: `src/services/syllabusRAGFallback.ts`**
+- `checkRAGAvailability(topicIds: string[])` - check if documents exist for topics
+- `generateFromRAGForSyllabus(topicIds: string[], count: number)` - call generate-from-rag for each topic
+- Save all generated MCQs to DB before returning
 
----
-
-## Execution Order (Remaining)
-
-### Phase 2: Integrate OpenClaw for Jobs/Scholarships
-
-1. **Sign up for OpenClaw** and get API credentials
-2. **Create webhook endpoint** in Supabase (or simple edge function)
-3. **Configure OpenClaw agent** with:
-   - Task: "Scrape Pakistan job boards for latest government and private jobs"
-   - Output: JSON matching `external_opportunities` schema
-   - Schedule: Daily or twice-weekly
-4. **Disable Gemini-based `fetch-external-jobs`** (or keep as fallback)
-
-### Phase 3: Scale-Ready Optimizations
-
-1. **Implement question pooling**: Pre-generate 100+ questions per topic during off-peak
-2. **Add similarity threshold check** before saving new questions (prevent near-duplicates)
-3. **Create tiered difficulty generation**: Auto-fill generates mix (40% easy, 40% medium, 20% hard)
-4. **Add usage analytics**: Track which topics are most accessed, prioritize those for auto-fill
-
----
-
-## Quota Protection Summary
-
-| Protection Layer | Implementation |
-|------------------|----------------|
-| Daily Limit Tracking | `ai_usage_logs` table + `get_ai_usage_today` RPC |
-| Model Fallback | Cycles through 3 Gemini models on 429 |
-| Database-First | All quiz delivery from cache |
-| Scheduled Generation | Nightly cron, not on-demand |
-| RAG Rate Limiting | 100ms delay between embedding calls |
-| Student Q&A Throttle | Max 500 char query, top-5 chunks only |
+### Flow Diagram
+```text
+User clicks "Generate Test"
+         │
+         ▼
+┌────────────────────────┐
+│ Query content_items    │
+│ for selected topics    │
+└──────────┬─────────────┘
+           │
+           ▼
+     ┌─────────────┐
+     │ Enough MCQs?│
+     └─────┬───────┘
+       Yes │    │ No
+           │    │
+           ▼    ▼
+┌──────────────┐ ┌─────────────────────┐
+│ Return from  │ │ Is user admin?      │
+│ DB (instant) │ └────────┬────────────┘
+└──────────────┘      Yes │    │ No
+                          │    │
+                          ▼    ▼
+           ┌──────────────────┐ ┌─────────────────────┐
+           │ Offer RAG option │ │ Show "Not enough    │
+           │ → Generate → DB  │ │ questions" message  │
+           └──────────────────┘ └─────────────────────┘
+```
 
 ---
 
-## Summary Checklist
+## Task 2: Auto-Fill Safe Re-enable (Priority: MEDIUM)
 
-| Category | Status |
-|----------|--------|
-| LMS Structure | ✅ DONE |
-| RAG Upload + Processing | ✅ DONE |
-| RAG Search + Q&A | ✅ DONE |
-| Question Bank CRUD | ✅ DONE |
-| MCQ Generation (Gemini) | ✅ DONE |
-| RAG → MCQ Auto-Generation | ✅ DONE |
-| Document-to-LMS Tagging | ✅ DONE |
-| Syllabus Builder RAG Fallback | ⏳ PENDING |
-| OpenClaw Integration | ⏳ NOT STARTED |
-| Scheduled Auto-Fill | ✅ DONE (ready to enable) |
-| Quota Protection | ✅ DONE |
+### Current State
+- `AutoFillDashboard.tsx` UI exists with enable/disable toggle
+- `scheduled-autofill` Edge Function exists but never triggered
+- `generateForTopic()` in `autoFillService.ts` is hardcoded to return failure
 
-**Next step**: Test the RAG-to-MCQ pipeline end-to-end, then proceed to Phase 2 (OpenClaw integration).
+### Changes Required
+
+**File: `src/services/autoFillService.ts`**
+- Re-enable `generateForTopic()` function
+- Add hard limits:
+  - Max 5 questions per topic per call (override any batch_size > 5)
+  - Check daily quota before proceeding
+- Add priority order:
+  1. Check if topic has RAG documents → use generate-from-rag
+  2. If no documents → use generate-test (Gemini direct)
+
+**File: `supabase/functions/scheduled-autofill/index.ts`**
+- Add hard batch size cap: `Math.min(batchSize, 5)`
+- Add daily run limit: max 50 questions per night
+- Add RAG-first priority check before calling generate-test
+
+**File: `src/components/admin/auto-fill/AutoFillSettings.tsx`**
+- Add UI warning: "Max 5 questions per batch for safety"
+- Add daily generation counter display
+- Add manual trigger button for testing
+
+### Safety Constraints
+| Setting | Value | Reason |
+|---------|-------|--------|
+| Batch size | Max 5 | Prevent quota exhaustion |
+| Daily limit | 50 questions | Hard cap for nightly cron |
+| Priority | RAG-first | Leverage uploaded documents |
+| Fallback | Gemini | Only when no documents exist |
+
+---
+
+## Task 3: Jobs & Scholarships Strategy Change (Priority: LOW)
+
+### Current State
+- `fetch-external-jobs` uses Gemini to generate fake/mock opportunities
+- No webhook endpoint for external agents
+- External Opportunities curation workflow exists (pending/approved/rejected)
+
+### Changes Required
+
+**New File: `supabase/functions/external-agent-webhook/index.ts`**
+- Accept POST requests with opportunities data
+- Validate payload schema matches `external_opportunities` table
+- Insert with `status: 'pending'` for admin review
+- Return success/failure count
+- Require API key in header for security
+
+**File: `supabase/config.toml`**
+- Add function config for `external-agent-webhook`
+- Set `verify_jwt = false` (uses API key instead)
+
+**File: `src/pages/admin/ExternalCuration.tsx`**
+- Add info banner: "Opportunities are synced from external agents"
+- Remove "Sync with AI" button (or mark as deprecated)
+- Keep manual entry option
+
+### Webhook Schema
+```json
+{
+  "api_key": "YOUR_SECURE_KEY",
+  "opportunities": [
+    {
+      "title": "Job Title",
+      "description": "Description",
+      "apply_url": "https://...",
+      "type": "job|scholarship",
+      "organization": "Org Name",
+      "location": "City",
+      "deadline_date": "2026-02-28",
+      "sector": "government|private",
+      "region": "sindh|punjab|federal|...",
+      "source_name": "OpenClaw"
+    }
+  ]
+}
+```
+
+---
+
+## Execution Order
+
+| Order | Task | Effort | Impact |
+|-------|------|--------|--------|
+| 1 | Syllabus Builder Fallback | Medium | High - Enables student quiz generation |
+| 2 | Auto-Fill Safe Re-enable | Low | Medium - Background content generation |
+| 3 | External Agent Webhook | Low | Low - Future automation readiness |
+
+---
+
+## Technical Notes
+
+### Files to Create
+- `src/services/syllabusRAGFallback.ts`
+- `supabase/functions/external-agent-webhook/index.ts`
+
+### Files to Modify
+- `src/components/syllabus-builder/SyllabusBuilder.tsx` (re-enable quiz generation)
+- `src/services/testGenerationService.ts` (add fallback logic)
+- `src/services/autoFillService.ts` (re-enable generateForTopic)
+- `supabase/functions/scheduled-autofill/index.ts` (add hard limits)
+- `src/components/admin/auto-fill/AutoFillSettings.tsx` (add safety UI)
+- `supabase/config.toml` (add new function)
+
+### Environment Variables Needed
+- `EXTERNAL_AGENT_API_KEY` - For webhook authentication (new secret)
+
+### Database Changes
+- None required - existing schema supports all features
+
+---
+
+## Success Criteria
+
+1. **Syllabus Builder**: Students can generate tests from DB; admins can trigger RAG generation
+2. **Auto-Fill**: Nightly cron generates max 50 questions safely; RAG used when documents exist
+3. **External Webhook**: OpenClaw can POST opportunities directly to DB for admin review
