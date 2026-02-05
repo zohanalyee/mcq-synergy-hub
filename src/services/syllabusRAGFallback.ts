@@ -48,55 +48,67 @@ export async function generateFromRAGForSyllabus(params: {
     return { success: false, generated: 0, saved: 0, error: 'No topics provided' };
   }
 
-  // Get topic details for generation
-  const { data: topics, error: topicError } = await supabase
-    .from('topics')
-    .select(`
-      id,
-      name,
-      subjects!inner(id, name)
-    `)
-    .in('id', topicIds);
-
-  if (topicError || !topics?.length) {
-    return { success: false, generated: 0, saved: 0, error: 'Failed to fetch topic details' };
-  }
+   // Only process topics that have RAG documents
+   const ragInfo = await checkRAGAvailability(topicIds);
+   
+   if (!ragInfo.hasDocuments) {
+     return { 
+       success: false, 
+       generated: 0, 
+       saved: 0, 
+       error: 'No RAG documents found for any of the selected topics. Please upload documents first.' 
+     };
+   }
+ 
+   // Filter to only topics with documents
+   const validTopicIds = topicIds.filter(id => ragInfo.topicsWithDocuments.includes(id));
+   
+   if (validTopicIds.length === 0) {
+     return { 
+       success: false, 
+       generated: 0, 
+       saved: 0, 
+       error: 'No RAG documents found for selected topics.' 
+     };
+   }
 
   let totalGenerated = 0;
   let totalSaved = 0;
   const errors: string[] = [];
 
-  // Generate for each topic with documents
-  const perTopicCount = Math.max(1, Math.ceil(count / topicIds.length));
+   // Distribute count across valid topics
+   const perTopicCount = Math.max(1, Math.ceil(count / validTopicIds.length));
 
-  for (const topic of topics) {
+   for (const topicId of validTopicIds) {
     try {
-      const subjectData = Array.isArray(topic.subjects) ? topic.subjects[0] : topic.subjects;
-      const subjectName = subjectData?.name || 'General';
-
+       // generate-from-rag now accepts topic_id and resolves everything internally
       const response = await supabase.functions.invoke('generate-from-rag', {
         body: {
-          topic_id: topic.id,
-          topic_name: topic.name,
-          subject_name: subjectName,
+           topic_id: topicId,
           difficulty: difficulty === 'mixed' ? undefined : difficulty,
           count: perTopicCount
         }
       });
 
       if (response.error) {
-        errors.push(`${topic.name}: ${response.error.message}`);
+         errors.push(`Topic ${topicId}: ${response.error.message}`);
         continue;
       }
 
       const result = response.data;
+       
+       if (result?.error) {
+         errors.push(`Topic ${topicId}: ${result.error}`);
+         continue;
+       }
+       
       if (result?.success) {
-        totalGenerated += result.generated || 0;
-        totalSaved += result.saved || 0;
+         totalGenerated += result.questions_generated || 0;
+         totalSaved += result.questions_saved || 0;
       }
     } catch (err) {
-      console.error(`Error generating for topic ${topic.name}:`, err);
-      errors.push(`${topic.name}: Generation failed`);
+       console.error(`Error generating for topic ${topicId}:`, err);
+       errors.push(`Topic ${topicId}: Generation failed`);
     }
   }
 
@@ -145,9 +157,9 @@ export async function getQuestionsWithFallbackInfo(params: {
 
   if (difficulty && difficulty !== 'mixed') {
     const difficultyMap: Record<string, string[]> = {
-      'easy': ['Easy'],
-      'medium': ['Medium'],
-      'hard': ['Hard']
+       'easy': ['Easy', 'easy'],
+       'medium': ['Medium', 'medium'],
+       'hard': ['Hard', 'hard']
     };
     filters.difficulties = difficultyMap[difficulty];
   }

@@ -77,6 +77,27 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+     // ============= AUTHENTICATION CHECK =============
+     const authHeader = req.headers.get("Authorization");
+     if (!authHeader?.startsWith("Bearer ")) {
+       return new Response(
+         JSON.stringify({ error: "Authentication required" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     const token = authHeader.replace("Bearer ", "");
+     const { data: userData, error: authError } = await supabase.auth.getUser(token);
+     
+     if (authError || !userData?.user) {
+       return new Response(
+         JSON.stringify({ error: "Invalid authentication token" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     const userId = userData.user.id;
+ 
     const body = await req.json() as SearchRequest;
     const { query, matchCount = DEFAULT_MATCH_COUNT, documentId } = body;
 
@@ -180,6 +201,7 @@ serve(async (req) => {
     // Log the successful search
     await supabase.from("ai_usage_logs").insert({
       source_type: "document_search",
+       triggered_by_user_id: userId,
       questions_requested: matchCount,
       questions_fetched: results.length,
       questions_saved: results.length,

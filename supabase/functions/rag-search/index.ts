@@ -12,6 +12,28 @@ const MAX_QUERY_LENGTH = 500;
 const DEFAULT_TOP_K = 5;
 const MATCH_THRESHOLD = 0.70;
 
+ // Rate limiting: track requests per user (simple in-memory, resets on cold start)
+ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+ const RATE_LIMIT_MAX = 20; // Max requests per window
+ const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
+ 
+ function checkRateLimit(userId: string): { allowed: boolean; remaining: number } {
+   const now = Date.now();
+   const entry = rateLimitMap.get(userId);
+   
+   if (!entry || now > entry.resetAt) {
+     rateLimitMap.set(userId, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
+     return { allowed: true, remaining: RATE_LIMIT_MAX - 1 };
+   }
+   
+   if (entry.count >= RATE_LIMIT_MAX) {
+     return { allowed: false, remaining: 0 };
+   }
+   
+   entry.count++;
+   return { allowed: true, remaining: RATE_LIMIT_MAX - entry.count };
+ }
+ 
 interface SearchRequest {
   query: string;
   documentIds?: string[];
@@ -129,6 +151,37 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+     // ============= AUTHENTICATION CHECK =============
+     const authHeader = req.headers.get("Authorization");
+     if (!authHeader?.startsWith("Bearer ")) {
+       return new Response(
+         JSON.stringify({ error: "Authentication required" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     const token = authHeader.replace("Bearer ", "");
+     const { data: userData, error: authError } = await supabase.auth.getUser(token);
+     
+     if (authError || !userData?.user) {
+       return new Response(
+         JSON.stringify({ error: "Invalid authentication token" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+ 
+     const userId = userData.user.id;
+ 
+     // ============= RATE LIMITING =============
+     const rateCheck = checkRateLimit(userId);
+     if (!rateCheck.allowed) {
+       console.log(`[rag-search] ⛔ Rate limited: ${userId}`);
+       return new Response(
+         JSON.stringify({ error: "Too many requests. Please wait before trying again." }),
+         { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "X-RateLimit-Remaining": "0" } }
+       );
+     }
+ 
     const body = await req.json() as SearchRequest;
     const { query, documentIds, topK = DEFAULT_TOP_K } = body;
 
@@ -275,6 +328,7 @@ serve(async (req) => {
     // Step 8: Log successful search
     await supabase.from("ai_usage_logs").insert({
       source_type: "rag_search",
+       triggered_by_user_id: userId,
       questions_requested: 1,
       questions_fetched: sections.length,
       questions_saved: 1,
@@ -296,7 +350,7 @@ serve(async (req) => {
         query: trimmedQuery,
         searchTime: Date.now() - startTime,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       { headers: { ...corsHeaders, "Content-Type": "application/json", "X-RateLimit-Remaining": String(rateCheck.remaining) } }
     );
 
   } catch (error) {

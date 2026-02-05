@@ -260,20 +260,33 @@ export async function generateForTopic(params: {
     const hasRAGDocuments = documents && documents.length > 0;
     const endpoint = hasRAGDocuments ? 'generate-from-rag' : 'generate-test';
 
-    const response = await supabase.functions.invoke(endpoint, {
-      body: {
-        topic_id: params.topic_id,
-        topic: `${params.topic_name} (${params.subject_name})`,
-        topic_name: params.topic_name,
-        subject_name: params.subject_name,
-        difficulty: params.difficulty || 'medium',
-        question_count: safeCount,
-        count: safeCount,
-        mode: 'bank_only',
-        source: 'auto_fill',
-        forceNew: true
-      }
-    });
+       // Build request body based on endpoint
+       const requestBody = hasRAGDocuments
+         ? {
+             // generate-from-rag now only needs topic_id
+             topic_id: params.topic_id,
+             count: safeCount,
+             difficulty_distribution: {
+               easy: Math.ceil(safeCount * 0.4),
+               medium: Math.ceil(safeCount * 0.4),
+               hard: Math.ceil(safeCount * 0.2)
+             }
+           }
+         : {
+             // generate-test needs more params
+             topic_id: params.topic_id,
+             topic: `${params.topic_name} (${params.subject_name})`,
+             topic_name: params.topic_name,
+             subject_name: params.subject_name,
+             difficulty: params.difficulty || 'medium',
+             question_count: safeCount,
+             count: safeCount,
+             mode: 'bank_only',
+             source: 'auto_fill',
+             forceNew: true
+           };
+ 
+       const response = await supabase.functions.invoke(endpoint, { body: requestBody });
 
     if (response.error) {
       const errorMsg = response.error.message || 'Unknown error';
