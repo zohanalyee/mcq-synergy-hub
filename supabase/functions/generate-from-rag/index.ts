@@ -17,25 +17,46 @@ interface MCQQuestion {
   difficulty: string;
 }
 
-async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "models/text-embedding-004",
-        content: { parts: [{ text }] },
-      }),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error(`Embedding API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.embedding?.values || [];
+ // Helper: Verify admin authorization
+ async function verifyAdmin(req: Request, supabase: any): Promise<{ authorized: boolean; userId?: string; error?: string }> {
+   const authHeader = req.headers.get("Authorization");
+   
+   // Allow service role calls (from scheduled jobs)
+   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+   if (authHeader?.includes(serviceKey || "")) {
+     return { authorized: true, userId: "service_role" };
+   }
+ 
+   // Allow admin trigger header (from scheduled-autofill)
+   if (req.headers.get("x-admin-trigger") === "true" && authHeader?.startsWith("Bearer ")) {
+     return { authorized: true, userId: "admin_trigger" };
+   }
+ 
+   // Verify JWT for regular calls
+   if (!authHeader?.startsWith("Bearer ")) {
+     return { authorized: false, error: "Missing or invalid authorization header" };
+   }
+ 
+   const token = authHeader.replace("Bearer ", "");
+   const { data, error } = await supabase.auth.getUser(token);
+   
+   if (error || !data?.user) {
+     return { authorized: false, error: "Invalid token" };
+   }
+ 
+   // Check if user is admin
+   const { data: roleData } = await supabase
+     .from("user_roles")
+     .select("role")
+     .eq("user_id", data.user.id)
+     .eq("role", "admin")
+     .single();
+ 
+   if (!roleData) {
+     return { authorized: false, error: "Admin privileges required" };
+   }
+ 
+   return { authorized: true, userId: data.user.id };
 }
 
 async function callGeminiWithFallback(
@@ -109,40 +130,105 @@ serve(async (req) => {
   }
 
   try {
+     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+ 
+     if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+       throw new Error("Missing required environment variables");
+     }
+ 
+     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+ 
+     // ============= AUTHORIZATION CHECK =============
+     const auth = await verifyAdmin(req, supabase);
+     if (!auth.authorized) {
+       console.log(`[generate-from-rag] ⛔ Unauthorized: ${auth.error}`);
+       return new Response(
+         JSON.stringify({ error: auth.error }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+     console.log(`[generate-from-rag] ✅ Authorized: ${auth.userId}`);
+ 
     const {
-      document_id,
       topic_id,
+       document_id, // Optional: for backward compatibility
       subject,
       topic,
+       topic_name,
+       subject_name,
       count = 10,
       difficulty_distribution = { easy: 4, medium: 4, hard: 2 },
     } = await req.json();
 
-    if (!document_id || !topic_id) {
+     // topic_id is now the primary required parameter
+     if (!topic_id) {
       return new Response(
-        JSON.stringify({ error: "document_id and topic_id are required" }),
+         JSON.stringify({ error: "topic_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-
-    if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing required environment variables");
+     // Resolve subject/topic names from topic_id if not provided
+     let subjectName = subject || subject_name;
+     let topicName = topic || topic_name;
+     
+     if (!subjectName || !topicName) {
+       const { data: topicData } = await supabase
+         .from("topics")
+         .select("name, subjects!inner(name)")
+         .eq("id", topic_id)
+         .single();
+       
+       if (topicData) {
+         topicName = topicName || topicData.name;
+         const subjectData = Array.isArray(topicData.subjects) ? topicData.subjects[0] : topicData.subjects;
+         subjectName = subjectName || subjectData?.name || "General";
+       }
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-
-    // Step 1: Fetch document sections for this document
-    console.log(`Fetching chunks for document: ${document_id}`);
-    const { data: sections, error: sectionsError } = await supabase
-      .from("document_sections")
-      .select("content")
-      .eq("document_id", document_id)
-      .order("section_index")
-      .limit(20); // Use top 20 chunks
+     // ============= STEP 1: Resolve document_id from topic_id =============
+     let targetDocumentId = document_id;
+     
+     if (!targetDocumentId) {
+       // Find documents linked to this topic
+       const { data: documents, error: docError } = await supabase
+         .from("documents")
+         .select("id, title")
+         .eq("topic_id", topic_id)
+         .eq("status", "completed")
+         .order("created_at", { ascending: false })
+         .limit(1);
+ 
+       if (docError) {
+         throw new Error(`Failed to fetch documents: ${docError.message}`);
+       }
+ 
+       if (!documents || documents.length === 0) {
+         console.log(`[generate-from-rag] No documents found for topic: ${topic_id}`);
+         return new Response(
+           JSON.stringify({ 
+             error: "No RAG documents found for this topic. Please upload a document first.",
+             topic_id,
+             has_documents: false
+           }),
+           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+         );
+       }
+ 
+       targetDocumentId = documents[0].id;
+       console.log(`[generate-from-rag] Resolved document: ${targetDocumentId} (${documents[0].title})`);
+     }
+ 
+     // ============= STEP 2: Fetch document sections =============
+     console.log(`[generate-from-rag] Fetching chunks for document: ${targetDocumentId}`);
+     const { data: sections, error: sectionsError } = await supabase
+       .from("document_sections")
+       .select("content")
+       .eq("document_id", targetDocumentId)
+       .order("section_index")
+       .limit(20);
 
     if (sectionsError) {
       throw new Error(`Failed to fetch document sections: ${sectionsError.message}`);
@@ -150,16 +236,16 @@ serve(async (req) => {
 
     if (!sections || sections.length === 0) {
       return new Response(
-        JSON.stringify({ error: "No content found in document" }),
+         JSON.stringify({ error: "No content chunks found in document. Try re-processing the PDF." }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Step 2: Combine chunks into context
+     // ============= STEP 3: Combine chunks into context =============
     const context = sections.map(s => s.content).join("\n\n---\n\n");
-    console.log(`Using ${sections.length} chunks, total length: ${context.length} chars`);
+     console.log(`[generate-from-rag] Using ${sections.length} chunks, total: ${context.length} chars`);
 
-    // Step 3: Build MCQ generation prompt
+     // ============= STEP 4: Build MCQ generation prompt =============
     const systemPrompt = `You are an expert MCQ question generator for educational content.
 Your task is to create high-quality multiple choice questions based ONLY on the provided document context.
 
@@ -185,8 +271,8 @@ Return ONLY a valid JSON array with this structure:
 
     const userPrompt = `Generate ${count} multiple-choice questions from the following educational content.
 
-SUBJECT: ${subject || "General"}
-TOPIC: ${topic || "General"}
+ SUBJECT: ${subjectName || "General"}
+ TOPIC: ${topicName || "General"}
 
 DIFFICULTY DISTRIBUTION:
 - Easy: ${difficulty_distribution.easy} questions
@@ -198,13 +284,13 @@ ${context.substring(0, 15000)}
 
 Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`;
 
-    // Step 4: Generate MCQs using Gemini
-    console.log("Generating MCQs with Gemini...");
+     // ============= STEP 5: Generate MCQs using Gemini =============
+     console.log("[generate-from-rag] Generating MCQs with Gemini...");
     const responseText = await callGeminiWithFallback(userPrompt, systemPrompt, GEMINI_API_KEY);
     
-    // Step 5: Parse response
+     // ============= STEP 6: Parse response =============
     const questions = parseJSONFromResponse(responseText);
-    console.log(`Parsed ${questions.length} questions from response`);
+     console.log(`[generate-from-rag] Parsed ${questions.length} questions`);
 
     if (questions.length === 0) {
       return new Response(
@@ -213,26 +299,31 @@ Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`
       );
     }
 
-    // Step 6: Save questions to content_items
+     // ============= STEP 7: Save questions to content_items =============
     let savedCount = 0;
     const errors: string[] = [];
 
     for (const q of questions) {
       try {
+         // Normalize difficulty to title case
+         const normalizedDifficulty = q.difficulty 
+           ? q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1).toLowerCase()
+           : "Medium";
+ 
         const { error: insertError } = await supabase.from("content_items").insert({
           title: q.title,
           description: q.title,
           category: "mcq",
           status: "approved",
-          subject: subject,
-          topic: topic,
+           subject: subjectName,
+           topic: topicName,
           topic_id: topic_id,
-          difficulty: q.difficulty || "Medium",
+           difficulty: normalizedDifficulty,
           options: q.options,
           correct_option: q.correct_option,
           explanation: q.explanation,
           source_type: "rag_generated",
-          source_document_id: document_id,
+           source_document_id: targetDocumentId,
           show_in_subjects: true,
           show_in_syllabus: true,
           show_in_mock_tests: true,
@@ -248,24 +339,27 @@ Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`
       }
     }
 
-    // Step 7: Log usage
+     // ============= STEP 8: Log usage =============
     await supabase.from("ai_usage_logs").insert({
       source_type: "rag_mcq_generation",
-      subject: subject,
-      topic: topic,
+       subject: subjectName,
+       topic: topicName,
       questions_requested: count,
       questions_fetched: questions.length,
       questions_saved: savedCount,
-      metadata: { document_id, topic_id, errors },
+       triggered_by_user_id: auth.userId === "service_role" || auth.userId === "admin_trigger" ? null : auth.userId,
+       metadata: { document_id: targetDocumentId, topic_id, errors: errors.length > 0 ? errors : undefined },
     });
 
-    console.log(`Saved ${savedCount}/${questions.length} questions`);
+     console.log(`[generate-from-rag] ✅ Saved ${savedCount}/${questions.length} questions`);
 
     return new Response(
       JSON.stringify({
         success: true,
         questions_generated: questions.length,
         questions_saved: savedCount,
+         topic_id,
+         document_id: targetDocumentId,
         errors: errors.length > 0 ? errors : undefined,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }

@@ -19,6 +19,43 @@ interface ProcessRequest {
   title?: string;
 }
 
+ // Helper: Verify admin authorization
+ async function verifyAdmin(req: Request, supabase: any): Promise<{ authorized: boolean; userId?: string; error?: string }> {
+   const authHeader = req.headers.get("Authorization");
+   
+   // Allow service role calls
+   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+   if (authHeader?.includes(serviceKey || "")) {
+     return { authorized: true, userId: "service_role" };
+   }
+ 
+   // Verify JWT for regular calls
+   if (!authHeader?.startsWith("Bearer ")) {
+     return { authorized: false, error: "Missing or invalid authorization header" };
+   }
+ 
+   const token = authHeader.replace("Bearer ", "");
+   const { data, error } = await supabase.auth.getUser(token);
+   
+   if (error || !data?.user) {
+     return { authorized: false, error: "Invalid token" };
+   }
+ 
+   // Check if user is admin
+   const { data: roleData } = await supabase
+     .from("user_roles")
+     .select("role")
+     .eq("user_id", data.user.id)
+     .eq("role", "admin")
+     .single();
+ 
+   if (!roleData) {
+     return { authorized: false, error: "Admin privileges required" };
+   }
+ 
+   return { authorized: true, userId: data.user.id };
+ }
+ 
 // Fetch and parse PDF from URL using unpdf
 async function extractTextFromPdf(fileUrl: string): Promise<{ text: string; pageCount: number }> {
   console.log(`Fetching PDF from: ${fileUrl}`);
@@ -150,6 +187,17 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+     // ============= AUTHORIZATION CHECK (Admin Only) =============
+     const auth = await verifyAdmin(req, supabase);
+     if (!auth.authorized) {
+       console.log(`[process-book] ⛔ Unauthorized: ${auth.error}`);
+       return new Response(
+         JSON.stringify({ error: auth.error }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+     console.log(`[process-book] ✅ Authorized: ${auth.userId}`);
+ 
     const { documentId, fileUrl, title } = await req.json() as ProcessRequest;
 
     if (!documentId || !fileUrl) {
@@ -159,8 +207,7 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Processing document: ${documentId}`);
-    console.log(`File URL: ${fileUrl}`);
+     console.log(`[process-book] Processing document: ${documentId}`);
 
     // Update document status to processing
     await supabase
@@ -170,7 +217,7 @@ serve(async (req) => {
 
     // Step 1: Fetch and extract text from PDF (server-side)
     const { text, pageCount } = await extractTextFromPdf(fileUrl);
-    console.log(`Extracted ${text.length} characters from ${pageCount} pages`);
+     console.log(`[process-book] Extracted ${text.length} chars from ${pageCount} pages`);
 
     if (!text || text.length < 100) {
       throw new Error("PDF appears to be empty or contains very little extractable text");
@@ -178,16 +225,16 @@ serve(async (req) => {
 
     // Step 2: Chunk the text
     const chunks = chunkText(text, CHUNK_SIZE, CHUNK_OVERLAP);
-    console.log(`Created ${chunks.length} chunks`);
+     console.log(`[process-book] Created ${chunks.length} chunks`);
 
     if (chunks.length === 0) {
       throw new Error("No valid text chunks could be extracted");
     }
 
     // Step 3: Generate embeddings for all chunks
-    console.log("Generating embeddings with Gemini...");
+     console.log("[process-book] Generating embeddings...");
     const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
-    console.log(`Generated ${embeddings.length} embeddings`);
+     console.log(`[process-book] Generated ${embeddings.length} embeddings`);
 
     // Step 4: Prepare sections for insertion
     const sections = chunks.map((content, index) => ({
@@ -217,7 +264,7 @@ serve(async (req) => {
       })
       .eq("id", documentId);
 
-    console.log(`Successfully processed document ${documentId} with ${chunks.length} sections`);
+     console.log(`[process-book] ✅ Processed ${documentId}: ${chunks.length} sections`);
 
     return new Response(
       JSON.stringify({
