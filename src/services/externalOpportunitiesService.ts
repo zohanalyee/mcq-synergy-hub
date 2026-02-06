@@ -10,7 +10,7 @@ import {
   ScholarshipScope
 } from "@/types/externalOpportunities";
 
-// Fetch opportunities by status (for admin)
+// Fetch opportunities by status (for admin) - includes duplicate detection
 export const getExternalOpportunities = async (status?: OpportunityStatus): Promise<ExternalOpportunity[]> => {
   let query = supabase
     .from('external_opportunities')
@@ -29,6 +29,50 @@ export const getExternalOpportunities = async (status?: OpportunityStatus): Prom
   }
   
   return (data || []) as ExternalOpportunity[];
+};
+
+// Check if URL already exists in approved opportunities (for duplicate detection)
+export const checkDuplicateUrl = async (applyUrl: string, excludeId?: string): Promise<boolean> => {
+  let query = supabase
+    .from('external_opportunities')
+    .select('id')
+    .eq('apply_url', applyUrl)
+    .eq('status', 'approved');
+  
+  if (excludeId) {
+    query = query.neq('id', excludeId);
+  }
+  
+  const { data, error } = await query.limit(1);
+  
+  if (error) {
+    console.error('Error checking duplicate URL:', error);
+    return false;
+  }
+  
+  return (data || []).length > 0;
+};
+
+// Get opportunities with duplicate flags
+export const getExternalOpportunitiesWithDuplicates = async (status?: OpportunityStatus): Promise<(ExternalOpportunity & { isDuplicate?: boolean })[]> => {
+  const opportunities = await getExternalOpportunities(status);
+  
+  // If checking pending, find duplicates against approved
+  if (status === 'pending') {
+    const { data: approved } = await supabase
+      .from('external_opportunities')
+      .select('apply_url')
+      .eq('status', 'approved');
+    
+    const approvedUrls = new Set((approved || []).map(a => a.apply_url));
+    
+    return opportunities.map(opp => ({
+      ...opp,
+      isDuplicate: approvedUrls.has(opp.apply_url)
+    }));
+  }
+  
+  return opportunities;
 };
 
 // Get approved opportunities for public pages with optional filters

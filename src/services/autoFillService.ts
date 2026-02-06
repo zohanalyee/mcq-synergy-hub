@@ -198,19 +198,40 @@ export async function getAutoFillStats(): Promise<{
   config: AutoFillConfig | null;
   queueCount: number;
   topPriorityTopics: AutoFillQueueItem[];
+  lastRunInfo: { timestamp: string; questionsSaved: number } | null;
 }> {
   // Single parallel fetch - no duplicate queue calls
-  const [usage, config, queue] = await Promise.all([
+  const [usage, config, queue, lastRun] = await Promise.all([
     getAIUsageToday(),
     getAutoFillConfig(),
-    getAutoFillQueue(100) // Single call with reasonable limit for count
+    getAutoFillQueue(100),
+    getLastAutoFillRun()
   ]);
   
   return {
     usage,
     config,
-    queueCount: queue.length, // Count from same call
-    topPriorityTopics: queue.slice(0, 5) // Top 5 from same data
+    queueCount: queue.length,
+    topPriorityTopics: queue.slice(0, 5),
+    lastRunInfo: lastRun
+  };
+}
+
+// Get last auto-fill run info from logs
+export async function getLastAutoFillRun(): Promise<{ timestamp: string; questionsSaved: number } | null> {
+  const { data, error } = await supabase
+    .from('ai_usage_logs')
+    .select('created_at, questions_saved')
+    .eq('source_type', 'auto_fill')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  
+  if (error || !data) return null;
+  
+  return {
+    timestamp: data.created_at,
+    questionsSaved: data.questions_saved
   };
 }
 

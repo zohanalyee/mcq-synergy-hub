@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
-import { RefreshCw, Check, X, ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap, Sparkles, Globe, Building } from "lucide-react";
+import { RefreshCw, Check, X, ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap, Sparkles, Globe, Building, AlertTriangle } from "lucide-react";
 import Header from "@/components/Header";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  getExternalOpportunities,
+  getExternalOpportunitiesWithDuplicates,
   updateOpportunityStatus,
   syncMockExternalData,
   syncAIExternalData,
@@ -25,7 +25,7 @@ const ExternalCuration = () => {
   const { user } = useAuth();
   const { isAdmin } = useUserRole();
   const [activeTab, setActiveTab] = useState<OpportunityStatus>("pending");
-  const [opportunities, setOpportunities] = useState<ExternalOpportunity[]>([]);
+  const [opportunities, setOpportunities] = useState<(ExternalOpportunity & { isDuplicate?: boolean })[]>([]);
   const [counts, setCounts] = useState<Record<OpportunityStatus, number>>({ pending: 0, approved: 0, rejected: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [isAISyncing, setIsAISyncing] = useState(false);
@@ -55,7 +55,7 @@ const ExternalCuration = () => {
     setIsLoading(true);
     try {
       const [opps, countsData] = await Promise.all([
-        getExternalOpportunities(activeTab),
+        getExternalOpportunitiesWithDuplicates(activeTab),
         getOpportunityCounts()
       ]);
       setOpportunities(opps);
@@ -276,7 +276,7 @@ const ExternalCuration = () => {
 };
 
 interface OpportunityCardProps {
-  opportunity: ExternalOpportunity;
+  opportunity: ExternalOpportunity & { isDuplicate?: boolean };
   onApprove?: () => void;
   onReject?: () => void;
   formatDate: (date: string | null) => string;
@@ -343,6 +343,12 @@ const OpportunityCard = ({ opportunity, onApprove, onReject, formatDate }: Oppor
                   {opportunity.type === "job" ? "Job" : "Scholarship"}
                 </Badge>
                 <Badge variant="outline">{opportunity.source_name}</Badge>
+                {opportunity.isDuplicate && (
+                  <Badge variant="destructive" className="gap-1 text-xs">
+                    <AlertTriangle className="h-3 w-3" />
+                    Duplicate URL
+                  </Badge>
+                )}
               </div>
               <CardTitle className="text-lg line-clamp-2">{opportunity.title}</CardTitle>
             </div>
