@@ -48,6 +48,8 @@ export interface ContentItem {
   showInSubjects?: boolean;
   showInSyllabus?: boolean;
   showInMockTests?: boolean;
+  // Source tracking
+  sourceType?: 'manual' | 'ai_generated' | 'rag_generated' | 'auto_fill' | null;
 }
 
 export interface MCQItem {

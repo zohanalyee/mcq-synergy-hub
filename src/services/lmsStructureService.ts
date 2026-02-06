@@ -219,6 +219,98 @@ export const assignSubjectToLevel = async (
   return true;
 };
 
+// ============ Topics with RAG Status ============
+
+export interface TopicWithRAGStatus {
+  id: string;
+  name: string;
+  description: string | null;
+  subject_id: string | null;
+  created_at: string;
+  documentCount: number;
+  chunkCount: number;
+  subjectName: string;
+}
+
+export const getTopicsWithRAGStatus = async (subjectId: string): Promise<TopicWithRAGStatus[]> => {
+  // Fetch topics
+  const { data: topics, error: topicsError } = await supabase
+    .from('topics')
+    .select('*')
+    .eq('subject_id', subjectId)
+    .order('name');
+
+  if (topicsError) {
+    console.error("Error fetching topics:", topicsError);
+    return [];
+  }
+
+  if (!topics || topics.length === 0) return [];
+
+  // Fetch subject name
+  const { data: subject } = await supabase
+    .from('subjects')
+    .select('name')
+    .eq('id', subjectId)
+    .single();
+
+  const subjectName = subject?.name || '';
+
+  // Fetch document counts for all topics
+  const topicIds = topics.map(t => t.id);
+  const { data: documents, error: docsError } = await supabase
+    .from('documents')
+    .select('topic_id, id')
+    .in('topic_id', topicIds)
+    .eq('status', 'completed');
+
+  if (docsError) {
+    console.error("Error fetching documents:", docsError);
+  }
+
+  // Get document IDs with documents
+  const documentsByTopic = new Map<string, string[]>();
+  (documents || []).forEach(doc => {
+    if (doc.topic_id) {
+      const existing = documentsByTopic.get(doc.topic_id) || [];
+      existing.push(doc.id);
+      documentsByTopic.set(doc.topic_id, existing);
+    }
+  });
+
+  // Fetch chunk counts for documents
+  const allDocIds = (documents || []).map(d => d.id);
+  let chunksByDocument = new Map<string, number>();
+  
+  if (allDocIds.length > 0) {
+    const { data: sections } = await supabase
+      .from('document_sections')
+      .select('document_id')
+      .in('document_id', allDocIds);
+
+    (sections || []).forEach(s => {
+      const count = chunksByDocument.get(s.document_id) || 0;
+      chunksByDocument.set(s.document_id, count + 1);
+    });
+  }
+
+  return topics.map(topic => {
+    const docIds = documentsByTopic.get(topic.id) || [];
+    const chunkCount = docIds.reduce((sum, docId) => sum + (chunksByDocument.get(docId) || 0), 0);
+    
+    return {
+      id: topic.id,
+      name: topic.name,
+      description: topic.description,
+      subject_id: topic.subject_id,
+      created_at: topic.created_at,
+      documentCount: docIds.length,
+      chunkCount,
+      subjectName
+    };
+  });
+};
+
 // ============ Bulk Import ============
 
 export const bulkImportSyllabus = async (

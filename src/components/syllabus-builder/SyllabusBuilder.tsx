@@ -390,8 +390,9 @@ export const SyllabusBuilder = () => {
         if (sessionError) throw sessionError;
 
         toast({
-          title: "Test Ready!",
-          description: `${fallbackInfo.questions.length} questions loaded from Question Bank.`
+          title: "✅ Test Ready!",
+          description: `${fallbackInfo.questions.length} questions loaded from Question Bank.`,
+          duration: 5000
         });
 
         navigate(`/test-session/${session.id}`);
@@ -401,9 +402,10 @@ export const SyllabusBuilder = () => {
       // Step 3: Not enough questions - check if admin can generate from RAG
       if (!isAdmin) {
         toast({
-          title: "Not Enough Questions",
-          description: `Only ${fallbackInfo.questions.length} questions available for these topics. Please try different topics or reduce the question count.`,
-          variant: "destructive"
+          title: "❌ Not Enough Questions",
+          description: `Only ${fallbackInfo.questions.length}/${quizSettings.questionsCount} questions available. Please try different topics or reduce the count.`,
+          variant: "destructive",
+          duration: 6000
         });
         setIsGenerating(false);
         return;
@@ -412,9 +414,10 @@ export const SyllabusBuilder = () => {
       // Step 4: Admin path - offer RAG generation if documents exist
       if (!fallbackInfo.ragAvailable) {
         toast({
-          title: "No Course Materials Available",
-          description: `Found ${fallbackInfo.questions.length} questions, but no PDF documents are linked to these topics. Please upload course materials first.`,
-          variant: "destructive"
+          title: "📚 No Course Materials",
+          description: `Found ${fallbackInfo.questions.length} questions. This topic has no uploaded study material for RAG generation.`,
+          variant: "destructive",
+          duration: 6000
         });
         setIsGenerating(false);
         return;
@@ -509,8 +512,9 @@ export const SyllabusBuilder = () => {
         .single();
 
       toast({
-        title: "Test Generated!",
-        description: `Created test with ${updatedInfo.questions.length} questions (${ragResult.saved} newly generated).`
+        title: "🎉 Test Generated!",
+        description: `${fallbackInfo.questions.length} from Question Bank + ${ragResult.saved} generated from course material.`,
+        duration: 5000
       });
 
       if (session) navigate(`/test-session/${session.id}`);
