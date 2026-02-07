@@ -87,6 +87,7 @@ const QuestionBankManager = () => {
     showInSubjects: row.show_in_subjects,
     showInSyllabus: row.show_in_syllabus,
     showInMockTests: row.show_in_mock_tests,
+    sourceType: row.source_type,
   });
 
   // Fetch questions with server-side pagination

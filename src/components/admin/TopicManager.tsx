@@ -18,7 +18,8 @@ const TopicManager = () => {
     currentTopics,
     handleAddTopic,
     handleRemoveTopic,
-    resetForm
+    resetForm,
+    refreshTopics,
   } = useTopicManagement();
 
   return (
@@ -64,7 +65,8 @@ const TopicManager = () => {
       {selectedSubject ? (
         <TopicList 
           topics={currentTopics} 
-          onRemoveTopic={handleRemoveTopic} 
+          onRemoveTopic={handleRemoveTopic}
+          onRefresh={refreshTopics}
         />
       ) : (
         <div className="text-center p-10 border rounded-md bg-muted/10">
