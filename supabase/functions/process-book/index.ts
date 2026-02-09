@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
+import { checkQuota, retryWithBackoff, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -452,7 +453,27 @@ serve(async (req) => {
       throw new Error("No valid text chunks could be extracted");
     }
 
-    // Step 3: Generate embeddings for all chunks
+    // Step 3: Quota check before embedding generation (each chunk = 1 API call)
+    console.log(`[process-book] Checking quota before generating ${chunks.length} embeddings...`);
+    try {
+      const quota = await checkQuota(supabase);
+      console.log(`[process-book] 📊 Quota remaining: ${quota.remaining}, chunks needed: ${chunks.length}`);
+      if (quota.remaining < chunks.length) {
+        console.warn(`[process-book] ⚠️ Quota (${quota.remaining}) may be insufficient for ${chunks.length} chunks`);
+      }
+    } catch (err) {
+      if (err instanceof QuotaExhaustedError) {
+        // Update document status to failed
+        await supabase
+          .from("documents")
+          .update({ status: "failed" })
+          .eq("id", documentId);
+        return quotaExhaustedResponse(corsHeaders);
+      }
+      throw err;
+    }
+
+    // Step 4: Generate embeddings for all chunks
     console.log("[process-book] Generating embeddings...");
     const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
     console.log(`[process-book] Generated ${embeddings.length} embeddings`);

@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { checkQuota, retryWithBackoff, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -150,6 +151,17 @@ serve(async (req) => {
        );
      }
      console.log(`[generate-from-rag] ✅ Authorized: ${auth.userId}`);
+
+    // ============= QUOTA CHECK =============
+    try {
+      const quota = await checkQuota(supabase);
+      console.log(`[generate-from-rag] 📊 Quota remaining: ${quota.remaining}`);
+    } catch (err) {
+      if (err instanceof QuotaExhaustedError) {
+        return quotaExhaustedResponse(corsHeaders);
+      }
+      throw err;
+    }
  
     const {
       topic_id,
@@ -286,7 +298,11 @@ Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`
 
      // ============= STEP 5: Generate MCQs using Gemini =============
      console.log("[generate-from-rag] Generating MCQs with Gemini...");
-    const responseText = await callGeminiWithFallback(userPrompt, systemPrompt, GEMINI_API_KEY);
+    const responseText = await retryWithBackoff(
+      () => callGeminiWithFallback(userPrompt, systemPrompt, GEMINI_API_KEY),
+      2,
+      'generate-from-rag MCQ generation'
+    );
     
      // ============= STEP 6: Parse response =============
     const questions = parseJSONFromResponse(responseText);
