@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const EMBEDDING_MODEL = "text-embedding-004";
+const EMBEDDING_MODELS = ["text-embedding-005", "text-embedding-004"];
 const MAX_QUERY_LENGTH = 300;
 const DEFAULT_MATCH_COUNT = 4;
 const MATCH_THRESHOLD = 0.75;
@@ -25,37 +25,38 @@ interface SearchResult {
   title: string;
 }
 
-// Generate embedding using Google Gemini API
+// Generate embedding using Google Gemini API with model fallback
 async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: `models/${EMBEDDING_MODEL}`,
-        content: {
-          parts: [{ text }],
-        },
-      }),
-    }
-  );
+  for (const model of EMBEDDING_MODELS) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: `models/${model}`,
+          content: { parts: [{ text }] },
+        }),
+      }
+    );
 
-  if (!response.ok) {
+    if (response.ok) {
+      const data = await response.json();
+      if (data.embedding?.values) return data.embedding.values;
+    }
+
+    if (response.status === 404) {
+      const err = await response.text();
+      console.warn(`Embedding model ${model} not found, trying next...`);
+      continue;
+    }
+
     const error = await response.text();
     console.error("Gemini API error:", error);
     throw new Error(`Gemini API error: ${response.status}`);
   }
 
-  const data = await response.json();
-  
-  if (!data.embedding?.values) {
-    throw new Error("No embedding returned from Gemini API");
-  }
-
-  return data.embedding.values;
+  throw new Error("No embedding model available");
 }
 
 serve(async (req) => {
