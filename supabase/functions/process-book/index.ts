@@ -10,7 +10,7 @@ const corsHeaders = {
 // Configuration
 const CHUNK_SIZE = 1000; // characters per chunk
 const CHUNK_OVERLAP = 200; // overlap between chunks
-const EMBEDDING_MODELS = ["text-embedding-005", "text-embedding-004"]; // Fallback list
+const EMBEDDING_MODELS = ["gemini-embedding-001", "text-embedding-005", "text-embedding-004"]; // Current stable + fallbacks
 const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25MB
 const MIN_QUALITY_CHARS = 500; // minimum chars for "good" native extraction
 const MIN_QUALITY_LETTERS = 100; // minimum letter count for "good" extraction
