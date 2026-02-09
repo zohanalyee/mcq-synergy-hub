@@ -90,73 +90,169 @@ async function extractTextNative(pdfBytes: Uint8Array): Promise<{
   }
 }
 
-// Stage 2: OCR fallback using Gemini Vision API for scanned PDFs
-async function extractTextWithVisionOCR(
-  pdfBytes: Uint8Array,
-  apiKey: string
-): Promise<string> {
-  console.log("[process-book] 🔍 Using Gemini Vision OCR for scanned PDF...");
-
-  // Convert PDF bytes to base64
-  let base64Pdf = "";
-  const STEP = 32768; // Process in chunks to avoid stack overflow with large PDFs
+// Helper: Convert PDF bytes to base64 string (chunk-safe for large files)
+function pdfToBase64(pdfBytes: Uint8Array): string {
+  let raw = "";
+  const STEP = 32768;
   for (let i = 0; i < pdfBytes.length; i += STEP) {
     const slice = pdfBytes.subarray(i, Math.min(i + STEP, pdfBytes.length));
-    base64Pdf += String.fromCharCode(...slice);
+    raw += String.fromCharCode(...slice);
   }
-  base64Pdf = btoa(base64Pdf);
+  return btoa(raw);
+}
 
-  console.log(`[process-book] PDF base64 size: ${base64Pdf.length} chars`);
+// Helper: Extract text from Gemini-style response
+function extractTextFromGeminiResponse(result: any): string {
+  if (
+    result.candidates?.length > 0 &&
+    result.candidates[0].content?.parts?.length > 0
+  ) {
+    return (result.candidates[0].content.parts[0].text || "").trim();
+  }
+  return "";
+}
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{
-          parts: [
+// Strategy A: Use Lovable AI Gateway (separate quota via LOVABLE_API_KEY)
+async function extractViaLovableGateway(
+  pdfBytes: Uint8Array
+): Promise<string> {
+  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
+  if (!lovableApiKey) {
+    throw new Error("LOVABLE_API_KEY not configured");
+  }
+
+  console.log("[process-book] 🔍 Using Lovable AI Gateway for OCR...");
+  const base64Pdf = pdfToBase64(pdfBytes);
+
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "user",
+          content: [
             {
-              text: "Extract ALL text from this PDF document. Preserve the page structure and formatting as much as possible. Include all headings, paragraphs, bullet points, tables, and any other text content. Output only the extracted text, nothing else.",
+              type: "text",
+              text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Include all headings, paragraphs, bullet points, tables, and any other text content. Output only the extracted text, nothing else.",
             },
             {
-              inline_data: {
-                mime_type: "application/pdf",
-                data: base64Pdf,
+              type: "image_url",
+              image_url: {
+                url: `data:application/pdf;base64,${base64Pdf}`,
               },
             },
           ],
-        }],
-        generationConfig: {
-          maxOutputTokens: 65536,
-          temperature: 0.1, // Low temperature for accurate extraction
         },
-      }),
-    }
-  );
+      ],
+      max_tokens: 65536,
+      temperature: 0.1,
+    }),
+  });
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("[process-book] Gemini Vision API error:", errorText);
-    throw new Error(`Gemini Vision OCR failed: ${response.status} - ${errorText}`);
+    console.error("[process-book] Lovable AI Gateway error:", response.status, errorText);
+    throw new Error(`Lovable AI Gateway OCR failed: ${response.status}`);
   }
 
   const result = await response.json();
+  const text = result.choices?.[0]?.message?.content || "";
 
-  if (
-    result.candidates &&
-    result.candidates.length > 0 &&
-    result.candidates[0].content &&
-    result.candidates[0].content.parts &&
-    result.candidates[0].content.parts.length > 0
-  ) {
-    const extractedText = result.candidates[0].content.parts[0].text || "";
-    console.log(`[process-book] ✅ Vision OCR extracted ${extractedText.length} characters`);
-    return extractedText.trim();
+  if (!text || text.length < 50) {
+    throw new Error("Lovable AI Gateway returned insufficient text");
   }
 
-  console.error("[process-book] Vision API returned unexpected response:", JSON.stringify(result).substring(0, 500));
-  throw new Error("Gemini Vision OCR returned no text content");
+  console.log(`[process-book] ✅ Lovable Gateway OCR extracted ${text.length} characters`);
+  return text.trim();
+}
+
+// Strategy B: Direct Gemini Vision API with retry
+async function extractViaGeminiDirect(
+  pdfBytes: Uint8Array,
+  apiKey: string,
+  retries = 1
+): Promise<string> {
+  console.log("[process-book] 🔍 Using direct Gemini Vision OCR...");
+  const base64Pdf = pdfToBase64(pdfBytes);
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Include all headings, paragraphs, bullet points, tables, and any other text. Output only the extracted text, nothing else." },
+              { inline_data: { mime_type: "application/pdf", data: base64Pdf } },
+            ],
+          }],
+          generationConfig: { maxOutputTokens: 65536, temperature: 0.1 },
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const result = await response.json();
+      const text = extractTextFromGeminiResponse(result);
+      if (text && text.length >= 50) {
+        console.log(`[process-book] ✅ Direct Gemini OCR extracted ${text.length} characters`);
+        return text;
+      }
+      throw new Error("Gemini Vision OCR returned insufficient text");
+    }
+
+    // Handle rate limiting with retry
+    if (response.status === 429 && attempt < retries) {
+      const errorBody = await response.text();
+      console.warn(`[process-book] ⚠️ Gemini rate limited (attempt ${attempt + 1}). Retrying in 55s...`);
+      await new Promise(resolve => setTimeout(resolve, 55000));
+      continue;
+    }
+
+    const errorText = await response.text();
+    throw new Error(`Gemini Vision OCR failed: ${response.status} - ${errorText}`);
+  }
+
+  throw new Error("Gemini Vision OCR exhausted all retries");
+}
+
+// Stage 2: OCR with cascading fallback (Lovable Gateway → Direct Gemini)
+async function extractTextWithVisionOCR(
+  pdfBytes: Uint8Array,
+  geminiApiKey: string
+): Promise<string> {
+  // Try Lovable AI Gateway first (separate quota, not affected by Gemini free tier limits)
+  try {
+    return await extractViaLovableGateway(pdfBytes);
+  } catch (gatewayError) {
+    console.warn(`[process-book] Lovable Gateway failed: ${gatewayError instanceof Error ? gatewayError.message : gatewayError}`);
+  }
+
+  // Fallback: Try direct Gemini with retry
+  try {
+    return await extractViaGeminiDirect(pdfBytes, geminiApiKey, 1);
+  } catch (geminiError) {
+    console.error(`[process-book] Direct Gemini also failed: ${geminiError instanceof Error ? geminiError.message : geminiError}`);
+  }
+
+  // Final fallback: Try secondary Gemini key if available
+  const altKey = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
+  if (altKey && altKey !== geminiApiKey) {
+    console.log("[process-book] Trying EXTERNAL_JOBS_GEMINI_KEY as final fallback...");
+    return await extractViaGeminiDirect(pdfBytes, altKey, 0);
+  }
+
+  throw new Error(
+    "All OCR methods failed. Your Gemini API free tier quota may be exhausted. " +
+    "Please wait for quota to reset or upgrade your Google Cloud billing."
+  );
 }
 
 // Combined extraction: native first, Vision OCR fallback
