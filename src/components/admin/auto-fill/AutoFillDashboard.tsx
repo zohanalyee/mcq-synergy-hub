@@ -21,6 +21,7 @@ import {
 } from "@/services/autoFillService";
 import ContentGapQueue from "./ContentGapQueue";
 import AutoFillSettings from "./AutoFillSettings";
+import QuotaMonitor from "../QuotaMonitor";
 
 const AutoFillDashboard = () => {
   const [usage, setUsage] = useState<AIUsageToday | null>(null);
@@ -136,7 +137,8 @@ const AutoFillDashboard = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {/* Quota Monitor - Global AI usage overview */}
+      <QuotaMonitor />
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">

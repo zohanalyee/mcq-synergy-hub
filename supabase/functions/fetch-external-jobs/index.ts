@@ -1,9 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { checkQuota, retryWithBackoff, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
 // ============= MODEL FALLBACK CONFIGURATION =============
@@ -173,11 +174,28 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
+    // ============= REQUEST LOGGING =============
+    console.log(`[fetch-external-jobs] 📥 Request at ${new Date().toISOString()}`, {
+      userAgent: req.headers.get('user-agent')?.slice(0, 50),
+      referer: req.headers.get('referer'),
+    });
+
+    // ============= QUOTA CHECK =============
+    try {
+      const quota = await checkQuota(supabase);
+      console.log(`[fetch-external-jobs] 📊 Quota remaining: ${quota.remaining}`);
+    } catch (err) {
+      if (err instanceof QuotaExhaustedError) {
+        return quotaExhaustedResponse(corsHeaders);
+      }
+      throw err;
+    }
+
     const { searchType = 'jobs' } = await req.json();
 
-    // Build the prompt based on search type
+    // Build the prompt based on search type (reduced to exactly 5 items)
     const prompt = searchType === 'scholarships' 
-      ? `Search for the latest scholarship opportunities for Pakistani students in 2026. Return a JSON array with 5-10 scholarships. Each object should have:
+      ? `Search for the latest scholarship opportunities for Pakistani students in 2026. Return a JSON array with exactly 5 scholarships. Each object should have:
 - title: Scholarship name
 - description: Brief description (max 200 chars)
 - apply_url: Application URL (use realistic URLs from HEC, Fulbright, etc.)
@@ -191,7 +209,7 @@ serve(async (req) => {
 - region: Detect from location (sindh, punjab, kpk, balochistan, federal, international, other)
 
 Return ONLY the JSON array, no explanations.`
-      : `Search for the latest job opportunities in Pakistan for 2026. Return a JSON array with 5-10 jobs. Each object should have:
+      : `Search for the latest job opportunities in Pakistan for 2026. Return a JSON array with exactly 5 jobs. Each object should have:
 - title: Job title
 - description: Brief description (max 200 chars)
 - apply_url: Application URL (use realistic URLs from job portals)
@@ -206,10 +224,14 @@ Return ONLY the JSON array, no explanations.`
 
 Return ONLY the JSON array, no explanations.`;
 
-    console.log("Calling Gemini API with model fallback for:", searchType);
+    console.log("[fetch-external-jobs] Calling Gemini API with model fallback for:", searchType);
 
-    // Use the robust fallback mechanism
-    const result = await callGeminiWithFallback(EXTERNAL_JOBS_GEMINI_KEY, prompt);
+    // Use the robust fallback mechanism with retryWithBackoff
+    const result = await retryWithBackoff(
+      () => callGeminiWithFallback(EXTERNAL_JOBS_GEMINI_KEY, prompt),
+      2,
+      `fetch-external-jobs-${searchType}`
+    );
 
     if (!result.success) {
       console.error("All Gemini models failed:", result.error);

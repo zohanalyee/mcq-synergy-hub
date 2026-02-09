@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { checkQuota, retryWithBackoff, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -756,7 +757,10 @@ serve(async (req) => {
       topic_id: topic_id || null,
       auto_partial: autoPartial,
       requestId,
-      authenticated: !!verified_user_id
+      authenticated: !!verified_user_id,
+      timestamp: new Date().toISOString(),
+      userAgent: req.headers.get('user-agent')?.slice(0, 50),
+      referer: req.headers.get('referer'),
     });
 
     // Initialize Supabase client with service role for database operations
@@ -861,6 +865,17 @@ serve(async (req) => {
     if (isBankOnly) {
       console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank with HYBRID DEDUP`);
       
+      // ============= QUOTA CHECK (only for AI-generating modes) =============
+      try {
+        const quota = await checkQuota(supabase);
+        console.log(`[generate-test] 📊 Quota remaining: ${quota.remaining}`);
+      } catch (err) {
+        if (err instanceof QuotaExhaustedError) {
+          return quotaExhaustedResponse(corsHeaders);
+        }
+        throw err;
+      }
+
       const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
       if (!GEMINI_API_KEY) {
         throw new Error('GEMINI_API_KEY is not configured');
@@ -1143,6 +1158,36 @@ serve(async (req) => {
     // FULL AI GENERATION
     const missingCount = forceNew ? qc : qc - dbQuestions.length;
     console.log(`Step 2: Need ${missingCount} questions from AI (have ${dbQuestions.length} from cache)`);
+
+    // ============= QUOTA CHECK (before full AI generation) =============
+    try {
+      const quota = await checkQuota(supabase);
+      console.log(`[generate-test] 📊 Quota remaining before AI gen: ${quota.remaining}`);
+    } catch (err) {
+      if (err instanceof QuotaExhaustedError) {
+        // If we have cached questions, return those instead of failing
+        if (dbQuestions.length > 0) {
+          const returnedQuestions = shuffleArray(dbQuestions).slice(0, qc);
+          return new Response(
+            JSON.stringify({
+              session_name: `${topic} Quiz`,
+              questions: returnedQuestions,
+              source: 'cache',
+              cached_count: returnedQuestions.length,
+              ai_count: 0,
+              remaining_count: Math.max(0, qc - returnedQuestions.length),
+              total_requested: qc,
+              ai_unavailable: true,
+              error_type: 'quota_exhausted',
+              error_notice: 'Daily AI quota exhausted. Showing cached questions only.'
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
+          );
+        }
+        return quotaExhaustedResponse(corsHeaders);
+      }
+      throw err;
+    }
 
     const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
     console.log(`🔑 GEMINI_API_KEY configured: ${GEMINI_API_KEY ? 'Yes (' + GEMINI_API_KEY.substring(0, 8) + '...)' : 'NO - MISSING!'}`);
