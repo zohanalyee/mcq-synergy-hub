@@ -12,6 +12,8 @@ const CHUNK_SIZE = 1000; // characters per chunk
 const CHUNK_OVERLAP = 200; // overlap between chunks
 const EMBEDDING_MODEL = "text-embedding-004"; // Google's 768-dim model
 const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25MB
+const MIN_QUALITY_CHARS = 500; // minimum chars for "good" native extraction
+const MIN_QUALITY_LETTERS = 100; // minimum letter count for "good" extraction
 
 interface ProcessRequest {
   documentId: string;
@@ -19,47 +21,151 @@ interface ProcessRequest {
   title?: string;
 }
 
- // Helper: Verify admin authorization
- async function verifyAdmin(req: Request, supabase: any): Promise<{ authorized: boolean; userId?: string; error?: string }> {
-   const authHeader = req.headers.get("Authorization");
-   
-   // Allow service role calls
-   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-   if (authHeader?.includes(serviceKey || "")) {
-     return { authorized: true, userId: "service_role" };
-   }
- 
-   // Verify JWT for regular calls
-   if (!authHeader?.startsWith("Bearer ")) {
-     return { authorized: false, error: "Missing or invalid authorization header" };
-   }
- 
-   const token = authHeader.replace("Bearer ", "");
-   const { data, error } = await supabase.auth.getUser(token);
-   
-   if (error || !data?.user) {
-     return { authorized: false, error: "Invalid token" };
-   }
- 
-   // Check if user is admin
-   const { data: roleData } = await supabase
-     .from("user_roles")
-     .select("role")
-     .eq("user_id", data.user.id)
-     .eq("role", "admin")
-     .single();
- 
-   if (!roleData) {
-     return { authorized: false, error: "Admin privileges required" };
-   }
- 
-   return { authorized: true, userId: data.user.id };
- }
- 
-// Fetch and parse PDF from URL using unpdf
-async function extractTextFromPdf(fileUrl: string): Promise<{ text: string; pageCount: number }> {
-  console.log(`Fetching PDF from: ${fileUrl}`);
+// Helper: Verify admin authorization
+async function verifyAdmin(req: Request, supabase: any): Promise<{ authorized: boolean; userId?: string; error?: string }> {
+  const authHeader = req.headers.get("Authorization");
   
+  // Allow service role calls
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (authHeader?.includes(serviceKey || "")) {
+    return { authorized: true, userId: "service_role" };
+  }
+
+  // Verify JWT for regular calls
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { authorized: false, error: "Missing or invalid authorization header" };
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getUser(token);
+  
+  if (error || !data?.user) {
+    return { authorized: false, error: "Invalid token" };
+  }
+
+  // Check if user is admin
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", data.user.id)
+    .eq("role", "admin")
+    .single();
+
+  if (!roleData) {
+    return { authorized: false, error: "Admin privileges required" };
+  }
+
+  return { authorized: true, userId: data.user.id };
+}
+
+// Stage 1: Try native text extraction with unpdf
+async function extractTextNative(pdfBytes: Uint8Array): Promise<{
+  text: string;
+  pageCount: number;
+  quality: "good" | "poor";
+}> {
+  try {
+    const pdf = await getDocumentProxy(pdfBytes);
+    const pageCount = pdf.numPages;
+    
+    console.log(`[process-book] PDF has ${pageCount} pages`);
+
+    const { text: fullText } = await extractText(pdf, { mergePages: true });
+    const trimmed = fullText.trim();
+    
+    console.log(`[process-book] Native extraction: ${trimmed.length} characters`);
+
+    // Quality check: minimum chars AND enough actual letters (not just whitespace/symbols)
+    const letterCount = (trimmed.match(/[a-zA-Z\u0600-\u06FF\u0900-\u097F]/g) || []).length;
+    const hasGoodText = trimmed.length > MIN_QUALITY_CHARS && letterCount > MIN_QUALITY_LETTERS;
+
+    return {
+      text: trimmed,
+      pageCount,
+      quality: hasGoodText ? "good" : "poor",
+    };
+  } catch (error) {
+    console.error("[process-book] Native extraction failed:", error);
+    return { text: "", pageCount: 0, quality: "poor" };
+  }
+}
+
+// Stage 2: OCR fallback using Gemini Vision API for scanned PDFs
+async function extractTextWithVisionOCR(
+  pdfBytes: Uint8Array,
+  apiKey: string
+): Promise<string> {
+  console.log("[process-book] 🔍 Using Gemini Vision OCR for scanned PDF...");
+
+  // Convert PDF bytes to base64
+  let base64Pdf = "";
+  const STEP = 32768; // Process in chunks to avoid stack overflow with large PDFs
+  for (let i = 0; i < pdfBytes.length; i += STEP) {
+    const slice = pdfBytes.subarray(i, Math.min(i + STEP, pdfBytes.length));
+    base64Pdf += String.fromCharCode(...slice);
+  }
+  base64Pdf = btoa(base64Pdf);
+
+  console.log(`[process-book] PDF base64 size: ${base64Pdf.length} chars`);
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            {
+              text: "Extract ALL text from this PDF document. Preserve the page structure and formatting as much as possible. Include all headings, paragraphs, bullet points, tables, and any other text content. Output only the extracted text, nothing else.",
+            },
+            {
+              inline_data: {
+                mime_type: "application/pdf",
+                data: base64Pdf,
+              },
+            },
+          ],
+        }],
+        generationConfig: {
+          maxOutputTokens: 65536,
+          temperature: 0.1, // Low temperature for accurate extraction
+        },
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error("[process-book] Gemini Vision API error:", errorText);
+    throw new Error(`Gemini Vision OCR failed: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+
+  if (
+    result.candidates &&
+    result.candidates.length > 0 &&
+    result.candidates[0].content &&
+    result.candidates[0].content.parts &&
+    result.candidates[0].content.parts.length > 0
+  ) {
+    const extractedText = result.candidates[0].content.parts[0].text || "";
+    console.log(`[process-book] ✅ Vision OCR extracted ${extractedText.length} characters`);
+    return extractedText.trim();
+  }
+
+  console.error("[process-book] Vision API returned unexpected response:", JSON.stringify(result).substring(0, 500));
+  throw new Error("Gemini Vision OCR returned no text content");
+}
+
+// Combined extraction: native first, Vision OCR fallback
+async function extractPdfContent(
+  fileUrl: string,
+  apiKey: string
+): Promise<{ text: string; pageCount: number; method: "native" | "vision-ocr" }> {
+  console.log(`[process-book] Fetching PDF from: ${fileUrl}`);
+
   const response = await fetch(fileUrl);
   if (!response.ok) {
     throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
@@ -67,28 +173,44 @@ async function extractTextFromPdf(fileUrl: string): Promise<{ text: string; page
 
   const contentLength = response.headers.get("content-length");
   if (contentLength && parseInt(contentLength) > MAX_PDF_SIZE) {
-    throw new Error(`PDF file too large (${Math.round(parseInt(contentLength) / 1024 / 1024)}MB). Maximum is ${MAX_PDF_SIZE / 1024 / 1024}MB.`);
+    throw new Error(
+      `PDF file too large (${Math.round(parseInt(contentLength) / 1024 / 1024)}MB). Maximum is ${MAX_PDF_SIZE / 1024 / 1024}MB.`
+    );
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  const data = new Uint8Array(arrayBuffer);
-  
-  console.log(`PDF downloaded: ${data.length} bytes`);
+  const pdfBytes = new Uint8Array(arrayBuffer);
+  console.log(`[process-book] PDF downloaded: ${pdfBytes.length} bytes`);
 
-  // Parse PDF with unpdf
-  const pdf = await getDocumentProxy(data);
-  const pageCount = pdf.numPages;
-  
-  console.log(`PDF has ${pageCount} pages`);
+  // Stage 1: Try native extraction
+  const nativeResult = await extractTextNative(pdfBytes);
 
-  // Extract all text using unpdf's extractText
-  const { text: fullText } = await extractText(pdf, { mergePages: true });
+  if (nativeResult.quality === "good") {
+    console.log("[process-book] ✅ Native extraction quality is good, using it");
+    return {
+      text: nativeResult.text,
+      pageCount: nativeResult.pageCount,
+      method: "native",
+    };
+  }
 
-  console.log(`Extracted ${fullText.length} characters from ${pageCount} pages`);
+  // Stage 2: Native extraction was poor → likely scanned PDF → use Vision OCR
+  console.log(
+    `[process-book] ⚠️ Native extraction poor (${nativeResult.text.length} chars). Falling back to Vision OCR...`
+  );
+
+  const ocrText = await extractTextWithVisionOCR(pdfBytes, apiKey);
+
+  if (!ocrText || ocrText.length < 100) {
+    throw new Error(
+      "PDF appears to be empty or unreadable. Neither text extraction nor OCR could find sufficient content."
+    );
+  }
 
   return {
-    text: fullText.trim(),
-    pageCount,
+    text: ocrText,
+    pageCount: nativeResult.pageCount || 1,
+    method: "vision-ocr",
   };
 }
 
@@ -101,7 +223,7 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
     const end = Math.min(start + chunkSize, text.length);
     const chunk = text.slice(start, end).trim();
     
-    if (chunk.length > 50) { // Only add chunks with meaningful content
+    if (chunk.length > 50) {
       chunks.push(chunk);
     }
     
@@ -155,13 +277,10 @@ async function generateEmbeddingsBatch(
     const embedding = await generateEmbedding(chunks[i], apiKey);
     embeddings.push(embedding);
     
-    // Log progress
     if ((i + 1) % 10 === 0) {
       console.log(`Generated embeddings: ${i + 1}/${chunks.length}`);
     }
     
-    // Rate limiting: 60 requests per minute for free tier
-    // Add small delay between requests
     if (i < chunks.length - 1) {
       await new Promise(resolve => setTimeout(resolve, 100));
     }
@@ -171,7 +290,6 @@ async function generateEmbeddingsBatch(
 }
 
 serve(async (req) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
@@ -187,17 +305,17 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-     // ============= AUTHORIZATION CHECK (Admin Only) =============
-     const auth = await verifyAdmin(req, supabase);
-     if (!auth.authorized) {
-       console.log(`[process-book] ⛔ Unauthorized: ${auth.error}`);
-       return new Response(
-         JSON.stringify({ error: auth.error }),
-         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-       );
-     }
-     console.log(`[process-book] ✅ Authorized: ${auth.userId}`);
- 
+    // Authorization check (Admin Only)
+    const auth = await verifyAdmin(req, supabase);
+    if (!auth.authorized) {
+      console.log(`[process-book] ⛔ Unauthorized: ${auth.error}`);
+      return new Response(
+        JSON.stringify({ error: auth.error }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    console.log(`[process-book] ✅ Authorized: ${auth.userId}`);
+
     const { documentId, fileUrl, title } = await req.json() as ProcessRequest;
 
     if (!documentId || !fileUrl) {
@@ -207,7 +325,7 @@ serve(async (req) => {
       );
     }
 
-     console.log(`[process-book] Processing document: ${documentId}`);
+    console.log(`[process-book] Processing document: ${documentId}`);
 
     // Update document status to processing
     await supabase
@@ -215,9 +333,9 @@ serve(async (req) => {
       .update({ status: "processing" })
       .eq("id", documentId);
 
-    // Step 1: Fetch and extract text from PDF (server-side)
-    const { text, pageCount } = await extractTextFromPdf(fileUrl);
-     console.log(`[process-book] Extracted ${text.length} chars from ${pageCount} pages`);
+    // Step 1: Extract text (native first, Vision OCR fallback for scanned PDFs)
+    const { text, pageCount, method } = await extractPdfContent(fileUrl, GEMINI_API_KEY);
+    console.log(`[process-book] Extracted ${text.length} chars from ${pageCount} pages via ${method}`);
 
     if (!text || text.length < 100) {
       throw new Error("PDF appears to be empty or contains very little extractable text");
@@ -225,24 +343,24 @@ serve(async (req) => {
 
     // Step 2: Chunk the text
     const chunks = chunkText(text, CHUNK_SIZE, CHUNK_OVERLAP);
-     console.log(`[process-book] Created ${chunks.length} chunks`);
+    console.log(`[process-book] Created ${chunks.length} chunks`);
 
     if (chunks.length === 0) {
       throw new Error("No valid text chunks could be extracted");
     }
 
     // Step 3: Generate embeddings for all chunks
-     console.log("[process-book] Generating embeddings...");
+    console.log("[process-book] Generating embeddings...");
     const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
-     console.log(`[process-book] Generated ${embeddings.length} embeddings`);
+    console.log(`[process-book] Generated ${embeddings.length} embeddings`);
 
     // Step 4: Prepare sections for insertion
     const sections = chunks.map((content, index) => ({
       document_id: documentId,
       content,
-      embedding: JSON.stringify(embeddings[index]), // pgvector accepts JSON array
+      embedding: JSON.stringify(embeddings[index]),
       section_index: index,
-      token_count: Math.ceil(content.length / 4), // Rough token estimate
+      token_count: Math.ceil(content.length / 4),
     }));
 
     // Step 5: Insert sections into database
@@ -260,11 +378,11 @@ serve(async (req) => {
       .from("documents")
       .update({ 
         status: "completed",
-        page_count: chunks.length 
+        page_count: pageCount 
       })
       .eq("id", documentId);
 
-     console.log(`[process-book] ✅ Processed ${documentId}: ${chunks.length} sections`);
+    console.log(`[process-book] ✅ Processed ${documentId}: ${chunks.length} sections via ${method}`);
 
     return new Response(
       JSON.stringify({
@@ -273,13 +391,13 @@ serve(async (req) => {
         pagesExtracted: pageCount,
         chunksProcessed: chunks.length,
         embeddingDimension: embeddings[0]?.length || 768,
+        extractionMethod: method,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
     console.error("Process book error:", error);
     
-    // Try to update document status to failed
     try {
       const body = await req.clone().json();
       if (body?.documentId) {
