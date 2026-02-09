@@ -10,7 +10,7 @@ const corsHeaders = {
 // Configuration
 const CHUNK_SIZE = 1000; // characters per chunk
 const CHUNK_OVERLAP = 200; // overlap between chunks
-const EMBEDDING_MODEL = "text-embedding-004"; // Google's 768-dim model
+const EMBEDDING_MODELS = ["text-embedding-005", "text-embedding-004"]; // Fallback list
 const MAX_PDF_SIZE = 25 * 1024 * 1024; // 25MB
 const MIN_QUALITY_CHARS = 500; // minimum chars for "good" native extraction
 const MIN_QUALITY_LETTERS = 100; // minimum letter count for "good" extraction
@@ -329,37 +329,44 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
   return chunks;
 }
 
-// Generate embedding using Google Gemini API
+// Generate embedding using Google Gemini API with model fallback
 async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${EMBEDDING_MODEL}:embedContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: `models/${EMBEDDING_MODEL}`,
-        content: {
-          parts: [{ text }],
-        },
-      }),
+  let lastError = "";
+
+  for (const model of EMBEDDING_MODELS) {
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: `models/${model}`,
+          content: { parts: [{ text }] },
+        }),
+      }
+    );
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.embedding?.values) {
+        return data.embedding.values;
+      }
     }
-  );
 
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("Gemini API error:", error);
-    throw new Error(`Gemini API error: ${response.status} - ${error}`);
+    // If 404 (model not found), try next model
+    const errorText = await response.text();
+    if (response.status === 404) {
+      console.warn(`[process-book] Embedding model ${model} not found, trying next...`);
+      lastError = errorText;
+      continue;
+    }
+
+    // For other errors, throw immediately
+    console.error(`Gemini embedding error (${model}):`, errorText);
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
   }
 
-  const data = await response.json();
-  
-  if (!data.embedding?.values) {
-    throw new Error("No embedding returned from Gemini API");
-  }
-
-  return data.embedding.values;
+  throw new Error(`No embedding model available. Last error: ${lastError}`);
 }
 
 // Batch generate embeddings with rate limiting
