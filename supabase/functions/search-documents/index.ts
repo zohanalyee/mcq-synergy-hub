@@ -6,7 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const EMBEDDING_MODELS = ["text-embedding-005", "text-embedding-004"];
+const EMBEDDING_MODELS = ["gemini-embedding-001", "text-embedding-005", "text-embedding-004"];
 const MAX_QUERY_LENGTH = 300;
 const DEFAULT_MATCH_COUNT = 4;
 const MATCH_THRESHOLD = 0.75;
