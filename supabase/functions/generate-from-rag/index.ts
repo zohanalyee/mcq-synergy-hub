@@ -8,7 +8,7 @@ const corsHeaders = {
 };
 
 // Gemini model fallback
-const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash-8b"];
+const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-lite"];
 
 interface MCQQuestion {
   title: string;
