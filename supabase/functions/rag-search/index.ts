@@ -59,6 +59,7 @@ async function generateEmbedding(text: string, apiKey: string): Promise<number[]
         body: JSON.stringify({
           model: `models/${model}`,
           content: { parts: [{ text }] },
+          outputDimensionality: 768,
         }),
       }
     );

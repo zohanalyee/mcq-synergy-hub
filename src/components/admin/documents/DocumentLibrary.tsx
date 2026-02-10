@@ -185,12 +185,20 @@ const DocumentLibrary = () => {
       // Refresh documents list
       await fetchDocuments();
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Upload error:", error);
+      console.error("Error details:", {
+        message: error?.message,
+        status: error?.status,
+        statusText: error?.statusText,
+        context: error?.context,
+      });
+      
+      const errorMessage = error instanceof Error ? error.message : "Upload failed";
       
       setUploadProgress({
         stage: "failed",
-        message: error instanceof Error ? error.message : "Upload failed",
+        message: errorMessage,
         progress: 0,
       });
 
@@ -203,7 +211,9 @@ const DocumentLibrary = () => {
         }
       }
 
-      toast.error(error instanceof Error ? error.message : "Upload failed");
+      toast.error(`Upload failed: ${errorMessage}`, {
+        description: error?.context?.body ? String(error.context.body).slice(0, 200) : undefined,
+      });
     } finally {
       setIsUploading(false);
       // Clear progress after delay
