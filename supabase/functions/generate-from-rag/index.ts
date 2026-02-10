@@ -7,9 +7,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Gemini model fallback
-const GEMINI_MODELS = ["gemini-2.0-flash", "gemini-2.0-flash-lite"];
-
 interface MCQQuestion {
   title: string;
   options: { A: string; B: string; C: string; D: string };
@@ -60,48 +57,43 @@ interface MCQQuestion {
    return { authorized: true, userId: data.user.id };
 }
 
-async function callGeminiWithFallback(
-  prompt: string,
+// Call Lovable AI Gateway (OpenAI-compatible)
+async function callLovableAI(
   systemPrompt: string,
+  userPrompt: string,
   apiKey: string
 ): Promise<string> {
-  let lastError: Error | null = null;
+  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 8192,
+    }),
+  });
 
-  for (const model of GEMINI_MODELS) {
-    try {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-            systemInstruction: { parts: [{ text: systemPrompt }] },
-            generationConfig: {
-              temperature: 0.7,
-              topP: 0.9,
-              maxOutputTokens: 8192,
-            },
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.error(`Model ${model} failed:`, response.status, errText);
-        lastError = new Error(`${model}: ${response.status}`);
-        continue;
-      }
-
-      const data = await response.json();
-      return data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    } catch (err) {
-      lastError = err as Error;
-      console.error(`Model ${model} error:`, err);
+  if (!response.ok) {
+    const errText = await response.text();
+    console.error(`Lovable AI Gateway error: ${response.status}`, errText);
+    if (response.status === 429) {
+      throw new Error("Rate limit exceeded. Please try again later.");
     }
+    if (response.status === 402) {
+      throw new Error("AI credits exhausted. Please add credits to your Lovable workspace.");
+    }
+    throw new Error(`AI Gateway error: ${response.status}`);
   }
 
-  throw lastError || new Error("All Gemini models failed");
+  const data = await response.json();
+  return data.choices?.[0]?.message?.content || "";
 }
 
 function parseJSONFromResponse(text: string): MCQQuestion[] {
@@ -131,11 +123,11 @@ serve(async (req) => {
   }
 
   try {
-     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
  
-     if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+     if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
        throw new Error("Missing required environment variables");
      }
  
@@ -222,6 +214,7 @@ serve(async (req) => {
          return new Response(
            JSON.stringify({ 
              error: "No RAG documents found for this topic. Please upload a document first.",
+             error_type: "no_rag_data",
              topic_id,
              has_documents: false
            }),
@@ -296,10 +289,10 @@ ${context.substring(0, 15000)}
 
 Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`;
 
-     // ============= STEP 5: Generate MCQs using Gemini =============
-     console.log("[generate-from-rag] Generating MCQs with Gemini...");
+     // ============= STEP 5: Generate MCQs using Lovable AI Gateway =============
+     console.log("[generate-from-rag] Generating MCQs via Lovable AI Gateway...");
     const responseText = await retryWithBackoff(
-      () => callGeminiWithFallback(userPrompt, systemPrompt, GEMINI_API_KEY),
+      () => callLovableAI(systemPrompt, userPrompt, LOVABLE_API_KEY),
       2,
       'generate-from-rag MCQ generation'
     );

@@ -7,73 +7,58 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// ============= MODEL FALLBACK CONFIGURATION =============
-// Ordered by preference - will try each until one works
-// Using stable model names without deprecated suffixes
-const PREFERRED_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro'
-];
-
-// Call Gemini API with automatic model fallback
-async function callGeminiWithFallback(
+// Call Lovable AI Gateway (OpenAI-compatible)
+async function callLovableAI(
   apiKey: string,
   prompt: string
-): Promise<{ success: boolean; text?: string; modelUsed?: string; error?: string }> {
-  
-  for (const model of PREFERRED_MODELS) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    console.log(`🔄 Trying model: ${model}`);
-    
-    try {
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 4096,
-          }
-        })
-      });
+): Promise<{ success: boolean; text?: string; error?: string }> {
+  console.log("🔄 Calling Lovable AI Gateway...");
 
-      console.log(`📥 ${model} Response Status: ${response.status}`);
+  try {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "user", content: prompt },
+        ],
+        temperature: 0.7,
+        max_tokens: 4096,
+      }),
+    });
 
-      if (response.ok) {
-        const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        console.log(`✅ Success with model: ${model}`);
-        return { success: true, text, modelUsed: model };
-      }
+    console.log(`📥 Gateway Response Status: ${response.status}`);
 
-      // Handle specific error codes
-      if (response.status === 429) {
-        console.warn(`⚠️ Rate limit on ${model}, trying next model...`);
-        continue;
-      }
-      if (response.status === 404 || response.status === 400) {
-        const errorText = await response.text();
-        console.warn(`⚠️ Model ${model} unavailable (${response.status}): ${errorText.slice(0, 100)}`);
-        continue;
-      }
-      if (response.status === 403 || response.status === 401) {
-        return { success: false, error: 'AUTH_ERROR' };
-      }
-      
-      console.warn(`⚠️ ${model} returned ${response.status}, trying next...`);
-      continue;
-      
-    } catch (fetchError) {
-      console.error(`❌ Network error with ${model}:`, fetchError);
-      continue;
+    if (response.ok) {
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content || "";
+      console.log("✅ Success with Lovable AI Gateway");
+      return { success: true, text };
     }
-  }
 
-  // All models failed
-  console.error('❌ ALL_MODELS_FAILED: Exhausted all fallback options');
-  return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
+    if (response.status === 429) {
+      console.warn("⚠️ Rate limit on Lovable AI Gateway");
+      return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
+    }
+    if (response.status === 402) {
+      console.warn("⚠️ Credits exhausted on Lovable AI Gateway");
+      return { success: false, error: 'CREDITS_EXHAUSTED' };
+    }
+    if (response.status === 403 || response.status === 401) {
+      return { success: false, error: 'AUTH_ERROR' };
+    }
+
+    const errText = await response.text();
+    console.warn(`⚠️ Gateway returned ${response.status}: ${errText.slice(0, 100)}`);
+    return { success: false, error: `Gateway error: ${response.status}` };
+  } catch (fetchError) {
+    console.error("❌ Network error with Lovable AI Gateway:", fetchError);
+    return { success: false, error: 'NETWORK_ERROR' };
+  }
 }
 
 type SectorType = 'government' | 'private';
@@ -154,10 +139,10 @@ serve(async (req) => {
   }
 
   try {
-    const EXTERNAL_JOBS_GEMINI_KEY = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
-    if (!EXTERNAL_JOBS_GEMINI_KEY) {
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
       return new Response(
-        JSON.stringify({ success: false, error: "AUTH_ERROR" }),
+        JSON.stringify({ success: false, error: "LOVABLE_API_KEY not configured" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -224,24 +209,23 @@ Return ONLY the JSON array, no explanations.`
 
 Return ONLY the JSON array, no explanations.`;
 
-    console.log("[fetch-external-jobs] Calling Gemini API with model fallback for:", searchType);
+    console.log("[fetch-external-jobs] Calling Lovable AI Gateway for:", searchType);
 
-    // Use the robust fallback mechanism with retryWithBackoff
+    // Use the robust retry mechanism
     const result = await retryWithBackoff(
-      () => callGeminiWithFallback(EXTERNAL_JOBS_GEMINI_KEY, prompt),
+      () => callLovableAI(LOVABLE_API_KEY, prompt),
       2,
       `fetch-external-jobs-${searchType}`
     );
 
     if (!result.success) {
-      console.error("All Gemini models failed:", result.error);
+      console.error("Lovable AI Gateway call failed:", result.error);
       return new Response(
         JSON.stringify({ success: false, error: result.error }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log(`AI Response received using model: ${result.modelUsed}`);
     const aiText = result.text || "";
     
     console.log("AI Response received, parsing...");
