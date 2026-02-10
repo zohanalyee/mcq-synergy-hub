@@ -1,68 +1,129 @@
 
-# Fix PDF Upload Dimension Mismatch + Add QuotaMonitor to Admin Panel
+
+# Fix: Switch AI Functions to Lovable AI Gateway
 
 ## Root Cause
 
-The PDF upload error **"expected 768 dimensions, not 3072"** is the actual failure. The `gemini-embedding-001` model outputs 3072-dimensional vectors by default, but the `document_sections.embedding` column is defined as `vector(768)`. The edge function logs from the context confirm this exact error.
+The error is NOT a model availability issue. Your **Gemini API free tier is completely exhausted** -- the logs show `limit: 0` for all models. Every direct Gemini API call returns 429 regardless of which model is used. Changing model names will never fix this.
 
-## Two Changes Required
+## Solution
 
-### 1. Fix Embedding Dimension Mismatch (process-book, search-documents, rag-search)
+Switch all three AI generation edge functions from direct Gemini API calls (using `GEMINI_API_KEY`) to the **Lovable AI Gateway** (using `LOVABLE_API_KEY`), which has its own separate quota. The gateway is OpenAI-compatible and already configured.
 
-The simplest fix is to tell `gemini-embedding-001` to output 768 dimensions using the `outputDimensionality` parameter in the API request. This avoids any database migration and keeps compatibility with existing stored embeddings.
+The embedding functions (`process-book`, `search-documents`, `rag-search`) will remain on direct Gemini since they use the embedding API which is different from the chat completions API.
 
-**Files to edit:**
-- `supabase/functions/process-book/index.ts` -- Add `outputDimensionality: 768` to the `generateEmbedding` function's API request body
-- `supabase/functions/search-documents/index.ts` -- Same change for query embeddings
-- `supabase/functions/rag-search/index.ts` -- Same change for query embeddings
+---
 
-The change is in the `embedContent` API call body, adding:
-```
-content: { parts: [{ text }] },
-outputDimensionality: 768,   // <-- add this line
-```
+## Changes
 
-This ensures all three functions produce 768-dimension vectors matching the database schema and the `match_document_sections` RPC function.
+### 1. Update `generate-from-rag/index.ts`
 
-### 2. Add QuotaMonitor to AdminPanel Page
+Replace `callGeminiWithFallback` with a call to `https://ai.gateway.lovable.dev/v1/chat/completions`:
 
-**File to edit:** `src/pages/AdminPanel.tsx`
+- Use `LOVABLE_API_KEY` instead of `GEMINI_API_KEY`
+- Send messages in OpenAI format: `[{role: "system", content: systemPrompt}, {role: "user", content: userPrompt}]`
+- Use model `google/gemini-2.5-flash` (default recommended model)
+- Keep `retryWithBackoff` wrapper
+- Handle 429 and 402 errors from the gateway with user-friendly messages
+- Remove the `GEMINI_MODELS` array and `callGeminiWithFallback` function entirely
 
-Import the `QuotaMonitor` component and render it between the `AdminHeader` and `AdminContent` sections. This gives administrators immediate visibility into AI quota status when they open the admin panel.
+### 2. Update `generate-test/index.ts`
 
-### 3. Improve Error Logging in DocumentLibrary
+Same pattern -- replace `callGeminiWithFallback` with Lovable AI Gateway call:
 
-**File to edit:** `src/components/admin/documents/DocumentLibrary.tsx`
+- Use `LOVABLE_API_KEY`
+- Model: `google/gemini-2.5-flash`
+- Keep the existing prompt structure but format as chat messages
+- Handle 429/402 gateway errors
 
-Enhance the catch block in `handleUpload` to log the full error details to the console and show a more descriptive toast to the admin, making future debugging easier.
+### 3. Update `fetch-external-jobs/index.ts`
+
+Same pattern:
+
+- Switch from `EXTERNAL_JOBS_GEMINI_KEY` to `LOVABLE_API_KEY`
+- Use Lovable AI Gateway endpoint
+- Model: `google/gemini-2.5-flash`
+
+### 4. Improve Frontend Error Handling in `SyllabusBuilder.tsx`
+
+In the `handleGenerateQuiz` function, parse error responses from `generateFromRAGForSyllabus` and show specific messages:
+
+- If error contains "quota": Show "Daily quota reached. Try again later."
+- If error contains "no_rag_data" or "No RAG documents": Show "No study material found. Upload PDFs first."
+- Default: Show the raw error message
 
 ---
 
 ## Technical Details
 
+**Lovable AI Gateway call pattern:**
+```text
+POST https://ai.gateway.lovable.dev/v1/chat/completions
+Authorization: Bearer {LOVABLE_API_KEY}
+Content-Type: application/json
+
+{
+  "model": "google/gemini-2.5-flash",
+  "messages": [
+    {"role": "system", "content": "..."},
+    {"role": "user", "content": "..."}
+  ],
+  "temperature": 0.7,
+  "max_tokens": 8192
+}
+```
+
+**Response format:**
+```text
+{
+  "choices": [{
+    "message": {"content": "...the generated text..."}
+  }]
+}
+```
+
+**Files to edit:**
+
 | File | Change |
 |------|--------|
-| `supabase/functions/process-book/index.ts` | Add `outputDimensionality: 768` to embedding API call |
-| `supabase/functions/search-documents/index.ts` | Add `outputDimensionality: 768` to embedding API call |
-| `supabase/functions/rag-search/index.ts` | Add `outputDimensionality: 768` to embedding API call |
-| `src/pages/AdminPanel.tsx` | Import and render `QuotaMonitor` above `AdminContent` |
-| `src/components/admin/documents/DocumentLibrary.tsx` | Add detailed error logging in catch block |
+| `supabase/functions/generate-from-rag/index.ts` | Switch to Lovable AI Gateway |
+| `supabase/functions/generate-test/index.ts` | Switch to Lovable AI Gateway |
+| `supabase/functions/fetch-external-jobs/index.ts` | Switch to Lovable AI Gateway |
+| `src/components/syllabus-builder/SyllabusBuilder.tsx` | Better error messages based on error type |
 
-All three edge functions will be redeployed after the changes. Perfect diagnosis! The embedding dimension mismatch (3072 vs 768) is exactly the issue.
+**What stays unchanged:**
+- `process-book/index.ts` -- uses embedding API, not chat completions
+- `search-documents/index.ts` -- uses embedding API
+- `rag-search/index.ts` -- uses embedding API
+- `quotaManager.ts` -- no changes needed
+- `QuotaMonitor.tsx` -- no changes needed
+Perfect analysis! The Gemini free tier is exhausted (limit: 0), so switching to Lovable AI Gateway is the right solution.
 
-Plan approved. Please implement all 3 changes:
+Plan approved. Please implement all changes:
 
-1. ✅ Add outputDimensionality: 768 to all 3 edge functions
-   - process-book/index.ts
-   - search-documents/index.ts
-   - rag-search/index.ts
+1. ✅ Update generate-from-rag/index.ts
+   - Switch to Lovable AI Gateway
+   - Use LOVABLE_API_KEY
+   - Model: google/gemini-2.5-flash
+   - OpenAI format messages
 
-2. ✅ Add QuotaMonitor to AdminPanel.tsx
-   - Render it prominently at the top
-   - Between AdminHeader and AdminContent
+2. ✅ Update generate-test/index.ts
+   - Same switch to gateway
+   - Keep existing prompt logic
+   - Better error handling
 
-3. ✅ Improve error logging in DocumentLibrary.tsx
-   - Console.log full error details
-   - Show descriptive toast with error message
+3. ✅ Update fetch-external-jobs/index.ts
+   - Switch from EXTERNAL_JOBS_GEMINI_KEY to LOVABLE_API_KEY
+   - Use gateway endpoint
+
+4. ✅ Improve SyllabusBuilder.tsx error messages
+   - Parse error types
+   - Show user-friendly messages
+
+IMPORTANT NOTES:
+- Keep embeddings functions unchanged (they use different API)
+- Maintain retryWithBackoff wrapper
+- Handle 429 and 402 gateway errors gracefully
+- Test thoroughly after deployment
 
 Please implement and deploy all changes now.
