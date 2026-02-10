@@ -13,6 +13,7 @@ import { useAdminContent } from "@/hooks/useAdminContent";
 import AdminHeader from "@/components/admin/AdminHeader";
 import AdminContent from "@/components/admin/AdminContent";
 import AdminLoader from "@/components/admin/AdminLoader";
+import QuotaMonitor from "@/components/admin/QuotaMonitor";
 
 const AdminPanel = () => {
   const navigate = useNavigate();
@@ -91,6 +92,8 @@ const AdminPanel = () => {
           quizCount={statistics.quizCount}
           totalCount={statistics.totalCount}
         />
+        
+        <QuotaMonitor />
         
         <AdminContent
           activeTab={activeTab}
