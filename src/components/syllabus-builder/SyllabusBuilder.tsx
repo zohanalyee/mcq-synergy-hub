@@ -436,11 +436,29 @@ export const SyllabusBuilder = () => {
       });
 
       if (!ragResult.success || ragResult.saved === 0) {
+        // Parse error type for user-friendly messages
+        const errorMsg = ragResult.error || "";
+        let toastTitle = "Generation Failed";
+        let toastDescription = "Could not generate questions. Please try again.";
+
+        if (errorMsg.toLowerCase().includes("quota") || errorMsg.toLowerCase().includes("rate limit")) {
+          toastTitle = "⏳ Daily Quota Reached";
+          toastDescription = "AI generation quota reached. Please try again later.";
+        } else if (errorMsg.toLowerCase().includes("no_rag_data") || errorMsg.toLowerCase().includes("no rag documents")) {
+          toastTitle = "📚 No Study Material";
+          toastDescription = "No course material found for these topics. Upload PDFs first.";
+        } else if (errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("402")) {
+          toastTitle = "💳 Credits Exhausted";
+          toastDescription = "AI credits exhausted. Please add credits to your workspace.";
+        } else if (errorMsg) {
+          toastDescription = errorMsg;
+        }
+
         // Fall back to partial test if we have some questions
         if (fallbackInfo.questions.length > 0) {
           toast({
             title: "Partial Test Created",
-            description: `RAG generation incomplete. Created test with ${fallbackInfo.questions.length} available questions.`
+            description: `${toastDescription} Created test with ${fallbackInfo.questions.length} available questions.`
           });
           
           const { data: session } = await supabase
@@ -472,8 +490,8 @@ export const SyllabusBuilder = () => {
         }
 
         toast({
-          title: "Generation Failed",
-          description: ragResult.error || "Could not generate questions. Please try again.",
+          title: toastTitle,
+          description: toastDescription,
           variant: "destructive"
         });
         setIsGenerating(false);

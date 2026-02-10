@@ -26,80 +26,73 @@ interface UsageLogEntry {
   metadata?: Record<string, any>;
 }
 
-// ============= MODEL FALLBACK CONFIGURATION =============
-// Ordered by preference - will try each until one works
-// Using stable model names without deprecated suffixes
-const PREFERRED_MODELS = [
-  'gemini-2.0-flash',
-  'gemini-1.5-flash',
-  'gemini-1.5-pro'
-];
-
-// Shuffle array using Fisher-Yates algorithm
-function shuffleArray<T>(array: T[]): T[] {
-  const shuffled = [...array];
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-  return shuffled;
-}
-
-// Call Gemini API with automatic model fallback
-async function callGeminiWithFallback(
+// ============= LOVABLE AI GATEWAY =============
+// Call Lovable AI Gateway (OpenAI-compatible) instead of direct Gemini
+async function callLovableAIGateway(
   apiKey: string,
   contents: any,
   generationConfig: any,
-  safetySettings: any
+  _safetySettings: any
 ): Promise<{ success: boolean; data?: any; modelUsed?: string; error?: string; status?: number }> {
-  
-  for (const model of PREFERRED_MODELS) {
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
-    console.log(`🔄 Trying model: ${model}`);
-    
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents, generationConfig, safetySettings }),
-      });
+  console.log('🔄 Calling Lovable AI Gateway...');
 
-      console.log(`📥 ${model} Response Status: ${response.status}`);
+  // Extract text from Gemini-format contents to OpenAI messages
+  const userText = contents?.[0]?.parts?.[0]?.text || '';
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`✅ Success with model: ${model}`);
-        return { success: true, data, modelUsed: model };
-      }
+  try {
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages: [
+          { role: 'user', content: userText },
+        ],
+        temperature: generationConfig?.temperature || 0.7,
+        max_tokens: generationConfig?.maxOutputTokens || 8000,
+      }),
+    });
 
-      // Handle specific error codes
-      if (response.status === 429) {
-        console.warn(`⚠️ Rate limit on ${model}, trying next model...`);
-        continue; // Try next model
-      }
-      if (response.status === 404 || response.status === 400) {
-        const errorText = await response.text();
-        console.warn(`⚠️ Model ${model} unavailable (${response.status}): ${errorText.slice(0, 100)}`);
-        continue; // Model not found or bad request, try next
-      }
-      if (response.status === 403 || response.status === 401) {
-        // Auth error - don't try other models, the key is bad
-        return { success: false, error: 'AUTH_ERROR', status: response.status };
-      }
-      
-      // Other error - try next model
-      console.warn(`⚠️ ${model} returned ${response.status}, trying next...`);
-      continue;
-      
-    } catch (fetchError) {
-      console.error(`❌ Network error with ${model}:`, fetchError);
-      continue; // Network error, try next model
+    console.log(`📥 Gateway Response Status: ${response.status}`);
+
+    if (response.ok) {
+      const data = await response.json();
+      const text = data.choices?.[0]?.message?.content || '';
+      console.log('✅ Success with Lovable AI Gateway');
+      // Return in Gemini-compatible format for downstream parsing
+      return {
+        success: true,
+        data: {
+          candidates: [{
+            content: { parts: [{ text }] }
+          }]
+        },
+        modelUsed: 'lovable-gateway/gemini-2.5-flash'
+      };
     }
-  }
 
-  // All models failed
-  console.error('❌ ALL_MODELS_FAILED: Exhausted all fallback options');
-  return { success: false, error: 'ALL_MODELS_FAILED', status: 503 };
+    if (response.status === 429) {
+      console.warn('⚠️ Rate limit on Lovable AI Gateway');
+      return { success: false, error: 'ALL_MODELS_FAILED', status: 429 };
+    }
+    if (response.status === 402) {
+      console.warn('⚠️ Credits exhausted on Lovable AI Gateway');
+      return { success: false, error: 'ALL_MODELS_FAILED', status: 429 };
+    }
+    if (response.status === 403 || response.status === 401) {
+      return { success: false, error: 'AUTH_ERROR', status: response.status };
+    }
+
+    const errText = await response.text();
+    console.warn(`⚠️ Gateway returned ${response.status}: ${errText.slice(0, 100)}`);
+    return { success: false, error: 'ALL_MODELS_FAILED', status: response.status };
+  } catch (fetchError) {
+    console.error('❌ Network error with Lovable AI Gateway:', fetchError);
+    return { success: false, error: 'ALL_MODELS_FAILED', status: 503 };
+  }
 }
 
 // Sanitize topic for flexible matching - removes brackets and extra whitespace
@@ -391,7 +384,7 @@ REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicate
         { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
       ];
 
-      const result = await callGeminiWithFallback(apiKey, contents, generationConfig, safetySettings);
+      const result = await callLovableAIGateway(apiKey, contents, generationConfig, safetySettings);
 
       if (!result.success) {
         if (result.error === 'AUTH_ERROR') {
@@ -876,9 +869,9 @@ serve(async (req) => {
         throw err;
       }
 
-      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-      if (!GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY is not configured');
+      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+      if (!LOVABLE_API_KEY) {
+        throw new Error('LOVABLE_API_KEY is not configured');
       }
 
       // ============= FIX: Fetch existing questions for deduplication =============
@@ -907,7 +900,7 @@ serve(async (req) => {
           topic,
           difficulty,
           qc,
-          GEMINI_API_KEY,
+          LOVABLE_API_KEY,
           existingTitlesForDedup // NOW passing existing questions!
         );
       } catch (genError: any) {
@@ -1123,8 +1116,8 @@ serve(async (req) => {
       console.log(`⚡ PARTIAL MODE ACTIVE: Returning ${returnedQuestions.length} questions, Generating ${missingCount} in background`);
       
       if (missingCount > 0) {
-        const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-        if (GEMINI_API_KEY) {
+        const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+        if (LOVABLE_API_KEY) {
           EdgeRuntime.waitUntil(
             backgroundGenerateAndSave(
               topic,
@@ -1132,7 +1125,7 @@ serve(async (req) => {
               difficulty,
               missingCount,
               existingQuestionTexts,
-              GEMINI_API_KEY,
+              LOVABLE_API_KEY,
               supabase,
               user_id,
               sourceType
@@ -1189,15 +1182,15 @@ serve(async (req) => {
       throw err;
     }
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    console.log(`🔑 GEMINI_API_KEY configured: ${GEMINI_API_KEY ? 'Yes (' + GEMINI_API_KEY.substring(0, 8) + '...)' : 'NO - MISSING!'}`);
+    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    console.log(`🔑 LOVABLE_API_KEY configured: ${LOVABLE_API_KEY ? 'Yes' : 'NO - MISSING!'}`);
     
-    if (!GEMINI_API_KEY) {
+    if (!LOVABLE_API_KEY) {
       return new Response(
         JSON.stringify({
-          error: 'GEMINI_API_KEY not configured',
+          error: 'LOVABLE_API_KEY not configured',
           error_type: 'config_error',
-          details: 'Please add your Google Gemini API key to Supabase secrets'
+          details: 'LOVABLE_API_KEY is missing from Supabase secrets'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
@@ -1210,7 +1203,7 @@ serve(async (req) => {
         topic, 
         difficulty, 
         missingCount, 
-        GEMINI_API_KEY,
+        LOVABLE_API_KEY,
         existingQuestionTexts
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
