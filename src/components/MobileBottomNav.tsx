@@ -239,6 +239,14 @@ const MobileBottomNav = () => {
                   <span className="text-sm font-medium">Feedback</span>
                 </button>
                 
+                <button
+                  onClick={() => handleProfileAction('/ask-document')}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                >
+                  <BookOpen className="h-5 w-5 text-emerald-600" />
+                  <span className="text-sm font-medium">Ask Docs</span>
+                </button>
+                
                 <Separator className="my-2" />
                 
                 <button
