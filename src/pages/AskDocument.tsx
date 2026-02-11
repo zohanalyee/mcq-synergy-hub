@@ -121,7 +121,7 @@ const AskDocument: React.FC = () => {
     <div className="min-h-screen bg-background">
       <Header />
       
-      <main className="container mx-auto px-4 py-6 max-w-4xl">
+      <main className="container mx-auto px-4 pt-2 pb-6 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
