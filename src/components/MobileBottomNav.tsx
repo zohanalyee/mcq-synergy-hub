@@ -85,7 +85,10 @@ const MobileBottomNav = () => {
     return 'User';
   };
 
+  const showAskDocsNew = !localStorage.getItem('visited_ask_docs');
+
   const handleProfileAction = (path: string) => {
+    if (path === '/ask-document') localStorage.setItem('visited_ask_docs', 'true');
     setProfileSheetOpen(false);
     navigate(path);
   };
@@ -245,6 +248,9 @@ const MobileBottomNav = () => {
                 >
                   <BookOpen className="h-5 w-5 text-emerald-600" />
                   <span className="text-sm font-medium">Ask Docs</span>
+                  {showAskDocsNew && (
+                    <span className="ml-auto text-[10px] px-1.5 py-0 rounded-full bg-emerald-500 text-white font-semibold">NEW</span>
+                  )}
                 </button>
                 
                 <Separator className="my-2" />

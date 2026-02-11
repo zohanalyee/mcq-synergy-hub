@@ -77,6 +77,12 @@ export function AppSidebar({
   const expanded = open || (isMobile && openMobile);
   const { data: newJobsCount = 0 } = useNewJobsCount();
   const { data: newScholarshipsCount = 0 } = useNewScholarshipsCount();
+  const showAskDocsNew = !localStorage.getItem('visited_ask_docs');
+
+  const handleNavigate = (path: string, title: string) => {
+    if (title === 'Ask Docs') localStorage.setItem('visited_ask_docs', 'true');
+    onNavigate(path);
+  };
 
   return (
     <Sidebar 
@@ -180,7 +186,7 @@ export function AppSidebar({
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton 
-                      onClick={() => onNavigate(item.path)} 
+                      onClick={() => handleNavigate(item.path, item.title)} 
                       isActive={isActive(item.path)} 
                       tooltip={item.title}
                       className={cn(
@@ -194,6 +200,14 @@ export function AppSidebar({
                         "font-medium ml-2 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                         expanded ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-2 absolute"
                       )}>{item.title}</span>
+                      {item.title === 'Ask Docs' && showAskDocsNew && (
+                        <Badge className={cn(
+                          "ml-auto text-[10px] px-1.5 py-0 bg-emerald-500 hover:bg-emerald-600 text-white border-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+                          expanded ? "opacity-100 scale-100" : "opacity-0 scale-75 absolute right-2"
+                        )}>
+                          NEW
+                        </Badge>
+                      )}
                       {item.title === 'Question Bank' && isAdmin && (
                         <Badge variant="secondary" className={cn(
                           "ml-auto text-[10px] px-1.5 py-0 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
