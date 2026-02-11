@@ -1,60 +1,39 @@
 
 
-# Add "Ask Document" RAG Q&A to Navigation
+# Add "NEW" Badge to Ask Docs Navigation
 
-## Summary
+A lightweight enhancement using `localStorage` to show a dismissable "NEW" badge on the Ask Docs navigation item across all three surfaces.
 
-The Ask Document page (`/ask-document`) is fully built and functional but has **zero navigation links** anywhere in the app. Students can only access it by manually typing the URL. This plan adds it to all navigation surfaces.
+## Approach
+
+Use a simple `localStorage` check -- the badge shows until the user visits `/ask-document` for the first time. No date-based logic needed; once visited, it stays hidden permanently.
 
 ## Changes
 
-### 1. Add to Header nav items (`src/components/Header.tsx`)
+### 1. Sidebar (`src/components/AppSidebar.tsx`)
 
-Add `{ title: 'Ask Docs', path: '/ask-document' }` to the `secondaryNavItems` array (after "Feedback"). This makes it visible in the desktop navigation dropdown and mobile menu.
+- Read `localStorage.getItem('visited_ask_docs')` inside the component
+- For the `'Ask Docs'` menu item, render a small emerald `Badge` with text "NEW" (similar to the existing "Admin" badge on Question Bank)
+- In the `onClick` handler for Ask Docs, call `localStorage.setItem('visited_ask_docs', 'true')` alongside `onNavigate`
 
-### 2. Add icon mapping in Sidebar (`src/components/AppSidebar.tsx`)
+### 2. Mobile Bottom Nav (`src/components/MobileBottomNav.tsx`)
 
-Add an entry for `'Ask Docs'` in the `getIcon` function using the `BookOpen` icon (or `MessageSquare`) with a distinctive color (e.g., `text-emerald-600`). This ensures the sidebar shows a proper icon when expanded or collapsed.
+- Same `localStorage` check
+- Add a small "NEW" `Badge` next to the "Ask Docs" label in the profile sheet
+- Set `localStorage` on click via the existing `handleProfileAction`
 
-### 3. Add to Mobile Bottom Nav profile sheet (`src/components/MobileBottomNav.tsx`)
+### 3. Header (`src/components/Header.tsx`)
 
-Add a button in the profile sheet (between "Feedback" and the separator before Settings) that navigates to `/ask-document`. Use a `BookOpen` or `MessagesSquare` icon to match the feature's purpose.
+- No direct change needed here -- the header passes `secondaryNavItems` to `AppSidebar`, which already handles rendering. The "Ask Docs" item flows through the sidebar menu where the badge is already added.
 
 ## Technical Details
 
 | File | Change |
 |------|--------|
-| `src/components/Header.tsx` | Add `{ title: 'Ask Docs', path: '/ask-document' }` to `secondaryNavItems` array |
-| `src/components/AppSidebar.tsx` | Add `'Ask Docs'` icon entry in `getIcon` function |
-| `src/components/MobileBottomNav.tsx` | Add navigation button to `/ask-document` in the profile sheet |
+| `src/components/AppSidebar.tsx` | Add `localStorage` check; render emerald "NEW" badge on Ask Docs item; set flag on click |
+| `src/components/MobileBottomNav.tsx` | Add `localStorage` check; render "NEW" badge next to Ask Docs button; set flag on click |
 
-No new dependencies, no backend changes, no route changes needed -- the page and edge function already exist.
-Plan approved! Please add "Ask Document" navigation links.
+**Badge styling:** `bg-emerald-500 text-white text-[10px] px-1.5 py-0` -- matches the existing badge pattern used for Jobs count and Admin label.
 
-IMPLEMENTATION:
-Add navigation to all 3 locations as described:
-1. ✅ Header.tsx - secondaryNavItems
-2. ✅ AppSidebar.tsx - icon mapping
-3. ✅ MobileBottomNav.tsx - profile sheet button
+No new dependencies. Minimal code addition (~10 lines per file).
 
-PREFERENCES:
-- Icon: BookOpen (preferred) - represents documents/books
-- Color: text-emerald-600 - distinctive green
-- Label: "Ask Docs" or "Ask Document" (keep it short for mobile)
-
-ADDITIONAL REQUESTS:
-
-1. Also add tooltip/description:
-   - Desktop: Hover tooltip "Ask questions from your study materials"
-   - Mobile: Long-press hint or subtitle
-
-2. Badge/indicator (optional):
-   - Show "NEW" badge for first week
-   - Or show document count if possible
-
-3. Verify it works:
-   - Test on desktop, tablet, mobile
-   - Ensure all navigation paths work
-   - Check icon displays correctly
-
-Please implement and deploy all changes.
