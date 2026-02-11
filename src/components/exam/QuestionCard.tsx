@@ -59,7 +59,12 @@ const QuestionCard = ({
 
           {/* Option cards */}
           <div className="space-y-2">
-            {question.options.map((option: string, idx: number) => {
+            {(Array.isArray(question.options)
+              ? question.options
+              : question.options && typeof question.options === 'object'
+                ? Object.values(question.options)
+                : []
+            ).map((option: string, idx: number) => {
               const isSelected = selectedAnswer === option;
               return (
                 <div
