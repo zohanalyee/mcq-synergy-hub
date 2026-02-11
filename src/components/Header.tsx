@@ -62,6 +62,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   const secondaryNavItems = [
     { title: 'Analytics', path: '/analytics' },
     { title: 'Feedback', path: '/feedback' },
+    { title: 'Ask Docs', path: '/ask-document' },
   ];
 
   const isActive = (path: string) => {

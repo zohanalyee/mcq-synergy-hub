@@ -53,6 +53,9 @@ const getIcon = (title: string) => {
     'Question Bank': { 
       icon: <Database size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500" />
     },
+    'Ask Docs': { 
+      icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
+    },
   };
   return icons[title] || { 
     icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-gray-500" />
