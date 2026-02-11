@@ -1,129 +1,60 @@
 
 
-# Fix: Switch AI Functions to Lovable AI Gateway
+# Add "Ask Document" RAG Q&A to Navigation
 
-## Root Cause
+## Summary
 
-The error is NOT a model availability issue. Your **Gemini API free tier is completely exhausted** -- the logs show `limit: 0` for all models. Every direct Gemini API call returns 429 regardless of which model is used. Changing model names will never fix this.
-
-## Solution
-
-Switch all three AI generation edge functions from direct Gemini API calls (using `GEMINI_API_KEY`) to the **Lovable AI Gateway** (using `LOVABLE_API_KEY`), which has its own separate quota. The gateway is OpenAI-compatible and already configured.
-
-The embedding functions (`process-book`, `search-documents`, `rag-search`) will remain on direct Gemini since they use the embedding API which is different from the chat completions API.
-
----
+The Ask Document page (`/ask-document`) is fully built and functional but has **zero navigation links** anywhere in the app. Students can only access it by manually typing the URL. This plan adds it to all navigation surfaces.
 
 ## Changes
 
-### 1. Update `generate-from-rag/index.ts`
+### 1. Add to Header nav items (`src/components/Header.tsx`)
 
-Replace `callGeminiWithFallback` with a call to `https://ai.gateway.lovable.dev/v1/chat/completions`:
+Add `{ title: 'Ask Docs', path: '/ask-document' }` to the `secondaryNavItems` array (after "Feedback"). This makes it visible in the desktop navigation dropdown and mobile menu.
 
-- Use `LOVABLE_API_KEY` instead of `GEMINI_API_KEY`
-- Send messages in OpenAI format: `[{role: "system", content: systemPrompt}, {role: "user", content: userPrompt}]`
-- Use model `google/gemini-2.5-flash` (default recommended model)
-- Keep `retryWithBackoff` wrapper
-- Handle 429 and 402 errors from the gateway with user-friendly messages
-- Remove the `GEMINI_MODELS` array and `callGeminiWithFallback` function entirely
+### 2. Add icon mapping in Sidebar (`src/components/AppSidebar.tsx`)
 
-### 2. Update `generate-test/index.ts`
+Add an entry for `'Ask Docs'` in the `getIcon` function using the `BookOpen` icon (or `MessageSquare`) with a distinctive color (e.g., `text-emerald-600`). This ensures the sidebar shows a proper icon when expanded or collapsed.
 
-Same pattern -- replace `callGeminiWithFallback` with Lovable AI Gateway call:
+### 3. Add to Mobile Bottom Nav profile sheet (`src/components/MobileBottomNav.tsx`)
 
-- Use `LOVABLE_API_KEY`
-- Model: `google/gemini-2.5-flash`
-- Keep the existing prompt structure but format as chat messages
-- Handle 429/402 gateway errors
-
-### 3. Update `fetch-external-jobs/index.ts`
-
-Same pattern:
-
-- Switch from `EXTERNAL_JOBS_GEMINI_KEY` to `LOVABLE_API_KEY`
-- Use Lovable AI Gateway endpoint
-- Model: `google/gemini-2.5-flash`
-
-### 4. Improve Frontend Error Handling in `SyllabusBuilder.tsx`
-
-In the `handleGenerateQuiz` function, parse error responses from `generateFromRAGForSyllabus` and show specific messages:
-
-- If error contains "quota": Show "Daily quota reached. Try again later."
-- If error contains "no_rag_data" or "No RAG documents": Show "No study material found. Upload PDFs first."
-- Default: Show the raw error message
-
----
+Add a button in the profile sheet (between "Feedback" and the separator before Settings) that navigates to `/ask-document`. Use a `BookOpen` or `MessagesSquare` icon to match the feature's purpose.
 
 ## Technical Details
 
-**Lovable AI Gateway call pattern:**
-```text
-POST https://ai.gateway.lovable.dev/v1/chat/completions
-Authorization: Bearer {LOVABLE_API_KEY}
-Content-Type: application/json
-
-{
-  "model": "google/gemini-2.5-flash",
-  "messages": [
-    {"role": "system", "content": "..."},
-    {"role": "user", "content": "..."}
-  ],
-  "temperature": 0.7,
-  "max_tokens": 8192
-}
-```
-
-**Response format:**
-```text
-{
-  "choices": [{
-    "message": {"content": "...the generated text..."}
-  }]
-}
-```
-
-**Files to edit:**
-
 | File | Change |
 |------|--------|
-| `supabase/functions/generate-from-rag/index.ts` | Switch to Lovable AI Gateway |
-| `supabase/functions/generate-test/index.ts` | Switch to Lovable AI Gateway |
-| `supabase/functions/fetch-external-jobs/index.ts` | Switch to Lovable AI Gateway |
-| `src/components/syllabus-builder/SyllabusBuilder.tsx` | Better error messages based on error type |
+| `src/components/Header.tsx` | Add `{ title: 'Ask Docs', path: '/ask-document' }` to `secondaryNavItems` array |
+| `src/components/AppSidebar.tsx` | Add `'Ask Docs'` icon entry in `getIcon` function |
+| `src/components/MobileBottomNav.tsx` | Add navigation button to `/ask-document` in the profile sheet |
 
-**What stays unchanged:**
-- `process-book/index.ts` -- uses embedding API, not chat completions
-- `search-documents/index.ts` -- uses embedding API
-- `rag-search/index.ts` -- uses embedding API
-- `quotaManager.ts` -- no changes needed
-- `QuotaMonitor.tsx` -- no changes needed
-Perfect analysis! The Gemini free tier is exhausted (limit: 0), so switching to Lovable AI Gateway is the right solution.
+No new dependencies, no backend changes, no route changes needed -- the page and edge function already exist.
+Plan approved! Please add "Ask Document" navigation links.
 
-Plan approved. Please implement all changes:
+IMPLEMENTATION:
+Add navigation to all 3 locations as described:
+1. ✅ Header.tsx - secondaryNavItems
+2. ✅ AppSidebar.tsx - icon mapping
+3. ✅ MobileBottomNav.tsx - profile sheet button
 
-1. ✅ Update generate-from-rag/index.ts
-   - Switch to Lovable AI Gateway
-   - Use LOVABLE_API_KEY
-   - Model: google/gemini-2.5-flash
-   - OpenAI format messages
+PREFERENCES:
+- Icon: BookOpen (preferred) - represents documents/books
+- Color: text-emerald-600 - distinctive green
+- Label: "Ask Docs" or "Ask Document" (keep it short for mobile)
 
-2. ✅ Update generate-test/index.ts
-   - Same switch to gateway
-   - Keep existing prompt logic
-   - Better error handling
+ADDITIONAL REQUESTS:
 
-3. ✅ Update fetch-external-jobs/index.ts
-   - Switch from EXTERNAL_JOBS_GEMINI_KEY to LOVABLE_API_KEY
-   - Use gateway endpoint
+1. Also add tooltip/description:
+   - Desktop: Hover tooltip "Ask questions from your study materials"
+   - Mobile: Long-press hint or subtitle
 
-4. ✅ Improve SyllabusBuilder.tsx error messages
-   - Parse error types
-   - Show user-friendly messages
+2. Badge/indicator (optional):
+   - Show "NEW" badge for first week
+   - Or show document count if possible
 
-IMPORTANT NOTES:
-- Keep embeddings functions unchanged (they use different API)
-- Maintain retryWithBackoff wrapper
-- Handle 429 and 402 gateway errors gracefully
-- Test thoroughly after deployment
+3. Verify it works:
+   - Test on desktop, tablet, mobile
+   - Ensure all navigation paths work
+   - Check icon displays correctly
 
-Please implement and deploy all changes now.
+Please implement and deploy all changes.
