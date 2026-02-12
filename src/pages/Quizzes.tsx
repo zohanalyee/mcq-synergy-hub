@@ -74,21 +74,21 @@ const Quizzes = () => {
 
   return (
     <Header>
-      <div className="container mx-auto px-4 pt-4 pb-10">
+      <div className="container mx-auto px-4 pt-2 pb-4">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-6 text-center"
+          className="mb-3 text-center"
         >
-          <h1 className="text-2xl font-bold text-foreground">Quizzes</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold text-foreground">Quizzes</h1>
+          <p className="text-xs text-muted-foreground">
             Practice with AI-powered quizzes from our Question Bank
           </p>
         </motion.div>
 
-        <Tabs defaultValue="subject" className="mb-4">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 h-10">
+        <Tabs defaultValue="subject" className="mb-2">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-3 h-9">
             <TabsTrigger value="subject" className="flex items-center gap-2">
               <Shuffle className="h-4 w-4" />
               Subject Quiz
@@ -107,17 +107,17 @@ const Quizzes = () => {
               transition={{ duration: 0.3 }}
             >
               <Card className="max-w-lg mx-auto">
-                <CardHeader className="text-center pb-1 pt-4">
-                  <div className="mx-auto w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-2">
-                    <Shuffle className="h-5 w-5 text-primary" />
+                <CardHeader className="text-center pb-0 pt-3">
+                  <div className="mx-auto w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-1">
+                    <Shuffle className="h-4 w-4 text-primary" />
                   </div>
-                  <CardTitle className="text-lg">Subject-Wise Quiz</CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardTitle className="text-base">Subject-Wise Quiz</CardTitle>
+                  <CardDescription className="text-[11px]">
                     Random questions from any topic under your selected subject
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="space-y-4 pt-2">
+                <CardContent className="space-y-3 pt-1">
                   {isLoading ? (
                     <div className="space-y-4">
                       <Skeleton className="h-10 w-full" />
@@ -228,19 +228,19 @@ const Quizzes = () => {
               transition={{ duration: 0.3 }}
             >
               <Card className="max-w-lg mx-auto">
-                <CardHeader className="text-center pb-1 pt-4">
-                  <div className="mx-auto w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center mb-2">
-                    <Target className="h-5 w-5 text-accent-foreground" />
+                <CardHeader className="text-center pb-0 pt-3">
+                  <div className="mx-auto w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center mb-1">
+                    <Target className="h-4 w-4 text-accent-foreground" />
                   </div>
-                  <CardTitle className="text-lg">Topic-Wise Quiz</CardTitle>
-                  <CardDescription className="text-xs">
+                  <CardTitle className="text-base">Topic-Wise Quiz</CardTitle>
+                  <CardDescription className="text-[11px]">
                     Focused questions from a specific topic you want to master
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="space-y-4 pt-2">
+                <CardContent className="space-y-3 pt-1">
                   {isLoading ? (
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       <Skeleton className="h-10 w-full" />
                       <Skeleton className="h-10 w-full" />
                       <Skeleton className="h-10 w-full" />
@@ -372,7 +372,7 @@ const Quizzes = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mt-8 max-w-2xl mx-auto"
+          className="mt-4 max-w-2xl mx-auto"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-muted/30">
