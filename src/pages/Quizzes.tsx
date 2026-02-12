@@ -372,7 +372,7 @@ const Quizzes = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="mt-4 max-w-2xl mx-auto"
+          className="mt-4 max-w-2xl mx-auto hidden md:block"
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="bg-muted/30">
