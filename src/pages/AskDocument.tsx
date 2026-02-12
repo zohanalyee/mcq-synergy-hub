@@ -151,7 +151,7 @@ const AskDocument: React.FC = () => {
         {/* Chat area */}
         <Card className="mb-4">
           <CardContent className="p-0">
-            <ScrollArea className="h-[350px] p-4">
+            <ScrollArea className="h-[420px] p-4">
               {messages.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
                   <BookOpen className="h-12 w-12 mb-4 opacity-50" />
