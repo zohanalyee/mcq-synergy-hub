@@ -174,16 +174,16 @@ serve(async (req) => {
      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
        global: { headers: { Authorization: authHeader } },
      });
-     const { data: claimsData, error: authError } = await supabaseAuth.auth.getClaims(token);
+     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
      
-     if (authError || !claimsData?.claims?.sub) {
+     if (authError || !user) {
        return new Response(
          JSON.stringify({ error: "Invalid authentication token" }),
          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
        );
      }
  
-     const userId = claimsData.claims.sub as string;
+     const userId = user.id;
  
      // ============= RATE LIMITING =============
      const rateCheck = checkRateLimit(userId);
