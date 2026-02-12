@@ -159,36 +159,23 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-     // ============= AUTHENTICATION CHECK =============
+     // ============= OPTIONAL AUTHENTICATION =============
+     let userId: string | null = null;
      const authHeader = req.headers.get("Authorization");
-     if (!authHeader?.startsWith("Bearer ")) {
-       return new Response(
-         JSON.stringify({ error: "Authentication required" }),
-         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-       );
+     if (authHeader?.startsWith("Bearer ")) {
+       const token = authHeader.replace("Bearer ", "");
+       const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+         global: { headers: { Authorization: authHeader } },
+       });
+       const { data: { user } } = await supabaseAuth.auth.getUser(token);
+       if (user) userId = user.id;
      }
  
-     const token = authHeader.replace("Bearer ", "");
-     
-     // Create a separate client with the user's token for auth validation
-     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-       global: { headers: { Authorization: authHeader } },
-     });
-     const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
-     
-     if (authError || !user) {
-       return new Response(
-         JSON.stringify({ error: "Invalid authentication token" }),
-         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-       );
-     }
- 
-     const userId = user.id;
- 
-     // ============= RATE LIMITING =============
-     const rateCheck = checkRateLimit(userId);
+     // ============= RATE LIMITING (by userId or IP) =============
+     const rateLimitKey = userId || req.headers.get("x-forwarded-for") || "anonymous";
+     const rateCheck = checkRateLimit(rateLimitKey);
      if (!rateCheck.allowed) {
-       console.log(`[rag-search] ⛔ Rate limited: ${userId}`);
+       console.log(`[rag-search] ⛔ Rate limited: ${rateLimitKey}`);
        return new Response(
          JSON.stringify({ error: "Too many requests. Please wait before trying again." }),
          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json", "X-RateLimit-Remaining": "0" } }
