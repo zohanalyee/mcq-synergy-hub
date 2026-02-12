@@ -156,6 +156,7 @@ serve(async (req) => {
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
      // ============= AUTHENTICATION CHECK =============
@@ -168,16 +169,21 @@ serve(async (req) => {
      }
  
      const token = authHeader.replace("Bearer ", "");
-     const { data: userData, error: authError } = await supabase.auth.getUser(token);
      
-     if (authError || !userData?.user) {
+     // Create a separate client with the user's token for auth validation
+     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+       global: { headers: { Authorization: authHeader } },
+     });
+     const { data: claimsData, error: authError } = await supabaseAuth.auth.getClaims(token);
+     
+     if (authError || !claimsData?.claims?.sub) {
        return new Response(
          JSON.stringify({ error: "Invalid authentication token" }),
          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
        );
      }
  
-     const userId = userData.user.id;
+     const userId = claimsData.claims.sub as string;
  
      // ============= RATE LIMITING =============
      const rateCheck = checkRateLimit(userId);
