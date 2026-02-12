@@ -1,39 +1,72 @@
+# Fix Ask Document Page Layout
 
+## Root Cause
 
-# Add "NEW" Badge to Ask Docs Navigation
+The `Header` component (lines 158-208) creates a full-page layout with `min-h-screen`, sidebar, fixed header bar, and a `<main>` slot for `{children}`. Other pages pass their content **inside** `<Header>` as children.
 
-A lightweight enhancement using `localStorage` to show a dismissable "NEW" badge on the Ask Docs navigation item across all three surfaces.
+However, `AskDocument.tsx` renders its content **after** `<Header />` as a sibling element:
 
-## Approach
+```text
+<div min-h-screen>        <-- AskDocument wrapper
+  <Header />              <-- This is a full min-h-screen layout
+  <main>content</main>    <-- This appears BELOW the full-height Header
+</div>
+```
 
-Use a simple `localStorage` check -- the badge shows until the user visits `/ask-document` for the first time. No date-based logic needed; once visited, it stays hidden permanently.
+This pushes the page content below an entire viewport height of empty space.
 
-## Changes
+## Fix (single file change)
 
-### 1. Sidebar (`src/components/AppSidebar.tsx`)
+**File: `src/pages/AskDocument.tsx**`
 
-- Read `localStorage.getItem('visited_ask_docs')` inside the component
-- For the `'Ask Docs'` menu item, render a small emerald `Badge` with text "NEW" (similar to the existing "Admin" badge on Question Bank)
-- In the `onClick` handler for Ask Docs, call `localStorage.setItem('visited_ask_docs', 'true')` alongside `onNavigate`
+Move the page content to be **children** of `<Header>` instead of a sibling. Remove the outer `min-h-screen` wrapper since Header already provides that.
 
-### 2. Mobile Bottom Nav (`src/components/MobileBottomNav.tsx`)
+Before:
 
-- Same `localStorage` check
-- Add a small "NEW" `Badge` next to the "Ask Docs" label in the profile sheet
-- Set `localStorage` on click via the existing `handleProfileAction`
+```tsx
+return (
+  <div className="min-h-screen bg-background">
+    <Header />
+    <main className="container mx-auto px-4 pt-2 pb-6 max-w-4xl">
+      {/* all content */}
+    </main>
+  </div>
+);
+```
 
-### 3. Header (`src/components/Header.tsx`)
+After:
 
-- No direct change needed here -- the header passes `secondaryNavItems` to `AppSidebar`, which already handles rendering. The "Ask Docs" item flows through the sidebar menu where the badge is already added.
+```tsx
+return (
+  <Header>
+    <div className="container mx-auto px-4 pt-2 pb-6 max-w-4xl">
+      {/* all content -- unchanged */}
+    </div>
+  </Header>
+);
+```
 
-## Technical Details
+Key changes:
 
-| File | Change |
-|------|--------|
-| `src/components/AppSidebar.tsx` | Add `localStorage` check; render emerald "NEW" badge on Ask Docs item; set flag on click |
-| `src/components/MobileBottomNav.tsx` | Add `localStorage` check; render "NEW" badge next to Ask Docs button; set flag on click |
+- Remove outer `<div className="min-h-screen bg-background">`
+- Change `<Header />` (self-closing) to `<Header>...</Header>` (wrapping)
+- Move content inside Header as children
+- Change `<main>` to `<div>` since Header already provides a `<main>` wrapper
 
-**Badge styling:** `bg-emerald-500 text-white text-[10px] px-1.5 py-0` -- matches the existing badge pattern used for Jobs count and Admin label.
+No other files need changes. The content itself (title, chat area, input, example questions) stays exactly the same.  
 
-No new dependencies. Minimal code addition (~10 lines per file).
+Perfect diagnosis! Please implement the layout fix.
 
+APPROVED CHANGES:
+
+1. ✅ Remove outer min-h-screen wrapper
+
+2. ✅ Make Header a wrapping component (not self-closing)
+
+3. ✅ Move content inside Header as children
+
+4. ✅ Change <main> to <div>
+
+This matches the pattern used by other pages in the app and will fix the spacing issue completely.
+
+Please implement and deploy the fix now.
