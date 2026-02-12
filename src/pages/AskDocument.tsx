@@ -118,10 +118,8 @@ const AskDocument: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      
-      <main className="container mx-auto px-4 pt-2 pb-6 max-w-4xl">
+    <Header>
+      <div className="container mx-auto px-4 pt-2 pb-6 max-w-4xl">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
@@ -218,8 +216,8 @@ const AskDocument: React.FC = () => {
             No documents available. Contact your administrator to upload course materials.
           </p>
         )}
-      </main>
-    </div>
+      </div>
+    </Header>
   );
 };
 
