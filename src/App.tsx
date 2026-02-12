@@ -86,7 +86,7 @@ const App = () => {
                       visibleToasts={5}
                     />
                     <NoticeBoard />
-                    <FloatingFeedbackButton />
+                    
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
                     <Routes>
