@@ -3,14 +3,20 @@ import { EducationalSystem, Level, SyllabusImportItem } from "@/types/lms.types"
 
 // ============ Educational Systems ============
 
-export const getEducationalSystems = async (): Promise<EducationalSystem[]> => {
-  const { data, error } = await supabase
+export const getEducationalSystems = async (includeUnapproved = false): Promise<EducationalSystem[]> => {
+  let query = supabase
     .from('educational_systems')
     .select(`
       *,
       levels(count)
     `)
     .order('name');
+
+  if (!includeUnapproved) {
+    query = query.or('approved.is.null,approved.eq.true');
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching educational systems:", error);
@@ -90,8 +96,8 @@ export const removeEducationalSystem = async (id: string): Promise<boolean> => {
 
 // ============ Levels ============
 
-export const getLevelsBySystem = async (systemId: string): Promise<Level[]> => {
-  const { data, error } = await supabase
+export const getLevelsBySystem = async (systemId: string, includeUnapproved = false): Promise<Level[]> => {
+  let query = supabase
     .from('levels')
     .select(`
       *,
@@ -99,6 +105,12 @@ export const getLevelsBySystem = async (systemId: string): Promise<Level[]> => {
     `)
     .eq('system_id', systemId)
     .order('order_index');
+
+  if (!includeUnapproved) {
+    query = query.or('approved.is.null,approved.eq.true');
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error fetching levels:", error);

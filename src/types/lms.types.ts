@@ -6,6 +6,11 @@ export interface EducationalSystem {
   is_active: boolean;
   created_at: string;
   levelCount?: number;
+  auto_created?: boolean;
+  approved?: boolean;
+  created_by_ai?: boolean;
+  admin_reviewed_at?: string;
+  admin_reviewed_by?: string;
 }
 
 export interface Level {
@@ -15,6 +20,11 @@ export interface Level {
   order_index: number;
   created_at: string;
   subjectCount?: number;
+  auto_created?: boolean;
+  approved?: boolean;
+  created_by_ai?: boolean;
+  admin_reviewed_at?: string;
+  admin_reviewed_by?: string;
 }
 
 export interface SyllabusImportItem {

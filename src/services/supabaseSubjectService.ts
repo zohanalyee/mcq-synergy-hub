@@ -11,15 +11,21 @@ export interface Subject {
 }
 
 // Get all subjects from Supabase
-export const getSubjects = async (): Promise<Subject[]> => {
+export const getSubjects = async (includeUnapproved = false): Promise<Subject[]> => {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('subjects')
       .select(`
         *,
         topics(count)
       `)
       .order('name');
+
+    if (!includeUnapproved) {
+      query = query.or('approved.is.null,approved.eq.true');
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error fetching subjects:", error);
