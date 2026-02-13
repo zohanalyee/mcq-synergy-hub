@@ -26,3 +26,9 @@ verify_jwt = false
 
 [functions.external-agent-webhook]
 verify_jwt = false
+
+[functions.analyze-pdf-metadata]
+verify_jwt = false
+
+[functions.auto-link-document]
+verify_jwt = false

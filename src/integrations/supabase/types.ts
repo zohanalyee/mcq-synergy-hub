@@ -602,7 +602,12 @@ export type Database = {
       }
       educational_systems: {
         Row: {
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
+          approved: boolean | null
+          auto_created: boolean | null
           created_at: string | null
+          created_by_ai: boolean | null
           description: string | null
           id: string
           is_active: boolean | null
@@ -610,7 +615,12 @@ export type Database = {
           type: string
         }
         Insert: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           created_at?: string | null
+          created_by_ai?: boolean | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -618,7 +628,12 @@ export type Database = {
           type: string
         }
         Update: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           created_at?: string | null
+          created_by_ai?: boolean | null
           description?: string | null
           id?: string
           is_active?: boolean | null
@@ -746,21 +761,36 @@ export type Database = {
       }
       levels: {
         Row: {
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
+          approved: boolean | null
+          auto_created: boolean | null
           created_at: string | null
+          created_by_ai: boolean | null
           id: string
           name: string
           order_index: number | null
           system_id: string | null
         }
         Insert: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           created_at?: string | null
+          created_by_ai?: boolean | null
           id?: string
           name: string
           order_index?: number | null
           system_id?: string | null
         }
         Update: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           created_at?: string | null
+          created_by_ai?: boolean | null
           id?: string
           name?: string
           order_index?: number | null
@@ -775,6 +805,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lms_approvals: {
+        Row: {
+          admin_notes: string | null
+          ai_metadata: Json | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          id: string
+          status: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          ai_metadata?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          entity_id: string
+          entity_name: string
+          entity_type: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          ai_metadata?: Json | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          entity_id?: string
+          entity_name?: string
+          entity_type?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -862,8 +931,13 @@ export type Database = {
       }
       subjects: {
         Row: {
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
+          approved: boolean | null
+          auto_created: boolean | null
           category: string | null
           created_at: string
+          created_by_ai: boolean | null
           description: string | null
           icon: string | null
           id: string
@@ -871,8 +945,13 @@ export type Database = {
           name: string
         }
         Insert: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           category?: string | null
           created_at?: string
+          created_by_ai?: boolean | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -880,8 +959,13 @@ export type Database = {
           name: string
         }
         Update: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           category?: string | null
           created_at?: string
+          created_by_ai?: boolean | null
           description?: string | null
           icon?: string | null
           id?: string
@@ -1009,21 +1093,42 @@ export type Database = {
       }
       topics: {
         Row: {
+          admin_reviewed_at: string | null
+          admin_reviewed_by: string | null
+          ai_confidence: number | null
+          ai_suggested_name: string | null
+          approved: boolean | null
+          auto_created: boolean | null
           created_at: string
+          created_by_ai: boolean | null
           description: string | null
           id: string
           name: string
           subject_id: string | null
         }
         Insert: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          ai_confidence?: number | null
+          ai_suggested_name?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           created_at?: string
+          created_by_ai?: boolean | null
           description?: string | null
           id?: string
           name: string
           subject_id?: string | null
         }
         Update: {
+          admin_reviewed_at?: string | null
+          admin_reviewed_by?: string | null
+          ai_confidence?: number | null
+          ai_suggested_name?: string | null
+          approved?: boolean | null
+          auto_created?: boolean | null
           created_at?: string
+          created_by_ai?: boolean | null
           description?: string | null
           id?: string
           name?: string

@@ -12,7 +12,8 @@ import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
 import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
 import DocumentLibrary from "./documents/DocumentLibrary";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library } from "lucide-react";
+import LMSApprovalDashboard from "./LMSApprovalDashboard";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,6 +66,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
             External Curation 🌐
           </Button>
         </Link>
+        <TabsTrigger value="lms-approvals" className="flex items-center gap-2 border-2 border-primary/20">
+          <ShieldCheck className="h-4 w-4" />
+          LMS Approvals 🔍
+        </TabsTrigger>
         
         {/* Separator */}
         <div className="w-px h-8 bg-border mx-2" />
@@ -211,6 +216,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Configuration */}
       <TabsContent value="lms-structure">
         <LMSStructureManager />
+      </TabsContent>
+      
+      <TabsContent value="lms-approvals">
+        <LMSApprovalDashboard />
       </TabsContent>
       
       <TabsContent value="subjects">
