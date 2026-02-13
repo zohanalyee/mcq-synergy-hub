@@ -1,72 +1,139 @@
-# Fix Ask Document Page Layout
 
-## Root Cause
 
-The `Header` component (lines 158-208) creates a full-page layout with `min-h-screen`, sidebar, fixed header bar, and a `<main>` slot for `{children}`. Other pages pass their content **inside** `<Header>` as children.
+# Smart PDF Upload with AI Auto-Categorization and Approval System
 
-However, `AskDocument.tsx` renders its content **after** `<Header />` as a sibling element:
+## Overview
 
-```text
-<div min-h-screen>        <-- AskDocument wrapper
-  <Header />              <-- This is a full min-h-screen layout
-  <main>content</main>    <-- This appears BELOW the full-height Header
-</div>
-```
+This feature transforms the existing Document Library into a smart upload system where AI automatically detects the LMS hierarchy (System/Level/Subject/Topic) from uploaded PDFs, auto-creates missing categories as "unapproved" (hidden from students), and provides an approval dashboard for admin review.
 
-This pushes the page content below an entire viewport height of empty space.
+## Important: Schema Mapping
 
-## Fix (single file change)
+Your existing database uses different table names than referenced in the request:
+- "Board" = `educational_systems` table
+- "Class" = `levels` table
+- "Subject" = `subjects` table
+- "Topic" = `topics` table
 
-**File: `src/pages/AskDocument.tsx**`
+All changes will be adapted to match this existing schema.
 
-Move the page content to be **children** of `<Header>` instead of a sibling. Remove the outer `min-h-screen` wrapper since Header already provides that.
+---
 
-Before:
+## Phase 1: Database Changes
 
-```tsx
-return (
-  <div className="min-h-screen bg-background">
-    <Header />
-    <main className="container mx-auto px-4 pt-2 pb-6 max-w-4xl">
-      {/* all content */}
-    </main>
-  </div>
-);
-```
+**Migration: Add approval columns to LMS tables**
 
-After:
+Add `auto_created`, `approved`, `created_by_ai`, `admin_reviewed_at`, `admin_reviewed_by` columns to:
+- `educational_systems`
+- `levels`
+- `subjects`
+- `topics` (also add `ai_suggested_name` and `ai_confidence`)
 
-```tsx
-return (
-  <Header>
-    <div className="container mx-auto px-4 pt-2 pb-6 max-w-4xl">
-      {/* all content -- unchanged */}
-    </div>
-  </Header>
-);
-```
+All existing rows will be set to `approved = TRUE`.
 
-Key changes:
+**New table: `lms_approvals`**
 
-- Remove outer `<div className="min-h-screen bg-background">`
-- Change `<Header />` (self-closing) to `<Header>...</Header>` (wrapping)
-- Move content inside Header as children
-- Change `<main>` to `<div>` since Header already provides a `<main>` wrapper
+Tracks pending AI-created categories with fields: `entity_type`, `entity_id`, `entity_name`, `ai_metadata` (JSONB), `status` (pending/approved/rejected/merged), `admin_notes`, `approved_by`, timestamps. RLS: admin-only access.
 
-No other files need changes. The content itself (title, chat area, input, example questions) stays exactly the same.  
+---
 
-Perfect diagnosis! Please implement the layout fix.
+## Phase 2: Edge Function - `analyze-pdf-metadata`
 
-APPROVED CHANGES:
+New edge function that:
+1. Receives `filename` and `first_page_text` from the uploaded PDF
+2. Calls the Lovable AI Gateway (google/gemini-2.5-flash) with a prompt tuned for Pakistani educational content
+3. Returns JSON with detected `system` (board), `level` (class), `subject`, `topic`, `confidence`, and `reasoning`
 
-1. ✅ Remove outer min-h-screen wrapper
+Uses existing `LOVABLE_API_KEY` secret. Config: `verify_jwt = false` (auth handled in code).
 
-2. ✅ Make Header a wrapping component (not self-closing)
+---
 
-3. ✅ Move content inside Header as children
+## Phase 3: Edge Function - `auto-link-document`
 
-4. ✅ Change <main> to <div>
+New edge function that:
+1. Receives `document_id` and AI `metadata`
+2. For each level of the hierarchy (system, level, subject, topic):
+   - Checks if an existing matching record exists
+   - If yes, reuses it
+   - If no, creates it with `approved = false`, `auto_created = true`, `created_by_ai = true`
+   - Logs a pending entry in `lms_approvals`
+3. Links the document to the resolved `topic_id`, `subject_id`, `level_id`, `system_id`
 
-This matches the pattern used by other pages in the app and will fix the spacing issue completely.
+Uses service role key for database writes.
 
-Please implement and deploy the fix now.
+---
+
+## Phase 4: Frontend - Smart Upload Mode
+
+**Update `DocumentLibrary.tsx`** to add a Smart/Manual upload toggle:
+
+- **Smart Upload tab**: Drag-and-drop or file picker. On upload:
+  1. Read first ~2000 chars of PDF text (via FileReader)
+  2. Call `analyze-pdf-metadata` edge function
+  3. Show AI detection results (System, Level, Subject, Topic, confidence %)
+  4. Upload file to `course_books` storage bucket
+  5. Create document record
+  6. Call `auto-link-document` to create/link LMS hierarchy
+  7. Trigger `process-book` for text extraction and embeddings
+  8. Show status badges: "Needs Review" (if new categories created) or "Complete"
+
+- **Manual Upload tab**: Existing dropdown-based upload flow (preserved as-is)
+
+Each file shows a progress card with stages: Analyzing, Uploading, Linking, Processing, Complete/Error.
+
+---
+
+## Phase 5: Approval Dashboard
+
+**New component: `LMSApprovalDashboard.tsx`**
+
+- Added as a new tab "LMS Approvals" in AdminTabs with a pending count badge
+- Shows all pending `lms_approvals` entries grouped by entity type
+- Each card shows: entity type badge, name, AI metadata (board, class, subject, confidence %), reasoning
+- Low confidence items (<70%) get a warning badge
+- Actions per item: Approve (sets `approved = true` on the entity), Reject (marks as rejected)
+- Batch approve/reject with checkboxes
+
+---
+
+## Phase 6: Hide Unapproved from Students
+
+Update student-facing queries to filter `approved = true` (or handle NULL as approved for backward compatibility):
+
+Files to update:
+- `src/services/lmsStructureService.ts` - `getEducationalSystems()`, `getLevelsBySystem()`, `getSubjectsByLevel()`, `getTopicsWithRAGStatus()`
+- `src/services/supabaseSubjectService.ts`
+- `src/services/supabaseTopicService.ts`
+- `src/components/admin/question-bank/ManualQuestionDialog.tsx`
+- `src/components/syllabus-builder/hooks/useSyllabusData.ts`
+- Database function `global_context_search` - add `AND (s.approved IS NULL OR s.approved = true)` filter
+
+Admin views will continue to show all items (approved and unapproved) with visual distinction.
+
+The filter pattern: `.or('approved.is.null,approved.eq.true')` ensures backward compatibility since existing rows won't have the column value until the migration sets them.
+
+---
+
+## Technical Details
+
+### New files:
+- `supabase/functions/analyze-pdf-metadata/index.ts`
+- `supabase/functions/auto-link-document/index.ts`
+- `src/components/admin/LMSApprovalDashboard.tsx`
+
+### Modified files:
+- `supabase/config.toml` (add new function entries)
+- `src/components/admin/documents/DocumentLibrary.tsx` (smart upload mode)
+- `src/components/admin/AdminTabs.tsx` (add Approvals tab)
+- `src/services/lmsStructureService.ts` (approved filter for student queries)
+- `src/services/supabaseSubjectService.ts` (approved filter)
+- `src/services/supabaseTopicService.ts` (approved filter)
+- `src/types/lms.types.ts` (add approval fields to interfaces)
+- `src/services/documentService.ts` (smart upload helpers)
+
+### Database migration:
+- ALTER TABLE for 4 LMS tables (add approval columns)
+- CREATE TABLE `lms_approvals`
+- UPDATE existing rows to `approved = TRUE`
+- RLS policies on `lms_approvals` (admin-only CRUD)
+- Update `global_context_search` function to filter unapproved
+
