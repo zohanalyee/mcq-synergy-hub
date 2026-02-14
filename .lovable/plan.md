@@ -1,139 +1,80 @@
 
 
-# Smart PDF Upload with AI Auto-Categorization and Approval System
+# Admin-Guided AI Categorization: Chunk Preview and Manual Override
 
-## Overview
+## What This Adds
 
-This feature transforms the existing Document Library into a smart upload system where AI automatically detects the LMS hierarchy (System/Level/Subject/Topic) from uploaded PDFs, auto-creates missing categories as "unapproved" (hidden from students), and provides an approval dashboard for admin review.
-
-## Important: Schema Mapping
-
-Your existing database uses different table names than referenced in the request:
-- "Board" = `educational_systems` table
-- "Class" = `levels` table
-- "Subject" = `subjects` table
-- "Topic" = `topics` table
-
-All changes will be adapted to match this existing schema.
+After a Smart Upload completes, admins can:
+1. Expand a "View Content" section to see the first chunks of the processed PDF
+2. See a "Fix Categorization" button when AI detects "Unknown" or low confidence
+3. Open a dialog showing AI suggestions, chunk previews, and manual override dropdowns
+4. Save corrections which re-link the document to the correct LMS hierarchy
 
 ---
 
-## Phase 1: Database Changes
+## Changes
 
-**Migration: Add approval columns to LMS tables**
+### 1. Update SmartUploadFile interface (DocumentLibrary.tsx)
 
-Add `auto_created`, `approved`, `created_by_ai`, `admin_reviewed_at`, `admin_reviewed_by` columns to:
-- `educational_systems`
-- `levels`
-- `subjects`
-- `topics` (also add `ai_suggested_name` and `ai_confidence`)
+Add `chunks` and `documentId` fields to track chunk data and the created document ID after processing.
 
-All existing rows will be set to `approved = TRUE`.
+### 2. Fetch chunks after processing completes (DocumentLibrary.tsx)
 
-**New table: `lms_approvals`**
+After `processDocument` succeeds, query `document_sections` for up to 10 chunks and store them in the smart file state. Also store the `documentId` for re-linking.
 
-Tracks pending AI-created categories with fields: `entity_type`, `entity_id`, `entity_name`, `ai_metadata` (JSONB), `status` (pending/approved/rejected/merged), `admin_notes`, `approved_by`, timestamps. RLS: admin-only access.
+### 3. Add collapsible chunk preview UI (DocumentLibrary.tsx)
 
----
+Below each completed smart upload card, add a `Collapsible` section showing:
+- First 5 chunks with 200-char previews
+- Count of remaining chunks
+- "Fix Categorization" button (always visible, highlighted when Unknown or confidence < 70%)
 
-## Phase 2: Edge Function - `analyze-pdf-metadata`
+### 4. Create ManualCategorizationDialog component
 
-New edge function that:
-1. Receives `filename` and `first_page_text` from the uploaded PDF
-2. Calls the Lovable AI Gateway (google/gemini-2.5-flash) with a prompt tuned for Pakistani educational content
-3. Returns JSON with detected `system` (board), `level` (class), `subject`, `topic`, `confidence`, and `reasoning`
+New file: `src/components/admin/documents/ManualCategorizationDialog.tsx`
 
-Uses existing `LOVABLE_API_KEY` secret. Config: `verify_jwt = false` (auth handled in code).
+A dialog that shows:
+- AI's detected metadata with confidence badge
+- Content preview from first 3 chunks
+- Four editable fields: System (select from DB), Level (select), Subject (select), Topic (text input)
+- Cascading selects: changing System loads its Levels, changing Level loads its Subjects
+- "Confirm & Re-link" button that calls `auto-link-document` with corrected metadata
 
----
+### 5. Wire the dialog into DocumentLibrary
 
-## Phase 3: Edge Function - `auto-link-document`
-
-New edge function that:
-1. Receives `document_id` and AI `metadata`
-2. For each level of the hierarchy (system, level, subject, topic):
-   - Checks if an existing matching record exists
-   - If yes, reuses it
-   - If no, creates it with `approved = false`, `auto_created = true`, `created_by_ai = true`
-   - Logs a pending entry in `lms_approvals`
-3. Links the document to the resolved `topic_id`, `subject_id`, `level_id`, `system_id`
-
-Uses service role key for database writes.
-
----
-
-## Phase 4: Frontend - Smart Upload Mode
-
-**Update `DocumentLibrary.tsx`** to add a Smart/Manual upload toggle:
-
-- **Smart Upload tab**: Drag-and-drop or file picker. On upload:
-  1. Read first ~2000 chars of PDF text (via FileReader)
-  2. Call `analyze-pdf-metadata` edge function
-  3. Show AI detection results (System, Level, Subject, Topic, confidence %)
-  4. Upload file to `course_books` storage bucket
-  5. Create document record
-  6. Call `auto-link-document` to create/link LMS hierarchy
-  7. Trigger `process-book` for text extraction and embeddings
-  8. Show status badges: "Needs Review" (if new categories created) or "Complete"
-
-- **Manual Upload tab**: Existing dropdown-based upload flow (preserved as-is)
-
-Each file shows a progress card with stages: Analyzing, Uploading, Linking, Processing, Complete/Error.
-
----
-
-## Phase 5: Approval Dashboard
-
-**New component: `LMSApprovalDashboard.tsx`**
-
-- Added as a new tab "LMS Approvals" in AdminTabs with a pending count badge
-- Shows all pending `lms_approvals` entries grouped by entity type
-- Each card shows: entity type badge, name, AI metadata (board, class, subject, confidence %), reasoning
-- Low confidence items (<70%) get a warning badge
-- Actions per item: Approve (sets `approved = true` on the entity), Reject (marks as rejected)
-- Batch approve/reject with checkboxes
-
----
-
-## Phase 6: Hide Unapproved from Students
-
-Update student-facing queries to filter `approved = true` (or handle NULL as approved for backward compatibility):
-
-Files to update:
-- `src/services/lmsStructureService.ts` - `getEducationalSystems()`, `getLevelsBySystem()`, `getSubjectsByLevel()`, `getTopicsWithRAGStatus()`
-- `src/services/supabaseSubjectService.ts`
-- `src/services/supabaseTopicService.ts`
-- `src/components/admin/question-bank/ManualQuestionDialog.tsx`
-- `src/components/syllabus-builder/hooks/useSyllabusData.ts`
-- Database function `global_context_search` - add `AND (s.approved IS NULL OR s.approved = true)` filter
-
-Admin views will continue to show all items (approved and unapproved) with visual distinction.
-
-The filter pattern: `.or('approved.is.null,approved.eq.true')` ensures backward compatibility since existing rows won't have the column value until the migration sets them.
+Add state for the dialog (`fixDialog`), an `openFixDialog` function, and render the dialog component. On confirm, call `auto-link-document` with the corrected metadata and refresh documents.
 
 ---
 
 ## Technical Details
 
-### New files:
-- `supabase/functions/analyze-pdf-metadata/index.ts`
-- `supabase/functions/auto-link-document/index.ts`
-- `src/components/admin/LMSApprovalDashboard.tsx`
+### SmartUploadFile interface changes:
+```text
+Add:
+  chunks?: { index: number; content: string; preview: string }[]
+  documentId?: string
+```
 
-### Modified files:
-- `supabase/config.toml` (add new function entries)
-- `src/components/admin/documents/DocumentLibrary.tsx` (smart upload mode)
-- `src/components/admin/AdminTabs.tsx` (add Approvals tab)
-- `src/services/lmsStructureService.ts` (approved filter for student queries)
-- `src/services/supabaseSubjectService.ts` (approved filter)
-- `src/services/supabaseTopicService.ts` (approved filter)
-- `src/types/lms.types.ts` (add approval fields to interfaces)
-- `src/services/documentService.ts` (smart upload helpers)
+### Chunk fetching (after step 6 in handleSmartUpload):
+Query `document_sections` table filtered by `document_id`, ordered by `section_index`, limit 10. Map to preview objects with first 200 chars.
 
-### Database migration:
-- ALTER TABLE for 4 LMS tables (add approval columns)
-- CREATE TABLE `lms_approvals`
-- UPDATE existing rows to `approved = TRUE`
-- RLS policies on `lms_approvals` (admin-only CRUD)
-- Update `global_context_search` function to filter unapproved
+### ManualCategorizationDialog props:
+- `open`, `onClose`
+- `filename`, `aiMetadata`, `chunks`, `documentId`
+- `onConfirm` callback
+
+### Cascading select logic:
+- On mount: load all approved `educational_systems`
+- On system change: load `levels` filtered by `system_id`
+- On level change: load `subjects` filtered by `level_id`
+- Topic remains a free text input
+
+### Re-linking flow:
+Call `supabase.functions.invoke('auto-link-document', { body: { document_id, metadata } })` with corrected values and confidence 1.0.
+
+### Files to create:
+- `src/components/admin/documents/ManualCategorizationDialog.tsx`
+
+### Files to modify:
+- `src/components/admin/documents/DocumentLibrary.tsx`
 
