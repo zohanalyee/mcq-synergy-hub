@@ -24,8 +24,8 @@ export const FilterSidebar = ({
   toggleLevelFilter,
   clearFilters
 }: FilterSidebarProps) => {
-  const [systemsOpen, setSystemsOpen] = useState(true);
-  const [levelsOpen, setLevelsOpen] = useState(true);
+  const [systemsOpen, setSystemsOpen] = useState(false);
+  const [levelsOpen, setLevelsOpen] = useState(false);
 
   const hasActiveFilters = filterState.selectedSystemIds.length > 0 || filterState.selectedLevelIds.length > 0;
 
