@@ -8,6 +8,8 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Table,
   TableBody,
@@ -51,11 +53,14 @@ import {
   Brain,
   Zap,
   FolderOpen,
+  ChevronDown,
+  Edit,
 } from "lucide-react";
 import { documentService, Document, UploadProgress, DocumentLMSMetadata } from "@/services/documentService";
 import { format } from "date-fns";
 import DocumentLMSSelector, { LMSSelection } from "./DocumentLMSSelector";
 import { supabase } from "@/integrations/supabase/client";
+import { ManualCategorizationDialog } from "./ManualCategorizationDialog";
 
 interface DocumentWithLMS extends Document {
   system_name?: string;
@@ -64,20 +69,38 @@ interface DocumentWithLMS extends Document {
   topic_name?: string;
 }
 
+interface ChunkPreview {
+  index: number;
+  content: string;
+  preview: string;
+}
+
+interface AIMetadata {
+  system: string;
+  level: string;
+  subject: string;
+  topic: string;
+  confidence: number;
+  reasoning?: string;
+}
+
 interface SmartUploadFile {
   file: File;
   status: 'pending' | 'analyzing' | 'uploading' | 'linking' | 'processing' | 'complete' | 'error';
   progress: number;
-  metadata?: {
-    system: string;
-    level: string;
-    subject: string;
-    topic: string;
-    confidence: number;
-    reasoning?: string;
-  };
+  metadata?: AIMetadata;
+  chunks?: ChunkPreview[];
+  documentId?: string;
   error?: string;
   requiresApproval?: boolean;
+}
+
+interface FixDialogState {
+  open: boolean;
+  filename: string;
+  metadata: AIMetadata;
+  chunks: ChunkPreview[];
+  documentId: string;
 }
 
 const DocumentLibrary = () => {
@@ -94,6 +117,9 @@ const DocumentLibrary = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [lmsSelection, setLmsSelection] = useState<LMSSelection>({});
+
+  // Fix categorization dialog
+  const [fixDialog, setFixDialog] = useState<FixDialogState | null>(null);
 
   useEffect(() => {
     fetchDocuments();
@@ -215,7 +241,25 @@ const DocumentLibrary = () => {
 
         await documentService.processDocument(docRecord.id, nameWithoutExt, fileUrl);
 
-        // Step 6: Complete
+        // Step 6: Fetch chunk previews
+        let chunks: ChunkPreview[] = [];
+        try {
+          const { data: chunkData } = await supabase
+            .from('document_sections')
+            .select('section_index, content')
+            .eq('document_id', docRecord.id)
+            .order('section_index')
+            .limit(10);
+          chunks = (chunkData || []).map(c => ({
+            index: c.section_index,
+            content: c.content,
+            preview: c.content.substring(0, 200) + (c.content.length > 200 ? '...' : ''),
+          }));
+        } catch (e) {
+          console.error('Failed to fetch chunks:', e);
+        }
+
+        // Step 7: Complete
         const requiresApproval = linkResult?.requires_approval ?? false;
         setSmartFiles(prev => {
           const next = new Map(prev);
@@ -223,7 +267,9 @@ const DocumentLibrary = () => {
             ...next.get(key)!, 
             status: 'complete', 
             progress: 100, 
-            requiresApproval 
+            requiresApproval,
+            chunks,
+            documentId: docRecord.id,
           });
           return next;
         });
@@ -566,6 +612,60 @@ const DocumentLibrary = () => {
                             )}
                           </div>
                         </div>
+
+                        {/* Chunk Preview & Fix Categorization */}
+                        {state.status === 'complete' && state.chunks && state.chunks.length > 0 && (
+                          <Collapsible className="mt-3">
+                            <CollapsibleTrigger className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                              <FileText className="h-4 w-4" />
+                              View Content ({state.chunks.length} chunks)
+                              <ChevronDown className="h-3 w-3" />
+                            </CollapsibleTrigger>
+                            <CollapsibleContent className="mt-3 space-y-3">
+                              <ScrollArea className="h-[200px] border rounded-lg p-3">
+                                {state.chunks.slice(0, 5).map((chunk) => (
+                                  <div key={chunk.index} className="mb-3 pb-3 border-b last:border-0">
+                                    <Badge variant="outline" className="text-xs mb-1">
+                                      Chunk {chunk.index + 1}
+                                    </Badge>
+                                    <p className="text-xs text-muted-foreground">
+                                      {chunk.preview}
+                                    </p>
+                                  </div>
+                                ))}
+                                {state.chunks.length > 5 && (
+                                  <p className="text-xs text-muted-foreground italic">
+                                    +{state.chunks.length - 5} more chunks
+                                  </p>
+                                )}
+                              </ScrollArea>
+
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  if (state.metadata && state.documentId) {
+                                    setFixDialog({
+                                      open: true,
+                                      filename,
+                                      metadata: state.metadata,
+                                      chunks: state.chunks || [],
+                                      documentId: state.documentId,
+                                    });
+                                  }
+                                }}
+                                className={`w-full ${
+                                  state.metadata && (state.metadata.system === 'Unknown' || state.metadata.topic === 'Unknown' || state.metadata.confidence < 0.7)
+                                    ? 'border-yellow-500/50 text-yellow-600 hover:bg-yellow-500/10'
+                                    : ''
+                                }`}
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Fix Categorization
+                              </Button>
+                            </CollapsibleContent>
+                          </Collapsible>
+                        )}
                       </CardContent>
                     </Card>
                   ))}
@@ -764,6 +864,33 @@ const DocumentLibrary = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Manual Categorization Dialog */}
+      {fixDialog && (
+        <ManualCategorizationDialog
+          open={fixDialog.open}
+          onClose={() => setFixDialog(null)}
+          filename={fixDialog.filename}
+          aiMetadata={fixDialog.metadata}
+          chunks={fixDialog.chunks}
+          documentId={fixDialog.documentId}
+          onConfirm={async (correctedMetadata) => {
+            try {
+              const { data, error } = await supabase.functions.invoke('auto-link-document', {
+                body: { document_id: fixDialog.documentId, metadata: correctedMetadata }
+              });
+              if (error || !data?.success) {
+                throw new Error(data?.error || error?.message || 'Re-linking failed');
+              }
+              toast.success('Categorization updated successfully!');
+              setFixDialog(null);
+              await fetchDocuments();
+            } catch (err: any) {
+              toast.error(`Failed to update: ${err.message}`);
+            }
+          }}
+        />
+      )}
     </motion.div>
   );
 };
