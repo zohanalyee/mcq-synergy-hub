@@ -81,8 +81,8 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
+    --border: 220 13% 82%;
+    --input: 220 13% 82%;
     --ring: 214 90% 52%;
 
     --radius: 0.75rem;
@@ -233,6 +233,16 @@ body::-webkit-scrollbar-thumb:hover {
   
   .liquid-orange {
     background: radial-gradient(circle, hsl(25, 100%, 60%) 0%, transparent 70%);
+  }
+}
+
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+  .container {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
   }
 }
 
