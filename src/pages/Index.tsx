@@ -167,7 +167,7 @@ const Home = () => {
       
       
       {/* Hero Section */}
-      <section className="pt-4 pb-8 relative overflow-hidden">
+      <section className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -176,7 +176,7 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="px-2.5 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full">
+              <span className="hidden md:inline px-2.5 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full">
                 Prepare Smarter, Score Higher
               </span>
             </motion.div>
@@ -185,7 +185,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-3xl md:text-4xl lg:text-5xl font-bold mt-4 mb-4 tracking-tight"
+              className="text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight"
             >
               Master MCQs with <span className="text-gradient">Precision</span> and <span className="text-gradient">Confidence</span>
             </motion.h1>
@@ -194,7 +194,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="text-base text-muted-foreground mb-6 max-w-2xl mx-auto"
+              className="hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto"
             >
               Personalize your test preparation with custom syllabi, analytics-driven insights, and adaptive learning.
             </motion.p>
@@ -203,11 +203,11 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="mb-6"
+              className="mb-2 md:mb-6"
             >
-              <h2 className="text-base md:text-xl font-bold mb-3">Prepare Your Way</h2>
+              <h2 className="hidden md:block text-xl font-bold mb-3">Prepare Your Way</h2>
               {/* Hero Cards - Stack on mobile, row on desktop */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 md:gap-4">
                 {testCategories.map((category, index) => (
                   <TestCategoryCard
                     key={category.title}
@@ -220,7 +220,7 @@ const Home = () => {
                 ))}
               </div>
               
-              {/* Stats Section - 2x2 on mobile, 4 columns on desktop */}
+              {/* Stats Section */}
               <HeroStatsSection />
             </motion.div>
             
@@ -228,7 +228,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="flex flex-col sm:flex-row gap-3 justify-center"
+              className="hidden sm:flex flex-row gap-3 justify-center"
             >
               <Button size="default" onClick={() => navigate('/get-started')}>
                 Get Started
