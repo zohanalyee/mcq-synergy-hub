@@ -1,87 +1,117 @@
+# Fix: Smart Upload Edge Function Failure
 
-# Ultra-Compact Hero Section for Mobile
+## Problem
 
-## Goal
-Make the entire hero section (heading, 3 category cards, stats) fit in one mobile screen without scrolling, while keeping the desktop layout comfortable.
+The `process-book` Edge Function times out during Smart Upload. It downloads the PDF, extracts text (potentially with Vision OCR), chunks it, and generates embeddings for every chunk -- this can exceed the Edge Function CPU time limit for larger files.
+
+Testing confirmed `analyze-pdf-metadata` and `auto-link-document` both return 200 OK. The failure happens at Step 5 (`processDocument`) in `DocumentLibrary.tsx`.
+
+## Solution
+
+Make the `process-book` failure **non-fatal** during Smart Upload. The document is already uploaded and linked by the time `process-book` runs. If it fails, show a warning instead of an error, and let the admin retry processing later.
 
 ## Changes
 
-### 1. Redesign TestCategoryCard for mobile (src/components/TestCategoryCard.tsx)
-Switch to a **horizontal row layout on mobile** (icon + title + arrow in one line) and keep the current vertical card layout on desktop:
-- Mobile: Single-row card with icon, title, and chevron. No description, no "Get Started" button. Minimal padding (`p-2.5`), `min-h` removed on mobile.
-- Desktop: Keep current vertical layout with description and button (`md:min-h-[140px]`, `md:p-4`).
+### 1. Make process-book non-fatal in Smart Upload (src/components/admin/documents/DocumentLibrary.tsx)
 
-### 2. Compact hero section in Index.tsx (src/pages/Index.tsx)
-- Remove the "Prepare Smarter, Score Higher" badge on mobile (`hidden md:inline`)
-- Reduce heading: `text-xl` on mobile (from `text-3xl`)
-- Remove subtitle paragraph on mobile (`hidden md:block`)
-- Remove "Prepare Your Way" subheading on mobile (`hidden md:block`)
-- Reduce vertical spacing: `pt-2 pb-4` on mobile (from `pt-4 pb-8`)
-- Reduce margins between elements: `mb-2` on mobile (from `mb-6`)
-- Remove "Get Started" / "Explore Subjects" buttons on mobile (`hidden sm:flex`) since the cards already navigate
-- Cards gap: `gap-1.5` on mobile
+Wrap the `processDocument` call (line 242) in a try-catch. If it fails:
 
-### 3. Compact HeroStatsSection for mobile (src/components/home/HeroStatsSection.tsx)
-Replace the 2x2 grid of stat cards with a **single-row inline summary on mobile**:
-- Mobile: One horizontal row showing "24m | 35 Tests | 7% | 120 Qs" with tiny icons, no cards, no progress bars
-- Desktop: Keep the existing 4-column grid with cards and progress bars
+- Still mark the upload as "complete" (since file is uploaded and LMS-linked)
+- Show a warning toast instead of a hard error
+- Store a `processingFailed` flag on the SmartUploadFile so the UI can show a "Retry Processing" button
 
-Use a responsive approach: `hidden md:grid` for the card grid, `flex md:hidden` for the inline row.
+### 2. Add `processingFailed` flag to SmartUploadFile interface
 
-### 4. Files modified
-- `src/components/TestCategoryCard.tsx` -- horizontal mobile layout
-- `src/pages/Index.tsx` -- hide non-essential elements on mobile, tighten spacing
-- `src/components/home/HeroStatsSection.tsx` -- inline stats row on mobile
+Add a boolean `processingFailed` field. When true, show a warning badge and a "Retry Processing" button next to the completed card.
+
+### 3. Add retry processing button in the smart upload cards UI
+
+When `processingFailed` is true on a completed file, show:
+
+- An amber warning badge ("Text extraction pending")
+- A "Retry Processing" button that calls `documentService.processDocument` again
+
+### 4. Update process-book to use EdgeRuntime.waitUntil for long tasks (supabase/functions/process-book/index.ts)
+
+Restructure the function to:
+
+- Return a 202 response immediately after validating inputs and updating status to "processing"
+- Use `EdgeRuntime.waitUntil()` to run the actual PDF processing (text extraction, chunking, embedding) in the background
+- The background task updates the document status to "completed" or "failed" when done
+
+This prevents the function from timing out on large files.
 
 ## Technical Details
 
-### TestCategoryCard mobile layout:
+### SmartUploadFile interface change:
+
 ```text
-<Card>
-  <div className="flex items-center gap-3 p-2.5 md:hidden">
-    <icon-circle />
-    <title className="flex-1 text-sm font-semibold" />
-    <ChevronRight />
-  </div>
-  <div className="hidden md:flex flex-col p-4">
-    <!-- existing desktop layout -->
-  </div>
-</Card>
+Add: processingFailed?: boolean
 ```
 
-### Index.tsx hero spacing changes:
-- Section: `pt-2 pb-4 md:pt-4 md:pb-8`
-- Badge: `hidden md:inline`
-- Heading: `text-xl md:text-4xl lg:text-5xl`, reduced `mt-2 mb-2 md:mt-4 md:mb-4`
-- Subtitle: `hidden md:block`
-- "Prepare Your Way": `hidden md:block`
-- Cards grid gap: `gap-1.5 md:gap-4`
-- CTA buttons: `hidden sm:flex`
+### DocumentLibrary.tsx change (handleSmartUpload, around line 242):
 
-### HeroStatsSection mobile inline row:
 ```text
-<!-- Mobile: inline compact row -->
-<div className="flex md:hidden items-center justify-center gap-3 mt-2 text-xs text-muted-foreground">
-  <span><Clock h-3/> 24m</span>
-  <span>|</span>
-  <span><CheckCircle h-3/> 35</span>
-  <span>|</span>
-  <span><Target h-3/> 7%</span>
-  <span>|</span>
-  <span><HelpCircle h-3/> 120</span>
-</div>
+// Step 5: Process PDF - non-fatal
+let processingFailed = false;
+try {
+  await documentService.processDocument(docRecord.id, nameWithoutExt, fileUrl);
+} catch (processError) {
+  console.warn('Processing failed (non-fatal):', processError);
+  processingFailed = true;
+}
 
-<!-- Desktop: existing card grid -->
-<div className="hidden md:grid grid-cols-4 gap-3">
-  ...existing StatCards...
-</div>
+// Step 6 continues regardless...
+// Step 7: mark complete with processingFailed flag
 ```
 
-### Estimated mobile height:
-- Heading: ~50px
-- Card 1: ~48px
-- Card 2: ~48px
-- Card 3: ~48px
-- Stats row: ~24px
-- Spacing: ~30px
-- Total: ~248px (fits easily in one screen)
+### process-book/index.ts restructure:
+
+```text
+// After validation and auth check:
+// 1. Update status to "processing"
+// 2. Return 202 immediately
+// 3. Use EdgeRuntime.waitUntil() for the actual work
+
+EdgeRuntime.waitUntil((async () => {
+  try {
+    // extract text, chunk, embed, insert sections
+    // update status to "completed"
+  } catch (error) {
+    // update status to "failed"
+  }
+})());
+
+return new Response(JSON.stringify({ success: true, status: "processing" }), {
+  status: 202,
+  headers: { ...corsHeaders, "Content-Type": "application/json" }
+});
+```
+
+### Files modified:
+
+- `src/components/admin/documents/DocumentLibrary.tsx` -- non-fatal process-book, retry button
+- `supabase/functions/process-book/index.ts` -- background processing with EdgeRuntime.waitUntil.    Perfect diagnosis and solution! Approved.
+  CONFIRMED UNDERSTANDING:
+  ✅ process-book times out on large PDFs
+  ✅ analyze-pdf-metadata works (200 OK)
+  ✅ auto-link-document works (200 OK)
+  ✅ Only processing fails (Step 5)
+  ✅ But file is already uploaded and linked
+  APPROVED SOLUTION:
+  ✅ Make process-book non-fatal in Smart Upload
+  ✅ Show warning + retry button (not error)
+  ✅ Use EdgeRuntime.waitUntil() for background processing
+  ✅ Return 202 immediately
+  ✅ Update status when background work completes
+  ADDITIONAL REQUESTS:
+  1. Auto-refresh status in UI:
+     After "Retry Processing" clicked, poll document status every 10 seconds and update UI when completed.
+  2. Show processing progress if possible:
+     If background task can send progress updates (e.g., "Extracting text 50%"), show in UI.
+  3. Batch retry:
+     If multiple uploads pending processing, add "Retry All" button.
+  4. Notification on completion:
+     When background processing completes, show toast: "PDF processing complete! 184 chunks created."
+  These are optional enhancements - priority is the core non-fatal + background processing fix.
+  Please implement and deploy!
