@@ -93,6 +93,7 @@ interface SmartUploadFile {
   documentId?: string;
   error?: string;
   requiresApproval?: boolean;
+  processingFailed?: boolean;
 }
 
 interface FixDialogState {
@@ -111,6 +112,7 @@ const DocumentLibrary = () => {
   const [generatingMCQs, setGeneratingMCQs] = useState<string | null>(null);
   const [uploadMode, setUploadMode] = useState<'smart' | 'manual'>('smart');
   const [smartFiles, setSmartFiles] = useState<Map<string, SmartUploadFile>>(new Map());
+  const [retryingProcessing, setRetryingProcessing] = useState<string | null>(null);
   
   // Manual form state
   const [title, setTitle] = useState("");
@@ -232,34 +234,42 @@ const DocumentLibrary = () => {
           console.error('Auto-link failed:', linkResult?.error || linkError);
         }
 
-        // Step 5: Process PDF (text extraction + embeddings)
+        // Step 5: Process PDF (text extraction + embeddings) - NON-FATAL
+        let processingFailed = false;
         setSmartFiles(prev => {
           const next = new Map(prev);
           next.set(key, { ...next.get(key)!, status: 'processing', progress: 80 });
           return next;
         });
 
-        await documentService.processDocument(docRecord.id, nameWithoutExt, fileUrl);
-
-        // Step 6: Fetch chunk previews
-        let chunks: ChunkPreview[] = [];
         try {
-          const { data: chunkData } = await supabase
-            .from('document_sections')
-            .select('section_index, content')
-            .eq('document_id', docRecord.id)
-            .order('section_index')
-            .limit(10);
-          chunks = (chunkData || []).map(c => ({
-            index: c.section_index,
-            content: c.content,
-            preview: c.content.substring(0, 200) + (c.content.length > 200 ? '...' : ''),
-          }));
-        } catch (e) {
-          console.error('Failed to fetch chunks:', e);
+          await documentService.processDocument(docRecord.id, nameWithoutExt, fileUrl);
+        } catch (processError) {
+          console.warn('Processing failed (non-fatal):', processError);
+          processingFailed = true;
         }
 
-        // Step 7: Complete
+        // Step 6: Fetch chunk previews (only if processing succeeded)
+        let chunks: ChunkPreview[] = [];
+        if (!processingFailed) {
+          try {
+            const { data: chunkData } = await supabase
+              .from('document_sections')
+              .select('section_index, content')
+              .eq('document_id', docRecord.id)
+              .order('section_index')
+              .limit(10);
+            chunks = (chunkData || []).map(c => ({
+              index: c.section_index,
+              content: c.content,
+              preview: c.content.substring(0, 200) + (c.content.length > 200 ? '...' : ''),
+            }));
+          } catch (e) {
+            console.error('Failed to fetch chunks:', e);
+          }
+        }
+
+        // Step 7: Complete (upload + linking succeeded regardless of processing)
         const requiresApproval = linkResult?.requires_approval ?? false;
         setSmartFiles(prev => {
           const next = new Map(prev);
@@ -268,13 +278,18 @@ const DocumentLibrary = () => {
             status: 'complete', 
             progress: 100, 
             requiresApproval,
+            processingFailed,
             chunks,
             documentId: docRecord.id,
           });
           return next;
         });
 
-        if (requiresApproval) {
+        if (processingFailed) {
+          toast.warning(`${file.name} uploaded & linked, but text extraction is pending.`, {
+            description: 'You can retry processing later using the button below.'
+          });
+        } else if (requiresApproval) {
           toast.success(`${file.name} uploaded! New categories need review.`, {
             description: `AI: ${metadata.system} → ${metadata.level} → ${metadata.subject} → ${metadata.topic}`
           });
@@ -479,6 +494,65 @@ const DocumentLibrary = () => {
     }
   };
 
+  const handleRetryProcessing = async (filename: string, state: SmartUploadFile) => {
+    if (!state.documentId) return;
+    setRetryingProcessing(filename);
+    
+    try {
+      const fileUrl = (await supabase.from('documents').select('file_url').eq('id', state.documentId).single()).data?.file_url;
+      if (!fileUrl) throw new Error('Document not found');
+      
+      await documentService.processDocument(state.documentId, filename.replace(/\.pdf$/i, ''), fileUrl);
+      
+      // Poll for completion
+      const pollForStatus = async () => {
+        for (let i = 0; i < 30; i++) {
+          await new Promise(r => setTimeout(r, 10000));
+          const { data: doc } = await supabase.from('documents').select('status').eq('id', state.documentId!).single();
+          if (doc?.status === 'completed') {
+            // Fetch chunks
+            const { data: chunkData } = await supabase
+              .from('document_sections')
+              .select('section_index, content')
+              .eq('document_id', state.documentId!)
+              .order('section_index')
+              .limit(10);
+            const chunks = (chunkData || []).map(c => ({
+              index: c.section_index,
+              content: c.content,
+              preview: c.content.substring(0, 200) + (c.content.length > 200 ? '...' : ''),
+            }));
+            
+            setSmartFiles(prev => {
+              const next = new Map(prev);
+              next.set(filename, { ...next.get(filename)!, processingFailed: false, chunks });
+              return next;
+            });
+            toast.success(`PDF processing complete! ${chunkData?.length || 0} chunks created.`);
+            setRetryingProcessing(null);
+            await fetchDocuments();
+            return;
+          } else if (doc?.status === 'failed') {
+            throw new Error('Processing failed on retry');
+          }
+        }
+        throw new Error('Processing timed out');
+      };
+      
+      pollForStatus().catch(err => {
+        console.error('Polling error:', err);
+        toast.error('Processing retry failed');
+        setRetryingProcessing(null);
+      });
+      
+      toast.info('Processing started! This may take a few minutes...');
+    } catch (error) {
+      console.error('Retry processing error:', error);
+      toast.error('Failed to retry processing');
+      setRetryingProcessing(null);
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -593,13 +667,19 @@ const DocumentLibrary = () => {
                           </div>
                           <div className="shrink-0">
                             {state.status === 'complete' ? (
-                              <Badge className={state.requiresApproval ? 'bg-yellow-500/20 text-yellow-500' : 'bg-primary/20 text-primary'}>
-                                {state.requiresApproval ? (
-                                  <><AlertTriangle className="h-3 w-3 mr-1" />Needs Review</>
-                                ) : (
-                                  <><CheckCircle2 className="h-3 w-3 mr-1" />Complete</>
-                                )}
-                              </Badge>
+                              state.processingFailed ? (
+                                <Badge className="bg-amber-500/20 text-amber-600">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />Text Extraction Pending
+                                </Badge>
+                              ) : state.requiresApproval ? (
+                                <Badge className="bg-yellow-500/20 text-yellow-500">
+                                  <AlertTriangle className="h-3 w-3 mr-1" />Needs Review
+                                </Badge>
+                              ) : (
+                                <Badge className="bg-primary/20 text-primary">
+                                  <CheckCircle2 className="h-3 w-3 mr-1" />Complete
+                                </Badge>
+                              )
                             ) : state.status === 'error' ? (
                               <Badge variant="destructive">
                                 <XCircle className="h-3 w-3 mr-1" />Error
@@ -612,6 +692,25 @@ const DocumentLibrary = () => {
                             )}
                           </div>
                         </div>
+
+                        {/* Retry Processing Button for failed processing */}
+                        {state.status === 'complete' && state.processingFailed && (
+                          <div className="mt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRetryProcessing(filename, state)}
+                              disabled={retryingProcessing === filename}
+                              className="w-full border-amber-500/50 text-amber-600 hover:bg-amber-500/10"
+                            >
+                              {retryingProcessing === filename ? (
+                                <><Loader2 className="h-3 w-3 mr-2 animate-spin" />Processing...</>
+                              ) : (
+                                <><RefreshCw className="h-3 w-3 mr-2" />Retry Processing</>
+                              )}
+                            </Button>
+                          </div>
+                        )}
 
                         {/* Chunk Preview & Fix Categorization */}
                         {state.status === 'complete' && state.chunks && state.chunks.length > 0 && (
