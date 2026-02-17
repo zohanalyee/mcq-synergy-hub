@@ -131,6 +131,22 @@ const DocumentLibrary = () => {
     try {
       setIsLoading(true);
       const docs = await documentService.getDocumentsWithLMS();
+      
+      // Auto-timeout: mark documents stuck in 'processing' for >15 min as 'failed'
+      const stuckDocs = docs.filter(d => 
+        d.status === 'processing' && 
+        (Date.now() - new Date(d.updated_at).getTime()) > 15 * 60 * 1000
+      );
+      for (const doc of stuckDocs) {
+        try {
+          await documentService.updateStatus(doc.id, 'failed');
+          doc.status = 'failed';
+          toast.warning(`"${doc.title}" was stuck processing and marked as failed.`);
+        } catch (e) {
+          console.error('Failed to auto-timeout document:', doc.id, e);
+        }
+      }
+      
       setDocuments(docs);
     } catch (error) {
       toast.error("Failed to fetch documents");
@@ -388,11 +404,48 @@ const DocumentLibrary = () => {
   const handleDelete = async (doc: DocumentWithLMS) => {
     try {
       await documentService.deleteDocument(doc.id, doc.file_url);
-      toast.success("Document deleted");
+      toast.success(`"${doc.title}" deleted successfully`);
       await fetchDocuments();
-    } catch (error) {
-      toast.error("Failed to delete document");
-      console.error(error);
+    } catch (error: any) {
+      const msg = error?.message || "Unknown error";
+      toast.error(`Failed to delete "${doc.title}": ${msg}`);
+      console.error("Delete error:", error);
+    }
+  };
+
+  const handleRetryFromTable = async (doc: DocumentWithLMS) => {
+    setRetryingProcessing(doc.id);
+    try {
+      await documentService.updateStatus(doc.id, 'processing');
+      await documentService.processDocument(doc.id, doc.title, doc.file_url);
+      toast.info('Processing started in background...');
+      
+      // Poll for completion
+      const poll = async () => {
+        for (let i = 0; i < 30; i++) {
+          await new Promise(r => setTimeout(r, 10000));
+          const { data } = await supabase
+            .from('documents').select('status').eq('id', doc.id).maybeSingle();
+          if (data?.status === 'completed') {
+            toast.success(`"${doc.title}" processed successfully!`);
+            await fetchDocuments();
+            setRetryingProcessing(null);
+            return;
+          }
+          if (data?.status === 'failed') {
+            throw new Error('Processing failed');
+          }
+        }
+        throw new Error('Processing timed out');
+      };
+      poll().catch(err => {
+        toast.error(`Processing failed: ${err.message}`);
+        setRetryingProcessing(null);
+        fetchDocuments();
+      });
+    } catch (error: any) {
+      toast.error(`Failed to start processing: ${error?.message || 'Unknown error'}`);
+      setRetryingProcessing(null);
     }
   };
 
@@ -893,6 +946,31 @@ const DocumentLibrary = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
+                        {/* Retry Processing Button */}
+                        {(doc.status === 'failed' || doc.status === 'processing') && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleRetryFromTable(doc)}
+                                  disabled={retryingProcessing === doc.id}
+                                >
+                                  {retryingProcessing === doc.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <RefreshCw className="h-4 w-4 text-amber-500" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                {doc.status === 'failed' ? "Retry Processing" : "Force Retry (currently processing)"}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+
                         {/* Generate MCQs Button */}
                         <TooltipProvider>
                           <Tooltip>
