@@ -1,117 +1,245 @@
-# Fix: Smart Upload Edge Function Failure
+# Fix: Retry Button, Background Processing, and Delete Issues
 
-## Problem
+## Problem Summary
 
-The `process-book` Edge Function times out during Smart Upload. It downloads the PDF, extracts text (potentially with Vision OCR), chunks it, and generates embeddings for every chunk -- this can exceed the Edge Function CPU time limit for larger files.
-
-Testing confirmed `analyze-pdf-metadata` and `auto-link-document` both return 200 OK. The failure happens at Step 5 (`processDocument`) in `DocumentLibrary.tsx`.
-
-## Solution
-
-Make the `process-book` failure **non-fatal** during Smart Upload. The document is already uploaded and linked by the time `process-book` runs. If it fails, show a warning instead of an error, and let the admin retry processing later.
+1. **Retry button only exists in Smart Upload cards** (in-memory state), not in the Documents Table where database-fetched documents appear. Documents manually set to `failed` in the DB have no retry option.
+2. **Background processing via `EdgeRuntime.waitUntil()` appears to silently fail** -- the 202 response returns but no background logs appear.
+3. **Delete may fail silently** for older documents due to missing error feedback or RLS constraints.
 
 ## Changes
 
-### 1. Make process-book non-fatal in Smart Upload (src/components/admin/documents/DocumentLibrary.tsx)
+### 1. Add Retry Button to Documents Table (DocumentLibrary.tsx)
 
-Wrap the `processDocument` call (line 242) in a try-catch. If it fails:
+The documents table (lines 882-960) currently shows status badges but has no retry/reprocess action for `failed` or `processing` documents. Add a "Retry Processing" button in the Actions column for documents with `status === 'failed'` or stuck `status === 'processing'`.
 
-- Still mark the upload as "complete" (since file is uploaded and LMS-linked)
-- Show a warning toast instead of a hard error
-- Store a `processingFailed` flag on the SmartUploadFile so the UI can show a "Retry Processing" button
+New handler `handleRetryFromTable(doc)` will:
 
-### 2. Add `processingFailed` flag to SmartUploadFile interface
+- Update document status to `processing` via `documentService.updateStatus`
+- Call `documentService.processDocument(doc.id, doc.title, doc.file_url)`
+- Start polling every 10s for status change (completed/failed)
+- Show toast on completion
 
-Add a boolean `processingFailed` field. When true, show a warning badge and a "Retry Processing" button next to the completed card.
+### 2. Add Debug Logging to Background Job (process-book/index.ts)
 
-### 3. Add retry processing button in the smart upload cards UI
+Add explicit log lines at the very start and end of the `processInBackground` function to confirm the background job actually executes:
 
-When `processingFailed` is true on a completed file, show:
+```text
+Line 296 (start of processInBackground):
+  console.log('[process-book] BACKGROUND JOB STARTED for:', documentId);
 
-- An amber warning badge ("Text extraction pending")
-- A "Retry Processing" button that calls `documentService.processDocument` again
+Line 346 (after success):
+  console.log('[process-book] BACKGROUND JOB COMPLETED for:', documentId);
 
-### 4. Update process-book to use EdgeRuntime.waitUntil for long tasks (supabase/functions/process-book/index.ts)
+Line 349 (in catch):
+  console.error('[process-book] BACKGROUND JOB FAILED for:', documentId, error);
+```
 
-Restructure the function to:
+Also wrap the `EdgeRuntime.waitUntil` call (line 393) in a try-catch to detect if `waitUntil` itself throws:
 
-- Return a 202 response immediately after validating inputs and updating status to "processing"
-- Use `EdgeRuntime.waitUntil()` to run the actual PDF processing (text extraction, chunking, embedding) in the background
-- The background task updates the document status to "completed" or "failed" when done
+```text
+try {
+  EdgeRuntime.waitUntil(processInBackground(...));
+  console.log('[process-book] waitUntil() accepted the background job');
+} catch (e) {
+  console.error('[process-book] waitUntil() REJECTED:', e);
+  // Fallback: run inline (will timeout on large files but works for small ones)
+  await processInBackground(...);
+}
+```
 
-This prevents the function from timing out on large files.
+### 3. Add Auto-Timeout for Stuck Documents (DocumentLibrary.tsx)
+
+In `fetchDocuments`, after loading docs, check for any document stuck in `processing` for over 15 minutes and auto-update them to `failed`:
+
+```text
+const stuckDocs = docs.filter(d => 
+  d.status === 'processing' && 
+  (Date.now() - new Date(d.updated_at).getTime()) > 15 * 60 * 1000
+);
+for (const doc of stuckDocs) {
+  await documentService.updateStatus(doc.id, 'failed');
+}
+```
+
+### 4. Improve Delete Error Handling (DocumentLibrary.tsx)
+
+Add more specific error logging in `handleDelete` and show the actual error message in the toast instead of a generic "Failed to delete document".
+
+## Files Modified
+
+- `src/components/admin/documents/DocumentLibrary.tsx` -- retry button in table, auto-timeout, better delete errors
+- `supabase/functions/process-book/index.ts` -- debug logging, waitUntil fallback
 
 ## Technical Details
 
-### SmartUploadFile interface change:
+### Documents Table Retry Button (added to Actions column, lines 894-957):
+
+After the delete AlertDialog, add a conditional retry button:
 
 ```text
-Add: processingFailed?: boolean
+{(doc.status === 'failed' || doc.status === 'processing') && (
+  <TooltipProvider>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => handleRetryFromTable(doc)}
+          disabled={retryingProcessing === doc.id}
+        >
+          {retryingProcessing === doc.id ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className="h-4 w-4 text-amber-500" />
+          )}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>Retry Processing</TooltipContent>
+    </Tooltip>
+  </TooltipProvider>
+)}
 ```
 
-### DocumentLibrary.tsx change (handleSmartUpload, around line 242):
+### handleRetryFromTable handler:
 
 ```text
-// Step 5: Process PDF - non-fatal
-let processingFailed = false;
-try {
-  await documentService.processDocument(docRecord.id, nameWithoutExt, fileUrl);
-} catch (processError) {
-  console.warn('Processing failed (non-fatal):', processError);
-  processingFailed = true;
-}
-
-// Step 6 continues regardless...
-// Step 7: mark complete with processingFailed flag
-```
-
-### process-book/index.ts restructure:
-
-```text
-// After validation and auth check:
-// 1. Update status to "processing"
-// 2. Return 202 immediately
-// 3. Use EdgeRuntime.waitUntil() for the actual work
-
-EdgeRuntime.waitUntil((async () => {
+const handleRetryFromTable = async (doc: DocumentWithLMS) => {
+  setRetryingProcessing(doc.id);
   try {
-    // extract text, chunk, embed, insert sections
-    // update status to "completed"
+    await documentService.updateStatus(doc.id, 'processing');
+    await documentService.processDocument(doc.id, doc.title, doc.file_url);
+    toast.info('Processing started in background...');
+    
+    // Poll for completion
+    const poll = async () => {
+      for (let i = 0; i < 30; i++) {
+        await new Promise(r => setTimeout(r, 10000));
+        const { data } = await supabase
+          .from('documents').select('status').eq('id', doc.id).single();
+        if (data?.status === 'completed') {
+          toast.success(`"${doc.title}" processed successfully!`);
+          await fetchDocuments();
+          setRetryingProcessing(null);
+          return;
+        }
+        if (data?.status === 'failed') {
+          throw new Error('Processing failed');
+        }
+      }
+      throw new Error('Timed out');
+    };
+    poll().catch(err => {
+      toast.error(`Processing failed: ${err.message}`);
+      setRetryingProcessing(null);
+      fetchDocuments();
+    });
   } catch (error) {
-    // update status to "failed"
+    toast.error('Failed to start processing');
+    setRetryingProcessing(null);
   }
-})());
-
-return new Response(JSON.stringify({ success: true, status: "processing" }), {
-  status: 202,
-  headers: { ...corsHeaders, "Content-Type": "application/json" }
-});
+};
 ```
 
-### Files modified:
+### process-book waitUntil fallback (line 391-393):
 
-- `src/components/admin/documents/DocumentLibrary.tsx` -- non-fatal process-book, retry button
-- `supabase/functions/process-book/index.ts` -- background processing with EdgeRuntime.waitUntil.    Perfect diagnosis and solution! Approved.
-  CONFIRMED UNDERSTANDING:
-  ✅ process-book times out on large PDFs
-  ✅ analyze-pdf-metadata works (200 OK)
-  ✅ auto-link-document works (200 OK)
-  ✅ Only processing fails (Step 5)
-  ✅ But file is already uploaded and linked
-  APPROVED SOLUTION:
-  ✅ Make process-book non-fatal in Smart Upload
-  ✅ Show warning + retry button (not error)
-  ✅ Use EdgeRuntime.waitUntil() for background processing
-  ✅ Return 202 immediately
-  ✅ Update status when background work completes
-  ADDITIONAL REQUESTS:
-  1. Auto-refresh status in UI:
-     After "Retry Processing" clicked, poll document status every 10 seconds and update UI when completed.
-  2. Show processing progress if possible:
-     If background task can send progress updates (e.g., "Extracting text 50%"), show in UI.
-  3. Batch retry:
-     If multiple uploads pending processing, add "Retry All" button.
-  4. Notification on completion:
-     When background processing completes, show toast: "PDF processing complete! 184 chunks created."
-  These are optional enhancements - priority is the core non-fatal + background processing fix.
-  Please implement and deploy!
+```text
+try {
+  // @ts-ignore
+  EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase));
+  console.log('[process-book] waitUntil() accepted background job for:', documentId);
+} catch (waitUntilError) {
+  console.error('[process-book] waitUntil() REJECTED, running inline:', waitUntilError);
+  // Run synchronously as fallback -- may timeout for large files but works for small ones
+  await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
+}  
+```
+
+Perfect solution! Approved for implementation.
+
+CONFIRMED CHANGES:
+
+✅ Add retry button to Documents Table (Actions column)
+
+✅ Works for status='failed' OR status='processing'
+
+✅ Auto-polling with 10s intervals
+
+✅ Toast notifications on completion
+
+✅ Debug logging at START of background job
+
+✅ Debug logging at END (success/fail)
+
+✅ Test if waitUntil() is accepted/rejected
+
+✅ Fallback to inline processing if waitUntil fails
+
+✅ Auto-timeout for stuck documents (>15 min)
+
+✅ Runs on fetchDocuments() page load
+
+✅ Auto-marks as 'failed' → retry button appears
+
+✅ Better delete error messages
+
+✅ Show actual error (not generic message)
+
+ADDITIONAL REQUESTS:
+
+1. Retry Button Icon Color:
+
+   Use amber/orange for the RefreshCw icon to match warning theme:
+
+   ```tsx
+
+   <RefreshCw className="h-4 w-4 text-amber-500" />
+
+   ```
+
+2. Tooltip Enhancement:
+
+   Add status-specific tooltip text:
+
+   - If status='failed': "Retry Processing"
+
+   - If status='processing': "Force Retry (currently processing)"
+
+3. Confirm Before Retry for Processing Docs:
+
+   If document is currently 'processing', show confirmation dialog:
+
+   "Document is currently processing. Force retry?"
+
+   This prevents accidental double-processing.
+
+4. Add Retry Count Tracking (Optional):
+
+   Add `retry_count` column to documents table
+
+   Increment on each retry
+
+   Show in UI: "Retry Processing (Attempt 2)"
+
+   Prevent infinite retries (max 3)
+
+5. Background Job Timeout:
+
+   Add max execution time check in processInBackground:
+
+   ```typescript
+
+   const startTime = [Date.now](http://Date.now)();
+
+   // ... processing ...
+
+   if ([Date.now](http://Date.now)() - startTime > 10  *60*  1000) {
+
+     throw new Error('Processing timeout (>10 minutes)');
+
+   }
+
+   ```
+
+These are optional enhancements - priority is the core retry button + debug logging.
+
+Please implement and deploy!
