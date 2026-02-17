@@ -293,6 +293,9 @@ async function generateEmbeddingsBatch(chunks: string[], apiKey: string): Promis
 
 // Background processing logic
 async function processInBackground(documentId: string, fileUrl: string, title: string | undefined, GEMINI_API_KEY: string, supabase: any) {
+  const startTime = Date.now();
+  console.log(`[process-book] 🔥 BACKGROUND JOB STARTED for: ${documentId}`);
+  
   try {
     // Step 1: Extract text
     const { text, pageCount, method } = await extractPdfContent(fileUrl, GEMINI_API_KEY);
@@ -300,6 +303,11 @@ async function processInBackground(documentId: string, fileUrl: string, title: s
 
     if (!text || text.length < 100) {
       throw new Error("PDF appears to be empty or contains very little extractable text");
+    }
+
+    // Check for timeout (>10 minutes)
+    if (Date.now() - startTime > 10 * 60 * 1000) {
+      throw new Error('Processing timeout (>10 minutes)');
     }
 
     // Step 2: Chunk
@@ -343,10 +351,10 @@ async function processInBackground(documentId: string, fileUrl: string, title: s
 
     // Step 6: Update status to completed
     await supabase.from("documents").update({ status: "completed", page_count: pageCount }).eq("id", documentId);
-    console.log(`[process-book] ✅ Processed ${documentId}: ${chunks.length} sections via ${method}`);
+    console.log(`[process-book] ✅ BACKGROUND JOB COMPLETED for: ${documentId} — ${chunks.length} sections via ${method} in ${Math.round((Date.now() - startTime) / 1000)}s`);
 
   } catch (error) {
-    console.error("[process-book] Background processing error:", error);
+    console.error(`[process-book] 🔴 BACKGROUND JOB FAILED for: ${documentId}`, error);
     await supabase.from("documents").update({ status: "failed" }).eq("id", documentId);
   }
 }
@@ -389,8 +397,15 @@ serve(async (req) => {
     await supabase.from("documents").update({ status: "processing" }).eq("id", documentId);
 
     // Offload heavy work to background via EdgeRuntime.waitUntil
-    // @ts-ignore - EdgeRuntime.waitUntil is available in Supabase Edge Functions
-    EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase));
+    try {
+      // @ts-ignore - EdgeRuntime.waitUntil is available in Supabase Edge Functions
+      EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase));
+      console.log(`[process-book] waitUntil() accepted background job for: ${documentId}`);
+    } catch (waitUntilError) {
+      console.error(`[process-book] waitUntil() REJECTED, running inline:`, waitUntilError);
+      // Fallback: run synchronously (may timeout for large files but works for small ones)
+      await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
+    }
 
     // Return 202 immediately
     return new Response(
