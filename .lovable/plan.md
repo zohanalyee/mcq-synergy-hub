@@ -1,245 +1,535 @@
-# Fix: Retry Button, Background Processing, and Delete Issues
+COMPLETE SCALABLE PDF PROCESSING PLAN
 
-## Problem Summary
+For PDFs from 1 page to 1000+ pages
 
-1. **Retry button only exists in Smart Upload cards** (in-memory state), not in the Documents Table where database-fetched documents appear. Documents manually set to `failed` in the DB have no retry option.
-2. **Background processing via `EdgeRuntime.waitUntil()` appears to silently fail** -- the 202 response returns but no background logs appear.
-3. **Delete may fail silently** for older documents due to missing error feedback or RLS constraints.
+CURRENT PROBLEM:
 
-## Changes
+- 15-page batches work for ~85 pages
 
-### 1. Add Retry Button to Documents Table (DocumentLibrary.tsx)
+- But 1000 pages = 67 batches × 20s = 22 minutes (still timeout!)
 
-The documents table (lines 882-960) currently shows status badges but has no retry/reprocess action for `failed` or `processing` documents. Add a "Retry Processing" button in the Actions column for documents with `status === 'failed'` or stuck `status === 'processing'`.
+- Need a completely different architecture for large PDFs
 
-New handler `handleRetryFromTable(doc)` will:
+---
 
-- Update document status to `processing` via `documentService.updateStatus`
-- Call `documentService.processDocument(doc.id, doc.title, doc.file_url)`
-- Start polling every 10s for status change (completed/failed)
-- Show toast on completion
+## ARCHITECTURE: 3-TIER PROCESSING
 
-### 2. Add Debug Logging to Background Job (process-book/index.ts)
+### TIER 1: Small PDF (1-50 pages)
 
-Add explicit log lines at the very start and end of the `processInBackground` function to confirm the background job actually executes:
+Strategy: Direct OCR (single request)
 
-```text
-Line 296 (start of processInBackground):
-  console.log('[process-book] BACKGROUND JOB STARTED for:', documentId);
+Time: 20-60 seconds
 
-Line 346 (after success):
-  console.log('[process-book] BACKGROUND JOB COMPLETED for:', documentId);
+Handled by: Current approach (fixed)
 
-Line 349 (in catch):
-  console.error('[process-book] BACKGROUND JOB FAILED for:', documentId, error);
-```
+### TIER 2: Medium PDF (51-200 pages)  
 
-Also wrap the `EdgeRuntime.waitUntil` call (line 393) in a try-catch to detect if `waitUntil` itself throws:
+Strategy: Batch OCR via EdgeRuntime.waitUntil()
 
-```text
-try {
-  EdgeRuntime.waitUntil(processInBackground(...));
-  console.log('[process-book] waitUntil() accepted the background job');
-} catch (e) {
-  console.error('[process-book] waitUntil() REJECTED:', e);
-  // Fallback: run inline (will timeout on large files but works for small ones)
-  await processInBackground(...);
-}
-```
+Time: 2-5 minutes
 
-### 3. Add Auto-Timeout for Stuck Documents (DocumentLibrary.tsx)
+Handled by: New batch fix (15 pages/batch)
 
-In `fetchDocuments`, after loading docs, check for any document stuck in `processing` for over 15 minutes and auto-update them to `failed`:
+### TIER 3: Large PDF (200+ pages)
 
-```text
-const stuckDocs = docs.filter(d => 
-  d.status === 'processing' && 
-  (Date.now() - new Date(d.updated_at).getTime()) > 15 * 60 * 1000
+Strategy: Supabase pg_cron + Queue System
+
+Time: As long as needed (no timeout!)
+
+Handled by: Background job queue (NEW - needs implementation)
+
+---
+
+## IMPLEMENTATION PLAN
+
+### STEP 1: Database Queue Table
+
+```sql
+
+CREATE TABLE pdf_processing_queue (
+
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+
+  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+
+  file_url TEXT NOT NULL,
+
+  total_pages INTEGER NOT NULL,
+
+  processed_pages INTEGER DEFAULT 0,
+
+  status TEXT DEFAULT 'pending', -- pending, processing, completed, failed
+
+  current_batch INTEGER DEFAULT 0,
+
+  total_batches INTEGER,
+
+  extracted_text TEXT DEFAULT '',
+
+  error_message TEXT,
+
+  created_at TIMESTAMP DEFAULT NOW(),
+
+  updated_at TIMESTAMP DEFAULT NOW()
+
 );
-for (const doc of stuckDocs) {
-  await documentService.updateStatus(doc.id, 'failed');
-}
+
+CREATE INDEX idx_queue_status ON pdf_processing_queue(status);
+
+CREATE INDEX idx_queue_document ON pdf_processing_queue(document_id);
+
 ```
 
-### 4. Improve Delete Error Handling (DocumentLibrary.tsx)
+---
 
-Add more specific error logging in `handleDelete` and show the actual error message in the toast instead of a generic "Failed to delete document".
+### STEP 2: Smart process-book (Detects PDF Size)
 
-## Files Modified
+```typescript
 
-- `src/components/admin/documents/DocumentLibrary.tsx` -- retry button in table, auto-timeout, better delete errors
-- `supabase/functions/process-book/index.ts` -- debug logging, waitUntil fallback
+// In process-book/index.ts
 
-## Technical Details
+const DIRECT_OCR_LIMIT = 50;    // pages
 
-### Documents Table Retry Button (added to Actions column, lines 894-957):
+const BATCH_OCR_LIMIT = 200;    // pages
 
-After the delete AlertDialog, add a conditional retry button:
+// Above 200 pages → use queue system
 
-```text
-{(doc.status === 'failed' || doc.status === 'processing') && (
-  <TooltipProvider>
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleRetryFromTable(doc)}
-          disabled={retryingProcessing === doc.id}
-        >
-          {retryingProcessing === doc.id ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <RefreshCw className="h-4 w-4 text-amber-500" />
-          )}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>Retry Processing</TooltipContent>
-    </Tooltip>
-  </TooltipProvider>
-)}
-```
+serve(async (req) => {
 
-### handleRetryFromTable handler:
+  // ... existing auth + validation ...
 
-```text
-const handleRetryFromTable = async (doc: DocumentWithLMS) => {
-  setRetryingProcessing(doc.id);
-  try {
-    await documentService.updateStatus(doc.id, 'processing');
-    await documentService.processDocument(doc.id, doc.title, doc.file_url);
-    toast.info('Processing started in background...');
-    
-    // Poll for completion
-    const poll = async () => {
-      for (let i = 0; i < 30; i++) {
-        await new Promise(r => setTimeout(r, 10000));
-        const { data } = await supabase
-          .from('documents').select('status').eq('id', doc.id).single();
-        if (data?.status === 'completed') {
-          toast.success(`"${doc.title}" processed successfully!`);
-          await fetchDocuments();
-          setRetryingProcessing(null);
-          return;
-        }
-        if (data?.status === 'failed') {
-          throw new Error('Processing failed');
-        }
-      }
-      throw new Error('Timed out');
-    };
-    poll().catch(err => {
-      toast.error(`Processing failed: ${err.message}`);
-      setRetryingProcessing(null);
-      fetchDocuments();
-    });
-  } catch (error) {
-    toast.error('Failed to start processing');
-    setRetryingProcessing(null);
+  const { text: nativeText, pageCount } = await extractTextNative(pdfBytes);
+
+  if (nativeText.quality === 'good') {
+
+    // Native text works → process normally (any page count)
+
+    EdgeRuntime.waitUntil(processNormalDocument(documentId, nativeText, ...));
+
+    return new Response(JSON.stringify({ success: true, status: 'processing' }), { status: 202 });
+
   }
-};
+
+  // Scanned PDF → check page count
+
+  if (pageCount <= DIRECT_OCR_LIMIT) {
+
+    // TIER 1: Single OCR request
+
+    EdgeRuntime.waitUntil(processWithDirectOCR(documentId, pdfBytes, ...));
+
+    return new Response(JSON.stringify({ success: true, status: 'processing' }), { status: 202 });
+
+  }
+
+  if (pageCount <= BATCH_OCR_LIMIT) {
+
+    // TIER 2: Batch OCR within waitUntil
+
+    EdgeRuntime.waitUntil(processWithBatchOCR(documentId, pdfBytes, pageCount, ...));
+
+    return new Response(JSON.stringify({ success: true, status: 'processing' }), { status: 202 });
+
+  }
+
+  // TIER 3: Large PDF → Queue system
+
+  await addToProcessingQueue(documentId, fileUrl, pageCount);
+
+  return new Response(JSON.stringify({
+
+    success: true,
+
+    status: 'queued',
+
+    message: `Large PDF (${pageCount} pages) added to processing queue. Will complete in ${Math.ceil(pageCount / 50)} minutes.`
+
+  }), { status: 202 });
+
+});
+
 ```
 
-### process-book waitUntil fallback (line 391-393):
+---
 
-```text
-try {
-  // @ts-ignore
-  EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase));
-  console.log('[process-book] waitUntil() accepted background job for:', documentId);
-} catch (waitUntilError) {
-  console.error('[process-book] waitUntil() REJECTED, running inline:', waitUntilError);
-  // Run synchronously as fallback -- may timeout for large files but works for small ones
-  await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
-}  
+### STEP 3: Queue Processor Edge Function (NEW)
+
+```typescript
+
+// New file: supabase/functions/process-pdf-queue/index.ts
+
+// Called by pg_cron every 2 minutes
+
+serve(async (req) => {
+
+  const supabase = createClient(...SERVICE_ROLE_KEY...);
+
+  // Get next pending job
+
+  const { data: job } = await supabase
+
+    .from('pdf_processing_queue')
+
+    .select('*')
+
+    .eq('status', 'pending')
+
+    .order('created_at')
+
+    .limit(1)
+
+    .single();
+
+  if (!job) {
+
+    return new Response(JSON.stringify({ message: 'No pending jobs' }));
+
+  }
+
+  // Mark as processing
+
+  await supabase.from('pdf_processing_queue')
+
+    .update({ status: 'processing', updated_at: new Date() })
+
+    .eq('id', [job.id](http://job.id));
+
+  const PAGES_PER_INVOCATION = 50; // Process 50 pages per cron tick
+
+  const startPage = job.processed_pages + 1;
+
+  const endPage = Math.min(startPage + PAGES_PER_INVOCATION - 1, [job.total](http://job.total)_pages);
+
+  try {
+
+    // Download PDF
+
+    const pdfBytes = await downloadPDF(job.file_url);
+
+    
+
+    // Extract this batch of pages
+
+    const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
+
+    
+
+    // OCR this batch
+
+    const batchText = await performOCR(batchBytes);
+
+    
+
+    // Update progress
+
+    const newProcessedPages = endPage;
+
+    const newText = job.extracted_text + '\n' + batchText;
+
+    const isComplete = newProcessedPages >= [job.total](http://job.total)_pages;
+
+    if (isComplete) {
+
+      // All pages processed! Now chunk + embed
+
+      await supabase.from('pdf_processing_queue')
+
+        .update({ 
+
+          status: 'completed',
+
+          processed_pages: newProcessedPages,
+
+          extracted_text: newText
+
+        })
+
+        .eq('id', [job.id](http://job.id));
+
+      // Generate chunks and embeddings
+
+      await generateChunksAndEmbeddings(job.document_id, newText, supabase);
+
+      
+
+      // Update document status
+
+      await supabase.from('documents')
+
+        .update({ status: 'completed' })
+
+        .eq('id', job.document_id);
+
+        
+
+    } else {
+
+      // More pages remaining → mark as pending for next tick
+
+      await supabase.from('pdf_processing_queue')
+
+        .update({
+
+          status: 'pending', // Back to pending for next cron tick
+
+          processed_pages: newProcessedPages,
+
+          current_batch: job.current_batch + 1,
+
+          extracted_text: newText
+
+        })
+
+        .eq('id', [job.id](http://job.id));
+
+    }
+
+  } catch (error) {
+
+    await supabase.from('pdf_processing_queue')
+
+      .update({ status: 'failed', error_message: error.message })
+
+      .eq('id', [job.id](http://job.id));
+
+    
+
+    await supabase.from('documents')
+
+      .update({ status: 'failed' })
+
+      .eq('id', job.document_id);
+
+  }
+
+});
+
 ```
 
-Perfect solution! Approved for implementation.
+---
 
-CONFIRMED CHANGES:
+### STEP 4: pg_cron Schedule
 
-✅ Add retry button to Documents Table (Actions column)
+```sql
 
-✅ Works for status='failed' OR status='processing'
+-- In Supabase → Database → Extensions → enable pg_cron
 
-✅ Auto-polling with 10s intervals
+-- Then in SQL Editor:
 
-✅ Toast notifications on completion
+SELECT cron.schedule(
 
-✅ Debug logging at START of background job
+  'process-pdf-queue',     -- job name
 
-✅ Debug logging at END (success/fail)
+  '*/2 * * * *',           -- every 2 minutes
 
-✅ Test if waitUntil() is accepted/rejected
+  $$
 
-✅ Fallback to inline processing if waitUntil fails
+  SELECT net.http_post(
 
-✅ Auto-timeout for stuck documents (>15 min)
+    url := '[https://YOUR_PROJECT.supabase.co/functions/v1/process-pdf-queue](https://YOUR_PROJECT.supabase.co/functions/v1/process-pdf-queue)',
 
-✅ Runs on fetchDocuments() page load
+    headers := '{"Authorization": "Bearer YOUR_SERVICE_KEY"}'::jsonb,
 
-✅ Auto-marks as 'failed' → retry button appears
+    body := '{}'::jsonb
 
-✅ Better delete error messages
+  );
 
-✅ Show actual error (not generic message)
+  $$
 
-ADDITIONAL REQUESTS:
+);
 
-1. Retry Button Icon Color:
+```
 
-   Use amber/orange for the RefreshCw icon to match warning theme:
+---
 
-   ```tsx
+### STEP 5: UI Progress for Large PDFs
 
-   <RefreshCw className="h-4 w-4 text-amber-500" />
+```typescript
 
-   ```
+// Update DocumentLibrary.tsx to show queue progress:
 
-2. Tooltip Enhancement:
+// New query for queued documents:
 
-   Add status-specific tooltip text:
+const { data: queueStatus } = await supabase
 
-   - If status='failed': "Retry Processing"
+  .from('pdf_processing_queue')
 
-   - If status='processing': "Force Retry (currently processing)"
+  .select('processed_pages, total_pages, status, current_batch, total_batches')
 
-3. Confirm Before Retry for Processing Docs:
+  .eq('document_id', [doc.id](http://doc.id))
 
-   If document is currently 'processing', show confirmation dialog:
+  .single();
 
-   "Document is currently processing. Force retry?"
+// Show in UI:
 
-   This prevents accidental double-processing.
+{queueStatus && queueStatus.status === 'pending' && (
 
-4. Add Retry Count Tracking (Optional):
+  <div className="text-xs text-muted-foreground">
 
-   Add `retry_count` column to documents table
+    <Progress 
 
-   Increment on each retry
+      value={(queueStatus.processed_pages / [queueStatus.total](http://queueStatus.total)_pages) * 100} 
 
-   Show in UI: "Retry Processing (Attempt 2)"
+    />
 
-   Prevent infinite retries (max 3)
+    <span>
 
-5. Background Job Timeout:
+      Page {queueStatus.processed_pages} of {[queueStatus.total](http://queueStatus.total)_pages}
 
-   Add max execution time check in processInBackground:
+      ({Math.round((queueStatus.processed_pages / [queueStatus.total](http://queueStatus.total)_pages) * 100)}%)
 
-   ```typescript
+    </span>
 
-   const startTime = [Date.now](http://Date.now)();
+    <span className="text-xs">
 
-   // ... processing ...
+      Estimated: {Math.ceil(([queueStatus.total](http://queueStatus.total)_pages - queueStatus.processed_pages) / 50 * 2)} min remaining
 
-   if ([Date.now](http://Date.now)() - startTime > 10  *60*  1000) {
+    </span>
 
-     throw new Error('Processing timeout (>10 minutes)');
+  </div>
 
-   }
+)}
 
-   ```
+```
 
-These are optional enhancements - priority is the core retry button + debug logging.
+---
 
-Please implement and deploy!
+## COMPLETE FLOW DIAGRAM
+
+```
+
+Admin uploads PDF
+
+       ↓
+
+Check native text quality
+
+       ↓
+
+Has good native text?
+
+  YES → Process normally (any size) ✅
+
+  NO → Check page count
+
+         ↓
+
+    ≤ 50 pages?
+
+      YES → Direct OCR (single request, 20s) ✅
+
+      NO ↓
+
+    ≤ 200 pages?
+
+      YES → Batch OCR via waitUntil (15 pages/batch, 3-5 min) ✅
+
+      NO ↓
+
+    > 200 pages → Queue System
+
+      - Add to pdf_processing_queue
+
+      - pg_cron runs every 2 minutes
+
+      - Processes 50 pages per tick
+
+      - 1000 pages = 20 ticks = 40 minutes
+
+      - Progress shown in UI
+
+      - Email/notification on completion ✅
+
+```
+
+---
+
+## TIME ESTIMATES AT SCALE
+
+| PDF Size | Pages | Strategy | Time |
+
+|----------|-------|----------|------|
+
+| Small | 1-50 | Direct OCR | 20-60 sec |
+
+| Medium | 51-200 | Batch OCR | 2-5 min |
+
+| Large | 201-500 | Queue (2min/tick) | 10-20 min |
+
+| Very Large | 501-1000 | Queue (2min/tick) | 20-40 min |
+
+| Massive | 1000+ | Queue (2min/tick) | 40+ min |
+
+ALL sizes work without timeout! ✅
+
+---
+
+## IMPLEMENTATION PRIORITY
+
+Phase 1 (IMMEDIATE - fixes current issue):
+
+✅ Already implementing: Batch OCR for 50-200 pages
+
+Phase 2 (THIS WEEK - handles large PDFs):
+
+1. Create pdf_processing_queue table
+
+2. Create process-pdf-queue edge function
+
+3. Set up pg_cron (every 2 minutes)
+
+4. Update process-book to detect large PDFs
+
+5. Add UI progress display
+
+Phase 3 (NEXT WEEK - polish):
+
+1. Email notification on completion
+
+2. Better progress UI
+
+3. Retry failed queue items
+
+4. Queue monitoring dashboard
+
+---
+
+## ADDITIONAL CONSIDERATIONS
+
+### Text PDFs (not scanned):
+
+If PDF has native text (not image-based):
+
+- NO OCR needed at all
+
+- Process instantly regardless of page count
+
+- 1000 pages with native text = 30 seconds
+
+- Only scanned PDFs need OCR batching
+
+### Partial Processing:
+
+If queue fails midway (page 400 of 1000):
+
+- Save progress in database
+
+- Resume from page 400 on next retry
+
+- Don't restart from beginning
+
+- Efficient and reliable
+
+### Storage Consideration:
+
+Extracted text stored in pdf_processing_queue temporarily
+
+After processing complete, text goes to document_sections
+
+Queue entry can be cleaned up after 24 hours
+
+---
+
+PLEASE IMPLEMENT PHASE 2 AFTER CURRENT BATCH OCR FIX!
+
+This makes the platform truly scalable for any PDF size.
