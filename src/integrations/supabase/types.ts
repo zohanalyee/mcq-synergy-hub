@@ -845,6 +845,59 @@ export type Database = {
         }
         Relationships: []
       }
+      pdf_processing_queue: {
+        Row: {
+          created_at: string
+          current_batch: number | null
+          document_id: string
+          error_message: string | null
+          extracted_text: string | null
+          file_url: string
+          id: string
+          processed_pages: number | null
+          status: string
+          total_batches: number | null
+          total_pages: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_batch?: number | null
+          document_id: string
+          error_message?: string | null
+          extracted_text?: string | null
+          file_url: string
+          id?: string
+          processed_pages?: number | null
+          status?: string
+          total_batches?: number | null
+          total_pages: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_batch?: number | null
+          document_id?: string
+          error_message?: string | null
+          extracted_text?: string | null
+          file_url?: string
+          id?: string
+          processed_pages?: number | null
+          status?: string
+          total_batches?: number | null
+          total_pages?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pdf_processing_queue_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           active_learning_context: Json | null

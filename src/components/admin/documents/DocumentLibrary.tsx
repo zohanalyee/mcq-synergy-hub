@@ -62,11 +62,20 @@ import DocumentLMSSelector, { LMSSelection } from "./DocumentLMSSelector";
 import { supabase } from "@/integrations/supabase/client";
 import { ManualCategorizationDialog } from "./ManualCategorizationDialog";
 
+interface QueueStatus {
+  processed_pages: number;
+  total_pages: number;
+  status: string;
+  current_batch: number | null;
+  total_batches: number | null;
+}
+
 interface DocumentWithLMS extends Document {
   system_name?: string;
   level_name?: string;
   subject_name?: string;
   topic_name?: string;
+  queue_status?: QueueStatus | null;
 }
 
 interface ChunkPreview {
@@ -144,6 +153,31 @@ const DocumentLibrary = () => {
           toast.warning(`"${doc.title}" was stuck processing and marked as failed.`);
         } catch (e) {
           console.error('Failed to auto-timeout document:', doc.id, e);
+        }
+      }
+
+      // Fetch queue status for documents in processing/pending
+      const processingDocIds = docs.filter(d => d.status === 'processing').map(d => d.id);
+      if (processingDocIds.length > 0) {
+        const { data: queueData } = await supabase
+          .from('pdf_processing_queue')
+          .select('document_id, processed_pages, total_pages, status, current_batch, total_batches')
+          .in('document_id', processingDocIds);
+        
+        if (queueData) {
+          const queueMap = new Map(queueData.map(q => [q.document_id, q as QueueStatus & { document_id: string }]));
+          docs.forEach(doc => {
+            const qs = queueMap.get(doc.id);
+            if (qs) {
+              (doc as DocumentWithLMS).queue_status = {
+                processed_pages: qs.processed_pages,
+                total_pages: qs.total_pages,
+                status: qs.status,
+                current_batch: qs.current_batch,
+                total_batches: qs.total_batches,
+              };
+            }
+          });
         }
       }
       
@@ -937,7 +971,24 @@ const DocumentLibrary = () => {
                   <TableRow key={doc.id}>
                     <TableCell className="font-medium">{doc.title}</TableCell>
                     <TableCell>{getLMSBadge(doc)}</TableCell>
-                    <TableCell>{getStatusBadge(doc.status)}</TableCell>
+                    <TableCell>
+                      {getStatusBadge(doc.status)}
+                      {doc.queue_status && doc.queue_status.status !== 'completed' && (
+                        <div className="mt-1 space-y-0.5">
+                          <Progress 
+                            value={(doc.queue_status.processed_pages / doc.queue_status.total_pages) * 100} 
+                            className="h-1.5"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            Page {doc.queue_status.processed_pages}/{doc.queue_status.total_pages}
+                            {' '}({Math.round((doc.queue_status.processed_pages / doc.queue_status.total_pages) * 100)}%)
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            ~{Math.ceil((doc.queue_status.total_pages - doc.queue_status.processed_pages) / 50 * 2)} min remaining
+                          </p>
+                        </div>
+                      )}
+                    </TableCell>
                     <TableCell>
                       {doc.page_count ? `${doc.page_count} chunks` : "-"}
                     </TableCell>
