@@ -1,7 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
-import { checkQuota, retryWithBackoff, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
+import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
+import { checkQuota, QuotaExhaustedError } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -15,6 +16,9 @@ const EMBEDDING_MODELS = ["gemini-embedding-001", "text-embedding-005", "text-em
 const MAX_PDF_SIZE = 25 * 1024 * 1024;
 const MIN_QUALITY_CHARS = 500;
 const MIN_QUALITY_LETTERS = 100;
+const DIRECT_OCR_LIMIT = 50;
+const BATCH_OCR_LIMIT = 200;
+const BATCH_SIZE = 15;
 
 interface ProcessRequest {
   documentId: string;
@@ -25,35 +29,35 @@ interface ProcessRequest {
 // Helper: Verify admin authorization
 async function verifyAdmin(req: Request, supabase: any): Promise<{ authorized: boolean; userId?: string; error?: string }> {
   const authHeader = req.headers.get("Authorization");
-  
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (authHeader?.includes(serviceKey || "")) {
     return { authorized: true, userId: "service_role" };
   }
-
   if (!authHeader?.startsWith("Bearer ")) {
     return { authorized: false, error: "Missing or invalid authorization header" };
   }
-
   const token = authHeader.replace("Bearer ", "");
   const { data, error } = await supabase.auth.getUser(token);
-  
   if (error || !data?.user) {
     return { authorized: false, error: "Invalid token" };
   }
-
   const { data: roleData } = await supabase
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", data.user.id)
-    .eq("role", "admin")
-    .single();
-
+    .from("user_roles").select("role").eq("user_id", data.user.id).eq("role", "admin").single();
   if (!roleData) {
     return { authorized: false, error: "Admin privileges required" };
   }
-
   return { authorized: true, userId: data.user.id };
+}
+
+// Extract a range of pages from a PDF using pdf-lib
+async function extractPageRange(pdfBytes: Uint8Array, startPage: number, endPage: number): Promise<Uint8Array> {
+  const srcDoc = await PDFDocument.load(pdfBytes);
+  const newDoc = await PDFDocument.create();
+  const indices = Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage - 1 + i);
+  const pages = await newDoc.copyPages(srcDoc, indices);
+  pages.forEach(page => newDoc.addPage(page));
+  const newBytes = await newDoc.save();
+  return new Uint8Array(newBytes);
 }
 
 // Stage 1: Try native text extraction with unpdf
@@ -66,14 +70,11 @@ async function extractTextNative(pdfBytes: Uint8Array): Promise<{
     const pdf = await getDocumentProxy(pdfBytes);
     const pageCount = pdf.numPages;
     console.log(`[process-book] PDF has ${pageCount} pages`);
-
     const { text: fullText } = await extractText(pdf, { mergePages: true });
     const trimmed = fullText.trim();
     console.log(`[process-book] Native extraction: ${trimmed.length} characters`);
-
     const letterCount = (trimmed.match(/[a-zA-Z\u0600-\u06FF\u0900-\u097F]/g) || []).length;
     const hasGoodText = trimmed.length > MIN_QUALITY_CHARS && letterCount > MIN_QUALITY_LETTERS;
-
     return { text: trimmed, pageCount, quality: hasGoodText ? "good" : "poor" };
   } catch (error) {
     console.error("[process-book] Native extraction failed:", error);
@@ -98,121 +99,222 @@ function extractTextFromGeminiResponse(result: any): string {
   return "";
 }
 
-async function extractViaLovableGateway(pdfBytes: Uint8Array): Promise<string> {
+// Batch OCR via Lovable Gateway — processes pages in batches of BATCH_SIZE
+async function extractViaLovableGateway(pdfBytes: Uint8Array, pageCount: number): Promise<string> {
   const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
   if (!lovableApiKey) throw new Error("LOVABLE_API_KEY not configured");
 
-  console.log("[process-book] 🔍 Using Lovable AI Gateway for OCR...");
-  const base64Pdf = pdfToBase64(pdfBytes);
-
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [{
-        role: "user",
-        content: [
-          { type: "text", text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Include all headings, paragraphs, bullet points, tables, and any other text content. Output only the extracted text, nothing else." },
-          { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64Pdf}` } },
-        ],
-      }],
-      max_tokens: 65536,
-      temperature: 0.1,
-    }),
-  });
-
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error("[process-book] Lovable AI Gateway error:", response.status, errorText);
-    throw new Error(`Lovable AI Gateway OCR failed: ${response.status}`);
+  // For small PDFs, send whole thing
+  if (pageCount <= DIRECT_OCR_LIMIT) {
+    console.log("[process-book] 🔍 Using Lovable AI Gateway for OCR (single request)...");
+    const base64Pdf = pdfToBase64(pdfBytes);
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [{
+          role: "user",
+          content: [
+            { type: "text", text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Include all headings, paragraphs, bullet points, tables, and any other text content. Output only the extracted text, nothing else." },
+            { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64Pdf}` } },
+          ],
+        }],
+        max_tokens: 65536,
+        temperature: 0.1,
+      }),
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("[process-book] Lovable AI Gateway error:", response.status, errorText);
+      throw new Error(`Lovable AI Gateway OCR failed: ${response.status}`);
+    }
+    const result = await response.json();
+    const text = result.choices?.[0]?.message?.content || "";
+    if (!text || text.length < 50) throw new Error("Lovable AI Gateway returned insufficient text");
+    console.log(`[process-book] ✅ Lovable Gateway OCR extracted ${text.length} characters`);
+    return text.trim();
   }
 
-  const result = await response.json();
-  const text = result.choices?.[0]?.message?.content || "";
-  if (!text || text.length < 50) throw new Error("Lovable AI Gateway returned insufficient text");
+  // Batch mode for medium PDFs
+  const batches = Math.ceil(pageCount / BATCH_SIZE);
+  console.log(`[process-book] 🔍 Batch OCR via Lovable Gateway: ${batches} batches of ${BATCH_SIZE} pages`);
+  let fullText = "";
 
-  console.log(`[process-book] ✅ Lovable Gateway OCR extracted ${text.length} characters`);
-  return text.trim();
-}
+  for (let batch = 0; batch < batches; batch++) {
+    const startPage = batch * BATCH_SIZE + 1;
+    const endPage = Math.min(startPage + BATCH_SIZE - 1, pageCount);
+    console.log(`[process-book] OCR batch ${batch + 1}/${batches}: pages ${startPage}-${endPage}`);
 
-async function extractViaGeminiDirect(pdfBytes: Uint8Array, apiKey: string, retries = 1): Promise<string> {
-  console.log("[process-book] 🔍 Using direct Gemini Vision OCR...");
-  const base64Pdf = pdfToBase64(pdfBytes);
+    try {
+      const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
+      const batchBase64 = pdfToBase64(batchBytes);
 
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
+      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          contents: [{ parts: [
-            { text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Include all headings, paragraphs, bullet points, tables, and any other text. Output only the extracted text, nothing else." },
-            { inline_data: { mime_type: "application/pdf", data: base64Pdf } },
-          ] }],
-          generationConfig: { maxOutputTokens: 65536, temperature: 0.1 },
+          model: "google/gemini-2.5-flash",
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text", text: `Extract ALL text from pages ${startPage}-${endPage} of this PDF. Preserve structure. Output only the extracted text.` },
+              { type: "image_url", image_url: { url: `data:application/pdf;base64,${batchBase64}` } },
+            ],
+          }],
+          max_tokens: 16384,
+          temperature: 0.1,
         }),
-      }
-    );
+      });
 
-    if (response.ok) {
+      if (!response.ok) {
+        const errText = await response.text();
+        console.warn(`[process-book] ⚠️ Batch ${batch + 1} failed (${response.status}): ${errText.substring(0, 200)}`);
+        continue; // Skip failed batch, don't abort
+      }
+
       const result = await response.json();
-      const text = extractTextFromGeminiResponse(result);
-      if (text && text.length >= 50) {
-        console.log(`[process-book] ✅ Direct Gemini OCR extracted ${text.length} characters`);
-        return text;
-      }
-      throw new Error("Gemini Vision OCR returned insufficient text");
-    }
+      const batchText = result.choices?.[0]?.message?.content || "";
+      fullText += batchText + "\n\n";
+      console.log(`[process-book] Batch ${batch + 1} extracted ${batchText.length} chars`);
 
-    if (response.status === 429 && attempt < retries) {
-      const errorBody = await response.text();
-      console.warn(`[process-book] ⚠️ Gemini rate limited (attempt ${attempt + 1}). Retrying in 55s...`);
-      await new Promise(resolve => setTimeout(resolve, 55000));
+      // Delay between batches to avoid rate limiting
+      if (batch < batches - 1) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    } catch (batchError) {
+      console.warn(`[process-book] ⚠️ Batch ${batch + 1} error:`, batchError instanceof Error ? batchError.message : batchError);
       continue;
     }
-
-    const errorText = await response.text();
-    throw new Error(`Gemini Vision OCR failed: ${response.status} - ${errorText}`);
   }
 
-  throw new Error("Gemini Vision OCR exhausted all retries");
+  if (fullText.length < 50) throw new Error("Batch OCR extracted insufficient text");
+  console.log(`[process-book] ✅ Total batch OCR: ${fullText.length} characters from ${batches} batches`);
+  return fullText.trim();
 }
 
-async function extractTextWithVisionOCR(pdfBytes: Uint8Array, geminiApiKey: string): Promise<string> {
+// Batch OCR via direct Gemini
+async function extractViaGeminiDirect(pdfBytes: Uint8Array, apiKey: string, retries = 1, pageCount = 0): Promise<string> {
+  // For small PDFs or unknown page count, send whole thing
+  if (pageCount <= DIRECT_OCR_LIMIT) {
+    console.log("[process-book] 🔍 Using direct Gemini Vision OCR (single request)...");
+    const base64Pdf = pdfToBase64(pdfBytes);
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [
+              { text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Output only the extracted text, nothing else." },
+              { inline_data: { mime_type: "application/pdf", data: base64Pdf } },
+            ] }],
+            generationConfig: { maxOutputTokens: 65536, temperature: 0.1 },
+          }),
+        }
+      );
+      if (response.ok) {
+        const result = await response.json();
+        const text = extractTextFromGeminiResponse(result);
+        if (text && text.length >= 50) {
+          console.log(`[process-book] ✅ Direct Gemini OCR extracted ${text.length} characters`);
+          return text;
+        }
+        throw new Error("Gemini Vision OCR returned insufficient text");
+      }
+      if (response.status === 429 && attempt < retries) {
+        console.warn(`[process-book] ⚠️ Gemini rate limited (attempt ${attempt + 1}). Retrying in 55s...`);
+        await new Promise(resolve => setTimeout(resolve, 55000));
+        continue;
+      }
+      const errorText = await response.text();
+      throw new Error(`Gemini Vision OCR failed: ${response.status} - ${errorText}`);
+    }
+    throw new Error("Gemini Vision OCR exhausted all retries");
+  }
+
+  // Batch mode for medium PDFs
+  const batches = Math.ceil(pageCount / BATCH_SIZE);
+  console.log(`[process-book] 🔍 Batch OCR via direct Gemini: ${batches} batches`);
+  let fullText = "";
+
+  for (let batch = 0; batch < batches; batch++) {
+    const startPage = batch * BATCH_SIZE + 1;
+    const endPage = Math.min(startPage + BATCH_SIZE - 1, pageCount);
+    console.log(`[process-book] Gemini batch ${batch + 1}/${batches}: pages ${startPage}-${endPage}`);
+
+    try {
+      const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
+      const batchBase64 = pdfToBase64(batchBytes);
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [
+              { text: `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.` },
+              { inline_data: { mime_type: "application/pdf", data: batchBase64 } },
+            ] }],
+            generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const result = await response.json();
+        const batchText = extractTextFromGeminiResponse(result);
+        fullText += batchText + "\n\n";
+        console.log(`[process-book] Gemini batch ${batch + 1} extracted ${batchText.length} chars`);
+      } else {
+        const errText = await response.text();
+        console.warn(`[process-book] ⚠️ Gemini batch ${batch + 1} failed: ${response.status}`);
+        if (response.status === 429 && batch < batches - 1) {
+          console.log("[process-book] Rate limited, waiting 55s...");
+          await new Promise(r => setTimeout(r, 55000));
+        }
+      }
+
+      if (batch < batches - 1) await new Promise(r => setTimeout(r, 500));
+    } catch (batchError) {
+      console.warn(`[process-book] ⚠️ Gemini batch ${batch + 1} error:`, batchError instanceof Error ? batchError.message : batchError);
+    }
+  }
+
+  if (fullText.length < 50) throw new Error("Gemini batch OCR extracted insufficient text");
+  console.log(`[process-book] ✅ Total Gemini batch OCR: ${fullText.length} characters`);
+  return fullText.trim();
+}
+
+async function extractTextWithVisionOCR(pdfBytes: Uint8Array, geminiApiKey: string, pageCount: number): Promise<string> {
   try {
-    return await extractViaLovableGateway(pdfBytes);
+    return await extractViaLovableGateway(pdfBytes, pageCount);
   } catch (gatewayError) {
     console.warn(`[process-book] Lovable Gateway failed: ${gatewayError instanceof Error ? gatewayError.message : gatewayError}`);
   }
-
   try {
-    return await extractViaGeminiDirect(pdfBytes, geminiApiKey, 1);
+    return await extractViaGeminiDirect(pdfBytes, geminiApiKey, 1, pageCount);
   } catch (geminiError) {
     console.error(`[process-book] Direct Gemini also failed: ${geminiError instanceof Error ? geminiError.message : geminiError}`);
   }
-
   const altKey = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
   if (altKey && altKey !== geminiApiKey) {
     console.log("[process-book] Trying EXTERNAL_JOBS_GEMINI_KEY as final fallback...");
-    return await extractViaGeminiDirect(pdfBytes, altKey, 0);
+    return await extractViaGeminiDirect(pdfBytes, altKey, 0, pageCount);
   }
-
-  throw new Error("All OCR methods failed. Your Gemini API free tier quota may be exhausted.");
+  throw new Error("All OCR methods failed.");
 }
 
 async function extractPdfContent(fileUrl: string, apiKey: string): Promise<{ text: string; pageCount: number; method: "native" | "vision-ocr" }> {
   console.log(`[process-book] Fetching PDF from: ${fileUrl}`);
-
   const response = await fetch(fileUrl);
   if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
-
   const contentLength = response.headers.get("content-length");
   if (contentLength && parseInt(contentLength) > MAX_PDF_SIZE) {
     throw new Error(`PDF file too large (${Math.round(parseInt(contentLength) / 1024 / 1024)}MB). Maximum is ${MAX_PDF_SIZE / 1024 / 1024}MB.`);
   }
-
   const arrayBuffer = await response.arrayBuffer();
   const pdfBytes = new Uint8Array(arrayBuffer);
   console.log(`[process-book] PDF downloaded: ${pdfBytes.length} bytes`);
@@ -225,12 +327,11 @@ async function extractPdfContent(fileUrl: string, apiKey: string): Promise<{ tex
   }
 
   console.log(`[process-book] ⚠️ Native extraction poor (${nativeResult.text.length} chars). Falling back to Vision OCR...`);
-  const ocrText = await extractTextWithVisionOCR(pdfBytes, apiKey);
+  const ocrText = await extractTextWithVisionOCR(pdfBytes, apiKey, nativeResult.pageCount || 1);
 
   if (!ocrText || ocrText.length < 100) {
     throw new Error("PDF appears to be empty or unreadable.");
   }
-
   return { text: ocrText, pageCount: nativeResult.pageCount || 1, method: "vision-ocr" };
 }
 
@@ -261,19 +362,16 @@ async function generateEmbedding(text: string, apiKey: string): Promise<number[]
         }),
       }
     );
-
     if (response.ok) {
       const data = await response.json();
       if (data.embedding?.values) return data.embedding.values;
     }
-
     const errorText = await response.text();
     if (response.status === 404) {
       console.warn(`[process-book] Embedding model ${model} not found, trying next...`);
       lastError = errorText;
       continue;
     }
-
     console.error(`Gemini embedding error (${model}):`, errorText);
     throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
   }
@@ -291,31 +389,26 @@ async function generateEmbeddingsBatch(chunks: string[], apiKey: string): Promis
   return embeddings;
 }
 
-// Background processing logic
+// Background processing for Tier 1 & 2 (≤200 pages)
 async function processInBackground(documentId: string, fileUrl: string, title: string | undefined, GEMINI_API_KEY: string, supabase: any) {
   const startTime = Date.now();
   console.log(`[process-book] 🔥 BACKGROUND JOB STARTED for: ${documentId}`);
-  
+
   try {
-    // Step 1: Extract text
     const { text, pageCount, method } = await extractPdfContent(fileUrl, GEMINI_API_KEY);
     console.log(`[process-book] Extracted ${text.length} chars from ${pageCount} pages via ${method}`);
 
     if (!text || text.length < 100) {
       throw new Error("PDF appears to be empty or contains very little extractable text");
     }
-
-    // Check for timeout (>10 minutes)
     if (Date.now() - startTime > 10 * 60 * 1000) {
       throw new Error('Processing timeout (>10 minutes)');
     }
 
-    // Step 2: Chunk
     const chunks = chunkText(text, CHUNK_SIZE, CHUNK_OVERLAP);
     console.log(`[process-book] Created ${chunks.length} chunks`);
     if (chunks.length === 0) throw new Error("No valid text chunks could be extracted");
 
-    // Step 3: Quota check
     console.log(`[process-book] Checking quota before generating ${chunks.length} embeddings...`);
     try {
       const quota = await checkQuota(supabase);
@@ -329,12 +422,10 @@ async function processInBackground(documentId: string, fileUrl: string, title: s
       throw err;
     }
 
-    // Step 4: Generate embeddings
     console.log("[process-book] Generating embeddings...");
     const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
     console.log(`[process-book] Generated ${embeddings.length} embeddings`);
 
-    // Step 5: Insert sections
     const sections = chunks.map((content, index) => ({
       document_id: documentId,
       content,
@@ -349,7 +440,6 @@ async function processInBackground(documentId: string, fileUrl: string, title: s
       throw new Error(`Failed to insert sections: ${insertError.message}`);
     }
 
-    // Step 6: Update status to completed
     await supabase.from("documents").update({ status: "completed", page_count: pageCount }).eq("id", documentId);
     console.log(`[process-book] ✅ BACKGROUND JOB COMPLETED for: ${documentId} — ${chunks.length} sections via ${method} in ${Math.round((Date.now() - startTime) / 1000)}s`);
 
@@ -357,6 +447,20 @@ async function processInBackground(documentId: string, fileUrl: string, title: s
     console.error(`[process-book] 🔴 BACKGROUND JOB FAILED for: ${documentId}`, error);
     await supabase.from("documents").update({ status: "failed" }).eq("id", documentId);
   }
+}
+
+// Add large PDF to queue for cron-based processing
+async function addToProcessingQueue(supabase: any, documentId: string, fileUrl: string, pageCount: number) {
+  const totalBatches = Math.ceil(pageCount / BATCH_SIZE);
+  const { error } = await supabase.from("pdf_processing_queue").insert({
+    document_id: documentId,
+    file_url: fileUrl,
+    total_pages: pageCount,
+    total_batches: totalBatches,
+    status: "pending",
+  });
+  if (error) throw new Error(`Failed to add to queue: ${error.message}`);
+  console.log(`[process-book] 📋 Added to queue: ${documentId} (${pageCount} pages, ${totalBatches} batches)`);
 }
 
 serve(async (req) => {
@@ -372,7 +476,6 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Authorization check
     const auth = await verifyAdmin(req, supabase);
     if (!auth.authorized) {
       return new Response(
@@ -383,7 +486,6 @@ serve(async (req) => {
     console.log(`[process-book] ✅ Authorized: ${auth.userId}`);
 
     const { documentId, fileUrl, title } = await req.json() as ProcessRequest;
-
     if (!documentId || !fileUrl) {
       return new Response(
         JSON.stringify({ error: "documentId and fileUrl are required" }),
@@ -391,36 +493,90 @@ serve(async (req) => {
       );
     }
 
-    console.log(`[process-book] Processing document: ${documentId} (background mode)`);
-
-    // Update status to processing
+    console.log(`[process-book] Processing document: ${documentId}`);
     await supabase.from("documents").update({ status: "processing" }).eq("id", documentId);
 
-    // Offload heavy work to background via EdgeRuntime.waitUntil
-    try {
-      // @ts-ignore - EdgeRuntime.waitUntil is available in Supabase Edge Functions
-      EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase));
-      console.log(`[process-book] waitUntil() accepted background job for: ${documentId}`);
-    } catch (waitUntilError) {
-      console.error(`[process-book] waitUntil() REJECTED, running inline:`, waitUntilError);
-      // Fallback: run synchronously (may timeout for large files but works for small ones)
-      await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
+    // Determine tier: download PDF and check native text + page count
+    const pdfResponse = await fetch(fileUrl);
+    if (!pdfResponse.ok) throw new Error(`Failed to fetch PDF: ${pdfResponse.status}`);
+    const pdfArrayBuffer = await pdfResponse.arrayBuffer();
+    const pdfBytes = new Uint8Array(pdfArrayBuffer);
+    console.log(`[process-book] PDF downloaded: ${pdfBytes.length} bytes`);
+
+    const nativeResult = await extractTextNative(pdfBytes);
+    const pageCount = nativeResult.pageCount || 1;
+
+    // If native text is good, process normally regardless of size
+    if (nativeResult.quality === "good") {
+      console.log(`[process-book] Native text good (${nativeResult.text.length} chars). Processing normally.`);
+      try {
+        // @ts-ignore
+        EdgeRuntime.waitUntil((async () => {
+          const startTime = Date.now();
+          console.log(`[process-book] 🔥 BACKGROUND JOB STARTED (native) for: ${documentId}`);
+          try {
+            const chunks = chunkText(nativeResult.text, CHUNK_SIZE, CHUNK_OVERLAP);
+            if (chunks.length === 0) throw new Error("No valid chunks");
+            const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
+            const sections = chunks.map((content, index) => ({
+              document_id: documentId, content, embedding: JSON.stringify(embeddings[index]),
+              section_index: index, token_count: Math.ceil(content.length / 4),
+            }));
+            await supabase.from("document_sections").insert(sections);
+            await supabase.from("documents").update({ status: "completed", page_count: pageCount }).eq("id", documentId);
+            console.log(`[process-book] ✅ COMPLETED (native) for: ${documentId} in ${Math.round((Date.now() - startTime) / 1000)}s`);
+          } catch (err) {
+            console.error(`[process-book] 🔴 FAILED (native) for: ${documentId}`, err);
+            await supabase.from("documents").update({ status: "failed" }).eq("id", documentId);
+          }
+        })());
+      } catch {
+        // Fallback inline
+        await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
+      }
+      return new Response(
+        JSON.stringify({ success: true, status: "processing", documentId, tier: "native", pageCount }),
+        { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
-    // Return 202 immediately
+    // Scanned PDF — route by tier
+    if (pageCount <= BATCH_OCR_LIMIT) {
+      // TIER 1 & 2: Direct or batch OCR within waitUntil
+      const tier = pageCount <= DIRECT_OCR_LIMIT ? 1 : 2;
+      console.log(`[process-book] Tier ${tier}: ${pageCount} pages, using ${tier === 1 ? 'direct' : 'batch'} OCR`);
+      try {
+        // @ts-ignore
+        EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase));
+        console.log(`[process-book] waitUntil() accepted background job for: ${documentId}`);
+      } catch (waitUntilError) {
+        console.error(`[process-book] waitUntil() REJECTED, running inline:`, waitUntilError);
+        await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
+      }
+      return new Response(
+        JSON.stringify({ success: true, status: "processing", documentId, tier, pageCount }),
+        { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // TIER 3: Large PDF → Queue system
+    console.log(`[process-book] Tier 3: ${pageCount} pages → adding to processing queue`);
+    await addToProcessingQueue(supabase, documentId, fileUrl, pageCount);
+    const estimatedMinutes = Math.ceil(pageCount / 50) * 2;
     return new Response(
       JSON.stringify({
         success: true,
-        status: "processing",
+        status: "queued",
         documentId,
-        message: "Document processing started in background",
+        tier: 3,
+        pageCount,
+        message: `Large PDF (${pageCount} pages) added to processing queue. Estimated time: ~${estimatedMinutes} minutes.`,
       }),
       { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
     console.error("Process book error:", error);
-
     try {
       const body = await req.clone().json();
       if (body?.documentId) {
@@ -430,9 +586,8 @@ serve(async (req) => {
         await supabase.from("documents").update({ status: "failed" }).eq("id", body.documentId);
       }
     } catch {
-      // Ignore errors when updating status
+      // Ignore
     }
-
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error", details: "Failed to process book" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
