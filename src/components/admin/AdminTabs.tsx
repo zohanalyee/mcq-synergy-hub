@@ -13,7 +13,8 @@ import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
 import DocumentLibrary from "./documents/DocumentLibrary";
 import LMSApprovalDashboard from "./LMSApprovalDashboard";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck } from "lucide-react";
+import AIContentFactory from "./AIContentFactory";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="documents" className="flex items-center gap-2 border-2 border-primary/20">
           <Library className="h-4 w-4" />
           Documents 📚
+        </TabsTrigger>
+        <TabsTrigger value="generate-mcqs" className="flex items-center gap-2 border-2 border-primary/20">
+          <Sparkles className="h-4 w-4" />
+          Generate MCQs ⚡
         </TabsTrigger>
         <TabsTrigger value="jobs" className="flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4" />
@@ -109,7 +114,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Dashboard Tab */}
       <TabsContent value="dashboard">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {/* AI Content Factory removed - AI features paused */}
+          <AIContentFactory />
           
           <Card>
             <CardHeader className="pb-2">
@@ -187,7 +192,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <DocumentLibrary />
       </TabsContent>
       
-      {/* Auto-Fill Tab removed - AI features paused */}
+      {/* Generate MCQs Tab */}
+      <TabsContent value="generate-mcqs">
+        <AIContentFactory />
+      </TabsContent>
       
       {/* Jobs Tab */}
       <TabsContent value="jobs">

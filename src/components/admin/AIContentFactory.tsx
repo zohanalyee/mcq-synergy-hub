@@ -8,8 +8,9 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Factory, Zap, Database, Loader2, CheckCircle, AlertCircle, Sparkles } from "lucide-react";
+import { Factory, Zap, Database, Loader2, CheckCircle, AlertCircle, Sparkles, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 
 interface GenerationResult {
   batch: number;
@@ -19,13 +20,24 @@ interface GenerationResult {
   duplicates: number;
 }
 
+interface LMSItem {
+  id: string;
+  name: string;
+}
+
 const AIContentFactory = () => {
-  const [subjects, setSubjects] = useState<{ id: string; name: string }[]>([]);
-  const [topics, setTopics] = useState<{ id: string; name: string; subject_id: string }[]>([]);
-  const [selectedSubject, setSelectedSubject] = useState<string>("");
-  const [selectedTopic, setSelectedTopic] = useState<string>("");
-  const [difficulty, setDifficulty] = useState<string>("medium");
-  const [quantity, setQuantity] = useState<number>(50);
+  const [systems, setSystems] = useState<LMSItem[]>([]);
+  const [levels, setLevels] = useState<(LMSItem & { system_id: string })[]>([]);
+  const [subjects, setSubjects] = useState<(LMSItem & { level_id: string })[]>([]);
+  const [topics, setTopics] = useState<(LMSItem & { subject_id: string })[]>([]);
+
+  const [selectedSystem, setSelectedSystem] = useState("");
+  const [selectedLevel, setSelectedLevel] = useState("");
+  const [selectedSubject, setSelectedSubject] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState("");
+  const [difficulty, setDifficulty] = useState("medium");
+  const [quantity, setQuantity] = useState(100);
+
   const [isGenerating, setIsGenerating] = useState(false);
   const [progress, setProgress] = useState(0);
   const [currentBatch, setCurrentBatch] = useState(0);
@@ -33,30 +45,62 @@ const AIContentFactory = () => {
   const [results, setResults] = useState<GenerationResult[]>([]);
   const [totalSaved, setTotalSaved] = useState(0);
   const [totalDuplicates, setTotalDuplicates] = useState(0);
+  const [topicQuestionCount, setTopicQuestionCount] = useState<number | null>(null);
 
-  // Load subjects and topics
+  // Load all hierarchy data
   useEffect(() => {
     const loadData = async () => {
-      const [subjectsRes, topicsRes] = await Promise.all([
-        supabase.from('subjects').select('id, name').order('name'),
+      const [systemsRes, levelsRes, subjectsRes, topicsRes] = await Promise.all([
+        supabase.from('educational_systems').select('id, name').eq('is_active', true).order('name'),
+        supabase.from('levels').select('id, name, system_id').order('name'),
+        supabase.from('subjects').select('id, name, level_id').order('name'),
         supabase.from('topics').select('id, name, subject_id').order('name')
       ]);
-      
-      if (subjectsRes.data) setSubjects(subjectsRes.data);
-      if (topicsRes.data) setTopics(topicsRes.data);
+      if (systemsRes.data) setSystems(systemsRes.data);
+      if (levelsRes.data) setLevels(levelsRes.data as any);
+      if (subjectsRes.data) setSubjects(subjectsRes.data as any);
+      if (topicsRes.data) setTopics(topicsRes.data as any);
     };
     loadData();
   }, []);
 
-  const filteredTopics = selectedSubject 
-    ? topics.filter(t => t.subject_id === selectedSubject)
-    : topics;
+  // Load question count for selected topic/subject
+  useEffect(() => {
+    const loadCount = async () => {
+      const topicName = selectedTopic
+        ? topics.find(t => t.id === selectedTopic)?.name
+        : selectedSubject
+          ? subjects.find(s => s.id === selectedSubject)?.name
+          : null;
+      if (!topicName) { setTopicQuestionCount(null); return; }
+
+      const { count } = await supabase
+        .from('content_items')
+        .select('id', { count: 'exact', head: true })
+        .eq('category', 'mcq')
+        .or(`topic.eq.${topicName},subject.eq.${topicName}`);
+      setTopicQuestionCount(count ?? 0);
+    };
+    loadCount();
+  }, [selectedTopic, selectedSubject, topics, subjects]);
+
+  const filteredLevels = selectedSystem ? levels.filter(l => l.system_id === selectedSystem) : [];
+  const filteredSubjects = selectedLevel ? subjects.filter(s => s.level_id === selectedLevel) : [];
+  const filteredTopics = selectedSubject ? topics.filter(t => t.subject_id === selectedSubject) : [];
+
+  const selectionSteps = [
+    { label: "Board", done: !!selectedSystem },
+    { label: "Class", done: !!selectedLevel },
+    { label: "Subject", done: !!selectedSubject },
+    { label: "Topic", done: !!selectedTopic },
+  ];
+  const isReady = selectedSubject || selectedTopic;
 
   const BATCH_SIZE = 20;
 
   const handleGenerate = async () => {
-    if (!selectedSubject && !selectedTopic) {
-      toast.error("Please select a subject or topic");
+    if (!isReady) {
+      toast.error("Please select at least a subject");
       return;
     }
 
@@ -69,10 +113,14 @@ const AIContentFactory = () => {
     const batches = Math.ceil(quantity / BATCH_SIZE);
     setTotalBatches(batches);
 
-    // Get the topic/subject name for the request
-    const topicName = selectedTopic 
-      ? topics.find(t => t.id === selectedTopic)?.name 
-      : subjects.find(s => s.id === selectedSubject)?.name || "General";
+    const systemName = systems.find(s => s.id === selectedSystem)?.name;
+    const levelName = filteredLevels.find(l => l.id === selectedLevel)?.name;
+    const subjectName = filteredSubjects.find(s => s.id === selectedSubject)?.name
+      || subjects.find(s => s.id === selectedSubject)?.name;
+    const topicName = filteredTopics.find(t => t.id === selectedTopic)?.name
+      || topics.find(t => t.id === selectedTopic)?.name;
+
+    const generationTopic = topicName || subjectName || "General";
 
     let accumulatedSaved = 0;
     let accumulatedDuplicates = 0;
@@ -84,8 +132,8 @@ const AIContentFactory = () => {
       try {
         const { data, error } = await supabase.functions.invoke('generate-test', {
           body: {
-            topic: topicName,
-            difficulty: difficulty,
+            topic: generationTopic,
+            difficulty,
             question_count: batchQuantity,
             mode: 'bank_only',
             forceNew: true
@@ -114,7 +162,6 @@ const AIContentFactory = () => {
         setTotalDuplicates(accumulatedDuplicates);
         setProgress(((batch + 1) / batches) * 100);
 
-        // Small delay between batches to avoid rate limiting
         if (batch < batches - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
@@ -125,12 +172,16 @@ const AIContentFactory = () => {
     }
 
     setIsGenerating(false);
-    
-    if (accumulatedDuplicates > 0) {
-      toast.success(`Generation complete! Saved ${accumulatedSaved} questions, ${accumulatedDuplicates} flagged for review`);
-    } else {
-      toast.success(`Generation complete! Saved ${accumulatedSaved} questions`);
+
+    // Build descriptive summary
+    const parts = [levelName, subjectName, topicName].filter(Boolean).join(" - ");
+    const summary = parts ? ` for ${parts}` : "";
+
+    if (quantity >= 500 && accumulatedSaved > 0) {
+      confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
     }
+
+    toast.success(`✅ Generated ${accumulatedSaved} MCQs${summary}${accumulatedDuplicates > 0 ? `, ${accumulatedDuplicates} flagged` : ""}`);
   };
 
   return (
@@ -146,19 +197,34 @@ const AIContentFactory = () => {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Selection Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {/* Selection Progress */}
+        <div className="flex items-center gap-1 text-xs">
+          {selectionSteps.map((step, i) => (
+            <div key={step.label} className="flex items-center gap-1">
+              {i > 0 && <span className="text-muted-foreground">→</span>}
+              <span className={step.done ? "text-primary font-medium flex items-center gap-0.5" : "text-muted-foreground"}>
+                {step.label} {step.done && <Check className="h-3 w-3" />}
+              </span>
+            </div>
+          ))}
+          {isReady && <span className="ml-2 text-primary font-medium">Ready!</span>}
+        </div>
+
+        {/* 4-column LMS Hierarchy */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           <div className="space-y-1">
-            <Label className="text-xs">Subject</Label>
-            <Select value={selectedSubject} onValueChange={(v) => {
-              setSelectedSubject(v);
+            <Label className="text-xs">Board</Label>
+            <Select value={selectedSystem} onValueChange={(v) => {
+              setSelectedSystem(v);
+              setSelectedLevel("");
+              setSelectedSubject("");
               setSelectedTopic("");
             }}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Select subject" />
+                <SelectValue placeholder="Select board" />
               </SelectTrigger>
               <SelectContent>
-                {subjects.map(s => (
+                {systems.map(s => (
                   <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
                 ))}
               </SelectContent>
@@ -166,10 +232,45 @@ const AIContentFactory = () => {
           </div>
 
           <div className="space-y-1">
-            <Label className="text-xs">Topic (Optional)</Label>
-            <Select value={selectedTopic || "all"} onValueChange={(v) => setSelectedTopic(v === "all" ? "" : v)}>
+            <Label className="text-xs">Class</Label>
+            <Select value={selectedLevel} onValueChange={(v) => {
+              setSelectedLevel(v);
+              setSelectedSubject("");
+              setSelectedTopic("");
+            }} disabled={!selectedSystem}>
               <SelectTrigger className="h-9">
-                <SelectValue placeholder="Any topic" />
+                <SelectValue placeholder={selectedSystem ? "Select class" : "Select board first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredLevels.map(l => (
+                  <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Subject</Label>
+            <Select value={selectedSubject} onValueChange={(v) => {
+              setSelectedSubject(v);
+              setSelectedTopic("");
+            }} disabled={!selectedLevel}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={selectedLevel ? "Select subject" : "Select class first"} />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredSubjects.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-xs">Topic</Label>
+            <Select value={selectedTopic || "all"} onValueChange={(v) => setSelectedTopic(v === "all" ? "" : v)} disabled={!selectedSubject}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder={selectedSubject ? "Any topic" : "Select subject first"} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Any topic</SelectItem>
@@ -179,21 +280,22 @@ const AIContentFactory = () => {
               </SelectContent>
             </Select>
           </div>
+        </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs">Difficulty</Label>
-            <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger className="h-9">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="easy">Easy</SelectItem>
-                <SelectItem value="medium">Medium</SelectItem>
-                <SelectItem value="hard">Hard</SelectItem>
-                <SelectItem value="mixed">Mixed</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        {/* Difficulty */}
+        <div className="space-y-1">
+          <Label className="text-xs">Difficulty</Label>
+          <Select value={difficulty} onValueChange={setDifficulty}>
+            <SelectTrigger className="h-9">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="easy">Easy</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="hard">Hard</SelectItem>
+              <SelectItem value="mixed">Mixed</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Quantity Slider */}
@@ -206,18 +308,26 @@ const AIContentFactory = () => {
             value={[quantity]}
             onValueChange={(v) => setQuantity(v[0])}
             min={10}
-            max={200}
+            max={1000}
             step={10}
             className="w-full"
           />
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>10</span>
-            <span>50</span>
             <span>100</span>
-            <span>150</span>
-            <span>200</span>
+            <span>250</span>
+            <span>500</span>
+            <span>1000</span>
           </div>
         </div>
+
+        {/* Topic Stats */}
+        {topicQuestionCount !== null && (
+          <div className="text-xs text-muted-foreground flex items-center gap-1">
+            <Database className="h-3 w-3" />
+            Current bank: <span className="font-medium text-foreground">{topicQuestionCount.toLocaleString()}</span> questions for this topic
+          </div>
+        )}
 
         {/* Progress Section */}
         <AnimatePresence mode="wait">
@@ -245,7 +355,7 @@ const AIContentFactory = () => {
                 </span>
                 <span className="flex items-center gap-1">
                   <AlertCircle className="h-3 w-3 text-yellow-500" />
-                  Flagged for Review: {totalDuplicates}
+                  Flagged: {totalDuplicates}
                 </span>
               </div>
             </motion.div>
@@ -282,9 +392,9 @@ const AIContentFactory = () => {
         </AnimatePresence>
 
         {/* Generate Button */}
-        <Button 
-          onClick={handleGenerate} 
-          disabled={isGenerating || (!selectedSubject && !selectedTopic)}
+        <Button
+          onClick={handleGenerate}
+          disabled={isGenerating || !isReady}
           className="w-full"
           size="lg"
         >
