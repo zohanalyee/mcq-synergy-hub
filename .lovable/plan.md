@@ -1,535 +1,197 @@
-COMPLETE SCALABLE PDF PROCESSING PLAN
+# Re-enable Direct AI MCQ Generation
 
-For PDFs from 1 page to 1000+ pages
+## What Already Exists
 
-CURRENT PROBLEM:
+- `AIContentFactory.tsx` -- working component with subject/topic dropdowns, batch generation, progress UI
+- `generate-test` edge function -- working, uses Lovable AI Gateway, saves to `content_items`, has deduplication
+- Both were "paused" -- the factory card was removed from the AdminTabs dashboard (line 112)
 
-- 15-page batches work for ~85 pages
+## What Needs to Change
 
-- But 1000 pages = 67 batches × 20s = 22 minutes (still timeout!)
+### 1. Enhance AIContentFactory.tsx
 
-- Need a completely different architecture for large PDFs
+Add the full LMS hierarchy (Board and Class dropdowns) before Subject/Topic:
 
----
+- **Board dropdown**: Fetches from `educational_systems` table (filtered by `is_active = true`)
+- **Class dropdown**: Fetches from `levels` table, filtered by selected board's `system_id`
+- **Subject dropdown**: Fetches from `subjects` table, filtered by selected level's `level_id`
+- **Topic dropdown**: Fetches from `topics` table, filtered by selected subject's `subject_id`
 
-## ARCHITECTURE: 3-TIER PROCESSING
+Each dropdown filters the next (cascading selection).
 
-### TIER 1: Small PDF (1-50 pages)
+Increase the quantity slider:
 
-Strategy: Direct OCR (single request)
+- Current: min 10, max 200, step 10
+- New: min 10, max 1000, step 10
+- Batch size stays at 20 (the edge function handles batching internally)
 
-Time: 20-60 seconds
+Update the edge function call to pass the full context (board name, class name) for better prompt quality.
 
-Handled by: Current approach (fixed)
+### 2. Re-add to AdminTabs.tsx
 
-### TIER 2: Medium PDF (51-200 pages)  
+- Restore the AIContentFactory card on the dashboard tab (line 112, where the comment says "AI Content Factory removed")
+- Add a new dedicated tab "Generate MCQs" with a Sparkles icon, placed after the Documents tab
 
-Strategy: Batch OCR via EdgeRuntime.waitUntil()
+### 3. No Edge Function Changes Needed
 
-Time: 2-5 minutes
+The `generate-test` function already:
 
-Handled by: New batch fix (15 pages/batch)
+- Accepts `topic`, `difficulty`, `question_count`, `mode: 'bank_only'`
+- Uses Lovable AI Gateway (google/gemini-2.5-flash)
+- Has hybrid deduplication (fingerprint + normalized text)
+- Saves to `content_items` with proper status
+- Logs usage to `ai_usage_logs`
 
-### TIER 3: Large PDF (200+ pages)
+## Technical Details
 
-Strategy: Supabase pg_cron + Queue System
+### Updated AIContentFactory.tsx data loading
 
-Time: As long as needed (no timeout!)
+```text
+useEffect: load all 4 levels of hierarchy
+  const [systems] = supabase.from('educational_systems')
+    .select('id, name').eq('is_active', true).order('name')
+  const [levels] = supabase.from('levels').select('id, name, system_id').order('name')
+  const [subjects] = supabase.from('subjects').select('id, name, level_id').order('name')
+  const [topics] = supabase.from('topics').select('id, name, subject_id').order('name')
 
-Handled by: Background job queue (NEW - needs implementation)
-
----
-
-## IMPLEMENTATION PLAN
-
-### STEP 1: Database Queue Table
-
-```sql
-
-CREATE TABLE pdf_processing_queue (
-
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-
-  document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-
-  file_url TEXT NOT NULL,
-
-  total_pages INTEGER NOT NULL,
-
-  processed_pages INTEGER DEFAULT 0,
-
-  status TEXT DEFAULT 'pending', -- pending, processing, completed, failed
-
-  current_batch INTEGER DEFAULT 0,
-
-  total_batches INTEGER,
-
-  extracted_text TEXT DEFAULT '',
-
-  error_message TEXT,
-
-  created_at TIMESTAMP DEFAULT NOW(),
-
-  updated_at TIMESTAMP DEFAULT NOW()
-
-);
-
-CREATE INDEX idx_queue_status ON pdf_processing_queue(status);
-
-CREATE INDEX idx_queue_document ON pdf_processing_queue(document_id);
-
+Cascading filters:
+  filteredLevels = levels.filter(l => l.system_id === selectedSystem)
+  filteredSubjects = subjects.filter(s => s.level_id === selectedLevel)
+  filteredTopics = topics.filter(t => t.subject_id === selectedSubject)
 ```
 
----
+### Updated selection grid (4 columns instead of 3)
 
-### STEP 2: Smart process-book (Detects PDF Size)
+```text
+Row 1: Board | Class | Subject | Topic
+Row 2: Difficulty (dropdown)
+Row 3: Quantity slider (10-1000)
+Row 4: Generate button
+```
 
-```typescript
+### Updated handleGenerate
 
-// In process-book/index.ts
+```text
+// Build rich topic context for better AI generation
+const systemName = systems.find(s => s.id === selectedSystem)?.name
+const levelName = filteredLevels.find(l => l.id === selectedLevel)?.name
+const subjectName = filteredSubjects.find(s => s.id === selectedSubject)?.name
+const topicName = filteredTopics.find(t => t.id === selectedTopic)?.name
 
-const DIRECT_OCR_LIMIT = 50;    // pages
+// Use the most specific name available
+const generationTopic = topicName || subjectName || "General"
 
-const BATCH_OCR_LIMIT = 200;    // pages
-
-// Above 200 pages → use queue system
-
-serve(async (req) => {
-
-  // ... existing auth + validation ...
-
-  const { text: nativeText, pageCount } = await extractTextNative(pdfBytes);
-
-  if (nativeText.quality === 'good') {
-
-    // Native text works → process normally (any page count)
-
-    EdgeRuntime.waitUntil(processNormalDocument(documentId, nativeText, ...));
-
-    return new Response(JSON.stringify({ success: true, status: 'processing' }), { status: 202 });
-
+// Pass to edge function (existing API)
+supabase.functions.invoke('generate-test', {
+  body: {
+    topic: generationTopic,
+    difficulty,
+    question_count: batchQuantity,
+    mode: 'bank_only',
+    forceNew: true
   }
-
-  // Scanned PDF → check page count
-
-  if (pageCount <= DIRECT_OCR_LIMIT) {
-
-    // TIER 1: Single OCR request
-
-    EdgeRuntime.waitUntil(processWithDirectOCR(documentId, pdfBytes, ...));
-
-    return new Response(JSON.stringify({ success: true, status: 'processing' }), { status: 202 });
-
-  }
-
-  if (pageCount <= BATCH_OCR_LIMIT) {
-
-    // TIER 2: Batch OCR within waitUntil
-
-    EdgeRuntime.waitUntil(processWithBatchOCR(documentId, pdfBytes, pageCount, ...));
-
-    return new Response(JSON.stringify({ success: true, status: 'processing' }), { status: 202 });
-
-  }
-
-  // TIER 3: Large PDF → Queue system
-
-  await addToProcessingQueue(documentId, fileUrl, pageCount);
-
-  return new Response(JSON.stringify({
-
-    success: true,
-
-    status: 'queued',
-
-    message: `Large PDF (${pageCount} pages) added to processing queue. Will complete in ${Math.ceil(pageCount / 50)} minutes.`
-
-  }), { status: 202 });
-
-});
-
+})
 ```
 
----
-
-### STEP 3: Queue Processor Edge Function (NEW)
-
-```typescript
-
-// New file: supabase/functions/process-pdf-queue/index.ts
-
-// Called by pg_cron every 2 minutes
-
-serve(async (req) => {
-
-  const supabase = createClient(...SERVICE_ROLE_KEY...);
-
-  // Get next pending job
-
-  const { data: job } = await supabase
-
-    .from('pdf_processing_queue')
-
-    .select('*')
-
-    .eq('status', 'pending')
-
-    .order('created_at')
-
-    .limit(1)
-
-    .single();
-
-  if (!job) {
-
-    return new Response(JSON.stringify({ message: 'No pending jobs' }));
-
-  }
-
-  // Mark as processing
-
-  await supabase.from('pdf_processing_queue')
-
-    .update({ status: 'processing', updated_at: new Date() })
-
-    .eq('id', [job.id](http://job.id));
-
-  const PAGES_PER_INVOCATION = 50; // Process 50 pages per cron tick
-
-  const startPage = job.processed_pages + 1;
-
-  const endPage = Math.min(startPage + PAGES_PER_INVOCATION - 1, [job.total](http://job.total)_pages);
-
-  try {
-
-    // Download PDF
-
-    const pdfBytes = await downloadPDF(job.file_url);
-
-    
-
-    // Extract this batch of pages
-
-    const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
-
-    
-
-    // OCR this batch
-
-    const batchText = await performOCR(batchBytes);
-
-    
-
-    // Update progress
-
-    const newProcessedPages = endPage;
-
-    const newText = job.extracted_text + '\n' + batchText;
-
-    const isComplete = newProcessedPages >= [job.total](http://job.total)_pages;
-
-    if (isComplete) {
-
-      // All pages processed! Now chunk + embed
-
-      await supabase.from('pdf_processing_queue')
-
-        .update({ 
-
-          status: 'completed',
-
-          processed_pages: newProcessedPages,
-
-          extracted_text: newText
-
-        })
-
-        .eq('id', [job.id](http://job.id));
-
-      // Generate chunks and embeddings
-
-      await generateChunksAndEmbeddings(job.document_id, newText, supabase);
-
-      
-
-      // Update document status
-
-      await supabase.from('documents')
-
-        .update({ status: 'completed' })
-
-        .eq('id', job.document_id);
-
-        
-
-    } else {
-
-      // More pages remaining → mark as pending for next tick
-
-      await supabase.from('pdf_processing_queue')
-
-        .update({
-
-          status: 'pending', // Back to pending for next cron tick
-
-          processed_pages: newProcessedPages,
-
-          current_batch: job.current_batch + 1,
-
-          extracted_text: newText
-
-        })
-
-        .eq('id', [job.id](http://job.id));
-
-    }
-
-  } catch (error) {
-
-    await supabase.from('pdf_processing_queue')
-
-      .update({ status: 'failed', error_message: error.message })
-
-      .eq('id', [job.id](http://job.id));
-
-    
-
-    await supabase.from('documents')
-
-      .update({ status: 'failed' })
-
-      .eq('id', job.document_id);
-
-  }
-
-});
-
+### AdminTabs.tsx changes
+
+Line 51-54 area -- add new tab trigger:
+
+```text
+<TabsTrigger value="generate-mcqs" className="flex items-center gap-2 border-2 border-primary/20">
+  <Sparkles className="h-4 w-4" />
+  Generate MCQs
+</TabsTrigger>
 ```
 
----
+After Documents TabsContent (line 188) -- add new tab content:
 
-### STEP 4: pg_cron Schedule
-
-```sql
-
--- In Supabase → Database → Extensions → enable pg_cron
-
--- Then in SQL Editor:
-
-SELECT cron.schedule(
-
-  'process-pdf-queue',     -- job name
-
-  '*/2 * * * *',           -- every 2 minutes
-
-  $$
-
-  SELECT net.http_post(
-
-    url := '[https://YOUR_PROJECT.supabase.co/functions/v1/process-pdf-queue](https://YOUR_PROJECT.supabase.co/functions/v1/process-pdf-queue)',
-
-    headers := '{"Authorization": "Bearer YOUR_SERVICE_KEY"}'::jsonb,
-
-    body := '{}'::jsonb
-
-  );
-
-  $$
-
-);
-
+```text
+<TabsContent value="generate-mcqs">
+  <AIContentFactory />
+</TabsContent>
 ```
 
----
+Line 112 -- restore factory card on dashboard:
 
-### STEP 5: UI Progress for Large PDFs
-
-```typescript
-
-// Update DocumentLibrary.tsx to show queue progress:
-
-// New query for queued documents:
-
-const { data: queueStatus } = await supabase
-
-  .from('pdf_processing_queue')
-
-  .select('processed_pages, total_pages, status, current_batch, total_batches')
-
-  .eq('document_id', [doc.id](http://doc.id))
-
-  .single();
-
-// Show in UI:
-
-{queueStatus && queueStatus.status === 'pending' && (
-
-  <div className="text-xs text-muted-foreground">
-
-    <Progress 
-
-      value={(queueStatus.processed_pages / [queueStatus.total](http://queueStatus.total)_pages) * 100} 
-
-    />
-
-    <span>
-
-      Page {queueStatus.processed_pages} of {[queueStatus.total](http://queueStatus.total)_pages}
-
-      ({Math.round((queueStatus.processed_pages / [queueStatus.total](http://queueStatus.total)_pages) * 100)}%)
-
-    </span>
-
-    <span className="text-xs">
-
-      Estimated: {Math.ceil(([queueStatus.total](http://queueStatus.total)_pages - queueStatus.processed_pages) / 50 * 2)} min remaining
-
-    </span>
-
-  </div>
-
-)}
-
+```text
+<AIContentFactory />
 ```
 
----
+### Quantity slider update
 
-## COMPLETE FLOW DIAGRAM
-
+```text
+<Slider min={10} max={1000} step={10} />
+Labels: 10 | 100 | 250 | 500 | 1000
 ```
 
-Admin uploads PDF
+## Files Modified
 
-       ↓
+- `src/components/admin/AIContentFactory.tsx` -- add Board/Class dropdowns, increase quantity to 1000
+- `src/components/admin/AdminTabs.tsx` -- re-add factory to dashboard, add dedicated tab
 
-Check native text quality
+## No Database Changes Required
 
-       ↓
+All tables (educational_systems, levels, subjects, topics, content_items) already exist with the right schema.  
 
-Has good native text?
+&nbsp;
 
-  YES → Process normally (any size) ✅
+&nbsp;
 
-  NO → Check page count
+Perfect! Approved for immediate implementation.
 
-         ↓
+CONFIRMED CHANGES:
 
-    ≤ 50 pages?
+✅ AIContentFactory.tsx:
 
-      YES → Direct OCR (single request, 20s) ✅
+   - Add Board dropdown (educational_systems)
 
-      NO ↓
+   - Add Class dropdown (levels, filtered by board)
 
-    ≤ 200 pages?
+   - Cascading filters working
 
-      YES → Batch OCR via waitUntil (15 pages/batch, 3-5 min) ✅
+   - Increase quantity max: 200 → 1000
 
-      NO ↓
+   - Full 4-level hierarchy
 
-    > 200 pages → Queue System
+✅ AdminTabs.tsx:
 
-      - Add to pdf_processing_queue
+   - Restore AIContentFactory card (line 112)
 
-      - pg_cron runs every 2 minutes
+   - Add "Generate MCQs" tab with Sparkles icon
 
-      - Processes 50 pages per tick
+   - Place after Documents tab
 
-      - 1000 pages = 20 ticks = 40 minutes
+✅ No edge function changes needed
 
-      - Progress shown in UI
+✅ No database changes needed
 
-      - Email/notification on completion ✅
+ADDITIONAL REQUESTS:
 
-```
+1. Add visual feedback:
 
----
+   Show which selections are required before Generate button enables:
 
-## TIME ESTIMATES AT SCALE
+   - Board ✓ → Class ✓ → Subject ✓ → Topic ✓ → Ready!
 
-| PDF Size | Pages | Strategy | Time |
+2. Add generation summary after completion:
 
-|----------|-------|----------|------|
+   Toast message:
 
-| Small | 1-50 | Direct OCR | 20-60 sec |
+   "✅ Generated 500 MCQs for Class 3 - General Knowledge - Animals"
 
-| Medium | 51-200 | Batch OCR | 2-5 min |
+3. Add quick stats in UI:
 
-| Large | 201-500 | Queue (2min/tick) | 10-20 min |
+   Show total questions in content_items for selected topic
 
-| Very Large | 501-1000 | Queue (2min/tick) | 20-40 min |
+   Example: "Current bank: 1,234 questions for this topic"
 
-| Massive | 1000+ | Queue (2min/tick) | 40+ min |
+4. Success confetti animation:
 
-ALL sizes work without timeout! ✅
+   When bulk generation (500+) completes successfully
 
----
+These are minor enhancements - priority is the core re-enabling.
 
-## IMPLEMENTATION PRIORITY
+Please implement and deploy immediately!
 
-Phase 1 (IMMEDIATE - fixes current issue):
-
-✅ Already implementing: Batch OCR for 50-200 pages
-
-Phase 2 (THIS WEEK - handles large PDFs):
-
-1. Create pdf_processing_queue table
-
-2. Create process-pdf-queue edge function
-
-3. Set up pg_cron (every 2 minutes)
-
-4. Update process-book to detect large PDFs
-
-5. Add UI progress display
-
-Phase 3 (NEXT WEEK - polish):
-
-1. Email notification on completion
-
-2. Better progress UI
-
-3. Retry failed queue items
-
-4. Queue monitoring dashboard
-
----
-
-## ADDITIONAL CONSIDERATIONS
-
-### Text PDFs (not scanned):
-
-If PDF has native text (not image-based):
-
-- NO OCR needed at all
-
-- Process instantly regardless of page count
-
-- 1000 pages with native text = 30 seconds
-
-- Only scanned PDFs need OCR batching
-
-### Partial Processing:
-
-If queue fails midway (page 400 of 1000):
-
-- Save progress in database
-
-- Resume from page 400 on next retry
-
-- Don't restart from beginning
-
-- Efficient and reliable
-
-### Storage Consideration:
-
-Extracted text stored in pdf_processing_queue temporarily
-
-After processing complete, text goes to document_sections
-
-Queue entry can be cleaned up after 24 hours
-
----
-
-PLEASE IMPLEMENT PHASE 2 AFTER CURRENT BATCH OCR FIX!
-
-This makes the platform truly scalable for any PDF size.
+This allows us to launch the app without waiting for PDF fixes.
