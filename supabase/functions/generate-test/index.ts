@@ -562,7 +562,7 @@ async function saveQuestionsInBackground(
           category: 'mcq',
           subject: sanitizedTopic,
           topic: topic,
-          difficulty: difficulty.toLowerCase(),
+          difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
@@ -961,7 +961,7 @@ serve(async (req) => {
           subject: sanitizedTopic,
           topic: topic,
           topic_id: topic_id || null, // FK link to topics table
-          difficulty: difficulty.toLowerCase(),
+          difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
