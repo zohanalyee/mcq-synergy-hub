@@ -150,7 +150,7 @@ const AIContentFactory = () => {
           batch: batch + 1,
           requested: batchQuantity,
           generated: data.questions_generated || 0,
-          saved: data.questions_saved || 0,
+          saved: data.questions_approved || 0,
           duplicates: data.duplicates_flagged || 0
         };
 
