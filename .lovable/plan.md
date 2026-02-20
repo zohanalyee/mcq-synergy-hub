@@ -1,197 +1,101 @@
-# Re-enable Direct AI MCQ Generation
+# Fix: MCQs Not Saving to Database
 
-## What Already Exists
+## Root Cause
 
-- `AIContentFactory.tsx` -- working component with subject/topic dropdowns, batch generation, progress UI
-- `generate-test` edge function -- working, uses Lovable AI Gateway, saves to `content_items`, has deduplication
-- Both were "paused" -- the factory card was removed from the AdminTabs dashboard (line 112)
-
-## What Needs to Change
-
-### 1. Enhance AIContentFactory.tsx
-
-Add the full LMS hierarchy (Board and Class dropdowns) before Subject/Topic:
-
-- **Board dropdown**: Fetches from `educational_systems` table (filtered by `is_active = true`)
-- **Class dropdown**: Fetches from `levels` table, filtered by selected board's `system_id`
-- **Subject dropdown**: Fetches from `subjects` table, filtered by selected level's `level_id`
-- **Topic dropdown**: Fetches from `topics` table, filtered by selected subject's `subject_id`
-
-Each dropdown filters the next (cascading selection).
-
-Increase the quantity slider:
-
-- Current: min 10, max 200, step 10
-- New: min 10, max 1000, step 10
-- Batch size stays at 20 (the edge function handles batching internally)
-
-Update the edge function call to pass the full context (board name, class name) for better prompt quality.
-
-### 2. Re-add to AdminTabs.tsx
-
-- Restore the AIContentFactory card on the dashboard tab (line 112, where the comment says "AI Content Factory removed")
-- Add a new dedicated tab "Generate MCQs" with a Sparkles icon, placed after the Documents tab
-
-### 3. No Edge Function Changes Needed
-
-The `generate-test` function already:
-
-- Accepts `topic`, `difficulty`, `question_count`, `mode: 'bank_only'`
-- Uses Lovable AI Gateway (google/gemini-2.5-flash)
-- Has hybrid deduplication (fingerprint + normalized text)
-- Saves to `content_items` with proper status
-- Logs usage to `ai_usage_logs`
-
-## Technical Details
-
-### Updated AIContentFactory.tsx data loading
+A database CHECK constraint on the `content_items` table requires `difficulty` values to be Title Case: `'Easy'`, `'Medium'`, or `'Hard'`.
 
 ```text
-useEffect: load all 4 levels of hierarchy
-  const [systems] = supabase.from('educational_systems')
-    .select('id, name').eq('is_active', true).order('name')
-  const [levels] = supabase.from('levels').select('id, name, system_id').order('name')
-  const [subjects] = supabase.from('subjects').select('id, name, level_id').order('name')
-  const [topics] = supabase.from('topics').select('id, name, subject_id').order('name')
-
-Cascading filters:
-  filteredLevels = levels.filter(l => l.system_id === selectedSystem)
-  filteredSubjects = subjects.filter(s => s.level_id === selectedLevel)
-  filteredTopics = topics.filter(t => t.subject_id === selectedSubject)
+CHECK (difficulty IS NULL OR difficulty IN ('Easy', 'Medium', 'Hard'))
 ```
 
-### Updated selection grid (4 columns instead of 3)
+The `generate-test` edge function converts difficulty to lowercase (`difficulty.toLowerCase()`) before inserting, producing `'easy'`, `'medium'`, `'hard'`. This violates the constraint, causing every INSERT to fail silently.
+
+The "zero loss" retry logic retries 3 times but uses the same lowercase difficulty each time, so all retries also fail. The code then counts the failure as "flagged" anyway (returns `'flagged'` even when the emergency save fails), so the API response reports 20 "saved" per batch when 0 rows actually reach the database.
+
+## Evidence
+
+- AI usage logs show: `approved: 0, flagged_duplicates: 20` for all 5 batches
+- Database has 0 rows with `topic = 'Blessings of Allah'`
+- Database has 0 rows with `status = 'flagged_duplicate'`
+- The constraint: `content_items_difficulty_check` requires Title Case values
+
+## Fix
+
+### File: `supabase/functions/generate-test/index.ts`
+
+**Change 1**: Fix difficulty casing in `forceSaveQuestion` (around line 964)
+
+Replace:
 
 ```text
-Row 1: Board | Class | Subject | Topic
-Row 2: Difficulty (dropdown)
-Row 3: Quantity slider (10-1000)
-Row 4: Generate button
+difficulty: difficulty.toLowerCase(),
 ```
 
-### Updated handleGenerate
+With:
 
 ```text
-// Build rich topic context for better AI generation
-const systemName = systems.find(s => s.id === selectedSystem)?.name
-const levelName = filteredLevels.find(l => l.id === selectedLevel)?.name
-const subjectName = filteredSubjects.find(s => s.id === selectedSubject)?.name
-const topicName = filteredTopics.find(t => t.id === selectedTopic)?.name
-
-// Use the most specific name available
-const generationTopic = topicName || subjectName || "General"
-
-// Pass to edge function (existing API)
-supabase.functions.invoke('generate-test', {
-  body: {
-    topic: generationTopic,
-    difficulty,
-    question_count: batchQuantity,
-    mode: 'bank_only',
-    forceNew: true
-  }
-})
+difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
 ```
 
-### AdminTabs.tsx changes
+This converts `'easy'` to `'Easy'`, `'medium'` to `'Medium'`, `'hard'` to `'Hard'`.
 
-Line 51-54 area -- add new tab trigger:
+**Change 2**: Fix same issue in `saveQuestionsInBackground` (around line 565)
+
+Same replacement -- this function is used for non-bank-only mode background saves.
+
+**Change 3 (UI)**: Fix misleading "Saved" counter in `AIContentFactory.tsx`
+
+The UI currently shows `data.questions_saved` (which is approved + flagged total) as "Saved". After the fix, change to use `data.questions_approved` for the Saved counter so users see the actual approved count.
+
+In `AIContentFactory.tsx`, update the batch result mapping:
 
 ```text
-<TabsTrigger value="generate-mcqs" className="flex items-center gap-2 border-2 border-primary/20">
-  <Sparkles className="h-4 w-4" />
-  Generate MCQs
-</TabsTrigger>
+// Before:
+saved: data.questions_saved || 0,
+
+// After:
+saved: data.questions_approved || 0,
 ```
 
-After Documents TabsContent (line 188) -- add new tab content:
+### Files Modified
 
-```text
-<TabsContent value="generate-mcqs">
-  <AIContentFactory />
-</TabsContent>
-```
+- `supabase/functions/generate-test/index.ts` -- fix difficulty Title Case in 2 locations
+- `src/components/admin/AIContentFactory.tsx` -- show approved count instead of total
 
-Line 112 -- restore factory card on dashboard:
+### After Deployment
 
-```text
-<AIContentFactory />
-```
+Re-run the same generation (Blessings of Allah, 100 questions) and verify questions appear in the Question Bank with `status = 'approved'`.  Perfect diagnosis! Approved for immediate deployment.
 
-### Quantity slider update
+CONFIRMED:
 
-```text
-<Slider min={10} max={1000} step={10} />
-Labels: 10 | 100 | 250 | 500 | 1000
-```
+✅ Root cause: Case sensitivity (lowercase vs Title Case)
 
-## Files Modified
+✅ Fix 1: forceSaveQuestion() - Title Case difficulty
 
-- `src/components/admin/AIContentFactory.tsx` -- add Board/Class dropdowns, increase quantity to 1000
-- `src/components/admin/AdminTabs.tsx` -- re-add factory to dashboard, add dedicated tab
+✅ Fix 2: saveQuestionsInBackground() - Title Case difficulty
 
-## No Database Changes Required
+✅ Fix 3: AIContentFactory.tsx - Show questions_approved (not questions_saved)
 
-All tables (educational_systems, levels, subjects, topics, content_items) already exist with the right schema.  
+TESTING PLAN:
 
-&nbsp;
+After deployment:
 
-&nbsp;
+1. Hard refresh browser
 
-Perfect! Approved for immediate implementation.
+2. Re-generate: Blessings of Allah, 100 questions
 
-CONFIRMED CHANGES:
+3. Verify in database: Should see ~100 rows
 
-✅ AIContentFactory.tsx:
+4. Check status: Should be 'approved'
 
-   - Add Board dropdown (educational_systems)
+5. Check difficulty: Should be 'Easy', 'Medium', 'Hard' (Title Case)
 
-   - Add Class dropdown (levels, filtered by board)
+6. Generate different topic: Should work
 
-   - Cascading filters working
+7. Generate same topic again: Should catch duplicates properly
 
-   - Increase quantity max: 200 → 1000
+8. Test bulk (500): Should save + confetti
 
-   - Full 4-level hierarchy
+This fix unblocks the entire launch!
 
-✅ AdminTabs.tsx:
-
-   - Restore AIContentFactory card (line 112)
-
-   - Add "Generate MCQs" tab with Sparkles icon
-
-   - Place after Documents tab
-
-✅ No edge function changes needed
-
-✅ No database changes needed
-
-ADDITIONAL REQUESTS:
-
-1. Add visual feedback:
-
-   Show which selections are required before Generate button enables:
-
-   - Board ✓ → Class ✓ → Subject ✓ → Topic ✓ → Ready!
-
-2. Add generation summary after completion:
-
-   Toast message:
-
-   "✅ Generated 500 MCQs for Class 3 - General Knowledge - Animals"
-
-3. Add quick stats in UI:
-
-   Show total questions in content_items for selected topic
-
-   Example: "Current bank: 1,234 questions for this topic"
-
-4. Success confetti animation:
-
-   When bulk generation (500+) completes successfully
-
-These are minor enhancements - priority is the core re-enabling.
-
-Please implement and deploy immediately!
-
-This allows us to launch the app without waiting for PDF fixes.
+Please deploy immediately.
