@@ -1,10 +1,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { SyllabusSubject, SyllabusTopic, FilterState, EducationalSystemWithLevels } from '../interfaces';
+import { getTopicQuestionCounts } from '@/services/syllabusRAGFallback';
 
 export const useSyllabusData = () => {
   const [systems, setSystems] = useState<EducationalSystemWithLevels[]>([]);
   const [rawSubjects, setRawSubjects] = useState<SyllabusSubject[]>([]);
+  const [topicQuestionCounts, setTopicQuestionCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -72,14 +74,16 @@ export const useSyllabusData = () => {
           )
         `)
         .not('level_id', 'is', null)
+        .or('approved.eq.true,approved.is.null')
         .order('name');
 
       if (subjectsError) throw subjectsError;
 
-      // Fetch all topics
+      // Fetch all approved topics
       const { data: topicsData, error: topicsError } = await supabase
         .from('topics')
         .select('id, name, description, subject_id')
+        .or('approved.eq.true,approved.is.null')
         .order('name');
 
       if (topicsError) throw topicsError;
@@ -112,6 +116,13 @@ export const useSyllabusData = () => {
       });
 
       setRawSubjects(subjects);
+
+      // Fetch question counts for all topics
+      const allTopicIds = subjects.flatMap(s => s.topics.map(t => t.id));
+      if (allTopicIds.length > 0) {
+        const counts = await getTopicQuestionCounts(allTopicIds);
+        setTopicQuestionCounts(counts);
+      }
     } catch (err) {
       console.error('Error fetching subjects:', err);
       setError('Failed to load subjects');
@@ -207,6 +218,7 @@ export const useSyllabusData = () => {
     filteredSubjects,
     rawSubjects,
     setRawSubjects,
+    topicQuestionCounts,
     loading,
     error,
     filterState,

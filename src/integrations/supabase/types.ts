@@ -1265,6 +1265,42 @@ export type Database = {
           },
         ]
       }
+      user_generation_preferences: {
+        Row: {
+          default_difficulty: string | null
+          default_quantity: number | null
+          id: string
+          last_board_id: string | null
+          last_class_id: string | null
+          last_subject_id: string | null
+          last_topic_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          default_difficulty?: string | null
+          default_quantity?: number | null
+          id?: string
+          last_board_id?: string | null
+          last_class_id?: string | null
+          last_subject_id?: string | null
+          last_topic_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          default_difficulty?: string | null
+          default_quantity?: number | null
+          id?: string
+          last_board_id?: string | null
+          last_class_id?: string | null
+          last_subject_id?: string | null
+          last_topic_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_quiz_attempts: {
         Row: {
           answers: Json | null

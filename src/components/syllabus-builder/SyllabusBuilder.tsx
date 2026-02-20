@@ -40,6 +40,7 @@ export const SyllabusBuilder = () => {
     filteredSubjects,
     rawSubjects,
     setRawSubjects,
+    topicQuestionCounts,
     loading,
     filterState,
     toggleSystemFilter,
@@ -603,6 +604,7 @@ export const SyllabusBuilder = () => {
           <SubjectGrid
             subjects={filteredSubjects}
             loading={loading}
+            topicQuestionCounts={topicQuestionCounts}
             onToggleSubject={handleToggleSubject}
             onToggleTopic={handleToggleTopic}
             onToggleExpand={handleToggleExpand}

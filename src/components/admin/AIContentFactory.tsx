@@ -46,6 +46,30 @@ const AIContentFactory = () => {
   const [totalSaved, setTotalSaved] = useState(0);
   const [totalDuplicates, setTotalDuplicates] = useState(0);
   const [topicQuestionCount, setTopicQuestionCount] = useState<number | null>(null);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
+
+  // Load user preferences on mount
+  useEffect(() => {
+    const loadPrefs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { setPreferencesLoaded(true); return; }
+      const { data } = await supabase
+        .from('user_generation_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) {
+        setDifficulty(data.default_difficulty || 'medium');
+        setQuantity(data.default_quantity || 100);
+        if (data.last_board_id) setSelectedSystem(data.last_board_id);
+        if (data.last_class_id) setSelectedLevel(data.last_class_id);
+        if (data.last_subject_id) setSelectedSubject(data.last_subject_id);
+        if (data.last_topic_id) setSelectedTopic(data.last_topic_id);
+      }
+      setPreferencesLoaded(true);
+    };
+    loadPrefs();
+  }, []);
 
   // Load all hierarchy data
   useEffect(() => {
@@ -172,6 +196,25 @@ const AIContentFactory = () => {
     }
 
     setIsGenerating(false);
+
+    // Save preferences after generation
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('user_generation_preferences').upsert({
+          user_id: user.id,
+          default_difficulty: difficulty,
+          default_quantity: quantity,
+          last_board_id: selectedSystem || null,
+          last_class_id: selectedLevel || null,
+          last_subject_id: selectedSubject || null,
+          last_topic_id: selectedTopic || null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+      }
+    } catch (e) {
+      console.error('Failed to save preferences:', e);
+    }
 
     // Build descriptive summary
     const parts = [levelName, subjectName, topicName].filter(Boolean).join(" - ");

@@ -84,15 +84,25 @@ export const SelectionSummary = ({
             <span className="text-primary font-bold mr-1">{selectedTopicsCount}</span> Topics
           </Badge>
           {selectedTopicsCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onClearSelection}
-              className="h-7 px-2 text-xs ml-auto"
-            >
-              <X className="h-3 w-3 mr-1" />
-              Clear
-            </Button>
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onClearSelection}
+                className="h-7 px-2 text-xs ml-auto"
+              >
+                <X className="h-3 w-3 mr-1" />
+                Clear
+              </Button>
+              <p className="w-full text-xs text-muted-foreground">
+                ~{selectedTopicsCount * quizSettings.questionsCount} questions estimated
+                {selectedTopicsCount * quizSettings.questionsCount > 100 && (
+                  <span className="text-destructive font-medium ml-1">
+                    (exceeds 100 max — reduce selections or questions)
+                  </span>
+                )}
+              </p>
+            </>
           )}
         </div>
 
@@ -162,7 +172,7 @@ export const SelectionSummary = ({
         <div className="space-y-2">
           <Button
             onClick={onGenerateQuiz}
-            disabled={selectedTopicsCount === 0 || isGenerating}
+            disabled={selectedTopicsCount === 0 || isGenerating || (selectedTopicsCount * quizSettings.questionsCount > 100)}
             className="w-full"
           >
             {isGenerating ? (
@@ -170,7 +180,7 @@ export const SelectionSummary = ({
             ) : (
               <>
                 <Sparkles className="h-4 w-4 mr-2" />
-                Generate Test
+                Generate Test ({Math.min(selectedTopicsCount * quizSettings.questionsCount, 100)} Qs)
               </>
             )}
           </Button>
