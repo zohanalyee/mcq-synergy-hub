@@ -1,101 +1,278 @@
-# Fix: MCQs Not Saving to Database
+# Make Syllabus Builder Fully Operational + Save User Preferences
 
-## Root Cause
+## Current State Analysis
 
-A database CHECK constraint on the `content_items` table requires `difficulty` values to be Title Case: `'Easy'`, `'Medium'`, or `'Hard'`.
+The Syllabus Builder already has most pieces working:
 
-```text
-CHECK (difficulty IS NULL OR difficulty IN ('Easy', 'Medium', 'Hard'))
-```
+- Selection system with checkboxes (subjects and topics)
+- Filter sidebar (Board/Class)
+- Test settings panel (questions, time, difficulty)
+- Save template feature
+- Test session page with timer, scoring, results
 
-The `generate-test` edge function converts difficulty to lowercase (`difficulty.toLowerCase()`) before inserting, producing `'easy'`, `'medium'`, `'hard'`. This violates the constraint, causing every INSERT to fail silently.
+**Critical Issue Found**: The question query in `syllabusRAGFallback.ts` resolves topic UUIDs to topic NAMES, then queries `content_items` by the `topic` text field. However, ~50% of questions (1,859 of 3,802) have `topic_id` set. The name-matching approach is fragile and misses questions where names don't match exactly. Querying by `topic_id` directly would be far more reliable.
 
-The "zero loss" retry logic retries 3 times but uses the same lowercase difficulty each time, so all retries also fail. The code then counts the failure as "flagged" anyway (returns `'flagged'` even when the emergency save fails), so the API response reports 20 "saved" per batch when 0 rows actually reach the database.
+**Other Issues**:
 
-## Evidence
+- No approved filtering on subjects/topics (shows AI-suggested items to students)
+- No question availability count shown per topic
+- No 100-question maximum enforcement
+- Questions aren't distributed across topics (just fetched in bulk)
+- No user generation preferences saved
 
-- AI usage logs show: `approved: 0, flagged_duplicates: 20` for all 5 batches
-- Database has 0 rows with `topic = 'Blessings of Allah'`
-- Database has 0 rows with `status = 'flagged_duplicate'`
-- The constraint: `content_items_difficulty_check` requires Title Case values
+---
 
-## Fix
+## Part 1: Fix Syllabus Builder Core
 
-### File: `supabase/functions/generate-test/index.ts`
+### 1.1 Fix Question Fetching (Critical)
 
-**Change 1**: Fix difficulty casing in `forceSaveQuestion` (around line 964)
+**File: `src/services/syllabusRAGFallback.ts**`
 
-Replace:
-
-```text
-difficulty: difficulty.toLowerCase(),
-```
-
-With:
+Replace the current `getQuestionsWithFallbackInfo` approach. Instead of resolving topic IDs to names and querying by text, query `content_items` directly using both `topic_id` (UUID) AND `topic` (text name) for maximum coverage:
 
 ```text
-difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+// Query by topic_id (UUID) for linked questions
+const { data: byId } = await supabase
+  .from('content_items')
+  .select('*')
+  .eq('category', 'mcq')
+  .eq('status', 'approved')
+  .in('topic_id', topicIds)
+  .limit(requestedCount * 2);
+
+// Also query by topic name for unlinked questions
+const topicNames = topics?.map(t => t.name) || [];
+const { data: byName } = await supabase
+  .from('content_items')
+  .select('*')
+  .eq('category', 'mcq')
+  .eq('status', 'approved')
+  .is('topic_id', null)
+  .in('topic', topicNames)
+  .limit(requestedCount * 2);
+
+// Merge and deduplicate by ID
+const allQuestions = deduplicateById([...(byId || []), ...(byName || [])]);
 ```
 
-This converts `'easy'` to `'Easy'`, `'medium'` to `'Medium'`, `'hard'` to `'Hard'`.
+This ensures we find questions regardless of whether they were linked by UUID or only by name.
 
-**Change 2**: Fix same issue in `saveQuestionsInBackground` (around line 565)
+### 1.2 Add Approved Filtering
 
-Same replacement -- this function is used for non-bank-only mode background saves.
+**File: `src/components/syllabus-builder/hooks/useSyllabusData.ts**`
 
-**Change 3 (UI)**: Fix misleading "Saved" counter in `AIContentFactory.tsx`
+Add `.or('approved.eq.true,approved.is.null')` to both subjects and topics queries so students don't see AI-suggested unapproved items.
 
-The UI currently shows `data.questions_saved` (which is approved + flagged total) as "Saved". After the fix, change to use `data.questions_approved` for the Saved counter so users see the actual approved count.
+### 1.3 Show Question Availability Per Topic
 
-In `AIContentFactory.tsx`, update the batch result mapping:
+**File: `src/components/syllabus-builder/SyllabusSubjectCard.tsx**`
+
+Add a small badge next to each topic showing how many approved MCQs are available. Fetch counts in bulk from `content_items` grouped by `topic_id`.
+
+**File: `src/components/syllabus-builder/hooks/useSyllabusData.ts**`
+
+Add a query to fetch question counts per topic:
 
 ```text
-// Before:
-saved: data.questions_saved || 0,
+const { data: counts } = await supabase
+  .from('content_items')
+  .select('topic_id')
+  .eq('category', 'mcq')
+  .eq('status', 'approved')
+  .not('topic_id', 'is', null);
 
-// After:
-saved: data.questions_approved || 0,
+// Count per topic_id
+const countMap = counts.reduce((acc, item) => {
+  acc[item.topic_id] = (acc[item.topic_id] || 0) + 1;
+  return acc;
+}, {});
 ```
 
-### Files Modified
+Pass this to subject cards so each topic shows "(30 Qs)" next to its name.
 
-- `supabase/functions/generate-test/index.ts` -- fix difficulty Title Case in 2 locations
-- `src/components/admin/AIContentFactory.tsx` -- show approved count instead of total
+### 1.4 Enforce 100 Question Maximum
 
-### After Deployment
+**File: `src/components/syllabus-builder/SelectionSummary.tsx**`
 
-Re-run the same generation (Blessings of Allah, 100 questions) and verify questions appear in the Question Bank with `status = 'approved'`.  Perfect diagnosis! Approved for immediate deployment.
+- Cap the questions slider at 100 (already max 100)
+- Add validation: if `selectedTopicsCount * questionsCount > 100`, show a warning
+- Disable Generate button if over limit
+- Show estimated total: "~60 questions (3 topics x 20 each)"
 
-CONFIRMED:
+### 1.5 Distribute Questions Across Topics
 
-✅ Root cause: Case sensitivity (lowercase vs Title Case)
+**File: `src/services/syllabusRAGFallback.ts**`
 
-✅ Fix 1: forceSaveQuestion() - Title Case difficulty
+Instead of fetching all questions in one query, distribute the requested count across selected topics:
 
-✅ Fix 2: saveQuestionsInBackground() - Title Case difficulty
+```text
+const perTopicCount = Math.ceil(requestedCount / topicIds.length);
 
-✅ Fix 3: AIContentFactory.tsx - Show questions_approved (not questions_saved)
+for (const topicId of topicIds) {
+  const topicQuestions = await fetchForTopic(topicId, perTopicCount);
+  allQuestions.push(...topicQuestions);
+}
 
-TESTING PLAN:
+// Shuffle the combined result
+const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+return shuffled.slice(0, requestedCount);
+```
 
-After deployment:
+This ensures balanced representation across all selected topics.
 
-1. Hard refresh browser
+---
 
-2. Re-generate: Blessings of Allah, 100 questions
+## Part 2: Save User Generation Preferences
 
-3. Verify in database: Should see ~100 rows
+### 2.1 Database Migration
 
-4. Check status: Should be 'approved'
+Create a new table for storing admin MCQ generation preferences:
 
-5. Check difficulty: Should be 'Easy', 'Medium', 'Hard' (Title Case)
+```sql
+CREATE TABLE public.user_generation_preferences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL,
+  default_difficulty TEXT DEFAULT 'Medium',
+  default_quantity INTEGER DEFAULT 100,
+  last_board_id UUID,
+  last_class_id UUID,
+  last_subject_id UUID,
+  last_topic_id UUID,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+  UNIQUE(user_id)
+);
 
-6. Generate different topic: Should work
+ALTER TABLE public.user_generation_preferences ENABLE ROW LEVEL SECURITY;
 
-7. Generate same topic again: Should catch duplicates properly
+CREATE POLICY "Users can manage their own preferences"
+  ON public.user_generation_preferences FOR ALL
+  USING (auth.uid() = user_id)
+  WITH CHECK (auth.uid() = user_id);
+```
 
-8. Test bulk (500): Should save + confetti
+### 2.2 Load Preferences on Mount
 
-This fix unblocks the entire launch!
+**File: `src/components/admin/AIContentFactory.tsx**`
 
-Please deploy immediately.
+On component mount, fetch saved preferences and pre-fill dropdowns:
+
+```text
+useEffect(() => {
+  const loadPrefs = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+    const { data } = await supabase
+      .from('user_generation_preferences')
+      .select('*')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (data) {
+      setDifficulty(data.default_difficulty || 'Medium');
+      setQuantity(data.default_quantity || 100);
+      if (data.last_board_id) setSelectedSystem(data.last_board_id);
+      // ... etc for class, subject, topic
+    }
+  };
+  loadPrefs();
+}, []);
+```
+
+### 2.3 Save Preferences After Generation
+
+**File: `src/components/admin/AIContentFactory.tsx**`
+
+After successful generation completes, upsert preferences:
+
+```text
+await supabase.from('user_generation_preferences').upsert({
+  user_id: user.id,
+  default_difficulty: difficulty,
+  default_quantity: quantity,
+  last_board_id: selectedSystem,
+  last_class_id: selectedLevel,
+  last_subject_id: selectedSubject,
+  last_topic_id: selectedTopic,
+  updated_at: new Date().toISOString()
+});
+```
+
+---
+
+## Files Modified
+
+1. `src/services/syllabusRAGFallback.ts` -- Fix query to use topic_id + name fallback, add topic distribution
+2. `src/components/syllabus-builder/hooks/useSyllabusData.ts` -- Add approved filtering, fetch question counts per topic
+3. `src/components/syllabus-builder/SyllabusSubjectCard.tsx` -- Show question count per topic
+4. `src/components/syllabus-builder/SelectionSummary.tsx` -- Add estimated total display, enforce 100 max warning
+5. `src/components/admin/AIContentFactory.tsx` -- Load/save generation preferences
+6. New migration: Create `user_generation_preferences` table
+
+## No Edge Function Changes Required
+
+All changes are frontend + database. The existing `generate-test` edge function and question bank service continue to work as-is.   Perfect! Approved for immediate implementation.
+
+CONFIRMED FIXES:
+
+Part 1 - Syllabus Builder:
+
+✅ Fix question query (topic_id + name fallback)
+
+✅ Add approved filtering (students see only approved)
+
+✅ Show question count per topic "(45 Qs)"
+
+✅ Enforce 100 question maximum with warning
+
+✅ Distribute questions across selected topics
+
+✅ Filters collapsed by default
+
+Part 2 - User Preferences:
+
+✅ Create user_generation_preferences table
+
+✅ Load preferences on mount (AIContentFactory)
+
+✅ Save preferences after generation
+
+✅ Remember difficulty, quantity, last selections
+
+CRITICAL FIX:
+
+The topic_id query fix is ESSENTIAL - currently missing 50% of questions!
+
+This explains why tests were failing to generate enough questions.
+
+FILES MODIFIED:
+
+1. syllabusRAGFallback.ts
+
+2. useSyllabusData.ts
+
+3. SyllabusSubjectCard.tsx
+
+4. SelectionSummary.tsx
+
+5. AIContentFactory.tsx
+
+6. Database migration
+
+TESTING PRIORITY:
+
+After deployment, test:
+
+1. Question finding (should find ALL questions now)
+
+2. Topic count badges (show availability)
+
+3. 100 max enforcement (warning + disable)
+
+4. Distribution (balanced across topics)
+
+5. Preferences (load/save working)
+
+6. Filters (collapsed by default)
+
+This is the FINAL feature before launch!
+
+Please implement and deploy as soon as possible.
