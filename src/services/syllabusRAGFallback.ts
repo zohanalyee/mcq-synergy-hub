@@ -1,5 +1,4 @@
 import { supabase } from "@/integrations/supabase/client";
-import { getQuestionBank, QuestionBankItem } from "./questionBankService";
 
 // Check if RAG documents exist for the given topic IDs
 export async function checkRAGAvailability(topicIds: string[]): Promise<{
@@ -48,67 +47,63 @@ export async function generateFromRAGForSyllabus(params: {
     return { success: false, generated: 0, saved: 0, error: 'No topics provided' };
   }
 
-   // Only process topics that have RAG documents
-   const ragInfo = await checkRAGAvailability(topicIds);
+  const ragInfo = await checkRAGAvailability(topicIds);
    
-   if (!ragInfo.hasDocuments) {
-     return { 
-       success: false, 
-       generated: 0, 
-       saved: 0, 
-       error: 'No RAG documents found for any of the selected topics. Please upload documents first.' 
-     };
-   }
- 
-   // Filter to only topics with documents
-   const validTopicIds = topicIds.filter(id => ragInfo.topicsWithDocuments.includes(id));
+  if (!ragInfo.hasDocuments) {
+    return { 
+      success: false, 
+      generated: 0, 
+      saved: 0, 
+      error: 'No RAG documents found for any of the selected topics. Please upload documents first.' 
+    };
+  }
+
+  const validTopicIds = topicIds.filter(id => ragInfo.topicsWithDocuments.includes(id));
    
-   if (validTopicIds.length === 0) {
-     return { 
-       success: false, 
-       generated: 0, 
-       saved: 0, 
-       error: 'No RAG documents found for selected topics.' 
-     };
-   }
+  if (validTopicIds.length === 0) {
+    return { 
+      success: false, 
+      generated: 0, 
+      saved: 0, 
+      error: 'No RAG documents found for selected topics.' 
+    };
+  }
 
   let totalGenerated = 0;
   let totalSaved = 0;
   const errors: string[] = [];
 
-   // Distribute count across valid topics
-   const perTopicCount = Math.max(1, Math.ceil(count / validTopicIds.length));
+  const perTopicCount = Math.max(1, Math.ceil(count / validTopicIds.length));
 
-   for (const topicId of validTopicIds) {
+  for (const topicId of validTopicIds) {
     try {
-       // generate-from-rag now accepts topic_id and resolves everything internally
       const response = await supabase.functions.invoke('generate-from-rag', {
         body: {
-           topic_id: topicId,
+          topic_id: topicId,
           difficulty: difficulty === 'mixed' ? undefined : difficulty,
           count: perTopicCount
         }
       });
 
       if (response.error) {
-         errors.push(`Topic ${topicId}: ${response.error.message}`);
+        errors.push(`Topic ${topicId}: ${response.error.message}`);
         continue;
       }
 
       const result = response.data;
        
-       if (result?.error) {
-         errors.push(`Topic ${topicId}: ${result.error}`);
-         continue;
-       }
+      if (result?.error) {
+        errors.push(`Topic ${topicId}: ${result.error}`);
+        continue;
+      }
        
       if (result?.success) {
-         totalGenerated += result.questions_generated || 0;
-         totalSaved += result.questions_saved || 0;
+        totalGenerated += result.questions_generated || 0;
+        totalSaved += result.questions_saved || 0;
       }
     } catch (err) {
-       console.error(`Error generating for topic ${topicId}:`, err);
-       errors.push(`Topic ${topicId}: Generation failed`);
+      console.error(`Error generating for topic ${topicId}:`, err);
+      errors.push(`Topic ${topicId}: Generation failed`);
     }
   }
 
@@ -120,13 +115,113 @@ export async function generateFromRAGForSyllabus(params: {
   };
 }
 
-// Get MCQs from DB with fallback info
+// Question bank item interface for syllabus builder
+export interface SyllabusQuestion {
+  id: string;
+  title: string;
+  options: any;
+  correctOption: string | null;
+  explanation: string | null;
+  difficulty: string | null;
+  subject: string | null;
+  topic: string | null;
+  topic_id: string | null;
+}
+
+// Fetch questions by topic_id (UUID) + topic name fallback, with balanced distribution
+async function fetchQuestionsForTopic(
+  topicId: string,
+  topicName: string,
+  count: number,
+  difficulty?: string
+): Promise<SyllabusQuestion[]> {
+  // Query 1: By topic_id (linked questions)
+  let queryById = supabase
+    .from('content_items')
+    .select('id, title, options, correct_option, explanation, difficulty, subject, topic, topic_id')
+    .eq('category', 'mcq')
+    .eq('status', 'approved')
+    .eq('topic_id', topicId)
+    .limit(count * 2);
+
+  if (difficulty && difficulty !== 'mixed') {
+    const titleCase = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+    queryById = queryById.eq('difficulty', titleCase);
+  }
+
+  const { data: byId } = await queryById;
+
+  // Query 2: By topic name for unlinked questions (topic_id is null)
+  let queryByName = supabase
+    .from('content_items')
+    .select('id, title, options, correct_option, explanation, difficulty, subject, topic, topic_id')
+    .eq('category', 'mcq')
+    .eq('status', 'approved')
+    .is('topic_id', null)
+    .ilike('topic', topicName)
+    .limit(count * 2);
+
+  if (difficulty && difficulty !== 'mixed') {
+    const titleCase = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+    queryByName = queryByName.eq('difficulty', titleCase);
+  }
+
+  const { data: byName } = await queryByName;
+
+  // Merge and deduplicate
+  const seen = new Set<string>();
+  const merged: SyllabusQuestion[] = [];
+
+  for (const row of [...(byId || []), ...(byName || [])]) {
+    if (!seen.has(row.id)) {
+      seen.add(row.id);
+      merged.push({
+        id: row.id,
+        title: row.title,
+        options: row.options,
+        correctOption: row.correct_option,
+        explanation: row.explanation,
+        difficulty: row.difficulty,
+        subject: row.subject,
+        topic: row.topic,
+        topic_id: row.topic_id
+      });
+    }
+  }
+
+  // Shuffle and take requested count
+  const shuffled = merged.sort(() => Math.random() - 0.5);
+  return shuffled.slice(0, count);
+}
+
+// Get topic question counts in bulk (for displaying availability badges)
+export async function getTopicQuestionCounts(topicIds: string[]): Promise<Record<string, number>> {
+  if (topicIds.length === 0) return {};
+
+  // Get counts by topic_id
+  const { data } = await supabase
+    .from('content_items')
+    .select('topic_id')
+    .eq('category', 'mcq')
+    .eq('status', 'approved')
+    .in('topic_id', topicIds);
+
+  const countMap: Record<string, number> = {};
+  for (const item of data || []) {
+    if (item.topic_id) {
+      countMap[item.topic_id] = (countMap[item.topic_id] || 0) + 1;
+    }
+  }
+  return countMap;
+}
+
+// Get MCQs with balanced distribution across topics + fallback info
 export async function getQuestionsWithFallbackInfo(params: {
   topicIds: string[];
   requestedCount: number;
   difficulty?: string;
 }): Promise<{
-  questions: QuestionBankItem[];
+  questions: SyllabusQuestion[];
   hasEnough: boolean;
   shortage: number;
   ragAvailable: boolean;
@@ -134,48 +229,49 @@ export async function getQuestionsWithFallbackInfo(params: {
 }> {
   const { topicIds, requestedCount, difficulty } = params;
 
-  // Get topic names for the query
-  const { data: topics } = await supabase
-    .from('topics')
-    .select('id, name, subjects!inner(name)')
-    .in('id', topicIds);
-
-  const topicNames = topics?.map(t => t.name) || [];
-  const subjectNames = [...new Set(
-    topics?.map(t => {
-      const subjectData = Array.isArray(t.subjects) ? t.subjects[0] : t.subjects;
-      return subjectData?.name;
-    }).filter(Boolean) || []
-  )];
-
-  // Query existing MCQs
-  const filters: any = {
-    subjects: subjectNames.length > 0 ? subjectNames : undefined,
-    topics: topicNames.length > 0 ? topicNames : undefined,
-    limit: requestedCount * 2 // Get extra for filtering
-  };
-
-  if (difficulty && difficulty !== 'mixed') {
-    const difficultyMap: Record<string, string[]> = {
-       'easy': ['Easy', 'easy'],
-       'medium': ['Medium', 'medium'],
-       'hard': ['Hard', 'hard']
-    };
-    filters.difficulties = difficultyMap[difficulty];
+  if (topicIds.length === 0) {
+    return { questions: [], hasEnough: false, shortage: requestedCount, ragAvailable: false, ragDocumentCount: 0 };
   }
 
-  const questions = await getQuestionBank(filters);
+  // Get topic names for fallback query
+  const { data: topics } = await supabase
+    .from('topics')
+    .select('id, name')
+    .in('id', topicIds);
+
+  const topicNameMap: Record<string, string> = {};
+  for (const t of topics || []) {
+    topicNameMap[t.id] = t.name;
+  }
+
+  // Distribute requested count across topics
+  const perTopicCount = Math.max(1, Math.ceil(requestedCount / topicIds.length));
+  const allQuestions: SyllabusQuestion[] = [];
+  const seen = new Set<string>();
+
+  for (const topicId of topicIds) {
+    const topicName = topicNameMap[topicId] || '';
+    const topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, difficulty);
+    
+    for (const q of topicQuestions) {
+      if (!seen.has(q.id)) {
+        seen.add(q.id);
+        allQuestions.push(q);
+      }
+    }
+  }
+
+  // Shuffle and cap at requested count
+  const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+  const finalQuestions = shuffled.slice(0, requestedCount);
 
   // Check RAG availability
   const ragInfo = await checkRAGAvailability(topicIds);
 
-  const hasEnough = questions.length >= requestedCount;
-  const shortage = Math.max(0, requestedCount - questions.length);
-
   return {
-    questions: questions.slice(0, requestedCount),
-    hasEnough,
-    shortage,
+    questions: finalQuestions,
+    hasEnough: finalQuestions.length >= requestedCount,
+    shortage: Math.max(0, requestedCount - finalQuestions.length),
     ragAvailable: ragInfo.hasDocuments,
     ragDocumentCount: ragInfo.documentCount
   };

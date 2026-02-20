@@ -23,6 +23,7 @@ import { getCardTheme } from "@/components/ui/GlassCard";
 
 interface SyllabusSubjectCardProps {
   subject: SyllabusSubject;
+  topicQuestionCounts?: Record<string, number>;
   onToggleSubject: (subjectId: string) => void;
   onToggleTopic: (subjectId: string, topicId: string) => void;
   onToggleExpand: (subjectId: string) => void;
@@ -43,6 +44,7 @@ const iconMap: Record<string, React.ReactNode> = {
 
 export const SyllabusSubjectCard = ({
   subject,
+  topicQuestionCounts = {},
   onToggleSubject,
   onToggleTopic,
   onToggleExpand
@@ -107,6 +109,10 @@ export const SyllabusSubjectCard = ({
                 </h4>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400">
                   {subject.topics.length} Topics
+                  {(() => {
+                    const totalQs = subject.topics.reduce((sum, t) => sum + (topicQuestionCounts[t.id] || 0), 0);
+                    return totalQs > 0 ? ` • ${totalQs} Qs` : '';
+                  })()}
                 </p>
               </div>
             </div>
@@ -184,6 +190,11 @@ export const SyllabusSubjectCard = ({
                       />
                       <span className="text-[10px] text-slate-700 dark:text-slate-300 truncate">
                         {topic.name}
+                        {topicQuestionCounts[topic.id] ? (
+                          <span className="text-[9px] text-muted-foreground ml-1">
+                            ({topicQuestionCounts[topic.id]} Qs)
+                          </span>
+                        ) : null}
                       </span>
                     </label>
                   ))

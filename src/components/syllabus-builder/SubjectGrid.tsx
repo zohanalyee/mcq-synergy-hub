@@ -7,6 +7,7 @@ import { SyllabusSubjectCard } from './SyllabusSubjectCard';
 interface SubjectGridProps {
   subjects: SyllabusSubject[];
   loading: boolean;
+  topicQuestionCounts?: Record<string, number>;
   onToggleSubject: (subjectId: string) => void;
   onToggleTopic: (subjectId: string, topicId: string) => void;
   onToggleExpand: (subjectId: string) => void;
@@ -29,6 +30,7 @@ const item = {
 export const SubjectGrid = ({
   subjects,
   loading,
+  topicQuestionCounts = {},
   onToggleSubject,
   onToggleTopic,
   onToggleExpand,
@@ -64,6 +66,7 @@ export const SubjectGrid = ({
         <motion.div key={subject.id} variants={item}>
           <SyllabusSubjectCard
             subject={subject}
+            topicQuestionCounts={topicQuestionCounts}
             onToggleSubject={onToggleSubject}
             onToggleTopic={onToggleTopic}
             onToggleExpand={onToggleExpand}
