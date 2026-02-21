@@ -226,11 +226,12 @@ export async function getQuestionsWithFallbackInfo(params: {
   shortage: number;
   ragAvailable: boolean;
   ragDocumentCount: number;
+  usedDifficultyFallback: boolean;
 }> {
   const { topicIds, requestedCount, difficulty } = params;
 
   if (topicIds.length === 0) {
-    return { questions: [], hasEnough: false, shortage: requestedCount, ragAvailable: false, ragDocumentCount: 0 };
+    return { questions: [], hasEnough: false, shortage: requestedCount, ragAvailable: false, ragDocumentCount: 0, usedDifficultyFallback: false };
   }
 
   // Get topic names for fallback query
@@ -249,10 +250,20 @@ export async function getQuestionsWithFallbackInfo(params: {
   const allQuestions: SyllabusQuestion[] = [];
   const seen = new Set<string>();
 
+  let usedDifficultyFallback = false;
+
   for (const topicId of topicIds) {
     const topicName = topicNameMap[topicId] || '';
-    const topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, difficulty);
+    let topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, difficulty);
     
+    // If no questions found with specific difficulty, retry without filter
+    if (topicQuestions.length === 0 && difficulty && difficulty !== 'mixed') {
+      topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, undefined);
+      if (topicQuestions.length > 0) {
+        usedDifficultyFallback = true;
+      }
+    }
+
     for (const q of topicQuestions) {
       if (!seen.has(q.id)) {
         seen.add(q.id);
@@ -273,6 +284,7 @@ export async function getQuestionsWithFallbackInfo(params: {
     hasEnough: finalQuestions.length >= requestedCount,
     shortage: Math.max(0, requestedCount - finalQuestions.length),
     ragAvailable: ragInfo.hasDocuments,
-    ragDocumentCount: ragInfo.documentCount
+    ragDocumentCount: ragInfo.documentCount,
+    usedDifficultyFallback
   };
 }
