@@ -361,9 +361,17 @@ export const SyllabusBuilder = () => {
         difficulty: quizSettings.difficulty
       });
 
-      // Step 2: If we have enough questions, create test from DB
-      if (fallbackInfo.hasEnough) {
-        // Create test session from cached questions
+      // Step 2: If we have enough questions (or at least some), create test from DB
+      if (fallbackInfo.questions.length > 0) {
+        // Use available questions - warn if fewer than requested
+        if (!fallbackInfo.hasEnough) {
+          toast({
+            title: "⚠️ Limited Questions Available",
+            description: `Found ${fallbackInfo.questions.length} of ${quizSettings.questionsCount} requested. Generating test with available questions.`,
+            duration: 5000
+          });
+        }
+
         const { data: session, error: sessionError } = await supabase
           .from('custom_test_sessions')
           .insert({
@@ -400,11 +408,11 @@ export const SyllabusBuilder = () => {
         return;
       }
 
-      // Step 3: Not enough questions - check if admin can generate from RAG
+      // Step 3: No questions at all - check RAG for admin, show error for students
       if (!isAdmin) {
         toast({
-          title: "❌ Not Enough Questions",
-          description: `Only ${fallbackInfo.questions.length}/${quizSettings.questionsCount} questions available. Please try different topics or reduce the count.`,
+          title: "❌ No Questions Available",
+          description: "No questions found for selected topics. Please try different topics.",
           variant: "destructive",
           duration: 6000
         });
@@ -415,8 +423,8 @@ export const SyllabusBuilder = () => {
       // Step 4: Admin path - offer RAG generation if documents exist
       if (!fallbackInfo.ragAvailable) {
         toast({
-          title: "📚 No Course Materials",
-          description: `Found ${fallbackInfo.questions.length} questions. This topic has no uploaded study material for RAG generation.`,
+          title: "📚 No Questions or Course Materials",
+          description: "No questions in the bank and no uploaded study material for RAG generation.",
           variant: "destructive",
           duration: 6000
         });
