@@ -363,8 +363,14 @@ export const SyllabusBuilder = () => {
 
       // Step 2: If we have enough questions (or at least some), create test from DB
       if (fallbackInfo.questions.length > 0) {
-        // Use available questions - warn if fewer than requested
-        if (!fallbackInfo.hasEnough) {
+        // Inform user if difficulty fallback was used
+        if (fallbackInfo.usedDifficultyFallback) {
+          toast({
+            title: "ℹ️ Difficulty Adjusted",
+            description: `No ${quizSettings.difficulty} questions found. Generated test with available difficulties instead.`,
+            duration: 5000
+          });
+        } else if (!fallbackInfo.hasEnough) {
           toast({
             title: "⚠️ Limited Questions Available",
             description: `Found ${fallbackInfo.questions.length} of ${quizSettings.questionsCount} requested. Generating test with available questions.`,
