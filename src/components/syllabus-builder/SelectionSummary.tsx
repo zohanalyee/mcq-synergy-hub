@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { ChevronDown, Settings, X, Sparkles, Bookmark } from 'lucide-react';
+import { ChevronDown, Settings, X, Sparkles, Bookmark, Zap, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { QuizSettings } from './interfaces';
 
@@ -24,6 +24,8 @@ interface SelectionSummaryProps {
   isGenerating: boolean;
   onSaveTemplate?: (name: string) => Promise<boolean>;
   isSavingTemplate?: boolean;
+  topicQuestionCounts?: Record<string, number>;
+  selectedTopicIds?: string[];
 }
 
 export const SelectionSummary = ({
@@ -37,11 +39,20 @@ export const SelectionSummary = ({
   onGenerateQuiz,
   isGenerating,
   onSaveTemplate,
-  isSavingTemplate = false
+  isSavingTemplate = false,
+  topicQuestionCounts = {},
+  selectedTopicIds = []
 }: SelectionSummaryProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+
+  // Calculate available questions from bank for selected topics
+  const availableInBank = useMemo(() => {
+    return selectedTopicIds.reduce((sum, id) => sum + (topicQuestionCounts[id] || 0), 0);
+  }, [selectedTopicIds, topicQuestionCounts]);
+
+  const willGenerate = Math.max(0, quizSettings.questionsCount - availableInBank);
 
   const handleSaveTemplate = async () => {
     if (!templateName.trim() || !onSaveTemplate) return;
@@ -94,11 +105,21 @@ export const SelectionSummary = ({
                 <X className="h-3 w-3 mr-1" />
                 Clear
               </Button>
-              <p className="w-full text-xs text-muted-foreground">
-                ~{selectedTopicsCount * quizSettings.questionsCount} questions estimated
-                {selectedTopicsCount * quizSettings.questionsCount > 100 && (
-                  <span className="text-destructive font-medium ml-1">
-                    (exceeds 100 max — reduce selections or questions)
+              <p className="w-full text-xs text-muted-foreground space-y-1">
+                <span className="flex items-center gap-1">
+                  <Database className="h-3 w-3" />
+                  {availableInBank} questions in bank
+                </span>
+                {willGenerate > 0 && selectedTopicsCount > 0 && (
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                    <Zap className="h-3 w-3" />
+                    Will generate {willGenerate} more (~{Math.ceil(willGenerate / 15) * 10}s)
+                  </span>
+                )}
+                {availableInBank === 0 && selectedTopicsCount > 0 && (
+                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                    <Zap className="h-3 w-3" />
+                    All {quizSettings.questionsCount} will be AI-generated
                   </span>
                 )}
               </p>
@@ -172,15 +193,19 @@ export const SelectionSummary = ({
         <div className="space-y-2">
           <Button
             onClick={onGenerateQuiz}
-            disabled={selectedTopicsCount === 0 || isGenerating || (selectedTopicsCount * quizSettings.questionsCount > 100)}
+            disabled={selectedTopicsCount === 0 || isGenerating}
             className="w-full"
           >
             {isGenerating ? (
               <>Generating...</>
             ) : (
               <>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Generate Test ({Math.min(selectedTopicsCount * quizSettings.questionsCount, 100)} Qs)
+                {willGenerate > 0 ? (
+                  <Zap className="h-4 w-4 mr-2" />
+                ) : (
+                  <Sparkles className="h-4 w-4 mr-2" />
+                )}
+                Generate Test ({quizSettings.questionsCount} Qs)
               </>
             )}
           </Button>
