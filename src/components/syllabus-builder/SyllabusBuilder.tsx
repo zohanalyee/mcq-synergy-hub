@@ -9,7 +9,7 @@ import { useUserRole } from '@/contexts/UserRoleContext';
 import { supabase } from '@/integrations/supabase/client';
 import { GlassSearchInput } from '@/components/ui/GlassSearchInput';
 import { GlobalSearchResult } from '@/services/globalSearchService';
-import { getQuestionsWithFallbackInfo, generateFromRAGForSyllabus } from '@/services/syllabusRAGFallback';
+import { getQuestionsWithFallbackInfo } from '@/services/syllabusRAGFallback';
 
 import { useSyllabusData } from './hooks/useSyllabusData';
 import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
@@ -331,7 +331,10 @@ export const SyllabusBuilder = () => {
     }
   }, [rawSubjects, setRawSubjects]);
 
-  // Generate test with DB-first fallback logic
+  // Maximum questions to auto-generate via AI
+  const MAX_AUTO_GENERATE = 200;
+
+  // Generate test with smart hybrid logic: bank-first + AI generation for shortages
   const handleGenerateQuiz = async () => {
     if (!user) {
       toast({
@@ -354,71 +357,53 @@ export const SyllabusBuilder = () => {
     setIsGenerating(true);
 
     try {
-      // Step 1: Check existing questions in DB
-      const fallbackInfo = await getQuestionsWithFallbackInfo({
+      const requestedCount = quizSettings.questionsCount;
+
+      // Step 1: Check question bank
+      console.log('=== HYBRID GENERATION START ===');
+      console.log('Selected topics:', selectedTopicIds);
+      console.log('Requested:', requestedCount, 'Difficulty:', quizSettings.difficulty);
+
+      const bankResult = await getQuestionsWithFallbackInfo({
         topicIds: selectedTopicIds,
-        requestedCount: quizSettings.questionsCount,
+        requestedCount,
         difficulty: quizSettings.difficulty
       });
 
-      // Step 2: If we have enough questions (or at least some), create test from DB
-      if (fallbackInfo.questions.length > 0) {
-        // Inform user if difficulty fallback was used
-        if (fallbackInfo.usedDifficultyFallback) {
-          toast({
-            title: "ℹ️ Difficulty Adjusted",
-            description: `No ${quizSettings.difficulty} questions found. Generated test with available difficulties instead.`,
-            duration: 5000
-          });
-        } else if (!fallbackInfo.hasEnough) {
-          toast({
-            title: "⚠️ Limited Questions Available",
-            description: `Found ${fallbackInfo.questions.length} of ${quizSettings.questionsCount} requested. Generating test with available questions.`,
-            duration: 5000
-          });
-        }
+      const foundInBank = bankResult.questions.length;
+      const shortage = Math.max(0, requestedCount - foundInBank);
 
-        const { data: session, error: sessionError } = await supabase
-          .from('custom_test_sessions')
-          .insert({
-            user_id: user.id,
-            session_name: syllabusName,
-            question_count: fallbackInfo.questions.length,
-            time_limit: quizSettings.timeLimit,
-            topics: selectedTopicIds,
-            difficulty_levels: [quizSettings.difficulty],
-            questions: fallbackInfo.questions.map(q => ({
-              id: q.id,
-              question: q.title,
-              options: q.options,
-              correctOption: q.correctOption,
-              explanation: q.explanation,
-              difficulty: q.difficulty,
-              subject: q.subject,
-              topic: q.topic
-            })),
-            is_active: true
-          })
-          .select('id')
-          .single();
+      console.log('Found in bank:', foundInBank, 'Shortage:', shortage);
 
-        if (sessionError) throw sessionError;
-
+      // Difficulty fallback notification
+      if (bankResult.usedDifficultyFallback && foundInBank > 0) {
         toast({
-          title: "✅ Test Ready!",
-          description: `${fallbackInfo.questions.length} questions loaded from Question Bank.`,
-          duration: 5000
+          title: "ℹ️ Difficulty Adjusted",
+          description: `No ${quizSettings.difficulty} questions found. Using available difficulties instead.`,
+          duration: 4000
         });
+      }
 
-        navigate(`/test-session/${session.id}`);
+      // Step 2: Enough in bank? Create test immediately
+      if (shortage <= 0) {
+        console.log('✅ Enough in bank, creating test directly');
+        const session = await createTestSession(bankResult.questions.slice(0, requestedCount));
+        if (session) {
+          toast({
+            title: "✅ Test Ready!",
+            description: `${requestedCount} questions loaded instantly from Question Bank.`,
+            duration: 5000
+          });
+          navigate(`/test-session/${session}`);
+        }
         return;
       }
 
-      // Step 3: No questions at all - check RAG for admin, show error for students
-      if (!isAdmin) {
+      // Step 3: Some questions exist but not enough — or zero
+      if (shortage > MAX_AUTO_GENERATE) {
         toast({
-          title: "❌ No Questions Available",
-          description: "No questions found for selected topics. Please try different topics.",
+          title: "⚠️ Too Many Questions Needed",
+          description: `Need to generate ${shortage} questions which exceeds the limit of ${MAX_AUTO_GENERATE}. Please reduce the quantity or select topics with more existing questions.`,
           variant: "destructive",
           duration: 6000
         });
@@ -426,142 +411,143 @@ export const SyllabusBuilder = () => {
         return;
       }
 
-      // Step 4: Admin path - offer RAG generation if documents exist
-      if (!fallbackInfo.ragAvailable) {
+      // Step 4: Generate shortage via AI
+      if (foundInBank > 0) {
         toast({
-          title: "📚 No Questions or Course Materials",
-          description: "No questions in the bank and no uploaded study material for RAG generation.",
-          variant: "destructive",
-          duration: 6000
+          title: "🔄 Generating Additional Questions...",
+          description: `Found ${foundInBank} in bank. Generating ${shortage} more (~${Math.ceil(shortage / 15) * 10}s)...`,
+          duration: 8000
         });
-        setIsGenerating(false);
-        return;
+      } else {
+        toast({
+          title: "🔄 Generating Questions...",
+          description: `Generating ${shortage} questions via AI (~${Math.ceil(shortage / 15) * 10}s). They'll be saved for instant reuse!`,
+          duration: 8000
+        });
       }
 
-      // Step 5: Admin can generate from RAG
-      toast({
-        title: "Generating from Course Materials...",
-        description: `Found ${fallbackInfo.ragDocumentCount} documents. Generating ${fallbackInfo.shortage} additional questions.`
-      });
-
-      const ragResult = await generateFromRAGForSyllabus({
-        topicIds: selectedTopicIds,
-        count: fallbackInfo.shortage,
-        difficulty: quizSettings.difficulty
-      });
-
-      if (!ragResult.success || ragResult.saved === 0) {
-        // Parse error type for user-friendly messages
-        const errorMsg = ragResult.error || "";
-        let toastTitle = "Generation Failed";
-        let toastDescription = "Could not generate questions. Please try again.";
-
-        if (errorMsg.toLowerCase().includes("quota") || errorMsg.toLowerCase().includes("rate limit")) {
-          toastTitle = "⏳ Daily Quota Reached";
-          toastDescription = "AI generation quota reached. Please try again later.";
-        } else if (errorMsg.toLowerCase().includes("no_rag_data") || errorMsg.toLowerCase().includes("no rag documents")) {
-          toastTitle = "📚 No Study Material";
-          toastDescription = "No course material found for these topics. Upload PDFs first.";
-        } else if (errorMsg.toLowerCase().includes("credit") || errorMsg.toLowerCase().includes("402")) {
-          toastTitle = "💳 Credits Exhausted";
-          toastDescription = "AI credits exhausted. Please add credits to your workspace.";
-        } else if (errorMsg) {
-          toastDescription = errorMsg;
+      console.log('🤖 Calling generate-test for', shortage, 'questions');
+      const generatedResult = await supabase.functions.invoke('generate-test', {
+        body: {
+          topic_ids: selectedTopicIds,
+          difficulty: quizSettings.difficulty === 'mixed' ? undefined : quizSettings.difficulty,
+          question_count: shortage,
+          mode: 'bank_only',
+          forceNew: true
         }
+      });
 
-        // Fall back to partial test if we have some questions
-        if (fallbackInfo.questions.length > 0) {
+      if (generatedResult.error) {
+        console.error('AI generation error:', generatedResult.error);
+        // If we have bank questions, use them as fallback
+        if (foundInBank > 0) {
           toast({
-            title: "Partial Test Created",
-            description: `${toastDescription} Created test with ${fallbackInfo.questions.length} available questions.`
+            title: "⚠️ Partial Test Created",
+            description: `AI generation failed. Created test with ${foundInBank} available questions.`,
+            duration: 5000
           });
-          
-          const { data: session } = await supabase
-            .from('custom_test_sessions')
-            .insert({
-              user_id: user.id,
-              session_name: syllabusName,
-              question_count: fallbackInfo.questions.length,
-              time_limit: quizSettings.timeLimit,
-              topics: selectedTopicIds,
-              difficulty_levels: [quizSettings.difficulty],
-              questions: fallbackInfo.questions.map(q => ({
-                id: q.id,
-                question: q.title,
-                options: q.options,
-                correctOption: q.correctOption,
-                explanation: q.explanation,
-                difficulty: q.difficulty,
-                subject: q.subject,
-                topic: q.topic
-              })),
-              is_active: true
-            })
-            .select('id')
-            .single();
-
-          if (session) navigate(`/test-session/${session.id}`);
+          const session = await createTestSession(bankResult.questions);
+          if (session) navigate(`/test-session/${session}`);
           return;
         }
+        throw new Error(generatedResult.error.message || 'AI generation failed');
+      }
 
+      // Step 5: Re-fetch from bank (now includes newly generated questions)
+      console.log('📥 Re-fetching from bank after generation...');
+      const updatedBank = await getQuestionsWithFallbackInfo({
+        topicIds: selectedTopicIds,
+        requestedCount,
+        difficulty: quizSettings.difficulty
+      });
+
+      const finalQuestions = updatedBank.questions.slice(0, requestedCount);
+      console.log('Final questions:', finalQuestions.length);
+
+      if (finalQuestions.length === 0) {
         toast({
-          title: toastTitle,
-          description: toastDescription,
+          title: "❌ Generation Failed",
+          description: "No questions could be generated. Please try again or select different topics.",
           variant: "destructive"
         });
         setIsGenerating(false);
         return;
       }
 
-      // Step 6: Re-fetch questions after RAG generation and create test
-      const updatedInfo = await getQuestionsWithFallbackInfo({
-        topicIds: selectedTopicIds,
-        requestedCount: quizSettings.questionsCount,
-        difficulty: quizSettings.difficulty
-      });
+      if (finalQuestions.length < requestedCount * 0.8) {
+        toast({
+          title: "⚠️ Partial Test",
+          description: `Generated ${finalQuestions.length} of ${requestedCount} requested. Creating test with available questions.`,
+          duration: 5000
+        });
+      }
 
-      const { data: session } = await supabase
-        .from('custom_test_sessions')
-        .insert({
-          user_id: user.id,
-          session_name: syllabusName,
-          question_count: updatedInfo.questions.length,
-          time_limit: quizSettings.timeLimit,
-          topics: selectedTopicIds,
-          difficulty_levels: [quizSettings.difficulty],
-          questions: updatedInfo.questions.map(q => ({
-            id: q.id,
-            question: q.title,
-            options: q.options,
-            correctOption: q.correctOption,
-            explanation: q.explanation,
-            difficulty: q.difficulty,
-            subject: q.subject,
-            topic: q.topic
-          })),
-          is_active: true
-        })
-        .select('id')
-        .single();
+      // Step 6: Create test
+      const session = await createTestSession(finalQuestions);
+      if (session) {
+        const newlyGenerated = finalQuestions.length - foundInBank;
+        toast({
+          title: "✅ Test Ready!",
+          description: newlyGenerated > 0
+            ? `${foundInBank} from bank + ${newlyGenerated} newly generated. Bank grew to ${updatedBank.questions.length}! 🌱`
+            : `${finalQuestions.length} questions loaded from Question Bank.`,
+          duration: 6000
+        });
+        navigate(`/test-session/${session}`);
+      }
 
-      toast({
-        title: "🎉 Test Generated!",
-        description: `${fallbackInfo.questions.length} from Question Bank + ${ragResult.saved} generated from course material.`,
-        duration: 5000
-      });
-
-      if (session) navigate(`/test-session/${session.id}`);
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Quiz generation error:', error);
-      toast({
-        title: "Generation Failed",
-        description: "An error occurred. Please try again.",
-        variant: "destructive"
-      });
+      
+      let title = "Generation Failed";
+      let description = "An error occurred. Please try again.";
+      
+      const errMsg = error?.message || '';
+      if (errMsg.includes('quota') || errMsg.includes('rate limit') || errMsg.includes('429')) {
+        title = "⏳ AI Rate Limited";
+        description = "AI generation quota reached. Please try again in a few minutes.";
+      } else if (errMsg.includes('402') || errMsg.includes('credit')) {
+        title = "💳 Credits Exhausted";
+        description = "AI credits exhausted. Contact admin.";
+      }
+      
+      toast({ title, description, variant: "destructive" });
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  // Helper to create a test session and return session ID
+  const createTestSession = async (questions: any[]): Promise<string | null> => {
+    const { data: session, error } = await supabase
+      .from('custom_test_sessions')
+      .insert({
+        user_id: user!.id,
+        session_name: syllabusName,
+        question_count: questions.length,
+        time_limit: quizSettings.timeLimit,
+        topics: selectedTopicIds,
+        difficulty_levels: [quizSettings.difficulty],
+        questions: questions.map(q => ({
+          id: q.id,
+          question: q.title,
+          options: q.options,
+          correctOption: q.correctOption,
+          explanation: q.explanation,
+          difficulty: q.difficulty,
+          subject: q.subject,
+          topic: q.topic
+        })),
+        is_active: true
+      })
+      .select('id')
+      .single();
+
+    if (error) {
+      console.error('Session creation error:', error);
+      throw error;
+    }
+    return session?.id || null;
   };
 
   return (
@@ -641,6 +627,8 @@ export const SyllabusBuilder = () => {
               isGenerating={isGenerating}
               onSaveTemplate={handleSaveTemplate}
               isSavingTemplate={isSavingTemplate}
+              topicQuestionCounts={topicQuestionCounts}
+              selectedTopicIds={selectedTopicIds}
             />
           </div>
         </div>
