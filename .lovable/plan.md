@@ -1,64 +1,136 @@
-# Fix: Syllabus Builder Difficulty Mismatch Causing False "No Questions" Error
 
-## Root Cause
 
-The bug is a **difficulty filter mismatch** between the topic count badge and the question fetch query:
+# Fix: AI-Generated Questions Not Saving Due to Undefined Difficulty + Add Subject Fallback
 
-1. **Topic count badge** (`getTopicQuestionCounts`) shows "~20 Qs" -- it counts ALL approved MCQs regardless of difficulty
-2. **Question fetch** (`fetchQuestionsForTopic`) filters by the selected difficulty (default: `'medium'`)
-3. If a topic has 20 questions but none are "Medium" difficulty, the fetch returns 0 questions
-4. With 0 questions, the code falls through to the RAG check (line 424), which shows the "No Questions or Course Materials" error
+## Root Cause (Confirmed from Edge Function Logs)
 
-**Database evidence:** Topic "Introduction to Biology" has 20 questions (10 Easy + 10 Hard, 0 Medium). The UI badge shows "20 Qs" but generating with default difficulty "medium" finds zero.
+The `generate-test` edge function crashes during the save step at line 994:
 
-## Fix (2 changes)
+```
+difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase()
+```
 
-### Change 1: Auto-retry without difficulty filter when filtered query returns 0
+When the Syllabus Builder sends `difficulty: undefined` (for "mixed" mode), this line throws:
+```
+TypeError: Cannot read properties of undefined (reading 'charAt')
+```
 
-**File:** `src/services/syllabusRAGFallback.ts` -- `fetchQuestionsForTopic` function
+The error is caught at line 1071-1073 and counted as `flaggedCount++`, so the function reports "15/15 saved (0 approved, 15 flagged)" -- but **zero questions are actually inserted into the database**. The client then re-fetches, finds 0 questions, and shows "Generation Failed".
 
-After the filtered query returns 0 results, automatically retry without the difficulty filter so questions are never missed:
+Additionally, the `topic_id` used in `forceSaveQuestion` (line 993) comes from the request body's singular `topic_id` field, which is `null` when the Syllabus Builder sends `topic_ids` (plural). This means even if the save succeeds, the questions won't be linked to topics, making them invisible to the re-fetch query.
 
-```text
-// Current: returns empty if no questions match difficulty
-// Fixed: retry without difficulty filter as fallback
+## Fix 1: Handle Undefined Difficulty in Edge Function (CRITICAL)
 
-const topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, difficulty);
+**File: `supabase/functions/generate-test/index.ts`**
 
-if (topicQuestions.length === 0 && difficulty && difficulty !== 'mixed') {
-  // Retry without difficulty filter
-  const fallbackQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, undefined);
-  // use fallbackQuestions instead
+At line 994 inside `forceSaveQuestion`, replace the raw `difficulty` reference with a safe default:
+
+```typescript
+// Line 994 - currently:
+difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+
+// Fix to:
+difficulty: (difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase(),
+```
+
+Also add a normalization near line 765 (after request parsing) to ensure `difficulty` always has a value:
+
+```typescript
+// After line 765, add:
+const safeDifficulty = difficulty || 'Medium';
+```
+
+Then use `safeDifficulty` throughout the bank_only flow.
+
+## Fix 2: Resolve topic_id from topic_ids for Save Linkage (CRITICAL)
+
+**File: `supabase/functions/generate-test/index.ts`**
+
+Currently the function resolves the topic **name** from `topic_ids` but doesn't resolve a `topic_id` UUID for database linkage. After the topic name resolution block (around line 757), add:
+
+```typescript
+// Resolve topic_id for FK linkage if topic_ids provided but topic_id is not
+let resolvedTopicId = topic_id || null;
+if (!resolvedTopicId && topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0) {
+  resolvedTopicId = topic_ids[0]; // Use first topic_id for linkage
 }
 ```
 
-### Change 2: Show difficulty-aware counts in topic badges
+Then use `resolvedTopicId` instead of `topic_id` at line 993 in `forceSaveQuestion`.
 
-**File:** `src/services/syllabusRAGFallback.ts` -- `getTopicQuestionCounts` function
+## Fix 3: Add Subject-Wide Fallback in syllabusRAGFallback.ts
 
-This is optional but prevents the misleading badge. The count badge currently ignores difficulty. Since the difficulty setting is in the quiz panel and the badges load at mount time, the simplest approach is the retry in Change 1 above.
+**File: `src/services/syllabusRAGFallback.ts`**
+
+After the topic-level queries (both by topic_id and by difficulty fallback) return 0 results, add a third fallback that queries by subject. This ensures questions from the same subject are used when no topic-specific questions exist.
+
+Add after the topic loop (around line 273), before the final return:
+
+```typescript
+// Subject-wide fallback if no topic-specific questions found
+if (allQuestions.length === 0) {
+  // Get subject_ids for selected topics
+  const { data: topicSubjects } = await supabase
+    .from('topics')
+    .select('subject_id')
+    .in('id', topicIds);
+  
+  const subjectIds = [...new Set(topicSubjects?.map(t => t.subject_id).filter(Boolean) || [])];
+  
+  if (subjectIds.length > 0) {
+    // Get subject names for text matching
+    const { data: subjects } = await supabase
+      .from('subjects')
+      .select('id, name')
+      .in('id', subjectIds);
+    
+    const subjectNames = subjects?.map(s => s.name) || [];
+    
+    // Query questions matching these subject names
+    for (const subjectName of subjectNames) {
+      const { data } = await supabase
+        .from('content_items')
+        .select('id, title, options, correct_option, explanation, difficulty, subject, topic, topic_id')
+        .eq('category', 'mcq')
+        .eq('status', 'approved')
+        .ilike('subject', subjectName)
+        .limit(requestedCount);
+      
+      for (const row of data || []) {
+        if (!seen.has(row.id)) {
+          seen.add(row.id);
+          allQuestions.push({ ... }); // map to SyllabusQuestion
+        }
+      }
+    }
+  }
+}
+```
+
+Add `usedSubjectFallback: boolean` to the return type.
+
+## Fix 4: Better Error Handling + Bank Fallback in SyllabusBuilder
+
+**File: `src/components/syllabus-builder/SyllabusBuilder.tsx`**
+
+In the `handleGenerateQuiz` function:
+
+1. Add detailed logging of the AI generation response
+2. After AI generation fails but `foundInBank > 0`, use bank questions as fallback (already partially implemented at line 443, but enhance with specific error messages for 429/402/500)
+3. Add subject fallback notification toast when `updatedBank.usedSubjectFallback` is true
 
 ## Files Modified
 
-- `src/services/syllabusRAGFallback.ts` -- Add difficulty fallback retry in the question distribution loop
+1. **`supabase/functions/generate-test/index.ts`** -- Fix undefined `difficulty` crash + resolve `topic_id` from `topic_ids`
+2. **`src/services/syllabusRAGFallback.ts`** -- Add subject-wide fallback (Priority 3) + return `usedSubjectFallback` flag
+3. **`src/components/syllabus-builder/SyllabusBuilder.tsx`** -- Better error handling, subject fallback toast, detailed logging
 
-## Why This Fully Fixes It
+## Expected Behavior After Fix
 
-- If questions exist for a topic at ANY difficulty, they will be found
-- The difficulty filter is treated as a preference, not a hard filter
-- No RAG-related code is touched -- the question bank path at line 365 will now consistently find questions
-- The error at line 424 becomes unreachable when questions exist in any difficulty 
-
-"No Medium difficulty questions available for this topic. 
-
-Generated test with Easy and Hard questions instead."
-
-&nbsp;
-
-This explains the behavior without blocking the user.
-
-&nbsp;
-
-Please deploy immediately!
-
-This is the REAL root cause of the "No Questions" error.
+1. User selects topic with 0 questions, requests 50
+2. Bank query: 0 topic questions found
+3. Subject fallback: finds 20 questions from same subject
+4. AI generates 30 more (difficulty defaults to "Medium" safely)
+5. Questions save correctly with proper `topic_id` linkage
+6. Re-fetch finds all 50 questions
+7. Test created successfully
