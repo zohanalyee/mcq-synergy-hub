@@ -990,8 +990,8 @@ serve(async (req) => {
           category: 'mcq',
           subject: sanitizedTopic,
           topic: topic,
-          topic_id: topic_id || null, // FK link to topics table
-          difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+      topic_id: topic_id || (topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null), // FK link to topics table
+          difficulty: ((difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase()),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
@@ -1083,7 +1083,7 @@ serve(async (req) => {
         source_type: 'admin_bulk_generator',
         subject: sanitizedTopic,
         topic: topic,
-        difficulty: difficulty,
+      difficulty: difficulty || 'Medium',
         questions_requested: qc,
         questions_fetched: newQuestions.length,
         questions_saved: totalSaved,
