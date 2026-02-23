@@ -712,7 +712,7 @@ serve(async (req) => {
     // ============= END JWT AUTHENTICATION =============
 
     const { 
-      topic, 
+      topic: rawTopic, 
       difficulty, 
       question_count, 
       forceNew, 
@@ -722,17 +722,51 @@ serve(async (req) => {
       mode, // 'bank_only' for admin bulk generator
       source, // 'auto_fill' for auto-fill feature
       topic_id, // UUID for FK link to topics table
+      topic_ids, // Array of UUIDs from Syllabus Builder
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
 
     // Use verified user ID from JWT, not from request body
     const user_id = verified_user_id;
 
+    // Initialize Supabase client with service role for database operations
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Resolve topic name from topic_ids if rawTopic is not provided
+    let topic = rawTopic;
+    if (!topic && topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0) {
+      try {
+        const { data: topicRows } = await supabase
+          .from('topics')
+          .select('name')
+          .in('id', topic_ids)
+          .limit(1);
+        if (topicRows && topicRows.length > 0) {
+          topic = topicRows[0].name;
+          console.log(`📌 Resolved topic from topic_ids: "${topic}"`);
+        } else {
+          topic = 'General Knowledge';
+          console.log('⚠️ Could not resolve topic_ids, using fallback: "General Knowledge"');
+        }
+      } catch (e) {
+        topic = 'General Knowledge';
+        console.error('⚠️ Error resolving topic_ids:', e);
+      }
+    }
+    
+    // Final safety: ensure topic is always a string
+    if (!topic || typeof topic !== 'string') {
+      topic = 'General Knowledge';
+      console.log('⚠️ No topic provided, using fallback: "General Knowledge"');
+    }
+
     const qc = Number(question_count) || 10;
     const usePartialMode = partial_mode === true;
     const isFetchOnly = fetch_only === true;
-    const isBankOnly = mode === 'bank_only'; // Admin bulk mode - no test session
-    const isAutoFill = source === 'auto_fill'; // Auto-fill feature
+    const isBankOnly = mode === 'bank_only';
+    const isAutoFill = source === 'auto_fill';
     const isLargeRequest = qc > 20;
     const autoPartial = usePartialMode || isLargeRequest;
     const sourceType: 'user_test_session' | 'admin_bulk_generator' | 'auto_fill' = 
@@ -748,6 +782,7 @@ serve(async (req) => {
       mode: mode || 'default',
       source: source || 'user',
       topic_id: topic_id || null,
+      topic_ids: topic_ids || null,
       auto_partial: autoPartial,
       requestId,
       authenticated: !!verified_user_id,
@@ -755,11 +790,6 @@ serve(async (req) => {
       userAgent: req.headers.get('user-agent')?.slice(0, 50),
       referer: req.headers.get('referer'),
     });
-
-    // Initialize Supabase client with service role for database operations
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Sanitize topic for flexible matching
     const sanitizedTopic = sanitizeTopic(topic);
