@@ -227,11 +227,12 @@ export async function getQuestionsWithFallbackInfo(params: {
   ragAvailable: boolean;
   ragDocumentCount: number;
   usedDifficultyFallback: boolean;
+  usedSubjectFallback: boolean;
 }> {
   const { topicIds, requestedCount, difficulty } = params;
 
   if (topicIds.length === 0) {
-    return { questions: [], hasEnough: false, shortage: requestedCount, ragAvailable: false, ragDocumentCount: 0, usedDifficultyFallback: false };
+    return { questions: [], hasEnough: false, shortage: requestedCount, ragAvailable: false, ragDocumentCount: 0, usedDifficultyFallback: false, usedSubjectFallback: false };
   }
 
   // Get topic names for fallback query
@@ -272,6 +273,59 @@ export async function getQuestionsWithFallbackInfo(params: {
     }
   }
 
+  // Priority 3: Subject-wide fallback if no topic-specific questions found
+  let usedSubjectFallback = false;
+  if (allQuestions.length === 0) {
+    console.log('No topic-specific questions found, trying subject-wide fallback...');
+    const { data: topicSubjects } = await supabase
+      .from('topics')
+      .select('subject_id')
+      .in('id', topicIds);
+
+    const subjectIds = [...new Set(topicSubjects?.map(t => t.subject_id).filter(Boolean) || [])];
+
+    if (subjectIds.length > 0) {
+      const { data: subjects } = await supabase
+        .from('subjects')
+        .select('id, name')
+        .in('id', subjectIds);
+
+      const subjectNames = subjects?.map(s => s.name) || [];
+
+      for (const subjectName of subjectNames) {
+        const { data } = await supabase
+          .from('content_items')
+          .select('id, title, options, correct_option, explanation, difficulty, subject, topic, topic_id')
+          .eq('category', 'mcq')
+          .eq('status', 'approved')
+          .ilike('subject', subjectName)
+          .limit(requestedCount);
+
+        for (const row of data || []) {
+          if (!seen.has(row.id)) {
+            seen.add(row.id);
+            allQuestions.push({
+              id: row.id,
+              title: row.title,
+              options: row.options,
+              correctOption: row.correct_option,
+              explanation: row.explanation,
+              difficulty: row.difficulty,
+              subject: row.subject,
+              topic: row.topic,
+              topic_id: row.topic_id
+            });
+          }
+        }
+      }
+
+      if (allQuestions.length > 0) {
+        usedSubjectFallback = true;
+        console.log(`Subject fallback found ${allQuestions.length} questions`);
+      }
+    }
+  }
+
   // Shuffle and cap at requested count
   const shuffled = allQuestions.sort(() => Math.random() - 0.5);
   const finalQuestions = shuffled.slice(0, requestedCount);
@@ -285,6 +339,7 @@ export async function getQuestionsWithFallbackInfo(params: {
     shortage: Math.max(0, requestedCount - finalQuestions.length),
     ragAvailable: ragInfo.hasDocuments,
     ragDocumentCount: ragInfo.documentCount,
-    usedDifficultyFallback
+    usedDifficultyFallback,
+    usedSubjectFallback
   };
 }

@@ -438,19 +438,33 @@ export const SyllabusBuilder = () => {
       });
 
       if (generatedResult.error) {
-        console.error('AI generation error:', generatedResult.error);
+        console.error('AI generation error details:', {
+          error: generatedResult.error,
+          message: generatedResult.error?.message,
+        });
+        
+        const errMsg = generatedResult.error?.message || '';
+        
+        if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit')) {
+          toast({ title: "⏳ API Rate Limited", description: "AI generation temporarily unavailable. Please try again in a few minutes.", variant: "destructive", duration: 6000 });
+        } else if (errMsg.includes('402') || errMsg.includes('credit')) {
+          toast({ title: "💳 Credits Exhausted", description: "AI generation credits exhausted. Contact administrator.", variant: "destructive", duration: 6000 });
+        } else {
+          toast({ title: "⚠️ AI Generation Failed", description: `Error: ${errMsg || 'Unknown error'}. Try reducing question count.`, variant: "destructive", duration: 6000 });
+        }
+
         // If we have bank questions, use them as fallback
         if (foundInBank > 0) {
           toast({
-            title: "⚠️ Partial Test Created",
-            description: `AI generation failed. Created test with ${foundInBank} available questions.`,
-            duration: 5000
+            title: "Using Available Questions",
+            description: `Creating test with ${foundInBank} questions from bank.`,
+            duration: 4000
           });
           const session = await createTestSession(bankResult.questions);
           if (session) navigate(`/test-session/${session}`);
           return;
         }
-        throw new Error(generatedResult.error.message || 'AI generation failed');
+        throw new Error(errMsg || 'AI generation failed');
       }
 
       // Step 5: Re-fetch from bank (now includes newly generated questions)
@@ -463,6 +477,15 @@ export const SyllabusBuilder = () => {
 
       const finalQuestions = updatedBank.questions.slice(0, requestedCount);
       console.log('Final questions:', finalQuestions.length);
+
+      // Notify if subject fallback was used
+      if (updatedBank.usedSubjectFallback) {
+        toast({
+          title: "ℹ️ Using Related Questions",
+          description: "No questions found for selected topics. Using questions from the same subject instead.",
+          duration: 5000
+        });
+      }
 
       if (finalQuestions.length === 0) {
         toast({
