@@ -7,6 +7,7 @@ import SubjectPieChart from "@/components/dashboard/SubjectPieChart";
 import RecentActivity from "@/components/dashboard/RecentActivity";
 import SubjectBarChart from "@/components/dashboard/SubjectBarChart";
 import WeaknessSection from "@/components/dashboard/WeaknessSection";
+import RecommendedPractice from "@/components/dashboard/RecommendedPractice";
 import EmptyDashboard from "@/components/dashboard/EmptyDashboard";
 import RecentAchievements from "@/components/dashboard/RecentAchievements";
 import SubjectsMasteryTab from "@/components/dashboard/SubjectsMasteryTab";
@@ -87,6 +88,9 @@ const Dashboard = () => {
 
             {/* Saved Tests Section */}
             <SavedTestsList />
+
+            {/* Recommended Practice for Weak Areas */}
+            <RecommendedPractice />
 
             {/* Weakness Section for Overview */}
             {hasData && <WeaknessSection weaknesses={weaknesses} />}

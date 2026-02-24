@@ -133,7 +133,8 @@ async function fetchQuestionsForTopic(
   topicId: string,
   topicName: string,
   count: number,
-  difficulty?: string
+  difficulty?: string,
+  excludeQuestionIds: string[] = []
 ): Promise<SyllabusQuestion[]> {
   // Query 1: By topic_id (linked questions)
   let queryById = supabase
@@ -147,6 +148,10 @@ async function fetchQuestionsForTopic(
   if (difficulty && difficulty !== 'mixed') {
     const titleCase = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
     queryById = queryById.eq('difficulty', titleCase);
+  }
+
+  if (excludeQuestionIds.length > 0) {
+    queryById = queryById.not('id', 'in', `(${excludeQuestionIds.join(',')})`);
   }
 
   const { data: byId } = await queryById;
@@ -164,6 +169,10 @@ async function fetchQuestionsForTopic(
   if (difficulty && difficulty !== 'mixed') {
     const titleCase = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
     queryByName = queryByName.eq('difficulty', titleCase);
+  }
+
+  if (excludeQuestionIds.length > 0) {
+    queryByName = queryByName.not('id', 'in', `(${excludeQuestionIds.join(',')})`);
   }
 
   const { data: byName } = await queryByName;
@@ -220,6 +229,7 @@ export async function getQuestionsWithFallbackInfo(params: {
   topicIds: string[];
   requestedCount: number;
   difficulty?: string;
+  userId?: string;
 }): Promise<{
   questions: SyllabusQuestion[];
   hasEnough: boolean;
@@ -229,10 +239,24 @@ export async function getQuestionsWithFallbackInfo(params: {
   usedDifficultyFallback: boolean;
   usedSubjectFallback: boolean;
 }> {
-  const { topicIds, requestedCount, difficulty } = params;
+  const { topicIds, requestedCount, difficulty, userId } = params;
 
   if (topicIds.length === 0) {
     return { questions: [], hasEnough: false, shortage: requestedCount, ragAvailable: false, ragDocumentCount: 0, usedDifficultyFallback: false, usedSubjectFallback: false };
+  }
+
+  // Fetch attempted question IDs if userId provided
+  let excludeQuestionIds: string[] = [];
+  if (userId) {
+    const { data: attempts } = await supabase
+      .from('user_question_attempts' as any)
+      .select('question_id')
+      .eq('user_id', userId);
+
+    excludeQuestionIds = (attempts as any[] || []).map((a: any) => a.question_id);
+    if (excludeQuestionIds.length > 0) {
+      console.log(`Excluding ${excludeQuestionIds.length} previously attempted questions`);
+    }
   }
 
   // Get topic names for fallback query
@@ -255,11 +279,11 @@ export async function getQuestionsWithFallbackInfo(params: {
 
   for (const topicId of topicIds) {
     const topicName = topicNameMap[topicId] || '';
-    let topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, difficulty);
+    let topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, difficulty, excludeQuestionIds);
     
     // If no questions found with specific difficulty, retry without filter
     if (topicQuestions.length === 0 && difficulty && difficulty !== 'mixed') {
-      topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, undefined);
+      topicQuestions = await fetchQuestionsForTopic(topicId, topicName, perTopicCount, undefined, excludeQuestionIds);
       if (topicQuestions.length > 0) {
         usedDifficultyFallback = true;
       }

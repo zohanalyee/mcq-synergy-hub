@@ -335,9 +335,11 @@ const TestSession = () => {
     setIsLoadingMore(false);
 
     const timeTaken = testData.time_limit * 60 - timeRemaining;
+    const questionIds = questions.map((q: any) => q.id).filter(Boolean);
     const result = await processTestCompletion({
       score: correctAnswers, totalQuestions: questions.length, timeTaken,
       testType: "custom_quiz", subjects: testData.subjects || [], answers,
+      questionIds,
     });
 
     if (result.newBadges.length > 0) {
