@@ -1,136 +1,183 @@
 
 
-# Fix: AI-Generated Questions Not Saving Due to Undefined Difficulty + Add Subject Fallback
+# Implementation Plan: 3 Features
 
-## Root Cause (Confirmed from Edge Function Logs)
+## Request 1: Fix Difficulty-Wise Question Counts (Quick Fix)
 
-The `generate-test` edge function crashes during the save step at line 994:
+### Root Cause
+In `src/components/admin/QuestionBankManager.tsx` (lines 171-184), the `fetchStats` function queries difficulty values in **lowercase** (`'easy'`, `'medium'`, `'hard'`), but the database stores them in **Title Case** (`'Easy'`, `'Medium'`, `'Hard'`).
 
-```
-difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase()
-```
+Database proof:
+- Easy: 932
+- Medium: 2420
+- Hard: 489
+- Total: 3841
 
-When the Syllabus Builder sends `difficulty: undefined` (for "mixed" mode), this line throws:
-```
-TypeError: Cannot read properties of undefined (reading 'charAt')
-```
+All queries return 0 because `.eq('difficulty', 'easy')` doesn't match `'Easy'`.
 
-The error is caught at line 1071-1073 and counted as `flaggedCount++`, so the function reports "15/15 saved (0 approved, 15 flagged)" -- but **zero questions are actually inserted into the database**. The client then re-fetches, finds 0 questions, and shows "Generation Failed".
+### Fix
+**File:** `src/components/admin/QuestionBankManager.tsx` (lines 171-184)
 
-Additionally, the `topic_id` used in `forceSaveQuestion` (line 993) comes from the request body's singular `topic_id` field, which is `null` when the Syllabus Builder sends `topic_ids` (plural). This means even if the save succeeds, the questions won't be linked to topics, making them invisible to the re-fetch query.
+Change the three difficulty filter values to Title Case:
+- `'easy'` to `'Easy'`
+- `'medium'` to `'Medium'`
+- `'hard'` to `'Hard'`
 
-## Fix 1: Handle Undefined Difficulty in Edge Function (CRITICAL)
+Also add `.eq('category', 'mcq')` and `.eq('status', 'approved')` to each difficulty count query so stats are consistent (currently counting ALL content_items, not just approved MCQs).
 
-**File: `supabase/functions/generate-test/index.ts`**
+---
 
-At line 994 inside `forceSaveQuestion`, replace the raw `difficulty` reference with a safe default:
+## Request 2: Exclude Previously Attempted Questions
 
-```typescript
-// Line 994 - currently:
-difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+### Overview
+Track which questions each user has attempted, and exclude them from future test generation so users always get fresh questions.
 
-// Fix to:
-difficulty: (difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase(),
-```
+### Database Migration
+Create a new `user_question_attempts` table:
 
-Also add a normalization near line 765 (after request parsing) to ensure `difficulty` always has a value:
-
-```typescript
-// After line 765, add:
-const safeDifficulty = difficulty || 'Medium';
-```
-
-Then use `safeDifficulty` throughout the bank_only flow.
-
-## Fix 2: Resolve topic_id from topic_ids for Save Linkage (CRITICAL)
-
-**File: `supabase/functions/generate-test/index.ts`**
-
-Currently the function resolves the topic **name** from `topic_ids` but doesn't resolve a `topic_id` UUID for database linkage. After the topic name resolution block (around line 757), add:
-
-```typescript
-// Resolve topic_id for FK linkage if topic_ids provided but topic_id is not
-let resolvedTopicId = topic_id || null;
-if (!resolvedTopicId && topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0) {
-  resolvedTopicId = topic_ids[0]; // Use first topic_id for linkage
-}
+```text
+user_question_attempts
+- id: UUID (PK)
+- user_id: UUID (NOT NULL)
+- question_id: UUID (NOT NULL)
+- attempted_at: TIMESTAMPTZ (default NOW())
+- UNIQUE(user_id, question_id)
+- INDEX on user_id
+- INDEX on question_id
 ```
 
-Then use `resolvedTopicId` instead of `topic_id` at line 993 in `forceSaveQuestion`.
+RLS policies:
+- Users can INSERT their own attempts (`auth.uid() = user_id`)
+- Users can SELECT their own attempts (`auth.uid() = user_id`)
+- Users can DELETE their own attempts (`auth.uid() = user_id`) -- for reset functionality
 
-## Fix 3: Add Subject-Wide Fallback in syllabusRAGFallback.ts
+### Code Changes
 
-**File: `src/services/syllabusRAGFallback.ts`**
+**1. Record attempts after test submission**
 
-After the topic-level queries (both by topic_id and by difficulty fallback) return 0 results, add a third fallback that queries by subject. This ensures questions from the same subject are used when no topic-specific questions exist.
+**File:** `src/utils/gamification.ts` -- `processTestCompletion` function
 
-Add after the topic loop (around line 273), before the final return:
+After saving the test_attempt, also insert into `user_question_attempts`:
+- Extract question IDs from the test session
+- Upsert into `user_question_attempts` with `onConflict: 'user_id,question_id'`
 
-```typescript
-// Subject-wide fallback if no topic-specific questions found
-if (allQuestions.length === 0) {
-  // Get subject_ids for selected topics
-  const { data: topicSubjects } = await supabase
-    .from('topics')
-    .select('subject_id')
-    .in('id', topicIds);
-  
-  const subjectIds = [...new Set(topicSubjects?.map(t => t.subject_id).filter(Boolean) || [])];
-  
-  if (subjectIds.length > 0) {
-    // Get subject names for text matching
-    const { data: subjects } = await supabase
-      .from('subjects')
-      .select('id, name')
-      .in('id', subjectIds);
-    
-    const subjectNames = subjects?.map(s => s.name) || [];
-    
-    // Query questions matching these subject names
-    for (const subjectName of subjectNames) {
-      const { data } = await supabase
-        .from('content_items')
-        .select('id, title, options, correct_option, explanation, difficulty, subject, topic, topic_id')
-        .eq('category', 'mcq')
-        .eq('status', 'approved')
-        .ilike('subject', subjectName)
-        .limit(requestedCount);
-      
-      for (const row of data || []) {
-        if (!seen.has(row.id)) {
-          seen.add(row.id);
-          allQuestions.push({ ... }); // map to SyllabusQuestion
-        }
-      }
-    }
-  }
-}
+**File:** `src/pages/TestSession.tsx` -- `handleSubmit` function
+
+Pass the question IDs from the current test session to `processTestCompletion`, which will record them.
+
+**2. Exclude attempted questions in query functions**
+
+**File:** `src/services/syllabusRAGFallback.ts`
+
+- Add `userId?: string` parameter to `getQuestionsWithFallbackInfo`
+- If `userId` is provided, fetch attempted question IDs from `user_question_attempts`
+- Pass `excludeQuestionIds` to `fetchQuestionsForTopic`
+- In `fetchQuestionsForTopic`, add `.not('id', 'in', ...)` filter when exclusion list is provided
+
+**File:** `src/components/syllabus-builder/SyllabusBuilder.tsx`
+
+- Pass `userId: user.id` to `getQuestionsWithFallbackInfo` calls
+
+### Edge Cases
+- If user has attempted ALL available questions, the exclusion returns 0 results, triggering AI generation of fresh questions
+- The `user_question_attempts` table uses UPSERT so duplicate attempts don't cause errors
+
+---
+
+## Request 3: Auto-Feed Practice Tests for Weak Areas
+
+### Overview
+After test completion, automatically detect weak areas and create recommended practice tests that appear on the Dashboard.
+
+### Database Migration
+Create a `recommended_tests` table:
+
+```text
+recommended_tests
+- id: UUID (PK)
+- user_id: UUID (NOT NULL)
+- topic_name: TEXT (NOT NULL)
+- subject_name: TEXT
+- reason: TEXT (NOT NULL) -- 'weakness', 'review'
+- weakness_percentage: NUMERIC
+- question_count: INTEGER (NOT NULL)
+- question_ids: JSONB (array of question UUIDs)
+- status: TEXT (default 'pending') -- 'pending', 'started', 'completed', 'skipped'
+- session_id: UUID (nullable, linked test session)
+- created_at: TIMESTAMPTZ (default NOW())
+- completed_at: TIMESTAMPTZ (nullable)
 ```
 
-Add `usedSubjectFallback: boolean` to the return type.
+RLS policies:
+- Users can SELECT their own (`auth.uid() = user_id`)
+- Users can INSERT their own (`auth.uid() = user_id`)
+- Users can UPDATE their own (`auth.uid() = user_id`)
+- Users can DELETE their own (`auth.uid() = user_id`)
 
-## Fix 4: Better Error Handling + Bank Fallback in SyllabusBuilder
+### Code Changes
 
-**File: `src/components/syllabus-builder/SyllabusBuilder.tsx`**
+**1. Auto-generate recommendations after test completion**
 
-In the `handleGenerateQuiz` function:
+**File:** `src/utils/gamification.ts`
 
-1. Add detailed logging of the AI generation response
-2. After AI generation fails but `foundInBank > 0`, use bank questions as fallback (already partially implemented at line 443, but enhance with specific error messages for 429/402/500)
-3. Add subject fallback notification toast when `updatedBank.usedSubjectFallback` is true
+Add a new function `generateWeaknessRecommendations(userId, testResults)`:
+- After test completion, check if any subject scored below 50%
+- For each weak subject, check if a pending recommendation already exists
+- If not, fetch fresh questions (using exclusion logic from Request 2) for that subject
+- Insert into `recommended_tests`
 
-## Files Modified
+Call this function at the end of `processTestCompletion`.
 
-1. **`supabase/functions/generate-test/index.ts`** -- Fix undefined `difficulty` crash + resolve `topic_id` from `topic_ids`
-2. **`src/services/syllabusRAGFallback.ts`** -- Add subject-wide fallback (Priority 3) + return `usedSubjectFallback` flag
-3. **`src/components/syllabus-builder/SyllabusBuilder.tsx`** -- Better error handling, subject fallback toast, detailed logging
+**2. Dashboard UI -- Recommended Practice section**
 
-## Expected Behavior After Fix
+**File:** Create `src/components/dashboard/RecommendedPractice.tsx`
 
-1. User selects topic with 0 questions, requests 50
-2. Bank query: 0 topic questions found
-3. Subject fallback: finds 20 questions from same subject
-4. AI generates 30 more (difficulty defaults to "Medium" safely)
-5. Questions save correctly with proper `topic_id` linkage
-6. Re-fetch finds all 50 questions
-7. Test created successfully
+A new component that:
+- Queries `recommended_tests` for the current user where `status = 'pending'`
+- Shows cards with weak area name, score percentage, question count, and a "Start Practice" button
+- "Start Practice" creates a `custom_test_sessions` entry from the recommended question IDs and navigates to `/test-session/{id}`
+
+**File:** `src/pages/Dashboard.tsx`
+
+- Import and render `RecommendedPractice` in the overview tab, between WeaknessSection and SavedTestsList
+
+**3. Mark recommendation as completed**
+
+**File:** `src/pages/TestSession.tsx`
+
+- On test submission, check if the session was created from a recommendation
+- If so, update the recommendation status to `'completed'`
+
+---
+
+## Technical Details
+
+### Files Modified
+
+| File | Changes |
+|---|---|
+| `src/components/admin/QuestionBankManager.tsx` | Fix difficulty case: `'easy'` to `'Easy'`, etc. |
+| `src/services/syllabusRAGFallback.ts` | Add `userId` param + exclusion logic |
+| `src/components/syllabus-builder/SyllabusBuilder.tsx` | Pass `userId` to query functions |
+| `src/utils/gamification.ts` | Record attempts + generate weakness recommendations |
+| `src/pages/TestSession.tsx` | Pass question IDs to completion handler + mark recommendations done |
+| `src/pages/Dashboard.tsx` | Add RecommendedPractice component |
+
+### New Files
+
+| File | Purpose |
+|---|---|
+| `src/components/dashboard/RecommendedPractice.tsx` | UI for recommended practice tests |
+
+### Database Migrations
+
+1. Create `user_question_attempts` table with RLS
+2. Create `recommended_tests` table with RLS
+
+### Implementation Order
+
+1. Fix difficulty counts (standalone, no dependencies)
+2. Create both database tables (single migration)
+3. Implement question attempt tracking (Request 2)
+4. Implement auto-feed practice tests (Request 3, depends on #2 for fresh questions)
+
