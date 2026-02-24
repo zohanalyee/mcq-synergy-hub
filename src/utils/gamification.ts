@@ -9,6 +9,7 @@ interface TestCompletionData {
   subjects?: string[];
   answers?: Record<string | number, string>;
   contentId?: string;
+  questionIds?: string[];
 }
 
 interface Badge {
@@ -70,7 +71,7 @@ export const processTestCompletion = async (data: TestCompletionData): Promise<{
       return result;
     }
 
-    // 1. Save test attempt (this updates streak automatically)
+    // 1. Save test attempt
     const { error: attemptError } = await supabase.from("test_attempts").insert({
       user_id: user.id,
       test_type: data.testType,
@@ -90,17 +91,38 @@ export const processTestCompletion = async (data: TestCompletionData): Promise<{
 
     result.streakUpdated = true;
 
-    // 2. Check and award badges
+    // 2. Record attempted question IDs
+    if (data.questionIds && data.questionIds.length > 0) {
+      const attemptRows = data.questionIds.map(qId => ({
+        user_id: user.id,
+        question_id: qId
+      }));
+
+      const { error: upsertError } = await supabase
+        .from("user_question_attempts" as any)
+        .upsert(attemptRows, { onConflict: 'user_id,question_id' } as any);
+
+      if (upsertError) {
+        console.error("Error recording question attempts:", upsertError);
+      }
+    }
+
+    // 3. Check and award badges
     const newBadges = await checkAndAwardBadges(user.id, data);
     result.newBadges = newBadges;
 
-    // 3. Trigger celebration effects
+    // 4. Trigger celebration effects
     const percentage = (data.score / data.totalQuestions) * 100;
     if (percentage === 100) {
       triggerBigConfetti();
     } else if (percentage >= 70) {
       triggerConfetti();
     }
+
+    // 5. Generate weakness recommendations (fire and forget)
+    generateWeaknessRecommendations(user.id, data).catch(err => {
+      console.error("Error generating weakness recommendations:", err);
+    });
 
     result.success = true;
     return result;
@@ -110,40 +132,65 @@ export const processTestCompletion = async (data: TestCompletionData): Promise<{
   }
 };
 
+// Generate recommended practice tests for weak subjects
+async function generateWeaknessRecommendations(userId: string, data: TestCompletionData) {
+  if (!data.subjects || data.subjects.length === 0) return;
+
+  // Calculate per-subject scores from answers
+  // For now, if overall score < 50%, recommend practice for each subject
+  const percentage = (data.score / data.totalQuestions) * 100;
+  if (percentage >= 50) return; // Not weak enough to recommend
+
+  for (const subject of data.subjects) {
+    // Check if a pending recommendation already exists for this subject
+    const { data: existing } = await supabase
+      .from("recommended_tests" as any)
+      .select("id")
+      .eq("user_id", userId)
+      .eq("subject_name", subject)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (existing) continue;
+
+    // Insert recommendation (questions will be fetched when user starts practice)
+    await supabase.from("recommended_tests" as any).insert({
+      user_id: userId,
+      topic_name: subject,
+      subject_name: subject,
+      reason: "weakness",
+      weakness_percentage: Math.round(percentage),
+      question_count: 20,
+      question_ids: [],
+      status: "pending"
+    } as any);
+  }
+}
+
 const checkAndAwardBadges = async (userId: string, data: TestCompletionData): Promise<Badge[]> => {
   const newBadges: Badge[] = [];
 
   try {
-    // Fetch all available badges
     const { data: allBadges, error: badgesError } = await supabase
       .from("badges")
       .select("*");
 
-    if (badgesError || !allBadges) {
-      console.error("Error fetching badges:", badgesError);
-      return newBadges;
-    }
+    if (badgesError || !allBadges) return newBadges;
 
-    // Fetch user's existing badges
     const { data: userBadges, error: userBadgesError } = await supabase
       .from("user_badges")
       .select("badge_id")
       .eq("user_id", userId);
 
-    if (userBadgesError) {
-      console.error("Error fetching user badges:", userBadgesError);
-      return newBadges;
-    }
+    if (userBadgesError) return newBadges;
 
     const existingBadgeIds = new Set((userBadges || []).map(ub => ub.badge_id));
 
-    // Get user's test attempt count
     const { count: attemptCount } = await supabase
       .from("test_attempts")
       .select("*", { count: "exact", head: true })
       .eq("user_id", userId);
 
-    // Check each badge condition
     for (const badge of allBadges) {
       if (existingBadgeIds.has(badge.id)) continue;
 
@@ -151,32 +198,22 @@ const checkAndAwardBadges = async (userId: string, data: TestCompletionData): Pr
 
       switch (badge.name) {
         case "First Step":
-          // First quiz completed
           shouldAward = attemptCount === 1;
           break;
-
         case "High Flyer":
-          // 100% score
           shouldAward = data.score === data.totalQuestions;
           break;
-
         case "On Fire":
-          // 3-day streak - check streak
           shouldAward = await checkStreak(userId, 3);
           break;
-
         default:
-          // Custom badge logic can be added here
           break;
       }
 
       if (shouldAward) {
         const { error: awardError } = await supabase
           .from("user_badges")
-          .insert({
-            user_id: userId,
-            badge_id: badge.id
-          });
+          .insert({ user_id: userId, badge_id: badge.id });
 
         if (!awardError) {
           newBadges.push(badge as Badge);
@@ -223,7 +260,6 @@ const checkStreak = async (userId: string, requiredDays: number): Promise<boolea
       if (sortedDays[i] === expectedDateStr) {
         streak++;
       } else if (i === 0) {
-        // Allow yesterday as start if no activity today
         const yesterday = new Date(today);
         yesterday.setDate(today.getDate() - 1);
         if (sortedDays[0] === yesterday.toISOString().split("T")[0]) {

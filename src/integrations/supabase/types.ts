@@ -949,6 +949,51 @@ export type Database = {
         }
         Relationships: []
       }
+      recommended_tests: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          question_count: number
+          question_ids: Json | null
+          reason: string
+          session_id: string | null
+          status: string
+          subject_name: string | null
+          topic_name: string
+          user_id: string
+          weakness_percentage: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          question_count?: number
+          question_ids?: Json | null
+          reason?: string
+          session_id?: string | null
+          status?: string
+          subject_name?: string | null
+          topic_name: string
+          user_id: string
+          weakness_percentage?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          question_count?: number
+          question_ids?: Json | null
+          reason?: string
+          session_id?: string | null
+          status?: string
+          subject_name?: string | null
+          topic_name?: string
+          user_id?: string
+          weakness_percentage?: number | null
+        }
+        Relationships: []
+      }
       saved_syllabus_templates: {
         Row: {
           created_at: string | null
@@ -1297,6 +1342,27 @@ export type Database = {
           last_subject_id?: string | null
           last_topic_id?: string | null
           updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_question_attempts: {
+        Row: {
+          attempted_at: string
+          id: string
+          question_id: string
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          id?: string
+          question_id: string
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          id?: string
+          question_id?: string
           user_id?: string
         }
         Relationships: []

@@ -367,7 +367,8 @@ export const SyllabusBuilder = () => {
       const bankResult = await getQuestionsWithFallbackInfo({
         topicIds: selectedTopicIds,
         requestedCount,
-        difficulty: quizSettings.difficulty
+        difficulty: quizSettings.difficulty,
+        userId: user.id
       });
 
       const foundInBank = bankResult.questions.length;
@@ -472,7 +473,8 @@ export const SyllabusBuilder = () => {
       const updatedBank = await getQuestionsWithFallbackInfo({
         topicIds: selectedTopicIds,
         requestedCount,
-        difficulty: quizSettings.difficulty
+        difficulty: quizSettings.difficulty,
+        userId: user.id
       });
 
       const finalQuestions = updatedBank.questions.slice(0, requestedCount);
