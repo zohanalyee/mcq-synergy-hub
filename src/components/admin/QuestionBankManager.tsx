@@ -171,17 +171,23 @@ const QuestionBankManager = () => {
       const { count: easyCount } = await supabase
         .from('content_items')
         .select('id', { count: 'exact', head: true })
-        .eq('difficulty', 'easy');
+        .eq('category', 'mcq')
+        .eq('status', 'approved')
+        .eq('difficulty', 'Easy');
 
       const { count: mediumCount } = await supabase
         .from('content_items')
         .select('id', { count: 'exact', head: true })
-        .eq('difficulty', 'medium');
+        .eq('category', 'mcq')
+        .eq('status', 'approved')
+        .eq('difficulty', 'Medium');
 
       const { count: hardCount } = await supabase
         .from('content_items')
         .select('id', { count: 'exact', head: true })
-        .eq('difficulty', 'hard');
+        .eq('category', 'mcq')
+        .eq('status', 'approved')
+        .eq('difficulty', 'Hard');
 
       // Get counts by status
       const { count: pendingCount } = await supabase
