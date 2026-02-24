@@ -139,6 +139,50 @@ serve(async (req) => {
   }
 
   try {
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SERVICE_ROLE_KEY");
+
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
+      return new Response(
+        JSON.stringify({ success: false, error: "AUTH_ERROR" }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Require admin authentication
+    const authHeader = req.headers.get('Authorization');
+    const isServiceRole = authHeader === `Bearer ${SERVICE_ROLE_KEY}`;
+
+    if (!isServiceRole) {
+      const supabaseAuth = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+      const token = authHeader?.replace('Bearer ', '');
+      if (!token) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const { data: { user }, error: authError } = await supabaseAuth.auth.getUser(token);
+      if (authError || !user) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid token' }),
+          { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const { data: roleData } = await supabaseAuth
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+      if (!roleData) {
+        return new Response(
+          JSON.stringify({ error: 'Admin access required' }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       return new Response(
@@ -146,9 +190,6 @@ serve(async (req) => {
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
-    const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SERVICE_ROLE_KEY");
     
     if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
       return new Response(
