@@ -63,11 +63,18 @@ export const documentService = {
 
     if (uploadError) throw uploadError;
 
-    const { data: urlData } = supabase.storage
+    // Use signed URL since bucket is private
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from("course_books")
-      .getPublicUrl(filePath);
+      .createSignedUrl(filePath, 3600); // 1 hour expiry
 
-    return urlData.publicUrl;
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      console.error('Failed to generate signed URL for course book:', signedUrlError);
+      // Return the file path so URL can be regenerated later
+      return filePath;
+    }
+
+    return signedUrlData.signedUrl;
   },
 
   // Create document record

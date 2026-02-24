@@ -689,7 +689,13 @@ serve(async (req) => {
     const authHeader = req.headers.get('Authorization');
     let verified_user_id: string | undefined;
     
-    if (authHeader?.startsWith('Bearer ')) {
+    // Check if this is a service-role call (from scheduled-autofill or internal)
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const isServiceRoleCall = authHeader?.includes(supabaseServiceKey);
+
+    if (isServiceRoleCall) {
+      console.log('🔐 Service role call detected - authorized');
+    } else if (authHeader?.startsWith('Bearer ')) {
       // Initialize auth client for verification
       const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
       const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -704,10 +710,18 @@ serve(async (req) => {
         verified_user_id = data.claims.sub;
         console.log('🔐 Authenticated user:', verified_user_id);
       } else {
-        console.log('⚠️ JWT validation failed:', error?.message || 'Invalid token');
+        console.log('⛔ JWT validation failed:', error?.message || 'Invalid token');
+        return new Response(
+          JSON.stringify({ error: 'Unauthorized: Invalid token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
       }
     } else {
-      console.log('⚠️ No Authorization header provided - anonymous request');
+      console.log('⛔ No Authorization header - rejecting anonymous request');
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized: Authentication required' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
     // ============= END JWT AUTHENTICATION =============
 
