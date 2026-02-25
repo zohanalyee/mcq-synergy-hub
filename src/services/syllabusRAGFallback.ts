@@ -177,11 +177,33 @@ async function fetchQuestionsForTopic(
 
   const { data: byName } = await queryByName;
 
+  // Query 3: By canonical_topic_name for cross-board sharing
+  const canonicalName = topicName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  let queryByCanonical = supabase
+    .from('content_items')
+    .select('id, title, options, correct_option, explanation, difficulty, subject, topic, topic_id')
+    .eq('category', 'mcq')
+    .eq('status', 'approved')
+    .ilike('topic', canonicalName)
+    .is('topic_id', null)
+    .limit(count * 2);
+
+  if (difficulty && difficulty !== 'mixed') {
+    const titleCase = difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase();
+    queryByCanonical = queryByCanonical.eq('difficulty', titleCase);
+  }
+
+  if (excludeQuestionIds.length > 0) {
+    queryByCanonical = queryByCanonical.not('id', 'in', `(${excludeQuestionIds.join(',')})`);
+  }
+
+  const { data: byCanonical } = await queryByCanonical;
+
   // Merge and deduplicate
   const seen = new Set<string>();
   const merged: SyllabusQuestion[] = [];
 
-  for (const row of [...(byId || []), ...(byName || [])]) {
+  for (const row of [...(byId || []), ...(byName || []), ...(byCanonical || [])]) {
     if (!seen.has(row.id)) {
       seen.add(row.id);
       merged.push({

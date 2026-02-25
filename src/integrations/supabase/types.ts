@@ -120,6 +120,7 @@ export type Database = {
         Row: {
           apply_link: string | null
           cadre: string | null
+          canonical_topic_name: string | null
           category: string
           correct_option: string | null
           created_at: string
@@ -167,6 +168,7 @@ export type Database = {
         Insert: {
           apply_link?: string | null
           cadre?: string | null
+          canonical_topic_name?: string | null
           category: string
           correct_option?: string | null
           created_at?: string
@@ -214,6 +216,7 @@ export type Database = {
         Update: {
           apply_link?: string | null
           cadre?: string | null
+          canonical_topic_name?: string | null
           category?: string
           correct_option?: string | null
           created_at?: string
@@ -1521,6 +1524,22 @@ export type Database = {
           average_score: number
           subject: string
           tests_count: number
+        }[]
+      }
+      get_topic_inventory: {
+        Args: {
+          board_filter?: string
+          class_filter?: string
+          subject_filter?: string
+        }
+        Returns: {
+          board_count: number
+          board_names: string[]
+          canonical_name: string
+          display_name: string
+          status: string
+          subject_name: string
+          total_questions: number
         }[]
       }
       get_user_retention_stats: {
