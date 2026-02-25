@@ -556,12 +556,17 @@ async function saveQuestionsInBackground(
           finalTitle = `[ERROR/DUPLICATE-${shortId}] ${q.question}`;
         }
         
+        const canonicalTopicName = topic 
+          ? topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+          : null;
+
         const questionData = {
           title: finalTitle,
           description: q.explanation || '',
           category: 'mcq',
           subject: sanitizedTopic,
           topic: topic,
+          canonical_topic_name: canonicalTopicName,
           difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
           options: q.options,
           correct_option: q.answer,

@@ -88,7 +88,10 @@ const AIContentFactory = () => {
     loadData();
   }, []);
 
-  // Load question count for selected topic/subject
+  const [crossBoardCount, setCrossBoardCount] = useState<number | null>(null);
+  const [crossBoardNames, setCrossBoardNames] = useState<string[]>([]);
+
+  // Load question count + cross-board stats for selected topic/subject
   useEffect(() => {
     const loadCount = async () => {
       const topicName = selectedTopic
@@ -96,14 +99,34 @@ const AIContentFactory = () => {
         : selectedSubject
           ? subjects.find(s => s.id === selectedSubject)?.name
           : null;
-      if (!topicName) { setTopicQuestionCount(null); return; }
+      if (!topicName) { setTopicQuestionCount(null); setCrossBoardCount(null); setCrossBoardNames([]); return; }
+
+      const canonicalName = topicName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
       const { count } = await supabase
         .from('content_items')
         .select('id', { count: 'exact', head: true })
         .eq('category', 'mcq')
-        .or(`topic.eq.${topicName},subject.eq.${topicName}`);
+        .eq('status', 'approved')
+        .ilike('topic', topicName);
       setTopicQuestionCount(count ?? 0);
+
+      // Check how many boards share this topic
+      if (selectedTopic) {
+        const { data: matchingTopics } = await supabase
+          .from('topics')
+          .select('id, subjects!inner(levels!inner(educational_systems!inner(name)))')
+          .ilike('name', topicName);
+        
+        const boardNames = [...new Set(
+          (matchingTopics || []).map((t: any) => t.subjects?.levels?.educational_systems?.name).filter(Boolean)
+        )];
+        setCrossBoardCount(boardNames.length);
+        setCrossBoardNames(boardNames as string[]);
+      } else {
+        setCrossBoardCount(null);
+        setCrossBoardNames([]);
+      }
     };
     loadCount();
   }, [selectedTopic, selectedSubject, topics, subjects]);
@@ -366,9 +389,17 @@ const AIContentFactory = () => {
 
         {/* Topic Stats */}
         {topicQuestionCount !== null && (
-          <div className="text-xs text-muted-foreground flex items-center gap-1">
-            <Database className="h-3 w-3" />
-            Current bank: <span className="font-medium text-foreground">{topicQuestionCount.toLocaleString()}</span> questions for this topic
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground flex items-center gap-1">
+              <Database className="h-3 w-3" />
+              Current bank: <span className="font-medium text-foreground">{topicQuestionCount.toLocaleString()}</span> questions (canonical match)
+            </div>
+            {crossBoardCount !== null && crossBoardCount > 1 && (
+              <div className="text-xs text-primary flex items-center gap-1">
+                <Sparkles className="h-3 w-3" />
+                Shared across {crossBoardCount} boards ({crossBoardNames.join(', ')}) — questions available everywhere ✅
+              </div>
+            )}
           </div>
         )}
 
