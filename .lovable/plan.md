@@ -1,152 +1,74 @@
 
 
-# Implementation Plan: 3 Features
+# Plan: Enhanced Content Inventory Dashboard + Smart Topic Linking
 
-## Request 1: Fix Difficulty-Wise Question Counts (Quick Fix)
+## What This Does
 
-### Root Cause
-In `src/components/admin/QuestionBankManager.tsx` (lines 171-184), the `fetchStats` function queries difficulty values in **lowercase** (`'easy'`, `'medium'`, `'hard'`), but the database stores them in **Title Case** (`'Easy'`, `'Medium'`, `'Hard'`).
-
-Database proof:
-- Easy: 932
-- Medium: 2420
-- Hard: 489
-- Total: 3841
-
-All queries return 0 because `.eq('difficulty', 'easy')` doesn't match `'Easy'`.
-
-### Fix
-**File:** `src/components/admin/QuestionBankManager.tsx` (lines 171-184)
-
-Change the three difficulty filter values to Title Case:
-- `'easy'` to `'Easy'`
-- `'medium'` to `'Medium'`
-- `'hard'` to `'Hard'`
-
-Also add `.eq('category', 'mcq')` and `.eq('status', 'approved')` to each difficulty count query so stats are consistent (currently counting ALL content_items, not just approved MCQs).
+Replaces the existing basic Content Inventory (which only groups by subject/topic text) with a full LMS-aware inventory dashboard that shows statistics across boards/classes, identifies duplicate topics shared across boards, and enables bulk generation for low-inventory topics. Also adds a `canonical_topic_name` column for cross-board question sharing.
 
 ---
 
-## Request 2: Exclude Previously Attempted Questions
+## Part 1: Database Changes
 
-### Overview
-Track which questions each user has attempted, and exclude them from future test generation so users always get fresh questions.
+### 1a. New column on `content_items`
 
-### Database Migration
-Create a new `user_question_attempts` table:
+Add `canonical_topic_name TEXT` column with an index for fast lookups on approved MCQs. Backfill existing rows by normalizing the `topic` column (lowercase, replace non-alphanumeric with hyphens).
 
-```text
-user_question_attempts
-- id: UUID (PK)
-- user_id: UUID (NOT NULL)
-- question_id: UUID (NOT NULL)
-- attempted_at: TIMESTAMPTZ (default NOW())
-- UNIQUE(user_id, question_id)
-- INDEX on user_id
-- INDEX on question_id
-```
+### 1b. New RPC: `get_topic_inventory`
 
-RLS policies:
-- Users can INSERT their own attempts (`auth.uid() = user_id`)
-- Users can SELECT their own attempts (`auth.uid() = user_id`)
-- Users can DELETE their own attempts (`auth.uid() = user_id`) -- for reset functionality
-
-### Code Changes
-
-**1. Record attempts after test submission**
-
-**File:** `src/utils/gamification.ts` -- `processTestCompletion` function
-
-After saving the test_attempt, also insert into `user_question_attempts`:
-- Extract question IDs from the test session
-- Upsert into `user_question_attempts` with `onConflict: 'user_id,question_id'`
-
-**File:** `src/pages/TestSession.tsx` -- `handleSubmit` function
-
-Pass the question IDs from the current test session to `processTestCompletion`, which will record them.
-
-**2. Exclude attempted questions in query functions**
-
-**File:** `src/services/syllabusRAGFallback.ts`
-
-- Add `userId?: string` parameter to `getQuestionsWithFallbackInfo`
-- If `userId` is provided, fetch attempted question IDs from `user_question_attempts`
-- Pass `excludeQuestionIds` to `fetchQuestionsForTopic`
-- In `fetchQuestionsForTopic`, add `.not('id', 'in', ...)` filter when exclusion list is provided
-
-**File:** `src/components/syllabus-builder/SyllabusBuilder.tsx`
-
-- Pass `userId: user.id` to `getQuestionsWithFallbackInfo` calls
-
-### Edge Cases
-- If user has attempted ALL available questions, the exclusion returns 0 results, triggering AI generation of fresh questions
-- The `user_question_attempts` table uses UPSERT so duplicate attempts don't cause errors
+Replace the simple `get_content_inventory_stats` with a new function `get_topic_inventory(board_filter, class_filter, subject_filter)` that:
+- Joins topics -> subjects -> levels -> educational_systems (full LMS hierarchy)
+- Counts approved MCQs per canonical topic name (matching by `topic_id` OR `canonical_topic_name`)
+- Groups by canonical name to show cross-board statistics (how many boards share that topic)
+- Returns: `canonical_name`, `display_name`, `subject_name`, `board_count`, `board_names`, `total_questions`, `status` (good >= 100, low 50-99, empty < 50)
+- Filters by board/class/subject when provided
 
 ---
 
-## Request 3: Auto-Feed Practice Tests for Weak Areas
+## Part 2: Enhanced ContentInventory Component
 
-### Overview
-After test completion, automatically detect weak areas and create recommended practice tests that appear on the Dashboard.
+**File: `src/components/admin/analytics/ContentInventory.tsx`** (full rewrite)
 
-### Database Migration
-Create a `recommended_tests` table:
+Replace the existing accordion-based view with a flat table dashboard:
 
-```text
-recommended_tests
-- id: UUID (PK)
-- user_id: UUID (NOT NULL)
-- topic_name: TEXT (NOT NULL)
-- subject_name: TEXT
-- reason: TEXT (NOT NULL) -- 'weakness', 'review'
-- weakness_percentage: NUMERIC
-- question_count: INTEGER (NOT NULL)
-- question_ids: JSONB (array of question UUIDs)
-- status: TEXT (default 'pending') -- 'pending', 'started', 'completed', 'skipped'
-- session_id: UUID (nullable, linked test session)
-- created_at: TIMESTAMPTZ (default NOW())
-- completed_at: TIMESTAMPTZ (nullable)
+- **Filter bar**: Board, Class, Subject, and Status dropdowns (populated from `educational_systems`, `levels`, `subjects`)
+- **Summary cards**: Total Questions, Total Topics, Low Content count, Empty count
+- **Main table** with columns: Topic, Subject, Boards (badge with tooltip showing board names), Questions, Status (color-coded badges: green Good, amber Low, red Empty), Actions (Generate button)
+- **Bulk action buttons**: "Generate for All Low Topics" and "Generate for All Empty Topics"
+- Generate button triggers the existing `generate-test` edge function for the selected topic (reuses AIContentFactory logic)
+
+---
+
+## Part 3: Smart Topic Linking in Edge Function
+
+**File: `supabase/functions/generate-test/index.ts`**
+
+When saving questions in `saveQuestionsInBackground`, compute and store `canonical_topic_name`:
+```
+canonical_topic_name = topicName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
 ```
 
-RLS policies:
-- Users can SELECT their own (`auth.uid() = user_id`)
-- Users can INSERT their own (`auth.uid() = user_id`)
-- Users can UPDATE their own (`auth.uid() = user_id`)
-- Users can DELETE their own (`auth.uid() = user_id`)
+This is a one-line addition to the `questionData` object (around line 559).
 
-### Code Changes
+---
 
-**1. Auto-generate recommendations after test completion**
+## Part 4: Query Functions Use Canonical Names
 
-**File:** `src/utils/gamification.ts`
+**File: `src/services/syllabusRAGFallback.ts`**
 
-Add a new function `generateWeaknessRecommendations(userId, testResults)`:
-- After test completion, check if any subject scored below 50%
-- For each weak subject, check if a pending recommendation already exists
-- If not, fetch fresh questions (using exclusion logic from Request 2) for that subject
-- Insert into `recommended_tests`
+In `fetchQuestionsForTopic`, add a third query path: if `topic_id` and `topic name` queries return insufficient results, also query by `canonical_topic_name` matching. This enables cross-board question sharing automatically.
 
-Call this function at the end of `processTestCompletion`.
+---
 
-**2. Dashboard UI -- Recommended Practice section**
+## Part 5: AIContentFactory Topic Stats Enhancement
 
-**File:** Create `src/components/dashboard/RecommendedPractice.tsx`
+**File: `src/components/admin/AIContentFactory.tsx`**
 
-A new component that:
-- Queries `recommended_tests` for the current user where `status = 'pending'`
-- Shows cards with weak area name, score percentage, question count, and a "Start Practice" button
-- "Start Practice" creates a `custom_test_sessions` entry from the recommended question IDs and navigates to `/test-session/{id}`
+Update the topic stats section (lines 92-109) to also show:
+- How many boards share this topic
+- A note that "Questions generated will be available across all boards with this topic"
 
-**File:** `src/pages/Dashboard.tsx`
-
-- Import and render `RecommendedPractice` in the overview tab, between WeaknessSection and SavedTestsList
-
-**3. Mark recommendation as completed**
-
-**File:** `src/pages/TestSession.tsx`
-
-- On test submission, check if the session was created from a recommendation
-- If so, update the recommendation status to `'completed'`
+Query using the canonical name to get cross-board count.
 
 ---
 
@@ -154,30 +76,29 @@ A new component that:
 
 ### Files Modified
 
-| File | Changes |
+| File | Change |
 |---|---|
-| `src/components/admin/QuestionBankManager.tsx` | Fix difficulty case: `'easy'` to `'Easy'`, etc. |
-| `src/services/syllabusRAGFallback.ts` | Add `userId` param + exclusion logic |
-| `src/components/syllabus-builder/SyllabusBuilder.tsx` | Pass `userId` to query functions |
-| `src/utils/gamification.ts` | Record attempts + generate weakness recommendations |
-| `src/pages/TestSession.tsx` | Pass question IDs to completion handler + mark recommendations done |
-| `src/pages/Dashboard.tsx` | Add RecommendedPractice component |
+| `src/components/admin/analytics/ContentInventory.tsx` | Full rewrite with filters, table, bulk actions |
+| `src/components/admin/AIContentFactory.tsx` | Add cross-board stats display |
+| `supabase/functions/generate-test/index.ts` | Save `canonical_topic_name` on insert |
+| `src/services/syllabusRAGFallback.ts` | Add canonical name fallback query |
 
-### New Files
+### Database Migration
 
-| File | Purpose |
-|---|---|
-| `src/components/dashboard/RecommendedPractice.tsx` | UI for recommended practice tests |
+1. `ALTER TABLE content_items ADD COLUMN IF NOT EXISTS canonical_topic_name TEXT`
+2. `CREATE INDEX idx_content_items_canonical ON content_items(canonical_topic_name) WHERE status = 'approved' AND category = 'mcq'`
+3. Backfill: `UPDATE content_items SET canonical_topic_name = ... WHERE topic IS NOT NULL AND canonical_topic_name IS NULL`
+4. Create `get_topic_inventory()` RPC function
 
-### Database Migrations
+### No New Files
 
-1. Create `user_question_attempts` table with RLS
-2. Create `recommended_tests` table with RLS
+The existing `ContentInventory.tsx` is rewritten in place. No new components needed.
 
 ### Implementation Order
 
-1. Fix difficulty counts (standalone, no dependencies)
-2. Create both database tables (single migration)
-3. Implement question attempt tracking (Request 2)
-4. Implement auto-feed practice tests (Request 3, depends on #2 for fresh questions)
+1. Database migration (column + index + backfill + RPC)
+2. Update edge function to save canonical names
+3. Rewrite ContentInventory component
+4. Update syllabusRAGFallback for canonical queries
+5. Update AIContentFactory stats display
 
