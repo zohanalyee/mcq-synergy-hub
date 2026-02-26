@@ -31,7 +31,6 @@ import {
   CheckCircle2, 
   FolderTree,
   RefreshCw,
-  Sparkles,
   XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,8 +55,6 @@ interface LMSItem {
 const ContentInventory = () => {
   const [inventory, setInventory] = useState<TopicInventory[]>([]);
   const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState<string | null>(null);
-  const [bulkGenerating, setBulkGenerating] = useState(false);
 
   const [systems, setSystems] = useState<LMSItem[]>([]);
   const [levels, setLevels] = useState<(LMSItem & { system_id: string })[]>([]);
@@ -118,88 +115,6 @@ const ContentInventory = () => {
   const lowCount = useMemo(() => inventory.filter(i => i.status === 'low').length, [inventory]);
   const emptyCount = useMemo(() => inventory.filter(i => i.status === 'empty').length, [inventory]);
 
-  const handleGenerate = async (item: TopicInventory) => {
-    setGenerating(item.canonical_name);
-    try {
-      const { data: matchingTopics } = await supabase
-        .from('topics')
-        .select('id, name, subject_id, subjects(id, name)')
-        .ilike('name', item.display_name);
-
-      if (!matchingTopics || matchingTopics.length === 0) {
-        toast.error(`No topics found for "${item.display_name}"`);
-        return;
-      }
-
-      const topicIds = matchingTopics.map(t => t.id);
-      const subjectName = (matchingTopics[0] as any).subjects?.name;
-
-      const { error } = await supabase.functions.invoke('generate-test', {
-        body: {
-          topic_ids: topicIds,
-          topic: item.display_name,
-          subject: subjectName,
-          difficulty: 'mixed',
-          question_count: 50,
-          mode: 'bank_only',
-          forceNew: true,
-        }
-      });
-      if (error) throw error;
-      toast.success(`Generated 50 questions for "${item.display_name}" (across ${matchingTopics.length} boards)`);
-      await loadInventory();
-    } catch (err: any) {
-      toast.error(`Failed to generate for "${item.display_name}": ${err.message}`);
-    } finally {
-      setGenerating(null);
-    }
-  };
-
-  const handleBulkGenerate = async (targetStatus: 'low' | 'empty') => {
-    const targets = inventory.filter(i => i.status === targetStatus).slice(0, 10);
-    if (targets.length === 0) {
-      toast.info(`No ${targetStatus} topics found`);
-      return;
-    }
-    setBulkGenerating(true);
-    let successCount = 0;
-    const questionCount = targetStatus === 'empty' ? 50 : 30;
-
-    for (const item of targets) {
-      try {
-        const { data: matchingTopics } = await supabase
-          .from('topics')
-          .select('id, name, subject_id, subjects(id, name)')
-          .ilike('name', item.display_name);
-
-        if (!matchingTopics || matchingTopics.length === 0) continue;
-
-        const topicIds = matchingTopics.map(t => t.id);
-        const subjectName = (matchingTopics[0] as any).subjects?.name;
-
-        const { error } = await supabase.functions.invoke('generate-test', {
-          body: {
-            topic_ids: topicIds,
-            topic: item.display_name,
-            subject: subjectName,
-            difficulty: 'mixed',
-            question_count: questionCount,
-            mode: 'bank_only',
-            forceNew: true,
-          }
-        });
-        if (!error) successCount++;
-
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      } catch {
-        // continue with next
-      }
-    }
-    toast.success(`Bulk generated for ${successCount}/${targets.length} topics`);
-    setBulkGenerating(false);
-    await loadInventory();
-  };
-
   if (loading) {
     return (
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
@@ -220,10 +135,10 @@ const ContentInventory = () => {
         <div>
           <h2 className="text-xl font-bold flex items-center gap-2">
             <Archive className="h-5 w-5" />
-            Content Inventory
+            Inventory
           </h2>
           <p className="text-sm text-muted-foreground">
-            Cross-board topic statistics with smart linking
+            Read-only overview of question counts per topic across all boards
           </p>
         </div>
         <Button variant="outline" size="sm" onClick={loadInventory} disabled={loading}>
@@ -332,7 +247,6 @@ const ContentInventory = () => {
                   <TableHead>Boards</TableHead>
                   <TableHead className="text-right">Questions</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -361,17 +275,6 @@ const ContentInventory = () => {
                       {item.status === 'low' && <Badge className="bg-amber-500 text-white">⚠️ Low</Badge>}
                       {item.status === 'empty' && <Badge variant="destructive">❌ Empty</Badge>}
                     </TableCell>
-                    <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={generating === item.canonical_name || bulkGenerating}
-                        onClick={() => handleGenerate(item)}
-                      >
-                        <Sparkles className="h-3 w-3 mr-1" />
-                        {generating === item.canonical_name ? "..." : "Generate"}
-                      </Button>
-                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -379,18 +282,6 @@ const ContentInventory = () => {
           </CardContent>
         </Card>
       )}
-
-      {/* Bulk Actions */}
-      <div className="flex gap-3">
-        <Button onClick={() => handleBulkGenerate('empty')} disabled={bulkGenerating || emptyCount === 0} variant="default">
-          <Sparkles className="h-4 w-4 mr-2" />
-          {bulkGenerating ? "Generating..." : `Generate for Empty Topics (${emptyCount})`}
-        </Button>
-        <Button onClick={() => handleBulkGenerate('low')} disabled={bulkGenerating || lowCount === 0} variant="outline">
-          <Sparkles className="h-4 w-4 mr-2" />
-          {bulkGenerating ? "Generating..." : `Generate for Low Topics (${lowCount})`}
-        </Button>
-      </div>
     </motion.div>
   );
 };

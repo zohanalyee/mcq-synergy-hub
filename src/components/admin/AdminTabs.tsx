@@ -14,7 +14,8 @@ import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
 import DocumentLibrary from "./documents/DocumentLibrary";
 import LMSApprovalDashboard from "./LMSApprovalDashboard";
 import AIContentFactory from "./AIContentFactory";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck, Sparkles } from "lucide-react";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="generate-mcqs" className="flex items-center gap-2 border-2 border-primary/20">
           <Sparkles className="h-4 w-4" />
           Generate MCQs ⚡
+        </TabsTrigger>
+        <TabsTrigger value="smart-generation" className="flex items-center gap-2 border-2 border-primary/20">
+          <Zap className="h-4 w-4" />
+          Smart Generation 🤖
         </TabsTrigger>
         <TabsTrigger value="jobs" className="flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4" />
@@ -195,6 +200,11 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Generate MCQs Tab */}
       <TabsContent value="generate-mcqs">
         <AIContentFactory />
+      </TabsContent>
+      
+      {/* Smart Generation Tab */}
+      <TabsContent value="smart-generation">
+        <AutoFillDashboard />
       </TabsContent>
       
       {/* Jobs Tab */}
