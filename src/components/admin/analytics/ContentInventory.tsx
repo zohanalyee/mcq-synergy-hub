@@ -121,17 +121,32 @@ const ContentInventory = () => {
   const handleGenerate = async (item: TopicInventory) => {
     setGenerating(item.canonical_name);
     try {
+      const { data: matchingTopics } = await supabase
+        .from('topics')
+        .select('id, name, subject_id, subjects(id, name)')
+        .ilike('name', item.display_name);
+
+      if (!matchingTopics || matchingTopics.length === 0) {
+        toast.error(`No topics found for "${item.display_name}"`);
+        return;
+      }
+
+      const topicIds = matchingTopics.map(t => t.id);
+      const subjectName = (matchingTopics[0] as any).subjects?.name;
+
       const { error } = await supabase.functions.invoke('generate-test', {
         body: {
+          topic_ids: topicIds,
           topic: item.display_name,
+          subject: subjectName,
           difficulty: 'mixed',
-          question_count: 20,
+          question_count: 50,
           mode: 'bank_only',
           forceNew: true,
         }
       });
       if (error) throw error;
-      toast.success(`Generated questions for "${item.display_name}"`);
+      toast.success(`Generated 50 questions for "${item.display_name}" (across ${matchingTopics.length} boards)`);
       await loadInventory();
     } catch (err: any) {
       toast.error(`Failed to generate for "${item.display_name}": ${err.message}`);
@@ -148,18 +163,34 @@ const ContentInventory = () => {
     }
     setBulkGenerating(true);
     let successCount = 0;
+    const questionCount = targetStatus === 'empty' ? 50 : 30;
+
     for (const item of targets) {
       try {
+        const { data: matchingTopics } = await supabase
+          .from('topics')
+          .select('id, name, subject_id, subjects(id, name)')
+          .ilike('name', item.display_name);
+
+        if (!matchingTopics || matchingTopics.length === 0) continue;
+
+        const topicIds = matchingTopics.map(t => t.id);
+        const subjectName = (matchingTopics[0] as any).subjects?.name;
+
         const { error } = await supabase.functions.invoke('generate-test', {
           body: {
+            topic_ids: topicIds,
             topic: item.display_name,
+            subject: subjectName,
             difficulty: 'mixed',
-            question_count: 20,
+            question_count: questionCount,
             mode: 'bank_only',
             forceNew: true,
           }
         });
         if (!error) successCount++;
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
       } catch {
         // continue with next
       }
