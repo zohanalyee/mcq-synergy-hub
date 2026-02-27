@@ -45,6 +45,7 @@ import SubmitContent from "./pages/SubmitContent";
 import QuestionBank from "./pages/QuestionBank";
 import AskDocument from "./pages/AskDocument";
 import TestSession from "./pages/TestSession";
+import Notifications from "./pages/Notifications";
 
 // Tool Pages
 import CalendarTool from "./pages/tools/CalendarTool";
@@ -121,6 +122,7 @@ const App = () => {
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
                       <Route path="/test-session/:id" element={<TestSession />} />
+                      <Route path="/notifications" element={<Notifications />} />
                       
                       {/* Tool Routes */}
                       <Route path="/tools/calendar" element={<CalendarTool />} />

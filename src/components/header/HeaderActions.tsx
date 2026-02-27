@@ -1,4 +1,4 @@
-import { Shield, LogOut, Settings, Bell, LayoutGrid, LayoutDashboard, User, MessageSquare } from 'lucide-react';
+import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -13,9 +13,9 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import StreakCounter from '@/components/gamification/StreakCounter';
 import { useFloatingTools } from '@/contexts/FloatingToolsContext';
 import { toolsConfig, ToolId } from '@/components/tools/FloatingToolsRenderer';
-import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
+import NotificationBell from '@/components/notifications/NotificationBell';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 interface HeaderActionsProps {
@@ -38,8 +38,6 @@ const HeaderActions = ({
   onSignOut
 }: HeaderActionsProps) => {
   const { openTool } = useFloatingTools();
-  const { toast } = useToast();
-  const [hasNotifications] = useState(true);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
 
@@ -93,19 +91,7 @@ const HeaderActions = ({
       </DropdownMenu>
 
       {/* Notification Bell */}
-      {user && (
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="relative h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
-          onClick={() => toast({ title: 'Notifications', description: 'No new notifications' })}
-        >
-          <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
-          {hasNotifications && (
-            <span className="absolute top-1.5 right-1.5 h-2 w-2 rounded-full bg-destructive animate-pulse" />
-          )}
-        </Button>
-      )}
+      {user && <NotificationBell />}
 
       {/* User menu or sign in button - hidden on mobile (avatar moves to bottom nav) */}
       {user ? (

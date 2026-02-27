@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import confetti from "canvas-confetti";
+import { createNotification, NotificationType } from "@/services/notificationService";
 
 interface TestCompletionData {
   score: number;
@@ -111,15 +112,35 @@ export const processTestCompletion = async (data: TestCompletionData): Promise<{
     const newBadges = await checkAndAwardBadges(user.id, data);
     result.newBadges = newBadges;
 
-    // 4. Trigger celebration effects
+    // 4. Create notifications
     const percentage = (data.score / data.totalQuestions) * 100;
+
+    await createNotification(user.id, NotificationType.TEST_COMPLETED, {
+      testType: data.testType,
+      score: data.score,
+      total: data.totalQuestions,
+    });
+
+    await createNotification(user.id, NotificationType.RESULTS_READY, {
+      score: data.score,
+      total: data.totalQuestions,
+      percentage: Math.round(percentage),
+    });
+
+    for (const badge of newBadges) {
+      await createNotification(user.id, NotificationType.BADGE_EARNED, {
+        badgeName: badge.name,
+      });
+    }
+
+    // 5. Trigger celebration effects
     if (percentage === 100) {
       triggerBigConfetti();
     } else if (percentage >= 70) {
       triggerConfetti();
     }
 
-    // 5. Generate weakness recommendations (fire and forget)
+    // 6. Generate weakness recommendations (fire and forget)
     generateWeaknessRecommendations(user.id, data).catch(err => {
       console.error("Error generating weakness recommendations:", err);
     });
@@ -164,6 +185,12 @@ async function generateWeaknessRecommendations(userId: string, data: TestComplet
       question_ids: [],
       status: "pending"
     } as any);
+
+    // Send weakness notification
+    await createNotification(userId, NotificationType.WEAKNESS_DETECTED, {
+      subject,
+      percentage: Math.round(percentage),
+    });
   }
 }
 
