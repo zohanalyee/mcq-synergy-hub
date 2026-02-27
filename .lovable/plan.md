@@ -1,27 +1,26 @@
 
 
-# Fix: Auto-Fill False "Daily Quota Exhausted"
+# Plan: Enhance Profile Dropdown Menu Icons and Naming
 
-## Root Cause
-The `system_settings` row for key `ai_daily_limit` has `{"max_requests": 5, "max_questions": 500}`. The `get_ai_usage_today()` RPC reads `max_requests` and uses it as the daily limit. With 5 requests made today, the dashboard shows 5/5 = 100% exhausted.
+## Single File Change: `src/components/header/HeaderActions.tsx`
 
-The quota manager in edge functions uses a hardcoded `DAILY_QUOTA_LIMIT = 1400`, but the frontend/RPC uses this separate `system_settings` value of 5.
+### Current State
+- "Dashboard" item: no icon
+- "Admin Panel" item: has Shield icon ✓
+- "Profile" item: no icon
+- "Feedback" item: no icon
+- "Settings" item: has Settings icon ✓
+- "Sign Out" item: has LogOut icon ✓
 
-## Fix
-**Single data update** -- change `max_requests` from 5 to 1400 to match the edge function quota manager:
+### Changes
 
-```sql
-UPDATE system_settings
-SET value = '{"max_requests": 1400, "max_questions": 50000}'::jsonb,
-    updated_at = now()
-WHERE key = 'ai_daily_limit';
-```
+1. Add imports: `LayoutDashboard`, `User`, `MessageSquare` from `lucide-react`
 
-No code changes needed. The existing `get_ai_usage_today()` RPC and `AutoFillDashboard` component will immediately show the correct quota (e.g., 5/1400 = 0.4%).
+2. Line ~131: `"Dashboard"` → `<LayoutDashboard className="mr-2 h-3.5 w-3.5" /> My Dashboard`
 
-## Result After Fix
-- Daily AI Quota card: **5 / 1400** (0% used, 1395 remaining)
-- "Daily Quota Exhausted" alert: disappears
-- Auto-fill "Run Now" button: re-enabled
-- Consistent with QuotaMonitor's display
+3. Line ~138: `"Profile"` → `<User className="mr-2 h-3.5 w-3.5" /> Profile`
+
+4. Line ~141: `"Feedback"` → `<MessageSquare className="mr-2 h-3.5 w-3.5" /> Feedback`
+
+All other items already have icons. Icon size stays `h-3.5 w-3.5` to match existing icons in the dropdown.
 
