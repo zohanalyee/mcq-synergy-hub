@@ -1,4 +1,4 @@
-import { Shield, LogOut, Settings, Bell, LayoutGrid } from 'lucide-react';
+import { Shield, LogOut, Settings, Bell, LayoutGrid, LayoutDashboard, User, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -135,7 +135,8 @@ const HeaderActions = ({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-1.5">
-                Dashboard
+                <LayoutDashboard className="mr-2 h-3.5 w-3.5" />
+                My Dashboard
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-1.5">
@@ -144,9 +145,11 @@ const HeaderActions = ({
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-1.5">
+                <User className="mr-2 h-3.5 w-3.5" />
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-1.5">
+                <MessageSquare className="mr-2 h-3.5 w-3.5" />
                 Feedback
               </DropdownMenuItem>
               <DropdownMenuSeparator />
