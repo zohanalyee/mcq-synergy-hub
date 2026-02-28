@@ -16,6 +16,7 @@ import LMSApprovalDashboard from "./LMSApprovalDashboard";
 import AIContentFactory from "./AIContentFactory";
 import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
+import DocumentMCQConverter from "./DocumentMCQConverter";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +62,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="smart-generation" className="flex items-center gap-2 border-2 border-primary/20">
           <Zap className="h-4 w-4" />
           Smart Generation 🤖
+        </TabsTrigger>
+        <TabsTrigger value="doc-to-mcq" className="flex items-center gap-2 border-2 border-primary/20">
+          <FileText className="h-4 w-4" />
+          Doc → MCQ 📄
         </TabsTrigger>
         <TabsTrigger value="jobs" className="flex items-center gap-2">
           <BriefcaseBusiness className="h-4 w-4" />
@@ -205,6 +210,11 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Smart Generation Tab */}
       <TabsContent value="smart-generation">
         <AutoFillDashboard />
+      </TabsContent>
+      
+      {/* Doc to MCQ Tab */}
+      <TabsContent value="doc-to-mcq">
+        <DocumentMCQConverter />
       </TabsContent>
       
       {/* Jobs Tab */}
