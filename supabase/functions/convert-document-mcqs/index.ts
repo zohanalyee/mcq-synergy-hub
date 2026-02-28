@@ -115,10 +115,14 @@ serve(async (req) => {
       .join("\n\n");
 
     // Step 3: Combined AI prompt (Extract + Classify + Verify in one call)
-    const systemPrompt = `You are an expert MCQ extractor, classifier, and verifier. You will:
-1. Extract ALL multiple-choice questions from the document
-2. Classify each question by subject, topic, and difficulty
-3. Verify if the marked answers are correct
+    const systemPrompt = `You are an expert MCQ extractor. Your PRIMARY GOAL is to extract EVERY SINGLE question from the document.
+
+CRITICAL INSTRUCTIONS:
+1. Extract ALL questions - do not stop early
+2. If there's an answer key at the end, match it with questions
+3. Count total questions found
+4. Handle questions split across pages
+5. Ignore page numbers, headers, footers
 
 AVAILABLE SUBJECTS IN SYSTEM:
 ${subjectsList}
@@ -126,64 +130,103 @@ ${subjectsList}
 AVAILABLE TOPICS PER SUBJECT:
 ${topicsList}
 
+EXTRACTION RULES:
+━━━━━━━━━━━━━━━━
+1. Find EVERY question (Q1, Q2, 1., 2., Question 1:, etc.)
+2. Extract ALL 4 options (A/B/C/D or 1/2/3/4)
+3. Match correct answer from answer key if present
+4. If answer key says "1. B", match it to Question 1
+5. Continue until NO MORE questions found
+
 DIFFICULTY CRITERIA:
-- Easy: Basic recall/definition, single-step reasoning
-- Medium: Application of concepts, multi-step reasoning
-- Hard: Complex analysis, multi-concept integration, critical thinking
+- Easy: Basic recall, definitions, "What is...", "Which is..."
+- Medium: Application, "Why...", "How...", multi-step
+- Hard: Analysis, synthesis, "Evaluate...", "Compare..."
 
 ANSWER VERIFICATION:
-- Check if the marked correct answer is actually correct
-- Flag questions where the answer seems wrong or ambiguous
+- Check if marked answer is logically correct
+- Flag if answer seems wrong
+- Provide brief reasoning
 
-OUTPUT FORMAT - Return ONLY valid JSON (no markdown, no code blocks):
+OUTPUT FORMAT (PURE JSON, NO MARKDOWN):
 {
   "metadata": {
-    "total_questions": 0,
+    "total_questions": <actual count>,
     "source_type": "${source_type}",
-    "detected_subject": null,
-    "extraction_confidence": 0.0
+    "detected_subject": "Subject Name or null",
+    "extraction_confidence": 0.95,
+    "has_answer_key": true
   },
   "questions": [
     {
       "id": "q1",
-      "question": "Question text?",
+      "question": "Which is the central control system of the body?",
       "options": {
-        "A": "First option",
-        "B": "Second option",
-        "C": "Third option",
-        "D": "Fourth option"
+        "A": "Heart",
+        "B": "Brain",
+        "C": "Lungs",
+        "D": "Stomach"
       },
-      "correct_option": "A",
-      "explanation": "Why this is correct",
+      "correct_option": "B",
+      "explanation": "The brain controls all body functions",
       "subject_id": "matched-uuid-or-null",
-      "suggested_subject": "Subject Name",
+      "suggested_subject": "Science",
       "topic_id": "matched-uuid-or-null",
-      "suggested_topic": "Topic Name",
+      "suggested_topic": "Human Body",
       "difficulty": "Easy",
       "verified": true,
-      "verification_note": "",
-      "confidence": 0.95
+      "verification_note": "Correct - brain is the control center",
+      "confidence": 0.98
     }
   ],
   "summary": {
-    "total": 0,
-    "verified_correct": 0,
-    "flagged": 0,
-    "easy": 0,
-    "medium": 0,
-    "hard": 0
+    "total": <count>,
+    "verified_correct": <count>,
+    "flagged": <count>,
+    "easy": <count>,
+    "medium": <count>,
+    "hard": <count>
   }
 }
 
-IMPORTANT:
-- Extract ALL questions found in the document
-- Match subjects/topics to existing ones when possible (use the IDs provided)
-- If no match, suggest a subject/topic name
-- correct_option must be "A", "B", "C", or "D"
-- Set verified=false and add verification_note for suspicious answers
-- Return valid JSON only, no markdown wrapping`;
+CRITICAL SUCCESS CRITERIA:
+✓ Extract EVERY question (if document has 25, output must have 25)
+✓ Match answer key correctly
+✓ Classify by difficulty
+✓ Verify each answer
+✓ Return valid JSON only (no markdown)
 
-    const userPrompt = `Extract, classify, and verify ALL MCQ questions from this document:\n\n${documentText}`;
+EXAMPLE:
+If document shows:
+"1. Question text?
+ A) Option 1
+ B) Option 2
+ C) Option 3
+ D) Option 4
+ 
+ Answer Key: 1. B"
+
+Extract as:
+{
+  "id": "q1",
+  "question": "Question text?",
+  "options": {"A": "Option 1", "B": "Option 2", "C": "Option 3", "D": "Option 4"},
+  "correct_option": "B"
+}
+
+DO NOT STOP until all questions are extracted!`;
+    const userPrompt = `Extract ALL MCQ questions from this document.
+
+IMPORTANT: 
+- This document likely contains MULTIPLE questions (possibly 20-50+)
+- Extract EVERY SINGLE ONE
+- If you see "Answer Key" at the end, use it to match correct answers
+- Count questions as you extract to ensure completeness
+
+DOCUMENT TEXT:
+${documentText}
+
+REMINDER: Extract ALL questions found. Do not stop after a few!`;
 
     console.log(`[convert-document-mcqs] Calling AI with ${documentText.length} chars of text`);
 
@@ -200,7 +243,7 @@ IMPORTANT:
           { role: "user", content: userPrompt },
         ],
         temperature: 0.3,
-        max_tokens: 16384,
+        max_tokens: 32768,
       }),
     });
 
@@ -246,7 +289,15 @@ IMPORTANT:
       }
     }
 
-    console.log(`[convert-document-mcqs] Extracted ${parsed.questions?.length || 0} questions`);
+    console.log(`[convert-document-mcqs] ✓ Extracted ${parsed.questions?.length || 0} questions`);
+
+    // Extraction completeness sanity check
+    if (parsed.questions && parsed.questions.length > 0) {
+      const textLines = documentText.split('\n').length;
+      if (parsed.questions.length < 5 && textLines > 100) {
+        console.warn(`[convert-document-mcqs] ⚠️ WARNING: Only ${parsed.questions.length} questions extracted from ${textLines} lines of text. Document may need reprocessing.`);
+      }
+    }
 
     // Log usage
     await supabase.from("ai_usage_logs").insert({
