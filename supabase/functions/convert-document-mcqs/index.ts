@@ -268,22 +268,47 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
     const aiData = await aiResponse.json();
     const responseText = aiData.choices?.[0]?.message?.content || "";
 
-    // Parse AI response
+    // Robust JSON parsing
     let parsed: any;
+    const cleanJson = (text: string): string => {
+      // Remove markdown code blocks
+      let cleaned = text.replace(/```json\s*/gi, "").replace(/```\s*/g, "").trim();
+      // Find JSON boundaries
+      const jsonStart = cleaned.indexOf("{");
+      const jsonEnd = cleaned.lastIndexOf("}");
+      if (jsonStart === -1 || jsonEnd === -1) throw new Error("No JSON object found in AI response");
+      cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
+      // Fix common issues
+      cleaned = cleaned
+        .replace(/,\s*}/g, "}")
+        .replace(/,\s*]/g, "]")
+        .replace(/[\x00-\x1F\x7F]/g, (ch) => ch === '\n' || ch === '\r' || ch === '\t' ? ch : "");
+      return cleaned;
+    };
+
     try {
-      // Try direct parse
       parsed = JSON.parse(responseText);
     } catch {
-      // Try extracting JSON from markdown code blocks
-      const jsonMatch = responseText.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (jsonMatch) {
-        parsed = JSON.parse(jsonMatch[1].trim());
-      } else {
-        // Try finding JSON object
-        const objMatch = responseText.match(/\{[\s\S]*\}/);
-        if (objMatch) {
-          parsed = JSON.parse(objMatch[0]);
-        } else {
+      try {
+        const cleaned = cleanJson(responseText);
+        parsed = JSON.parse(cleaned);
+      } catch (e2) {
+        // Attempt to repair truncated JSON
+        try {
+          let repaired = cleanJson(responseText);
+          let openB = 0, closeB = 0, openA = 0, closeA = 0;
+          for (const c of repaired) {
+            if (c === '{') openB++; if (c === '}') closeB++;
+            if (c === '[') openA++; if (c === ']') closeA++;
+          }
+          // Remove trailing comma before adding closers
+          repaired = repaired.replace(/,\s*$/, "");
+          while (closeA < openA) { repaired += ']'; closeA++; }
+          while (closeB < openB) { repaired += '}'; closeB++; }
+          parsed = JSON.parse(repaired);
+          console.warn("[convert-document-mcqs] ⚠️ Repaired truncated JSON response");
+        } catch {
+          console.error("[convert-document-mcqs] Raw AI response (first 500 chars):", responseText.substring(0, 500));
           throw new Error("Failed to parse AI response as JSON");
         }
       }
