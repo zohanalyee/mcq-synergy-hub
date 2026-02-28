@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,83 @@ async function verifyAdmin(req: Request, supabase: any): Promise<{ authorized: b
     return { authorized: false, error: "Admin privileges required" };
   }
   return { authorized: true, userId: data.user.id };
+}
+
+function uint8ToBase64(bytes: Uint8Array): string {
+  let raw = "";
+  const step = 32768;
+  for (let i = 0; i < bytes.length; i += step) {
+    const slice = bytes.subarray(i, Math.min(i + step, bytes.length));
+    raw += String.fromCharCode(...slice);
+  }
+  return btoa(raw);
+}
+
+function hasReadableText(text: string): boolean {
+  const trimmed = text.trim();
+  const letterCount = (trimmed.match(/[A-Za-z\u0600-\u06FF\u0900-\u097F]/g) || []).length;
+  return trimmed.length >= 120 && letterCount >= 60;
+}
+
+async function extractPdfText(fileBytes: Uint8Array, lovableApiKey: string): Promise<string> {
+  try {
+    const pdf = await getDocumentProxy(fileBytes);
+    const { text } = await extractText(pdf, { mergePages: true });
+    const nativeText = (text || "").trim();
+
+    if (hasReadableText(nativeText)) {
+      console.log(`[convert-document-mcqs] Native PDF extraction succeeded (${nativeText.length} chars)`);
+      return nativeText;
+    }
+
+    console.warn(`[convert-document-mcqs] Native PDF extraction insufficient (${nativeText.length} chars), falling back to OCR`);
+  } catch (error) {
+    console.warn("[convert-document-mcqs] Native PDF extraction failed, falling back to OCR:", error);
+  }
+
+  const base64Pdf = uint8ToBase64(fileBytes);
+  const ocrResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${lovableApiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "google/gemini-2.5-flash",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Extract ALL readable text from this PDF. Preserve question and option structure. Output only extracted text.",
+            },
+            {
+              type: "image_url",
+              image_url: { url: `data:application/pdf;base64,${base64Pdf}` },
+            },
+          ],
+        },
+      ],
+      temperature: 0.1,
+      max_tokens: 32768,
+    }),
+  });
+
+  if (!ocrResponse.ok) {
+    const errText = await ocrResponse.text();
+    throw new Error(`PDF OCR failed: ${ocrResponse.status} ${errText.substring(0, 200)}`);
+  }
+
+  const ocrData = await ocrResponse.json();
+  const ocrText = (ocrData.choices?.[0]?.message?.content || "").trim();
+
+  if (!hasReadableText(ocrText)) {
+    throw new Error("PDF appears unreadable or has no extractable text.");
+  }
+
+  console.log(`[convert-document-mcqs] OCR PDF extraction succeeded (${ocrText.length} chars)`);
+  return ocrText;
 }
 
 serve(async (req) => {
@@ -74,7 +152,16 @@ serve(async (req) => {
       if (!fileResponse.ok) {
         throw new Error(`Failed to fetch file: ${fileResponse.status}`);
       }
-      documentText = await fileResponse.text();
+
+      const fileBytes = new Uint8Array(await fileResponse.arrayBuffer());
+      const contentType = (fileResponse.headers.get("content-type") || "").toLowerCase();
+      const isPdf = source_type === "pdf" || contentType.includes("application/pdf") || file_url.toLowerCase().includes(".pdf");
+
+      if (isPdf) {
+        documentText = await extractPdfText(fileBytes, LOVABLE_API_KEY);
+      } else {
+        documentText = new TextDecoder().decode(fileBytes);
+      }
     }
 
     if (!documentText || documentText.trim().length < 50) {
@@ -308,8 +395,15 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
           parsed = JSON.parse(repaired);
           console.warn("[convert-document-mcqs] ⚠️ Repaired truncated JSON response");
         } catch {
+          const aiPreview = responseText.replace(/\s+/g, " ").trim().substring(0, 500);
           console.error("[convert-document-mcqs] Raw AI response (first 500 chars):", responseText.substring(0, 500));
-          throw new Error("Failed to parse AI response as JSON");
+          return new Response(
+            JSON.stringify({
+              error: "AI returned non-JSON output. The document may be unreadable or extracted as binary data.",
+              ai_response_preview: aiPreview,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
         }
       }
     }
