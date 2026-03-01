@@ -1,29 +1,40 @@
 
 
-# Plan: Improve MCQ Extraction Prompt
+# Fix: "Run Now" Button Not Working
 
-## Single File Change: `supabase/functions/convert-document-mcqs/index.ts`
+## Root Cause
+The `x-admin-trigger` custom header sent by the frontend is **not listed** in the CORS `Access-Control-Allow-Headers`. The browser's CORS preflight rejects it, causing "Failed to fetch".
 
-### Change 1: Replace systemPrompt (lines 118-184)
-Replace with enhanced prompt that:
-- Strongly emphasizes extracting ALL questions (repeated instructions)
-- Explicitly handles answer keys at document end
-- Handles page breaks and split questions
-- Includes extraction example for answer key matching
-- Adds `has_answer_key` to metadata output
+The scheduled-autofill function's CORS headers allow: `authorization, x-client-info, apikey, content-type, ...` but NOT `x-admin-trigger`.
 
-### Change 2: Replace userPrompt (line 186)
-New prompt that:
-- Warns document may have 20-50+ questions
-- Instructs to check for answer keys
-- Reminds not to stop early
+## Fix: `supabase/functions/scheduled-autofill/index.ts`
 
-### Change 3: Add extraction validation logging (after line 249)
-- Log warning if few questions extracted from large text
-- Compare question count vs text line count as sanity check
+### Change 1: Add `x-admin-trigger` to CORS allowed headers
+Add the custom header to the existing `corsHeaders` string (line 6).
 
-### Change 4: Increase max_tokens (line 203)
-- Change from `16384` to `32768` to handle larger question sets without truncation
+### Change 2: Add proper admin verification for browser calls
+Currently, any request with `x-admin-trigger: true` is allowed — no actual admin check. Add JWT-based admin verification when the call comes from the browser (not service role):
 
-No other files need changes. Deploy after edit.
+```text
+if isAdminCall (has x-admin-trigger header):
+  → extract JWT from Authorization header
+  → verify user exists via supabase.auth.getUser()
+  → check user_roles table for admin role
+  → reject if not admin
+```
+
+### Change 3: Remove "already ran today" guard for manual runs
+The current code skips if any `auto_fill` log exists today (lines 67-81). This blocks the "Run Now" button after the first run. Only apply this guard for scheduled (service-role) calls, not manual admin triggers.
+
+## No frontend changes needed
+The `AutoFillDashboard.tsx` already calls the function correctly.
+
+## Files Changed
+
+| Action | File |
+|--------|------|
+| Modify | `supabase/functions/scheduled-autofill/index.ts` |
+
+## After deployment
+Deploy and test the "Run Now" button from the admin panel.
 
