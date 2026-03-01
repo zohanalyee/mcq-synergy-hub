@@ -3,7 +3,7 @@ import { checkQuota, retryWithBackoff, logQuotaUsage, quotaExhaustedResponse, Qu
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-admin-trigger, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 };
 
 interface AutoFillConfig {
@@ -46,6 +46,46 @@ Deno.serve(async (req) => {
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // For browser-based admin calls, verify JWT and admin role
+    if (isAdminCall && !isScheduledCall) {
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Missing authorization token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+
+      const { data: userData, error: userError } = await userClient.auth.getUser();
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid or expired token' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: roleData } = await supabaseAdmin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userData.user.id)
+        .eq('role', 'admin')
+        .maybeSingle();
+
+      if (!roleData) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Admin privileges required' }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log(`[Scheduled Auto-Fill] ✅ Admin verified: ${userData.user.id}`);
+    }
     
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -64,20 +104,22 @@ Deno.serve(async (req) => {
       throw err;
     }
 
-    // ============= ALREADY RAN TODAY CHECK =============
-    const today = new Date().toISOString().split('T')[0];
-    const { count: todayRunCount } = await supabase
-      .from('ai_usage_logs')
-      .select('*', { count: 'exact', head: true })
-      .eq('source_type', 'auto_fill')
-      .gte('created_at', `${today}T00:00:00Z`);
+    // ============= ALREADY RAN TODAY CHECK (scheduled calls only) =============
+    if (!isAdminCall) {
+      const today = new Date().toISOString().split('T')[0];
+      const { count: todayRunCount } = await supabase
+        .from('ai_usage_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('source_type', 'auto_fill')
+        .gte('created_at', `${today}T00:00:00Z`);
 
-    if ((todayRunCount || 0) > 0) {
-      console.log(`[Scheduled Auto-Fill] ⏭️ Already ran today (${todayRunCount} entries). Skipping.`);
-      return new Response(
-        JSON.stringify({ success: true, skipped: true, reason: 'Already ran today', today_runs: todayRunCount }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      if ((todayRunCount || 0) > 0) {
+        console.log(`[Scheduled Auto-Fill] ⏭️ Already ran today (${todayRunCount} entries). Skipping.`);
+        return new Response(
+          JSON.stringify({ success: true, skipped: true, reason: 'Already ran today', today_runs: todayRunCount }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
     }
 
     // Check if auto-fill is enabled
