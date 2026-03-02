@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
+import { callGeminiText, callGeminiVision } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -49,7 +50,7 @@ function hasReadableText(text: string): boolean {
   return trimmed.length >= 120 && letterCount >= 60;
 }
 
-async function extractPdfText(fileBytes: Uint8Array, lovableApiKey: string): Promise<string> {
+async function extractPdfText(fileBytes: Uint8Array, geminiApiKey: string): Promise<string> {
   try {
     const pdf = await getDocumentProxy(fileBytes);
     const { text } = await extractText(pdf, { mergePages: true });
@@ -66,41 +67,13 @@ async function extractPdfText(fileBytes: Uint8Array, lovableApiKey: string): Pro
   }
 
   const base64Pdf = uint8ToBase64(fileBytes);
-  const ocrResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: "Extract ALL readable text from this PDF. Preserve question and option structure. Output only extracted text.",
-            },
-            {
-              type: "image_url",
-              image_url: { url: `data:application/pdf;base64,${base64Pdf}` },
-            },
-          ],
-        },
-      ],
-      temperature: 0.1,
-      max_tokens: 32768,
-    }),
-  });
-
-  if (!ocrResponse.ok) {
-    const errText = await ocrResponse.text();
-    throw new Error(`PDF OCR failed: ${ocrResponse.status} ${errText.substring(0, 200)}`);
-  }
-
-  const ocrData = await ocrResponse.json();
-  const ocrText = (ocrData.choices?.[0]?.message?.content || "").trim();
+  const ocrText = await callGeminiVision(
+    geminiApiKey,
+    "Extract ALL readable text from this PDF. Preserve question and option structure. Output only extracted text.",
+    base64Pdf,
+    "application/pdf",
+    { maxOutputTokens: 32768 }
+  );
 
   if (!hasReadableText(ocrText)) {
     throw new Error("PDF appears unreadable or has no extractable text.");
@@ -116,12 +89,12 @@ serve(async (req) => {
   }
 
   try {
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
-    if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing required environment variables");
+    if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Missing required environment variables (GEMINI_API_KEY)");
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -158,7 +131,7 @@ serve(async (req) => {
       const isPdf = source_type === "pdf" || contentType.includes("application/pdf") || file_url.toLowerCase().includes(".pdf");
 
       if (isPdf) {
-        documentText = await extractPdfText(fileBytes, LOVABLE_API_KEY);
+        documentText = await extractPdfText(fileBytes, GEMINI_API_KEY);
       } else {
         documentText = new TextDecoder().decode(fileBytes);
       }
@@ -315,45 +288,25 @@ ${documentText}
 
 REMINDER: Extract ALL questions found. Do not stop after a few!`;
 
-    console.log(`[convert-document-mcqs] Calling AI with ${documentText.length} chars of text`);
+    console.log(`[convert-document-mcqs] Calling Gemini API directly with ${documentText.length} chars of text`);
 
-    const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
+    let responseText: string;
+    try {
+      responseText = await callGeminiText(GEMINI_API_KEY, systemPrompt, userPrompt, {
         temperature: 0.3,
-        max_tokens: 32768,
-      }),
-    });
-
-    if (!aiResponse.ok) {
-      const errText = await aiResponse.text();
-      console.error(`[convert-document-mcqs] AI error: ${aiResponse.status}`, errText);
-      if (aiResponse.status === 429) {
+        maxOutputTokens: 32768,
+      });
+    } catch (aiErr: any) {
+      const msg = aiErr.message || '';
+      console.error(`[convert-document-mcqs] AI error:`, msg);
+      if (msg.includes('RATE_LIMIT')) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a few minutes." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (aiResponse.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "AI credits exhausted. Please add credits to your Lovable workspace." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      throw new Error(`AI Gateway error: ${aiResponse.status}`);
+      throw aiErr;
     }
-
-    const aiData = await aiResponse.json();
-    const responseText = aiData.choices?.[0]?.message?.content || "";
 
     // Robust JSON parsing
     let parsed: any;

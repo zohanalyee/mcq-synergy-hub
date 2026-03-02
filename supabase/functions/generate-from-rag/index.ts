@@ -57,43 +57,18 @@ interface MCQQuestion {
    return { authorized: true, userId: data.user.id };
 }
 
-// Call Lovable AI Gateway (OpenAI-compatible)
-async function callLovableAI(
+import { callGeminiText } from '../_shared/gemini.ts';
+
+// Wrapper for backward compatibility
+async function callGeminiAI(
   systemPrompt: string,
   userPrompt: string,
   apiKey: string
 ): Promise<string> {
-  const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-2.5-flash",
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt },
-      ],
-      temperature: 0.7,
-      max_tokens: 8192,
-    }),
+  return callGeminiText(apiKey, systemPrompt, userPrompt, {
+    temperature: 0.7,
+    maxOutputTokens: 8192,
   });
-
-  if (!response.ok) {
-    const errText = await response.text();
-    console.error(`Lovable AI Gateway error: ${response.status}`, errText);
-    if (response.status === 429) {
-      throw new Error("Rate limit exceeded. Please try again later.");
-    }
-    if (response.status === 402) {
-      throw new Error("AI credits exhausted. Please add credits to your Lovable workspace.");
-    }
-    throw new Error(`AI Gateway error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  return data.choices?.[0]?.message?.content || "";
 }
 
 function parseJSONFromResponse(text: string): MCQQuestion[] {
@@ -123,12 +98,12 @@ serve(async (req) => {
   }
 
   try {
-     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
  
-     if (!LOVABLE_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-       throw new Error("Missing required environment variables");
+     if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+       throw new Error("Missing required environment variables (GEMINI_API_KEY)");
      }
  
      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -289,10 +264,10 @@ ${context.substring(0, 15000)}
 
 Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`;
 
-     // ============= STEP 5: Generate MCQs using Lovable AI Gateway =============
-     console.log("[generate-from-rag] Generating MCQs via Lovable AI Gateway...");
+     // ============= STEP 5: Generate MCQs using Direct Gemini API =============
+     console.log("[generate-from-rag] Generating MCQs via direct Gemini API...");
     const responseText = await retryWithBackoff(
-      () => callLovableAI(systemPrompt, userPrompt, LOVABLE_API_KEY),
+      () => callGeminiAI(systemPrompt, userPrompt, GEMINI_API_KEY),
       2,
       'generate-from-rag MCQ generation'
     );

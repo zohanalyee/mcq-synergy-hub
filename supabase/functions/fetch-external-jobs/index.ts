@@ -7,57 +7,27 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Call Lovable AI Gateway (OpenAI-compatible)
-async function callLovableAI(
+import { callGeminiText } from '../_shared/gemini.ts';
+
+// Call Gemini API directly
+async function callGeminiDirect(
   apiKey: string,
   prompt: string
 ): Promise<{ success: boolean; text?: string; error?: string }> {
-  console.log("🔄 Calling Lovable AI Gateway...");
-
+  console.log("🔄 Calling Gemini API directly...");
   try {
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [
-          { role: "user", content: prompt },
-        ],
-        temperature: 0.7,
-        max_tokens: 4096,
-      }),
+    const text = await callGeminiText(apiKey, '', prompt, {
+      temperature: 0.7,
+      maxOutputTokens: 4096,
     });
-
-    console.log(`📥 Gateway Response Status: ${response.status}`);
-
-    if (response.ok) {
-      const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || "";
-      console.log("✅ Success with Lovable AI Gateway");
-      return { success: true, text };
-    }
-
-    if (response.status === 429) {
-      console.warn("⚠️ Rate limit on Lovable AI Gateway");
-      return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
-    }
-    if (response.status === 402) {
-      console.warn("⚠️ Credits exhausted on Lovable AI Gateway");
-      return { success: false, error: 'CREDITS_EXHAUSTED' };
-    }
-    if (response.status === 403 || response.status === 401) {
-      return { success: false, error: 'AUTH_ERROR' };
-    }
-
-    const errText = await response.text();
-    console.warn(`⚠️ Gateway returned ${response.status}: ${errText.slice(0, 100)}`);
-    return { success: false, error: `Gateway error: ${response.status}` };
-  } catch (fetchError) {
-    console.error("❌ Network error with Lovable AI Gateway:", fetchError);
-    return { success: false, error: 'NETWORK_ERROR' };
+    console.log("✅ Success with direct Gemini API");
+    return { success: true, text };
+  } catch (err: any) {
+    const msg = err.message || '';
+    console.warn(`⚠️ Gemini error: ${msg.slice(0, 100)}`);
+    if (msg.includes('RATE_LIMIT')) return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
+    if (msg.includes('AUTH_ERROR')) return { success: false, error: 'AUTH_ERROR' };
+    return { success: false, error: msg.slice(0, 200) };
   }
 }
 
@@ -183,10 +153,10 @@ serve(async (req) => {
       }
     }
 
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    if (!GEMINI_API_KEY) {
       return new Response(
-        JSON.stringify({ success: false, error: "LOVABLE_API_KEY not configured" }),
+        JSON.stringify({ success: false, error: "GEMINI_API_KEY not configured" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -250,11 +220,11 @@ Return ONLY the JSON array, no explanations.`
 
 Return ONLY the JSON array, no explanations.`;
 
-    console.log("[fetch-external-jobs] Calling Lovable AI Gateway for:", searchType);
+    console.log("[fetch-external-jobs] Calling Gemini API directly for:", searchType);
 
     // Use the robust retry mechanism
     const result = await retryWithBackoff(
-      () => callLovableAI(LOVABLE_API_KEY, prompt),
+      () => callGeminiDirect(GEMINI_API_KEY, prompt),
       2,
       `fetch-external-jobs-${searchType}`
     );
