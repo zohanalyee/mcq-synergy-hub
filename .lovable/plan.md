@@ -1,40 +1,81 @@
 
 
-# Fix: "Run Now" Button Not Working
+# Plan: Switch All Edge Functions from Lovable AI Gateway to Direct Gemini API
 
-## Root Cause
-The `x-admin-trigger` custom header sent by the frontend is **not listed** in the CORS `Access-Control-Allow-Headers`. The browser's CORS preflight rejects it, causing "Failed to fetch".
+## Problem
+7 edge functions call `https://ai.gateway.lovable.dev/v1/chat/completions` (paid Lovable credits). Credits are exhausted. Need to switch to direct Gemini API using the existing `GEMINI_API_KEY` secret (already configured).
 
-The scheduled-autofill function's CORS headers allow: `authorization, x-client-info, apikey, content-type, ...` but NOT `x-admin-trigger`.
+## Affected Files (7 functions)
 
-## Fix: `supabase/functions/scheduled-autofill/index.ts`
+| File | Usage Type |
+|------|-----------|
+| `supabase/functions/_shared/gemini.ts` | **NEW** — shared helper |
+| `supabase/functions/generate-test/index.ts` | Text generation (MCQ batches) |
+| `supabase/functions/generate-from-rag/index.ts` | Text generation (RAG MCQs) |
+| `supabase/functions/convert-document-mcqs/index.ts` | Text generation + OCR fallback |
+| `supabase/functions/fetch-external-jobs/index.ts` | Text generation (job parsing) |
+| `supabase/functions/process-book/index.ts` | Vision/OCR (PDF processing) |
+| `supabase/functions/process-pdf-queue/index.ts` | Vision/OCR (PDF queue) |
+| `supabase/functions/analyze-pdf-metadata/index.ts` | Text generation (metadata) |
 
-### Change 1: Add `x-admin-trigger` to CORS allowed headers
-Add the custom header to the existing `corsHeaders` string (line 6).
+## Implementation
 
-### Change 2: Add proper admin verification for browser calls
-Currently, any request with `x-admin-trigger: true` is allowed — no actual admin check. Add JWT-based admin verification when the call comes from the browser (not service role):
+### Step 1: Create shared Gemini helper
+**New file: `supabase/functions/_shared/gemini.ts`**
 
+Two exported functions:
+- `callGeminiText(apiKey, systemPrompt, userPrompt, config?)` — for text-only generation. Calls `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent` with API key header, configurable temperature/maxOutputTokens.
+- `callGeminiVision(apiKey, prompt, base64Data, mimeType, config?)` — for OCR/vision tasks. Same endpoint but with `inlineData` parts.
+
+Both return the text string from `candidates[0].content.parts[0].text`.
+
+### Step 2: Update each function
+For each of the 7 files:
+1. Replace `LOVABLE_API_KEY` env var usage with `GEMINI_API_KEY`
+2. Replace `fetch("https://ai.gateway.lovable.dev/...")` calls with the shared helper
+3. Remove OpenAI-format response parsing (`choices[0].message.content`) — the helper returns text directly
+4. Keep existing error handling (429 rate limits, etc.)
+
+### Step 3: Deploy all updated functions
+
+## Technical Details
+
+**Gemini direct API format:**
 ```text
-if isAdminCall (has x-admin-trigger header):
-  → extract JWT from Authorization header
-  → verify user exists via supabase.auth.getUser()
-  → check user_roles table for admin role
-  → reject if not admin
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
+Header: x-goog-api-key: <GEMINI_API_KEY>
+
+Body: {
+  contents: [{ role: "user", parts: [{ text: "..." }] }],
+  generationConfig: { temperature, maxOutputTokens },
+  safetySettings: [{ category: "HARM_CATEGORY_*", threshold: "BLOCK_NONE" }]
+}
 ```
 
-### Change 3: Remove "already ran today" guard for manual runs
-The current code skips if any `auto_fill` log exists today (lines 67-81). This blocks the "Run Now" button after the first run. Only apply this guard for scheduled (service-role) calls, not manual admin triggers.
+System prompts will be sent as a user→model turn pair (Gemini doesn't have a native system role in the REST API).
 
-## No frontend changes needed
-The `AutoFillDashboard.tsx` already calls the function correctly.
+**Vision calls** (for OCR in `convert-document-mcqs`, `process-book`, `process-pdf-queue`):
+```text
+parts: [
+  { text: "Extract text..." },
+  { inlineData: { mimeType: "application/pdf", data: base64 } }
+]
+```
 
-## Files Changed
+**Model choice:** `gemini-2.0-flash` (free tier, fast, good quality). Falls within the 1,500 requests/day free limit.
+
+## Files Changed Summary
 
 | Action | File |
 |--------|------|
-| Modify | `supabase/functions/scheduled-autofill/index.ts` |
+| Create | `supabase/functions/_shared/gemini.ts` |
+| Modify | `supabase/functions/generate-test/index.ts` |
+| Modify | `supabase/functions/generate-from-rag/index.ts` |
+| Modify | `supabase/functions/convert-document-mcqs/index.ts` |
+| Modify | `supabase/functions/fetch-external-jobs/index.ts` |
+| Modify | `supabase/functions/process-book/index.ts` |
+| Modify | `supabase/functions/process-pdf-queue/index.ts` |
+| Modify | `supabase/functions/analyze-pdf-metadata/index.ts` |
 
-## After deployment
-Deploy and test the "Run Now" button from the admin panel.
+No database changes needed. `GEMINI_API_KEY` is already configured in Supabase secrets.
 
