@@ -12,10 +12,10 @@ serve(async (req) => {
 
   try {
     const { filename, first_page_text } = await req.json();
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
-    if (!LOVABLE_API_KEY) {
-      throw new Error('LOVABLE_API_KEY not configured');
+    if (!GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY not configured');
     }
 
     if (!filename) {
@@ -54,30 +54,11 @@ ${(first_page_text || '').substring(0, 2000)}
 
 Detect System (Board), Level (Class), Subject, and Topic. Return only JSON.`;
 
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt }
-        ],
-        temperature: 0.3
-      })
+    const { callGeminiText } = await import('../_shared/gemini.ts');
+    const aiText = await callGeminiText(GEMINI_API_KEY, systemPrompt, userPrompt, {
+      temperature: 0.3,
+      maxOutputTokens: 4096,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('AI Gateway error:', response.status, errorText);
-      throw new Error(`AI Gateway error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    const aiText = data.choices?.[0]?.message?.content || '';
     
     // Parse JSON from response (handle markdown code blocks)
     const jsonMatch = aiText.match(/```(?:json)?\s*([\s\S]*?)```/) || aiText.match(/(\{[\s\S]*\})/);

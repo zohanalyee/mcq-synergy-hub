@@ -34,65 +34,37 @@ async function extractPageRange(pdfBytes: Uint8Array, startPage: number, endPage
 }
 
 async function ocrBatch(pdfBytes: Uint8Array, startPage: number, endPage: number): Promise<string> {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
   const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
+
+  if (!geminiApiKey) {
+    console.error("[queue] GEMINI_API_KEY not configured");
+    return "";
+  }
 
   const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
   const batchBase64 = pdfToBase64(batchBytes);
 
-  // Try Lovable Gateway first
-  if (lovableApiKey) {
-    try {
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.` },
-              { type: "image_url", image_url: { url: `data:application/pdf;base64,${batchBase64}` } },
-            ],
-          }],
-          max_tokens: 16384,
-          temperature: 0.1,
-        }),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        return result.choices?.[0]?.message?.content || "";
-      }
-      const errText = await response.text();
-      console.warn(`[queue] Gateway batch failed: ${response.status} ${errText.substring(0, 200)}`);
-    } catch (e) {
-      console.warn(`[queue] Gateway error:`, e instanceof Error ? e.message : e);
+  // Direct Gemini API call
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        contents: [{ parts: [
+          { text: `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.` },
+          { inline_data: { mime_type: "application/pdf", data: batchBase64 } },
+        ] }],
+        generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
+      }),
     }
+  );
+  if (response.ok) {
+    const result = await response.json();
+    return result.candidates?.[0]?.content?.parts?.[0]?.text || "";
   }
-
-  // Fallback to direct Gemini
-  if (geminiApiKey) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [
-            { text: `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.` },
-            { inline_data: { mime_type: "application/pdf", data: batchBase64 } },
-          ] }],
-          generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
-        }),
-      }
-    );
-    if (response.ok) {
-      const result = await response.json();
-      return result.candidates?.[0]?.content?.parts?.[0]?.text || "";
-    }
-    const errText = await response.text();
-    console.warn(`[queue] Direct Gemini failed: ${response.status}`);
-  }
+  const errText = await response.text();
+  console.warn(`[queue] Gemini OCR failed: ${response.status} ${errText.substring(0, 200)}`);
 
   return "";
 }

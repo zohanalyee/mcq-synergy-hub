@@ -99,99 +99,7 @@ function extractTextFromGeminiResponse(result: any): string {
   return "";
 }
 
-// Batch OCR via Lovable Gateway — processes pages in batches of BATCH_SIZE
-async function extractViaLovableGateway(pdfBytes: Uint8Array, pageCount: number): Promise<string> {
-  const lovableApiKey = Deno.env.get("LOVABLE_API_KEY");
-  if (!lovableApiKey) throw new Error("LOVABLE_API_KEY not configured");
-
-  // For small PDFs, send whole thing
-  if (pageCount <= DIRECT_OCR_LIMIT) {
-    console.log("[process-book] 🔍 Using Lovable AI Gateway for OCR (single request)...");
-    const base64Pdf = pdfToBase64(pdfBytes);
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
-        messages: [{
-          role: "user",
-          content: [
-            { type: "text", text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Include all headings, paragraphs, bullet points, tables, and any other text content. Output only the extracted text, nothing else." },
-            { type: "image_url", image_url: { url: `data:application/pdf;base64,${base64Pdf}` } },
-          ],
-        }],
-        max_tokens: 65536,
-        temperature: 0.1,
-      }),
-    });
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[process-book] Lovable AI Gateway error:", response.status, errorText);
-      throw new Error(`Lovable AI Gateway OCR failed: ${response.status}`);
-    }
-    const result = await response.json();
-    const text = result.choices?.[0]?.message?.content || "";
-    if (!text || text.length < 50) throw new Error("Lovable AI Gateway returned insufficient text");
-    console.log(`[process-book] ✅ Lovable Gateway OCR extracted ${text.length} characters`);
-    return text.trim();
-  }
-
-  // Batch mode for medium PDFs
-  const batches = Math.ceil(pageCount / BATCH_SIZE);
-  console.log(`[process-book] 🔍 Batch OCR via Lovable Gateway: ${batches} batches of ${BATCH_SIZE} pages`);
-  let fullText = "";
-
-  for (let batch = 0; batch < batches; batch++) {
-    const startPage = batch * BATCH_SIZE + 1;
-    const endPage = Math.min(startPage + BATCH_SIZE - 1, pageCount);
-    console.log(`[process-book] OCR batch ${batch + 1}/${batches}: pages ${startPage}-${endPage}`);
-
-    try {
-      const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
-      const batchBase64 = pdfToBase64(batchBytes);
-
-      const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${lovableApiKey}`, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "google/gemini-2.5-flash",
-          messages: [{
-            role: "user",
-            content: [
-              { type: "text", text: `Extract ALL text from pages ${startPage}-${endPage} of this PDF. Preserve structure. Output only the extracted text.` },
-              { type: "image_url", image_url: { url: `data:application/pdf;base64,${batchBase64}` } },
-            ],
-          }],
-          max_tokens: 16384,
-          temperature: 0.1,
-        }),
-      });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        console.warn(`[process-book] ⚠️ Batch ${batch + 1} failed (${response.status}): ${errText.substring(0, 200)}`);
-        continue; // Skip failed batch, don't abort
-      }
-
-      const result = await response.json();
-      const batchText = result.choices?.[0]?.message?.content || "";
-      fullText += batchText + "\n\n";
-      console.log(`[process-book] Batch ${batch + 1} extracted ${batchText.length} chars`);
-
-      // Delay between batches to avoid rate limiting
-      if (batch < batches - 1) {
-        await new Promise(r => setTimeout(r, 500));
-      }
-    } catch (batchError) {
-      console.warn(`[process-book] ⚠️ Batch ${batch + 1} error:`, batchError instanceof Error ? batchError.message : batchError);
-      continue;
-    }
-  }
-
-  if (fullText.length < 50) throw new Error("Batch OCR extracted insufficient text");
-  console.log(`[process-book] ✅ Total batch OCR: ${fullText.length} characters from ${batches} batches`);
-  return fullText.trim();
-}
+// extractViaLovableGateway removed — all OCR now uses direct Gemini API
 
 // Batch OCR via direct Gemini
 async function extractViaGeminiDirect(pdfBytes: Uint8Array, apiKey: string, retries = 1, pageCount = 0): Promise<string> {
@@ -290,14 +198,9 @@ async function extractViaGeminiDirect(pdfBytes: Uint8Array, apiKey: string, retr
 
 async function extractTextWithVisionOCR(pdfBytes: Uint8Array, geminiApiKey: string, pageCount: number): Promise<string> {
   try {
-    return await extractViaLovableGateway(pdfBytes, pageCount);
-  } catch (gatewayError) {
-    console.warn(`[process-book] Lovable Gateway failed: ${gatewayError instanceof Error ? gatewayError.message : gatewayError}`);
-  }
-  try {
     return await extractViaGeminiDirect(pdfBytes, geminiApiKey, 1, pageCount);
   } catch (geminiError) {
-    console.error(`[process-book] Direct Gemini also failed: ${geminiError instanceof Error ? geminiError.message : geminiError}`);
+    console.error(`[process-book] Direct Gemini failed: ${geminiError instanceof Error ? geminiError.message : geminiError}`);
   }
   const altKey = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
   if (altKey && altKey !== geminiApiKey) {

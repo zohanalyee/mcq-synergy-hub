@@ -26,72 +26,32 @@ interface UsageLogEntry {
   metadata?: Record<string, any>;
 }
 
-// ============= LOVABLE AI GATEWAY =============
-// Call Lovable AI Gateway (OpenAI-compatible) instead of direct Gemini
-async function callLovableAIGateway(
+import { callGeminiText } from '../_shared/gemini.ts';
+
+// Wrapper to maintain existing call pattern
+async function callGeminiForBatch(
   apiKey: string,
-  contents: any,
-  generationConfig: any,
-  _safetySettings: any
-): Promise<{ success: boolean; data?: any; modelUsed?: string; error?: string; status?: number }> {
-  console.log('🔄 Calling Lovable AI Gateway...');
-
-  // Extract text from Gemini-format contents to OpenAI messages
-  const userText = contents?.[0]?.parts?.[0]?.text || '';
-
+  promptText: string,
+  generationConfig: any
+): Promise<{ success: boolean; text?: string; modelUsed?: string; error?: string; status?: number }> {
+  console.log('🔄 Calling Gemini API directly...');
   try {
-    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
-        messages: [
-          { role: 'user', content: userText },
-        ],
-        temperature: generationConfig?.temperature || 0.7,
-        max_tokens: generationConfig?.maxOutputTokens || 8000,
-      }),
+    const text = await callGeminiText(apiKey, '', promptText, {
+      temperature: generationConfig?.temperature || 0.7,
+      maxOutputTokens: generationConfig?.maxOutputTokens || 8000,
     });
-
-    console.log(`📥 Gateway Response Status: ${response.status}`);
-
-    if (response.ok) {
-      const data = await response.json();
-      const text = data.choices?.[0]?.message?.content || '';
-      console.log('✅ Success with Lovable AI Gateway');
-      // Return in Gemini-compatible format for downstream parsing
-      return {
-        success: true,
-        data: {
-          candidates: [{
-            content: { parts: [{ text }] }
-          }]
-        },
-        modelUsed: 'lovable-gateway/gemini-2.5-flash'
-      };
-    }
-
-    if (response.status === 429) {
-      console.warn('⚠️ Rate limit on Lovable AI Gateway');
+    console.log('✅ Success with direct Gemini API');
+    return { success: true, text, modelUsed: 'gemini-2.0-flash' };
+  } catch (err: any) {
+    const msg = err.message || '';
+    if (msg.includes('RATE_LIMIT')) {
       return { success: false, error: 'ALL_MODELS_FAILED', status: 429 };
     }
-    if (response.status === 402) {
-      console.warn('⚠️ Credits exhausted on Lovable AI Gateway');
-      return { success: false, error: 'ALL_MODELS_FAILED', status: 429 };
+    if (msg.includes('AUTH_ERROR')) {
+      return { success: false, error: 'AUTH_ERROR', status: 403 };
     }
-    if (response.status === 403 || response.status === 401) {
-      return { success: false, error: 'AUTH_ERROR', status: response.status };
-    }
-
-    const errText = await response.text();
-    console.warn(`⚠️ Gateway returned ${response.status}: ${errText.slice(0, 100)}`);
-    return { success: false, error: 'ALL_MODELS_FAILED', status: response.status };
-  } catch (fetchError) {
-    console.error('❌ Network error with Lovable AI Gateway:', fetchError);
-    return { success: false, error: 'ALL_MODELS_FAILED', status: 503 };
+    console.error('❌ Gemini API error:', msg);
+    return { success: false, error: 'ALL_MODELS_FAILED', status: 500 };
   }
 }
 
@@ -367,24 +327,12 @@ REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicate
       console.log(`📤 Calling Gemini API for batch ${batch + 1} with model fallback...`);
       console.log(`🔑 API Key prefix: ${apiKey ? apiKey.substring(0, 8) + '...' : 'MISSING!'}`);
       
-      const contents = [
-        {
-          role: 'user',
-          parts: [{ text: `${systemPrompt}\n\n${userPrompt}` }]
-        }
-      ];
-      const generationConfig = {
+      const promptText = `${systemPrompt}\n\n${userPrompt}`;
+
+      const result = await callGeminiForBatch(apiKey, promptText, {
         maxOutputTokens: 8000,
         temperature: 0.7
-      };
-      const safetySettings = [
-        { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-        { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
-      ];
-
-      const result = await callLovableAIGateway(apiKey, contents, generationConfig, safetySettings);
+      });
 
       if (!result.success) {
         if (result.error === 'AUTH_ERROR') {
@@ -397,7 +345,7 @@ REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicate
       }
 
       console.log(`✅ Batch ${batch + 1} generated with model: ${result.modelUsed}`);
-      const generatedText = result.data?.candidates?.[0]?.content?.parts?.[0]?.text;
+      const generatedText = result.text;
       
       if (generatedText) {
         const batchQuestions = parseAIResponse(generatedText);
@@ -918,9 +866,9 @@ serve(async (req) => {
         throw err;
       }
 
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      if (!LOVABLE_API_KEY) {
-        throw new Error('LOVABLE_API_KEY is not configured');
+      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+      if (!GEMINI_API_KEY) {
+        throw new Error('GEMINI_API_KEY is not configured');
       }
 
       // ============= FIX: Fetch existing questions for deduplication =============
@@ -949,7 +897,7 @@ serve(async (req) => {
           topic,
           difficulty,
           qc,
-          LOVABLE_API_KEY,
+          GEMINI_API_KEY,
           existingTitlesForDedup // NOW passing existing questions!
         );
       } catch (genError: any) {
@@ -1165,8 +1113,8 @@ serve(async (req) => {
       console.log(`⚡ PARTIAL MODE ACTIVE: Returning ${returnedQuestions.length} questions, Generating ${missingCount} in background`);
       
       if (missingCount > 0) {
-        const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-        if (LOVABLE_API_KEY) {
+        const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
+        if (GEMINI_KEY) {
           EdgeRuntime.waitUntil(
             backgroundGenerateAndSave(
               topic,
@@ -1174,7 +1122,7 @@ serve(async (req) => {
               difficulty,
               missingCount,
               existingQuestionTexts,
-              LOVABLE_API_KEY,
+              GEMINI_KEY,
               supabase,
               user_id,
               sourceType
@@ -1231,15 +1179,15 @@ serve(async (req) => {
       throw err;
     }
 
-    const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-    console.log(`🔑 LOVABLE_API_KEY configured: ${LOVABLE_API_KEY ? 'Yes' : 'NO - MISSING!'}`);
+    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+    console.log(`🔑 GEMINI_API_KEY configured: ${GEMINI_API_KEY ? 'Yes' : 'NO - MISSING!'}`);
     
-    if (!LOVABLE_API_KEY) {
+    if (!GEMINI_API_KEY) {
       return new Response(
         JSON.stringify({
-          error: 'LOVABLE_API_KEY not configured',
+          error: 'GEMINI_API_KEY not configured',
           error_type: 'config_error',
-          details: 'LOVABLE_API_KEY is missing from Supabase secrets'
+          details: 'GEMINI_API_KEY is missing from Supabase secrets'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
@@ -1252,7 +1200,7 @@ serve(async (req) => {
         topic, 
         difficulty, 
         missingCount, 
-        LOVABLE_API_KEY,
+        GEMINI_API_KEY,
         existingQuestionTexts
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
