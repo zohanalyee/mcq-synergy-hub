@@ -1,74 +1,18 @@
 
 
-# Plan: Switch All Edge Functions from Lovable AI Gateway to Direct Gemini API
+# Plan: AI Provider Auto-Switcher (Gemini → Lovable Fallback)
 
 ## Problem
-7 edge functions call `https://ai.gateway.lovable.dev/v1/chat/completions` (paid Lovable credits). Credits are exhausted. Need to switch to direct Gemini API using the existing `GEMINI_API_KEY` secret (already configured).
+When Gemini free-tier quota (1,500 req/day) is exhausted, all AI functions fail with 429 errors. System is completely down until midnight UTC reset.
 
-## Affected Files (7 functions)
+## Solution
+Add `callAIWithAutoSwitch` to the shared helper that tries Gemini first (free), then automatically falls back to Lovable AI Gateway (paid) on 429 errors. Resets Gemini availability at midnight UTC.
 
-| File | Usage Type |
-|------|-----------|
-| `supabase/functions/_shared/gemini.ts` | **NEW** — shared helper |
-| `supabase/functions/generate-test/index.ts` | Text generation (MCQ batches) |
-| `supabase/functions/generate-from-rag/index.ts` | Text generation (RAG MCQs) |
-| `supabase/functions/convert-document-mcqs/index.ts` | Text generation + OCR fallback |
-| `supabase/functions/fetch-external-jobs/index.ts` | Text generation (job parsing) |
-| `supabase/functions/process-book/index.ts` | Vision/OCR (PDF processing) |
-| `supabase/functions/process-pdf-queue/index.ts` | Vision/OCR (PDF queue) |
-| `supabase/functions/analyze-pdf-metadata/index.ts` | Text generation (metadata) |
-
-## Implementation
-
-### Step 1: Create shared Gemini helper
-**New file: `supabase/functions/_shared/gemini.ts`**
-
-Two exported functions:
-- `callGeminiText(apiKey, systemPrompt, userPrompt, config?)` — for text-only generation. Calls `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent` with API key header, configurable temperature/maxOutputTokens.
-- `callGeminiVision(apiKey, prompt, base64Data, mimeType, config?)` — for OCR/vision tasks. Same endpoint but with `inlineData` parts.
-
-Both return the text string from `candidates[0].content.parts[0].text`.
-
-### Step 2: Update each function
-For each of the 7 files:
-1. Replace `LOVABLE_API_KEY` env var usage with `GEMINI_API_KEY`
-2. Replace `fetch("https://ai.gateway.lovable.dev/...")` calls with the shared helper
-3. Remove OpenAI-format response parsing (`choices[0].message.content`) — the helper returns text directly
-4. Keep existing error handling (429 rate limits, etc.)
-
-### Step 3: Deploy all updated functions
-
-## Technical Details
-
-**Gemini direct API format:**
-```text
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent
-Header: x-goog-api-key: <GEMINI_API_KEY>
-
-Body: {
-  contents: [{ role: "user", parts: [{ text: "..." }] }],
-  generationConfig: { temperature, maxOutputTokens },
-  safetySettings: [{ category: "HARM_CATEGORY_*", threshold: "BLOCK_NONE" }]
-}
-```
-
-System prompts will be sent as a user→model turn pair (Gemini doesn't have a native system role in the REST API).
-
-**Vision calls** (for OCR in `convert-document-mcqs`, `process-book`, `process-pdf-queue`):
-```text
-parts: [
-  { text: "Extract text..." },
-  { inlineData: { mimeType: "application/pdf", data: base64 } }
-]
-```
-
-**Model choice:** `gemini-2.0-flash` (free tier, fast, good quality). Falls within the 1,500 requests/day free limit.
-
-## Files Changed Summary
+## Files to Change
 
 | Action | File |
 |--------|------|
-| Create | `supabase/functions/_shared/gemini.ts` |
+| Modify | `supabase/functions/_shared/gemini.ts` |
 | Modify | `supabase/functions/generate-test/index.ts` |
 | Modify | `supabase/functions/generate-from-rag/index.ts` |
 | Modify | `supabase/functions/convert-document-mcqs/index.ts` |
@@ -76,6 +20,47 @@ parts: [
 | Modify | `supabase/functions/process-book/index.ts` |
 | Modify | `supabase/functions/process-pdf-queue/index.ts` |
 | Modify | `supabase/functions/analyze-pdf-metadata/index.ts` |
+| Migrate | `ai_usage_logs` table (add `ai_provider` + `cost_estimate` columns) |
 
-No database changes needed. `GEMINI_API_KEY` is already configured in Supabase secrets.
+## Implementation Details
+
+### 1. `_shared/gemini.ts` — Add `callAIWithAutoSwitch` + `callVisionWithAutoSwitch`
+
+New exported functions that:
+- Maintain in-memory provider status (`gemini.available`, `lovable.available`)
+- Call `checkDailyReset()` before each request to re-enable Gemini on new UTC day
+- Apply 4-second rate-limit delay before Gemini calls
+- On Gemini 429/quota errors: mark unavailable, fall through to Lovable Gateway
+- Lovable Gateway uses OpenAI-compatible format (`/v1/chat/completions` with `google/gemini-2.5-flash`)
+- Return `{ text, provider, cost }` tuple for logging
+- Vision variant calls Gemini Vision directly, falls back to Lovable for text-only if OCR fails
+
+### 2. Update each edge function
+
+**Pattern for text-generation functions** (`generate-test`, `generate-from-rag`, `fetch-external-jobs`, `analyze-pdf-metadata`, `convert-document-mcqs`):
+- Replace `callGeminiText(apiKey, ...)` → `callAIWithAutoSwitch(systemPrompt, userPrompt, config)`
+- Remove manual `GEMINI_API_KEY` env reads (handled inside the auto-switcher)
+- Log `provider` in `ai_usage_logs` inserts
+
+**Pattern for vision/OCR functions** (`process-book`, `process-pdf-queue`, `convert-document-mcqs` OCR path):
+- These use inline PDF data and can't go through Lovable Gateway's chat API
+- Keep direct Gemini Vision calls but add the fallback Gemini key (`EXTERNAL_JOBS_GEMINI_KEY`) cycling that already exists
+- No Lovable fallback for vision (Gateway doesn't support inline PDF)
+
+**Special: `convert-document-mcqs`** already has `generateWithAdaptiveFallback` with dual-key cycling — will add Lovable Gateway as a final fallback after all Gemini keys are exhausted.
+
+**Special: `scheduled-autofill`** doesn't call Gemini directly (it calls `generate-test`/`generate-from-rag` via HTTP). No AI call changes needed.
+
+### 3. Database migration
+
+```sql
+ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS ai_provider TEXT;
+ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS cost_estimate NUMERIC DEFAULT 0;
+```
+
+### 4. Environment
+
+`LOVABLE_API_KEY` already exists in secrets. `GEMINI_API_KEY` already exists. No new secrets needed.
+
+### 5. Deploy all 7 updated edge functions
 
