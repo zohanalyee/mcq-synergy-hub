@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
+import JSZip from "https://esm.sh/jszip@3.10.1";
 import { callGeminiText, callGeminiVision } from '../_shared/gemini.ts';
 import { retryWithBackoff } from '../_shared/quotaManager.ts';
 
@@ -51,6 +52,55 @@ function hasReadableText(text: string): boolean {
   return trimmed.length >= 120 && letterCount >= 60;
 }
 
+function decodeXmlEntities(input: string): string {
+  return input
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#xA;/gi, "\n")
+    .replace(/&#xD;/gi, "\n")
+    .replace(/&#x9;/gi, " ");
+}
+
+async function extractDocxText(fileBytes: Uint8Array): Promise<string> {
+  try {
+    const zip = await JSZip.loadAsync(fileBytes);
+    const documentXmlFile = zip.file("word/document.xml");
+
+    if (!documentXmlFile) {
+      throw new Error("DOCX missing word/document.xml");
+    }
+
+    const documentXml = await documentXmlFile.async("text");
+    const paragraphs = documentXml.match(/<w:p[\s\S]*?<\/w:p>/g) || [];
+
+    const extracted = paragraphs
+      .map((paragraph) => {
+        const runs = [...paragraph.matchAll(/<w:t[^>]*>([\s\S]*?)<\/w:t>/g)]
+          .map((match) => decodeXmlEntities(match[1] || ""))
+          .join("")
+          .trim();
+        return runs;
+      })
+      .filter(Boolean)
+      .join("\n")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim();
+
+    if (!hasReadableText(extracted)) {
+      throw new Error("DOCX text extraction produced low-quality text");
+    }
+
+    console.log(`[convert-document-mcqs] DOCX extraction succeeded (${extracted.length} chars)`);
+    return extracted;
+  } catch (error) {
+    console.error("[convert-document-mcqs] DOCX extraction failed:", error);
+    throw new Error("Unable to extract readable text from DOCX. Please upload PDF/TXT or paste text.");
+  }
+}
+
 async function extractPdfText(fileBytes: Uint8Array, geminiApiKey: string): Promise<string> {
   try {
     const pdf = await getDocumentProxy(fileBytes);
@@ -73,7 +123,7 @@ async function extractPdfText(fileBytes: Uint8Array, geminiApiKey: string): Prom
     "Extract ALL readable text from this PDF. Preserve question and option structure. Output only extracted text.",
     base64Pdf,
     "application/pdf",
-    { maxOutputTokens: 32768 }
+    { maxOutputTokens: 12288 }
   );
 
   if (!hasReadableText(ocrText)) {
@@ -84,6 +134,61 @@ async function extractPdfText(fileBytes: Uint8Array, geminiApiKey: string): Prom
   return ocrText;
 }
 
+function isRateLimitError(error: any): boolean {
+  const message = String(error?.message || "").toLowerCase();
+  return (
+    error?.status === 429 ||
+    error?.statusCode === 429 ||
+    message.includes("429") ||
+    message.includes("rate limit") ||
+    message.includes("rate_limit") ||
+    message.includes("resource_exhausted") ||
+    message.includes("gemini_rate_limit") ||
+    message.includes("quota")
+  );
+}
+
+async function generateWithAdaptiveFallback(
+  primaryApiKey: string,
+  fallbackApiKey: string | undefined,
+  systemPrompt: string,
+  userPrompt: string
+): Promise<string> {
+  const apiKeys = [primaryApiKey, fallbackApiKey].filter((k): k is string => !!k && k.trim().length > 0);
+
+  const attempts = [
+    { model: "gemini-2.0-flash", temperature: 0.2, maxOutputTokens: 8192 },
+    { model: "gemini-2.0-flash-lite", temperature: 0.2, maxOutputTokens: 6144 },
+    { model: "gemini-2.0-flash", temperature: 0.1, maxOutputTokens: 4096 },
+  ];
+
+  let lastError: any;
+
+  for (const key of apiKeys) {
+    const keyLabel = key === primaryApiKey ? "primary" : "fallback";
+
+    for (const cfg of attempts) {
+      try {
+        console.log(`[convert-document-mcqs] Trying ${cfg.model} (${keyLabel} key, maxTokens=${cfg.maxOutputTokens})`);
+        return await retryWithBackoff(
+          () => callGeminiText(key, systemPrompt, userPrompt, cfg),
+          2,
+          `convert-document-mcqs:${cfg.model}:${keyLabel}`
+        );
+      } catch (err: any) {
+        lastError = err;
+        if (isRateLimitError(err)) {
+          console.warn(`[convert-document-mcqs] Rate limited on ${cfg.model} (${keyLabel} key), trying next fallback...`);
+          continue;
+        }
+        throw err;
+      }
+    }
+  }
+
+  throw lastError || new Error("All Gemini attempts failed");
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -91,6 +196,7 @@ serve(async (req) => {
 
   try {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+    const FALLBACK_GEMINI_API_KEY = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -129,10 +235,14 @@ serve(async (req) => {
 
       const fileBytes = new Uint8Array(await fileResponse.arrayBuffer());
       const contentType = (fileResponse.headers.get("content-type") || "").toLowerCase();
-      const isPdf = source_type === "pdf" || contentType.includes("application/pdf") || file_url.toLowerCase().includes(".pdf");
+      const lowerUrl = file_url.toLowerCase();
+      const isPdf = source_type === "pdf" || contentType.includes("application/pdf") || lowerUrl.includes(".pdf");
+      const isDocx = source_type === "docx" || contentType.includes("officedocument.wordprocessingml.document") || lowerUrl.includes(".docx");
 
       if (isPdf) {
         documentText = await extractPdfText(fileBytes, GEMINI_API_KEY);
+      } else if (isDocx) {
+        documentText = await extractDocxText(fileBytes);
       } else {
         documentText = new TextDecoder().decode(fileBytes);
       }
@@ -145,8 +255,8 @@ serve(async (req) => {
       );
     }
 
-    // Truncate to avoid token limits
-    const maxChars = 80000;
+    // Truncate to avoid token/rate-limit pressure
+    const maxChars = 30000;
     if (documentText.length > maxChars) {
       documentText = documentText.substring(0, maxChars);
       console.log(`[convert-document-mcqs] Truncated text to ${maxChars} chars`);
@@ -293,20 +403,21 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
 
     let responseText: string;
     try {
-      responseText = await retryWithBackoff(
-        () => callGeminiText(GEMINI_API_KEY, systemPrompt, userPrompt, {
-          temperature: 0.3,
-          maxOutputTokens: 32768,
-        }),
-        4,
-        'convert-document-mcqs'
+      responseText = await generateWithAdaptiveFallback(
+        GEMINI_API_KEY,
+        FALLBACK_GEMINI_API_KEY,
+        systemPrompt,
+        userPrompt
       );
     } catch (aiErr: any) {
       const msg = aiErr.message || '';
       console.error(`[convert-document-mcqs] AI error:`, msg);
-      if (msg.includes('RATE_LIMIT') || msg.includes('429')) {
+      if (isRateLimitError(aiErr)) {
         return new Response(
-          JSON.stringify({ error: "Rate limit exceeded. Please try again in a few minutes." }),
+          JSON.stringify({
+            error: "Gemini rate limit reached. Please retry in 2-5 minutes (a lower-load model fallback was already attempted).",
+            error_type: "rate_limit",
+          }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
