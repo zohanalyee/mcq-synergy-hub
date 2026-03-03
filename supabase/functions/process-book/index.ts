@@ -3,6 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 import { checkQuota, QuotaExhaustedError } from '../_shared/quotaManager.ts';
+import { callVisionWithAutoSwitch } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",

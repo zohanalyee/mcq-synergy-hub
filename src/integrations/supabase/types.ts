@@ -16,6 +16,8 @@ export type Database = {
     Tables: {
       ai_usage_logs: {
         Row: {
+          ai_provider: string | null
+          cost_estimate: number | null
           created_at: string
           difficulty: string | null
           id: string
@@ -29,6 +31,8 @@ export type Database = {
           triggered_by_user_id: string | null
         }
         Insert: {
+          ai_provider?: string | null
+          cost_estimate?: number | null
           created_at?: string
           difficulty?: string | null
           id?: string
@@ -42,6 +46,8 @@ export type Database = {
           triggered_by_user_id?: string | null
         }
         Update: {
+          ai_provider?: string | null
+          cost_estimate?: number | null
           created_at?: string
           difficulty?: string | null
           id?: string

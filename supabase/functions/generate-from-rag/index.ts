@@ -57,19 +57,7 @@ interface MCQQuestion {
    return { authorized: true, userId: data.user.id };
 }
 
-import { callGeminiText } from '../_shared/gemini.ts';
-
-// Wrapper for backward compatibility
-async function callGeminiAI(
-  systemPrompt: string,
-  userPrompt: string,
-  apiKey: string
-): Promise<string> {
-  return callGeminiText(apiKey, systemPrompt, userPrompt, {
-    temperature: 0.7,
-    maxOutputTokens: 8192,
-  });
-}
+import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 
 function parseJSONFromResponse(text: string): MCQQuestion[] {
   // Try to extract JSON array from response
@@ -98,12 +86,11 @@ serve(async (req) => {
   }
 
   try {
-     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
      const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
  
-     if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-       throw new Error("Missing required environment variables (GEMINI_API_KEY)");
+     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+       throw new Error("Missing required environment variables");
      }
  
      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
@@ -264,13 +251,14 @@ ${context.substring(0, 15000)}
 
 Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`;
 
-     // ============= STEP 5: Generate MCQs using Direct Gemini API =============
-     console.log("[generate-from-rag] Generating MCQs via direct Gemini API...");
-    const responseText = await retryWithBackoff(
-      () => callGeminiAI(systemPrompt, userPrompt, GEMINI_API_KEY),
+     // ============= STEP 5: Generate MCQs using Auto-Switcher =============
+     console.log("[generate-from-rag] Generating MCQs via auto-switcher...");
+    const { text: responseText, provider: aiProvider, cost: aiCost } = await retryWithBackoff(
+      () => callAIWithAutoSwitch(systemPrompt, userPrompt, { temperature: 0.7, maxOutputTokens: 8192 }),
       2,
       'generate-from-rag MCQ generation'
     );
+    console.log(`[generate-from-rag] Generated using ${aiProvider} (cost: ${aiCost})`);
     
      // ============= STEP 6: Parse response =============
     const questions = parseJSONFromResponse(responseText);
@@ -333,6 +321,8 @@ Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`
       questions_saved: savedCount,
        triggered_by_user_id: auth.userId === "service_role" || auth.userId === "admin_trigger" ? null : auth.userId,
        metadata: { document_id: targetDocumentId, topic_id, errors: errors.length > 0 ? errors : undefined },
+       ai_provider: aiProvider,
+       cost_estimate: aiCost,
     });
 
      console.log(`[generate-from-rag] ✅ Saved ${savedCount}/${questions.length} questions`);

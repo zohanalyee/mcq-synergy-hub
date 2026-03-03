@@ -26,31 +26,31 @@ interface UsageLogEntry {
   metadata?: Record<string, any>;
 }
 
-import { callGeminiText } from '../_shared/gemini.ts';
+import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 
-// Wrapper to maintain existing call pattern
+// Wrapper to maintain existing call pattern - now uses auto-switcher
 async function callGeminiForBatch(
-  apiKey: string,
+  _apiKey: string,
   promptText: string,
   generationConfig: any
-): Promise<{ success: boolean; text?: string; modelUsed?: string; error?: string; status?: number }> {
-  console.log('🔄 Calling Gemini API directly...');
+): Promise<{ success: boolean; text?: string; modelUsed?: string; error?: string; status?: number; provider?: string; cost?: number }> {
+  console.log('🔄 Calling AI with auto-switch...');
   try {
-    const text = await callGeminiText(apiKey, '', promptText, {
+    const { text, provider, cost } = await callAIWithAutoSwitch('', promptText, {
       temperature: generationConfig?.temperature || 0.7,
       maxOutputTokens: generationConfig?.maxOutputTokens || 8000,
     });
-    console.log('✅ Success with direct Gemini API');
-    return { success: true, text, modelUsed: 'gemini-2.0-flash' };
+    console.log(`✅ Success with ${provider} (cost: ${cost})`);
+    return { success: true, text, modelUsed: provider === 'gemini' ? 'gemini-2.0-flash' : 'lovable-gateway', provider, cost };
   } catch (err: any) {
     const msg = err.message || '';
-    if (msg.includes('RATE_LIMIT')) {
+    if (msg.includes('RATE_LIMIT') || msg.includes('429') || msg.includes('quota')) {
       return { success: false, error: 'ALL_MODELS_FAILED', status: 429 };
     }
     if (msg.includes('AUTH_ERROR')) {
       return { success: false, error: 'AUTH_ERROR', status: 403 };
     }
-    console.error('❌ Gemini API error:', msg);
+    console.error('❌ AI auto-switch error:', msg);
     return { success: false, error: 'ALL_MODELS_FAILED', status: 500 };
   }
 }

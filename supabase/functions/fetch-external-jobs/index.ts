@@ -7,25 +7,24 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-import { callGeminiText } from '../_shared/gemini.ts';
+import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 
-// Call Gemini API directly
-async function callGeminiDirect(
-  apiKey: string,
+// Call AI with auto-switch (Gemini free → Lovable paid fallback)
+async function callAIDirect(
   prompt: string
-): Promise<{ success: boolean; text?: string; error?: string }> {
-  console.log("🔄 Calling Gemini API directly...");
+): Promise<{ success: boolean; text?: string; error?: string; provider?: string; cost?: number }> {
+  console.log("🔄 Calling AI with auto-switch...");
   try {
-    const text = await callGeminiText(apiKey, '', prompt, {
+    const { text, provider, cost } = await callAIWithAutoSwitch('', prompt, {
       temperature: 0.7,
       maxOutputTokens: 4096,
     });
-    console.log("✅ Success with direct Gemini API");
-    return { success: true, text };
+    console.log(`✅ Success with ${provider} (cost: ${cost})`);
+    return { success: true, text, provider, cost };
   } catch (err: any) {
     const msg = err.message || '';
-    console.warn(`⚠️ Gemini error: ${msg.slice(0, 100)}`);
-    if (msg.includes('RATE_LIMIT')) return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
+    console.warn(`⚠️ AI error: ${msg.slice(0, 100)}`);
+    if (msg.includes('RATE_LIMIT') || msg.includes('429')) return { success: false, error: 'RATE_LIMIT_EXCEEDED' };
     if (msg.includes('AUTH_ERROR')) return { success: false, error: 'AUTH_ERROR' };
     return { success: false, error: msg.slice(0, 200) };
   }
@@ -153,21 +152,13 @@ serve(async (req) => {
       }
     }
 
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
+    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
       return new Response(
-        JSON.stringify({ success: false, error: "GEMINI_API_KEY not configured" }),
+        JSON.stringify({ success: false, error: "Missing env vars" }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
     
-    if (!SUPABASE_URL || !SERVICE_ROLE_KEY) {
-      return new Response(
-        JSON.stringify({ success: false, error: "AUTH_ERROR" }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
     // ============= REQUEST LOGGING =============
@@ -220,11 +211,11 @@ Return ONLY the JSON array, no explanations.`
 
 Return ONLY the JSON array, no explanations.`;
 
-    console.log("[fetch-external-jobs] Calling Gemini API directly for:", searchType);
+    console.log("[fetch-external-jobs] Calling AI auto-switcher for:", searchType);
 
-    // Use the robust retry mechanism
+    // Use the auto-switcher with retry
     const result = await retryWithBackoff(
-      () => callGeminiDirect(GEMINI_API_KEY, prompt),
+      () => callAIDirect(prompt),
       2,
       `fetch-external-jobs-${searchType}`
     );
