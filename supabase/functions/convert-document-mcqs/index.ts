@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import { callGeminiText, callGeminiVision } from '../_shared/gemini.ts';
+import { retryWithBackoff } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -292,14 +293,18 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
 
     let responseText: string;
     try {
-      responseText = await callGeminiText(GEMINI_API_KEY, systemPrompt, userPrompt, {
-        temperature: 0.3,
-        maxOutputTokens: 32768,
-      });
+      responseText = await retryWithBackoff(
+        () => callGeminiText(GEMINI_API_KEY, systemPrompt, userPrompt, {
+          temperature: 0.3,
+          maxOutputTokens: 32768,
+        }),
+        3,
+        'convert-document-mcqs'
+      );
     } catch (aiErr: any) {
       const msg = aiErr.message || '';
       console.error(`[convert-document-mcqs] AI error:`, msg);
-      if (msg.includes('RATE_LIMIT')) {
+      if (msg.includes('RATE_LIMIT') || msg.includes('429')) {
         return new Response(
           JSON.stringify({ error: "Rate limit exceeded. Please try again in a few minutes." }),
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
