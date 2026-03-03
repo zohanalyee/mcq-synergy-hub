@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -12,11 +13,6 @@ serve(async (req) => {
 
   try {
     const { filename, first_page_text } = await req.json();
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-
-    if (!GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY not configured');
-    }
 
     if (!filename) {
       throw new Error('filename is required');
@@ -54,11 +50,12 @@ ${(first_page_text || '').substring(0, 2000)}
 
 Detect System (Board), Level (Class), Subject, and Topic. Return only JSON.`;
 
-    const { callGeminiText } = await import('../_shared/gemini.ts');
-    const aiText = await callGeminiText(GEMINI_API_KEY, systemPrompt, userPrompt, {
+    const { text: aiText, provider, cost } = await callAIWithAutoSwitch(systemPrompt, userPrompt, {
       temperature: 0.3,
       maxOutputTokens: 4096,
     });
+
+    console.log(`[analyze-pdf-metadata] Generated using ${provider} (cost: ${cost})`);
     
     // Parse JSON from response (handle markdown code blocks)
     const jsonMatch = aiText.match(/```(?:json)?\s*([\s\S]*?)```/) || aiText.match(/(\{[\s\S]*\})/);

@@ -34,39 +34,24 @@ async function extractPageRange(pdfBytes: Uint8Array, startPage: number, endPage
 }
 
 async function ocrBatch(pdfBytes: Uint8Array, startPage: number, endPage: number): Promise<string> {
-  const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
-
-  if (!geminiApiKey) {
-    console.error("[queue] GEMINI_API_KEY not configured");
-    return "";
-  }
+  const { callVisionWithAutoSwitch } = await import('../_shared/gemini.ts');
 
   const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
   const batchBase64 = pdfToBase64(batchBytes);
 
-  // Direct Gemini API call
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: [
-          { text: `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.` },
-          { inline_data: { mime_type: "application/pdf", data: batchBase64 } },
-        ] }],
-        generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
-      }),
-    }
-  );
-  if (response.ok) {
-    const result = await response.json();
-    return result.candidates?.[0]?.content?.parts?.[0]?.text || "";
+  try {
+    const { text, provider } = await callVisionWithAutoSwitch(
+      `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.`,
+      batchBase64,
+      "application/pdf",
+      { maxOutputTokens: 16384, temperature: 0.1 }
+    );
+    console.log(`[queue] OCR batch ${startPage}-${endPage} succeeded via ${provider} (${text.length} chars)`);
+    return text;
+  } catch (err: any) {
+    console.warn(`[queue] OCR batch ${startPage}-${endPage} failed:`, err.message?.substring(0, 100));
+    return "";
   }
-  const errText = await response.text();
-  console.warn(`[queue] Gemini OCR failed: ${response.status} ${errText.substring(0, 200)}`);
-
-  return "";
 }
 
 function chunkText(text: string, chunkSize: number, overlap: number): string[] {

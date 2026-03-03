@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import JSZip from "https://esm.sh/jszip@3.10.1";
-import { callGeminiText, callGeminiVision } from '../_shared/gemini.ts';
+import { callGeminiText, callGeminiVision, callAIWithAutoSwitch } from '../_shared/gemini.ts';
 import { retryWithBackoff } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
@@ -164,6 +164,7 @@ async function generateWithAdaptiveFallback(
 
   let lastError: any;
 
+  // Try all Gemini keys + model combos first
   for (const key of apiKeys) {
     const keyLabel = key === primaryApiKey ? "primary" : "fallback";
 
@@ -186,7 +187,16 @@ async function generateWithAdaptiveFallback(
     }
   }
 
-  throw lastError || new Error("All Gemini attempts failed");
+  // Final fallback: Lovable AI Gateway
+  console.log('[convert-document-mcqs] All Gemini keys exhausted. Trying Lovable Gateway...');
+  try {
+    const { text } = await callAIWithAutoSwitch(systemPrompt, userPrompt, { temperature: 0.2, maxOutputTokens: 8192 });
+    return text;
+  } catch (lovableErr: any) {
+    console.error('[convert-document-mcqs] Lovable Gateway also failed:', lovableErr.message?.substring(0, 100));
+  }
+
+  throw lastError || new Error("All AI attempts failed");
 }
 
 serve(async (req) => {
@@ -495,6 +505,8 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
       questions_saved: 0,
       triggered_by_user_id: auth.userId === "service_role" ? null : auth.userId,
       metadata: { source_type, text_length: documentText.length },
+      ai_provider: 'gemini',
+      cost_estimate: 0,
     });
 
     return new Response(

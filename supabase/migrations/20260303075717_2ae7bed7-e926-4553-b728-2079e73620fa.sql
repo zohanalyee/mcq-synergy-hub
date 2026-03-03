@@ -1,0 +1,2 @@
+ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS ai_provider TEXT;
+ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS cost_estimate NUMERIC DEFAULT 0;
