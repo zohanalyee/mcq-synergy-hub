@@ -298,7 +298,7 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
           temperature: 0.3,
           maxOutputTokens: 32768,
         }),
-        3,
+        4,
         'convert-document-mcqs'
       );
     } catch (aiErr: any) {

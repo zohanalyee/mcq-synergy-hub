@@ -21,6 +21,12 @@ function extractText(result: any): string {
   return result?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
 }
 
+function createGeminiError(message: string, status: number): Error {
+  const err = new Error(message);
+  (err as any).status = status;
+  return err;
+}
+
 /**
  * Call Gemini for text-only generation.
  * System prompt is simulated via a user→model turn pair.
@@ -59,12 +65,12 @@ export async function callGeminiText(
   if (!response.ok) {
     const errText = await response.text();
     if (response.status === 429) {
-      throw new Error("GEMINI_RATE_LIMIT: Rate limit exceeded. Please try again later.");
+      throw createGeminiError("GEMINI_RATE_LIMIT: Rate limit exceeded. Please try again later.", 429);
     }
     if (response.status === 403 || response.status === 401) {
-      throw new Error("GEMINI_AUTH_ERROR: API key invalid or unauthorized.");
+      throw createGeminiError("GEMINI_AUTH_ERROR: API key invalid or unauthorized.", response.status);
     }
-    throw new Error(`Gemini API error: ${response.status} - ${errText.substring(0, 300)}`);
+    throw createGeminiError(`Gemini API error: ${response.status} - ${errText.substring(0, 300)}`, response.status);
   }
 
   const data = await response.json();
@@ -109,9 +115,9 @@ export async function callGeminiVision(
   if (!response.ok) {
     const errText = await response.text();
     if (response.status === 429) {
-      throw new Error("GEMINI_RATE_LIMIT: Rate limit exceeded.");
+      throw createGeminiError("GEMINI_RATE_LIMIT: Rate limit exceeded.", 429);
     }
-    throw new Error(`Gemini Vision error: ${response.status} - ${errText.substring(0, 300)}`);
+    throw createGeminiError(`Gemini Vision error: ${response.status} - ${errText.substring(0, 300)}`, response.status);
   }
 
   const data = await response.json();

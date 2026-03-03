@@ -74,12 +74,16 @@ export async function retryWithBackoff<T>(
     try {
       return await fn();
     } catch (error: any) {
+      const message = String(error?.message || '').toLowerCase();
       const is429 =
-        error.status === 429 ||
-        error.message?.includes('429') ||
-        error.message?.includes('quota') ||
-        error.message?.includes('rate limit') ||
-        error.message?.includes('RESOURCE_EXHAUSTED');
+        error?.status === 429 ||
+        error?.statusCode === 429 ||
+        message.includes('429') ||
+        message.includes('quota') ||
+        message.includes('rate limit') ||
+        message.includes('rate_limit') ||
+        message.includes('resource_exhausted') ||
+        message.includes('gemini_rate_limit');
 
       if (is429 && i < maxRetries - 1) {
         const delay = Math.pow(3, i) * 5000; // 5s, 15s, 45s
