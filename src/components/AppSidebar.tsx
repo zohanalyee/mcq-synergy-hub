@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { BookOpen, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight } from 'lucide-react';
+import { BookOpen, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, Wrench } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
@@ -55,6 +55,9 @@ const getIcon = (title: string) => {
     },
     'Ask Docs': { 
       icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
+    },
+    'Tools': {
+      icon: <Wrench size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-amber-500" />
     },
   };
   return icons[title] || { 

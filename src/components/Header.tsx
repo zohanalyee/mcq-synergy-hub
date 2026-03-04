@@ -1,5 +1,7 @@
 import { useState, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppearance } from '@/contexts/AppearanceContext';
@@ -10,6 +12,7 @@ import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
 import { useDeviceCapability } from '@/hooks/useDeviceCapability';
+import { ToolsPanel } from './tools/ToolsPanel';
 
 const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -49,7 +52,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     }
   };
 
-  const navItems = [
+  const hardcodedNavItems = [
     { title: 'Home', path: '/' },
     { title: 'Subjects', path: '/subjects' },
     { title: 'Quizzes', path: '/quizzes' },
@@ -57,7 +60,24 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     { title: 'Jobs', path: '/jobs' },
     { title: 'Custom Syllabus', path: '/custom-syllabus' },
     { title: 'Scholarships', path: '/scholarships' },
+    { title: 'Tools', path: '/tools' },
   ];
+
+  const { data: dbNavItems } = useQuery({
+    queryKey: ['navigation-items'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('navigation_items')
+        .select('*')
+        .eq('is_visible', true)
+        .order('position');
+      if (error) throw error;
+      return data?.map(item => ({ title: item.label, path: item.href })) ?? null;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const navItems = dbNavItems ?? hardcodedNavItems;
 
   const secondaryNavItems = [
     { title: 'Analytics', path: '/analytics' },
@@ -186,6 +206,7 @@ const HeaderContent = ({
               {(!isExpanded || isMobile) && (
                 <HeaderLogo onNavigate={handleNavigation} />
               )}
+              <ToolsPanel />
               <HeaderActions
                 theme={theme}
                 user={user}

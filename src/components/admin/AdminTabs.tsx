@@ -14,9 +14,10 @@ import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
 import DocumentLibrary from "./documents/DocumentLibrary";
 import LMSApprovalDashboard from "./LMSApprovalDashboard";
 import AIContentFactory from "./AIContentFactory";
-import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck, Sparkles, Zap } from "lucide-react";
+import { Database, BarChart3, LayoutDashboard, FileText, Settings, Upload, BookOpen, FolderTree, Briefcase, AlertTriangle, Layers, Archive, BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck, Sparkles, Zap, Navigation } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
+import NavigationManager from "./NavigationManager";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -118,6 +119,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         <TabsTrigger value="job-tests" className="flex items-center gap-2">
           <Briefcase className="h-4 w-4" />
           Job Tests
+        </TabsTrigger>
+        <TabsTrigger value="navigation" className="flex items-center gap-2">
+          <Navigation className="h-4 w-4" />
+          Navigation
         </TabsTrigger>
       </TabsList>
 
@@ -260,6 +265,10 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       
       <TabsContent value="job-tests">
         <JobTestManager />
+      </TabsContent>
+      
+      <TabsContent value="navigation">
+        <NavigationManager />
       </TabsContent>
     </Tabs>
   );

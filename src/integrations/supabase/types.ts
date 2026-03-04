@@ -854,6 +854,53 @@ export type Database = {
         }
         Relationships: []
       }
+      navigation_items: {
+        Row: {
+          created_at: string | null
+          href: string
+          icon: string | null
+          id: string
+          is_visible: boolean | null
+          label: string
+          parent_id: string | null
+          position: number
+          target_audience: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          href: string
+          icon?: string | null
+          id?: string
+          is_visible?: boolean | null
+          label: string
+          parent_id?: string | null
+          position?: number
+          target_audience?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          href?: string
+          icon?: string | null
+          id?: string
+          is_visible?: boolean | null
+          label?: string
+          parent_id?: string | null
+          position?: number
+          target_audience?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "navigation_items_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "navigation_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pdf_processing_queue: {
         Row: {
           created_at: string
