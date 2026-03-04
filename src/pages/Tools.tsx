@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Wrench } from 'lucide-react';
-import { ALL_TOOLS, TOOL_CATEGORIES } from '@/data/toolsData';
+import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
 import { motion } from 'framer-motion';
 
 const Tools = () => {
@@ -61,32 +61,36 @@ const Tools = () => {
 
         {/* Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-          {filtered.map((tool, i) => (
-            <motion.div
-              key={tool.id}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: Math.min(i * 0.02, 0.3) }}
-            >
-              <Link
-                to={tool.href}
-                className="relative flex flex-col items-center gap-2.5 p-4 rounded-xl border border-border/50 hover:border-primary/30 hover:shadow-md hover:bg-accent/30 transition-all text-center group h-full"
+          {filtered.map((tool, i) => {
+            const colors = CATEGORY_COLORS[tool.category] || CATEGORY_COLORS['Calculators'];
+            return (
+              <motion.div
+                key={tool.id}
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: Math.min(i * 0.02, 0.3) }}
               >
-                {tool.popular && (
-                  <Badge className="absolute top-2 right-2 text-[9px] px-1.5 py-0 bg-primary/90">
-                    Popular
-                  </Badge>
-                )}
-                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 group-hover:scale-110 transition-all">
-                  <tool.icon className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground leading-tight">{tool.name}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{tool.description}</p>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                <Link
+                  to={tool.href}
+                  className={`relative flex flex-col items-center gap-2.5 p-4 rounded-xl border ${colors.border} ${colors.bg} ${colors.hover} hover:shadow-md transition-all text-center group h-full`}
+                >
+                  {tool.popular && (
+                    <Badge className="absolute top-2 right-2 text-[9px] px-1.5 py-0 bg-primary/90">
+                      Popular
+                    </Badge>
+                  )}
+                  <div className={`h-10 w-10 rounded-xl ${colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
+                    <tool.icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground leading-tight">{tool.name}</p>
+                    <p className={`text-[10px] font-medium mt-0.5 ${colors.badge}`}>{tool.category}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{tool.description}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
 
         {filtered.length === 0 && (

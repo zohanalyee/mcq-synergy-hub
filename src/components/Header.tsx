@@ -12,7 +12,7 @@ import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
 import { useDeviceCapability } from '@/hooks/useDeviceCapability';
-import { ToolsPanel } from './tools/ToolsPanel';
+
 
 const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
   const [scrolled, setScrolled] = useState(false);
@@ -60,7 +60,6 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     { title: 'Jobs', path: '/jobs' },
     { title: 'Custom Syllabus', path: '/custom-syllabus' },
     { title: 'Scholarships', path: '/scholarships' },
-    { title: 'Tools', path: '/tools' },
   ];
 
   const { data: dbNavItems } = useQuery({
@@ -206,7 +205,6 @@ const HeaderContent = ({
               {(!isExpanded || isMobile) && (
                 <HeaderLogo onNavigate={handleNavigation} />
               )}
-              <ToolsPanel />
               <HeaderActions
                 theme={theme}
                 user={user}

@@ -1,10 +1,12 @@
-import { GraduationCap, Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Info } from 'lucide-react';
 import Header from '@/components/Header';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import ToolWrapper, { CopyButton } from '@/components/tools/ToolWrapper';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useState } from 'react';
+import { motion } from 'framer-motion';
 
 interface Course {
   id: string;
@@ -43,87 +45,120 @@ const GPACalculator = () => {
   const calculateGPA = () => {
     let totalPoints = 0;
     let totalCredits = 0;
-
     courses.forEach(course => {
       const points = gradePoints[course.grade] || 0;
       totalPoints += points * course.credits;
       totalCredits += course.credits;
     });
-
     return totalCredits > 0 ? (totalPoints / totalCredits).toFixed(2) : '0.00';
   };
 
+  const gpa = calculateGPA();
+
   return (
     <Header>
-      <div className="container py-8 max-w-2xl mx-auto">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-violet-500/10 mb-4">
-            <GraduationCap className="h-8 w-8 text-violet-500" />
+      <ToolWrapper toolId="gpa-calculator" title="GPA Calculator" description="Calculate your grade point average" category="Student Tools">
+        {/* How-to info box */}
+        <div className="rounded-lg border border-border/60 bg-accent/30 p-4 mb-6">
+          <div className="flex gap-2 items-start">
+            <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+            <div className="text-sm text-muted-foreground space-y-1">
+              <p className="font-medium text-foreground">How to calculate your GPA:</p>
+              <ol className="list-decimal list-inside space-y-0.5">
+                <li>Enter each course/subject name</li>
+                <li>Select the grade you received (A+, A, B+, etc.)</li>
+                <li>Enter the credit hours for that course (usually 1–6)</li>
+                <li>Click "Add Course" for more courses</li>
+                <li>Your GPA is calculated automatically</li>
+              </ol>
+            </div>
           </div>
-          <h1 className="text-2xl font-bold">GPA Calculator</h1>
-          <p className="text-muted-foreground">Calculate your grade point average</p>
         </div>
-        
-        <Card className="bg-white/80 dark:bg-card/80 backdrop-blur-sm border-white/20 mb-6">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-lg">Your Courses</CardTitle>
-            <Button size="sm" variant="outline" onClick={addCourse}>
-              <Plus className="h-4 w-4 mr-1" /> Add Course
-            </Button>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {courses.map((course, index) => (
-              <div key={course.id} className="flex gap-3 items-center">
-                <span className="text-sm text-muted-foreground w-6">{index + 1}.</span>
+
+        {/* Column headers */}
+        <div className="hidden sm:grid grid-cols-[2rem_1fr_5rem_6rem_2.5rem] gap-3 items-center mb-2 px-1">
+          <span className="text-xs text-muted-foreground">#</span>
+          <Label className="text-xs">Course Name</Label>
+          <Label className="text-xs">Credits</Label>
+          <Label className="text-xs">Grade</Label>
+          <span />
+        </div>
+
+        <div className="space-y-3">
+          {courses.map((course, index) => (
+            <div key={course.id} className="grid grid-cols-1 sm:grid-cols-[2rem_1fr_5rem_6rem_2.5rem] gap-2 sm:gap-3 items-end sm:items-center p-3 sm:p-0 rounded-lg sm:rounded-none border sm:border-0 border-border/40">
+              <span className="hidden sm:block text-sm text-muted-foreground text-center">{index + 1}.</span>
+
+              <div className="space-y-1 sm:space-y-0">
+                <Label className="sm:hidden text-xs text-muted-foreground">Course Name</Label>
                 <Input
-                  placeholder="Course name"
+                  placeholder="e.g. Mathematics"
                   value={course.name}
                   onChange={(e) => updateCourse(course.id, 'name', e.target.value)}
-                  className="flex-1 bg-background"
+                  className="bg-background"
                 />
-                <Input
-                  type="number"
-                  min="1"
-                  max="6"
-                  value={course.credits}
-                  onChange={(e) => updateCourse(course.id, 'credits', parseInt(e.target.value) || 1)}
-                  className="w-20 bg-background"
-                />
-                <Select value={course.grade} onValueChange={(v) => updateCourse(course.id, 'grade', v)}>
-                  <SelectTrigger className="w-24 bg-background">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(gradePoints).map(grade => (
-                      <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              </div>
+
+              <div className="flex gap-2 sm:contents">
+                <div className="flex-1 sm:flex-none space-y-1 sm:space-y-0">
+                  <Label className="sm:hidden text-xs text-muted-foreground">Credits</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    max="6"
+                    value={course.credits}
+                    onChange={(e) => updateCourse(course.id, 'credits', parseInt(e.target.value) || 1)}
+                    className="bg-background"
+                    placeholder="3"
+                  />
+                </div>
+
+                <div className="flex-1 sm:flex-none space-y-1 sm:space-y-0">
+                  <Label className="sm:hidden text-xs text-muted-foreground">Grade</Label>
+                  <Select value={course.grade} onValueChange={(v) => updateCourse(course.id, 'grade', v)}>
+                    <SelectTrigger className="bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(gradePoints).map(([grade, pts]) => (
+                        <SelectItem key={grade} value={grade}>{grade} ({pts.toFixed(1)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => removeCourse(course.id)}
                   disabled={courses.length === 1}
+                  className="self-end sm:self-auto shrink-0"
                 >
                   <Trash2 className="h-4 w-4 text-muted-foreground" />
                 </Button>
               </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card className="bg-violet-500/10 border-violet-500/20">
-          <CardContent className="py-6">
-            <div className="text-center">
-              <div className="text-sm text-muted-foreground mb-2">Your GPA</div>
-              <div className="text-5xl font-bold text-violet-500">{calculateGPA()}</div>
-              <div className="text-sm text-muted-foreground mt-2">
-                Total Credits: {courses.reduce((sum, c) => sum + c.credits, 0)}
-              </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          ))}
+        </div>
+
+        <Button variant="outline" size="sm" onClick={addCourse} className="mt-4 gap-1.5">
+          <Plus className="h-3.5 w-3.5" /> Add Course
+        </Button>
+
+        {/* GPA Result */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-6 p-5 rounded-xl bg-accent/30 text-center space-y-2"
+        >
+          <p className="text-sm text-muted-foreground">Your GPA</p>
+          <p className="text-5xl font-bold text-foreground">{gpa}</p>
+          <p className="text-sm text-muted-foreground">
+            Based on {courses.length} course{courses.length !== 1 ? 's' : ''} · {courses.reduce((s, c) => s + c.credits, 0)} total credits
+          </p>
+          <CopyButton text={gpa} />
+        </motion.div>
+      </ToolWrapper>
     </Header>
   );
 };
