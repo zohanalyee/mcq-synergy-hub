@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Copy } from 'lucide-react';
@@ -17,13 +17,24 @@ interface ToolWrapperProps {
 
 const ToolWrapper = ({ toolId, title, description, category, children }: ToolWrapperProps) => {
   const relatedTools = getRelatedTools(toolId, 4);
+  const navigate = useNavigate();
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => navigate('/tools')}
+        className="-ml-2 gap-1.5 text-muted-foreground hover:text-foreground hover:bg-accent"
+      >
+        <ArrowLeft className="h-4 w-4" />
+        Back to All Tools
+      </Button>
+
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link to="/tools" className="hover:text-foreground transition-colors flex items-center gap-1">
-          <ArrowLeft className="h-3.5 w-3.5" />
+      <nav className="flex items-center gap-2 text-sm text-muted-foreground -mt-3">
+        <Link to="/tools" className="hover:text-foreground transition-colors">
           Tools
         </Link>
         <span>/</span>

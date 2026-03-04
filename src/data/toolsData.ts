@@ -28,6 +28,44 @@ export const TOOL_CATEGORIES = [
   'Generators',
 ] as const;
 
+export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg: string; hover: string; badge: string }> = {
+  'Calculators': {
+    icon: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
+    border: 'border-blue-200/60 dark:border-blue-800/50',
+    bg: 'bg-blue-50/50 dark:bg-blue-950/20',
+    hover: 'hover:border-blue-400 dark:hover:border-blue-600',
+    badge: 'text-blue-700 dark:text-blue-300',
+  },
+  'Student Tools': {
+    icon: 'bg-violet-100 dark:bg-violet-900/40 text-violet-600 dark:text-violet-400',
+    border: 'border-violet-200/60 dark:border-violet-800/50',
+    bg: 'bg-violet-50/50 dark:bg-violet-950/20',
+    hover: 'hover:border-violet-400 dark:hover:border-violet-600',
+    badge: 'text-violet-700 dark:text-violet-300',
+  },
+  'Productivity': {
+    icon: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400',
+    border: 'border-amber-200/60 dark:border-amber-800/50',
+    bg: 'bg-amber-50/50 dark:bg-amber-950/20',
+    hover: 'hover:border-amber-400 dark:hover:border-amber-600',
+    badge: 'text-amber-700 dark:text-amber-300',
+  },
+  'Converters': {
+    icon: 'bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400',
+    border: 'border-cyan-200/60 dark:border-cyan-800/50',
+    bg: 'bg-cyan-50/50 dark:bg-cyan-950/20',
+    hover: 'hover:border-cyan-400 dark:hover:border-cyan-600',
+    badge: 'text-cyan-700 dark:text-cyan-300',
+  },
+  'Generators': {
+    icon: 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400',
+    border: 'border-rose-200/60 dark:border-rose-800/50',
+    bg: 'bg-rose-50/50 dark:bg-rose-950/20',
+    hover: 'hover:border-rose-400 dark:hover:border-rose-600',
+    badge: 'text-rose-700 dark:text-rose-300',
+  },
+};
+
 export const ALL_TOOLS: ToolDefinition[] = [
   // === Existing (7) ===
   { id: 'calculator', name: 'Calculator', description: 'Basic & scientific calculator', category: 'Calculators', icon: Calculator, popular: true, href: '/tools/math' },
