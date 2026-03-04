@@ -1,66 +1,89 @@
 
 
-# Plan: AI Provider Auto-Switcher (Gemini → Lovable Fallback)
+# Plan: Premium Tools System with Admin-Controlled Navigation
 
-## Problem
-When Gemini free-tier quota (1,500 req/day) is exhausted, all AI functions fail with 429 errors. System is completely down until midnight UTC reset.
+## Overview
+Full implementation across 4 phases: admin navigation DB, tools slide-out panel, tools listing page, and 50 individual tool pages.
 
-## Solution
-Add `callAIWithAutoSwitch` to the shared helper that tries Gemini first (free), then automatically falls back to Lovable AI Gateway (paid) on 429 errors. Resets Gemini availability at midnight UTC.
+## Phase 1: Database & Admin Navigation
 
-## Files to Change
+**Migration**: Create `navigation_items` table with RLS using the existing `is_admin()` function (not a subquery, to avoid recursion). Seed with current nav items.
 
-| Action | File |
-|--------|------|
-| Modify | `supabase/functions/_shared/gemini.ts` |
-| Modify | `supabase/functions/generate-test/index.ts` |
-| Modify | `supabase/functions/generate-from-rag/index.ts` |
-| Modify | `supabase/functions/convert-document-mcqs/index.ts` |
-| Modify | `supabase/functions/fetch-external-jobs/index.ts` |
-| Modify | `supabase/functions/process-book/index.ts` |
-| Modify | `supabase/functions/process-pdf-queue/index.ts` |
-| Modify | `supabase/functions/analyze-pdf-metadata/index.ts` |
-| Migrate | `ai_usage_logs` table (add `ai_provider` + `cost_estimate` columns) |
+**Admin UI**: Add a `NavigationManager` component to AdminTabs for toggling visibility and reordering items. No drag-and-drop library (avoid adding `@dnd-kit`); use simple up/down arrows instead.
 
-## Implementation Details
+**Header update**: Fetch visible `navigation_items` from Supabase. Fall back to hardcoded items if query fails. Cache with React Query.
 
-### 1. `_shared/gemini.ts` — Add `callAIWithAutoSwitch` + `callVisionWithAutoSwitch`
+| File | Action |
+|------|--------|
+| Migration SQL | Create `navigation_items` table + RLS + seed data |
+| `src/components/admin/NavigationManager.tsx` | New admin component |
+| `src/components/admin/AdminTabs.tsx` | Add NavigationManager tab |
+| `src/components/Header.tsx` | Fetch nav from DB with fallback |
 
-New exported functions that:
-- Maintain in-memory provider status (`gemini.available`, `lovable.available`)
-- Call `checkDailyReset()` before each request to re-enable Gemini on new UTC day
-- Apply 4-second rate-limit delay before Gemini calls
-- On Gemini 429/quota errors: mark unavailable, fall through to Lovable Gateway
-- Lovable Gateway uses OpenAI-compatible format (`/v1/chat/completions` with `google/gemini-2.5-flash`)
-- Return `{ text, provider, cost }` tuple for logging
-- Vision variant calls Gemini Vision directly, falls back to Lovable for text-only if OCR fails
+## Phase 2: Tools Infrastructure
 
-### 2. Update each edge function
+**ToolWrapper**: Shared layout component wrapping all tool pages with breadcrumbs, title, description, related tools section, and MCQ CTA.
 
-**Pattern for text-generation functions** (`generate-test`, `generate-from-rag`, `fetch-external-jobs`, `analyze-pdf-metadata`, `convert-document-mcqs`):
-- Replace `callGeminiText(apiKey, ...)` → `callAIWithAutoSwitch(systemPrompt, userPrompt, config)`
-- Remove manual `GEMINI_API_KEY` env reads (handled inside the auto-switcher)
-- Log `provider` in `ai_usage_logs` inserts
+**ToolsPanel**: Sheet-based slide-out panel showing popular tools + "View All" link to `/tools`. Triggered from sidebar icon.
 
-**Pattern for vision/OCR functions** (`process-book`, `process-pdf-queue`, `convert-document-mcqs` OCR path):
-- These use inline PDF data and can't go through Lovable Gateway's chat API
-- Keep direct Gemini Vision calls but add the fallback Gemini key (`EXTERNAL_JOBS_GEMINI_KEY`) cycling that already exists
-- No Lovable fallback for vision (Gateway doesn't support inline PDF)
+**Sidebar update**: Add a "Tools" entry with `Wrench` icon to the sidebar's "Tools & Resources" section, navigating to `/tools`. The slide-out panel is a secondary affordance.
 
-**Special: `convert-document-mcqs`** already has `generateWithAdaptiveFallback` with dual-key cycling — will add Lovable Gateway as a final fallback after all Gemini keys are exhausted.
+| File | Action |
+|------|--------|
+| `src/components/tools/ToolWrapper.tsx` | New shared wrapper |
+| `src/components/tools/ToolsPanel.tsx` | New slide-out panel |
+| `src/components/AppSidebar.tsx` | Add Tools nav item |
+| `src/components/Header.tsx` | Add "Tools" to nav items |
 
-**Special: `scheduled-autofill`** doesn't call Gemini directly (it calls `generate-test`/`generate-from-rag` via HTTP). No AI call changes needed.
+## Phase 3: Tools Listing Page
 
-### 3. Database migration
+**`/tools` page**: Grid of all 50 tools with search input, category filter chips (All, Calculators, Student Tools, Productivity, Converters, Generators), and "Popular" badges. Each card links to `/tools/{tool-id}`.
 
-```sql
-ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS ai_provider TEXT;
-ALTER TABLE ai_usage_logs ADD COLUMN IF NOT EXISTS cost_estimate NUMERIC DEFAULT 0;
-```
+**Static definitions**: All tools defined in a `src/data/toolsData.ts` config array (id, name, category, icon, description, popular flag, href). No database table needed for tool definitions.
 
-### 4. Environment
+| File | Action |
+|------|--------|
+| `src/data/toolsData.ts` | New: 50 tool definitions |
+| `src/pages/Tools.tsx` | New: tools listing page |
+| `src/App.tsx` | Add `/tools` route + lazy imports |
 
-`LOVABLE_API_KEY` already exists in secrets. `GEMINI_API_KEY` already exists. No new secrets needed.
+## Phase 4: 50 Individual Tool Pages
 
-### 5. Deploy all 7 updated edge functions
+All tools are client-side only (no backend). Each uses `ToolWrapper` for consistent layout. Tools organized by category:
+
+**Calculators (20)**: BMI, Percentage, Salary, EMI, Tip, Loan, Discount, BMR, Duration, Ratio, Speed, Area, Fraction, Date, Fuel + existing (Calculator, Age, GPA)
+
+**Student Tools (10)**: CGPA, GPA-to-%, %-to-GPA, Grade, Marks, Attendance, Result, Formula Sheet, Periodic Table, Multiplication Table
+
+**Converters (8)**: Currency (static rates), Temperature, Roman Numeral, Binary, Unit (existing), Case Converter, Image Resizer (canvas API), PDF-to-Text (file reader)
+
+**Productivity (6)**: Stopwatch, World Clock, Word Counter, Character Counter + existing (Timer, Notes, Calendar)
+
+**Generators (6)**: QR Code (via canvas), Password, Random Name, Color Picker, Random Number, Equation Solver
+
+Each tool page:
+- Uses `useState` with debounced calculations (300ms via `useEffect`)
+- Framer Motion `animate` for result reveal
+- Copy-to-clipboard button on results
+- Mobile responsive grid layouts
+
+**Routing**: All 50 tools added to `App.tsx` with `React.lazy()` for code splitting.
+
+| File | Action |
+|------|--------|
+| `src/pages/tools/*.tsx` | ~43 new tool page files |
+| `src/App.tsx` | Add all tool routes (lazy) |
+
+## Technical Decisions
+
+- **No new dependencies** except tools that genuinely need them (e.g., `qrcode` for QR generator -- will use canvas API instead to avoid deps)
+- **No drag-and-drop library** for admin nav -- simple position arrows
+- **Static tool definitions** -- no DB table for tools themselves
+- **Lazy loading** all tool pages for bundle optimization
+- **ToolWrapper** provides consistent breadcrumbs, SEO-ready titles, related tools, and MCQ platform CTA on every tool page
+
+## Estimated Changes
+- ~50 new files (tool pages + infrastructure)
+- ~5 modified files (App.tsx, Header, Sidebar, AdminTabs, migration)
+- 1 new DB table (navigation_items)
 
