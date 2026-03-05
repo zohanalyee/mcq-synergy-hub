@@ -29,13 +29,13 @@ const AdminContent = ({
   const getCurrentContent = () => currentContent;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <AdminTabs activeTab={activeTab} setActiveTab={setActiveTab} />
       
       {activeTab === 'analytics' && (
-        <div className="p-6 bg-card rounded-lg border">
+        <div className="p-4 bg-card rounded-lg border">
           <h3 className="text-lg font-semibold mb-4">Analytics Dashboard</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
             <div className="p-4 border rounded-lg">
               <h4 className="font-medium text-primary">Question Bank Usage</h4>
               <p className="text-2xl font-bold">{getCurrentContent().filter(item => item.category === 'mcq').length}</p>
