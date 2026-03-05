@@ -55,11 +55,11 @@ const Notifications = () => {
 
   return (
     <Header>
-      <main className="container mx-auto px-4 py-4 max-w-2xl">
-        <div className="flex items-center justify-between mb-4">
+      <main className="container mx-auto px-3 sm:px-4 py-3 max-w-3xl">
+        <div className="flex items-center justify-between mb-3">
           <div>
-            <h1 className="text-2xl font-bold">Notifications</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold">Notifications</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
               {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
             </p>
           </div>
@@ -80,10 +80,10 @@ const Notifications = () => {
 
         <div className="rounded-lg border border-border overflow-hidden bg-card">
           {isLoading ? (
-            <div className="p-8 text-center text-muted-foreground text-sm">Loading...</div>
+            <div className="p-6 text-center text-muted-foreground text-sm">Loading...</div>
           ) : notifications.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <BellOff className="h-10 w-10 mb-3 opacity-40" />
+            <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
+              <BellOff className="h-9 w-9 mb-2 opacity-40" />
               <p className="text-sm font-medium">
                 {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
               </p>
