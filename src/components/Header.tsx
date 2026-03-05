@@ -76,9 +76,11 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     staleTime: 5 * 60 * 1000,
   });
 
-  const navItems = dbNavItems ?? hardcodedNavItems;
+  const rawNavItems = dbNavItems ?? hardcodedNavItems;
+  const navItems = rawNavItems.filter(item => item.title !== 'Tools');
 
   const secondaryNavItems = [
+    { title: 'Tools', path: '/tools' },
     { title: 'Analytics', path: '/analytics' },
     { title: 'Feedback', path: '/feedback' },
     { title: 'Ask Docs', path: '/ask-document' },
