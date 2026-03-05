@@ -54,13 +54,12 @@ const Notifications = () => {
   const unreadCount = notifications.filter((n: any) => !n.is_read).length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <main className="container mx-auto px-4 py-6 max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
+    <Header>
+      <main className="container mx-auto px-4 py-4 max-w-2xl">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold">Notifications</h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-sm text-muted-foreground mt-0.5">
               {unreadCount > 0 ? `${unreadCount} unread` : 'All caught up!'}
             </p>
           </div>
@@ -72,7 +71,7 @@ const Notifications = () => {
           )}
         </div>
 
-        <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unread')} className="mb-4">
+        <Tabs value={filter} onValueChange={(v) => setFilter(v as 'all' | 'unread')} className="mb-3">
           <TabsList>
             <TabsTrigger value="all">All</TabsTrigger>
             <TabsTrigger value="unread">Unread</TabsTrigger>
@@ -89,7 +88,7 @@ const Notifications = () => {
                 {filter === 'unread' ? 'No unread notifications' : 'No notifications yet'}
               </p>
               <p className="text-xs mt-1">
-                {filter === 'unread' ? 'You\'re all caught up!' : 'Complete tests to start receiving notifications.'}
+                {filter === 'unread' ? "You're all caught up!" : 'Complete tests to start receiving notifications.'}
               </p>
             </div>
           ) : (
@@ -113,7 +112,7 @@ const Notifications = () => {
           </div>
         )}
       </main>
-    </div>
+    </Header>
   );
 };
 
