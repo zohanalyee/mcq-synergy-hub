@@ -142,7 +142,7 @@ const SubjectCard = ({
     >
       <div 
         className={`
-          rounded-2xl p-3 min-h-[120px] flex flex-col
+          rounded-2xl p-3 min-h-[100px] flex flex-col
           border border-white/50 dark:border-white/20
           shadow-sm hover:shadow-lg
           transition-all duration-300
