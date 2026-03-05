@@ -262,7 +262,7 @@ const Home = () => {
       </section>
       
       {/* Subjects Section */}
-      <section className="py-8">
+      <section className="py-5">
         <div className="container px-4 mx-auto">
           <div className="text-center mb-6">
             <motion.h2
@@ -308,15 +308,15 @@ const Home = () => {
       </section>
       
       {/* Features Section */}
-      <section className="py-8 bg-muted/50">
+      <section className="py-5 bg-muted/50">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-6">
+          <div className="text-center mb-5">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-2xl font-bold mb-2"
+              className="text-xl font-bold mb-2"
             >
               Powerful Features
             </motion.h2>
@@ -389,15 +389,15 @@ const Home = () => {
       </section>
       
       {/* Testimonials Section */}
-      <section className="py-8">
+      <section className="py-5">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-6">
+          <div className="text-center mb-5">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-2xl font-bold mb-2"
+              className="text-xl font-bold mb-2"
             >
               What Our Users Say
             </motion.h2>
@@ -428,7 +428,7 @@ const Home = () => {
       </section>
       
       {/* CTA Section */}
-      <section className="py-8 bg-muted/50 relative overflow-hidden">
+      <section className="py-5 bg-muted/50 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-2xl mx-auto text-center">
