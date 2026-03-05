@@ -80,7 +80,7 @@ const Scholarships = () => {
 
   return (
     <Header>
-      <div className="max-w-6xl mx-auto px-4 pt-4 pb-16">
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-16">
         {/* Header Section */}
         <div className="mb-6 text-center">
           <motion.h1 
@@ -112,7 +112,7 @@ const Scholarships = () => {
         </div>
 
         {/* Full-width Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {isLoading ? (
             // Loading skeleton - compact
             Array.from({ length: 6 }).map((_, index) => (

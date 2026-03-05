@@ -30,7 +30,7 @@ type AdminTabsProps = {
 const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab}>
-      <TabsList className="mb-6 flex flex-wrap gap-2">
+      <TabsList className="mb-4 flex flex-wrap gap-1">
         {/* Main Navigation */}
         <TabsTrigger value="dashboard" className="flex items-center gap-2">
           <LayoutDashboard className="h-4 w-4" />
@@ -128,7 +128,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
 
       {/* Dashboard Tab */}
       <TabsContent value="dashboard">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           <AIContentFactory />
           
           <Card>

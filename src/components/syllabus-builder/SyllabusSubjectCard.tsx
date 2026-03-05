@@ -95,7 +95,7 @@ export const SyllabusSubjectCard = ({
               
               {/* Icon Squircle - Smaller */}
               <div
-                className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center shrink-0
+                className="w-7 h-7 rounded-lg shadow-md flex items-center justify-center shrink-0
                            group-hover:scale-105 transition-transform duration-200"
                 style={{ backgroundColor: theme.main }}
               >
@@ -104,7 +104,7 @@ export const SyllabusSubjectCard = ({
 
               {/* Subject Info */}
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-xs text-slate-800 dark:text-slate-100 truncate leading-tight">
+                <h4 className="font-bold text-xs text-slate-800 dark:text-slate-100 leading-tight line-clamp-2" title={subject.name}>
                   {subject.name}
                 </h4>
                 <p className="text-[10px] text-slate-500 dark:text-slate-400">

@@ -576,7 +576,7 @@ export const SyllabusBuilder = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 pt-4 pb-24 lg:pb-10">
+    <div className="max-w-7xl mx-auto px-4 pt-4 pb-24 lg:pb-10">
       {/* Hero Header */}
       <motion.div
         className="mb-4 text-center"
