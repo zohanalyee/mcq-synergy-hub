@@ -27,7 +27,7 @@ const Tools = () => {
             <Wrench className="h-4 w-4" />
             {ALL_TOOLS.length}+ Free Tools
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Free Online Tools</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Free Online Tools</h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
             Premium tools for students, professionals, and everyone — fast, smooth & free forever.
           </p>
@@ -60,7 +60,7 @@ const Tools = () => {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
           {filtered.map((tool, i) => {
             const colors = CATEGORY_COLORS[tool.category] || CATEGORY_COLORS['Calculators'];
             return (
@@ -72,15 +72,15 @@ const Tools = () => {
               >
                 <Link
                   to={tool.href}
-                  className={`relative flex flex-col items-center gap-2.5 p-4 rounded-xl border ${colors.border} ${colors.bg} ${colors.hover} hover:shadow-md transition-all text-center group h-full`}
+                  className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border ${colors.border} ${colors.bg} ${colors.hover} hover:shadow-md transition-all text-center group h-full`}
                 >
                   {tool.popular && (
                     <Badge className="absolute top-2 right-2 text-[9px] px-1.5 py-0 bg-primary/90">
                       Popular
                     </Badge>
                   )}
-                  <div className={`h-10 w-10 rounded-xl ${colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
-                    <tool.icon className="h-5 w-5" />
+                  <div className={`h-8 w-8 rounded-xl ${colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
+                    <tool.icon className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground leading-tight">{tool.name}</p>

@@ -264,13 +264,13 @@ const Home = () => {
       {/* Subjects Section */}
       <section className="py-5">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-6">
+          <div className="text-center mb-3">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-2xl font-bold mb-2"
+              className="text-lg font-bold mb-2"
             >
               Popular Subjects
             </motion.h2>
@@ -285,7 +285,7 @@ const Home = () => {
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
             {displaySubjects.map((subject, index) => (
               <SubjectCard
                 key={subject.title}
@@ -299,7 +299,7 @@ const Home = () => {
             ))}
           </div>
           
-          <div className="mt-8 text-center">
+          <div className="mt-4 text-center">
             <Button variant="outline" size="sm" onClick={() => navigate('/subjects')}>
               View All Subjects
             </Button>
@@ -310,13 +310,13 @@ const Home = () => {
       {/* Features Section */}
       <section className="py-5 bg-muted/50">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-5">
+          <div className="text-center mb-3">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-xl font-bold mb-2"
+              className="text-lg font-bold mb-2"
             >
               Powerful Features
             </motion.h2>
@@ -331,7 +331,7 @@ const Home = () => {
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
             {features.map((feature, index) => (
               <FeatureCard
                 key={feature.title}
@@ -354,7 +354,7 @@ const Home = () => {
                 from={0}
                 to={5000}
                 prefix="+"
-                className="text-2xl md:text-3xl font-bold mb-1"
+                className="text-xl md:text-2xl font-bold mb-1"
               />
               <p className="text-xs text-white/80">MCQs Available</p>
             </div>
@@ -362,7 +362,7 @@ const Home = () => {
               <AnimatedCounter
                 from={0}
                 to={25}
-                className="text-2xl md:text-3xl font-bold mb-1"
+                className="text-xl md:text-2xl font-bold mb-1"
               />
               <p className="text-xs text-white/80">Subjects Covered</p>
             </div>
@@ -371,7 +371,7 @@ const Home = () => {
                 from={0}
                 to={98}
                 suffix="%"
-                className="text-2xl md:text-3xl font-bold mb-1"
+                className="text-xl md:text-2xl font-bold mb-1"
               />
               <p className="text-xs text-white/80">User Satisfaction</p>
             </div>
@@ -380,7 +380,7 @@ const Home = () => {
                 from={0}
                 to={20000}
                 prefix="+"
-                className="text-2xl md:text-3xl font-bold mb-1"
+                className="text-xl md:text-2xl font-bold mb-1"
               />
               <p className="text-xs text-white/80">Tests Completed</p>
             </div>
@@ -391,13 +391,13 @@ const Home = () => {
       {/* Testimonials Section */}
       <section className="py-5">
         <div className="container px-4 mx-auto">
-          <div className="text-center mb-5">
+          <div className="text-center mb-3">
             <motion.h2
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="text-xl font-bold mb-2"
+              className="text-lg font-bold mb-2"
             >
               What Our Users Say
             </motion.h2>
@@ -412,7 +412,7 @@ const Home = () => {
             </motion.p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {testimonials.map((testimonial, index) => (
               <TestimonialCard
                 key={testimonial.author}

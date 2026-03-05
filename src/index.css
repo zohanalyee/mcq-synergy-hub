@@ -236,10 +236,11 @@ body::-webkit-scrollbar-thumb:hover {
   }
 }
 
+html {
+  font-size: 14px;
+}
+
 @media (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
   .container {
     padding-left: 0.75rem;
     padding-right: 0.75rem;
