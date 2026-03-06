@@ -15,7 +15,7 @@ import { useSyllabusData } from './hooks/useSyllabusData';
 import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
 import { GlassFilterSidebar } from './GlassFilterSidebar';
 import { SubjectGrid } from './SubjectGrid';
-import { SelectionSummary } from './SelectionSummary';
+import { FloatingActionBar } from './FloatingActionBar';
 import { SyllabusSubject, QuizSettings, SavedSyllabusTemplate } from './interfaces';
 
 const MAX_SUBJECTS = 10;
@@ -576,7 +576,7 @@ export const SyllabusBuilder = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 pt-4 pb-24 lg:pb-10">
+    <div className="max-w-7xl mx-auto px-4 pt-4 pb-28">
       {/* Hero Header */}
       <motion.div
         className="mb-4 text-center"
@@ -601,10 +601,10 @@ export const SyllabusBuilder = () => {
         </div>
       </motion.div>
 
-      {/* Main Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      {/* Main Layout - 2 columns: Filters + Subject Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
         {/* Left Sidebar - Glass Filters */}
-        <div className="lg:col-span-1">
+        <div>
           <div className="sticky top-20">
             <GlassFilterSidebar
               systems={systems}
@@ -617,8 +617,8 @@ export const SyllabusBuilder = () => {
           </div>
         </div>
 
-        {/* Center - Subject Grid */}
-        <div className="lg:col-span-2 space-y-4">
+        {/* Right - Subject Grid (full remaining width) */}
+        <div className="space-y-4">
           {/* Glass Search Bar */}
           <GlassSearchInput
             placeholder="Search subjects or topics..."
@@ -636,41 +636,23 @@ export const SyllabusBuilder = () => {
             onClearFilters={clearFilters}
           />
         </div>
-
-        {/* Right Sidebar - Quiz Panel */}
-        <div className="lg:col-span-1">
-          <div className="sticky top-20">
-            <SelectionSummary
-              selectedSubjectsCount={selectedSubjectsCount}
-              selectedTopicsCount={selectedTopicsCount}
-              syllabusName={syllabusName}
-              setSyllabusName={setSyllabusName}
-              quizSettings={quizSettings}
-              updateQuizSettings={updateQuizSettings}
-              onClearSelection={handleClearSelection}
-              onGenerateQuiz={handleGenerateQuiz}
-              isGenerating={isGenerating}
-              onSaveTemplate={handleSaveTemplate}
-              isSavingTemplate={isSavingTemplate}
-              topicQuestionCounts={topicQuestionCounts}
-              selectedTopicIds={selectedTopicIds}
-            />
-          </div>
-        </div>
       </div>
 
-      {/* Mobile Sticky Footer */}
-      {selectedTopicsCount > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-3 bg-background/95 backdrop-blur-sm border-t lg:hidden z-40 safe-area-inset-bottom">
-          <Button
-            onClick={handleGenerateQuiz}
-            className="w-full h-10"
-            disabled={isGenerating}
-          >
-            {isGenerating ? 'Generating...' : `Generate Test (${selectedTopicsCount} Topics)`}
-          </Button>
-        </div>
-      )}
+      {/* Floating Action Bar */}
+      <FloatingActionBar
+        selectedSubjectsCount={selectedSubjectsCount}
+        selectedTopicsCount={selectedTopicsCount}
+        syllabusName={syllabusName}
+        setSyllabusName={setSyllabusName}
+        quizSettings={quizSettings}
+        updateQuizSettings={updateQuizSettings}
+        onGenerateQuiz={handleGenerateQuiz}
+        isGenerating={isGenerating}
+        onSaveTemplate={handleSaveTemplate}
+        isSavingTemplate={isSavingTemplate}
+        topicQuestionCounts={topicQuestionCounts}
+        selectedTopicIds={selectedTopicIds}
+      />
     </div>
   );
 };
