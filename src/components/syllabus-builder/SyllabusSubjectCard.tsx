@@ -81,33 +81,33 @@ export const SyllabusSubjectCard = ({
       >
         <Collapsible open={subject.isExpanded} onOpenChange={() => onToggleExpand(subject.id)}>
           {/* Card Header - Compact */}
-          <div className="p-3">
-            <div className="flex items-start gap-2">
+          <div className="p-2.5">
+            <div className="flex items-start gap-1.5">
               {/* Subject Checkbox */}
               <Checkbox
                 checked={allTopicsSelected}
                 // @ts-ignore - indeterminate is valid but not in types
                 ref={(el) => el && (el.indeterminate = someTopicsSelected)}
                 onCheckedChange={() => onToggleSubject(subject.id)}
-                className="mt-0.5 h-4 w-4"
+                className="mt-0.5 h-3.5 w-3.5 shrink-0"
                 onClick={(e) => e.stopPropagation()}
               />
               
-              {/* Icon Squircle - Smaller */}
+              {/* Icon Squircle */}
               <div
-                className="w-7 h-7 rounded-lg shadow-md flex items-center justify-center shrink-0
+                className="w-5 h-5 rounded shadow-sm flex items-center justify-center shrink-0
                            group-hover:scale-105 transition-transform duration-200"
                 style={{ backgroundColor: theme.main }}
               >
-                {getIcon()}
+                {React.cloneElement(getIcon() as React.ReactElement, { className: "h-3 w-3 text-white" })}
               </div>
 
               {/* Subject Info */}
               <div className="flex-1 min-w-0">
-                <h4 className="font-bold text-xs text-slate-800 dark:text-slate-100 leading-tight line-clamp-2" title={subject.name}>
+                <h4 className="font-semibold text-[11px] text-slate-800 dark:text-slate-100 leading-tight line-clamp-2" title={subject.name}>
                   {subject.name}
                 </h4>
-                <p className="text-[10px] text-slate-500 dark:text-slate-400">
+                <p className="text-[9px] text-slate-500 dark:text-slate-400 mt-0.5">
                   {subject.topics.length} Topics
                   {(() => {
                     const totalQs = subject.topics.reduce((sum, t) => sum + (topicQuestionCounts[t.id] || 0), 0);
