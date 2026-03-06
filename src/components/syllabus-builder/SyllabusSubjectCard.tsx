@@ -67,7 +67,7 @@ export const SyllabusSubjectCard = ({
     <motion.div
       whileHover={{ y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="cursor-pointer group h-full"
+      className={cn("cursor-pointer group", subject.isExpanded && "col-span-2")}
     >
       <div
         className={cn(
