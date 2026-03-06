@@ -72,21 +72,21 @@ export const FloatingActionBar = ({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[95vw] max-w-4xl"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-4xl"
           >
-            <div className="bg-background/80 dark:bg-slate-900/80 backdrop-blur-xl border border-white/30 dark:border-white/10 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl">
+            <div className="bg-slate-900/85 backdrop-blur-xl border border-blue-500/30 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-[0_0_40px_rgba(59,130,246,0.15)]">
               {/* Mobile: stacked, Desktop: horizontal */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
                 {/* Left: Selection stats */}
                 <div className="flex items-center gap-2 shrink-0">
-                  <Badge variant="secondary" className="px-2 py-1 text-xs whitespace-nowrap">
-                    <span className="text-primary font-bold mr-1">{selectedSubjectsCount}</span> Subjects
+                  <Badge variant="secondary" className="px-2 py-1 text-xs whitespace-nowrap bg-blue-950/60 border-blue-500/20 text-blue-200">
+                    <span className="text-blue-400 font-bold mr-1">{selectedSubjectsCount}</span> Subjects
                   </Badge>
-                  <Badge variant="secondary" className="px-2 py-1 text-xs whitespace-nowrap">
-                    <span className="text-primary font-bold mr-1">{selectedTopicsCount}</span> Topics
+                  <Badge variant="secondary" className="px-2 py-1 text-xs whitespace-nowrap bg-blue-950/60 border-blue-500/20 text-blue-200">
+                    <span className="text-blue-400 font-bold mr-1">{selectedTopicsCount}</span> Topics
                   </Badge>
                   {availableInBank > 0 && (
-                    <span className="text-[10px] text-muted-foreground hidden md:flex items-center gap-1">
+                    <span className="text-[10px] text-blue-300/70 hidden md:flex items-center gap-1">
                       <Database className="h-3 w-3" /> {availableInBank} in bank
                     </span>
                   )}
@@ -98,11 +98,11 @@ export const FloatingActionBar = ({
                     value={syllabusName}
                     onChange={(e) => setSyllabusName(e.target.value)}
                     placeholder="Test Name"
-                    className="h-8 text-sm flex-1 min-w-0"
+                    className="h-8 text-sm flex-1 min-w-0 bg-white/10 border-blue-500/20 text-white placeholder:text-blue-300/50 focus:border-blue-400/50"
                   />
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-blue-300 hover:text-blue-100 hover:bg-blue-800/40">
                         <Settings className="h-4 w-4" />
                       </Button>
                     </PopoverTrigger>
@@ -167,7 +167,7 @@ export const FloatingActionBar = ({
                       size="sm"
                       onClick={openSaveDialog}
                       disabled={isSavingTemplate}
-                      className="h-8 hidden sm:flex"
+                      className="h-8 hidden sm:flex border-blue-500/30 text-blue-200 hover:bg-blue-800/40 hover:text-blue-100"
                     >
                       <Bookmark className="h-3.5 w-3.5 mr-1.5" />
                       Save
@@ -177,7 +177,7 @@ export const FloatingActionBar = ({
                     size="sm"
                     onClick={onGenerateQuiz}
                     disabled={isGenerating}
-                    className="h-8 sm:h-8"
+                    className="h-8 sm:h-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg border-0"
                   >
                     {isGenerating ? (
                       'Generating...'

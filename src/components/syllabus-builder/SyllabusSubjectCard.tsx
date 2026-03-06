@@ -179,8 +179,8 @@ export const SyllabusSubjectCard = ({
                   subject.topics.map(topic => (
                     <label
                       key={topic.id}
-                      className="flex items-center gap-1.5 py-1 px-1.5 rounded-lg hover:bg-white/50 
-                                 dark:hover:bg-slate-800/50 cursor-pointer transition-colors"
+                      className="flex items-center gap-1.5 py-1.5 px-2 rounded-lg hover:bg-blue-50/60 
+                                 dark:hover:bg-blue-900/30 cursor-pointer transition-colors"
                       onClick={(e) => e.stopPropagation()}
                     >
                       <Checkbox
