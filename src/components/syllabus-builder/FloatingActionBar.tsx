@@ -44,10 +44,14 @@ export const FloatingActionBar = ({
   onSaveTemplate,
   isSavingTemplate = false,
   topicQuestionCounts = {},
-  selectedTopicIds = []
+  selectedTopicIds = [],
+  subjects = [],
+  perTopicCounts = {},
+  onPerTopicCountsChange
 }: FloatingActionBarProps) => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [topicsModalOpen, setTopicsModalOpen] = useState(false);
 
   const availableInBank = useMemo(() => {
     return selectedTopicIds.reduce((sum, id) => sum + (topicQuestionCounts[id] || 0), 0);
