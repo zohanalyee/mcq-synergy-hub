@@ -9,8 +9,9 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Settings, Sparkles, Bookmark, Zap } from 'lucide-react';
-import { QuizSettings } from './interfaces';
+import { Settings, Sparkles, Bookmark, Zap, SlidersHorizontal } from 'lucide-react';
+import { QuizSettings, SyllabusSubject } from './interfaces';
+import { TopicsSelectorModal } from './TopicsSelectorModal';
 
 interface FloatingActionBarProps {
   selectedSubjectsCount: number;
@@ -25,6 +26,10 @@ interface FloatingActionBarProps {
   isSavingTemplate?: boolean;
   topicQuestionCounts?: Record<string, number>;
   selectedTopicIds?: string[];
+  // Per-topic question counts
+  subjects?: SyllabusSubject[];
+  perTopicCounts?: Record<string, number>;
+  onPerTopicCountsChange?: (counts: Record<string, number>, deselectedTopicIds: string[]) => void;
 }
 
 export const FloatingActionBar = ({
