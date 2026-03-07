@@ -1,54 +1,30 @@
 
 
-## Plan: Aggressive Spacing & Density Reductions
+## Analysis
 
-### 1. Base Font Size — Apply 14px globally (not just mobile)
-**File: `src/index.css`**
-- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
+Looking at the code, the `FloatingActionBar` is already rendered at the **page level** in `SyllabusBuilder.tsx` (line 642), not inside any card. It also already uses `fixed` positioning. However, on mobile (as shown in the screenshot), it visually overlaps with cards, creating the illusion it's part of a card.
 
-### 2. Subject Grid — More columns
-**File: `src/components/subjects/SubjectGrid.tsx`**
-- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
-- Reduce gap from `gap-3` → `gap-2`
+The real issues are:
+1. The bar is inside the page's `div` container which may clip or constrain it -- using a React Portal to `document.body` will guarantee independence
+2. The bar is too tall vertically on mobile -- needs compacting
 
-### 3. Syllabus Builder Grid — More columns
-**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
-- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
-- Reduce gap from `gap-3` → `gap-2`
+## Plan
 
-### 4. Tools Page — More columns, tighter spacing
-**File: `src/pages/Tools.tsx`**
-- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
-- Gap: `gap-2.5` → `gap-2`
-- Tool card padding: `p-4` → `p-3`
-- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
-- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
+### 1. Add React Portal to `FloatingActionBar.tsx`
+- Wrap the entire rendered output in `createPortal(..., document.body)` so it's fully outside any parent container/grid
+- Import `createPortal` from `react-dom`
 
-### 5. Index Page — Tighter sections
-**File: `src/pages/Index.tsx`**
-- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
-- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
-- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
-- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
-- Testimonials grid gap: `gap-4` → `gap-2`
-- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
-- "View All Subjects" margin: `mt-8` → `mt-4`
+### 2. Make the bar more compact (same file)
+- Reduce outer padding from `px-4 sm:px-6 py-3 sm:py-4` to `px-3 py-2 sm:px-4 sm:py-3`
+- Reduce gap between sections from `gap-3 sm:gap-4` to `gap-2 sm:gap-3`
+- On mobile, use a single-row horizontal layout: stats badges + input + generate button all in one line
+- Shrink badge sizes, input height, and button text
+- Remove the "Save" button on mobile (already hidden with `hidden sm:flex`)
+- Target ~50% height reduction
 
-### 6. SubjectCard — Slightly tighter
-**File: `src/components/SubjectCard.tsx`**
-- Min-height: `min-h-[120px]` → `min-h-[100px]`
+### 3. Minor: ensure bottom padding on page
+- Already has `pb-28` on the container -- sufficient
 
-### 7. FeatureCard — Reduce padding
-**File: `src/components/FeatureCard.tsx`**
-- Card min-height: `min-h-[100px]` → remove
-- Padding: `p-3` → `p-2.5`
-
-### Files to edit (7 files):
-1. `src/index.css` — global 14px font
-2. `src/components/subjects/SubjectGrid.tsx` — more columns
-3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
-4. `src/pages/Tools.tsx` — denser grid
-5. `src/pages/Index.tsx` — tighter sections
-6. `src/components/SubjectCard.tsx` — smaller min-height
-7. `src/components/FeatureCard.tsx` — less padding
+### Files to modify
+- `src/components/syllabus-builder/FloatingActionBar.tsx` -- Portal + compact layout
 
