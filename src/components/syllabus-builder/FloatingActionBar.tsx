@@ -81,7 +81,7 @@ export const FloatingActionBar = ({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-20 lg:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-3xl"
+          className="fixed bottom-20 lg:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[92%] max-w-2xl"
         >
           <div className="bg-slate-900/90 backdrop-blur-xl border border-blue-500/30 px-3 py-2 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.15)]">
             <div className="flex items-center gap-2">
