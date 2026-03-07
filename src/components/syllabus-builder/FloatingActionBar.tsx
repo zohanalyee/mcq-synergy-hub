@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Settings, Sparkles, Bookmark, Zap, Database } from 'lucide-react';
+import { Settings, Sparkles, Bookmark, Zap } from 'lucide-react';
 import { QuizSettings } from './interfaces';
 
 interface FloatingActionBarProps {
