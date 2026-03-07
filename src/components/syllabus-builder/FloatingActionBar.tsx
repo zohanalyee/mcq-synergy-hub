@@ -9,8 +9,9 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Settings, Sparkles, Bookmark, Zap } from 'lucide-react';
-import { QuizSettings } from './interfaces';
+import { Settings, Sparkles, Bookmark, Zap, SlidersHorizontal } from 'lucide-react';
+import { QuizSettings, SyllabusSubject } from './interfaces';
+import { TopicsSelectorModal } from './TopicsSelectorModal';
 
 interface FloatingActionBarProps {
   selectedSubjectsCount: number;
@@ -25,6 +26,10 @@ interface FloatingActionBarProps {
   isSavingTemplate?: boolean;
   topicQuestionCounts?: Record<string, number>;
   selectedTopicIds?: string[];
+  // Per-topic question counts
+  subjects?: SyllabusSubject[];
+  perTopicCounts?: Record<string, number>;
+  onPerTopicCountsChange?: (counts: Record<string, number>, deselectedTopicIds: string[]) => void;
 }
 
 export const FloatingActionBar = ({
@@ -39,10 +44,14 @@ export const FloatingActionBar = ({
   onSaveTemplate,
   isSavingTemplate = false,
   topicQuestionCounts = {},
-  selectedTopicIds = []
+  selectedTopicIds = [],
+  subjects = [],
+  perTopicCounts = {},
+  onPerTopicCountsChange
 }: FloatingActionBarProps) => {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
+  const [topicsModalOpen, setTopicsModalOpen] = useState(false);
 
   const availableInBank = useMemo(() => {
     return selectedTopicIds.reduce((sum, id) => sum + (topicQuestionCounts[id] || 0), 0);
@@ -72,7 +81,7 @@ export const FloatingActionBar = ({
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 100, opacity: 0 }}
           transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-3xl"
+          className="fixed bottom-20 lg:bottom-8 left-1/2 -translate-x-1/2 z-[100] w-[95%] max-w-3xl"
         >
           <div className="bg-slate-900/90 backdrop-blur-xl border border-blue-500/30 px-3 py-2 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.15)]">
             <div className="flex items-center gap-2">
@@ -80,8 +89,14 @@ export const FloatingActionBar = ({
               <Badge variant="secondary" className="px-1.5 py-0.5 text-[10px] whitespace-nowrap bg-blue-950/60 border-blue-500/20 text-blue-200 shrink-0">
                 <span className="text-blue-400 font-bold mr-0.5">{selectedSubjectsCount}</span>S
               </Badge>
-              <Badge variant="secondary" className="px-1.5 py-0.5 text-[10px] whitespace-nowrap bg-blue-950/60 border-blue-500/20 text-blue-200 shrink-0">
+              {/* Topics badge - clickable to open per-topic modal */}
+              <Badge
+                variant="secondary"
+                className="px-1.5 py-0.5 text-[10px] whitespace-nowrap bg-blue-950/60 border-blue-500/20 text-blue-200 shrink-0 cursor-pointer hover:bg-blue-900/60 transition-colors"
+                onClick={() => setTopicsModalOpen(true)}
+              >
                 <span className="text-blue-400 font-bold mr-0.5">{selectedTopicsCount}</span>T
+                <SlidersHorizontal className="h-2.5 w-2.5 ml-0.5 text-blue-400" />
               </Badge>
 
               {/* Test name input */}
@@ -186,6 +201,16 @@ export const FloatingActionBar = ({
   return (
     <>
       {createPortal(floatingBar, document.body)}
+
+      {/* Per-Topic Question Count Modal */}
+      <TopicsSelectorModal
+        open={topicsModalOpen}
+        onOpenChange={setTopicsModalOpen}
+        subjects={subjects}
+        perTopicCounts={perTopicCounts}
+        topicQuestionCounts={topicQuestionCounts}
+        onApply={(counts, deselected) => onPerTopicCountsChange?.(counts, deselected)}
+      />
 
       {/* Save Template Dialog */}
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
