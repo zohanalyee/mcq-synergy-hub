@@ -202,6 +202,16 @@ export const FloatingActionBar = ({
     <>
       {createPortal(floatingBar, document.body)}
 
+      {/* Per-Topic Question Count Modal */}
+      <TopicsSelectorModal
+        open={topicsModalOpen}
+        onOpenChange={setTopicsModalOpen}
+        subjects={subjects}
+        perTopicCounts={perTopicCounts}
+        topicQuestionCounts={topicQuestionCounts}
+        onApply={(counts, deselected) => onPerTopicCountsChange?.(counts, deselected)}
+      />
+
       {/* Save Template Dialog */}
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <DialogContent className="sm:max-w-md">
