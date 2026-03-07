@@ -28,6 +28,7 @@ export const SyllabusBuilder = () => {
   const [syllabusName, setSyllabusName] = useState('My Custom Test');
   const [isGenerating, setIsGenerating] = useState(false);
   const [isSavingTemplate, setIsSavingTemplate] = useState(false);
+  const [perTopicQuestionCounts, setPerTopicQuestionCounts] = useState<Record<string, number>>({});
   const [quizSettings, setQuizSettings] = useState<QuizSettings>({
     timeLimit: 30,
     questionsCount: 20,
@@ -652,6 +653,28 @@ export const SyllabusBuilder = () => {
         isSavingTemplate={isSavingTemplate}
         topicQuestionCounts={topicQuestionCounts}
         selectedTopicIds={selectedTopicIds}
+        subjects={rawSubjects}
+        perTopicCounts={perTopicQuestionCounts}
+        onPerTopicCountsChange={(counts, deselectedIds) => {
+          setPerTopicQuestionCounts(counts);
+          // Deselect topics that were unchecked in the modal
+          if (deselectedIds.length > 0) {
+            setRawSubjects(prev => prev.map(s => ({
+              ...s,
+              topics: s.topics.map(t => 
+                deselectedIds.includes(t.id) ? { ...t, isSelected: false } : t
+              ),
+              isSelected: s.topics.some(t => t.isSelected && !deselectedIds.includes(t.id))
+            })));
+          }
+          // Update total questions count from per-topic counts
+          const totalFromTopics = selectedTopicIds
+            .filter(id => !deselectedIds.includes(id))
+            .reduce((sum, id) => sum + (counts[id] || 5), 0);
+          if (totalFromTopics > 0) {
+            updateQuizSettings('questionsCount', totalFromTopics);
+          }
+        }}
       />
     </div>
   );
