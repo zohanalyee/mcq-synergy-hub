@@ -1,4 +1,4 @@
-import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare } from 'lucide-react';
+import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
