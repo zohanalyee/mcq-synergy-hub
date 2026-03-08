@@ -181,9 +181,9 @@ const AutoFillSettings = ({ config, onConfigUpdate, onClose }: AutoFillSettingsP
                 Configure AI generation limits and thresholds
               </CardDescription>
             </div>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="h-4 w-4" />
-            </Button>
+            <button onClick={onClose} className="h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:scale-110 transition-transform">
+              <X className="h-3.5 w-3.5" />
+            </button>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">

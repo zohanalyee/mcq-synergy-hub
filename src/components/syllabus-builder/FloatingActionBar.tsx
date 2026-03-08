@@ -98,7 +98,7 @@ export const FloatingActionBar = ({
               {/* Close button */}
               <button
                 onClick={() => setDismissed(true)}
-                className="h-5 w-5 shrink-0 flex items-center justify-center rounded-full text-blue-300 hover:text-white hover:bg-blue-700/50 transition-colors"
+                className="h-5 w-5 shrink-0 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground hover:scale-110 transition-transform"
                 aria-label="Close action bar"
               >
                 <X className="h-3 w-3" />
