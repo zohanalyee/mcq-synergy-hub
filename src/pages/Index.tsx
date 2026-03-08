@@ -94,21 +94,21 @@ const Home = () => {
       title: "Competitive Exams",
       description: "Practice full-length job recruitment and exam simulations",
       icon: <Timer size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-blue-600 to-blue-400 text-white",
+      bgClass: "bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all duration-300 text-white",
       route: "/mock-tests"
     },
     {
       title: "Subject-wise Practice",
       description: "Focus on specific subjects to strengthen your knowledge",
       icon: <BookOpen size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-purple-600 to-purple-400 text-white",
+      bgClass: "bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all duration-300 text-white",
       route: "/subjects"
     },
     {
       title: "Custom Syllabus Builder",
       description: "Create your own syllabus by selecting from multiple subjects and topics",
       icon: <ListChecks size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-amber-600 to-amber-400 text-white",
+      bgClass: "bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all duration-300 text-white",
       route: "/custom-syllabus"
     }
   ];
