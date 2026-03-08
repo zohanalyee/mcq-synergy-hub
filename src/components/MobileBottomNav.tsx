@@ -18,11 +18,11 @@ import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 
 const TAB_COLORS = {
-  home: { active: 'text-blue-500', dot: 'bg-blue-500' },
-  subjects: { active: 'text-emerald-500', dot: 'bg-emerald-500' },
-  recruitment: { active: 'text-orange-500', dot: 'bg-orange-500' },
-  syllabus: { active: 'text-purple-500', dot: 'bg-purple-500' },
-  profile: { active: 'text-indigo-500', dot: 'bg-indigo-500' },
+  home: { active: 'text-blue-500', inactive: 'text-blue-400/50', dot: 'bg-blue-500' },
+  subjects: { active: 'text-emerald-500', inactive: 'text-emerald-400/50', dot: 'bg-emerald-500' },
+  recruitment: { active: 'text-orange-500', inactive: 'text-orange-400/50', dot: 'bg-orange-500' },
+  syllabus: { active: 'text-purple-500', inactive: 'text-purple-400/50', dot: 'bg-purple-500' },
+  profile: { active: 'text-indigo-500', inactive: 'text-indigo-400/50', dot: 'bg-indigo-500' },
 } as const;
 
 const navItems = [
@@ -105,7 +105,7 @@ const MobileBottomNav = () => {
                     <item.icon
                       className={cn(
                         "h-5 w-5 transition-colors duration-200",
-                        isActive ? colors.active : "text-muted-foreground"
+                        isActive ? colors.active : colors.inactive
                       )}
                       strokeWidth={isActive ? 2.5 : 1.8}
                       fill={isActive ? 'currentColor' : 'none'}
@@ -115,7 +115,7 @@ const MobileBottomNav = () => {
 
                   <span className={cn(
                     "text-[9px] tracking-wide transition-colors duration-200",
-                    isActive ? cn(colors.active, "font-semibold") : "text-muted-foreground font-medium"
+                    isActive ? cn(colors.active, "font-semibold") : cn(colors.inactive, "font-medium")
                   )}>
                     {item.label}
                   </span>
@@ -160,7 +160,7 @@ const MobileBottomNav = () => {
 
                   <span className={cn(
                     "text-[9px] tracking-wide transition-colors duration-200",
-                    isProfileActive ? "text-indigo-500 font-semibold" : "text-muted-foreground font-medium"
+                    isProfileActive ? "text-indigo-500 font-semibold" : "text-indigo-400/50 font-medium"
                   )}>
                     You
                   </span>
