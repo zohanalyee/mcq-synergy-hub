@@ -13,26 +13,21 @@ const PlatformStatsSection = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["platform-stats"],
     queryFn: async () => {
-      const [mcqRes, subjectsRes, testsRes] = await Promise.all([
-        supabase.from("content_items").select("id", { count: "exact", head: true }).eq("category", "mcq"),
-        supabase.from("subjects").select("id", { count: "exact", head: true }),
-        supabase.from("test_attempts").select("id", { count: "exact", head: true }),
-      ]);
-
-      return {
-        mcqs: mcqRes.count ?? 0,
-        subjects: subjectsRes.count ?? 0,
-        tests: testsRes.count ?? 0,
-      };
+      const { data, error } = await supabase.rpc("get_platform_stats");
+      if (error) {
+        console.error("Platform stats error:", error);
+        return { mcq_count: 0, subject_count: 0, test_count: 0 };
+      }
+      return data?.[0] ?? { mcq_count: 0, subject_count: 0, test_count: 0 };
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const stats = [
-    { to: data?.mcqs ?? 0, prefix: "+", label: "MCQs Available" },
-    { to: data?.subjects ?? 0, prefix: "", label: "Subjects Covered" },
+    { to: Number(data?.mcq_count ?? 0), prefix: "+", label: "MCQs Available" },
+    { to: Number(data?.subject_count ?? 0), prefix: "", label: "Subjects Covered" },
     { to: 98, suffix: "%", label: "User Satisfaction" },
-    { to: data?.tests ?? 0, prefix: "+", label: "Tests Completed" },
+    { to: Number(data?.test_count ?? 0), prefix: "+", label: "Tests Completed" },
   ];
 
   return (
