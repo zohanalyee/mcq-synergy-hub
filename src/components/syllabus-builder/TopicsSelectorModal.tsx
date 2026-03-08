@@ -97,7 +97,7 @@ export const TopicsSelectorModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="text-base">Customize Topics & Questions</DialogTitle>
           <p className="text-xs text-muted-foreground">
@@ -116,7 +116,7 @@ export const TopicsSelectorModal = ({
         </div>
 
         {/* Topics list */}
-        <div className="-mx-6 px-6 min-h-0 max-h-[50vh] overflow-y-auto">
+        <div className="-mx-6 px-6 min-h-0 flex-1 overflow-y-auto">
           <div className="space-y-4 py-2">
             {selectedSubjects.map(subject => (
               <div key={subject.id}>
