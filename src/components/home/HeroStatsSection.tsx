@@ -24,6 +24,14 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
   >
     <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
     
+    {/* Subtle scan-line overlay */}
+    <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{
+      backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)`,
+    }} />
+    
+    {/* AI micro-icon */}
+    <Sparkles className="absolute top-1.5 right-1.5 h-2.5 w-2.5 text-white/30" />
+    
     <div className="relative z-10">
       <div className="flex items-center gap-2 mb-1.5">
         <div className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
