@@ -97,7 +97,7 @@ export const TopicsSelectorModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden !z-[110] [&~*]:!z-[105]">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] flex flex-col overflow-hidden" style={{ zIndex: 110 }}>
         <DialogHeader>
           <DialogTitle className="text-base">Customize Topics & Questions</DialogTitle>
           <p className="text-xs text-muted-foreground">
