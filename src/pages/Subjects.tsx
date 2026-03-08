@@ -2,10 +2,10 @@ import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Sparkles, Loader2 } from "lucide-react";
 import Header from "@/components/Header";
-import SystemLevelFilter from "@/components/subjects/SystemLevelFilter";
 import FilterSummary from "@/components/subjects/FilterSummary";
 import SubjectGrid from "@/components/subjects/SubjectGrid";
-import { SmartSearchInput } from "@/components/ui/SmartSearchInput";
+import { GlassSearchInput } from "@/components/ui/GlassSearchInput";
+import { GlassFilterSidebar } from "@/components/syllabus-builder/GlassFilterSidebar";
 import { GlobalSearchResult } from "@/services/globalSearchService";
 import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -83,43 +83,31 @@ const Subjects = () => {
           </p>
         </motion.div>
         
-        {/* Smart Search Bar */}
+        {/* Glass Search + Filter Row */}
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1 }}
           className="mb-4"
         >
-          <div className="max-w-2xl mx-auto">
-            <SmartSearchInput
-              placeholder="Search subjects by name or description..."
-              onSelect={handleSmartSearchSelect}
-            />
-          </div>
-        </motion.div>
-        
-        {/* System & Level Filters */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="mb-4"
-        >
-          {loading ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-full max-w-md" />
-              <Skeleton className="h-8 w-full max-w-lg" />
+          <div className="flex items-start gap-3">
+            <div className="flex-1">
+              <GlassSearchInput
+                placeholder="Search subjects or topics..."
+                onSelect={handleSmartSearchSelect}
+              />
             </div>
-          ) : (
-            <SystemLevelFilter
-              systems={systems}
-              availableLevels={availableLevels}
-              selectedSystemIds={filterState.selectedSystemIds}
-              selectedLevelIds={filterState.selectedLevelIds}
-              toggleSystemFilter={toggleSystemFilter}
-              toggleLevelFilter={toggleLevelFilter}
-            />
-          )}
+            {!loading && (
+              <GlassFilterSidebar
+                systems={systems.map(s => ({ ...s, description: undefined }))}
+                availableLevels={availableLevels}
+                filterState={filterState}
+                toggleSystemFilter={toggleSystemFilter}
+                toggleLevelFilter={toggleLevelFilter}
+                clearFilters={clearFilters}
+              />
+            )}
+          </div>
         </motion.div>
 
         <FilterSummary 
