@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 interface Topic {
   id: string;

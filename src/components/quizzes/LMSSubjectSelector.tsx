@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface LMSSubject {
