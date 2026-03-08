@@ -11,15 +11,15 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Topic {
-  id?: string;
+  id: string;
   name: string;
   description?: string;
 }
 
 interface LMSTopicSelectorProps {
   topics: Topic[];
-  value: string;
-  onValueChange: (value: string) => void;
+  value: string; // topic ID
+  onValueChange: (id: string) => void;
   disabled?: boolean;
   placeholder?: string;
   disabledPlaceholder?: string;
@@ -38,13 +38,24 @@ export const LMSTopicSelector = ({
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState('');
 
-  const filtered = useMemo(() => {
-    if (!search) return topics;
-    const q = search.toLowerCase();
-    return topics.filter(t => t.name.toLowerCase().includes(q));
-  }, [topics, search]);
+  // Deduplicate topics by name (same topic name under same subject should appear once)
+  const dedupedTopics = useMemo(() => {
+    const seen = new Set<string>();
+    return topics.filter(t => {
+      const key = t.name.toLowerCase().trim();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [topics]);
 
-  const selectedTopic = topics.find(t => t.name === value);
+  const filtered = useMemo(() => {
+    if (!search) return dedupedTopics;
+    const q = search.toLowerCase();
+    return dedupedTopics.filter(t => t.name.toLowerCase().includes(q));
+  }, [dedupedTopics, search]);
+
+  const selectedTopic = dedupedTopics.find(t => t.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -84,16 +95,16 @@ export const LMSTopicSelector = ({
                 <button
                   key={topic.id}
                   onClick={() => {
-                    onValueChange(topic.name === value ? '' : topic.name);
+                    onValueChange(topic.id === value ? '' : topic.id);
                     setOpen(false);
                     setSearch('');
                   }}
                   className={cn(
                     "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left hover:bg-accent transition-colors",
-                    value === topic.name && "bg-accent"
+                    value === topic.id && "bg-accent"
                   )}
                 >
-                  <Check className={cn("h-4 w-4 shrink-0", value === topic.name ? "opacity-100 text-primary" : "opacity-0")} />
+                  <Check className={cn("h-4 w-4 shrink-0", value === topic.id ? "opacity-100 text-primary" : "opacity-0")} />
                   <span className="truncate">{topic.name}</span>
                 </button>
               ))}

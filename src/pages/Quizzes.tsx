@@ -9,8 +9,6 @@ import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import Header from "@/components/Header";
-import { useSupabaseSubjects } from "@/hooks/useSupabaseSubjects";
-import { useSupabaseTopics } from "@/hooks/useSupabaseTopics";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -18,11 +16,15 @@ import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2 } from "lucide-re
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 
+interface TopicItem {
+  id: string;
+  name: string;
+  description?: string;
+}
+
 const Quizzes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { loading: subjectsLoading } = useSupabaseSubjects();
-  const { allTopics, loading: topicsLoading } = useSupabaseTopics();
   
   // Subject Quiz State (Category A - Random Mix)
   const [selectedSubjectA, setSelectedSubjectA] = useState<string>("");
@@ -37,12 +39,31 @@ const Quizzes = () => {
   const [timeLimitB, setTimeLimitB] = useState(15);
   const [isGeneratingB, setIsGeneratingB] = useState(false);
   
-  // Get topics for selected subject in Category B
-  const availableTopics = selectedSubjectB ? (allTopics[selectedSubjectB] || []) : [];
-  
-  // Reset topic when subject changes in Category B
+  // Topics fetched by subject ID for Category B
+  const [topicsForSubjectB, setTopicsForSubjectB] = useState<TopicItem[]>([]);
+  const [topicsLoading, setTopicsLoading] = useState(false);
+
+  // Fetch topics when subject B changes
   useEffect(() => {
     setSelectedTopicB("");
+    if (!selectedSubjectB) {
+      setTopicsForSubjectB([]);
+      return;
+    }
+    const fetchTopics = async () => {
+      setTopicsLoading(true);
+      const { data, error } = await supabase
+        .from('topics')
+        .select('id, name, description')
+        .eq('subject_id', selectedSubjectB)
+        .or('approved.is.null,approved.eq.true')
+        .order('name');
+      if (!error && data) {
+        setTopicsForSubjectB(data as TopicItem[]);
+      }
+      setTopicsLoading(false);
+    };
+    fetchTopics();
   }, [selectedSubjectB]);
 
   // DISABLED: AI features paused
@@ -51,8 +72,6 @@ const Quizzes = () => {
       toast.error("Please select a subject");
       return;
     }
-    
-    // AI generation temporarily disabled
     toast.error("AI Quiz Generation Temporarily Unavailable", {
       description: "Quiz generation is paused. Please use the Question Bank or Custom Syllabus page to practice with existing questions.",
     });
@@ -64,14 +83,10 @@ const Quizzes = () => {
       toast.error("Please select both subject and topic");
       return;
     }
-    
-    // AI generation temporarily disabled
     toast.error("AI Quiz Generation Temporarily Unavailable", {
       description: "Quiz generation is paused. Please use the Question Bank or Custom Syllabus page to practice with existing questions.",
     });
   };
-
-  const isLoading = subjectsLoading || topicsLoading;
 
   return (
     <Header>
@@ -119,92 +134,82 @@ const Quizzes = () => {
                 </CardHeader>
                 
                 <CardContent className="space-y-3 pt-1">
-                  {isLoading ? (
-                    <div className="space-y-4">
-                      <Skeleton className="h-10 w-full" />
-                      <Skeleton className="h-10 w-full" />
-                      <Skeleton className="h-10 w-full" />
+                  {/* Subject Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="subject-a">Select Subject</Label>
+                    <LMSSubjectSelector
+                      id="subject-a"
+                      value={selectedSubjectA}
+                      onValueChange={(id) => setSelectedSubjectA(id)}
+                      placeholder="Search & choose a subject..."
+                    />
+                  </div>
+                  
+                  {/* Question Count */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-1.5 text-sm">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                        Questions
+                      </Label>
+                      <Badge variant="secondary" className="text-xs">{questionCountA}</Badge>
                     </div>
-                  ) : (
-                    <>
-                      {/* Subject Selection */}
-                      <div className="space-y-2">
-                        <Label htmlFor="subject-a">Select Subject</Label>
-                        <LMSSubjectSelector
-                          id="subject-a"
-                          value={selectedSubjectA}
-                          onValueChange={(val) => setSelectedSubjectA(val)}
-                          placeholder="Search & choose a subject..."
-                        />
-                      </div>
-                      
-                      {/* Question Count */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-1.5 text-sm">
-                            <HelpCircle className="h-3.5 w-3.5" />
-                            Questions
-                          </Label>
-                          <Badge variant="secondary" className="text-xs">{questionCountA}</Badge>
-                        </div>
-                        <Slider
-                          value={[questionCountA]}
-                          onValueChange={(v) => setQuestionCountA(v[0])}
-                          min={5}
-                          max={50}
-                          step={5}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>5</span>
-                          <span>50</span>
-                        </div>
-                      </div>
-                      
-                      {/* Time Limit */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-1.5 text-sm">
-                            <Clock className="h-3.5 w-3.5" />
-                            Time Limit
-                          </Label>
-                          <Badge variant="secondary" className="text-xs">{timeLimitA} min</Badge>
-                        </div>
-                        <Slider
-                          value={[timeLimitA]}
-                          onValueChange={(v) => setTimeLimitA(v[0])}
-                          min={5}
-                          max={60}
-                          step={5}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>5 min</span>
-                          <span>60 min</span>
-                        </div>
-                      </div>
-                      
-                      {/* Start Button */}
-                      <Button 
-                        className="w-full" 
-                        size="lg"
-                        onClick={handleStartSubjectQuiz}
-                        disabled={!selectedSubjectA || isGeneratingA}
-                      >
-                        {isGeneratingA ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Generating Quiz...
-                          </>
-                        ) : (
-                          <>
-                            <BookOpen className="mr-2 h-4 w-4" />
-                            Start Subject Quiz
-                          </>
-                        )}
-                      </Button>
-                    </>
-                  )}
+                    <Slider
+                      value={[questionCountA]}
+                      onValueChange={(v) => setQuestionCountA(v[0])}
+                      min={5}
+                      max={50}
+                      step={5}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>5</span>
+                      <span>50</span>
+                    </div>
+                  </div>
+                  
+                  {/* Time Limit */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-1.5 text-sm">
+                        <Clock className="h-3.5 w-3.5" />
+                        Time Limit
+                      </Label>
+                      <Badge variant="secondary" className="text-xs">{timeLimitA} min</Badge>
+                    </div>
+                    <Slider
+                      value={[timeLimitA]}
+                      onValueChange={(v) => setTimeLimitA(v[0])}
+                      min={5}
+                      max={60}
+                      step={5}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>5 min</span>
+                      <span>60 min</span>
+                    </div>
+                  </div>
+                  
+                  {/* Start Button */}
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleStartSubjectQuiz}
+                    disabled={!selectedSubjectA || isGeneratingA}
+                  >
+                    {isGeneratingA ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Quiz...
+                      </>
+                    ) : (
+                      <>
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        Start Subject Quiz
+                      </>
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>
@@ -229,111 +234,101 @@ const Quizzes = () => {
                 </CardHeader>
                 
                 <CardContent className="space-y-3 pt-1">
-                  {isLoading ? (
-                    <div className="space-y-3">
-                      <Skeleton className="h-10 w-full" />
-                      <Skeleton className="h-10 w-full" />
-                      <Skeleton className="h-10 w-full" />
+                  {/* Subject Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="subject-b">Select Subject</Label>
+                    <LMSSubjectSelector
+                      id="subject-b"
+                      value={selectedSubjectB}
+                      onValueChange={(id) => setSelectedSubjectB(id)}
+                      placeholder="Search & choose a subject..."
+                    />
+                  </div>
+                  
+                  {/* Topic Selection */}
+                  <div className="space-y-2">
+                    <Label htmlFor="topic-b">Select Topic</Label>
+                    <LMSTopicSelector
+                      id="topic-b"
+                      topics={topicsForSubjectB}
+                      value={selectedTopicB}
+                      onValueChange={setSelectedTopicB}
+                      disabled={!selectedSubjectB || topicsLoading}
+                      placeholder="Search & choose a topic..."
+                      disabledPlaceholder={topicsLoading ? "Loading topics..." : "Select a subject first"}
+                    />
+                    {selectedSubjectB && !topicsLoading && topicsForSubjectB.length === 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        No topics available for this subject.
+                      </p>
+                    )}
+                  </div>
+                  
+                  {/* Question Count */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                        <HelpCircle className="h-4 w-4" />
+                        Questions
+                      </Label>
+                      <Badge variant="secondary">{questionCountB}</Badge>
                     </div>
-                  ) : (
-                    <>
-                      {/* Subject Selection */}
-                      <div className="space-y-2">
-                        <Label htmlFor="subject-b">Select Subject</Label>
-                        <LMSSubjectSelector
-                          id="subject-b"
-                          value={selectedSubjectB}
-                          onValueChange={(val) => setSelectedSubjectB(val)}
-                          placeholder="Search & choose a subject..."
-                        />
-                      </div>
-                      
-                      {/* Topic Selection */}
-                      <div className="space-y-2">
-                        <Label htmlFor="topic-b">Select Topic</Label>
-                        <LMSTopicSelector
-                          id="topic-b"
-                          topics={availableTopics}
-                          value={selectedTopicB}
-                          onValueChange={setSelectedTopicB}
-                          disabled={!selectedSubjectB}
-                          placeholder="Search & choose a topic..."
-                          disabledPlaceholder="Select a subject first"
-                        />
-                        {selectedSubjectB && availableTopics.length === 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            No topics available for this subject.
-                          </p>
-                        )}
-                      </div>
-                      
-                      {/* Question Count */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-2">
-                            <HelpCircle className="h-4 w-4" />
-                            Questions
-                          </Label>
-                          <Badge variant="secondary">{questionCountB}</Badge>
-                        </div>
-                        <Slider
-                          value={[questionCountB]}
-                          onValueChange={(v) => setQuestionCountB(v[0])}
-                          min={5}
-                          max={50}
-                          step={5}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>5</span>
-                          <span>50</span>
-                        </div>
-                      </div>
-                      
-                      {/* Time Limit */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            Time Limit
-                          </Label>
-                          <Badge variant="secondary">{timeLimitB} min</Badge>
-                        </div>
-                        <Slider
-                          value={[timeLimitB]}
-                          onValueChange={(v) => setTimeLimitB(v[0])}
-                          min={5}
-                          max={60}
-                          step={5}
-                          className="w-full"
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>5 min</span>
-                          <span>60 min</span>
-                        </div>
-                      </div>
-                      
-                      {/* Start Button */}
-                      <Button 
-                        className="w-full" 
-                        size="lg"
-                        onClick={handleStartTopicQuiz}
-                        disabled={!selectedSubjectB || !selectedTopicB || isGeneratingB}
-                      >
-                        {isGeneratingB ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Generating Quiz...
-                          </>
-                        ) : (
-                          <>
-                            <Target className="mr-2 h-4 w-4" />
-                            Start Topic Quiz
-                          </>
-                        )}
-                      </Button>
-                    </>
-                  )}
+                    <Slider
+                      value={[questionCountB]}
+                      onValueChange={(v) => setQuestionCountB(v[0])}
+                      min={5}
+                      max={50}
+                      step={5}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>5</span>
+                      <span>50</span>
+                    </div>
+                  </div>
+                  
+                  {/* Time Limit */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        Time Limit
+                      </Label>
+                      <Badge variant="secondary">{timeLimitB} min</Badge>
+                    </div>
+                    <Slider
+                      value={[timeLimitB]}
+                      onValueChange={(v) => setTimeLimitB(v[0])}
+                      min={5}
+                      max={60}
+                      step={5}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>5 min</span>
+                      <span>60 min</span>
+                    </div>
+                  </div>
+                  
+                  {/* Start Button */}
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={handleStartTopicQuiz}
+                    disabled={!selectedSubjectB || !selectedTopicB || isGeneratingB}
+                  >
+                    {isGeneratingB ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Generating Quiz...
+                      </>
+                    ) : (
+                      <>
+                        <Target className="mr-2 h-4 w-4" />
+                        Start Topic Quiz
+                      </>
+                    )}
+                  </Button>
                 </CardContent>
               </Card>
             </motion.div>

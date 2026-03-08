@@ -21,8 +21,8 @@ export interface LMSSubject {
 }
 
 interface LMSSubjectSelectorProps {
-  value: string;
-  onValueChange: (value: string, subject: LMSSubject | null) => void;
+  value: string; // subject ID
+  onValueChange: (id: string, subject: LMSSubject | null) => void;
   placeholder?: string;
   id?: string;
 }
@@ -82,10 +82,7 @@ export const LMSSubjectSelector = ({ value, onValueChange, placeholder = "Choose
     return map;
   }, [filtered]);
 
-  const selectedSubject = subjects.find(s => s.name === value);
-  const displayLabel = selectedSubject
-    ? `${selectedSubject.name}`
-    : placeholder;
+  const selectedSubject = subjects.find(s => s.id === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -139,16 +136,16 @@ export const LMSSubjectSelector = ({ value, onValueChange, placeholder = "Choose
                     <button
                       key={subject.id}
                       onClick={() => {
-                        onValueChange(subject.name === value ? '' : subject.name, subject.name === value ? null : subject);
+                        onValueChange(subject.id === value ? '' : subject.id, subject.id === value ? null : subject);
                         setOpen(false);
                         setSearch('');
                       }}
                       className={cn(
                         "w-full flex items-center gap-2 px-2 py-1.5 rounded-md text-sm text-left hover:bg-accent transition-colors",
-                        value === subject.name && "bg-accent"
+                        value === subject.id && "bg-accent"
                       )}
                     >
-                      <Check className={cn("h-4 w-4 shrink-0", value === subject.name ? "opacity-100 text-primary" : "opacity-0")} />
+                      <Check className={cn("h-4 w-4 shrink-0", value === subject.id ? "opacity-100 text-primary" : "opacity-0")} />
                       <span className="truncate">{subject.name}</span>
                     </button>
                   ))}
