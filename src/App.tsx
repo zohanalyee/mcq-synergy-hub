@@ -16,7 +16,6 @@ import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import Index from "./pages/Index";
 import Subjects from "./pages/Subjects";
-import Dashboard from "./pages/Dashboard";
 import MockTests from "./pages/MockTests";
 import Analytics from "./pages/Analytics";
 import Leaderboard from "./pages/Leaderboard";
