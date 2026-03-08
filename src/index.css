@@ -320,7 +320,7 @@ html {
   }
   
   .pb-mobile-nav {
-    padding-bottom: 5rem;
+    padding-bottom: 3.5rem;
   }
   
   @media (min-width: 768px) {
