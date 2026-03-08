@@ -1,4 +1,4 @@
-import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare } from 'lucide-react';
+import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -11,12 +11,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import StreakCounter from '@/components/gamification/StreakCounter';
-import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
+import { ALL_TOOLS } from '@/data/toolsData';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 
 interface HeaderActionsProps {
   theme?: string;
@@ -51,7 +52,22 @@ const HeaderActions = ({
     return 'User';
   };
 
-  const categories = TOOL_CATEGORIES.filter(c => c !== 'All');
+  const STUDENT_TOOL_IDS = [
+    'gpa-calculator',
+    'cgpa-calculator', 
+    'percentage-calculator',
+    'grade-calculator',
+    'attendance-calculator',
+    'age-calculator',
+    'bmi-calculator',
+    'calculator',
+  ];
+
+  const FEATURED_IDS = new Set(['gpa-calculator', 'cgpa-calculator', 'percentage-calculator', 'grade-calculator']);
+
+  const studentTools = STUDENT_TOOL_IDS
+    .map(id => ALL_TOOLS.find(t => t.id === id))
+    .filter(Boolean);
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
@@ -69,48 +85,47 @@ const HeaderActions = ({
             <LayoutGrid className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border p-0">
-          <div className="flex items-center justify-between px-3 py-2">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tools</span>
-            <button
-              onClick={() => onNavigate('/tools')}
-              className="text-xs text-primary hover:underline font-medium"
-            >
-              View All
-            </button>
-          </div>
+        <DropdownMenuContent align="end" className="w-72 bg-popover/95 backdrop-blur-xl border border-border p-0">
+          <DropdownMenuLabel className="flex items-center justify-between px-3 py-2.5">
+            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Student Tools</span>
+            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">Most Used</Badge>
+          </DropdownMenuLabel>
           <DropdownMenuSeparator className="my-0" />
-          <ScrollArea className="max-h-[70vh]">
-            {categories.map((category) => {
-              const categoryTools = ALL_TOOLS.filter(t => t.category === category);
-              const colors = CATEGORY_COLORS[category];
+          <div className="py-1">
+            {studentTools.map((tool) => {
+              if (!tool) return null;
+              const Icon = tool.icon;
+              const isFeatured = FEATURED_IDS.has(tool.id);
               return (
-                <div key={category}>
-                  <div className={`px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wider ${colors?.badge || 'text-muted-foreground'}`}>
-                    {category}
+                <DropdownMenuItem 
+                  key={tool.id} 
+                  onClick={() => onNavigate(tool.href)}
+                  className="cursor-pointer px-3 py-2.5 mx-1 rounded-md gap-3"
+                >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 shrink-0">
+                    <Icon className="h-4 w-4 text-primary" />
                   </div>
-                  {categoryTools.map((tool) => {
-                    const Icon = tool.icon;
-                    return (
-                      <DropdownMenuItem 
-                        key={tool.id} 
-                        onClick={() => onNavigate(tool.href)}
-                        className="text-sm py-1.5 cursor-pointer px-3 mx-1 rounded-md"
-                      >
-                        <Icon className={`mr-2 h-4 w-4 flex-shrink-0 ${colors?.badge || ''}`} />
-                        <span className="truncate">{tool.name}</span>
-                        {tool.popular && (
-                          <span className="ml-auto text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-medium">
-                            ★
-                          </span>
-                        )}
-                      </DropdownMenuItem>
-                    );
-                  })}
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium truncate">{tool.name}</span>
+                      {isFeatured && <Star className="h-3 w-3 text-accent-foreground fill-accent shrink-0" />}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground truncate">{tool.description}</p>
+                  </div>
+                </DropdownMenuItem>
               );
             })}
-          </ScrollArea>
+          </div>
+          <DropdownMenuSeparator className="my-0" />
+          <div className="px-2 py-1.5">
+            <DropdownMenuItem 
+              onClick={() => onNavigate('/tools')}
+              className="cursor-pointer px-3 py-2 rounded-md justify-between text-primary font-medium text-sm"
+            >
+              <span>View All 50+ Tools</span>
+              <ArrowRight className="h-4 w-4" />
+            </DropdownMenuItem>
+          </div>
         </DropdownMenuContent>
       </DropdownMenu>
 
