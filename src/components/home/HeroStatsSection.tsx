@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, CheckCircle, Target, HelpCircle } from "lucide-react";
+import { Clock, CheckCircle, Target, HelpCircle, Sparkles } from "lucide-react";
 import { useUserStats } from "@/hooks/useUserStats";
 import { Skeleton } from "@/components/ui/skeleton";
 
