@@ -52,6 +52,16 @@ export const FloatingActionBar = ({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [topicsModalOpen, setTopicsModalOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const prevTopicsCount = useRef(selectedTopicsCount);
+
+  // Re-show bar when selection changes
+  useEffect(() => {
+    if (selectedTopicsCount !== prevTopicsCount.current) {
+      setDismissed(false);
+      prevTopicsCount.current = selectedTopicsCount;
+    }
+  }, [selectedTopicsCount]);
 
   const availableInBank = useMemo(() => {
     return selectedTopicIds.reduce((sum, id) => sum + (topicQuestionCounts[id] || 0), 0);
