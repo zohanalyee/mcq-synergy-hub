@@ -111,7 +111,7 @@ export function AppSidebar({
               <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1.5">
                 <BookOpen className="h-5 w-5 text-white" />
               </div>
-              <span className="text-base font-bold text-foreground">MCQs Point</span>
+              <span className="text-base font-bold text-gradient">MCQs Point</span>
             </div>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
           </div>
