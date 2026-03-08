@@ -744,6 +744,30 @@ export type Database = {
         }
         Relationships: []
       }
+      global_appearance_settings: {
+        Row: {
+          id: string
+          key: string
+          settings: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          key?: string
+          settings?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          key?: string
+          settings?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       job_categories: {
         Row: {
           created_at: string | null
@@ -1297,6 +1321,27 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_appearance_settings: {
+        Row: {
+          id: string
+          settings: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          settings?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          settings?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       user_badges: {
         Row: {
