@@ -42,7 +42,7 @@ const SubjectContent = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [isLoaded, setIsLoaded] = useState(false);
-  const [studyMode, setStudyMode] = useState<StudyMode>("read");
+  const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
   const [isLoadingMCQs, setIsLoadingMCQs] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
