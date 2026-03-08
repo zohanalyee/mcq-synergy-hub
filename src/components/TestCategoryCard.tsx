@@ -24,9 +24,13 @@ const TestCategoryCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
       whileHover={{ scale: 1.02 }}
-      className="h-full"
+      className="h-full group"
     >
-      <Card className={`overflow-hidden border-none ${bgClass}`} onClick={onClick}>
+      <Card className={`overflow-hidden border-none ${bgClass} relative`} onClick={onClick}>
+        {/* Shimmer sweep on hover */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out bg-gradient-to-r from-transparent via-white/15 to-transparent" />
+        </div>
         {/* Mobile: compact horizontal row */}
         <div className="flex md:hidden items-center gap-3 p-2.5 cursor-pointer">
           <div className="p-1.5 bg-white/20 rounded-lg shrink-0 [&>svg]:h-5 [&>svg]:w-5">

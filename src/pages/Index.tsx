@@ -25,7 +25,8 @@ import {
   ShieldCheck, 
   LayoutGrid,
   ListChecks,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 // Stagger container variants
@@ -188,14 +189,48 @@ const Home = () => {
         className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
+        
+        {/* AI Grid overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(rgba(139,92,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.3) 1px, transparent 1px)`,
+          backgroundSize: '32px 32px'
+        }} />
+        
+        {/* Animated glowing orbs */}
+        <motion.div
+          className="absolute -top-16 -right-16 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl pointer-events-none"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute -bottom-12 -left-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.25, 0.1] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
+              className="flex flex-col items-center"
             >
-              <span className="hidden md:inline px-2.5 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full">
+              {/* AI Brand Icon */}
+              <div className="relative mb-2 hidden md:flex items-center justify-center">
+                <motion.div
+                  className="absolute inset-0 rounded-full bg-violet-500/20 blur-lg"
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 2.5, repeat: Infinity }}
+                />
+                <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600">
+                  <BrainCircuit className="h-5 w-5 text-white" />
+                  <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
+                </div>
+              </div>
+              
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 text-primary border border-violet-500/20 rounded-full">
+                <Sparkles className="h-3 w-3 text-violet-500" />
                 Prepare Smarter, Score Higher
               </span>
             </motion.div>

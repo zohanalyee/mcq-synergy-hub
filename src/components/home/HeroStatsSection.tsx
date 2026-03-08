@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, CheckCircle, Target, HelpCircle } from "lucide-react";
+import { Clock, CheckCircle, Target, HelpCircle, Sparkles } from "lucide-react";
 import { useUserStats } from "@/hooks/useUserStats";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -23,6 +23,14 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
                shadow-md hover:shadow-lg transition-all duration-300 text-white`}
   >
     <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+    
+    {/* Subtle scan-line overlay */}
+    <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{
+      backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)`,
+    }} />
+    
+    {/* AI micro-icon */}
+    <Sparkles className="absolute top-1.5 right-1.5 h-2.5 w-2.5 text-white/30" />
     
     <div className="relative z-10">
       <div className="flex items-center gap-2 mb-1.5">
