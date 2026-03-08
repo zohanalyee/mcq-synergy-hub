@@ -19,8 +19,8 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, delay }}
     className={`relative overflow-hidden rounded-2xl p-3 md:p-4
-               bg-gradient-to-br ${gradient}
-               shadow-md hover:shadow-lg transition-all duration-300 text-white`}
+               bg-gradient-to-br ${gradient} backdrop-blur-md border border-white/20
+               shadow-md hover:shadow-lg hover:bg-white/15 transition-all duration-300 text-white`}
   >
     <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
     
