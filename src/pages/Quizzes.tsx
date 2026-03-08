@@ -21,7 +21,7 @@ import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 const Quizzes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subjects, loading: subjectsLoading } = useSupabaseSubjects();
+  const { loading: subjectsLoading } = useSupabaseSubjects();
   const { allTopics, loading: topicsLoading } = useSupabaseTopics();
   
   // Subject Quiz State (Category A - Random Mix)
