@@ -470,7 +470,7 @@ const Home = () => {
             </div>
           </div>
           <div className="mt-6 pt-4 border-t text-center text-muted-foreground text-xs">
-            <p>© {new Date().getFullYear()} MCQs Point. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} AI-MCQs Point. All rights reserved.</p>
           </div>
         </div>
       </footer>

@@ -113,7 +113,7 @@ const Auth = () => {
           >
             <BookOpen className="w-8 h-8 text-primary-foreground" />
           </motion.div>
-          <h1 className="text-3xl font-bold">MCQs Point</h1>
+          <h1 className="text-3xl font-bold">AI-MCQs Point</h1>
           <p className="text-muted-foreground">Your gateway to academic excellence</p>
         </div>
 

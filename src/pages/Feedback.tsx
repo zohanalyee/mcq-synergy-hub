@@ -16,7 +16,7 @@ const Feedback = () => {
           <CardHeader className="text-center pb-4">
             <CardTitle className="text-foreground text-xl">Provide Feedback</CardTitle>
             <CardDescription className="text-muted-foreground text-sm">
-              Help us improve MCQs Point
+              Help us improve AI-MCQs Point
             </CardDescription>
           </CardHeader>
           <CardContent>
