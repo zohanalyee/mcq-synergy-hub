@@ -39,16 +39,12 @@ const AdminPanel = () => {
     getContentStatistics
   } = useAdminContent();
 
-  // Initialize admin data when the component loads
   useEffect(() => {
     initializeAdminData();
   }, []);
 
-  // Security check: Verify admin status on every render
   useEffect(() => {
     setIsLoading(true);
-    
-    // Make sure user is authenticated first
     if (!user) {
       toast.error("Access denied", {
         description: "You must be logged in to access this page."
@@ -56,17 +52,13 @@ const AdminPanel = () => {
       navigate("/sign-in");
       return;
     }
-    
-    // Then verify admin status
     const adminCheck = checkIsAdmin();
-    
     if (!adminCheck) {
       toast.error("Access denied", {
         description: "You do not have administrator privileges."
       });
       navigate("/");
     }
-    
     setIsLoading(false);
   }, [user, navigate, checkIsAdmin]);
 
@@ -77,33 +69,43 @@ const AdminPanel = () => {
     return <AdminLoader />;
   }
 
-  // If security check failed, don't render anything else
   if (!isAdmin || !user) {
     return null;
   }
 
   return (
     <Header>
-      <div className="max-w-[1600px] mx-auto px-4 pt-4 pb-10 space-y-5">
-        <AdminHeader
-          pendingCount={statistics.pendingCount}
-          scholarshipCount={statistics.scholarshipCount}
-          mcqCount={statistics.mcqCount}
-          quizCount={statistics.quizCount}
-          totalCount={statistics.totalCount}
-        />
-        
-        <QuotaMonitor />
-        
-        <AdminContent
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          currentContent={currentContent}
-          handleEditClick={handleEditClick}
-          handleUpdateStatus={handleUpdateStatus}
-          handleDelete={handleDelete}
-          onBulkAction={handleBulkAction}
-        />
+      <div className="relative min-h-screen">
+        {/* AI-themed background */}
+        <div className="fixed inset-0 pointer-events-none z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-violet-950/5 via-transparent to-cyan-950/5 dark:from-violet-950/20 dark:via-transparent dark:to-cyan-950/10" />
+          <div className="absolute inset-0 opacity-[0.015] dark:opacity-[0.03]" style={{
+            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(139,92,246,0.4) 1px, transparent 0)`,
+            backgroundSize: '40px 40px'
+          }} />
+        </div>
+
+        <div className="relative z-10 max-w-[1600px] mx-auto px-4 pt-4 pb-10 space-y-4">
+          <AdminHeader
+            pendingCount={statistics.pendingCount}
+            scholarshipCount={statistics.scholarshipCount}
+            mcqCount={statistics.mcqCount}
+            quizCount={statistics.quizCount}
+            totalCount={statistics.totalCount}
+          />
+          
+          <QuotaMonitor />
+          
+          <AdminContent
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            currentContent={currentContent}
+            handleEditClick={handleEditClick}
+            handleUpdateStatus={handleUpdateStatus}
+            handleDelete={handleDelete}
+            onBulkAction={handleBulkAction}
+          />
+        </div>
       </div>
 
       <EnhancedEditContentDialog
