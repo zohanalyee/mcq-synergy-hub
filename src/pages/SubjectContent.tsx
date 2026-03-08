@@ -410,14 +410,9 @@ const SubjectContent = () => {
     }
   };
 
-  // Handle generate new questions (force AI generation)
-  // DISABLED: AI features paused - show message instead
+  // Handle generate new questions (Smart Hybrid: bank first → AI fallback)
   const handleGenerateNew = () => {
-    toast({
-      variant: "destructive",
-      title: "AI Generation Temporarily Unavailable",
-      description: "Please add questions manually through the Admin Panel. AI features will return soon.",
-    });
+    loadMCQs(true, false); // forceNew=true, fetchOnly=false → triggers AI if bank is empty
   };
 
   // Handle refresh (use cache first)
