@@ -1,5 +1,6 @@
-import { Palette, Monitor, Layout, CreditCard, Sparkles, RotateCcw, Droplets } from 'lucide-react';
+import { Palette, Monitor, Layout, CreditCard, Sparkles, RotateCcw, Droplets, Globe, Cloud, CloudOff } from 'lucide-react';
 import { useAppearance, AccentColor, AtmosphereMode, ColorMix, mixLibrary } from '@/contexts/AppearanceContext';
+import { useUserRole } from '@/contexts/UserRoleContext';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -39,19 +40,18 @@ const AppearanceSettings = () => {
     updateColorMix,
     updateCustomMixColors,
     resetToDefaults,
+    saveAsGlobal,
+    isUsingCustom,
+    isCloudSyncing,
   } = useAppearance();
+
+  const { isAdmin } = useUserRole();
 
   const handleOpacityChange = (type: 'interface' | 'sidebar' | 'cards', value: number) => {
     switch (type) {
-      case 'interface':
-        updateInterfaceOpacity(value);
-        break;
-      case 'sidebar':
-        updateSidebarOpacity(value);
-        break;
-      case 'cards':
-        updateCardsOpacity(value);
-        break;
+      case 'interface': updateInterfaceOpacity(value); break;
+      case 'sidebar': updateSidebarOpacity(value); break;
+      case 'cards': updateCardsOpacity(value); break;
     }
   };
 
@@ -68,6 +68,22 @@ const AppearanceSettings = () => {
 
   return (
     <div className="space-y-3">
+      {/* Sync Status Indicator */}
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-1.5 text-[10px]">
+          {isCloudSyncing ? (
+            <Cloud className="h-3 w-3 text-primary animate-pulse" />
+          ) : isUsingCustom ? (
+            <CloudOff className="h-3 w-3 text-amber-500" />
+          ) : (
+            <Globe className="h-3 w-3 text-emerald-500" />
+          )}
+          <span className="text-muted-foreground">
+            {isCloudSyncing ? 'Syncing...' : isUsingCustom ? 'Custom Override' : 'Global Defaults'}
+          </span>
+        </div>
+      </div>
+
       {/* Live Preview */}
       <LivePreviewCard />
 
@@ -98,7 +114,7 @@ const AppearanceSettings = () => {
         </div>
       </div>
 
-      {/* Opacity Sliders - Compact */}
+      {/* Opacity Sliders */}
       <div className="space-y-2.5">
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
@@ -108,16 +124,8 @@ const AppearanceSettings = () => {
             </div>
             <span className="text-muted-foreground font-mono text-[10px]">{settings.interfaceOpacity}%</span>
           </div>
-          <Slider
-            value={[settings.interfaceOpacity]}
-            onValueChange={([value]) => handleOpacityChange('interface', value)}
-            min={0}
-            max={100}
-            step={1}
-            className="cursor-pointer h-1.5"
-          />
+          <Slider value={[settings.interfaceOpacity]} onValueChange={([value]) => handleOpacityChange('interface', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
         </div>
-
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
@@ -126,16 +134,8 @@ const AppearanceSettings = () => {
             </div>
             <span className="text-muted-foreground font-mono text-[10px]">{settings.sidebarOpacity}%</span>
           </div>
-          <Slider
-            value={[settings.sidebarOpacity]}
-            onValueChange={([value]) => handleOpacityChange('sidebar', value)}
-            min={0}
-            max={100}
-            step={1}
-            className="cursor-pointer h-1.5"
-          />
+          <Slider value={[settings.sidebarOpacity]} onValueChange={([value]) => handleOpacityChange('sidebar', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
         </div>
-
         <div className="space-y-1">
           <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-1.5">
@@ -144,14 +144,7 @@ const AppearanceSettings = () => {
             </div>
             <span className="text-muted-foreground font-mono text-[10px]">{settings.cardsOpacity}%</span>
           </div>
-          <Slider
-            value={[settings.cardsOpacity]}
-            onValueChange={([value]) => handleOpacityChange('cards', value)}
-            min={0}
-            max={100}
-            step={1}
-            className="cursor-pointer h-1.5"
-          />
+          <Slider value={[settings.cardsOpacity]} onValueChange={([value]) => handleOpacityChange('cards', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
         </div>
       </div>
 
@@ -204,20 +197,11 @@ const AppearanceSettings = () => {
                     : "border-border hover:border-primary/50"
                 )}
               >
-                <div 
-                  className="absolute inset-0 opacity-30"
-                  style={{
-                    background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`
-                  }}
-                />
+                <div className="absolute inset-0 opacity-30" style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})` }} />
                 <div className="relative flex flex-col items-center gap-0.5">
                   <div className="flex -space-x-0.5">
                     {colors.map((color, i) => (
-                      <div
-                        key={i}
-                        className="w-2.5 h-2.5 rounded-full border border-background"
-                        style={{ backgroundColor: color }}
-                      />
+                      <div key={i} className="w-2.5 h-2.5 rounded-full border border-background" style={{ backgroundColor: color }} />
                     ))}
                   </div>
                   <span className="text-[8px] font-medium">{preset.label}</span>
@@ -226,35 +210,38 @@ const AppearanceSettings = () => {
             );
           })}
         </div>
-
-        {/* Custom Color Pickers - Inline */}
         <div className="flex items-center gap-2 pt-1">
           <span className="text-[10px] text-muted-foreground whitespace-nowrap">Custom:</span>
           <div className="flex gap-1 flex-1">
             {settings.customMixColors.map((color, index) => (
-              <input
-                key={index}
-                type="color"
-                value={color}
-                onChange={(e) => handleCustomColorChange(index as 0 | 1 | 2, e.target.value)}
-                className="flex-1 h-5 rounded cursor-pointer border border-border"
-                title={`Color ${index + 1}`}
-              />
+              <input key={index} type="color" value={color} onChange={(e) => handleCustomColorChange(index as 0 | 1 | 2, e.target.value)} className="flex-1 h-5 rounded cursor-pointer border border-border" title={`Color ${index + 1}`} />
             ))}
           </div>
           <button
             onClick={() => handleColorMixChange('custom')}
             className={cn(
               "text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap",
-              settings.colorMix === 'custom'
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/80"
+              settings.colorMix === 'custom' ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
             )}
           >
             Apply
           </button>
         </div>
       </div>
+
+      {/* Admin: Set as Global Default */}
+      {isAdmin && (
+        <Button
+          variant="default"
+          size="sm"
+          className="w-full h-8 text-xs"
+          onClick={saveAsGlobal}
+          disabled={isCloudSyncing}
+        >
+          <Globe className="h-3.5 w-3.5 mr-1.5" />
+          Set as Global Default
+        </Button>
+      )}
 
       {/* Reset Button */}
       <Button
@@ -264,7 +251,7 @@ const AppearanceSettings = () => {
         onClick={resetToDefaults}
       >
         <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
-        Reset to Defaults
+        Reset to Global Defaults
       </Button>
     </div>
   );
