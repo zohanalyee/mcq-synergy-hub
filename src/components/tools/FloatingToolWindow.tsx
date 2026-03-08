@@ -175,14 +175,12 @@ const FloatingToolWindow = ({
           >
             <Minus className="h-3 w-3" />
           </Button>
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-6 w-6 hover:bg-destructive/10 hover:text-destructive rounded-md" 
+          <button 
+            className="h-5 w-5 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:scale-110 transition-transform" 
             onClick={(e) => { e.stopPropagation(); onClose(); }}
           >
             <X className="h-3 w-3" />
-          </Button>
+          </button>
         </div>
       </div>
 

@@ -141,14 +141,12 @@ const NoticeBoard = () => {
           >
             <Card className="border-2 border-primary/20 shadow-xl">
               <CardHeader className="relative pb-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
+                <button
                   onClick={handleClose}
-                  className="absolute right-2 top-2"
+                  className="absolute right-2 top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:scale-110 transition-transform"
                 >
-                  <X className="h-4 w-4" />
-                </Button>
+                  <X className="h-3.5 w-3.5" />
+                </button>
                 <CardTitle className="text-primary text-2xl">
                   Welcome to MCQs Point
                 </CardTitle>

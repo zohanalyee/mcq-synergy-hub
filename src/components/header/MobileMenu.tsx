@@ -65,9 +65,9 @@ const MobileMenu = ({
               <span className="font-bold tracking-tight text-foreground">MCQs Point</span>
             </span>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
+          <button onClick={onClose} className="h-7 w-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:scale-110 transition-transform">
+            <X className="h-4 w-4" />
+          </button>
         </div>
         
         {/* Mobile Menu Content */}
