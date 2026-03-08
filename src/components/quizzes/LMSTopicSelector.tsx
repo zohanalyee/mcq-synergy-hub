@@ -58,7 +58,7 @@ export const LMSTopicSelector = ({
   const selectedTopic = dedupedTopics.find(t => t.id === value);
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={setOpen} modal={false}>
       <PopoverTrigger asChild>
         <Button
           id={id}
