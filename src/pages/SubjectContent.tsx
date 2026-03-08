@@ -235,6 +235,12 @@ const SubjectContent = () => {
           serverPayload?.message ||
           (typeof serverPayload === 'string' ? serverPayload : null);
 
+        if (status === 401 || status === 403) {
+          throw new Error(
+            'Please sign in to load practice questions. If this issue persists, contact the admin.'
+          );
+        }
+
         if (status === 402) {
           throw new Error(
             serverMessage ||
@@ -246,7 +252,7 @@ const SubjectContent = () => {
           throw new Error(serverMessage || 'You are being rate-limited. Please try again in a moment.');
         }
 
-        throw new Error(serverMessage || (error as any)?.message || 'Failed to load questions');
+        throw new Error(serverMessage || (error as any)?.message || 'Failed to load questions. Please contact admin if issue persists.');
       }
 
       if (!data || !data.questions) {
