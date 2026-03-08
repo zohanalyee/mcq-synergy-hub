@@ -108,7 +108,7 @@ const HeaderActions = ({
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-medium truncate">{tool.name}</span>
-                      {isFeatured && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500 shrink-0" />}
+                      {isFeatured && <Star className="h-3 w-3 text-accent-foreground fill-accent shrink-0" />}
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate">{tool.description}</p>
                   </div>
