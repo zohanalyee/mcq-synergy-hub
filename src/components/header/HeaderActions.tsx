@@ -145,8 +145,8 @@ const HeaderActions = ({
                 </AvatarFallback>
               </Avatar>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-52 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border">
-              <DropdownMenuLabel className="flex items-center gap-3 py-3">
+            <DropdownMenuContent align="end" className="w-56 bg-white/95 dark:bg-card backdrop-blur-xl border border-white/40 dark:border-border p-1.5">
+              <DropdownMenuLabel className="flex items-center gap-3 py-3 px-2">
                 <Avatar className="h-10 w-10">
                   <AvatarImage src={profile?.avatar_url || ''} />
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground text-sm font-medium">
@@ -159,32 +159,32 @@ const HeaderActions = ({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-1.5">
-                <LayoutDashboard className="mr-2 h-3.5 w-3.5" />
+              <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 mb-0.5">
+                <LayoutDashboard className="mr-2.5 h-4 w-4 text-blue-500" />
                 My Dashboard
               </DropdownMenuItem>
               {isAdmin && (
-                <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-1.5">
-                  <Shield className="mr-2 h-3.5 w-3.5 text-primary" />
+                <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 mb-0.5">
+                  <Shield className="mr-2.5 h-4 w-4 text-violet-500" />
                   Admin Panel
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-1.5">
-                <User className="mr-2 h-3.5 w-3.5" />
+              <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 mb-0.5">
+                <User className="mr-2.5 h-4 w-4 text-emerald-500" />
                 Profile
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-1.5">
-                <MessageSquare className="mr-2 h-3.5 w-3.5" />
+              <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 mb-0.5">
+                <MessageSquare className="mr-2.5 h-4 w-4 text-amber-500" />
                 Feedback
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-1.5">
-                <Settings className="mr-2 h-3.5 w-3.5" />
+              <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 mb-0.5">
+                <Settings className="mr-2.5 h-4 w-4 text-rose-500" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-1.5">
-                <LogOut className="mr-2 h-3.5 w-3.5" />
+              <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40">
+                <LogOut className="mr-2.5 h-4 w-4 text-red-500" />
                 <span>Sign Out</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
