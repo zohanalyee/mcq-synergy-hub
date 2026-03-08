@@ -18,11 +18,11 @@ import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 
 const TAB_COLORS = {
-  home: { active: 'text-blue-500', dot: 'bg-blue-500' },
-  subjects: { active: 'text-emerald-500', dot: 'bg-emerald-500' },
-  recruitment: { active: 'text-orange-500', dot: 'bg-orange-500' },
-  syllabus: { active: 'text-purple-500', dot: 'bg-purple-500' },
-  profile: { active: 'text-indigo-500', dot: 'bg-indigo-500' },
+  home: { active: 'text-blue-500', inactive: 'text-blue-400/50', dot: 'bg-blue-500' },
+  subjects: { active: 'text-emerald-500', inactive: 'text-emerald-400/50', dot: 'bg-emerald-500' },
+  recruitment: { active: 'text-orange-500', inactive: 'text-orange-400/50', dot: 'bg-orange-500' },
+  syllabus: { active: 'text-purple-500', inactive: 'text-purple-400/50', dot: 'bg-purple-500' },
+  profile: { active: 'text-indigo-500', inactive: 'text-indigo-400/50', dot: 'bg-indigo-500' },
 } as const;
 
 const navItems = [
