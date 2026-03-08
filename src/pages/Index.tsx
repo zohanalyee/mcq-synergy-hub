@@ -190,76 +190,23 @@ const Home = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         
-        {/* Animated AI Grid overlay - slowly drifting */}
-        <motion.div
-          className="absolute inset-0 pointer-events-none opacity-[0.04]"
-          animate={{ backgroundPosition: ['0px 0px', '32px 32px'] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-          style={{
-            backgroundImage: `linear-gradient(rgba(139,92,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.3) 1px, transparent 1px)`,
-            backgroundSize: '32px 32px'
-          }}
-        />
+        {/* AI Grid overlay */}
+        <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
+          backgroundImage: `linear-gradient(rgba(139,92,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.3) 1px, transparent 1px)`,
+          backgroundSize: '32px 32px'
+        }} />
         
-        {/* Animated glowing orbs - more dynamic with drift */}
+        {/* Animated glowing orbs */}
         <motion.div
-          className="absolute w-56 h-56 bg-violet-500/20 rounded-full blur-3xl pointer-events-none"
-          animate={{ 
-            scale: [1, 1.3, 0.9, 1.2, 1], 
-            opacity: [0.15, 0.35, 0.2, 0.3, 0.15],
-            x: [-40, 20, -10, 30, -40],
-            y: [-40, -20, -50, -30, -40],
-          }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-          style={{ top: '-4rem', right: '-4rem' }}
+          className="absolute -top-16 -right-16 w-48 h-48 bg-violet-500/15 rounded-full blur-3xl pointer-events-none"
+          animate={{ scale: [1, 1.2, 1], opacity: [0.15, 0.3, 0.15] }}
+          transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.div
-          className="absolute w-44 h-44 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"
-          animate={{ 
-            scale: [1.2, 0.8, 1.1, 0.9, 1.2], 
-            opacity: [0.1, 0.3, 0.15, 0.25, 0.1],
-            x: [-30, 10, -20, 15, -30],
-            y: [0, 20, -10, 15, 0],
-          }}
-          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-          style={{ bottom: '-3rem', left: '-3rem' }}
+          className="absolute -bottom-12 -left-12 w-40 h-40 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"
+          animate={{ scale: [1.2, 1, 1.2], opacity: [0.1, 0.25, 0.1] }}
+          transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
         />
-        {/* Third floating orb - center */}
-        <motion.div
-          className="absolute w-32 h-32 bg-blue-500/10 rounded-full blur-3xl pointer-events-none hidden md:block"
-          animate={{ 
-            scale: [0.8, 1.2, 0.9, 1.1, 0.8], 
-            opacity: [0.08, 0.2, 0.12, 0.18, 0.08],
-            x: [0, 40, -30, 20, 0],
-            y: [0, -30, 20, -15, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-          style={{ top: '40%', left: '50%' }}
-        />
-
-        {/* Floating micro-particles */}
-        {[...Array(5)].map((_, i) => (
-          <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-violet-400/30 rounded-full pointer-events-none hidden md:block"
-            animate={{
-              y: [0, -60, -120],
-              x: [0, (i % 2 === 0 ? 15 : -15), (i % 2 === 0 ? -10 : 10)],
-              opacity: [0, 0.6, 0],
-              scale: [0.5, 1, 0.3],
-            }}
-            transition={{
-              duration: 3 + i * 0.8,
-              repeat: Infinity,
-              delay: i * 1.2,
-              ease: "easeOut",
-            }}
-            style={{ 
-              left: `${15 + i * 18}%`, 
-              bottom: '20%',
-            }}
-          />
-        ))}
         
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -269,56 +216,23 @@ const Home = () => {
               transition={{ duration: 0.5 }}
               className="flex flex-col items-center"
             >
-              {/* AI Brand Icon - more animated */}
+              {/* AI Brand Icon */}
               <div className="relative mb-2 hidden md:flex items-center justify-center">
                 <motion.div
-                  className="absolute rounded-full bg-violet-500/25 blur-xl"
-                  animate={{ 
-                    scale: [1, 1.6, 1.2, 1.5, 1], 
-                    opacity: [0.2, 0.5, 0.3, 0.45, 0.2] 
-                  }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                  style={{ inset: '-8px' }}
+                  className="absolute inset-0 rounded-full bg-violet-500/20 blur-lg"
+                  animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+                  transition={{ duration: 2.5, repeat: Infinity }}
                 />
-                <motion.div
-                  className="relative flex items-center justify-center w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 shadow-lg shadow-indigo-500/30"
-                  animate={{ rotate: [0, 5, -5, 0] }}
-                  transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                >
+                <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600">
                   <BrainCircuit className="h-5 w-5 text-white" />
-                  <motion.div
-                    className="absolute -top-1 -right-1"
-                    animate={{ 
-                      scale: [1, 1.3, 1], 
-                      rotate: [0, 20, -10, 0],
-                      opacity: [0.8, 1, 0.8] 
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <Sparkles className="h-3.5 w-3.5 text-yellow-300" />
-                  </motion.div>
-                </motion.div>
+                  <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
+                </div>
               </div>
               
-              <motion.span 
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 border border-violet-500/20 rounded-full overflow-hidden"
-                animate={{ boxShadow: ['0 0 0px rgba(139,92,246,0)', '0 0 12px rgba(139,92,246,0.15)', '0 0 0px rgba(139,92,246,0)'] }}
-                transition={{ duration: 3, repeat: Infinity }}
-              >
-                <motion.div
-                  animate={{ rotate: [0, 15, -15, 0] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                >
-                  <Sparkles className="h-3 w-3 text-violet-500" />
-                </motion.div>
-                <motion.span
-                  className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:200%_100%]"
-                  animate={{ backgroundPosition: ['0% center', '100% center', '0% center'] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                >
-                  Prepare Smarter, Score Higher
-                </motion.span>
-              </motion.span>
+              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 text-primary border border-violet-500/20 rounded-full">
+                <Sparkles className="h-3 w-3 text-violet-500" />
+                Prepare Smarter, Score Higher
+              </span>
             </motion.div>
             
             <motion.h1
