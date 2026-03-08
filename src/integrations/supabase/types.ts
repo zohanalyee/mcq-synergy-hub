@@ -1607,6 +1607,14 @@ export type Database = {
           topic_name: string
         }[]
       }
+      get_platform_stats: {
+        Args: never
+        Returns: {
+          mcq_count: number
+          subject_count: number
+          test_count: number
+        }[]
+      }
       get_power_users: {
         Args: { limit_count?: number }
         Returns: {
