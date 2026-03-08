@@ -183,7 +183,7 @@ export const TopicsSelectorModal = ({
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
 
         {/* Footer */}
         <DialogFooter className="flex-row items-center justify-between sm:justify-between border-t pt-3 gap-2">
