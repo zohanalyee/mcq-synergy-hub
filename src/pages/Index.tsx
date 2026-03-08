@@ -359,35 +359,7 @@ const Home = () => {
       </motion.section>
       
       {/* Stats Section */}
-      <motion.section
-        variants={sectionReveal}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        className="py-6 bg-gradient-to-r from-primary to-accent text-white"
-      >
-        <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            {[
-              { to: 5000, prefix: "+", label: "MCQs Available" },
-              { to: 25, prefix: "", label: "Subjects Covered" },
-              { to: 98, suffix: "%", label: "User Satisfaction" },
-              { to: 20000, prefix: "+", label: "Tests Completed" },
-            ].map((stat) => (
-              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-                <AnimatedCounter
-                  from={0}
-                  to={stat.to}
-                  prefix={stat.prefix}
-                  suffix={stat.suffix}
-                  className="text-xl md:text-2xl font-bold mb-1"
-                />
-                <p className="text-xs text-white/80">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </motion.section>
+      <PlatformStatsSection />
       
       {/* Testimonials Section */}
       <motion.section
