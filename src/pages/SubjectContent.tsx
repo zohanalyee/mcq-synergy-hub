@@ -42,7 +42,7 @@ const SubjectContent = () => {
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const [isLoaded, setIsLoaded] = useState(false);
-  const [studyMode, setStudyMode] = useState<StudyMode>("read");
+  const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
   const [isLoadingMCQs, setIsLoadingMCQs] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -176,7 +176,7 @@ const SubjectContent = () => {
     }
   };
 
-  // Load MCQs from database cache only (AI generation disabled)
+  // Load MCQs — DB-first with optional AI fallback
   const loadMCQs = async (forceNew = false, fetchOnly = true) => {
     if (!title) return;
     
@@ -189,27 +189,28 @@ const SubjectContent = () => {
     lastFetchTimeRef.current = now;
     
     setIsLoadingMCQs(true);
-    setIsGenerating(false); // AI generation is disabled
+    setIsGenerating(forceNew && !fetchOnly);
     setLoadError(null);
 
     const topicToFetch = selectedTopic !== "all" ? selectedTopic : title;
     const requestedCount = parseInt(questionCount);
     
     try {
-      console.log('Fetching from database (AI disabled):', { 
+      console.log('Fetching MCQs:', { 
         topic: topicToFetch, 
         difficulty, 
-        question_count: requestedCount
+        question_count: requestedCount,
+        forceNew,
+        fetchOnly
       });
       
-      // AI GENERATION DISABLED: Always use fetch_only mode
       const { data, error } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: topicToFetch,
           difficulty: difficulty,
           question_count: requestedCount,
-          forceNew: false, // Never trigger AI
-          fetch_only: true, // Always fetch from cache only
+          forceNew: forceNew && !fetchOnly,
+          fetch_only: fetchOnly,
           partial_mode: false,
         }
       });
@@ -409,14 +410,9 @@ const SubjectContent = () => {
     }
   };
 
-  // Handle generate new questions (force AI generation)
-  // DISABLED: AI features paused - show message instead
+  // Handle generate new questions (Smart Hybrid: bank first → AI fallback)
   const handleGenerateNew = () => {
-    toast({
-      variant: "destructive",
-      title: "AI Generation Temporarily Unavailable",
-      description: "Please add questions manually through the Admin Panel. AI features will return soon.",
-    });
+    loadMCQs(true, false); // forceNew=true, fetchOnly=false → triggers AI if bank is empty
   };
 
   // Handle refresh (use cache first)

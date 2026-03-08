@@ -1,28 +1,54 @@
 
 
-## Plan: Auto-Load Practice Test & Enable AI Fallback on SubjectContent Page
+## Plan: Aggressive Spacing & Density Reductions
 
-### What Changes
+### 1. Base Font Size — Apply 14px globally (not just mobile)
+**File: `src/index.css`**
+- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
 
-**1. `src/pages/SubjectContent.tsx`**
-- Change default `studyMode` from `"read"` to `"practice"` — subjects open in practice mode by default so users can immediately attempt questions
-- Re-enable `handleGenerateNew`: instead of showing "AI unavailable" toast, call `loadMCQs(true, false)` which triggers AI generation when bank is empty
-- Update `loadMCQs`: when `fetchOnly=false` (Generate New), set `fetch_only: false` and `forceNew: true` so the edge function uses the Smart Hybrid flow (bank first → AI fallback)
-- "Refresh" button keeps current behavior: `loadMCQs(false, true)` — re-fetches from bank only, shuffled
-- On mount, keep `loadMCQs(false, true)` — auto-loads whatever is in the bank (no AI cost)
+### 2. Subject Grid — More columns
+**File: `src/components/subjects/SubjectGrid.tsx`**
+- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
+- Reduce gap from `gap-3` → `gap-2`
 
-**2. `src/components/subject-content/MCQControls.tsx`**
-- Update "Generate New" button label to "Generate New" with a subtle AI indicator
-- No structural changes needed — it already has the button wired up
+### 3. Syllabus Builder Grid — More columns
+**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
+- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
+- Reduce gap from `gap-3` → `gap-2`
 
-### Flow Summary
-- **Open subject** → auto-fetch from question bank (all topics, 20 questions, Medium)
-- **Practice Mode** (default): click options to reveal right/wrong
-- **Read Mode**: correct answers highlighted, no interaction
-- **Refresh**: re-fetch from bank with current filter settings
-- **Generate New**: triggers AI generation for missing questions, saves to bank
-- **Topic/Difficulty/Count filters**: work as today, re-fetch from bank
+### 4. Tools Page — More columns, tighter spacing
+**File: `src/pages/Tools.tsx`**
+- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
+- Gap: `gap-2.5` → `gap-2`
+- Tool card padding: `p-4` → `p-3`
+- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
+- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
 
-### Files Modified
-- `src/pages/SubjectContent.tsx` — default mode + re-enable AI generation path
+### 5. Index Page — Tighter sections
+**File: `src/pages/Index.tsx`**
+- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
+- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
+- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
+- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
+- Testimonials grid gap: `gap-4` → `gap-2`
+- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
+- "View All Subjects" margin: `mt-8` → `mt-4`
+
+### 6. SubjectCard — Slightly tighter
+**File: `src/components/SubjectCard.tsx`**
+- Min-height: `min-h-[120px]` → `min-h-[100px]`
+
+### 7. FeatureCard — Reduce padding
+**File: `src/components/FeatureCard.tsx`**
+- Card min-height: `min-h-[100px]` → remove
+- Padding: `p-3` → `p-2.5`
+
+### Files to edit (7 files):
+1. `src/index.css` — global 14px font
+2. `src/components/subjects/SubjectGrid.tsx` — more columns
+3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
+4. `src/pages/Tools.tsx` — denser grid
+5. `src/pages/Index.tsx` — tighter sections
+6. `src/components/SubjectCard.tsx` — smaller min-height
+7. `src/components/FeatureCard.tsx` — less padding
 
