@@ -296,6 +296,7 @@ const MobileBottomNav = () => {
             </SheetContent>
           </Sheet>
         </div>
+        </LayoutGroup>
       </nav>
 
       {/* Settings Dialog */}
