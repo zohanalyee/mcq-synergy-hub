@@ -6,7 +6,7 @@ import {
   Key, Type, Hash, CaseSensitive, User, Palette, Image, FileText,
   Clock, Globe, Shuffle, Heart, Hourglass, Maximize, Binary,
   Thermometer, Gauge, Square, Atom, QrCode, Coins,
-  Wrench, LucideIcon
+  Wrench, LucideIcon, Merge, FileOutput
 } from 'lucide-react';
 
 export interface ToolDefinition {
@@ -113,6 +113,9 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'case-converter', name: 'Text Case Converter', description: 'Convert text case styles', category: 'Converters', icon: CaseSensitive, href: '/tools/case-converter' },
   { id: 'image-resizer', name: 'Image Resizer', description: 'Resize images in browser', category: 'Converters', icon: Image, href: '/tools/image-resizer' },
   { id: 'image-compressor', name: 'Image Compressor', description: 'Compress images up to 80% instantly', category: 'Converters', icon: FileImage, popular: true, href: '/tools/image-compressor' },
+  { id: 'pdf-compressor', name: 'PDF Compressor', description: 'Reduce PDF file size instantly', category: 'Converters', icon: FileOutput, popular: true, href: '/tools/pdf-compressor' },
+  { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge multiple PDFs into one', category: 'Converters', icon: Merge, popular: true, href: '/tools/pdf-merger' },
+  { id: 'image-converter', name: 'Image Converter', description: 'Convert between JPG, PNG & WebP', category: 'Converters', icon: Image, popular: true, href: '/tools/image-converter' },
   { id: 'pdf-to-text', name: 'PDF to Text', description: 'Extract text from PDF files', category: 'Converters', icon: FileText, href: '/tools/pdf-to-text' },
 
   // === Productivity (4 new) ===
