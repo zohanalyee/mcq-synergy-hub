@@ -103,8 +103,8 @@ const HeaderActions = ({
                   onClick={() => onNavigate(tool.href)}
                   className="cursor-pointer px-3 py-2.5 mx-1 rounded-md gap-3"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 shrink-0">
-                    <Icon className="h-4 w-4 text-primary" />
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-md shrink-0 transition-transform group-hover:scale-110 ${TOOL_COLORS[tool.id]?.bg ?? 'bg-primary/10'}`}>
+                    <Icon className={`h-4 w-4 ${TOOL_COLORS[tool.id]?.icon ?? 'text-primary'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
