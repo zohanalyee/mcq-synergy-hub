@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { BookOpen, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, Wrench, ClipboardList } from 'lucide-react';
+import { BrainCircuit, Sparkles, BookOpen, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, Wrench, ClipboardList } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
@@ -108,10 +108,14 @@ export function AppSidebar({
               className="flex items-center gap-2 cursor-pointer transition-all duration-300"
               onClick={() => onNavigate('/')}
             >
-              <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1.5">
-                <BookOpen className="h-5 w-5 text-white" />
+              <div className="relative rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-1.5 animate-pulse drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]">
+                <BrainCircuit className="h-5 w-5 text-white" />
+                <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300" />
               </div>
-              <span className="text-base font-bold text-gradient">MCQs Point</span>
+              <span className="text-base">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 font-extrabold">AI-</span>
+                <span className="font-bold tracking-tight text-foreground">MCQs Point</span>
+              </span>
             </div>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
           </div>
@@ -234,7 +238,7 @@ export function AppSidebar({
 
       <SidebarFooter className="border-t border-border/40 p-2">
         <div className={cn("text-xs text-muted-foreground text-center transition-opacity duration-300", !expanded && "opacity-0")}> 
-          <p className="animate-fade-in">© 2025 MCQs Point</p>
+          <p className="animate-fade-in">© 2025 AI-MCQs Point</p>
         </div>
       </SidebarFooter>
     </Sidebar>

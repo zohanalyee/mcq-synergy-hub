@@ -1,45 +1,54 @@
 
 
-## Rebrand to "AI-MCQs Point" with Animated Logo & SEO
+## Plan: Aggressive Spacing & Density Reductions
 
-### Files to Edit
+### 1. Base Font Size — Apply 14px globally (not just mobile)
+**File: `src/index.css`**
+- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
 
-**1. `src/components/header/HeaderLogo.tsx`** — Main navbar logo
-- Replace `BookOpen` with `BrainCircuit` + `Sparkles` icon combo
-- Add `animate-pulse` and glow `drop-shadow` on icon container
-- Split text: "AI-" with gradient (`from-blue-500 to-indigo-600`, `bg-clip-text text-transparent font-extrabold`) + "MCQs Point" in `font-bold tracking-tight text-foreground`
-- Add `hover:scale-105 transition-transform duration-300` on wrapper
+### 2. Subject Grid — More columns
+**File: `src/components/subjects/SubjectGrid.tsx`**
+- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
+- Reduce gap from `gap-3` → `gap-2`
 
-**2. `src/components/AppSidebar.tsx`** — Sidebar logo (line ~114)
-- Same icon + text treatment as HeaderLogo
-- Update footer copyright (line ~237): "© 2025 AI-MCQs Point"
+### 3. Syllabus Builder Grid — More columns
+**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
+- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
+- Reduce gap from `gap-3` → `gap-2`
 
-**3. `src/components/header/MobileMenu.tsx`** — Mobile menu logo (line ~62)
-- Same icon + text treatment
+### 4. Tools Page — More columns, tighter spacing
+**File: `src/pages/Tools.tsx`**
+- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
+- Gap: `gap-2.5` → `gap-2`
+- Tool card padding: `p-4` → `p-3`
+- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
+- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
 
-**4. `index.html`** — SEO meta tags
-- Title: `AI-MCQs Point - Smart Test Preparation & Syllabus Builder`
-- Description: `Prepare smarter with AI-MCQs Point. Generate custom tests from Sindh Text Book Board and competitive exams instantly using AI-powered RAG technology.`
-- Add keywords meta: `MCQs, Pakistan, STBB, AI Test Prep, Competitive Exams, Quiz Builder`
-- Update OG title/description to match
-- Update author to "AI-MCQs Point"
+### 5. Index Page — Tighter sections
+**File: `src/pages/Index.tsx`**
+- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
+- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
+- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
+- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
+- Testimonials grid gap: `gap-4` → `gap-2`
+- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
+- "View All Subjects" margin: `mt-8` → `mt-4`
 
-**5. Bulk text replacement** across these files (all "MCQs Point" → "AI-MCQs Point"):
-- `src/pages/Auth.tsx` (line 116)
-- `src/pages/GetStarted.tsx` (line 35)
-- `src/pages/Feedback.tsx` (line 19)
-- `src/components/FloatingFeedbackButton.tsx` (line 43)
-- `src/pages/Index.tsx` (lines 157, 169, 425, 441, 473)
+### 6. SubjectCard — Slightly tighter
+**File: `src/components/SubjectCard.tsx`**
+- Min-height: `min-h-[120px]` → `min-h-[100px]`
 
-### Logo Visual Spec
+### 7. FeatureCard — Reduce padding
+**File: `src/components/FeatureCard.tsx`**
+- Card min-height: `min-h-[100px]` → remove
+- Padding: `p-3` → `p-2.5`
 
-```text
-┌──────────────────────────────────────┐
-│ [🧠✨ glow+pulse]  AI- MCQs Point   │
-│  BrainCircuit       gradient  solid  │
-│  + Sparkles         blue→indigo      │
-│                     extrabold  bold   │
-└──────────────────────────────────────┘
-hover → scale 1.05
-```
+### Files to edit (7 files):
+1. `src/index.css` — global 14px font
+2. `src/components/subjects/SubjectGrid.tsx` — more columns
+3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
+4. `src/pages/Tools.tsx` — denser grid
+5. `src/pages/Index.tsx` — tighter sections
+6. `src/components/SubjectCard.tsx` — smaller min-height
+7. `src/components/FeatureCard.tsx` — less padding
 

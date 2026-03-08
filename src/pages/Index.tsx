@@ -154,7 +154,7 @@ const Home = () => {
 
   const testimonials = [
     {
-      content: "MCQs Point helped me prepare efficiently for my medical entrance exam. The analytics feature showed me exactly where I needed to improve.",
+      content: "AI-MCQs Point helped me prepare efficiently for my medical entrance exam. The analytics feature showed me exactly where I needed to improve.",
       author: "Sarah Johnson",
       role: "Medical Student",
       rating: 5
@@ -166,7 +166,7 @@ const Home = () => {
       rating: 5
     },
     {
-      content: "I improved my test scores by 20% after just a month of consistent practice on MCQs Point. The immediate feedback helps correct misconceptions.",
+      content: "I improved my test scores by 20% after just a month of consistent practice on AI-MCQs Point. The immediate feedback helps correct misconceptions.",
       author: "Priya Sharma",
       role: "CSS Aspirant",
       rating: 4
@@ -422,7 +422,7 @@ const Home = () => {
               Ready to Transform Your Test Preparation?
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Join thousands of students who have improved their test scores with MCQs Point.
+              Join thousands of students who have improved their test scores with AI-MCQs Point.
             </p>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
@@ -438,7 +438,7 @@ const Home = () => {
         <div className="container px-4 mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <h3 className="text-sm font-bold mb-2 text-gradient">MCQs Point</h3>
+              <h3 className="text-sm font-bold mb-2 text-gradient">AI-MCQs Point</h3>
               <p className="text-xs text-muted-foreground">Your intelligent companion for MCQ-based test preparation.</p>
             </div>
             <div>
@@ -470,7 +470,7 @@ const Home = () => {
             </div>
           </div>
           <div className="mt-6 pt-4 border-t text-center text-muted-foreground text-xs">
-            <p>© {new Date().getFullYear()} MCQs Point. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} AI-MCQs Point. All rights reserved.</p>
           </div>
         </div>
       </footer>
