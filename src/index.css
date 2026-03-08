@@ -238,6 +238,7 @@ body::-webkit-scrollbar-thumb:hover {
 
 html {
   font-size: 14px;
+  overflow-y: scroll;
 }
 
 @media (max-width: 768px) {
