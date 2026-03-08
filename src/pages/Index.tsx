@@ -166,7 +166,7 @@ const Home = () => {
       rating: 5
     },
     {
-      content: "I improved my test scores by 20% after just a month of consistent practice on MCQs Point. The immediate feedback helps correct misconceptions.",
+      content: "I improved my test scores by 20% after just a month of consistent practice on AI-MCQs Point. The immediate feedback helps correct misconceptions.",
       author: "Priya Sharma",
       role: "CSS Aspirant",
       rating: 4
