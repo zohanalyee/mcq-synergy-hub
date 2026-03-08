@@ -301,7 +301,7 @@ const Home = () => {
               </div>
               
               <motion.span 
-                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 text-primary border border-violet-500/20 rounded-full"
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 border border-violet-500/20 rounded-full overflow-hidden"
                 animate={{ boxShadow: ['0 0 0px rgba(139,92,246,0)', '0 0 12px rgba(139,92,246,0.15)', '0 0 0px rgba(139,92,246,0)'] }}
                 transition={{ duration: 3, repeat: Infinity }}
               >
@@ -311,7 +311,13 @@ const Home = () => {
                 >
                   <Sparkles className="h-3 w-3 text-violet-500" />
                 </motion.div>
-                Prepare Smarter, Score Higher
+                <motion.span
+                  className="bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:200%_100%]"
+                  animate={{ backgroundPosition: ['0% center', '100% center', '0% center'] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                >
+                  Prepare Smarter, Score Higher
+                </motion.span>
               </motion.span>
             </motion.div>
             
