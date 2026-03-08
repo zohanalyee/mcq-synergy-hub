@@ -52,17 +52,18 @@ const HeaderActions = ({
     return 'User';
   };
 
-  const STUDENT_TOOL_IDS = [
-    'gpa-calculator',
-    'cgpa-calculator', 
-    'percentage-calculator',
-    'grade-calculator',
-    'attendance-calculator',
-    'age-calculator',
-    'bmi-calculator',
-    'calculator',
-  ];
+  const TOOL_COLORS: Record<string, { bg: string; icon: string }> = {
+    'gpa-calculator':        { bg: 'bg-[#FFE4EC] dark:bg-[#3D2A33]', icon: 'text-[#E8A0B8]' },
+    'cgpa-calculator':       { bg: 'bg-[#F0E6FF] dark:bg-[#2E2A3D]', icon: 'text-[#B89FD9]' },
+    'percentage-calculator': { bg: 'bg-[#E6F3FF] dark:bg-[#1E2D3D]', icon: 'text-[#90CAF9]' },
+    'grade-calculator':      { bg: 'bg-[#FFF4E6] dark:bg-[#3D3425]', icon: 'text-[#E8C896]' },
+    'attendance-calculator': { bg: 'bg-[#F0F4E8] dark:bg-[#2A3025]', icon: 'text-[#A8C69F]' },
+    'age-calculator':        { bg: 'bg-[#FFE5D9] dark:bg-[#3D2E25]', icon: 'text-[#E8A87C]' },
+    'bmi-calculator':        { bg: 'bg-[#E0F9F4] dark:bg-[#1E3D35]', icon: 'text-[#8BD8C7]' },
+    'calculator':            { bg: 'bg-[#FFF8E7] dark:bg-[#3D3820]', icon: 'text-[#D4A574]' },
+  };
 
+  const STUDENT_TOOL_IDS = Object.keys(TOOL_COLORS);
   const FEATURED_IDS = new Set(['gpa-calculator', 'cgpa-calculator', 'percentage-calculator', 'grade-calculator']);
 
   const studentTools = STUDENT_TOOL_IDS
@@ -102,8 +103,8 @@ const HeaderActions = ({
                   onClick={() => onNavigate(tool.href)}
                   className="cursor-pointer px-3 py-2.5 mx-1 rounded-md gap-3"
                 >
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 shrink-0">
-                    <Icon className="h-4 w-4 text-primary" />
+                  <div className={`flex h-8 w-8 items-center justify-center rounded-md shrink-0 transition-transform group-hover:scale-110 ${TOOL_COLORS[tool.id]?.bg ?? 'bg-primary/10'}`}>
+                    <Icon className={`h-4 w-4 ${TOOL_COLORS[tool.id]?.icon ?? 'text-primary'}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
