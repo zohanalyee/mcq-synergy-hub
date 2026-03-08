@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Sparkles, Loader2, Wifi } from "lucide-react";
 import Header from "@/components/Header";
 import FilterSummary from "@/components/subjects/FilterSummary";
 import SubjectGrid from "@/components/subjects/SubjectGrid";
@@ -9,6 +10,8 @@ import { GlassFilterSidebar } from "@/components/syllabus-builder/GlassFilterSid
 import { GlobalSearchResult } from "@/services/globalSearchService";
 import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { syncAllSubjects } from "@/services/offlineSyncService";
+import { useToast } from "@/hooks/use-toast";
 
 const Subjects = () => {
   const navigate = useNavigate();
