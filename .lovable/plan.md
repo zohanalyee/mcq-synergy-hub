@@ -1,54 +1,57 @@
 
 
-## Plan: Aggressive Spacing & Density Reductions
+## AI-Powered Coaching Dashboard
 
-### 1. Base Font Size — Apply 14px globally (not just mobile)
-**File: `src/index.css`**
-- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
+### Current State
+The Analytics page (`src/pages/Analytics.tsx`) uses **hardcoded mock data** -- no real Supabase data. Meanwhile, `useDashboardData` hook already fetches real user performance from `test_attempts` including subject performance, weaknesses, and weekly progress. The `get_student_weaknesses` RPC function exists. The recommended_tests infrastructure is already in place.
 
-### 2. Subject Grid — More columns
-**File: `src/components/subjects/SubjectGrid.tsx`**
-- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
-- Reduce gap from `gap-3` → `gap-2`
+### Approach
+Replace the static Analytics page with a coaching dashboard that uses **real user data** from existing hooks/tables. No new backend or edge functions needed -- all analysis logic runs client-side from existing `test_attempts` data.
 
-### 3. Syllabus Builder Grid — More columns
-**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
-- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
-- Reduce gap from `gap-3` → `gap-2`
+### Files to Create
 
-### 4. Tools Page — More columns, tighter spacing
-**File: `src/pages/Tools.tsx`**
-- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
-- Gap: `gap-2.5` → `gap-2`
-- Tool card padding: `p-4` → `p-3`
-- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
-- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
+1. **`src/hooks/useAnalyticsData.ts`** -- Custom hook that fetches comprehensive analytics:
+   - Reuses patterns from `useDashboardData` but adds: monthly performance history, per-subject topic breakdowns, weekly goal tracking
+   - Queries `test_attempts` grouped by subject/topic with accuracy calculations
+   - Calls existing `get_student_weaknesses` RPC
 
-### 5. Index Page — Tighter sections
-**File: `src/pages/Index.tsx`**
-- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
-- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
-- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
-- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
-- Testimonials grid gap: `gap-4` → `gap-2`
-- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
-- "View All Subjects" margin: `mt-8` → `mt-4`
+2. **`src/lib/aiCoach.ts`** -- Client-side analysis engine:
+   - `analyzePerformance()` -- identifies weak subjects (<60%), declining trends, strong areas
+   - `generateRecommendation(subject)` -- per-subject advice strings
+   - `generateStudyPlan(analytics)` -- weekly tasks, recommended tests, goals
+   - `analyzePerformanceTrend(data)` -- trend detection, anomaly finding
 
-### 6. SubjectCard — Slightly tighter
-**File: `src/components/SubjectCard.tsx`**
-- Min-height: `min-h-[120px]` → `min-h-[100px]`
+3. **`src/components/analytics/AIInsightsPanel.tsx`** -- Top coaching card with AI avatar, main insight text, key findings (concerns/successes), action buttons (View Recommendations, Generate Practice Test)
 
-### 7. FeatureCard — Reduce padding
-**File: `src/components/FeatureCard.tsx`**
-- Card min-height: `min-h-[100px]` → remove
-- Padding: `p-3` → `p-2.5`
+4. **`src/components/analytics/SubjectAnalysisCard.tsx`** -- Per-subject cards with accuracy progress bar, weak topics badges, AI recommendation text, Practice/Generate Test buttons
 
-### Files to edit (7 files):
-1. `src/index.css` — global 14px font
-2. `src/components/subjects/SubjectGrid.tsx` — more columns
-3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
-4. `src/pages/Tools.tsx` — denser grid
-5. `src/pages/Index.tsx` — tighter sections
-6. `src/components/SubjectCard.tsx` — smaller min-height
-7. `src/components/FeatureCard.tsx` — less padding
+5. **`src/components/analytics/StudyPlanSection.tsx`** -- 3-column grid: This Week tasks (checkboxes), Recommended Tests (with Start buttons), Weekly Goals (progress bars)
+
+6. **`src/components/analytics/TopicAnalysis.tsx`** -- Accordion per subject, each topic row shows accuracy bar, attempts count, "Needs practice" indicator, play button
+
+7. **`src/components/analytics/QuickTestGenerator.tsx`** -- Floating action button (bottom-right), opens dialog with AI recommendation, test preview (focus areas, question count, duration), Start Now / Customize buttons
+
+### Files to Edit
+
+8. **`src/pages/Analytics.tsx`** -- Complete rewrite:
+   - Replace hardcoded data with `useAnalyticsData` hook
+   - New layout: AI Insights Panel at top → Enhanced charts (with target line, trend analysis) → Subject Analysis cards → Study Plan → Topic Drill-Down
+   - Keep auth guard, add loading/empty states
+   - Render `QuickTestGenerator` floating button
+   - Navigation actions: Practice buttons navigate to `/custom-syllabus` or create test sessions via existing `custom_test_sessions` table
+
+### Data Flow
+```text
+test_attempts table (real data)
+  → useAnalyticsData hook (fetch + aggregate)
+  → aiCoach.ts (analyze + generate insights)
+  → UI components (render coaching dashboard)
+  → User clicks "Practice" → navigates to /custom-syllabus or /test-session
+```
+
+### Key Technical Decisions
+- **No new DB tables or edge functions** -- all analysis is client-side from existing `test_attempts` data
+- **No AI API calls** -- the "AI Coach" is deterministic rule-based analysis (pattern matching on scores/trends), not LLM-powered. This avoids credit costs.
+- Practice/Generate Test buttons will navigate to existing flows (Custom Syllabus page with pre-filled params, or create `custom_test_sessions` entries)
+- Empty state when user has no test data -- shows encouragement to take first test
 
