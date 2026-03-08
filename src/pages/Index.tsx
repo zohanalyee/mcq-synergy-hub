@@ -236,7 +236,7 @@ const Home = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <Sparkles className="h-3 w-3 text-violet-500 animate-pulse" />
-                <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite] bg-clip-text text-transparent font-semibold">
+                <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:500px_auto] animate-shimmer bg-clip-text text-transparent font-semibold">
                   Prepare Smarter, Score Higher
                 </span>
               </motion.span>
