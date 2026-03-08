@@ -190,11 +190,11 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     saveTimerRef.current = setTimeout(async () => {
       setIsCloudSyncing(true);
       try {
-        await supabase
+        await (supabase as any)
           .from('user_appearance_settings')
           .upsert({
             user_id: user.id,
-            settings: newSettings as unknown as Record<string, unknown>,
+            settings: newSettings,
             updated_at: new Date().toISOString(),
           }, { onConflict: 'user_id' });
         setIsUsingCustom(true);
