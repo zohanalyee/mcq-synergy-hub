@@ -1,54 +1,65 @@
+## Plan: Auto-Sync Question Bank for Offline Access
 
+### What It Does
 
-## Plan: Aggressive Spacing & Density Reductions
+When the Subjects page loads, it runs a background sync that pre-fetches questions for each visible subject from the question bank (database only, no AI) and stores them in `localStorage`. When a user opens any subject, `SubjectContent` checks the local cache first — if questions exist offline, they load instantly without any network call. A sync status indicator on each SubjectCard shows whether questions are cached.
 
-### 1. Base Font Size — Apply 14px globally (not just mobile)
-**File: `src/index.css`**
-- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
+### Architecture
 
-### 2. Subject Grid — More columns
-**File: `src/components/subjects/SubjectGrid.tsx`**
-- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
-- Reduce gap from `gap-3` → `gap-2`
+```text
+Subjects Page Load
+  └─► Background loop: for each subject
+        └─► supabase.functions.invoke('generate-test', { fetch_only: true })
+        └─► localStorage.setItem('mcq_cache_{subjectId}', JSON.stringify({questions, timestamp}))
 
-### 3. Syllabus Builder Grid — More columns
-**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
-- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
-- Reduce gap from `gap-3` → `gap-2`
+SubjectContent Page Load
+  └─► Check localStorage for 'mcq_cache_{subjectId}'
+        ├─ Found & fresh (< 24h) → use cached questions instantly
+        └─ Stale or missing → fetch from DB as usual
+```
 
-### 4. Tools Page — More columns, tighter spacing
-**File: `src/pages/Tools.tsx`**
-- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
-- Gap: `gap-2.5` → `gap-2`
-- Tool card padding: `p-4` → `p-3`
-- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
-- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
+### Files to Create/Modify
 
-### 5. Index Page — Tighter sections
-**File: `src/pages/Index.tsx`**
-- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
-- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
-- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
-- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
-- Testimonials grid gap: `gap-4` → `gap-2`
-- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
-- "View All Subjects" margin: `mt-8` → `mt-4`
+**1. `src/services/offlineSyncService.ts**` (NEW)
 
-### 6. SubjectCard — Slightly tighter
-**File: `src/components/SubjectCard.tsx`**
-- Min-height: `min-h-[120px]` → `min-h-[100px]`
+- `syncSubjectQuestions(subjectId, subjectName)` — calls `generate-test` with `fetch_only: true`, stores result in localStorage keyed by `mcq_cache_{subjectId}`
+- `getCachedQuestions(subjectId)` — reads from localStorage, returns null if stale (>24h)
+- `syncAllSubjects(subjects[])` — iterates subjects with a 500ms delay between each to avoid rate limits
+- `getSyncStatus(subjectId)` — returns `{synced: boolean, count: number, lastSync: Date}`
+- Cache format: `{ questions: MCQItem[], timestamp: number, subjectName: string }`
 
-### 7. FeatureCard — Reduce padding
-**File: `src/components/FeatureCard.tsx`**
-- Card min-height: `min-h-[100px]` → remove
-- Padding: `p-3` → `p-2.5`
+**2. `src/pages/Subjects.tsx**` — Add background sync
 
-### Files to edit (7 files):
-1. `src/index.css` — global 14px font
-2. `src/components/subjects/SubjectGrid.tsx` — more columns
-3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
-4. `src/pages/Tools.tsx` — denser grid
-5. `src/pages/Index.tsx` — tighter sections
-6. `src/components/SubjectCard.tsx` — smaller min-height
-7. `src/components/FeatureCard.tsx` — less padding
+- After subjects load, call `syncAllSubjects(mappedSubjects)` in a `useEffect`
+- Show a small toast: "Syncing questions for offline use..." with progress
+- Each SubjectCard gets a small green dot indicator if questions are cached
 
+**3. `src/components/SubjectCard.tsx**` — Add sync status badge
+
+- Import `getSyncStatus` from offlineSyncService
+- Show a small cached indicator (green dot or download icon) on subjects that have offline questions
+- Display cached question count in tooltip
+
+**4. `src/pages/SubjectContent.tsx**` — Use cached questions first
+
+- On mount, before calling `loadMCQs`, check `getCachedQuestions(subjectId)`
+- If cache hit: set MCQs immediately, show "Offline" source badge, skip network call
+- If cache miss or stale: proceed with normal `loadMCQs(false, true)` flow
+- After any successful DB/AI fetch, update the local cache
+
+### Sync Strategy
+
+- Background sync is non-blocking — subjects page remains interactive
+- Only fetches from question bank (`fetch_only: true`) — zero AI cost
+- 500ms delay between subjects to avoid rate-limiting
+- Cache expires after 24 hours, re-syncs on next Subjects page visit
+- Max localStorage usage ~5MB (sufficient for ~50 subjects × 20 questions each)
+
+### Files Modified
+
+- `src/services/offlineSyncService.ts` (new)
+- `src/pages/Subjects.tsx`
+- `src/components/SubjectCard.tsx`
+- `src/pages/SubjectContent.tsx`  
+
+if not availabe like empty subject user can genreate through AI as per his requirment of subject topic or diffuclty level or availble questions count
