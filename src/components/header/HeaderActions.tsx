@@ -159,9 +159,9 @@ const HeaderActions = ({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onNavigate('/dashboard')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40 mb-0.5">
-                <LayoutDashboard className="mr-2.5 h-4 w-4 text-blue-500" />
-                My Dashboard
+              <DropdownMenuItem onClick={() => onNavigate('/analytics')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40 mb-0.5">
+                <LayoutDashboard className="mr-2.5 h-4 w-4 text-cyan-500" />
+                AI Personal Coach
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 mb-0.5">

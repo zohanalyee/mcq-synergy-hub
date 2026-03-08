@@ -86,7 +86,7 @@ const Analytics = () => {
     <Header>
       <div className="max-w-7xl mx-auto px-4 pt-6 pb-20">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
-          <h1 className="text-2xl font-bold">AI Coaching Dashboard</h1>
+          <h1 className="text-2xl font-bold">AI Personal Coach</h1>
           <p className="text-muted-foreground text-sm">Personalized insights to boost your performance</p>
         </motion.div>
 

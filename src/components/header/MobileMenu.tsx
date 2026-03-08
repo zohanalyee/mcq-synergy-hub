@@ -136,9 +136,9 @@ const MobileMenu = ({
                 <Button 
                   variant="outline"
                   className="w-full flex items-center justify-center gap-2"
-                  onClick={() => handleNavigation('/dashboard')}
+                  onClick={() => handleNavigation('/analytics')}
                 >
-                  Dashboard
+                  AI Personal Coach
                 </Button>
                 <Button 
                   variant="destructive" 

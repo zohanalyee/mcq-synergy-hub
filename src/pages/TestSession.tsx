@@ -522,7 +522,7 @@ const TestSession = () => {
 
               <div className="flex gap-3 justify-center mt-6 flex-wrap">
                 <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
-                <Button size="sm" variant="outline" onClick={() => navigate("/dashboard")}>Dashboard</Button>
+                <Button size="sm" variant="outline" onClick={() => navigate("/analytics")}>AI Coach</Button>
               </div>
             </CardContent>
           </Card>

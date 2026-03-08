@@ -184,7 +184,7 @@ const MobileBottomNav = () => {
                 <Separator className="my-3" />
                 <div className="space-y-1">
                   {[
-                    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', iconClass: 'text-blue-500', bgClass: 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40' },
+                    { path: '/analytics', icon: Brain, label: 'AI Personal Coach', iconClass: 'text-cyan-500', bgClass: 'bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40' },
                     ...(isAdmin ? [{ path: '/admin', icon: Shield, label: 'Admin Panel', iconClass: 'text-violet-500', bgClass: 'bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40' }] : []),
                     { path: '/profile', icon: User, label: 'Profile', iconClass: 'text-emerald-500', bgClass: 'bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40' },
                     { path: '/feedback', icon: MessageSquare, label: 'Feedback', iconClass: 'text-amber-500', bgClass: 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40' },

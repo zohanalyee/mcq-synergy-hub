@@ -45,7 +45,10 @@ const getIcon = (title: string) => {
       icon: <FileText size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-amber-500" />
     },
     'Analytics': { 
-      icon: <TrendingUp size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
+      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
+    },
+    'AI Personal Coach': { 
+      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
     },
     'Feedback': { 
       icon: <MessageSquare size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-lime-500" />

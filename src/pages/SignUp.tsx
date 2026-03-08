@@ -26,7 +26,7 @@ const SignUp = () => {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   
   if (user) {
-    return <Navigate to="/dashboard" />;
+    return <Navigate to="/analytics" />;
   }
 
   const handleGoogleLogin = async () => {

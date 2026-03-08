@@ -32,7 +32,7 @@ const QuestionBank = () => {
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionBankItem | null>(null);
 
   const breadcrumbItems = [
-    { title: "Dashboard", href: "/dashboard" },
+    { title: "AI Personal Coach", href: "/analytics" },
     { title: "Question Bank", href: "/question-bank", isCurrent: true }
   ];
 

@@ -148,7 +148,7 @@ const App = () => {
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
                       <Route path="/subjects" element={<Subjects />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/dashboard" element={<Analytics />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/analytics" element={<Analytics />} />
                       <Route path="/mock-tests" element={<MockTests />} />
