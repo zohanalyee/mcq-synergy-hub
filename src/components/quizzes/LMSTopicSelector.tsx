@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface Topic {
-  id: string;
+  id?: string;
   name: string;
   description?: string;
 }
