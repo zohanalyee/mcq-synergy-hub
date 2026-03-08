@@ -102,17 +102,6 @@ const PDFCompressor = () => {
 
       setProgress(60);
       setProgressLabel('Optimizing...');
-      const level = compressionLevel[0];
-      if (level > 60) {
-        const pages = pdfDoc.getPages();
-        for (const page of pages) {
-          // Clear annotations for aggressive compression
-          const annots = page.node.lookup(page.node.get(PDFDocument.prototype ? Symbol() : Symbol()));
-          // Remove page-level metadata
-          page.node.delete(pdfDoc.context.obj('Metadata'));
-        }
-      }
-
       setProgress(80);
       setProgressLabel('Saving compressed PDF...');
 
