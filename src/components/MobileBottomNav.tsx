@@ -105,7 +105,7 @@ const MobileBottomNav = () => {
                     <item.icon
                       className={cn(
                         "h-5 w-5 transition-colors duration-200",
-                        isActive ? colors.active : "text-muted-foreground"
+                        isActive ? colors.active : colors.inactive
                       )}
                       strokeWidth={isActive ? 2.5 : 1.8}
                       fill={isActive ? 'currentColor' : 'none'}
