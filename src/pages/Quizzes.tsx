@@ -4,7 +4,6 @@ import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,11 +15,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2 } from "lucide-react";
+import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
+import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 
 const Quizzes = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subjects, loading: subjectsLoading } = useSupabaseSubjects();
+  const { loading: subjectsLoading } = useSupabaseSubjects();
   const { allTopics, loading: topicsLoading } = useSupabaseTopics();
   
   // Subject Quiz State (Category A - Random Mix)
@@ -129,23 +130,12 @@ const Quizzes = () => {
                       {/* Subject Selection */}
                       <div className="space-y-2">
                         <Label htmlFor="subject-a">Select Subject</Label>
-                        <Select value={selectedSubjectA} onValueChange={setSelectedSubjectA}>
-                          <SelectTrigger id="subject-a">
-                            <SelectValue placeholder="Choose a subject..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {subjects.map((subject) => (
-                              <SelectItem key={subject.id} value={subject.name}>
-                                {subject.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {subjects.length === 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            No subjects available. Add subjects in Admin Panel.
-                          </p>
-                        )}
+                        <LMSSubjectSelector
+                          id="subject-a"
+                          value={selectedSubjectA}
+                          onValueChange={(val) => setSelectedSubjectA(val)}
+                          placeholder="Search & choose a subject..."
+                        />
                       </div>
                       
                       {/* Question Count */}
@@ -250,43 +240,26 @@ const Quizzes = () => {
                       {/* Subject Selection */}
                       <div className="space-y-2">
                         <Label htmlFor="subject-b">Select Subject</Label>
-                        <Select value={selectedSubjectB} onValueChange={setSelectedSubjectB}>
-                          <SelectTrigger id="subject-b">
-                            <SelectValue placeholder="Choose a subject..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {subjects.map((subject) => (
-                              <SelectItem key={subject.id} value={subject.name}>
-                                {subject.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <LMSSubjectSelector
+                          id="subject-b"
+                          value={selectedSubjectB}
+                          onValueChange={(val) => setSelectedSubjectB(val)}
+                          placeholder="Search & choose a subject..."
+                        />
                       </div>
                       
                       {/* Topic Selection */}
                       <div className="space-y-2">
                         <Label htmlFor="topic-b">Select Topic</Label>
-                        <Select 
-                          value={selectedTopicB} 
+                        <LMSTopicSelector
+                          id="topic-b"
+                          topics={availableTopics}
+                          value={selectedTopicB}
                           onValueChange={setSelectedTopicB}
                           disabled={!selectedSubjectB}
-                        >
-                          <SelectTrigger id="topic-b">
-                            <SelectValue placeholder={
-                              selectedSubjectB 
-                                ? "Choose a topic..." 
-                                : "Select a subject first"
-                            } />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableTopics.map((topic) => (
-                              <SelectItem key={topic.id} value={topic.name}>
-                                {topic.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Search & choose a topic..."
+                          disabledPlaceholder="Select a subject first"
+                        />
                         {selectedSubjectB && availableTopics.length === 0 && (
                           <p className="text-xs text-muted-foreground">
                             No topics available for this subject.
