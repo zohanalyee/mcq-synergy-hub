@@ -47,6 +47,28 @@ export const signIn = async (email: string, password: string) => {
   }
 };
 
+// Sign in with Google OAuth
+export const signInWithGoogle = async () => {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: `${window.location.origin}/dashboard`,
+      },
+    });
+
+    if (error) {
+      console.error('Google sign in error:', error);
+      throw error;
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to sign in with Google:', error);
+    return { data: null, error };
+  }
+};
+
 // Sign out
 export const signOut = async () => {
   try {
