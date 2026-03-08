@@ -18,25 +18,50 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, delay }}
+    whileHover={{ scale: 1.03, y: -2 }}
     className={`relative overflow-hidden rounded-2xl p-3 md:p-4
                bg-gradient-to-br ${gradient}
-               shadow-md hover:shadow-lg transition-all duration-300 text-white`}
+               shadow-md hover:shadow-lg transition-all duration-300 text-white group cursor-default`}
   >
-    <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
+    <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
     
-    {/* Subtle scan-line overlay */}
-    <div className="absolute inset-0 pointer-events-none opacity-[0.04]" style={{
-      backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)`,
-    }} />
+    {/* Animated scan-line sweep */}
+    <motion.div
+      className="absolute inset-0 pointer-events-none"
+      style={{
+        backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.06) 2px, rgba(255,255,255,0.06) 4px)`,
+      }}
+      animate={{ y: [0, 8, 0] }}
+      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut", delay: delay * 2 }}
+    />
+
+    {/* Shimmer sweep */}
+    <div className="absolute inset-0 pointer-events-none overflow-hidden">
+      <motion.div
+        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent"
+        animate={{ x: ['-100%', '200%'] }}
+        transition={{ duration: 3, repeat: Infinity, delay: 1 + delay * 2, ease: "easeInOut" }}
+      />
+    </div>
     
-    {/* AI micro-icon */}
-    <Sparkles className="absolute top-1.5 right-1.5 h-2.5 w-2.5 text-white/30" />
+    {/* Animated AI micro-icon */}
+    <motion.div
+      className="absolute top-1.5 right-1.5"
+      animate={{ rotate: [0, 15, -10, 0], scale: [1, 1.2, 1], opacity: [0.25, 0.5, 0.25] }}
+      transition={{ duration: 3, repeat: Infinity, delay: delay }}
+    >
+      <Sparkles className="h-2.5 w-2.5 text-white/40" />
+    </motion.div>
     
     <div className="relative z-10">
       <div className="flex items-center gap-2 mb-1.5">
-        <div className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+        <motion.div 
+          className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0"
+          animate={{ boxShadow: ['0 0 0px rgba(255,255,255,0)', '0 0 10px rgba(255,255,255,0.2)', '0 0 0px rgba(255,255,255,0)'] }}
+          transition={{ duration: 3, repeat: Infinity, delay: delay }}
+        >
           {icon}
-        </div>
+        </motion.div>
         {loading ? (
           <Skeleton className="h-6 w-12 bg-white/30" />
         ) : (

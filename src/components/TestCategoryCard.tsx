@@ -61,10 +61,14 @@ const TestCategoryCard = ({
         </div>
 
         {/* Desktop: existing vertical layout */}
-        <CardContent className="hidden md:flex p-4 flex-col h-full min-h-[140px]">
-          <div className="mb-2 [&>svg]:h-6 [&>svg]:w-6">
+        <CardContent className="hidden md:flex p-4 flex-col h-full min-h-[140px] relative z-10">
+          <motion.div 
+            className="mb-2 [&>svg]:h-6 [&>svg]:w-6"
+            animate={{ scale: [1, 1.05, 1] }}
+            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+          >
             {icon}
-          </div>
+          </motion.div>
           <h3 className="text-base font-semibold mb-1 line-clamp-1">
             {title}
           </h3>
