@@ -116,7 +116,7 @@ export const TopicsSelectorModal = ({
         </div>
 
         {/* Topics list */}
-        <ScrollArea className="flex-1 -mx-6 px-6 min-h-0">
+        <ScrollArea className="flex-1 -mx-6 px-6 min-h-0 max-h-[55vh]">
           <div className="space-y-4 py-2">
             {selectedSubjects.map(subject => (
               <div key={subject.id}>
