@@ -81,9 +81,9 @@ const HeaderActions = ({
           <Button 
             variant="ghost" 
             size="icon" 
-            className="h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
+            className="h-9 w-9 rounded-full hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
           >
-            <LayoutGrid className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+            <LayoutGrid className="h-5 w-5 text-blue-500 hover:text-blue-600 transition-colors" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72 bg-popover/95 backdrop-blur-xl border border-border p-0">
