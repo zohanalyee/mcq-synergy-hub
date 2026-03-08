@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Sparkles, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Sparkles, Loader2, Wifi } from "lucide-react";
 import Header from "@/components/Header";
 import FilterSummary from "@/components/subjects/FilterSummary";
 import SubjectGrid from "@/components/subjects/SubjectGrid";
@@ -9,9 +10,13 @@ import { GlassFilterSidebar } from "@/components/syllabus-builder/GlassFilterSid
 import { GlobalSearchResult } from "@/services/globalSearchService";
 import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
 import { Skeleton } from "@/components/ui/skeleton";
+import { syncAllSubjects } from "@/services/offlineSyncService";
+import { useToast } from "@/hooks/use-toast";
 
 const Subjects = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [syncProgress, setSyncProgress] = useState<{ synced: number; total: number } | null>(null);
   const {
     systems,
     availableLevels,
@@ -26,6 +31,32 @@ const Subjects = () => {
     isFiltered,
     totalCount
   } = useSubjectsPageData();
+
+  // Background sync for offline access
+  useEffect(() => {
+    if (loading || subjects.length === 0) return;
+
+    const subjectsToSync = subjects
+      .filter(s => s.id)
+      .map(s => ({ id: s.id, title: s.title }));
+
+    if (subjectsToSync.length === 0) return;
+
+    toast({
+      title: "📥 Syncing for offline",
+      description: `Caching questions for ${subjectsToSync.length} subjects...`,
+    });
+
+    syncAllSubjects(subjectsToSync, (synced, total) => {
+      setSyncProgress({ synced, total });
+    }).then(() => {
+      setSyncProgress(null);
+      toast({
+        title: "✅ Offline sync complete",
+        description: "Questions are now available offline",
+      });
+    });
+  }, [loading, subjects.length]);
 
   // Handle smart search selection - navigate to subject content page
   const handleSmartSearchSelect = (item: GlobalSearchResult) => {

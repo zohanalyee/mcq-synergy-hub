@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { mockTopics } from "@/data/topicsData";
 import { supabase } from "@/integrations/supabase/client";
 import { getTopicsBySubject } from "@/services/supabaseTopicService";
+import { getCachedQuestions, setCachedQuestions } from "@/services/offlineSyncService";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -98,7 +99,52 @@ const SubjectContent = () => {
     
     setIsLoaded(true);
     loadTopicsFromDB();
-    // OPTIMIZATION: Initial load is DB-only (fetchOnly=true) to prevent quota drain
+
+    // Cache-first: try offline cache before network
+    if (subjectId) {
+      const cached = getCachedQuestions(subjectId);
+      if (cached && cached.questions.length > 0) {
+        // Transform cached questions the same way
+        const transformed = cached.questions.map((q: any, index: number) => {
+          let options: { key: string; text: string }[] = [];
+          if (Array.isArray(q.options)) {
+            options = q.options.map((opt: string, i: number) => ({
+              key: ['A', 'B', 'C', 'D'][i] || String.fromCharCode(65 + i),
+              text: opt
+            }));
+          } else if (typeof q.options === 'object' && q.options !== null) {
+            options = ['A', 'B', 'C', 'D']
+              .filter(key => q.options[key])
+              .map(key => ({ key, text: q.options[key] }));
+          }
+          let correctOption = 'A';
+          if (q.answer) {
+            const matchIndex = options.findIndex(opt => opt.text === q.answer);
+            if (matchIndex !== -1) correctOption = options[matchIndex].key;
+            else if (['A', 'B', 'C', 'D'].includes(q.answer)) correctOption = q.answer;
+          } else if (q.correct_option) {
+            correctOption = q.correct_option;
+          }
+          return {
+            id: q.id || `mcq-${index}-${Date.now()}`,
+            title: q.question || q.title || '',
+            question: q.question || q.title || '',
+            options,
+            correctOption,
+            explanation: q.explanation || undefined,
+            difficulty: (q.difficulty as "Easy" | "Medium" | "Hard") || 'Medium',
+            topic: q.topic || title,
+          };
+        });
+        setMcqs(transformed);
+        setQuestionSource('cache');
+        setCachedCount(transformed.length);
+        toast({ title: "⚡ Loaded from offline cache", description: `${transformed.length} questions available instantly` });
+        return;
+      }
+    }
+
+    // No cache hit — fetch from DB
     loadMCQs(false, true);
   }, [title, navigate, subjectId]);
 
@@ -319,6 +365,11 @@ const SubjectContent = () => {
       setQuestionSource(data.source || 'cache');
       setCachedCount(data.cached_count || 0);
       setAiCount(data.ai_count || 0);
+
+      // Update offline cache after successful fetch
+      if (subjectId && data.questions.length > 0) {
+        setCachedQuestions(subjectId, title, data.questions);
+      }
       
       if (data.source === 'ai' || data.ai_count > 0) {
         toast({

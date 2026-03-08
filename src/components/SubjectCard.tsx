@@ -1,9 +1,11 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { BookOpen, ArrowRight, WifiOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
+import { getSyncStatus } from "@/services/offlineSyncService";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface SubjectCardProps {
   title: string;
@@ -88,6 +90,7 @@ const SubjectCard = ({
   const navigate = useNavigate();
   
   const theme = getSubjectTheme(title, color);
+  const syncStatus = id ? getSyncStatus(id) : { synced: false, count: 0, lastSync: null };
   
   // Render icon with white color for the squircle container
   const renderIcon = () => {
@@ -161,12 +164,28 @@ const SubjectCard = ({
           }}
         />
         
-        {/* Icon Squircle - Compact */}
-        <div 
-          className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-105"
-          style={{ backgroundColor: theme.main }}
-        >
-          {renderIcon()}
+        {/* Icon Squircle - Compact with offline badge */}
+        <div className="relative w-fit">
+          <div 
+            className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-105"
+            style={{ backgroundColor: theme.main }}
+          >
+            {renderIcon()}
+          </div>
+          {syncStatus.synced && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-background flex items-center justify-center">
+                    <WifiOff className="w-2 h-2 text-white" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent side="top" className="text-xs">
+                  {syncStatus.count} questions cached offline
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
         </div>
         
         {/* Content */}
