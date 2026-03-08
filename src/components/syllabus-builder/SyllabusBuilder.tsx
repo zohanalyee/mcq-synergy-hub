@@ -602,42 +602,34 @@ export const SyllabusBuilder = () => {
         </div>
       </motion.div>
 
-      {/* Main Layout - 2 columns: Filters + Subject Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">
-        {/* Left Sidebar - Glass Filters */}
-        <div>
-          <div className="sticky top-20">
-            <GlassFilterSidebar
-              systems={systems}
-              availableLevels={availableLevels}
-              filterState={filterState}
-              toggleSystemFilter={toggleSystemFilter}
-              toggleLevelFilter={toggleLevelFilter}
-              clearFilters={clearFilters}
-            />
-          </div>
-        </div>
-
-        {/* Right - Subject Grid (full remaining width) */}
-        <div className="space-y-4">
-          {/* Glass Search Bar */}
+      {/* Search + Filter Row */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="flex-1">
           <GlassSearchInput
             placeholder="Search subjects or topics..."
             onSelect={handleSmartSearchSelect}
           />
-
-          {/* Subject Cards */}
-          <SubjectGrid
-            subjects={filteredSubjects}
-            loading={loading}
-            topicQuestionCounts={topicQuestionCounts}
-            onToggleSubject={handleToggleSubject}
-            onToggleTopic={handleToggleTopic}
-            onToggleExpand={handleToggleExpand}
-            onClearFilters={clearFilters}
-          />
         </div>
+        <GlassFilterSidebar
+          systems={systems}
+          availableLevels={availableLevels}
+          filterState={filterState}
+          toggleSystemFilter={toggleSystemFilter}
+          toggleLevelFilter={toggleLevelFilter}
+          clearFilters={clearFilters}
+        />
       </div>
+
+      {/* Subject Cards Grid (full width) */}
+      <SubjectGrid
+        subjects={filteredSubjects}
+        loading={loading}
+        topicQuestionCounts={topicQuestionCounts}
+        onToggleSubject={handleToggleSubject}
+        onToggleTopic={handleToggleTopic}
+        onToggleExpand={handleToggleExpand}
+        onClearFilters={clearFilters}
+      />
 
       {/* Floating Action Bar */}
       <FloatingActionBar
