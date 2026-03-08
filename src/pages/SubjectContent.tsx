@@ -365,6 +365,11 @@ const SubjectContent = () => {
       setQuestionSource(data.source || 'cache');
       setCachedCount(data.cached_count || 0);
       setAiCount(data.ai_count || 0);
+
+      // Update offline cache after successful fetch
+      if (subjectId && data.questions.length > 0) {
+        setCachedQuestions(subjectId, title, data.questions);
+      }
       
       if (data.source === 'ai' || data.ai_count > 0) {
         toast({
