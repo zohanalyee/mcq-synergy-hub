@@ -1,5 +1,5 @@
 
-import { X, BookOpen, Shield } from 'lucide-react';
+import { X, BrainCircuit, Sparkles, Shield } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
