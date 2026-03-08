@@ -90,6 +90,7 @@ const RomanConverter = lazy(() => import("./pages/tools/RomanConverter"));
 const BinaryConverter = lazy(() => import("./pages/tools/BinaryConverter"));
 const CaseConverter = lazy(() => import("./pages/tools/CaseConverter"));
 const ImageResizer = lazy(() => import("./pages/tools/ImageResizer"));
+const ImageCompressor = lazy(() => import("./pages/tools/ImageCompressor"));
 const PDFToText = lazy(() => import("./pages/tools/PDFToText"));
 const Stopwatch = lazy(() => import("./pages/tools/Stopwatch"));
 const WorldClock = lazy(() => import("./pages/tools/WorldClock"));
