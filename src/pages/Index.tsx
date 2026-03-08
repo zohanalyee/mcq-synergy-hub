@@ -352,12 +352,14 @@ const Home = () => {
             viewport={{ once: true, margin: "-40px" }}
             className="grid grid-cols-2 md:grid-cols-3 gap-2"
           >
-            {features.map((feature) => (
+            {features.map((feature, index) => (
               <motion.div key={feature.title} variants={staggerItem}>
                 <FeatureCard
                   title={feature.title}
                   description={feature.description}
                   icon={feature.icon}
+                  iconColor={feature.iconColor}
+                  delay={index}
                 />
               </motion.div>
             ))}
