@@ -7,14 +7,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { signIn, signUp } from "@/services/authService";
-import { Loader2, Mail, Lock, User, BookOpen } from "lucide-react";
+import { signIn, signUp, signInWithGoogle } from "@/services/authService";
+import { Loader2, Mail, Lock, BookOpen } from "lucide-react";
+
+const GoogleIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853"/>
+    <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
+  </svg>
+);
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -26,26 +37,33 @@ const Auth = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const handleGoogleLogin = async () => {
+    setIsGoogleLoading(true);
+    try {
+      const { error } = await signInWithGoogle();
+      if (error) throw error;
+    } catch (error: any) {
+      console.error("Google sign in failed:", error);
+      toast({
+        variant: "destructive",
+        title: "Google Sign In Failed",
+        description: error.message || "Failed to sign in with Google. Please try again."
+      });
+      setIsGoogleLoading(false);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-
     try {
       const { data, error } = await signIn(formData.email, formData.password);
-      
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       if (data?.user) {
-        toast({
-          title: "Welcome back!",
-          description: "You have been successfully signed in."
-        });
+        toast({ title: "Welcome back!", description: "You have been successfully signed in." });
         navigate("/");
       }
     } catch (error: any) {
-      console.error("Sign in failed:", error);
       toast({
         variant: "destructive",
         title: "Sign In Failed",
@@ -58,34 +76,19 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (formData.password !== formData.confirmPassword) {
-      toast({
-        variant: "destructive",
-        title: "Password Mismatch",
-        description: "Passwords do not match. Please try again."
-      });
+      toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
-
     setIsLoading(true);
-
     try {
       const { data, error } = await signUp(formData.email, formData.password);
-      
-      if (error) {
-        throw error;
-      }
-
+      if (error) throw error;
       if (data?.user) {
-        toast({
-          title: "Account Created!",
-          description: "Please check your email to verify your account."
-        });
+        toast({ title: "Account Created!", description: "Please check your email to verify your account." });
         navigate("/");
       }
     } catch (error: any) {
-      console.error("Sign up failed:", error);
       toast({
         variant: "destructive",
         title: "Sign Up Failed",
@@ -120,11 +123,37 @@ const Auth = () => {
         <Card>
           <CardHeader>
             <CardTitle>Welcome</CardTitle>
-            <CardDescription>
-              Sign in to your account or create a new one to get started
-            </CardDescription>
+            <CardDescription>Sign in to your account or create a new one to get started</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
+            {/* Google OAuth Button */}
+            <Button
+              variant="outline"
+              className="w-full h-11 font-medium gap-3 border-border/80 bg-background hover:bg-muted/80 hover:shadow-md transition-all"
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading || isLoading}
+            >
+              {isGoogleLoading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Connecting...
+                </>
+              ) : (
+                <>
+                  <GoogleIcon />
+                  Continue with Google
+                </>
+              )}
+            </Button>
+
+            {/* OR Divider */}
+            <div className="flex items-center gap-3">
+              <Separator className="flex-1" />
+              <span className="text-xs text-muted-foreground font-medium uppercase">or</span>
+              <Separator className="flex-1" />
+            </div>
+
+            {/* Email/Password Tabs */}
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
@@ -137,47 +166,18 @@ const Auth = () => {
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="pl-10"
-                        required
-                        disabled={isLoading}
-                      />
+                      <Input id="email" name="email" type="email" placeholder="Enter your email" value={formData.email} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
                     </div>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        placeholder="Enter your password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className="pl-10"
-                        required
-                        disabled={isLoading}
-                      />
+                      <Input id="password" name="password" type="password" placeholder="Enter your password" value={formData.password} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
                     </div>
                   </div>
-                  
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing In...
-                      </>
-                    ) : (
-                      "Sign In"
-                    )}
+                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                    {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing In...</>) : "Sign In"}
                   </Button>
                 </form>
               </TabsContent>
@@ -188,67 +188,25 @@ const Auth = () => {
                     <Label htmlFor="signup-email">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-email"
-                        name="email"
-                        type="email"
-                        placeholder="Enter your email"
-                        value={formData.email}
-                        onChange={handleInputChange}
-                        className="pl-10"
-                        required
-                        disabled={isLoading}
-                      />
+                      <Input id="signup-email" name="email" type="email" placeholder="Enter your email" value={formData.email} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
                     </div>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="signup-password">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="signup-password"
-                        name="password"
-                        type="password"
-                        placeholder="Create a password"
-                        value={formData.password}
-                        onChange={handleInputChange}
-                        className="pl-10"
-                        required
-                        disabled={isLoading}
-                        minLength={6}
-                      />
+                      <Input id="signup-password" name="password" type="password" placeholder="Create a password" value={formData.password} onChange={handleInputChange} className="pl-10" required disabled={isLoading} minLength={6} />
                     </div>
                   </div>
-                  
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="confirm-password"
-                        name="confirmPassword"
-                        type="password"
-                        placeholder="Confirm your password"
-                        value={formData.confirmPassword}
-                        onChange={handleInputChange}
-                        className="pl-10"
-                        required
-                        disabled={isLoading}
-                        minLength={6}
-                      />
+                      <Input id="confirm-password" name="confirmPassword" type="password" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} className="pl-10" required disabled={isLoading} minLength={6} />
                     </div>
                   </div>
-                  
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Creating Account...
-                      </>
-                    ) : (
-                      "Create Account"
-                    )}
+                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
+                    {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating Account...</>) : "Create Account"}
                   </Button>
                 </form>
               </TabsContent>
@@ -257,11 +215,7 @@ const Auth = () => {
         </Card>
 
         <div className="text-center mt-6">
-          <Button
-            variant="ghost"
-            onClick={() => navigate("/")}
-            className="text-muted-foreground hover:text-foreground"
-          >
+          <Button variant="ghost" onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
             ← Back to Home
           </Button>
         </div>
