@@ -102,8 +102,6 @@ const PDFCompressor = () => {
 
       setProgress(60);
       setProgressLabel('Optimizing...');
-
-      // Process pages - remove annotations based on compression level
       const level = compressionLevel[0];
       if (level > 60) {
         const pages = pdfDoc.getPages();
