@@ -90,6 +90,7 @@ const RomanConverter = lazy(() => import("./pages/tools/RomanConverter"));
 const BinaryConverter = lazy(() => import("./pages/tools/BinaryConverter"));
 const CaseConverter = lazy(() => import("./pages/tools/CaseConverter"));
 const ImageResizer = lazy(() => import("./pages/tools/ImageResizer"));
+const ImageCompressor = lazy(() => import("./pages/tools/ImageCompressor"));
 const PDFToText = lazy(() => import("./pages/tools/PDFToText"));
 const Stopwatch = lazy(() => import("./pages/tools/Stopwatch"));
 const WorldClock = lazy(() => import("./pages/tools/WorldClock"));
@@ -212,6 +213,7 @@ const App = () => {
                       <Route path="/tools/binary-converter" element={<Suspense fallback={null}><BinaryConverter /></Suspense>} />
                       <Route path="/tools/case-converter" element={<Suspense fallback={null}><CaseConverter /></Suspense>} />
                       <Route path="/tools/image-resizer" element={<Suspense fallback={null}><ImageResizer /></Suspense>} />
+                      <Route path="/tools/image-compressor" element={<Suspense fallback={null}><ImageCompressor /></Suspense>} />
                       <Route path="/tools/pdf-to-text" element={<Suspense fallback={null}><PDFToText /></Suspense>} />
                       <Route path="/tools/stopwatch" element={<Suspense fallback={null}><Stopwatch /></Suspense>} />
                       <Route path="/tools/world-clock" element={<Suspense fallback={null}><WorldClock /></Suspense>} />

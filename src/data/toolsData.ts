@@ -2,7 +2,7 @@ import {
   Calculator, Calendar, Timer, StickyNote, GraduationCap, ArrowLeftRight,
   Activity, Percent, DollarSign, CreditCard, CalendarDays, Fuel, Receipt,
   Landmark, Tag, TrendingUp, TrendingDown, Award, PenTool, UserCheck,
-  FileCheck, BookOpen, Grid3X3, Divide, Equal, LineChart,
+  FileCheck, BookOpen, Grid3X3, Divide, Equal, LineChart, FileImage,
   Key, Type, Hash, CaseSensitive, User, Palette, Image, FileText,
   Clock, Globe, Shuffle, Heart, Hourglass, Maximize, Binary,
   Thermometer, Gauge, Square, Atom, QrCode, Coins,
@@ -112,6 +112,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'binary-converter', name: 'Binary Converter', description: 'Convert decimal to binary & more', category: 'Converters', icon: Binary, href: '/tools/binary-converter' },
   { id: 'case-converter', name: 'Text Case Converter', description: 'Convert text case styles', category: 'Converters', icon: CaseSensitive, href: '/tools/case-converter' },
   { id: 'image-resizer', name: 'Image Resizer', description: 'Resize images in browser', category: 'Converters', icon: Image, href: '/tools/image-resizer' },
+  { id: 'image-compressor', name: 'Image Compressor', description: 'Compress images up to 80% instantly', category: 'Converters', icon: FileImage, popular: true, href: '/tools/image-compressor' },
   { id: 'pdf-to-text', name: 'PDF to Text', description: 'Extract text from PDF files', category: 'Converters', icon: FileText, href: '/tools/pdf-to-text' },
 
   // === Productivity (4 new) ===
