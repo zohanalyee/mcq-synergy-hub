@@ -25,7 +25,8 @@ import {
   ShieldCheck, 
   LayoutGrid,
   ListChecks,
-  CheckCircle2
+  CheckCircle2,
+  Sparkles
 } from 'lucide-react';
 
 // Stagger container variants
