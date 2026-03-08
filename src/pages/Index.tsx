@@ -229,10 +229,17 @@ const Home = () => {
                 </div>
               </div>
               
-              <span className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 text-primary border border-violet-500/20 rounded-full">
-                <Sparkles className="h-3 w-3 text-violet-500" />
-                Prepare Smarter, Score Higher
-              </span>
+              <motion.span
+                className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 text-primary border border-violet-500/20 rounded-full"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              >
+                <Sparkles className="h-3 w-3 text-violet-500 animate-pulse" />
+                <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:200%_auto] animate-[shimmer_3s_linear_infinite] bg-clip-text text-transparent font-semibold">
+                  Prepare Smarter, Score Higher
+                </span>
+              </motion.span>
             </motion.div>
             
             <motion.h1
