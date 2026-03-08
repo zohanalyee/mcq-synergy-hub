@@ -3,28 +3,45 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
-import { EnhancedSearchBox } from "@/components/mock-tests/EnhancedSearchBox";
+import ExamFiltersBar, { ExamFilters } from "@/components/mock-tests/ExamFilters";
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { getJobTests } from "@/services/jobTestService";
 
 const CompetitiveExams = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filters, setFilters] = useState<ExamFilters>({ organization: 'all', duration: 'all' });
   const [isLoaded, setIsLoaded] = useState(false);
   const [jobTests, setJobTests] = useState(initialJobTests);
   
   useEffect(() => {
-    // Load job tests from localStorage if available, otherwise use initial data
     const managedJobTests = getJobTests();
     if (managedJobTests.length > 0) {
       setJobTests(managedJobTests);
     }
-    
     setIsLoaded(true);
   }, []);
-  
-  const handleClearSearch = () => {
-    setSearchQuery("");
-  };
+
+  // Apply all filters
+  const filteredTests = jobTests.filter(test => {
+    // Search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        test.title.toLowerCase().includes(q) ||
+        test.description.toLowerCase().includes(q) ||
+        test.organization.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+    // Organization
+    if (filters.organization !== 'all' && test.organization !== filters.organization) return false;
+    // Duration
+    if (filters.duration !== 'all') {
+      if (filters.duration === 'short' && test.duration > 90) return false;
+      if (filters.duration === 'medium' && (test.duration <= 90 || test.duration > 120)) return false;
+      if (filters.duration === 'long' && test.duration <= 120) return false;
+    }
+    return true;
+  });
   
   return (
     <Header>
@@ -42,18 +59,19 @@ const CompetitiveExams = () => {
         </motion.div>
 
         <div className="mb-4">
-          <EnhancedSearchBox
-            searchQuery={searchQuery} 
-            setSearchQuery={setSearchQuery} 
-            onClearSearch={handleClearSearch}
-            placeholder="Search exams, organizations, or job positions..."
+          <ExamFiltersBar
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            filters={filters}
+            onFiltersChange={setFilters}
+            jobTests={jobTests}
           />
         </div>
 
         <JobTestsTab 
-          jobTests={jobTests}
+          jobTests={filteredTests}
           isLoaded={isLoaded}
-          searchQuery={searchQuery}
+          searchQuery=""
         />
       </div>
     </Header>
