@@ -108,10 +108,14 @@ export function AppSidebar({
               className="flex items-center gap-2 cursor-pointer transition-all duration-300"
               onClick={() => onNavigate('/')}
             >
-              <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1.5">
-                <BookOpen className="h-5 w-5 text-white" />
+              <div className="relative rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-1.5 animate-pulse drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]">
+                <BrainCircuit className="h-5 w-5 text-white" />
+                <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300" />
               </div>
-              <span className="text-base font-bold text-gradient">MCQs Point</span>
+              <span className="text-base">
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 font-extrabold">AI-</span>
+                <span className="font-bold tracking-tight text-foreground">MCQs Point</span>
+              </span>
             </div>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
           </div>
