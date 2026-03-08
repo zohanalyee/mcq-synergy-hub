@@ -1,54 +1,62 @@
 
 
-## Plan: Aggressive Spacing & Density Reductions
+## Global Appearance System (Admin + User Override)
 
-### 1. Base Font Size — Apply 14px globally (not just mobile)
-**File: `src/index.css`**
-- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
+### Concept
+Create a **Supabase-backed global appearance settings** table. Admin can set the default appearance for the entire webapp. All users see the admin's settings by default. Any user can override with their own preferences (stored per-user). If a user resets, they fall back to the admin's global defaults.
 
-### 2. Subject Grid — More columns
-**File: `src/components/subjects/SubjectGrid.tsx`**
-- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
-- Reduce gap from `gap-3` → `gap-2`
+### Database Changes
 
-### 3. Syllabus Builder Grid — More columns
-**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
-- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
-- Reduce gap from `gap-3` → `gap-2`
+**New table: `global_appearance_settings`**
+- `id` (uuid, PK)
+- `key` (text, unique) — always `'default'` for the single global config
+- `settings` (jsonb) — the full AppearanceSettings object
+- `updated_by` (uuid, FK to auth.users)
+- `updated_at` (timestamptz)
 
-### 4. Tools Page — More columns, tighter spacing
-**File: `src/pages/Tools.tsx`**
-- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
-- Gap: `gap-2.5` → `gap-2`
-- Tool card padding: `p-4` → `p-3`
-- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
-- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
+RLS: Anyone authenticated can read. Only admins can update (using `has_role` function).
 
-### 5. Index Page — Tighter sections
-**File: `src/pages/Index.tsx`**
-- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
-- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
-- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
-- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
-- Testimonials grid gap: `gap-4` → `gap-2`
-- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
-- "View All Subjects" margin: `mt-8` → `mt-4`
+**New table: `user_appearance_settings`**
+- `id` (uuid, PK)
+- `user_id` (uuid, FK to auth.users, unique)
+- `settings` (jsonb)
+- `updated_at` (timestamptz)
 
-### 6. SubjectCard — Slightly tighter
-**File: `src/components/SubjectCard.tsx`**
-- Min-height: `min-h-[120px]` → `min-h-[100px]`
+RLS: Users can read/write only their own row.
 
-### 7. FeatureCard — Reduce padding
-**File: `src/components/FeatureCard.tsx`**
-- Card min-height: `min-h-[100px]` → remove
-- Padding: `p-3` → `p-2.5`
+### Code Changes
 
-### Files to edit (7 files):
-1. `src/index.css` — global 14px font
-2. `src/components/subjects/SubjectGrid.tsx` — more columns
-3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
-4. `src/pages/Tools.tsx` — denser grid
-5. `src/pages/Index.tsx` — tighter sections
-6. `src/components/SubjectCard.tsx` — smaller min-height
-7. `src/components/FeatureCard.tsx` — less padding
+#### 1. `src/contexts/AppearanceContext.tsx`
+- On mount: fetch `global_appearance_settings` (the admin default) and `user_appearance_settings` (for the current user)
+- If user has saved settings → use those. Otherwise → use admin global defaults. Fallback → hardcoded defaults.
+- Subscribe to `global_appearance_settings` changes via Supabase realtime so if admin updates, non-customized users see changes instantly.
+- Add `saveToCloud()` — upserts the current user's settings to `user_appearance_settings`.
+- Add `saveAsGlobal()` — admin-only, upserts to `global_appearance_settings`.
+- Add `resetToGlobal()` — deletes user override, reverts to admin defaults.
+- Auto-save to cloud on every change (debounced).
+
+#### 2. `src/components/settings/AppearanceSettings.tsx`
+- Add an **"Set as Global Default"** button (visible only to admins, using `useUserRole`)
+- Change "Reset to Defaults" to "Reset to Global Defaults" — deletes user override and loads admin settings
+- Add a small indicator showing whether user is using "Global" or "Custom" settings
+
+#### 3. `src/components/settings/SettingsDialog.tsx`
+- No structural changes, just the admin button flows through AppearanceSettings
+
+### Flow
+
+```text
+Admin changes appearance → clicks "Set as Global Default"
+  → saves to global_appearance_settings table
+  → realtime broadcast updates all connected users without overrides
+
+User changes appearance → auto-saved to user_appearance_settings
+  → only affects that user
+  → "Reset to Global" removes their override
+```
+
+### Files to Create/Edit
+1. **Create** Supabase migration for both tables + RLS policies
+2. **Edit** `src/contexts/AppearanceContext.tsx` — add Supabase sync, global/user logic, realtime subscription
+3. **Edit** `src/components/settings/AppearanceSettings.tsx` — add admin "Set as Global" button, reset to global
 
