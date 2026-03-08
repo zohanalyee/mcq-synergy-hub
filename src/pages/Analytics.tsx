@@ -1,290 +1,204 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { 
-  BarChart, 
-  LineChart, 
-  PieChart, 
-  ResponsiveContainer, 
-  Bar, 
-  Line, 
-  Pie, 
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  Cell
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  LineChart, PieChart, ResponsiveContainer, Line, Pie, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, ReferenceLine,
 } from "recharts";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
-
-const performanceData = [
-  { date: "Jan", score: 65 },
-  { date: "Feb", score: 59 },
-  { date: "Mar", score: 80 },
-  { date: "Apr", score: 81 },
-  { date: "May", score: 56 },
-  { date: "Jun", score: 75 },
-  { date: "Jul", score: 85 },
-  { date: "Aug", score: 72 },
-  { date: "Sep", score: 78 },
-  { date: "Oct", score: 82 },
-  { date: "Nov", score: 91 },
-  { date: "Dec", score: 88 },
-];
-
-const subjectData = [
-  { name: "Mathematics", value: 78, color: "#3b82f6" },
-  { name: "Computer Science", value: 65, color: "#10b981" },
-  { name: "Physics", value: 45, color: "#8b5cf6" },
-  { name: "Chemistry", value: 30, color: "#ef4444" },
-  { name: "Biology", value: 50, color: "#22c55e" },
-  { name: "English", value: 60, color: "#f97316" },
-];
-
-const topicPerformance = [
-  { topic: "Algebra", score: 85 },
-  { topic: "Calculus", score: 72 },
-  { topic: "Geometry", score: 58 },
-  { topic: "Trigonometry", score: 65 },
-  { topic: "Statistics", score: 92 },
-  { topic: "Probability", score: 78 },
-];
+import { useAnalyticsData } from "@/hooks/useAnalyticsData";
+import { analyzePerformanceTrend } from "@/lib/aiCoach";
+import AIInsightsPanel from "@/components/analytics/AIInsightsPanel";
+import SubjectAnalysisCard from "@/components/analytics/SubjectAnalysisCard";
+import StudyPlanSection from "@/components/analytics/StudyPlanSection";
+import TopicAnalysis from "@/components/analytics/TopicAnalysis";
+import QuickTestGenerator from "@/components/analytics/QuickTestGenerator";
+import { TrendingUp, BookOpen, Target, Award } from "lucide-react";
 
 const Analytics = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const data = useAnalyticsData();
+  const [testDialogOpen, setTestDialogOpen] = useState(false);
+  const subjectRef = useRef<HTMLDivElement>(null);
 
-  // Redirect to sign in if user is not authenticated
   useEffect(() => {
-    if (!user) {
-      navigate('/signin');
-    }
+    if (!user) navigate("/signin");
   }, [user, navigate]);
 
-  // Show loading or sign in prompt if user is not authenticated
   if (!user) {
     return (
       <Header>
-        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
-          <div className="text-center py-12">
-            <h1 className="text-2xl font-bold mb-3">Authentication Required</h1>
-            <p className="text-muted-foreground mb-6 text-sm">
-              Please sign in to view your analytics and track your progress.
-            </p>
-            <Button onClick={() => navigate('/signin')}>
-              Sign In
-            </Button>
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12 text-center py-12">
+          <h1 className="text-2xl font-bold mb-3">Authentication Required</h1>
+          <p className="text-muted-foreground mb-6 text-sm">Please sign in to view your analytics.</p>
+          <Button onClick={() => navigate("/signin")}>Sign In</Button>
+        </div>
+      </Header>
+    );
+  }
+
+  if (data.loading) {
+    return (
+      <Header>
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12 space-y-4">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-32 w-full rounded-2xl" />
+          <div className="grid md:grid-cols-2 gap-4">
+            <Skeleton className="h-64" />
+            <Skeleton className="h-64" />
           </div>
         </div>
       </Header>
     );
   }
 
-  const container = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1
-      }
-    }
-  };
+  if (!data.hasData) {
+    return (
+      <Header>
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12 text-center py-16">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+            <BookOpen className="w-8 h-8 text-primary" />
+          </div>
+          <h1 className="text-2xl font-bold mb-2">Start Your Learning Journey</h1>
+          <p className="text-muted-foreground mb-6 text-sm max-w-md mx-auto">
+            Take your first test to unlock AI-powered coaching insights, personalized study plans, and performance tracking.
+          </p>
+          <Button onClick={() => navigate("/mock-tests")}>Take Your First Test</Button>
+        </div>
+      </Header>
+    );
+  }
 
-  const item = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
-  };
+  const trendAnalysis = analyzePerformanceTrend(data.monthlyPerformance);
+
+  const statCards = [
+    { label: "Total Tests", value: data.totalTests, icon: BookOpen, color: "text-blue-500" },
+    { label: "Questions", value: data.totalQuestions, icon: Target, color: "text-emerald-500" },
+    { label: "Avg Score", value: `${data.averageScore}%`, icon: Award, color: "text-purple-500" },
+    { label: "This Week", value: data.thisWeekTests, icon: TrendingUp, color: "text-orange-500" },
+  ];
 
   return (
     <Header>
-      <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6"
-        >
-          <h1 className="text-2xl font-bold">Analytics</h1>
-          <p className="text-muted-foreground text-sm">Track your performance over time</p>
+      <div className="max-w-7xl mx-auto px-4 pt-6 pb-20">
+        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
+          <h1 className="text-2xl font-bold">AI Coaching Dashboard</h1>
+          <p className="text-muted-foreground text-sm">Personalized insights to boost your performance</p>
         </motion.div>
 
-        <Tabs defaultValue="overview" className="mb-6">
-          <TabsList className="mb-6 w-full md:w-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="subjects">Subjects</TabsTrigger>
-            <TabsTrigger value="progress">Progress</TabsTrigger>
-            <TabsTrigger value="topics">Topics</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="overview">
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="visible"
-              className="grid grid-cols-1 lg:grid-cols-2 gap-4"
-            >
-              <motion.div variants={item}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Performance Over Time</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <LineChart data={performanceData}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                        <XAxis dataKey="date" />
-                        <YAxis />
-                        <Tooltip />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="score" 
-                          stroke="#8884d8" 
-                          strokeWidth={2}
-                          activeDot={{ r: 8 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </motion.div>
-              
-              <motion.div variants={item}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Subject Distribution</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={300}>
-                      <PieChart>
-                        <Pie
-                          data={subjectData}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={60}
-                          outerRadius={80}
-                          paddingAngle={2}
-                          dataKey="value"
-                          label
-                        >
-                          {subjectData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-          
-          <TabsContent value="subjects">
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.div variants={item}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Subject Performance</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart 
-                        data={subjectData}
-                        layout="vertical"
-                        margin={{ top: 5, right: 30, left: 100, bottom: 5 }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" horizontal opacity={0.3} />
-                        <XAxis type="number" />
-                        <YAxis dataKey="name" type="category" width={100} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="value" name="Score">
-                          {subjectData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-          
-          <TabsContent value="progress">
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.div variants={item}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Progress Over Time</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <LineChart data={performanceData}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                        <XAxis dataKey="date" />
-                        <YAxis domain={[0, 100]} />
-                        <Tooltip />
-                        <Legend />
-                        <Line 
-                          type="monotone" 
-                          dataKey="score" 
-                          stroke="#8884d8" 
-                          strokeWidth={2}
-                          dot={{ r: 5 }}
-                          activeDot={{ r: 8 }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-          
-          <TabsContent value="topics">
-            <motion.div
-              variants={container}
-              initial="hidden"
-              animate="visible"
-            >
-              <motion.div variants={item}>
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Topic Performance (Mathematics)</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ResponsiveContainer width="100%" height={400}>
-                      <BarChart data={topicPerformance}>
-                        <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                        <XAxis dataKey="topic" />
-                        <YAxis domain={[0, 100]} />
-                        <Tooltip />
-                        <Legend />
-                        <Bar dataKey="score" name="Score" fill="#3b82f6" />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </motion.div>
-          </TabsContent>
-        </Tabs>
+        {/* Stats row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          {statCards.map((s) => (
+            <Card key={s.label} className="p-3">
+              <div className="flex items-center gap-2">
+                <s.icon className={`w-4 h-4 ${s.color}`} />
+                <span className="text-xs text-muted-foreground">{s.label}</span>
+              </div>
+              <p className="text-xl font-bold mt-1">{s.value}</p>
+            </Card>
+          ))}
+        </div>
+
+        {/* AI Insights */}
+        <AIInsightsPanel
+          data={data}
+          onViewRecommendations={() => subjectRef.current?.scrollIntoView({ behavior: "smooth" })}
+          onGenerateTest={() => setTestDialogOpen(true)}
+        />
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Performance Over Time</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <LineChart data={data.monthlyPerformance}>
+                  <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                  <XAxis dataKey="month" tick={{ fontSize: 12 }} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.[0]) return null;
+                      const d = payload[0].payload;
+                      return (
+                        <div className="bg-background border rounded-lg shadow-lg p-2.5 text-sm">
+                          <p className="font-semibold">{d.month}</p>
+                          <p>Score: <span className="font-medium">{d.score}%</span></p>
+                          <p className="text-xs text-muted-foreground">{d.testsCompleted} tests</p>
+                        </div>
+                      );
+                    }}
+                  />
+                  <ReferenceLine y={75} stroke="hsl(var(--primary))" strokeDasharray="3 3" strokeOpacity={0.5} />
+                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={{ r: 3 }} activeDot={{ r: 6 }} />
+                </LineChart>
+              </ResponsiveContainer>
+              {trendAnalysis.trend && (
+                <div className="mt-3 p-2.5 bg-muted/50 rounded-lg">
+                  <p className="text-xs font-medium flex items-center gap-1.5 mb-0.5">
+                    <TrendingUp className="w-3.5 h-3.5 text-green-500" />
+                    Trend Analysis
+                  </p>
+                  <p className="text-xs text-muted-foreground">{trendAnalysis.trend}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Subject Distribution</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={260}>
+                <PieChart>
+                  <Pie
+                    data={data.subjects.slice(0, 6)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={80}
+                    paddingAngle={2}
+                    dataKey="accuracy"
+                    nameKey="name"
+                    label={({ name, accuracy }) => `${name}: ${accuracy}%`}
+                  >
+                    {data.subjects.slice(0, 6).map((entry, i) => (
+                      <Cell key={i} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Subject Analysis */}
+        <div ref={subjectRef}>
+          <h2 className="text-lg font-bold mb-3">Subject-Wise Analysis</h2>
+          <div className="grid md:grid-cols-2 gap-3 mb-6">
+            {data.subjects.map((subject) => (
+              <SubjectAnalysisCard key={subject.name} subject={subject} />
+            ))}
+          </div>
+        </div>
+
+        {/* Study Plan */}
+        <StudyPlanSection data={data} />
+
+        {/* Topic Drill-Down */}
+        <TopicAnalysis subjects={data.subjects} />
+
+        {/* Quick Test FAB */}
+        <QuickTestGenerator data={data} open={testDialogOpen} onOpenChange={setTestDialogOpen} />
       </div>
     </Header>
   );
