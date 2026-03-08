@@ -238,7 +238,7 @@ export function AppSidebar({
 
       <SidebarFooter className="border-t border-border/40 p-2">
         <div className={cn("text-xs text-muted-foreground text-center transition-opacity duration-300", !expanded && "opacity-0")}> 
-          <p className="animate-fade-in">© 2025 MCQs Point</p>
+          <p className="animate-fade-in">© 2025 AI-MCQs Point</p>
         </div>
       </SidebarFooter>
     </Sidebar>

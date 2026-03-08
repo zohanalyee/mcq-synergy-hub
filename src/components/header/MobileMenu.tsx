@@ -56,10 +56,14 @@ const MobileMenu = ({
       <Card className="fixed right-0 top-0 h-full w-[300px] rounded-l-2xl rounded-r-none shadow-lg animate-slide-right overflow-auto bg-card/80 backdrop-blur-sm border border-border/50">
         <div className="flex items-center justify-between p-4 border-b border-border/40">
           <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1.5 text-white">
-              <BookOpen className="h-5 w-5" />
+            <div className="relative rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-1.5 text-white animate-pulse drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]">
+              <BrainCircuit className="h-5 w-5" />
+              <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300" />
             </div>
-            <span className="text-xl font-bold text-gradient">MCQs Point</span>
+            <span className="text-xl">
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 font-extrabold">AI-</span>
+              <span className="font-bold tracking-tight text-foreground">MCQs Point</span>
+            </span>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />

@@ -1,5 +1,5 @@
 
-import { BookOpen } from 'lucide-react';
+import { BrainCircuit, Sparkles } from 'lucide-react';
 
 interface HeaderLogoProps {
   onNavigate: (path: string) => void;
@@ -8,14 +8,18 @@ interface HeaderLogoProps {
 const HeaderLogo = ({ onNavigate }: HeaderLogoProps) => {
   return (
     <div 
-      className="flex-shrink-0 cursor-pointer mr-2 sm:mr-6" 
+      className="flex-shrink-0 cursor-pointer mr-2 sm:mr-6 hover:scale-105 transition-transform duration-300" 
       onClick={() => onNavigate('/')}
     >
       <div className="flex items-center gap-1.5 sm:gap-2">
-        <div className="rounded-lg bg-gradient-to-br from-primary to-accent p-1 sm:p-1.5 text-white">
-          <BookOpen className="h-4 w-4 sm:h-5 sm:w-5" />
+        <div className="relative rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-1 sm:p-1.5 text-white animate-pulse drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]">
+          <BrainCircuit className="h-4 w-4 sm:h-5 sm:w-5" />
+          <Sparkles className="absolute -top-1 -right-1 h-2.5 w-2.5 sm:h-3 sm:w-3 text-yellow-300" />
         </div>
-        <span className="text-base sm:text-xl font-bold text-gradient whitespace-nowrap">MCQs Point</span>
+        <span className="text-base sm:text-xl whitespace-nowrap">
+          <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 font-extrabold">AI-</span>
+          <span className="font-bold tracking-tight text-foreground">MCQs Point</span>
+        </span>
       </div>
     </div>
   );
