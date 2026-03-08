@@ -95,6 +95,14 @@ export const FloatingActionBar = ({
         >
           <div className="bg-slate-900/90 backdrop-blur-xl border border-blue-500/30 px-3 py-2 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.15)]">
             <div className="flex items-center gap-2">
+              {/* Close button */}
+              <button
+                onClick={() => setDismissed(true)}
+                className="h-5 w-5 shrink-0 flex items-center justify-center rounded-full text-blue-300 hover:text-white hover:bg-blue-700/50 transition-colors"
+                aria-label="Close action bar"
+              >
+                <X className="h-3 w-3" />
+              </button>
               {/* Stats badges */}
               <Badge variant="secondary" className="px-1.5 py-0.5 text-[10px] whitespace-nowrap bg-blue-950/60 border-blue-500/20 text-blue-200 shrink-0">
                 <span className="text-blue-400 font-bold mr-0.5">{selectedSubjectsCount}</span>S
