@@ -68,7 +68,7 @@ const MobileBottomNav = () => {
     await signOut();
   };
 
-  const isProfileActive = location.pathname === '/profile' || location.pathname === '/dashboard';
+  const isProfileActive = location.pathname === '/profile' || location.pathname === '/analytics';
 
   return (
     <>
