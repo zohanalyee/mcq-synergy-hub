@@ -117,32 +117,38 @@ const Home = () => {
     {
       title: "Custom Syllabus Creation",
       description: "Build your own test syllabus by selecting from multiple subjects and topics.",
-      icon: <LayoutGrid size={24} />
+      icon: <LayoutGrid size={20} />,
+      iconColor: "from-blue-500 to-indigo-600",
     },
     {
       title: "Immediate Feedback",
       description: "Get instant feedback after each question or at the end of the test.",
-      icon: <CheckCircle2 size={24} />
+      icon: <CheckCircle2 size={20} />,
+      iconColor: "from-emerald-500 to-teal-600",
     },
     {
       title: "Performance Analytics",
       description: "Visualize your performance with detailed charts and progress tracking.",
-      icon: <BarChart3 size={24} />
+      icon: <BarChart3 size={20} />,
+      iconColor: "from-violet-500 to-purple-600",
     },
     {
       title: "Gamified Learning",
       description: "Earn badges and compete on leaderboards to stay motivated.",
-      icon: <Trophy size={24} />
+      icon: <Trophy size={20} />,
+      iconColor: "from-amber-500 to-orange-600",
     },
     {
       title: "Smart Study Plans",
       description: "Get personalized study plans based on your performance.",
-      icon: <Workflow size={24} />
+      icon: <Workflow size={20} />,
+      iconColor: "from-rose-500 to-pink-600",
     },
     {
       title: "Exam Strategies",
       description: "Learn proven strategies for tackling different types of MCQs.",
-      icon: <ShieldCheck size={24} />
+      icon: <ShieldCheck size={20} />,
+      iconColor: "from-cyan-500 to-blue-600",
     }
   ];
 
@@ -346,12 +352,14 @@ const Home = () => {
             viewport={{ once: true, margin: "-40px" }}
             className="grid grid-cols-2 md:grid-cols-3 gap-2"
           >
-            {features.map((feature) => (
+            {features.map((feature, index) => (
               <motion.div key={feature.title} variants={staggerItem}>
                 <FeatureCard
                   title={feature.title}
                   description={feature.description}
                   icon={feature.icon}
+                  iconColor={feature.iconColor}
+                  delay={index}
                 />
               </motion.div>
             ))}
