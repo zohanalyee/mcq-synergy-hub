@@ -154,7 +154,7 @@ const Home = () => {
 
   const testimonials = [
     {
-      content: "MCQs Point helped me prepare efficiently for my medical entrance exam. The analytics feature showed me exactly where I needed to improve.",
+      content: "AI-MCQs Point helped me prepare efficiently for my medical entrance exam. The analytics feature showed me exactly where I needed to improve.",
       author: "Sarah Johnson",
       role: "Medical Student",
       rating: 5
