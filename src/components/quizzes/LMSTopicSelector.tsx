@@ -86,7 +86,7 @@ export const LMSTopicSelector = ({
             className="h-8 border-0 p-0 shadow-none focus-visible:ring-0 text-sm"
           />
         </div>
-        <ScrollArea className="max-h-[280px]">
+        <div className="max-h-[280px] overflow-y-auto">
           {filtered.length === 0 ? (
             <div className="p-4 text-center text-sm text-muted-foreground">No topics found</div>
           ) : (
@@ -110,7 +110,7 @@ export const LMSTopicSelector = ({
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
