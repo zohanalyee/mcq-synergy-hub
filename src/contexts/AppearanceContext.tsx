@@ -239,11 +239,11 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
   const saveAsGlobal = useCallback(async () => {
     setIsCloudSyncing(true);
     try {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('global_appearance_settings')
         .upsert({
           key: 'default',
-          settings: settings as unknown as Record<string, unknown>,
+          settings: settings,
           updated_by: user?.id,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'key' });
