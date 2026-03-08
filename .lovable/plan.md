@@ -1,46 +1,54 @@
 
 
-## Replace Dashboard with Analytics as "AI Personal Coach"
+## Plan: Aggressive Spacing & Density Reductions
 
-The user wants to remove the Dashboard page and replace it with the Analytics page, renaming it "AI Personal Coach". The sidebar screenshot shows "Dashboard" in the profile sheet menu, and the sidebar shows "Analytics" — both should point to the same AI coaching page.
+### 1. Base Font Size — Apply 14px globally (not just mobile)
+**File: `src/index.css`**
+- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
 
-### Changes
+### 2. Subject Grid — More columns
+**File: `src/components/subjects/SubjectGrid.tsx`**
+- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
+- Reduce gap from `gap-3` → `gap-2`
 
-**1. `src/App.tsx`**
-- Remove the Dashboard import and route (`/dashboard`)
-- Change the `/analytics` route to use path `/dashboard` (keeping the same URL so existing links work), pointing to the `Analytics` component
-- Remove old Dashboard import
+### 3. Syllabus Builder Grid — More columns
+**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
+- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
+- Reduce gap from `gap-3` → `gap-2`
 
-**2. `src/pages/Analytics.tsx`**
-- Rename the page title from "AI Coaching Dashboard" to "AI Personal Coach"
-- Update heading text accordingly
+### 4. Tools Page — More columns, tighter spacing
+**File: `src/pages/Tools.tsx`**
+- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
+- Gap: `gap-2.5` → `gap-2`
+- Tool card padding: `p-4` → `p-3`
+- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
+- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
 
-**3. `src/components/MobileBottomNav.tsx`**
-- Line 187: Change the profile sheet menu item from `{ path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' }` to `{ path: '/analytics', icon: Brain, label: 'AI Personal Coach' }` with appropriate icon/colors
+### 5. Index Page — Tighter sections
+**File: `src/pages/Index.tsx`**
+- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
+- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
+- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
+- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
+- Testimonials grid gap: `gap-4` → `gap-2`
+- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
+- "View All Subjects" margin: `mt-8` → `mt-4`
 
-**4. `src/components/AppSidebar.tsx`**
-- Update the icon mapping: rename `'Analytics'` key to `'AI Personal Coach'` (or add a new key) so the sidebar renders the correct icon when the nav item label is updated. Add `Brain` icon import.
+### 6. SubjectCard — Slightly tighter
+**File: `src/components/SubjectCard.tsx`**
+- Min-height: `min-h-[120px]` → `min-h-[100px]`
 
-**5. `src/pages/SignIn.tsx` & `src/pages/SignUp.tsx`**
-- Change `Navigate to="/dashboard"` → `Navigate to="/analytics"`
+### 7. FeatureCard — Reduce padding
+**File: `src/components/FeatureCard.tsx`**
+- Card min-height: `min-h-[100px]` → remove
+- Padding: `p-3` → `p-2.5`
 
-**6. `src/services/authService.ts`**
-- Change Google OAuth `redirectTo` from `/dashboard` to `/analytics`
-
-**7. `src/pages/TestSession.tsx`**
-- Update the "Dashboard" button to navigate to `/analytics` and label it "AI Coach"
-
-**8. `src/pages/QuestionBank.tsx`**
-- Update breadcrumb from Dashboard → AI Personal Coach with `/analytics` href
-
-**9. Database: `navigation_items` table**
-- The sidebar "Analytics" item label should be updated to "AI Personal Coach" via a Supabase query (or the admin can do it manually via NavigationManager). We'll update it via migration.
-
-**10. Delete `src/pages/Dashboard.tsx`** — no longer needed since Analytics replaces it entirely.
-
-### Summary
-- `/dashboard` route removed, `/analytics` becomes the primary post-login destination
-- All redirects point to `/analytics`
-- Label everywhere changes to "AI Personal Coach"
-- Dashboard page file deleted
+### Files to edit (7 files):
+1. `src/index.css` — global 14px font
+2. `src/components/subjects/SubjectGrid.tsx` — more columns
+3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
+4. `src/pages/Tools.tsx` — denser grid
+5. `src/pages/Index.tsx` — tighter sections
+6. `src/components/SubjectCard.tsx` — smaller min-height
+7. `src/components/FeatureCard.tsx` — less padding
 

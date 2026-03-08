@@ -16,7 +16,6 @@ import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import Index from "./pages/Index";
 import Subjects from "./pages/Subjects";
-import Dashboard from "./pages/Dashboard";
 import MockTests from "./pages/MockTests";
 import Analytics from "./pages/Analytics";
 import Leaderboard from "./pages/Leaderboard";
@@ -149,7 +148,7 @@ const App = () => {
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
                       <Route path="/subjects" element={<Subjects />} />
-                      <Route path="/dashboard" element={<Dashboard />} />
+                      <Route path="/dashboard" element={<Analytics />} />
                       <Route path="/profile" element={<Profile />} />
                       <Route path="/analytics" element={<Analytics />} />
                       <Route path="/mock-tests" element={<MockTests />} />

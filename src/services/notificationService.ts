@@ -23,14 +23,14 @@ const templates: Record<NotificationType, NotificationTemplate> = {
     color: 'success',
     title: 'Test Completed',
     message: (d) => `You completed a ${d.testType || 'test'} with ${d.score}/${d.total} correct answers.`,
-    actionUrl: () => '/dashboard',
+    actionUrl: () => '/analytics',
   },
   [NotificationType.RESULTS_READY]: {
     icon: 'BarChart',
     color: 'info',
     title: 'Results Available',
     message: (d) => `You scored ${d.percentage}% (${d.score}/${d.total}).`,
-    actionUrl: () => '/dashboard',
+    actionUrl: () => '/analytics',
   },
   [NotificationType.BADGE_EARNED]: {
     icon: 'Trophy',
