@@ -438,7 +438,7 @@ const Home = () => {
         <div className="container px-4 mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <h3 className="text-sm font-bold mb-2 text-gradient">MCQs Point</h3>
+              <h3 className="text-sm font-bold mb-2 text-gradient">AI-MCQs Point</h3>
               <p className="text-xs text-muted-foreground">Your intelligent companion for MCQ-based test preparation.</p>
             </div>
             <div>
