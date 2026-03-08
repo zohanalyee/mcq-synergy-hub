@@ -184,15 +184,15 @@ const MobileBottomNav = () => {
                 <Separator className="my-3" />
                 <div className="space-y-1">
                   {[
-                    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', iconClass: 'text-muted-foreground' },
-                    ...(isAdmin ? [{ path: '/admin', icon: Shield, label: 'Admin Panel', iconClass: 'text-primary' }] : []),
-                    { path: '/profile', icon: User, label: 'Profile', iconClass: 'text-muted-foreground' },
-                    { path: '/feedback', icon: MessageSquare, label: 'Feedback', iconClass: 'text-muted-foreground' },
+                    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', iconClass: 'text-blue-500', bgClass: 'bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/40 dark:to-indigo-950/40' },
+                    ...(isAdmin ? [{ path: '/admin', icon: Shield, label: 'Admin Panel', iconClass: 'text-violet-500', bgClass: 'bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40' }] : []),
+                    { path: '/profile', icon: User, label: 'Profile', iconClass: 'text-emerald-500', bgClass: 'bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40' },
+                    { path: '/feedback', icon: MessageSquare, label: 'Feedback', iconClass: 'text-amber-500', bgClass: 'bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40' },
                   ].map((item) => (
                     <button
                       key={item.path}
                       onClick={() => handleProfileAction(item.path)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                      className={cn("w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors text-left", item.bgClass)}
                     >
                       <item.icon className={cn("h-5 w-5", item.iconClass)} />
                       <span className="text-sm font-medium">{item.label}</span>
@@ -201,7 +201,7 @@ const MobileBottomNav = () => {
 
                   <button
                     onClick={() => handleProfileAction('/ask-document')}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-50 to-cyan-50 dark:from-emerald-950/40 dark:to-cyan-950/40 transition-colors text-left"
                   >
                     <BookOpen className="h-5 w-5 text-emerald-600" />
                     <span className="text-sm font-medium">Ask Docs</span>
@@ -212,19 +212,19 @@ const MobileBottomNav = () => {
 
                   <Separator className="my-2" />
 
-                  <button onClick={() => { setProfileSheetOpen(false); setSettingsOpen(true); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left">
-                    <Settings className="h-5 w-5 text-muted-foreground" />
+                  <button onClick={() => { setProfileSheetOpen(false); setSettingsOpen(true); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 transition-colors text-left">
+                    <Settings className="h-5 w-5 text-rose-500" />
                     <span className="text-sm font-medium">Settings</span>
                   </button>
 
-                  <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left">
-                    {theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-muted-foreground" />}
+                  <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/40 dark:to-blue-950/40 transition-colors text-left">
+                    {theme === 'dark' ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5 text-sky-500" />}
                     <span className="text-sm font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
                   </button>
 
                   <Separator className="my-2" />
 
-                  <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 transition-colors text-left text-destructive">
+                  <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40 transition-colors text-left text-destructive">
                     <LogOut className="h-5 w-5" />
                     <span className="text-sm font-medium">Sign Out</span>
                   </button>
