@@ -9,7 +9,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { supabase } from '@/integrations/supabase/client';
 
 export interface LMSSubject {
@@ -119,7 +119,7 @@ export const LMSSubjectSelector = ({ value, onValueChange, placeholder = "Choose
             className="h-8 border-0 p-0 shadow-none focus-visible:ring-0 text-sm"
           />
         </div>
-        <ScrollArea className="max-h-[280px]">
+        <div className="max-h-[280px] overflow-y-auto">
           {loading ? (
             <div className="p-4 text-center text-sm text-muted-foreground">Loading subjects...</div>
           ) : filtered.length === 0 ? (
@@ -153,7 +153,7 @@ export const LMSSubjectSelector = ({ value, onValueChange, placeholder = "Choose
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </PopoverContent>
     </Popover>
   );
