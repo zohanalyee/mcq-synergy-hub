@@ -68,7 +68,9 @@ const Tools = () => {
                 key={tool.id}
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: Math.min(i * 0.02, 0.3) }}
+                whileHover={{ y: -4 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ delay: Math.min(i * 0.02, 0.3), type: "spring", stiffness: 300, damping: 20 }}
               >
                 <Link
                   to={tool.href}

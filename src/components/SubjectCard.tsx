@@ -133,7 +133,8 @@ const SubjectCard = ({
   
   return (
     <motion.div
-      whileHover={{ y: -3 }}
+      whileHover={{ y: -3, boxShadow: `0 8px 25px -5px ${theme.main}30` }}
+      whileTap={{ scale: 0.97 }}
       transition={{ type: "spring", stiffness: 400, damping: 17 }}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}

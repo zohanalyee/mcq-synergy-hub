@@ -31,13 +31,11 @@ const TestimonialCard = ({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: delay * 0.1 }}
-      viewport={{ once: true }}
+      whileHover={{ y: -4 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
       className="h-full"
     >
-      <Card className="min-h-[240px] max-h-[320px]">
+      <Card className="min-h-[240px] max-h-[320px] hover:shadow-lg transition-shadow duration-300">
         <CardContent className="p-6 flex flex-col justify-between">
           <div>
             <div className="flex space-x-1 mb-4">

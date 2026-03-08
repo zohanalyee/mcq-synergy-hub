@@ -130,9 +130,18 @@ const Subjects = () => {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading subjects from your curriculum...</p>
+          <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2">
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className="rounded-2xl p-3 min-h-[100px] flex flex-col border border-border/40 bg-card/60 animate-pulse">
+                <Skeleton className="w-9 h-9 rounded-xl mb-2" />
+                <Skeleton className="h-3 w-3/4 mb-1" />
+                <Skeleton className="h-2 w-1/2 mb-2" />
+                <div className="mt-auto pt-2 border-t border-border/30 flex justify-between">
+                  <Skeleton className="h-2 w-12" />
+                  <Skeleton className="w-6 h-6 rounded-full" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : error ? (
           <div className="text-center py-12">
