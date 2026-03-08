@@ -1,8 +1,5 @@
-
 import { motion } from "framer-motion";
 import { Shield } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { ContentItem } from "@/interfaces/content";
 
 type AdminHeaderProps = {
   pendingCount: number;
@@ -14,10 +11,9 @@ type AdminHeaderProps = {
 
 const AdminHeader = ({
   pendingCount,
-  scholarshipCount,
   mcqCount,
   quizCount,
-  totalCount
+  totalCount,
 }: AdminHeaderProps) => {
   return (
     <motion.div
@@ -25,7 +21,7 @@ const AdminHeader = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
     >
-      <div className="mb-4 flex flex-col md:flex-row md:items-center justify-between gap-2">
+      <div className="mb-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold mb-1 flex items-center gap-2">
             <Shield className="h-6 w-6 text-primary" />
@@ -36,26 +32,18 @@ const AdminHeader = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="outline" className="px-2 py-1 text-xs">
-            <span className="text-primary font-semibold mr-1">
-              {pendingCount}
-            </span> Pending
-          </Badge>
-          <Badge variant="outline" className="px-2 py-1 text-xs">
-            <span className="text-primary font-semibold mr-1">
-              {mcqCount}
-            </span> MCQs
-          </Badge>
-          <Badge variant="outline" className="px-2 py-1 text-xs">
-            <span className="text-primary font-semibold mr-1">
-              {quizCount}
-            </span> Quizzes
-          </Badge>
-          <Badge variant="outline" className="px-2 py-1 text-xs">
-            <span className="text-primary font-semibold mr-1">
-              {totalCount}
-            </span> Total
-          </Badge>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+            {pendingCount} Pending
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300">
+            {mcqCount} MCQs
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
+            {quizCount} Quizzes
+          </span>
+          <span className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+            {totalCount} Total
+          </span>
         </div>
       </div>
     </motion.div>
