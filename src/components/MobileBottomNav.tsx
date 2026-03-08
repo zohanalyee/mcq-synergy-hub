@@ -115,7 +115,7 @@ const MobileBottomNav = () => {
 
                   <span className={cn(
                     "text-[9px] tracking-wide transition-colors duration-200",
-                    isActive ? cn(colors.active, "font-semibold") : "text-muted-foreground font-medium"
+                    isActive ? cn(colors.active, "font-semibold") : cn(colors.inactive, "font-medium")
                   )}>
                     {item.label}
                   </span>
