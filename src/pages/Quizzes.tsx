@@ -130,23 +130,12 @@ const Quizzes = () => {
                       {/* Subject Selection */}
                       <div className="space-y-2">
                         <Label htmlFor="subject-a">Select Subject</Label>
-                        <Select value={selectedSubjectA} onValueChange={setSelectedSubjectA}>
-                          <SelectTrigger id="subject-a">
-                            <SelectValue placeholder="Choose a subject..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {subjects.map((subject) => (
-                              <SelectItem key={subject.id} value={subject.name}>
-                                {subject.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        {subjects.length === 0 && (
-                          <p className="text-xs text-muted-foreground">
-                            No subjects available. Add subjects in Admin Panel.
-                          </p>
-                        )}
+                        <LMSSubjectSelector
+                          id="subject-a"
+                          value={selectedSubjectA}
+                          onValueChange={(val) => setSelectedSubjectA(val)}
+                          placeholder="Search & choose a subject..."
+                        />
                       </div>
                       
                       {/* Question Count */}
