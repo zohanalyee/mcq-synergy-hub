@@ -11,7 +11,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import StreakCounter from '@/components/gamification/StreakCounter';
-import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
+import { ALL_TOOLS } from '@/data/toolsData';
+import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
