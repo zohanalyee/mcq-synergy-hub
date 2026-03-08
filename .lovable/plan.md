@@ -1,54 +1,65 @@
 
 
-## Plan: Aggressive Spacing & Density Reductions
+## Admin Panel UI/UX Fix Plan
 
-### 1. Base Font Size — Apply 14px globally (not just mobile)
-**File: `src/index.css`**
-- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
+### Current Issues
+1. **Tab navigation is chaotic** — 20+ tabs in a flat, wrapping flex list with emoji icons (⭐🤖📚), inconsistent borders, and a `Link` button mixed in. Hard to scan and navigate.
+2. **No visual grouping** — Tabs have separator divs but no labels; users can't distinguish Content vs Generation vs Structure sections.
+3. **QuotaMonitor takes too much space** — Always expanded with full breakdown, pushing actual content below the fold.
+4. **AdminHeader badges are plain** — No color coding, all identical outline badges.
+5. **Duplicate analytics content** — `AdminContent.tsx` renders a hardcoded analytics card AND `AdminAnalyticsDashboard` renders via `AdminTabs`.
+6. **No spacing/breathing room** — Components are stacked tightly without visual hierarchy.
 
-### 2. Subject Grid — More columns
-**File: `src/components/subjects/SubjectGrid.tsx`**
-- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
-- Reduce gap from `gap-3` → `gap-2`
+### Plan
 
-### 3. Syllabus Builder Grid — More columns
-**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
-- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
-- Reduce gap from `gap-3` → `gap-2`
+#### 1. Redesign AdminTabs with Grouped Sections
+Replace the flat tab list with categorized groups using small section headers:
 
-### 4. Tools Page — More columns, tighter spacing
-**File: `src/pages/Tools.tsx`**
-- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
-- Gap: `gap-2.5` → `gap-2`
-- Tool card padding: `p-4` → `p-3`
-- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
-- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
+```text
+┌─────────────────────────────────────────────────┐
+│ OVERVIEW                                         │
+│ [Dashboard] [Analytics] [Inventory]              │
+│                                                  │
+│ CONTENT                                          │  
+│ [Question Bank] [Review Duplicates] [Submit]     │
+│ [Bulk Upload]                                    │
+│                                                  │
+│ AI & GENERATION                                  │
+│ [Generate MCQs] [Smart Generation] [Doc→MCQ]     │
+│ [Documents]                                      │
+│                                                  │
+│ EXTERNAL                                         │
+│ [Jobs] [Scholarships] [External Curation]        │
+│                                                  │
+│ STRUCTURE                                        │
+│ [LMS Structure] [LMS Approvals] [Subjects]       │
+│ [Topics] [Job Tests] [Navigation]                │
+└─────────────────────────────────────────────────┘
+```
 
-### 5. Index Page — Tighter sections
-**File: `src/pages/Index.tsx`**
-- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
-- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
-- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
-- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
-- Testimonials grid gap: `gap-4` → `gap-2`
-- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
-- "View All Subjects" margin: `mt-8` → `mt-4`
+- Remove emoji characters, use only Lucide icons with color coding per group (blue for overview, green for content, purple for AI, orange for external, slate for structure).
+- Remove `border-2 border-primary/20` from individual tabs.
+- Use compact `text-xs` tab triggers with colored icon dots.
 
-### 6. SubjectCard — Slightly tighter
-**File: `src/components/SubjectCard.tsx`**
-- Min-height: `min-h-[120px]` → `min-h-[100px]`
+#### 2. Improve AdminHeader Badges
+- Color-code each badge: Pending → amber, MCQs → blue, Quizzes → purple, Total → emerald.
+- Use filled badge variants with soft backgrounds.
 
-### 7. FeatureCard — Reduce padding
-**File: `src/components/FeatureCard.tsx`**
-- Card min-height: `min-h-[100px]` → remove
-- Padding: `p-3` → `p-2.5`
+#### 3. Make QuotaMonitor Collapsible
+- Default to a collapsed single-line summary showing usage bar and remaining count.
+- Expand on click to show full breakdown.
 
-### Files to edit (7 files):
-1. `src/index.css` — global 14px font
-2. `src/components/subjects/SubjectGrid.tsx` — more columns
-3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
-4. `src/pages/Tools.tsx` — denser grid
-5. `src/pages/Index.tsx` — tighter sections
-6. `src/components/SubjectCard.tsx` — smaller min-height
-7. `src/components/FeatureCard.tsx` — less padding
+#### 4. Clean Up AdminContent
+- Remove the duplicate hardcoded analytics card in `AdminContent.tsx` (lines 35-60) since `AdminAnalyticsDashboard` already handles this via the analytics tab in `AdminTabs`.
+
+#### 5. Add Proper Spacing & Polish
+- Add `space-y-5` between header, quota, and content sections.
+- Add `mt-2` margin to tab content area for breathing room.
+
+### Files to Edit
+1. **`src/components/admin/AdminTabs.tsx`** — Restructure tabs into labeled groups with colored icons, remove emojis and inconsistent borders.
+2. **`src/components/admin/AdminHeader.tsx`** — Color-coded badges.
+3. **`src/components/admin/QuotaMonitor.tsx`** — Add collapsible behavior.
+4. **`src/components/admin/AdminContent.tsx`** — Remove duplicate analytics block.
+5. **`src/pages/AdminPanel.tsx`** — Adjust spacing between sections.
 
