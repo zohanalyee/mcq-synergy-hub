@@ -1,9 +1,11 @@
 
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { BookOpen, ArrowRight } from "lucide-react";
+import { BookOpen, ArrowRight, WifiOff } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
+import { getSyncStatus } from "@/services/offlineSyncService";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 
 interface SubjectCardProps {
   title: string;

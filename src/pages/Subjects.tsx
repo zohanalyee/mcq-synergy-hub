@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 
 const Subjects = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
+  const [syncProgress, setSyncProgress] = useState<{ synced: number; total: number } | null>(null);
   const {
     systems,
     availableLevels,
@@ -29,6 +31,32 @@ const Subjects = () => {
     isFiltered,
     totalCount
   } = useSubjectsPageData();
+
+  // Background sync for offline access
+  useEffect(() => {
+    if (loading || subjects.length === 0) return;
+
+    const subjectsToSync = subjects
+      .filter(s => s.id)
+      .map(s => ({ id: s.id, title: s.title }));
+
+    if (subjectsToSync.length === 0) return;
+
+    toast({
+      title: "📥 Syncing for offline",
+      description: `Caching questions for ${subjectsToSync.length} subjects...`,
+    });
+
+    syncAllSubjects(subjectsToSync, (synced, total) => {
+      setSyncProgress({ synced, total });
+    }).then(() => {
+      setSyncProgress(null);
+      toast({
+        title: "✅ Offline sync complete",
+        description: "Questions are now available offline",
+      });
+    });
+  }, [loading, subjects.length]);
 
   // Handle smart search selection - navigate to subject content page
   const handleSmartSearchSelect = (item: GlobalSearchResult) => {
