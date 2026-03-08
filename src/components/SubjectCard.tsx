@@ -90,6 +90,7 @@ const SubjectCard = ({
   const navigate = useNavigate();
   
   const theme = getSubjectTheme(title, color);
+  const syncStatus = id ? getSyncStatus(id) : { synced: false, count: 0, lastSync: null };
   
   // Render icon with white color for the squircle container
   const renderIcon = () => {
