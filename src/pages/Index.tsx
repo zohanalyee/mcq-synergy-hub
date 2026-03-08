@@ -434,40 +434,42 @@ const Home = () => {
       </motion.section>
       
       {/* Footer */}
-      <footer className="py-6 border-t">
+      <footer className="py-8 border-t bg-muted/30">
         <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div>
-              <h3 className="text-sm font-semibold mb-2">MCQs Point</h3>
+              <h3 className="text-sm font-bold mb-2 text-gradient">MCQs Point</h3>
               <p className="text-xs text-muted-foreground">Your intelligent companion for MCQ-based test preparation.</p>
             </div>
             <div>
               <h3 className="text-sm font-semibold mb-2">Quick Links</h3>
-              <ul className="space-y-1">
-                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Home</a></li>
-                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Subjects</a></li>
-                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Recruitment Tests</a></li>
-                <li><a href="#" className="text-xs text-muted-foreground hover:text-foreground transition-colors">Analytics</a></li>
+              <ul className="space-y-1.5">
+                <li><button onClick={() => navigate('/')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Home</button></li>
+                <li><button onClick={() => navigate('/subjects')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Subjects</button></li>
+                <li><button onClick={() => navigate('/mock-tests')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Recruitment Tests</button></li>
+                <li><button onClick={() => navigate('/analytics')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Analytics</button></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Resources</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Guides</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">FAQ</a></li>
-                <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Support</a></li>
+              <h3 className="text-sm font-semibold mb-2">Resources</h3>
+              <ul className="space-y-1.5">
+                <li><button onClick={() => navigate('/quizzes')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Quizzes</button></li>
+                <li><button onClick={() => navigate('/custom-syllabus')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Custom Syllabus</button></li>
+                <li><button onClick={() => navigate('/feedback')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Feedback</button></li>
+                <li><button onClick={() => navigate('/tools')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Tools</button></li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold mb-4">Contact</h3>
-              <ul className="space-y-2">
-                <li className="text-muted-foreground">contact@mcqspoint.com</li>
-                <li className="text-muted-foreground">+1 (555) 123-4567</li>
+              <h3 className="text-sm font-semibold mb-2">More</h3>
+              <ul className="space-y-1.5">
+                <li><button onClick={() => navigate('/jobs')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Jobs</button></li>
+                <li><button onClick={() => navigate('/scholarships')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Scholarships</button></li>
+                <li><button onClick={() => navigate('/leaderboard')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Leaderboard</button></li>
+                <li><button onClick={() => navigate('/ask-document')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Ask Docs</button></li>
               </ul>
             </div>
           </div>
-          <div className="mt-12 pt-8 border-t text-center text-muted-foreground text-sm">
+          <div className="mt-6 pt-4 border-t text-center text-muted-foreground text-xs">
             <p>© {new Date().getFullYear()} MCQs Point. All rights reserved.</p>
           </div>
         </div>
