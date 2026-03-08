@@ -94,21 +94,21 @@ const Home = () => {
       title: "Competitive Exams",
       description: "Practice full-length job recruitment and exam simulations",
       icon: <Timer size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-blue-600 to-blue-400 text-white",
+      bgClass: "bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all duration-300 text-white",
       route: "/mock-tests"
     },
     {
       title: "Subject-wise Practice",
       description: "Focus on specific subjects to strengthen your knowledge",
       icon: <BookOpen size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-purple-600 to-purple-400 text-white",
+      bgClass: "bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all duration-300 text-white",
       route: "/subjects"
     },
     {
       title: "Custom Syllabus Builder",
       description: "Create your own syllabus by selecting from multiple subjects and topics",
       icon: <ListChecks size={32} className="text-white" />,
-      bgClass: "bg-gradient-to-br from-amber-600 to-amber-400 text-white",
+      bgClass: "bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 transition-all duration-300 text-white",
       route: "/custom-syllabus"
     }
   ];
@@ -185,9 +185,14 @@ const Home = () => {
         variants={sectionReveal}
         initial="hidden"
         animate="visible"
-        className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden"
+        className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950"
       >
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
+        {/* Pakistani heritage background overlay */}
+        <div
+          className="absolute inset-0 bg-cover bg-center opacity-[0.12] mix-blend-overlay pointer-events-none"
+          style={{ backgroundImage: "url('/images/hero-bg-pakistan.jpg')" }}
+        />
+        
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
             <motion.div
@@ -195,8 +200,8 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <span className="hidden md:inline px-2.5 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full">
-                Prepare Smarter, Score Higher
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-white/90 rounded-full border border-indigo-400/50 bg-indigo-500/20 backdrop-blur-sm shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+                ✨ AI-Powered Platform
               </span>
             </motion.div>
             
@@ -204,18 +209,22 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight"
+              className="text-xl md:text-4xl lg:text-5xl font-bold mt-3 mb-2 md:mt-5 md:mb-4 tracking-tight text-white"
             >
-              Master MCQs with <span className="text-gradient text-gradient-animated">Precision</span> and <span className="text-gradient text-gradient-animated">Confidence</span>
+              Conquer Your Exams with{" "}
+              <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+                AI-Driven
+              </span>{" "}
+              Precision
             </motion.h1>
             
             <motion.p
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto"
+              className="hidden md:block text-base text-white/70 mb-6 max-w-2xl mx-auto"
             >
-              Personalize your test preparation with custom syllabi, analytics-driven insights, and adaptive learning.
+              Pakistan's smartest MCQ platform. Personalize your syllabus, get instant RAG-based question generation, and track your progress in real-time.
             </motion.p>
             
             <motion.div
@@ -224,8 +233,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mb-2 md:mb-6"
             >
-              <h2 className="hidden md:block text-xl font-bold mb-3">Prepare Your Way</h2>
-              {/* Hero Cards - Stack on mobile, row on desktop */}
+              <h2 className="hidden md:block text-xl font-bold mb-3 text-white">Prepare Your Way</h2>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 md:gap-4">
                 {testCategories.map((category, index) => (
                   <TestCategoryCard
@@ -239,7 +247,6 @@ const Home = () => {
                 ))}
               </div>
               
-              {/* Stats Section */}
               <HeroStatsSection />
             </motion.div>
             
@@ -250,12 +257,12 @@ const Home = () => {
               className="hidden sm:flex flex-row gap-3 justify-center"
             >
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
+                <Button size="default" className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white border-0 shadow-lg shadow-indigo-500/25" onClick={() => navigate('/get-started')}>
                   Get Started
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="default" variant="outline" onClick={() => navigate('/subjects')}>
+                <Button size="default" variant="outline" className="border-white/30 text-white hover:bg-white/10 hover:text-white" onClick={() => navigate('/subjects')}>
                   Explore Subjects
                 </Button>
               </motion.div>
@@ -263,23 +270,23 @@ const Home = () => {
           </div>
         </div>
         
-        {/* Floating elements */}
-        <div className="absolute top-1/2 left-10 transform -translate-y-1/2 hidden lg:block">
+        {/* Floating glow orbs */}
+        <div className="absolute top-1/3 left-10 hidden lg:block">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            transition={{ duration: 1, delay: 0.5 }}
-            className="w-32 h-32 rounded-full bg-primary/20 backdrop-blur-sm"
-            style={{ filter: 'blur(40px)' }}
+            animate={{ opacity: 0.4 }}
+            transition={{ duration: 1.5, delay: 0.5 }}
+            className="w-36 h-36 rounded-full bg-indigo-500/30"
+            style={{ filter: 'blur(60px)' }}
           />
         </div>
-        <div className="absolute bottom-20 right-10 hidden lg:block">
+        <div className="absolute bottom-16 right-10 hidden lg:block">
           <motion.div
             initial={{ opacity: 0 }}
-            animate={{ opacity: 0.6 }}
-            transition={{ duration: 1, delay: 0.7 }}
-            className="w-40 h-40 rounded-full bg-accent/20 backdrop-blur-sm"
-            style={{ filter: 'blur(40px)' }}
+            animate={{ opacity: 0.3 }}
+            transition={{ duration: 1.5, delay: 0.7 }}
+            className="w-44 h-44 rounded-full bg-emerald-500/20"
+            style={{ filter: 'blur(60px)' }}
           />
         </div>
       </motion.section>

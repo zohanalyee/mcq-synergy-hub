@@ -1,32 +1,54 @@
 
 
-## Hero Section Redesign: AI Branding + Pakistani Heritage
+## Plan: Aggressive Spacing & Density Reductions
 
-### Files to Edit
+### 1. Base Font Size — Apply 14px globally (not just mobile)
+**File: `src/index.css`**
+- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
 
-**1. `src/pages/Index.tsx`** (Hero section, lines 183-290)
-- Replace the light gradient background with a dark slate-to-indigo gradient: `bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950`
-- Add a background image layer with the Unsplash Pakistani monument photo at 10-15% opacity using `mix-blend-overlay`
-- Replace the pill badge text with "✨ AI-Powered Platform" and style it with a glowing blue/purple border (`shadow-[0_0_15px_rgba(99,102,241,0.5)] border border-indigo-400/50`)
-- Update H1 to: "Conquer Your Exams with AI-Driven Precision" — wrap "AI-Driven" in a vibrant gradient span
-- Update subheadline text to the Pakistan-focused copy
-- Force all text in the hero to white (`text-white`) since the background is now dark
-- Update CTA buttons: primary gets a bright gradient style, outline gets `border-white/30 text-white`
-- Update `testCategories` bgClass from solid gradients to glassmorphism: `bg-white/10 backdrop-blur-lg border border-white/20 hover:bg-white/20 text-white`
-- Replace floating blur circles with subtle indigo/emerald glow orbs
+### 2. Subject Grid — More columns
+**File: `src/components/subjects/SubjectGrid.tsx`**
+- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
+- Reduce gap from `gap-3` → `gap-2`
 
-**2. `src/components/TestCategoryCard.tsx`**
-- Since bgClass now passes glass styles, ensure the Card properly applies them (it already does via `${bgClass}`)
-- No structural changes needed — the glass classes will flow through
+### 3. Syllabus Builder Grid — More columns
+**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
+- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
+- Reduce gap from `gap-3` → `gap-2`
 
-**3. `src/components/home/HeroStatsSection.tsx`**
-- Update stat card gradients to glass style: replace solid gradients with `from-white/10 to-white/5` and add `backdrop-blur-md border border-white/20`
-- Keep the progress bar and icon styling but ensure white text contrast
+### 4. Tools Page — More columns, tighter spacing
+**File: `src/pages/Tools.tsx`**
+- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
+- Gap: `gap-2.5` → `gap-2`
+- Tool card padding: `p-4` → `p-3`
+- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
+- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
 
-### Visual Result
-- Dark, immersive hero with a faint Pakistani monument texture
-- Glowing "AI-Powered Platform" badge
-- Bold headline with gradient "AI-Driven" text
-- Glass-effect action cards and stat cards floating over the dark background
-- Premium, futuristic EdTech feel rooted in Pakistani identity
+### 5. Index Page — Tighter sections
+**File: `src/pages/Index.tsx`**
+- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
+- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
+- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
+- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
+- Testimonials grid gap: `gap-4` → `gap-2`
+- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
+- "View All Subjects" margin: `mt-8` → `mt-4`
+
+### 6. SubjectCard — Slightly tighter
+**File: `src/components/SubjectCard.tsx`**
+- Min-height: `min-h-[120px]` → `min-h-[100px]`
+
+### 7. FeatureCard — Reduce padding
+**File: `src/components/FeatureCard.tsx`**
+- Card min-height: `min-h-[100px]` → remove
+- Padding: `p-3` → `p-2.5`
+
+### Files to edit (7 files):
+1. `src/index.css` — global 14px font
+2. `src/components/subjects/SubjectGrid.tsx` — more columns
+3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
+4. `src/pages/Tools.tsx` — denser grid
+5. `src/pages/Index.tsx` — tighter sections
+6. `src/components/SubjectCard.tsx` — smaller min-height
+7. `src/components/FeatureCard.tsx` — less padding
 

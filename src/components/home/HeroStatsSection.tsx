@@ -19,8 +19,8 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, delay }}
     className={`relative overflow-hidden rounded-2xl p-3 md:p-4
-               bg-gradient-to-br ${gradient}
-               shadow-md hover:shadow-lg transition-all duration-300 text-white`}
+               bg-gradient-to-br ${gradient} backdrop-blur-md border border-white/20
+               shadow-md hover:shadow-lg hover:bg-white/15 transition-all duration-300 text-white`}
   >
     <div className="absolute inset-0 bg-white/10 opacity-0 hover:opacity-100 transition-opacity" />
     
@@ -69,28 +69,28 @@ const HeroStatsSection = () => {
       icon: <Clock className="w-4 h-4 md:w-5 md:h-5" />,
       value: formatStudyTime(totalStudyMinutes),
       label: "Total Study Time",
-      gradient: "from-blue-500 via-blue-600 to-indigo-600",
+      gradient: "from-white/10 to-white/5",
       progress: Math.min((totalStudyMinutes / 600) * 100, 100),
     },
     {
       icon: <CheckCircle className="w-4 h-4 md:w-5 md:h-5" />,
       value: testsCompleted.toString(),
       label: "Tests Completed",
-      gradient: "from-purple-500 via-purple-600 to-fuchsia-600",
+      gradient: "from-white/10 to-white/5",
       progress: Math.min((testsCompleted / 50) * 100, 100),
     },
     {
       icon: <Target className="w-4 h-4 md:w-5 md:h-5" />,
       value: `${accuracyRate}%`,
       label: "Accuracy Rate",
-      gradient: "from-orange-500 via-red-500 to-pink-500",
+      gradient: "from-white/10 to-white/5",
       progress: accuracyRate,
     },
     {
       icon: <HelpCircle className="w-4 h-4 md:w-5 md:h-5" />,
       value: questionsAnswered.toString(),
       label: "Questions Answered",
-      gradient: "from-teal-500 via-cyan-500 to-blue-500",
+      gradient: "from-white/10 to-white/5",
       progress: Math.min((questionsAnswered / 500) * 100, 100),
     },
   ];
