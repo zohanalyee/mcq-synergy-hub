@@ -223,14 +223,7 @@ const HeaderContent = ({
         
         {/* Main Content - Below header */}
         <main className="flex-1 overflow-x-hidden pb-mobile-nav mt-14">
-          <motion.div
-            key={typeof window !== 'undefined' ? window.location.pathname : ''}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-          >
-            {children}
-          </motion.div>
+          {children}
         </main>
       </div>
     </div>
