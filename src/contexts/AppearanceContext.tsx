@@ -104,7 +104,7 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     const loadCloudSettings = async () => {
       try {
         // Fetch global settings
-        const { data: globalData } = await supabase
+        const { data: globalData } = await (supabase as any)
           .from('global_appearance_settings')
           .select('settings')
           .eq('key', 'default')
