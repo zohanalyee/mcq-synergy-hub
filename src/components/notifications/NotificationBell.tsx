@@ -83,9 +83,9 @@ const NotificationBell = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9 rounded-full hover:bg-muted/50 transition-colors"
+          className="relative h-9 w-9 rounded-full hover:bg-amber-50 dark:hover:bg-amber-500/10 transition-colors"
         >
-          <Bell className="h-5 w-5 text-muted-foreground hover:text-foreground transition-colors" />
+          <Bell className="h-5 w-5 text-amber-500 hover:text-amber-600 transition-colors" />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 h-4 min-w-4 px-1 flex items-center justify-center rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold animate-pulse">
               {unreadCount > 9 ? '9+' : unreadCount}
