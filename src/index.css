@@ -620,3 +620,12 @@ html {
     transform: translateX(0);
   }
 }
+
+@keyframes gradient-shimmer {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
