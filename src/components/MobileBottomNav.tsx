@@ -1,6 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, BookOpen, Briefcase, ListChecks, Shield, LogOut, Settings, User, MessageSquare, LayoutDashboard, Sun, Moon } from 'lucide-react';
-import { motion, LayoutGroup } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,34 +17,20 @@ import { Separator } from '@/components/ui/separator';
 import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 
-// Color configuration for each tab
 const TAB_COLORS = {
-  home: {
-    active: 'text-blue-500',
-    bg: 'bg-blue-500/10',
-    ring: 'ring-blue-500',
-  },
-  subjects: {
-    active: 'text-emerald-500',
-    bg: 'bg-emerald-500/10',
-    ring: 'ring-emerald-500',
-  },
-  recruitment: {
-    active: 'text-orange-500',
-    bg: 'bg-orange-500/10',
-    ring: 'ring-orange-500',
-  },
-  syllabus: {
-    active: 'text-purple-500',
-    bg: 'bg-purple-500/10',
-    ring: 'ring-purple-500',
-  },
-  profile: {
-    active: 'text-indigo-500',
-    bg: 'bg-indigo-500/10',
-    ring: 'ring-indigo-500',
-  },
+  home: { active: 'text-blue-500', dot: 'bg-blue-500' },
+  subjects: { active: 'text-emerald-500', dot: 'bg-emerald-500' },
+  recruitment: { active: 'text-orange-500', dot: 'bg-orange-500' },
+  syllabus: { active: 'text-purple-500', dot: 'bg-purple-500' },
+  profile: { active: 'text-indigo-500', dot: 'bg-indigo-500' },
 } as const;
+
+const navItems = [
+  { icon: Home, label: 'Home', path: '/', colorKey: 'home' as const },
+  { icon: BookOpen, label: 'Subjects', path: '/subjects', colorKey: 'subjects' as const },
+  { icon: Briefcase, label: 'Tests', path: '/mock-tests', colorKey: 'recruitment' as const },
+  { icon: ListChecks, label: 'Syllabus', path: '/custom-syllabus', colorKey: 'syllabus' as const },
+];
 
 const MobileBottomNav = () => {
   const location = useLocation();
@@ -61,31 +47,14 @@ const MobileBottomNav = () => {
 
   useEffect(() => {
     const root = window.document.documentElement;
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    } else {
-      root.classList.remove('dark');
-    }
+    root.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
   if (!isMobile) return null;
 
-  const getInitials = (email?: string) => {
-    if (!email) return 'U';
-    return email.charAt(0).toUpperCase();
-  };
-
-  const getDisplayName = () => {
-    if (profile?.username) return profile.username;
-    if (user?.email) return user.email.split('@')[0];
-    return 'User';
-  };
-
+  const getInitials = (email?: string) => email?.charAt(0).toUpperCase() || 'U';
+  const getDisplayName = () => profile?.username || user?.email?.split('@')[0] || 'User';
   const showAskDocsNew = !localStorage.getItem('visited_ask_docs');
 
   const handleProfileAction = (path: string) => {
@@ -99,207 +68,173 @@ const MobileBottomNav = () => {
     await signOut();
   };
 
-  const handleOpenSettings = () => {
-    setProfileSheetOpen(false);
-    setSettingsOpen(true);
-  };
-
-  // Updated nav items with color keys
-  const navItems = [
-    { icon: Home, label: 'Home', path: '/', colorKey: 'home' as const },
-    { icon: BookOpen, label: 'Subjects', path: '/subjects', colorKey: 'subjects' as const },
-    { icon: Briefcase, label: 'Tests', path: '/mock-tests', colorKey: 'recruitment' as const },
-    { icon: ListChecks, label: 'Syllabus', path: '/custom-syllabus', colorKey: 'syllabus' as const },
-  ];
-
   const isProfileActive = location.pathname === '/profile' || location.pathname === '/dashboard';
 
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/40 safe-area-pb">
-        <LayoutGroup>
-        <div className="flex items-center justify-around h-16 px-1">
-          {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
-            const colors = TAB_COLORS[item.colorKey];
-            
-            return (
-              <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
-                className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-300",
-                  isActive ? colors.active : "text-slate-400"
-                )}
-              >
-                {/* Sliding active indicator pill */}
-                {isActive && (
-                  <motion.div
-                    layoutId="bottomNavIndicator"
-                    className={cn("absolute inset-x-2 top-1.5 bottom-1.5 rounded-xl", colors.bg)}
-                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
-                  />
-                )}
-                
-                <item.icon className={cn(
-                  "relative z-10 h-5 w-5 transition-all duration-300",
-                  isActive && "scale-110"
-                )} />
-                <span className={cn(
-                  "relative z-10 text-[10px] font-medium transition-all duration-300",
-                  isActive && "font-semibold"
-                )}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-pb">
+        {/* Glassmorphism bar */}
+        <div className="bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-t border-white/20 dark:border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+          <div className="flex items-center justify-around h-14 px-2">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              const colors = TAB_COLORS[item.colorKey];
 
-          {/* Profile Tab with Sheet Menu */}
-          <Sheet open={profileSheetOpen} onOpenChange={setProfileSheetOpen}>
-            <SheetTrigger asChild>
-              <button
-                className={cn(
-                  "relative flex flex-col items-center justify-center gap-0.5 w-16 h-full transition-all duration-300",
-                  isProfileActive ? TAB_COLORS.profile.active : "text-slate-400"
-                )}
-              >
-                {/* Background pill glow for active state */}
-                <div className={cn(
-                  "absolute inset-x-2 top-1.5 bottom-1.5 rounded-xl transition-all duration-300",
-                  isProfileActive ? TAB_COLORS.profile.bg : "bg-transparent"
-                )} />
-                
-                <Avatar className={cn(
-                  "relative z-10 h-6 w-6 transition-all duration-300",
-                  isProfileActive 
-                    ? "ring-2 ring-indigo-500 ring-offset-1 ring-offset-background scale-110" 
-                    : "ring-1 ring-slate-300 dark:ring-slate-600"
-                )}>
-                  <AvatarImage src={profile?.avatar_url || ''} />
-                  <AvatarFallback className={cn(
-                    "text-[10px] font-medium",
-                    isProfileActive 
-                      ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white"
-                      : "bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400"
-                  )}>
-                    {getInitials(user?.email)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className={cn(
-                  "relative z-10 text-[10px] font-medium transition-all duration-300",
-                  isProfileActive && "font-semibold"
-                )}>
-                  Profile
-                </span>
-              </button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-3xl pb-safe">
-              <SheetHeader className="pb-2">
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                    <AvatarImage src={profile?.avatar_url || ''} />
-                    <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium">
-                      {getInitials(user?.email)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col text-left">
-                    <SheetTitle className="text-base">{getDisplayName()}</SheetTitle>
-                    <span className="text-xs text-muted-foreground">{user?.email}</span>
-                  </div>
-                </div>
-              </SheetHeader>
-              
-              <Separator className="my-3" />
-              
-              <div className="space-y-1">
-                <button
-                  onClick={() => handleProfileAction('/dashboard')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+              return (
+                <motion.button
+                  key={item.path}
+                  onClick={() => navigate(item.path)}
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                  className="relative flex flex-col items-center justify-center gap-0.5 w-14 h-full"
                 >
-                  <LayoutDashboard className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm font-medium">Dashboard</span>
-                </button>
-                
-                {isAdmin && (
+                  {/* Dot indicator */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="navDot"
+                      className={cn("absolute top-1 w-4 h-[3px] rounded-full", colors.dot)}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                  )}
+
+                  {/* Icon with lift animation */}
+                  <motion.div
+                    animate={{ y: isActive ? -1 : 0 }}
+                    transition={{ type: 'spring', stiffness: 300, damping: 20 }}
+                  >
+                    <item.icon
+                      className={cn(
+                        "h-5 w-5 transition-colors duration-200",
+                        isActive ? colors.active : "text-muted-foreground"
+                      )}
+                      strokeWidth={isActive ? 2.5 : 1.8}
+                      fill={isActive ? 'currentColor' : 'none'}
+                      fillOpacity={isActive ? 0.15 : 0}
+                    />
+                  </motion.div>
+
+                  <span className={cn(
+                    "text-[9px] tracking-wide transition-colors duration-200",
+                    isActive ? cn(colors.active, "font-semibold") : "text-muted-foreground font-medium"
+                  )}>
+                    {item.label}
+                  </span>
+                </motion.button>
+              );
+            })}
+
+            {/* Profile Tab */}
+            <Sheet open={profileSheetOpen} onOpenChange={setProfileSheetOpen}>
+              <SheetTrigger asChild>
+                <motion.button
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 17 }}
+                  className="relative flex flex-col items-center justify-center gap-0.5 w-14 h-full"
+                >
+                  {isProfileActive && (
+                    <motion.div
+                      layoutId="navDot"
+                      className={cn("absolute top-1 w-4 h-[3px] rounded-full", TAB_COLORS.profile.dot)}
+                      transition={{ type: 'spring', stiffness: 500, damping: 30 }}
+                    />
+                  )}
+
+                  <motion.div animate={{ y: isProfileActive ? -1 : 0 }} transition={{ type: 'spring', stiffness: 300, damping: 20 }}>
+                    <Avatar className={cn(
+                      "h-5 w-5 transition-all duration-200",
+                      isProfileActive
+                        ? "ring-[1.5px] ring-indigo-500 ring-offset-1 ring-offset-background"
+                        : "ring-1 ring-border"
+                    )}>
+                      <AvatarImage src={profile?.avatar_url || ''} />
+                      <AvatarFallback className={cn(
+                        "text-[8px] font-medium",
+                        isProfileActive
+                          ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white"
+                          : "bg-muted text-muted-foreground"
+                      )}>
+                        {getInitials(user?.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                  </motion.div>
+
+                  <span className={cn(
+                    "text-[9px] tracking-wide transition-colors duration-200",
+                    isProfileActive ? "text-indigo-500 font-semibold" : "text-muted-foreground font-medium"
+                  )}>
+                    You
+                  </span>
+                </motion.button>
+              </SheetTrigger>
+              <SheetContent side="bottom" className="rounded-t-3xl pb-safe">
+                <SheetHeader className="pb-2">
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-12 w-12 ring-2 ring-primary/20">
+                      <AvatarImage src={profile?.avatar_url || ''} />
+                      <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium">
+                        {getInitials(user?.email)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col text-left">
+                      <SheetTitle className="text-base">{getDisplayName()}</SheetTitle>
+                      <span className="text-xs text-muted-foreground">{user?.email}</span>
+                    </div>
+                  </div>
+                </SheetHeader>
+                <Separator className="my-3" />
+                <div className="space-y-1">
+                  {[
+                    { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard', iconClass: 'text-muted-foreground' },
+                    ...(isAdmin ? [{ path: '/admin', icon: Shield, label: 'Admin Panel', iconClass: 'text-primary' }] : []),
+                    { path: '/profile', icon: User, label: 'Profile', iconClass: 'text-muted-foreground' },
+                    { path: '/feedback', icon: MessageSquare, label: 'Feedback', iconClass: 'text-muted-foreground' },
+                  ].map((item) => (
+                    <button
+                      key={item.path}
+                      onClick={() => handleProfileAction(item.path)}
+                      className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
+                    >
+                      <item.icon className={cn("h-5 w-5", item.iconClass)} />
+                      <span className="text-sm font-medium">{item.label}</span>
+                    </button>
+                  ))}
+
                   <button
-                    onClick={() => handleProfileAction('/admin')}
+                    onClick={() => handleProfileAction('/ask-document')}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
                   >
-                    <Shield className="h-5 w-5 text-primary" />
-                    <span className="text-sm font-medium">Admin Panel</span>
+                    <BookOpen className="h-5 w-5 text-emerald-600" />
+                    <span className="text-sm font-medium">Ask Docs</span>
+                    {showAskDocsNew && (
+                      <span className="ml-auto text-[10px] px-1.5 py-0 rounded-full bg-emerald-500 text-white font-semibold">NEW</span>
+                    )}
                   </button>
-                )}
-                
-                <button
-                  onClick={() => handleProfileAction('/profile')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
-                >
-                  <User className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm font-medium">Profile</span>
-                </button>
-                
-                <button
-                  onClick={() => handleProfileAction('/feedback')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
-                >
-                  <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm font-medium">Feedback</span>
-                </button>
-                
-                <button
-                  onClick={() => handleProfileAction('/ask-document')}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
-                >
-                  <BookOpen className="h-5 w-5 text-emerald-600" />
-                  <span className="text-sm font-medium">Ask Docs</span>
-                  {showAskDocsNew && (
-                    <span className="ml-auto text-[10px] px-1.5 py-0 rounded-full bg-emerald-500 text-white font-semibold">NEW</span>
-                  )}
-                </button>
-                
-                <Separator className="my-2" />
-                
-                <button
-                  onClick={handleOpenSettings}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
-                >
-                  <Settings className="h-5 w-5 text-muted-foreground" />
-                  <span className="text-sm font-medium">Settings</span>
-                </button>
-                
-                {/* Theme Toggle */}
-                <button
-                  onClick={toggleTheme}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left"
-                >
-                  {theme === 'dark' ? (
-                    <Sun className="h-5 w-5 text-primary" />
-                  ) : (
-                    <Moon className="h-5 w-5 text-muted-foreground" />
-                  )}
-                  <span className="text-sm font-medium">
-                    {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-                  </span>
-                </button>
-                
-                <Separator className="my-2" />
-                
-                <button
-                  onClick={handleSignOut}
-                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 transition-colors text-left text-destructive"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="text-sm font-medium">Sign Out</span>
-                </button>
-              </div>
-            </SheetContent>
-          </Sheet>
+
+                  <Separator className="my-2" />
+
+                  <button onClick={() => { setProfileSheetOpen(false); setSettingsOpen(true); }} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left">
+                    <Settings className="h-5 w-5 text-muted-foreground" />
+                    <span className="text-sm font-medium">Settings</span>
+                  </button>
+
+                  <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-muted transition-colors text-left">
+                    {theme === 'dark' ? <Sun className="h-5 w-5 text-primary" /> : <Moon className="h-5 w-5 text-muted-foreground" />}
+                    <span className="text-sm font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                  </button>
+
+                  <Separator className="my-2" />
+
+                  <button onClick={handleSignOut} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-destructive/10 transition-colors text-left text-destructive">
+                    <LogOut className="h-5 w-5" />
+                    <span className="text-sm font-medium">Sign Out</span>
+                  </button>
+                </div>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
-        </LayoutGroup>
       </nav>
 
-      {/* Settings Dialog */}
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
   );
