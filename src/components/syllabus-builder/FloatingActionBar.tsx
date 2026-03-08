@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Settings, Sparkles, Bookmark, Zap, SlidersHorizontal } from 'lucide-react';
+import { Settings, Sparkles, Bookmark, Zap, SlidersHorizontal, X } from 'lucide-react';
 import { QuizSettings, SyllabusSubject } from './interfaces';
 import { TopicsSelectorModal } from './TopicsSelectorModal';
 
@@ -52,6 +52,16 @@ export const FloatingActionBar = ({
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [templateName, setTemplateName] = useState('');
   const [topicsModalOpen, setTopicsModalOpen] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const prevTopicsCount = useRef(selectedTopicsCount);
+
+  // Re-show bar when selection changes
+  useEffect(() => {
+    if (selectedTopicsCount !== prevTopicsCount.current) {
+      setDismissed(false);
+      prevTopicsCount.current = selectedTopicsCount;
+    }
+  }, [selectedTopicsCount]);
 
   const availableInBank = useMemo(() => {
     return selectedTopicIds.reduce((sum, id) => sum + (topicQuestionCounts[id] || 0), 0);
@@ -75,7 +85,7 @@ export const FloatingActionBar = ({
 
   const floatingBar = (
     <AnimatePresence>
-      {selectedTopicsCount > 0 && (
+      {selectedTopicsCount > 0 && !dismissed && (
         <motion.div
           initial={{ y: 100, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
@@ -85,6 +95,14 @@ export const FloatingActionBar = ({
         >
           <div className="bg-slate-900/90 backdrop-blur-xl border border-blue-500/30 px-3 py-2 rounded-xl shadow-[0_0_30px_rgba(59,130,246,0.15)]">
             <div className="flex items-center gap-2">
+              {/* Close button */}
+              <button
+                onClick={() => setDismissed(true)}
+                className="h-5 w-5 shrink-0 flex items-center justify-center rounded-full text-blue-300 hover:text-white hover:bg-blue-700/50 transition-colors"
+                aria-label="Close action bar"
+              >
+                <X className="h-3 w-3" />
+              </button>
               {/* Stats badges */}
               <Badge variant="secondary" className="px-1.5 py-0.5 text-[10px] whitespace-nowrap bg-blue-950/60 border-blue-500/20 text-blue-200 shrink-0">
                 <span className="text-blue-400 font-bold mr-0.5">{selectedSubjectsCount}</span>S
