@@ -2,7 +2,7 @@ import {
   Calculator, Calendar, Timer, StickyNote, GraduationCap, ArrowLeftRight,
   Activity, Percent, DollarSign, CreditCard, CalendarDays, Fuel, Receipt,
   Landmark, Tag, TrendingUp, TrendingDown, Award, PenTool, UserCheck,
-  FileCheck, BookOpen, Grid3X3, Divide, Equal, LineChart,
+  FileCheck, BookOpen, Grid3X3, Divide, Equal, LineChart, FileImage,
   Key, Type, Hash, CaseSensitive, User, Palette, Image, FileText,
   Clock, Globe, Shuffle, Heart, Hourglass, Maximize, Binary,
   Thermometer, Gauge, Square, Atom, QrCode, Coins,
