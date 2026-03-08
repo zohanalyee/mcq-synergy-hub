@@ -117,7 +117,7 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
 
         if (user?.id) {
           // Fetch user override
-          const { data: userData } = await supabase
+          const { data: userData } = await (supabase as any)
             .from('user_appearance_settings')
             .select('settings')
             .eq('user_id', user.id)
