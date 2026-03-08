@@ -240,43 +240,26 @@ const Quizzes = () => {
                       {/* Subject Selection */}
                       <div className="space-y-2">
                         <Label htmlFor="subject-b">Select Subject</Label>
-                        <Select value={selectedSubjectB} onValueChange={setSelectedSubjectB}>
-                          <SelectTrigger id="subject-b">
-                            <SelectValue placeholder="Choose a subject..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {subjects.map((subject) => (
-                              <SelectItem key={subject.id} value={subject.name}>
-                                {subject.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <LMSSubjectSelector
+                          id="subject-b"
+                          value={selectedSubjectB}
+                          onValueChange={(val) => setSelectedSubjectB(val)}
+                          placeholder="Search & choose a subject..."
+                        />
                       </div>
                       
                       {/* Topic Selection */}
                       <div className="space-y-2">
                         <Label htmlFor="topic-b">Select Topic</Label>
-                        <Select 
-                          value={selectedTopicB} 
+                        <LMSTopicSelector
+                          id="topic-b"
+                          topics={availableTopics}
+                          value={selectedTopicB}
                           onValueChange={setSelectedTopicB}
                           disabled={!selectedSubjectB}
-                        >
-                          <SelectTrigger id="topic-b">
-                            <SelectValue placeholder={
-                              selectedSubjectB 
-                                ? "Choose a topic..." 
-                                : "Select a subject first"
-                            } />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableTopics.map((topic) => (
-                              <SelectItem key={topic.id} value={topic.name}>
-                                {topic.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                          placeholder="Search & choose a topic..."
+                          disabledPlaceholder="Select a subject first"
+                        />
                         {selectedSubjectB && availableTopics.length === 0 && (
                           <p className="text-xs text-muted-foreground">
                             No topics available for this subject.
