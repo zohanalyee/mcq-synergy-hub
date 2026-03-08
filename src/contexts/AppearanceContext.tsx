@@ -266,7 +266,7 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
 
     if (user?.id) {
       try {
-        await supabase
+        await (supabase as any)
           .from('user_appearance_settings')
           .delete()
           .eq('user_id', user.id);
