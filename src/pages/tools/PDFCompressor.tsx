@@ -115,7 +115,7 @@ const PDFCompressor = () => {
       setProgressLabel('Finalizing...');
       await new Promise(r => setTimeout(r, 300));
 
-      const blob = new Blob([compressedBytes], { type: 'application/pdf' });
+      const blob = new Blob([compressedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const originalSize = file.size;
       const compressedSize = blob.size;

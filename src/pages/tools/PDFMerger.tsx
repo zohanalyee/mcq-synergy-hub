@@ -121,7 +121,7 @@ const PDFMerger = () => {
       setProgressLabel('Saving merged PDF...');
 
       const mergedBytes = await mergedDoc.save({ useObjectStreams: true });
-      const blob = new Blob([mergedBytes], { type: 'application/pdf' });
+      const blob = new Blob([mergedBytes.buffer as ArrayBuffer], { type: 'application/pdf' });
       const url = URL.createObjectURL(blob);
       const totalSize = pdfFiles.reduce((a, f) => a + f.size, 0);
 
