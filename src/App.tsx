@@ -217,6 +217,9 @@ const App = () => {
                       <Route path="/tools/case-converter" element={<Suspense fallback={null}><CaseConverter /></Suspense>} />
                       <Route path="/tools/image-resizer" element={<Suspense fallback={null}><ImageResizer /></Suspense>} />
                       <Route path="/tools/image-compressor" element={<Suspense fallback={null}><ImageCompressor /></Suspense>} />
+                      <Route path="/tools/pdf-compressor" element={<Suspense fallback={null}><PDFCompressor /></Suspense>} />
+                      <Route path="/tools/pdf-merger" element={<Suspense fallback={null}><PDFMerger /></Suspense>} />
+                      <Route path="/tools/image-converter" element={<Suspense fallback={null}><ImageConverter /></Suspense>} />
                       <Route path="/tools/pdf-to-text" element={<Suspense fallback={null}><PDFToText /></Suspense>} />
                       <Route path="/tools/stopwatch" element={<Suspense fallback={null}><Stopwatch /></Suspense>} />
                       <Route path="/tools/world-clock" element={<Suspense fallback={null}><WorldClock /></Suspense>} />
