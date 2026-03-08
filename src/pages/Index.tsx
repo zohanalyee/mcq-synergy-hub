@@ -27,6 +27,26 @@ import {
   CheckCircle2
 } from 'lucide-react';
 
+// Stagger container variants
+const staggerContainer = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 20 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+};
+
+// Section reveal variants
+const sectionReveal = {
+  hidden: { opacity: 0, y: 40 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } }
+};
+
 const Home = () => {
   const { theme, setTheme } = useTheme();
   const [isLoaded, setIsLoaded] = useState(false);
@@ -36,18 +56,6 @@ const Home = () => {
   useEffect(() => {
     setIsLoaded(true);
   }, []);
-
-  const fadeInUpVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: i * 0.1,
-        duration: 0.5,
-      }
-    })
-  };
 
   const subjects = [
     {
@@ -158,7 +166,6 @@ const Home = () => {
     }
   ];
 
-  // Use default subjects for display
   const displaySubjects = subjects;
 
   return (
@@ -167,7 +174,12 @@ const Home = () => {
       
       
       {/* Hero Section */}
-      <section className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        animate="visible"
+        className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden"
+      >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
@@ -187,7 +199,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight"
             >
-              Master MCQs with <span className="text-gradient">Precision</span> and <span className="text-gradient">Confidence</span>
+              Master MCQs with <span className="text-gradient text-gradient-animated">Precision</span> and <span className="text-gradient text-gradient-animated">Confidence</span>
             </motion.h1>
             
             <motion.p
@@ -230,12 +242,16 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="hidden sm:flex flex-row gap-3 justify-center"
             >
-              <Button size="default" onClick={() => navigate('/get-started')}>
-                Get Started
-              </Button>
-              <Button size="default" variant="outline" onClick={() => navigate('/subjects')}>
-                Explore Subjects
-              </Button>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
+                  Get Started
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+                <Button size="default" variant="outline" onClick={() => navigate('/subjects')}>
+                  Explore Subjects
+                </Button>
+              </motion.div>
             </motion.div>
           </div>
         </div>
@@ -259,45 +275,44 @@ const Home = () => {
             style={{ filter: 'blur(40px)' }}
           />
         </div>
-      </section>
+      </motion.section>
       
       {/* Subjects Section */}
-      <section className="py-5">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        className="py-5"
+      >
         <div className="container px-4 mx-auto">
           <div className="text-center mb-3">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="text-lg font-bold mb-2"
-            >
-              Popular Subjects
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-sm text-muted-foreground max-w-xl mx-auto"
-            >
+            <h2 className="text-lg font-bold mb-2">Popular Subjects</h2>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
               Explore our comprehensive collection of subjects and topics
-            </motion.p>
+            </p>
           </div>
           
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-            {displaySubjects.map((subject, index) => (
-              <SubjectCard
-                key={subject.title}
-                title={subject.title}
-                icon={subject.icon}
-                description={subject.description}
-                topicCount={subject.topicCount}
-                color={subject.color}
-                onClick={() => navigate(`/subject/${subject.title.toLowerCase()}`)}
-              />
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            className="grid grid-cols-3 md:grid-cols-4 gap-2"
+          >
+            {displaySubjects.map((subject) => (
+              <motion.div key={subject.title} variants={staggerItem}>
+                <SubjectCard
+                  title={subject.title}
+                  icon={subject.icon}
+                  description={subject.description}
+                  topicCount={subject.topicCount}
+                  color={subject.color}
+                  onClick={() => navigate(`/subject/${subject.title.toLowerCase()}`)}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           
           <div className="mt-4 text-center">
             <Button variant="outline" size="sm" onClick={() => navigate('/subjects')}>
@@ -305,164 +320,137 @@ const Home = () => {
             </Button>
           </div>
         </div>
-      </section>
+      </motion.section>
       
       {/* Features Section */}
-      <section className="py-5 bg-muted/50">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        className="py-5 bg-muted/50"
+      >
         <div className="container px-4 mx-auto">
           <div className="text-center mb-3">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="text-lg font-bold mb-2"
-            >
-              Powerful Features
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-sm text-muted-foreground max-w-xl mx-auto"
-            >
+            <h2 className="text-lg font-bold mb-2">Powerful Features</h2>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
               Tools designed to maximize your learning efficiency
-            </motion.p>
+            </p>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {features.map((feature, index) => (
-              <FeatureCard
-                key={feature.title}
-                title={feature.title}
-                description={feature.description}
-                icon={feature.icon}
-                delay={index}
-              />
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            className="grid grid-cols-2 md:grid-cols-3 gap-2"
+          >
+            {features.map((feature) => (
+              <motion.div key={feature.title} variants={staggerItem}>
+                <FeatureCard
+                  title={feature.title}
+                  description={feature.description}
+                  icon={feature.icon}
+                />
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
         </div>
-      </section>
+      </motion.section>
       
       {/* Stats Section */}
-      <section className="py-6 bg-gradient-to-r from-primary to-accent text-white">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        className="py-6 bg-gradient-to-r from-primary to-accent text-white"
+      >
         <div className="container px-4 mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
-            <div>
-              <AnimatedCounter
-                from={0}
-                to={5000}
-                prefix="+"
-                className="text-xl md:text-2xl font-bold mb-1"
-              />
-              <p className="text-xs text-white/80">MCQs Available</p>
-            </div>
-            <div>
-              <AnimatedCounter
-                from={0}
-                to={25}
-                className="text-xl md:text-2xl font-bold mb-1"
-              />
-              <p className="text-xs text-white/80">Subjects Covered</p>
-            </div>
-            <div>
-              <AnimatedCounter
-                from={0}
-                to={98}
-                suffix="%"
-                className="text-xl md:text-2xl font-bold mb-1"
-              />
-              <p className="text-xs text-white/80">User Satisfaction</p>
-            </div>
-            <div>
-              <AnimatedCounter
-                from={0}
-                to={20000}
-                prefix="+"
-                className="text-xl md:text-2xl font-bold mb-1"
-              />
-              <p className="text-xs text-white/80">Tests Completed</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Testimonials Section */}
-      <section className="py-5">
-        <div className="container px-4 mx-auto">
-          <div className="text-center mb-3">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="text-lg font-bold mb-2"
-            >
-              What Our Users Say
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-sm text-muted-foreground max-w-xl mx-auto"
-            >
-              Hear from students who transformed their test preparation
-            </motion.p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            {testimonials.map((testimonial, index) => (
-              <TestimonialCard
-                key={testimonial.author}
-                content={testimonial.content}
-                author={testimonial.author}
-                role={testimonial.role}
-                rating={testimonial.rating}
-                delay={index}
-              />
+            {[
+              { to: 5000, prefix: "+", label: "MCQs Available" },
+              { to: 25, prefix: "", label: "Subjects Covered" },
+              { to: 98, suffix: "%", label: "User Satisfaction" },
+              { to: 20000, prefix: "+", label: "Tests Completed" },
+            ].map((stat) => (
+              <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
+                <AnimatedCounter
+                  from={0}
+                  to={stat.to}
+                  prefix={stat.prefix}
+                  suffix={stat.suffix}
+                  className="text-xl md:text-2xl font-bold mb-1"
+                />
+                <p className="text-xs text-white/80">{stat.label}</p>
+              </div>
             ))}
           </div>
         </div>
-      </section>
+      </motion.section>
+      
+      {/* Testimonials Section */}
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        className="py-5"
+      >
+        <div className="container px-4 mx-auto">
+          <div className="text-center mb-3">
+            <h2 className="text-lg font-bold mb-2">What Our Users Say</h2>
+            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
+              Hear from students who transformed their test preparation
+            </p>
+          </div>
+          
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true, margin: "-40px" }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-2"
+          >
+            {testimonials.map((testimonial) => (
+              <motion.div key={testimonial.author} variants={staggerItem}>
+                <TestimonialCard
+                  content={testimonial.content}
+                  author={testimonial.author}
+                  role={testimonial.role}
+                  rating={testimonial.rating}
+                />
+              </motion.div>
+            ))}
+          </motion.div>
+        </div>
+      </motion.section>
       
       {/* CTA Section */}
-      <section className="py-5 bg-muted/50 relative overflow-hidden">
+      <motion.section
+        variants={sectionReveal}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true, margin: "-80px" }}
+        className="py-5 bg-muted/50 relative overflow-hidden"
+      >
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 to-accent/5 pointer-events-none" />
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-2xl mx-auto text-center">
-            <motion.h2
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-              className="text-2xl font-bold mb-4"
-            >
+            <h2 className="text-2xl font-bold mb-4">
               Ready to Transform Your Test Preparation?
-            </motion.h2>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-sm text-muted-foreground mb-6"
-            >
+            </h2>
+            <p className="text-sm text-muted-foreground mb-6">
               Join thousands of students who have improved their test scores with MCQs Point.
-            </motion.p>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <Button size="default" onClick={() => navigate('/get-started')}>
+            </p>
+            <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+              <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
                 Get Started Now
               </Button>
             </motion.div>
           </div>
         </div>
-      </section>
+      </motion.section>
       
       {/* Footer */}
       <footer className="py-6 border-t">

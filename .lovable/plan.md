@@ -1,134 +1,54 @@
-## Premium UI/UX Enhancement Plan
-
-The codebase already has a solid foundation: Framer Motion is used throughout, glass effects exist, the design system has good bones. The enhancements below focus on **high-impact, low-risk polish** across the 4 priority pages.
-
----
-
-### 1. Staggered Card Animations on Home Page
-
-**File:** `src/pages/Index.tsx`
-
-Currently, all cards in each section animate individually with the same delay pattern. Wrap each grid section (subjects, features, testimonials) in a `motion.div` with `staggerChildren` variants so cards cascade in smoothly rather than popping in simultaneously. Apply to the 3 grid sections (~lines 288, 334, 415).
-
----
-
-### 2. Enhanced Card Hover Effects
-
-**Files:** `src/components/SubjectCard.tsx`, `src/components/FeatureCard.tsx`, `src/components/TestimonialCard.tsx`
-
-- **SubjectCard**: Already has `whileHover={{ y: -3 }}`. Add `whileTap={{ scale: 0.97 }}` for tactile feedback and a subtle glow shadow on hover via inline style (`boxShadow` using the subject's theme color).
-- **FeatureCard**: Add `whileHover={{ y: -4, scale: 1.02 }}` and `whileTap={{ scale: 0.98 }}` with spring transition. Currently has no hover motion.
-- **TestimonialCard**: Add `whileHover={{ y: -4 }}` with spring transition. Currently static.
-
----
-
-### 3. Smooth Section Reveal Animations on Home
-
-**File:** `src/pages/Index.tsx`
-
-Wrap each major `<section>` in a reusable `motion.section` with `whileInView` fade-up + `viewport={{ once: true, margin: "-80px" }}`. Currently individual headings animate but the section containers don't, causing a slightly jarring load of content blocks.
-
----
-
-### 4. Hero Section Polish
-
-**File:** `src/pages/Index.tsx`
-
-- Add a subtle gradient text shimmer animation to "Precision" and "Confidence" (the `text-gradient` spans) using a CSS keyframe that moves a highlight across the gradient.
-- Add `whileHover={{ scale: 1.03 }}` to the two hero CTA buttons for tactile feel.
-
-**File:** `src/index.css`
-
-Add a `@keyframes gradient-shimmer` and `.text-gradient-animated` class that shifts background-position.
-
----
-
-### 5. Improved Stats Counter Section
-
-**File:** `src/pages/Index.tsx` (lines 349-389)
-
-The gradient stats bar is solid but flat. Add slight glassmorphism: make each stat column a mini glass card with `bg-white/10 backdrop-blur-sm rounded-xl p-4` inside the gradient section, giving depth.
-
----
-
-### 6. Premium Skeleton Loaders for Subjects Page
-
-**File:** `src/pages/Subjects.tsx`
-
-Replace the simple `Loader2` spinner (line 134) with a skeleton grid that mirrors the actual `SubjectGrid` layout: a `grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5` of skeleton cards (rounded-2xl, with icon placeholder + 2 text lines), matching `SubjectCard` dimensions. This gives a perceived-performance boost.
-
----
-
-### 7. Tools Page Card Enhancement
-
-**File:** `src/pages/Tools.tsx`
-
-Add `whileHover={{ y: -4 }}` and `whileTap={{ scale: 0.97 }}` to each tool card's `motion.div`. Currently they only have `hover:shadow-md` via CSS. The motion hover will feel more premium.
-
----
-
-### 8. Global Page Transition Wrapper
-
-**File:** `src/App.tsx`
-
-No route-level `AnimatePresence` exists. The `PageLoader` overlay runs for 600ms but there's no content transition. This is too invasive to add everywhere safely, but we can add a simple fade-in wrapper: create a `PageTransition` component that wraps each page's content with `motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.25 }}`. Apply it inside `Header` component's `<main>` tag so every page fades in.
-
-**File:** `src/components/Header.tsx` (line 224)
-
-Wrap `{children}` inside `<main>` with a keyed `motion.div` using `location.pathname` as key.
-
----
-
-### 9. Micro-interaction: Button Shine Effect
-
-**File:** `src/index.css`
-
-Add a `.btn-shine` utility class with a CSS-only diagonal shine sweep on hover (using `::after` pseudo-element with `translateX` animation). Apply to primary CTA buttons on the home page.
-
----
-
-### 10. Bottom Nav Active Indicator Polish
-
-**File:** `src/components/MobileBottomNav.tsx`
-
-Add a small animated dot/pill indicator below the active icon using `motion.div` with `layoutId="bottomNavIndicator"` so it smoothly slides between tabs (the "magic move" pattern). Currently it uses a background pill glow but no sliding animation.
-
----
-
-### Summary of Files to Modify
 
 
-| File                                 | Changes                                                                   |
-| ------------------------------------ | ------------------------------------------------------------------------- |
-| `src/pages/Index.tsx`                | Staggered grids, section reveals, hero shimmer, stats glass, button hover |
-| `src/index.css`                      | Gradient shimmer keyframe, btn-shine utility                              |
-| `src/components/FeatureCard.tsx`     | Add hover/tap motion                                                      |
-| `src/components/TestimonialCard.tsx` | Add hover motion                                                          |
-| `src/components/SubjectCard.tsx`     | Add tap + glow shadow                                                     |
-| `src/pages/Subjects.tsx`             | Skeleton grid loader                                                      |
-| `src/pages/Tools.tsx`                | Card hover motion                                                         |
-| `src/components/Header.tsx`          | Page fade-in transition wrapper                                           |
-| `src/components/MobileBottomNav.tsx` | Sliding active indicator                                                  |
+## Plan: Aggressive Spacing & Density Reductions
 
+### 1. Base Font Size — Apply 14px globally (not just mobile)
+**File: `src/index.css`**
+- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
 
-Estimated scope: ~9 focused edits across 9 files. No new dependencies needed (Framer Motion already installed).   My additions:
+### 2. Subject Grid — More columns
+**File: `src/components/subjects/SubjectGrid.tsx`**
+- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
+- Reduce gap from `gap-3` → `gap-2`
 
-Add #11:
+### 3. Syllabus Builder Grid — More columns
+**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
+- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
+- Reduce gap from `gap-3` → `gap-2`
 
-11. Input Focus Glow Effect
+### 4. Tools Page — More columns, tighter spacing
+**File: `src/pages/Tools.tsx`**
+- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
+- Gap: `gap-2.5` → `gap-2`
+- Tool card padding: `p-4` → `p-3`
+- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
+- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
 
-File: src/components/ui/input.tsx
+### 5. Index Page — Tighter sections
+**File: `src/pages/Index.tsx`**
+- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
+- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
+- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
+- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
+- Testimonials grid gap: `gap-4` → `gap-2`
+- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
+- "View All Subjects" margin: `mt-8` → `mt-4`
 
-Add focus:ring-4 focus:ring-primary/10 for premium input feel
+### 6. SubjectCard — Slightly tighter
+**File: `src/components/SubjectCard.tsx`**
+- Min-height: `min-h-[120px]` → `min-h-[100px]`
 
-(Mentioned in their plan but not numbered)
+### 7. FeatureCard — Reduce padding
+**File: `src/components/FeatureCard.tsx`**
+- Card min-height: `min-h-[100px]` → remove
+- Padding: `p-3` → `p-2.5`
 
-Add #12:
+### Files to edit (7 files):
+1. `src/index.css` — global 14px font
+2. `src/components/subjects/SubjectGrid.tsx` — more columns
+3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
+4. `src/pages/Tools.tsx` — denser grid
+5. `src/pages/Index.tsx` — tighter sections
+6. `src/components/SubjectCard.tsx` — smaller min-height
+7. `src/components/FeatureCard.tsx` — less padding
 
-12. Toast Notification Polish
-
-File: Verify toast library styling
-
-Ensure toasts have slide-in animation + backdrop blur
-
-(Quick win if toasts exist)

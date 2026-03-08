@@ -1,5 +1,6 @@
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Home, BookOpen, Briefcase, ListChecks, Shield, LogOut, Settings, User, MessageSquare, LayoutDashboard, Sun, Moon } from 'lucide-react';
+import { motion, LayoutGroup } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
@@ -116,6 +117,7 @@ const MobileBottomNav = () => {
   return (
     <>
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/40 safe-area-pb">
+        <LayoutGroup>
         <div className="flex items-center justify-around h-16 px-1">
           {navItems.map((item) => {
             const isActive = location.pathname === item.path;
@@ -130,11 +132,14 @@ const MobileBottomNav = () => {
                   isActive ? colors.active : "text-slate-400"
                 )}
               >
-                {/* Background pill glow for active state */}
-                <div className={cn(
-                  "absolute inset-x-2 top-1.5 bottom-1.5 rounded-xl transition-all duration-300",
-                  isActive ? colors.bg : "bg-transparent"
-                )} />
+                {/* Sliding active indicator pill */}
+                {isActive && (
+                  <motion.div
+                    layoutId="bottomNavIndicator"
+                    className={cn("absolute inset-x-2 top-1.5 bottom-1.5 rounded-xl", colors.bg)}
+                    transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                  />
+                )}
                 
                 <item.icon className={cn(
                   "relative z-10 h-5 w-5 transition-all duration-300",
@@ -291,6 +296,7 @@ const MobileBottomNav = () => {
             </SheetContent>
           </Sheet>
         </div>
+        </LayoutGroup>
       </nav>
 
       {/* Settings Dialog */}

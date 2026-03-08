@@ -12,12 +12,11 @@ interface FeatureCardProps {
 const FeatureCard = ({ title, description, icon, delay = 0 }: FeatureCardProps) => {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay: delay * 0.1 }}
-      viewport={{ once: true }}
+      whileHover={{ y: -4, scale: 1.02 }}
+      whileTap={{ scale: 0.98 }}
+      transition={{ type: "spring", stiffness: 300, damping: 20 }}
     >
-      <Card className="bg-card border hover:shadow-md transition-shadow duration-300">
+      <Card className="bg-card border hover:shadow-lg transition-shadow duration-300">
         <CardContent className="p-2.5 flex flex-col">
           <div className="mb-2 text-primary [&>svg]:h-5 [&>svg]:w-5">{icon}</div>
           <h3 className="text-sm font-semibold mb-1">{title}</h3>

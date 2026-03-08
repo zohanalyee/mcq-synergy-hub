@@ -1,4 +1,5 @@
 import { useState, useEffect, ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -222,7 +223,14 @@ const HeaderContent = ({
         
         {/* Main Content - Below header */}
         <main className="flex-1 overflow-x-hidden pb-mobile-nav mt-14">
-          {children}
+          <motion.div
+            key={typeof window !== 'undefined' ? window.location.pathname : ''}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            {children}
+          </motion.div>
         </main>
       </div>
     </div>
