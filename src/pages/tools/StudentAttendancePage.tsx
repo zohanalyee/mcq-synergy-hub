@@ -50,7 +50,11 @@ const StudentAttendancePage = () => {
   }, [selectedClass]);
 
   useEffect(() => {
-    if (selectedClass && selectedSection && selectedDate) loadAttendance();
+    if (selectedClass === '__unassigned__') {
+      loadAttendance();
+    } else if (selectedClass && selectedSection && selectedDate) {
+      loadAttendance();
+    }
   }, [selectedClass, selectedSection, selectedDate]);
 
   const loadAttendance = async () => {
