@@ -169,7 +169,7 @@ const StudentAttendancePage = () => {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button variant="outline" size="sm" className="w-full h-9" onClick={loadAttendance} disabled={!selectedClass || !selectedSection}>
+              <Button variant="outline" size="sm" className="w-full h-9" onClick={loadAttendance} disabled={selectedClass === '__unassigned__' ? false : (!selectedClass || !selectedSection)}>
                 Load Students
               </Button>
             </div>
