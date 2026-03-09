@@ -145,7 +145,7 @@ export const getClassAttendanceForDate = async (classId: string, sectionId: stri
   if (error) throw error;
   
   const attendanceMap: Record<string, StudentAttendance> = {};
-  (data || []).forEach((a: StudentAttendance) => { attendanceMap[a.student_id] = a; });
+  (data || []).forEach((a: any) => { attendanceMap[a.student_id] = a as StudentAttendance; });
   
   return { students, attendance: attendanceMap };
 };
