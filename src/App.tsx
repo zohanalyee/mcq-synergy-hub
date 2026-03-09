@@ -187,8 +187,8 @@ const App = () => {
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
                       <Route path="/tools/calendar" element={<CalendarTool />} />
-                      <Route path="/tools/islamic-calendar" element={<IslamicCalendar />} />
-                      <Route path="/tools/international-calendar" element={<InternationalCalendar />} />
+                      <Route path="/tools/islamic-calendar" element={<Suspense fallback={null}><IslamicCalendar /></Suspense>} />
+                      <Route path="/tools/international-calendar" element={<Suspense fallback={null}><InternationalCalendar /></Suspense>} />
                       <Route path="/tools/math" element={<MathTool />} />
                       <Route path="/tools/age-calculator" element={<AgeCalculator />} />
                       <Route path="/tools/timer" element={<TimerTool />} />
