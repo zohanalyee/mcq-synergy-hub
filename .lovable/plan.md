@@ -1,62 +1,45 @@
+## Attendance & HR Management System Implementation Plan
 
-## Fix: Subject Browser — Show Board & Class Context, Group by Board
+This is a comprehensive and well-structured spec! Since we are building this within the existing educational platform, we will integrate it as a powerful new suite of modules accessible to Admins, Staff, and Students, complementing the existing LMS and quiz features.
 
-### Problem
-The sidebar query is:
-```js
-supabase.from("subjects").select("id, name")
-```
-This returns all subjects with just their name — "Biology" appears 7+ times with zero context. The user can't tell which board or class each belongs to.
+Here is the step-by-step plan to build this out:
 
-### Root Cause
-The LMS hierarchy is: `educational_systems (Board) → levels (Class) → subjects → topics`  
-The current query doesn't join up to `levels` or `educational_systems`.
+### Phase 1: Database Schema & Setup
 
-### Solution
+- Execute Supabase migrations to create the required tables: `students`, `staff`, `shifts`, `student_attendance`, `staff_attendance`, `student_leaves`, `staff_leaves`, `staff_leave_balance`, `holidays`, and `overtime_records`.
+- Setup Row Level Security (RLS) policies ensuring data privacy (e.g., students only see their own attendance, staff see their own check-ins/leaves, admins manage all).
+- Generate corresponding TypeScript types (`interfaces.ts`) for the frontend.
 
-**1. Update the Supabase Query** — join subjects → levels → educational_systems:
-```js
-supabase.from("subjects").select(`
-  id, name,
-  levels!level_id(
-    id, name,
-    educational_systems!system_id(id, name)
-  )
-`).eq("approved", true).order("name")
-```
+### Phase 2: Core Navigation & Dashboards
 
-**2. Update `LMSSubject` interface** to hold the full context:
-```ts
-interface LMSSubject {
-  id: string;
-  name: string;
-  levelName?: string;   // e.g. "Class 9"
-  levelId?: string;
-  systemName?: string;  // e.g. "Punjab Board"
-  systemId?: string;
-}
-```
+- **Routing Setup**: Add new routes in `src/App.tsx` (e.g., `/admin/attendance`, `/admin/hr`, `/staff/check-in`, `/student/attendance`).
+- **Dashboard UIs**: 
+  - Admin Overview: Today's stats (Present/Absent/Late), pending leaves, quick actions.
+  - Staff/Student Overview: Personal attendance calendar and leave balances.
+- **Sidebar Integration**: Add the Attendance and HR sections to the `AppSidebar` and `MobileBottomNav`.
 
-**3. Group subjects by Board in the sidebar UI:**
+### Phase 3: Student Attendance Module
 
-```text
-BROWSE SUBJECTS
-▼ Punjab Board            ← collapsible group header
-   Biology  [Class 9]     ← subject row with class badge
-   Physics  [Class 11]
-▼ Sindh Board
-   Biology  [Class 10]    ← same name, different board/class = clear!
-```
+- **Daily Marking Tool**: Build the class/section selection interface with a roster view. Implement the "Mark All Present" bulk action and individual override toggles (Present/Absent/Late/Half-day).
+- **Calendar & Reports**: Build the color-coded monthly calendar view for students and the class-wise percentage reports for teachers/admins.
 
-- Boards are rendered as collapsible section headers (unique — no duplicates)
-- Under each board, subjects show with a small "Class X" badge
-- Subjects without a board/class association still show in an "Other" group
+### Phase 4: Staff HR & Attendance Module
 
-**4. Update `newConversation` context** to carry `systemName + levelName` for richer chat titles:
-- Context badge in chat header: `Punjab Board · Class 9 · Biology`
-- Chat title: `Ask about Biology (Punjab Board)`
+- **Self Check-In Portal**: Build the time-stamped check-in/check-out UI for staff.
+- **Admin Staff Tracking**: A centralized view for admins to monitor staff arrival times, absences, and apply remarks.
+- **Shift & Roster Management**: UI to define working hours, late thresholds, and assign staff to specific shifts.
 
-### Files Changed
-- `src/pages/AskDocument.tsx` — query update, interface update, sidebar render restructure
+### Phase 5: Leave Management System
 
-### No DB changes needed — data is already there, just not being fetched.
+- **Application Forms**: Build intuitive forms for submitting casual, sick, and earned leave requests with document attachment support.
+- **Approval Workflow**: Create a dedicated queue for admins to approve/reject pending leaves.
+- **Balance Tracking**: Visual indicators for remaining leave allowances.
+
+### Phase 6: Analytics & Notifications
+
+- Implement Recharts-based visualizations (Attendance Trends, Class Comparisons).
+- Set up the notification scaffolding (using the existing `user_notifications` system) to alert users on leave status changes or low attendance.
+
+**Let's start with Phase 1 and 2.** Once approved, I will run the database migrations to set up the foundation and build the main dashboard layouts.
+
+**this is tool and will be in placed in tool menu allow user to add institute name.**
