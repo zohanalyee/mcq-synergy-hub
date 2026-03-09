@@ -6,7 +6,7 @@ import {
   Key, Type, Hash, CaseSensitive, User, Palette, Image, FileText,
   Clock, Globe, Shuffle, Heart, Hourglass, Maximize, Binary,
   Thermometer, Gauge, Square, Atom, QrCode, Coins,
-  Wrench, LucideIcon, Merge, FileOutput
+  Wrench, LucideIcon, Merge, FileOutput, Building2
 } from 'lucide-react';
 
 export interface ToolDefinition {
