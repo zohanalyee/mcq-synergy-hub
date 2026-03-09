@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ChevronLeft, Plus, Trash2, Building2, Users, UserCheck, Clock, GraduationCap } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Building2, Users, UserCheck, Clock, GraduationCap, Upload } from 'lucide-react';
+import BulkCSVUploadDialog from '@/components/tools/BulkCSVUploadDialog';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
