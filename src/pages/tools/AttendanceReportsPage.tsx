@@ -31,9 +31,10 @@ const ReportsPage = () => {
     if (!selectedClass) return;
     setLoading(true);
     try {
-      const { students: studs } = await (await import('@/services/attendanceService')).getClassAttendanceForDate(selectedClass, selectedSection || studs?.[0]?.section_id || '', fromDate);
+      const attService = await import('@/services/attendanceService');
+      const { students: studs } = await attService.getClassAttendanceForDate(selectedClass, selectedSection || '', fromDate);
       // Get attendance for all students in the date range
-      const reportData = await Promise.all(studs.map(async s => {
+      const reportData = await Promise.all(studs.map(async (s: AttStudent) => {
         const att = await getStudentAttendance(s.id, fromDate, toDate);
         const present = att.filter(a => a.status === 'Present').length;
         const absent = att.filter(a => a.status === 'Absent').length;
