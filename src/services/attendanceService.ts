@@ -149,21 +149,27 @@ export const getStudentAttendance = async (studentId: string, fromDate: string, 
 };
 
 export const getClassAttendanceForDate = async (classId: string, sectionId: string, date: string) => {
-  const students = await getStudents(classId, sectionId);
+  const students = await getStudents(classId, sectionId || undefined);
   const studentIds = students.map(s => s.id);
   
   if (studentIds.length === 0) return { students, attendance: {} };
-  
-  const { data, error } = await supabase
-    .from('student_attendance')
-    .select('*')
-    .in('student_id', studentIds)
-    .eq('date', date);
-  
-  if (error) throw error;
+
+  // Supabase has a limit; batch if needed
+  const batchSize = 200;
+  let allData: any[] = [];
+  for (let i = 0; i < studentIds.length; i += batchSize) {
+    const batch = studentIds.slice(i, i + batchSize);
+    const { data, error } = await supabase
+      .from('student_attendance')
+      .select('*')
+      .in('student_id', batch)
+      .eq('date', date);
+    if (error) throw error;
+    allData = allData.concat(data || []);
+  }
   
   const attendanceMap: Record<string, StudentAttendance> = {};
-  (data || []).forEach((a: any) => { attendanceMap[a.student_id] = a as StudentAttendance; });
+  allData.forEach((a: any) => { attendanceMap[a.student_id] = a as StudentAttendance; });
   
   return { students, attendance: attendanceMap };
 };
