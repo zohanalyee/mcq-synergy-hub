@@ -18,7 +18,7 @@ export const getInstituteSettings = async (userId: string): Promise<InstituteSet
 export const upsertInstituteSettings = async (settings: Partial<InstituteSettings> & { user_id: string }) => {
   const { data, error } = await supabase
     .from('institute_settings')
-    .upsert(settings, { onConflict: 'user_id' })
+    .upsert([settings] as any, { onConflict: 'user_id' })
     .select()
     .single();
   if (error) throw error;
