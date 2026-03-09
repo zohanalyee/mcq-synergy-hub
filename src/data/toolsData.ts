@@ -13,7 +13,7 @@ export interface ToolDefinition {
   id: string;
   name: string;
   description: string;
-  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'HR & Attendance';
+  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'HR & Attendance' | 'PDF Tools';
   icon: LucideIcon;
   popular?: boolean;
   href: string;
@@ -22,6 +22,7 @@ export interface ToolDefinition {
 export const TOOL_CATEGORIES = [
   'All',
   'HR & Attendance',
+  'PDF Tools',
   'Calculators',
   'Student Tools',
   'Productivity',
@@ -36,6 +37,13 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
     bg: 'bg-emerald-50/50 dark:bg-emerald-950/20',
     hover: 'hover:border-emerald-400 dark:hover:border-emerald-600',
     badge: 'text-emerald-700 dark:text-emerald-300',
+  },
+  'PDF Tools': {
+    icon: 'bg-orange-100 dark:bg-orange-900/40 text-orange-600 dark:text-orange-400',
+    border: 'border-orange-200/60 dark:border-orange-800/50',
+    bg: 'bg-orange-50/50 dark:bg-orange-950/20',
+    hover: 'hover:border-orange-400 dark:hover:border-orange-600',
+    badge: 'text-orange-700 dark:text-orange-300',
   },
   'Calculators': {
     icon: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
@@ -123,11 +131,13 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'case-converter', name: 'Text Case Converter', description: 'Convert text case styles', category: 'Converters', icon: CaseSensitive, href: '/tools/case-converter' },
   { id: 'image-resizer', name: 'Image Resizer', description: 'Resize images in browser', category: 'Converters', icon: Image, href: '/tools/image-resizer' },
   { id: 'image-compressor', name: 'Image Compressor', description: 'Compress images up to 80% instantly', category: 'Converters', icon: FileImage, popular: true, href: '/tools/image-compressor' },
-  { id: 'pdf-compressor', name: 'PDF Compressor', description: 'Reduce PDF file size instantly', category: 'Converters', icon: FileOutput, popular: true, href: '/tools/pdf-compressor' },
-  { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge multiple PDFs into one', category: 'Converters', icon: Merge, popular: true, href: '/tools/pdf-merger' },
   { id: 'image-converter', name: 'Image Converter', description: 'Convert between JPG, PNG & WebP', category: 'Converters', icon: Image, popular: true, href: '/tools/image-converter' },
-  { id: 'pdf-to-text', name: 'PDF to Text', description: 'Extract text from PDF files', category: 'Converters', icon: FileText, href: '/tools/pdf-to-text' },
-  { id: 'pdf-splitter', name: 'PDF Splitter', description: 'Split PDFs by page ranges', category: 'Converters', icon: FileOutput, popular: true, href: '/tools/pdf-splitter' },
+
+  // === PDF Tools ===
+  { id: 'pdf-compressor', name: 'PDF Compressor', description: 'Reduce PDF file size instantly', category: 'PDF Tools', icon: FileOutput, popular: true, href: '/tools/pdf-compressor' },
+  { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge multiple PDFs into one', category: 'PDF Tools', icon: Merge, popular: true, href: '/tools/pdf-merger' },
+  { id: 'pdf-to-text', name: 'PDF to Text', description: 'Extract text from PDF files', category: 'PDF Tools', icon: FileText, href: '/tools/pdf-to-text' },
+  { id: 'pdf-splitter', name: 'PDF Splitter', description: 'Split PDFs by page ranges', category: 'PDF Tools', icon: FileOutput, popular: true, href: '/tools/pdf-splitter' },
 
   // === Productivity (4 new) ===
   { id: 'stopwatch', name: 'Stopwatch', description: 'Simple stopwatch with laps', category: 'Productivity', icon: Clock, href: '/tools/stopwatch' },
