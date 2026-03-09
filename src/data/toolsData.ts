@@ -13,7 +13,7 @@ export interface ToolDefinition {
   id: string;
   name: string;
   description: string;
-  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators';
+  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'HR & Attendance';
   icon: LucideIcon;
   popular?: boolean;
   href: string;
