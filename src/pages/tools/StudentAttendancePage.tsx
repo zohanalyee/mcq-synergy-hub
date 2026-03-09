@@ -142,7 +142,10 @@ const StudentAttendancePage = () => {
               <label className="text-xs font-medium text-muted-foreground block mb-1">Class</label>
               <Select value={selectedClass} onValueChange={v => { setSelectedClass(v); setSelectedSection(''); }}>
                 <SelectTrigger className="h-9"><SelectValue placeholder="Select class" /></SelectTrigger>
-                <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  <SelectItem value="__unassigned__" className="text-orange-600 dark:text-orange-400">⚠ Unassigned Students</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
