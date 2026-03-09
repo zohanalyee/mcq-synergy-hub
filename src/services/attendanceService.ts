@@ -61,11 +61,29 @@ export const addSection = async (section: Omit<Section, 'id' | 'created_at'>) =>
 // ── Students ──────────────────────────────────────────────────────────────────
 export const getStudents = async (classId?: string, sectionId?: string): Promise<AttStudent[]> => {
   let q = supabase.from('att_students').select('*').eq('status', 'Active').order('roll_number');
-  if (classId) q = q.eq('class_id', classId);
-  if (sectionId) q = q.eq('section_id', sectionId);
+  if (classId === '__unassigned__') {
+    q = q.is('class_id', null);
+  } else if (classId) {
+    q = q.eq('class_id', classId);
+  }
+  if (sectionId === '__unassigned__') {
+    q = q.is('section_id', null);
+  } else if (sectionId) {
+    q = q.eq('section_id', sectionId);
+  }
   const { data, error } = await q;
   if (error) throw error;
   return (data || []) as AttStudent[];
+};
+
+export const bulkAssignStudentsClass = async (studentIds: string[], classId: string, sectionId?: string) => {
+  const updates: Record<string, any> = { class_id: classId };
+  if (sectionId) updates.section_id = sectionId;
+  const { error } = await supabase
+    .from('att_students')
+    .update(updates)
+    .in('id', studentIds);
+  if (error) throw error;
 };
 
 export const addStudent = async (student: Omit<AttStudent, 'id' | 'created_at'>) => {
@@ -131,21 +149,27 @@ export const getStudentAttendance = async (studentId: string, fromDate: string, 
 };
 
 export const getClassAttendanceForDate = async (classId: string, sectionId: string, date: string) => {
-  const students = await getStudents(classId, sectionId);
+  const students = await getStudents(classId, sectionId || undefined);
   const studentIds = students.map(s => s.id);
   
   if (studentIds.length === 0) return { students, attendance: {} };
-  
-  const { data, error } = await supabase
-    .from('student_attendance')
-    .select('*')
-    .in('student_id', studentIds)
-    .eq('date', date);
-  
-  if (error) throw error;
+
+  // Supabase has a limit; batch if needed
+  const batchSize = 200;
+  let allData: any[] = [];
+  for (let i = 0; i < studentIds.length; i += batchSize) {
+    const batch = studentIds.slice(i, i + batchSize);
+    const { data, error } = await supabase
+      .from('student_attendance')
+      .select('*')
+      .in('student_id', batch)
+      .eq('date', date);
+    if (error) throw error;
+    allData = allData.concat(data || []);
+  }
   
   const attendanceMap: Record<string, StudentAttendance> = {};
-  (data || []).forEach((a: any) => { attendanceMap[a.student_id] = a as StudentAttendance; });
+  allData.forEach((a: any) => { attendanceMap[a.student_id] = a as StudentAttendance; });
   
   return { students, attendance: attendanceMap };
 };

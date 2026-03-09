@@ -50,13 +50,19 @@ const StudentAttendancePage = () => {
   }, [selectedClass]);
 
   useEffect(() => {
-    if (selectedClass && selectedSection && selectedDate) loadAttendance();
+    if (selectedClass === '__unassigned__') {
+      loadAttendance();
+    } else if (selectedClass && selectedSection && selectedDate) {
+      loadAttendance();
+    }
   }, [selectedClass, selectedSection, selectedDate]);
 
   const loadAttendance = async () => {
     setLoading(true);
     try {
-      const { students: studs, attendance: att } = await getClassAttendanceForDate(selectedClass, selectedSection, selectedDate);
+      const classParam = selectedClass === '__unassigned__' ? '__unassigned__' : selectedClass;
+      const sectionParam = selectedClass === '__unassigned__' ? '' : selectedSection;
+      const { students: studs, attendance: att } = await getClassAttendanceForDate(classParam, sectionParam, selectedDate);
       setStudents(studs);
       const map: Record<string, { status: AttendanceStatus; remarks: string }> = {};
       studs.forEach(s => {
@@ -142,13 +148,19 @@ const StudentAttendancePage = () => {
               <label className="text-xs font-medium text-muted-foreground block mb-1">Class</label>
               <Select value={selectedClass} onValueChange={v => { setSelectedClass(v); setSelectedSection(''); }}>
                 <SelectTrigger className="h-9"><SelectValue placeholder="Select class" /></SelectTrigger>
-                <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectContent>
+                  {classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                  <SelectItem value="__unassigned__" className="text-orange-600 dark:text-orange-400">⚠ Unassigned Students</SelectItem>
+                </SelectContent>
               </Select>
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground block mb-1">Section</label>
-              <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedClass}>
-                <SelectTrigger className="h-9"><SelectValue placeholder={!selectedClass ? "Select class first" : sections.length === 0 ? "No sections found" : "Select section"} /></SelectTrigger>
+              <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedClass || selectedClass === '__unassigned__'}>
+                <SelectTrigger className="h-9"><SelectValue placeholder={
+                  selectedClass === '__unassigned__' ? "N/A for unassigned" :
+                  !selectedClass ? "Select class first" : sections.length === 0 ? "No sections found" : "Select section"
+                } /></SelectTrigger>
                 <SelectContent>
                   {sections.length === 0 ? (
                     <div className="px-3 py-2 text-xs text-muted-foreground">No sections added for this class. Go to <span className="font-medium">Setup → Classes</span> to add sections.</div>
@@ -159,7 +171,7 @@ const StudentAttendancePage = () => {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button variant="outline" size="sm" className="w-full h-9" onClick={loadAttendance} disabled={!selectedClass || !selectedSection}>
+              <Button variant="outline" size="sm" className="w-full h-9" onClick={loadAttendance} disabled={selectedClass === '__unassigned__' ? false : (!selectedClass || !selectedSection)}>
                 Load Students
               </Button>
             </div>
