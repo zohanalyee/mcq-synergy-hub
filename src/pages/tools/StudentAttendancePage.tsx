@@ -150,8 +150,11 @@ const StudentAttendancePage = () => {
             </div>
             <div>
               <label className="text-xs font-medium text-muted-foreground block mb-1">Section</label>
-              <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedClass}>
-                <SelectTrigger className="h-9"><SelectValue placeholder={!selectedClass ? "Select class first" : sections.length === 0 ? "No sections found" : "Select section"} /></SelectTrigger>
+              <Select value={selectedSection} onValueChange={setSelectedSection} disabled={!selectedClass || selectedClass === '__unassigned__'}>
+                <SelectTrigger className="h-9"><SelectValue placeholder={
+                  selectedClass === '__unassigned__' ? "N/A for unassigned" :
+                  !selectedClass ? "Select class first" : sections.length === 0 ? "No sections found" : "Select section"
+                } /></SelectTrigger>
                 <SelectContent>
                   {sections.length === 0 ? (
                     <div className="px-3 py-2 text-xs text-muted-foreground">No sections added for this class. Go to <span className="font-medium">Setup → Classes</span> to add sections.</div>
