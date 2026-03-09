@@ -6,14 +6,14 @@ import {
   Key, Type, Hash, CaseSensitive, User, Palette, Image, FileText,
   Clock, Globe, Shuffle, Heart, Hourglass, Maximize, Binary,
   Thermometer, Gauge, Square, Atom, QrCode, Coins,
-  Wrench, LucideIcon, Merge, FileOutput
+  Wrench, LucideIcon, Merge, FileOutput, Building2
 } from 'lucide-react';
 
 export interface ToolDefinition {
   id: string;
   name: string;
   description: string;
-  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators';
+  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'HR & Attendance';
   icon: LucideIcon;
   popular?: boolean;
   href: string;
@@ -21,6 +21,7 @@ export interface ToolDefinition {
 
 export const TOOL_CATEGORIES = [
   'All',
+  'HR & Attendance',
   'Calculators',
   'Student Tools',
   'Productivity',
@@ -29,6 +30,13 @@ export const TOOL_CATEGORIES = [
 ] as const;
 
 export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg: string; hover: string; badge: string }> = {
+  'HR & Attendance': {
+    icon: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400',
+    border: 'border-emerald-200/60 dark:border-emerald-800/50',
+    bg: 'bg-emerald-50/50 dark:bg-emerald-950/20',
+    hover: 'hover:border-emerald-400 dark:hover:border-emerald-600',
+    badge: 'text-emerald-700 dark:text-emerald-300',
+  },
   'Calculators': {
     icon: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
     border: 'border-blue-200/60 dark:border-blue-800/50',
@@ -67,6 +75,8 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
 };
 
 export const ALL_TOOLS: ToolDefinition[] = [
+  // === HR & Attendance System ===
+  { id: 'hr-system', name: 'Attendance & HR System', description: 'Complete attendance tracking & HR management', category: 'HR & Attendance', icon: Building2, popular: true, href: '/tools/hr' },
   // === Existing (7) ===
   { id: 'calculator', name: 'Calculator', description: 'Basic & scientific calculator', category: 'Calculators', icon: Calculator, popular: true, href: '/tools/math' },
   { id: 'age-calculator', name: 'Age Calculator', description: 'Calculate exact age from date of birth', category: 'Calculators', icon: Calendar, popular: true, href: '/tools/age-calculator' },

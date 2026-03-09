@@ -106,6 +106,13 @@ const NameGenerator = lazy(() => import("./pages/tools/NameGenerator"));
 const ColorPicker = lazy(() => import("./pages/tools/ColorPicker"));
 const RandomNumber = lazy(() => import("./pages/tools/RandomNumber"));
 const EquationSolver = lazy(() => import("./pages/tools/EquationSolver"));
+const AttendanceDashboard = lazy(() => import("./pages/tools/AttendanceDashboard"));
+const StudentAttendancePage = lazy(() => import("./pages/tools/StudentAttendancePage"));
+const StaffAttendancePage = lazy(() => import("./pages/tools/StaffAttendancePage"));
+const HRSetupPage = lazy(() => import("./pages/tools/HRSetupPage"));
+const LeavesPage = lazy(() => import("./pages/tools/LeavesPage"));
+const HolidaysPage = lazy(() => import("./pages/tools/HolidaysPage"));
+const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReportsPage"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -233,6 +240,15 @@ const App = () => {
                       <Route path="/tools/color-picker" element={<Suspense fallback={null}><ColorPicker /></Suspense>} />
                       <Route path="/tools/random-number" element={<Suspense fallback={null}><RandomNumber /></Suspense>} />
                       <Route path="/tools/equation-solver" element={<Suspense fallback={null}><EquationSolver /></Suspense>} />
+                      
+                      {/* HR & Attendance System */}
+                      <Route path="/tools/hr" element={<Suspense fallback={null}><AttendanceDashboard /></Suspense>} />
+                      <Route path="/tools/hr/student-attendance" element={<Suspense fallback={null}><StudentAttendancePage /></Suspense>} />
+                      <Route path="/tools/hr/staff-attendance" element={<Suspense fallback={null}><StaffAttendancePage /></Suspense>} />
+                      <Route path="/tools/hr/setup" element={<Suspense fallback={null}><HRSetupPage /></Suspense>} />
+                      <Route path="/tools/hr/leaves" element={<Suspense fallback={null}><LeavesPage /></Suspense>} />
+                      <Route path="/tools/hr/holidays" element={<Suspense fallback={null}><HolidaysPage /></Suspense>} />
+                      <Route path="/tools/hr/reports" element={<Suspense fallback={null}><AttendanceReportsPage /></Suspense>} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
