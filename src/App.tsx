@@ -48,6 +48,8 @@ import Notifications from "./pages/Notifications";
 
 // Existing Tool Pages
 import CalendarTool from "./pages/tools/CalendarTool";
+const IslamicCalendar = lazy(() => import("./pages/tools/IslamicCalendar"));
+const InternationalCalendar = lazy(() => import("./pages/tools/InternationalCalendar"));
 import MathTool from "./pages/tools/MathTool";
 import AgeCalculator from "./pages/tools/AgeCalculator";
 import TimerTool from "./pages/tools/TimerTool";
@@ -185,6 +187,8 @@ const App = () => {
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
                       <Route path="/tools/calendar" element={<CalendarTool />} />
+                      <Route path="/tools/islamic-calendar" element={<IslamicCalendar />} />
+                      <Route path="/tools/international-calendar" element={<InternationalCalendar />} />
                       <Route path="/tools/math" element={<MathTool />} />
                       <Route path="/tools/age-calculator" element={<AgeCalculator />} />
                       <Route path="/tools/timer" element={<TimerTool />} />
