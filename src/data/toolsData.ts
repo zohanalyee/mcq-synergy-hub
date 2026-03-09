@@ -21,12 +21,22 @@ export interface ToolDefinition {
 
 export const TOOL_CATEGORIES = [
   'All',
+  'HR & Attendance',
   'Calculators',
   'Student Tools',
   'Productivity',
   'Converters',
   'Generators',
 ] as const;
+
+export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg: string; hover: string; badge: string }> = {
+  'HR & Attendance': {
+    icon: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400',
+    border: 'border-emerald-200/60 dark:border-emerald-800/50',
+    bg: 'bg-emerald-50/50 dark:bg-emerald-950/20',
+    hover: 'hover:border-emerald-400 dark:hover:border-emerald-600',
+    badge: 'text-emerald-700 dark:text-emerald-300',
+  },
 
 export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg: string; hover: string; badge: string }> = {
   'Calculators': {
