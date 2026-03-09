@@ -95,6 +95,7 @@ const PDFCompressor = lazy(() => import("./pages/tools/PDFCompressor"));
 const PDFMerger = lazy(() => import("./pages/tools/PDFMerger"));
 const ImageConverter = lazy(() => import("./pages/tools/ImageConverter"));
 const PDFToText = lazy(() => import("./pages/tools/PDFToText"));
+const PDFSplitter = lazy(() => import("./pages/tools/PDFSplitter"));
 const Stopwatch = lazy(() => import("./pages/tools/Stopwatch"));
 const WorldClock = lazy(() => import("./pages/tools/WorldClock"));
 const WordCounter = lazy(() => import("./pages/tools/WordCounter"));
