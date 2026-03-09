@@ -117,6 +117,7 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge multiple PDFs into one', category: 'Converters', icon: Merge, popular: true, href: '/tools/pdf-merger' },
   { id: 'image-converter', name: 'Image Converter', description: 'Convert between JPG, PNG & WebP', category: 'Converters', icon: Image, popular: true, href: '/tools/image-converter' },
   { id: 'pdf-to-text', name: 'PDF to Text', description: 'Extract text from PDF files', category: 'Converters', icon: FileText, href: '/tools/pdf-to-text' },
+  { id: 'pdf-splitter', name: 'PDF Splitter', description: 'Split PDFs by page ranges', category: 'Converters', icon: FileOutput, popular: true, href: '/tools/pdf-splitter' },
 
   // === Productivity (4 new) ===
   { id: 'stopwatch', name: 'Stopwatch', description: 'Simple stopwatch with laps', category: 'Productivity', icon: Clock, href: '/tools/stopwatch' },
