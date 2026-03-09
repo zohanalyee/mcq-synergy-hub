@@ -257,7 +257,12 @@ const HRSetupPage = () => {
           {/* Staff */}
           <TabsContent value="staff" className="space-y-3">
             <Card>
-              <CardHeader><CardTitle className="text-base">Add Staff Member</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Add Staff Member</CardTitle>
+                <BulkCSVUploadDialog type="staff" classes={classes} sections={sections} onSuccess={loadAll}>
+                  <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-1" /> Bulk CSV</Button>
+                </BulkCSVUploadDialog>
+              </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input placeholder="Employee ID *" value={newStaff.employee_id} onChange={e => setNewStaff(p => ({ ...p, employee_id: e.target.value }))} />
                 <Input placeholder="Full Name *" value={newStaff.full_name} onChange={e => setNewStaff(p => ({ ...p, full_name: e.target.value }))} />
