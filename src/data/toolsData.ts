@@ -37,8 +37,6 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
     hover: 'hover:border-emerald-400 dark:hover:border-emerald-600',
     badge: 'text-emerald-700 dark:text-emerald-300',
   },
-
-export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg: string; hover: string; badge: string }> = {
   'Calculators': {
     icon: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
     border: 'border-blue-200/60 dark:border-blue-800/50',
