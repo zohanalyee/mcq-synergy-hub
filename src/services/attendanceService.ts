@@ -61,11 +61,29 @@ export const addSection = async (section: Omit<Section, 'id' | 'created_at'>) =>
 // ── Students ──────────────────────────────────────────────────────────────────
 export const getStudents = async (classId?: string, sectionId?: string): Promise<AttStudent[]> => {
   let q = supabase.from('att_students').select('*').eq('status', 'Active').order('roll_number');
-  if (classId) q = q.eq('class_id', classId);
-  if (sectionId) q = q.eq('section_id', sectionId);
+  if (classId === '__unassigned__') {
+    q = q.is('class_id', null);
+  } else if (classId) {
+    q = q.eq('class_id', classId);
+  }
+  if (sectionId === '__unassigned__') {
+    q = q.is('section_id', null);
+  } else if (sectionId) {
+    q = q.eq('section_id', sectionId);
+  }
   const { data, error } = await q;
   if (error) throw error;
   return (data || []) as AttStudent[];
+};
+
+export const bulkAssignStudentsClass = async (studentIds: string[], classId: string, sectionId?: string) => {
+  const updates: Record<string, any> = { class_id: classId };
+  if (sectionId) updates.section_id = sectionId;
+  const { error } = await supabase
+    .from('att_students')
+    .update(updates)
+    .in('id', studentIds);
+  if (error) throw error;
 };
 
 export const addStudent = async (student: Omit<AttStudent, 'id' | 'created_at'>) => {
