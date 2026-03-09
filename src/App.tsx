@@ -113,6 +113,8 @@ const HRSetupPage = lazy(() => import("./pages/tools/HRSetupPage"));
 const LeavesPage = lazy(() => import("./pages/tools/LeavesPage"));
 const HolidaysPage = lazy(() => import("./pages/tools/HolidaysPage"));
 const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReportsPage"));
+
+const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
