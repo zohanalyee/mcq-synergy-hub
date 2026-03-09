@@ -104,13 +104,72 @@ const BulkCSVUploadDialog = ({ type, classes, sections, onSuccess, children }: B
       });
       const rows = parseCSV(text);
       let success = 0, failed = 0;
+      let classesCreated = 0, sectionsCreated = 0;
 
       if (type === 'students') {
+        // Build mutable maps from existing data
         const classMap = new Map(classes.map(c => [c.name.toLowerCase(), c.id]));
+        const sectionsList = [...sections];
+
+        // 1. Collect unique class names from CSV
+        const uniqueClassNames = new Set(
+          rows.map(r => r.class_name?.trim()).filter(Boolean)
+        );
+
+        // 2. Auto-create missing classes
+        for (const className of uniqueClassNames) {
+          if (!classMap.has(className.toLowerCase())) {
+            const { data, error } = await supabase
+              .from('classes')
+              .insert({ name: className })
+              .select()
+              .single();
+            if (data && !error) {
+              classMap.set(className.toLowerCase(), data.id);
+              classesCreated++;
+            } else {
+              console.error('Failed to create class:', className, error);
+            }
+          }
+        }
+
+        // 3. Collect unique (class, section) pairs and auto-create missing sections
+        const sectionPairs = new Set(
+          rows
+            .filter(r => r.class_name?.trim() && r.section_name?.trim())
+            .map(r => `${r.class_name.trim().toLowerCase()}|||${r.section_name.trim().toLowerCase()}`)
+        );
+
+        for (const pair of sectionPairs) {
+          const [classKey, sectionKey] = pair.split('|||');
+          const classId = classMap.get(classKey);
+          if (!classId) continue;
+          const exists = sectionsList.some(
+            s => s.class_id === classId && s.name.toLowerCase() === sectionKey
+          );
+          if (!exists) {
+            const sectionName = rows.find(
+              r => r.section_name?.trim().toLowerCase() === sectionKey
+            )?.section_name?.trim() || sectionKey;
+            const { data, error } = await supabase
+              .from('sections')
+              .insert({ class_id: classId, name: sectionName })
+              .select()
+              .single();
+            if (data && !error) {
+              sectionsList.push({ id: data.id, class_id: classId, name: data.name });
+              sectionsCreated++;
+            } else {
+              console.error('Failed to create section:', sectionName, error);
+            }
+          }
+        }
+
+        // 4. Map students using complete lookup maps
         const records = rows.map(row => {
-          const classId = classMap.get(row.class_name?.toLowerCase() || '') || null;
+          const classId = classMap.get(row.class_name?.trim().toLowerCase() || '') || null;
           const sectionId = classId
-            ? sections.find(s => s.class_id === classId && s.name.toLowerCase() === (row.section_name?.toLowerCase() || ''))?.id || null
+            ? sectionsList.find(s => s.class_id === classId && s.name.toLowerCase() === (row.section_name?.trim().toLowerCase() || ''))?.id || null
             : null;
           return {
             admission_number: row.admission_number,
@@ -124,7 +183,6 @@ const BulkCSVUploadDialog = ({ type, classes, sections, onSuccess, children }: B
           };
         }).filter(r => r.admission_number && r.full_name);
 
-        // Batch insert in chunks of 50
         for (let i = 0; i < records.length; i += 50) {
           const chunk = records.slice(i, i + 50);
           const { error } = await supabase.from('att_students').insert(chunk);
