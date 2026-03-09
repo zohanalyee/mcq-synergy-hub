@@ -93,6 +93,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'unit-converter', name: 'Unit Converter', description: 'Convert between units', category: 'Converters', icon: ArrowLeftRight, popular: true, href: '/tools/units' },
   { id: 'notes', name: 'Quick Notes', description: 'Jot down notes quickly', category: 'Productivity', icon: StickyNote, popular: true, href: '/tools/notes' },
   { id: 'calendar', name: 'Study Calendar', description: 'Plan your study schedule', category: 'Productivity', icon: Calendar, href: '/tools/calendar' },
+  { id: 'islamic-calendar', name: 'Islamic (Hijri) Calendar', description: 'View Hijri dates & Islamic events', category: 'Productivity', icon: Moon, popular: true, href: '/tools/islamic-calendar' },
+  { id: 'international-calendar', name: 'International Calendar', description: 'View dates in 10+ calendar systems worldwide', category: 'Productivity', icon: Globe, popular: true, href: '/tools/international-calendar' },
 
   // === Calculators (15 new) ===
   { id: 'bmi-calculator', name: 'BMI Calculator', description: 'Calculate Body Mass Index', category: 'Calculators', icon: Activity, popular: true, href: '/tools/bmi-calculator' },
