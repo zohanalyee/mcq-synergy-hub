@@ -60,7 +60,9 @@ const StudentAttendancePage = () => {
   const loadAttendance = async () => {
     setLoading(true);
     try {
-      const { students: studs, attendance: att } = await getClassAttendanceForDate(selectedClass, selectedSection, selectedDate);
+      const classParam = selectedClass === '__unassigned__' ? '__unassigned__' : selectedClass;
+      const sectionParam = selectedClass === '__unassigned__' ? '' : selectedSection;
+      const { students: studs, attendance: att } = await getClassAttendanceForDate(classParam, sectionParam, selectedDate);
       setStudents(studs);
       const map: Record<string, { status: AttendanceStatus; remarks: string }> = {};
       studs.forEach(s => {
