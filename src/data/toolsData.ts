@@ -131,11 +131,13 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'case-converter', name: 'Text Case Converter', description: 'Convert text case styles', category: 'Converters', icon: CaseSensitive, href: '/tools/case-converter' },
   { id: 'image-resizer', name: 'Image Resizer', description: 'Resize images in browser', category: 'Converters', icon: Image, href: '/tools/image-resizer' },
   { id: 'image-compressor', name: 'Image Compressor', description: 'Compress images up to 80% instantly', category: 'Converters', icon: FileImage, popular: true, href: '/tools/image-compressor' },
-  { id: 'pdf-compressor', name: 'PDF Compressor', description: 'Reduce PDF file size instantly', category: 'Converters', icon: FileOutput, popular: true, href: '/tools/pdf-compressor' },
-  { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge multiple PDFs into one', category: 'Converters', icon: Merge, popular: true, href: '/tools/pdf-merger' },
   { id: 'image-converter', name: 'Image Converter', description: 'Convert between JPG, PNG & WebP', category: 'Converters', icon: Image, popular: true, href: '/tools/image-converter' },
-  { id: 'pdf-to-text', name: 'PDF to Text', description: 'Extract text from PDF files', category: 'Converters', icon: FileText, href: '/tools/pdf-to-text' },
-  { id: 'pdf-splitter', name: 'PDF Splitter', description: 'Split PDFs by page ranges', category: 'Converters', icon: FileOutput, popular: true, href: '/tools/pdf-splitter' },
+
+  // === PDF Tools ===
+  { id: 'pdf-compressor', name: 'PDF Compressor', description: 'Reduce PDF file size instantly', category: 'PDF Tools', icon: FileOutput, popular: true, href: '/tools/pdf-compressor' },
+  { id: 'pdf-merger', name: 'PDF Merger', description: 'Merge multiple PDFs into one', category: 'PDF Tools', icon: Merge, popular: true, href: '/tools/pdf-merger' },
+  { id: 'pdf-to-text', name: 'PDF to Text', description: 'Extract text from PDF files', category: 'PDF Tools', icon: FileText, href: '/tools/pdf-to-text' },
+  { id: 'pdf-splitter', name: 'PDF Splitter', description: 'Split PDFs by page ranges', category: 'PDF Tools', icon: FileOutput, popular: true, href: '/tools/pdf-splitter' },
 
   // === Productivity (4 new) ===
   { id: 'stopwatch', name: 'Stopwatch', description: 'Simple stopwatch with laps', category: 'Productivity', icon: Clock, href: '/tools/stopwatch' },
