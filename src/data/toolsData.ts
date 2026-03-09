@@ -13,7 +13,7 @@ export interface ToolDefinition {
   id: string;
   name: string;
   description: string;
-  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'HR & Attendance';
+  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'HR & Attendance' | 'PDF Tools';
   icon: LucideIcon;
   popular?: boolean;
   href: string;
@@ -22,6 +22,7 @@ export interface ToolDefinition {
 export const TOOL_CATEGORIES = [
   'All',
   'HR & Attendance',
+  'PDF Tools',
   'Calculators',
   'Student Tools',
   'Productivity',
