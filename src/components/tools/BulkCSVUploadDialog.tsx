@@ -210,7 +210,11 @@ const BulkCSVUploadDialog = ({ type, classes, sections, onSuccess, children }: B
 
       setResult({ success, failed });
       if (success > 0) {
-        toast.success(`${success} ${type} imported successfully`);
+        const extras = [];
+        if (classesCreated > 0) extras.push(`${classesCreated} classes`);
+        if (sectionsCreated > 0) extras.push(`${sectionsCreated} sections`);
+        const extraMsg = extras.length > 0 ? ` (auto-created ${extras.join(' & ')})` : '';
+        toast.success(`${success} ${type} imported successfully${extraMsg}`);
         onSuccess();
       }
       if (failed > 0) toast.error(`${failed} records failed to import`);
