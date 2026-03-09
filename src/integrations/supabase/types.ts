@@ -62,6 +62,119 @@ export type Database = {
         }
         Relationships: []
       }
+      att_staff: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          designation: string
+          email: string | null
+          employee_id: string
+          full_name: string
+          id: string
+          mobile: string | null
+          photo_url: string | null
+          shift_id: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          designation: string
+          email?: string | null
+          employee_id: string
+          full_name: string
+          id?: string
+          mobile?: string | null
+          photo_url?: string | null
+          shift_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          designation?: string
+          email?: string | null
+          employee_id?: string
+          full_name?: string
+          id?: string
+          mobile?: string | null
+          photo_url?: string | null
+          shift_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "att_staff_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      att_students: {
+        Row: {
+          admission_number: string
+          class_id: string | null
+          created_at: string | null
+          full_name: string
+          id: string
+          parent_email: string | null
+          parent_mobile: string | null
+          photo_url: string | null
+          roll_number: string | null
+          section_id: string | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admission_number: string
+          class_id?: string | null
+          created_at?: string | null
+          full_name: string
+          id?: string
+          parent_email?: string | null
+          parent_mobile?: string | null
+          photo_url?: string | null
+          roll_number?: string | null
+          section_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admission_number?: string
+          class_id?: string | null
+          created_at?: string | null
+          full_name?: string
+          id?: string
+          parent_email?: string | null
+          parent_mobile?: string | null
+          photo_url?: string | null
+          roll_number?: string | null
+          section_id?: string | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "att_students_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "att_students_section_id_fkey"
+            columns: ["section_id"]
+            isOneToOne: false
+            referencedRelation: "sections"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       badges: {
         Row: {
           category: string | null
@@ -85,6 +198,27 @@ export type Database = {
           description?: string
           icon?: string
           id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      classes: {
+        Row: {
+          created_at: string | null
+          id: string
+          institute_name: string | null
+          name: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          institute_name?: string | null
+          name: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          institute_name?: string | null
           name?: string
         }
         Relationships: []
@@ -768,6 +902,75 @@ export type Database = {
         }
         Relationships: []
       }
+      holidays: {
+        Row: {
+          applies_to: string | null
+          created_at: string | null
+          date: string
+          description: string | null
+          id: string
+          institute_name: string | null
+          name: string
+          type: string | null
+        }
+        Insert: {
+          applies_to?: string | null
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: string
+          institute_name?: string | null
+          name: string
+          type?: string | null
+        }
+        Update: {
+          applies_to?: string | null
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: string
+          institute_name?: string | null
+          name?: string
+          type?: string | null
+        }
+        Relationships: []
+      }
+      institute_settings: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          institute_name: string
+          logo_url: string | null
+          phone: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          institute_name: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          institute_name?: string
+          logo_url?: string | null
+          phone?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_categories: {
         Row: {
           created_at: string | null
@@ -921,6 +1124,50 @@ export type Database = {
             columns: ["parent_id"]
             isOneToOne: false
             referencedRelation: "navigation_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      overtime_records: {
+        Row: {
+          amount: number | null
+          approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
+          date: string
+          id: string
+          overtime_hours: number
+          rate_multiplier: number | null
+          staff_id: string
+        }
+        Insert: {
+          amount?: number | null
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          date: string
+          id?: string
+          overtime_hours: number
+          rate_multiplier?: number | null
+          staff_id: string
+        }
+        Update: {
+          amount?: number | null
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          date?: string
+          id?: string
+          overtime_hours?: number
+          rate_multiplier?: number | null
+          staff_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "overtime_records_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "att_staff"
             referencedColumns: ["id"]
           },
         ]
@@ -1106,6 +1353,318 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      sections: {
+        Row: {
+          class_id: string
+          created_at: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          class_id: string
+          created_at?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          class_id?: string
+          created_at?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sections_class_id_fkey"
+            columns: ["class_id"]
+            isOneToOne: false
+            referencedRelation: "classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shifts: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          half_day_hours: number | null
+          id: string
+          institute_name: string | null
+          is_active: boolean | null
+          late_threshold_minutes: number | null
+          name: string
+          start_time: string
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          half_day_hours?: number | null
+          id?: string
+          institute_name?: string | null
+          is_active?: boolean | null
+          late_threshold_minutes?: number | null
+          name: string
+          start_time: string
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          half_day_hours?: number | null
+          id?: string
+          institute_name?: string | null
+          is_active?: boolean | null
+          late_threshold_minutes?: number | null
+          name?: string
+          start_time?: string
+        }
+        Relationships: []
+      }
+      staff_attendance: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          date: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          marked_by: string | null
+          overtime_hours: number | null
+          remarks: string | null
+          staff_id: string
+          status: string | null
+          work_hours: number | null
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          date: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          marked_by?: string | null
+          overtime_hours?: number | null
+          remarks?: string | null
+          staff_id: string
+          status?: string | null
+          work_hours?: number | null
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          date?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          marked_by?: string | null
+          overtime_hours?: number | null
+          remarks?: string | null
+          staff_id?: string
+          status?: string | null
+          work_hours?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_attendance_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "att_staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_leave_balance: {
+        Row: {
+          casual_leave: number | null
+          casual_used: number | null
+          earned_leave: number | null
+          earned_used: number | null
+          id: string
+          sick_leave: number | null
+          sick_used: number | null
+          staff_id: string
+          year: number
+        }
+        Insert: {
+          casual_leave?: number | null
+          casual_used?: number | null
+          earned_leave?: number | null
+          earned_used?: number | null
+          id?: string
+          sick_leave?: number | null
+          sick_used?: number | null
+          staff_id: string
+          year: number
+        }
+        Update: {
+          casual_leave?: number | null
+          casual_used?: number | null
+          earned_leave?: number | null
+          earned_used?: number | null
+          id?: string
+          sick_leave?: number | null
+          sick_used?: number | null
+          staff_id?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_leave_balance_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "att_staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      staff_leaves: {
+        Row: {
+          applied_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          document_url: string | null
+          from_date: string
+          id: string
+          leave_type: string
+          reason: string
+          rejection_reason: string | null
+          staff_id: string
+          status: string | null
+          to_date: string
+          total_days: number
+        }
+        Insert: {
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          document_url?: string | null
+          from_date: string
+          id?: string
+          leave_type: string
+          reason: string
+          rejection_reason?: string | null
+          staff_id: string
+          status?: string | null
+          to_date: string
+          total_days: number
+        }
+        Update: {
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          document_url?: string | null
+          from_date?: string
+          id?: string
+          leave_type?: string
+          reason?: string
+          rejection_reason?: string | null
+          staff_id?: string
+          status?: string | null
+          to_date?: string
+          total_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "staff_leaves_staff_id_fkey"
+            columns: ["staff_id"]
+            isOneToOne: false
+            referencedRelation: "att_staff"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_attendance: {
+        Row: {
+          date: string
+          id: string
+          marked_at: string | null
+          marked_by: string | null
+          remarks: string | null
+          status: string
+          student_id: string
+        }
+        Insert: {
+          date: string
+          id?: string
+          marked_at?: string | null
+          marked_by?: string | null
+          remarks?: string | null
+          status: string
+          student_id: string
+        }
+        Update: {
+          date?: string
+          id?: string
+          marked_at?: string | null
+          marked_by?: string | null
+          remarks?: string | null
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_attendance_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "att_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      student_leaves: {
+        Row: {
+          applied_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          document_url: string | null
+          from_date: string
+          id: string
+          leave_type: string
+          reason: string
+          rejection_reason: string | null
+          status: string | null
+          student_id: string
+          to_date: string
+          total_days: number
+        }
+        Insert: {
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          document_url?: string | null
+          from_date: string
+          id?: string
+          leave_type: string
+          reason: string
+          rejection_reason?: string | null
+          status?: string | null
+          student_id: string
+          to_date: string
+          total_days: number
+        }
+        Update: {
+          applied_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          document_url?: string | null
+          from_date?: string
+          id?: string
+          leave_type?: string
+          reason?: string
+          rejection_reason?: string | null
+          status?: string | null
+          student_id?: string
+          to_date?: string
+          total_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_leaves_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "att_students"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subjects: {
         Row: {
