@@ -1,54 +1,62 @@
 
+## Fix: Subject Browser — Show Board & Class Context, Group by Board
 
-## Plan: Aggressive Spacing & Density Reductions
+### Problem
+The sidebar query is:
+```js
+supabase.from("subjects").select("id, name")
+```
+This returns all subjects with just their name — "Biology" appears 7+ times with zero context. The user can't tell which board or class each belongs to.
 
-### 1. Base Font Size — Apply 14px globally (not just mobile)
-**File: `src/index.css`**
-- Move `font-size: 14px` from the mobile-only media query to apply to `html` globally (all screen sizes)
+### Root Cause
+The LMS hierarchy is: `educational_systems (Board) → levels (Class) → subjects → topics`  
+The current query doesn't join up to `levels` or `educational_systems`.
 
-### 2. Subject Grid — More columns
-**File: `src/components/subjects/SubjectGrid.tsx`**
-- Change grid from `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8`
-- Reduce gap from `gap-3` → `gap-2`
+### Solution
 
-### 3. Syllabus Builder Grid — More columns
-**File: `src/components/syllabus-builder/SubjectGrid.tsx`**
-- Change from `grid-cols-2 sm:grid-cols-3` → `grid-cols-3 sm:grid-cols-4 lg:grid-cols-5`
-- Reduce gap from `gap-3` → `gap-2`
+**1. Update the Supabase Query** — join subjects → levels → educational_systems:
+```js
+supabase.from("subjects").select(`
+  id, name,
+  levels!level_id(
+    id, name,
+    educational_systems!system_id(id, name)
+  )
+`).eq("approved", true).order("name")
+```
 
-### 4. Tools Page — More columns, tighter spacing
-**File: `src/pages/Tools.tsx`**
-- Grid: `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5` → `grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8`
-- Gap: `gap-2.5` → `gap-2`
-- Tool card padding: `p-4` → `p-3`
-- Icon size: `h-10 w-10` → `h-8 w-8`, inner icon `h-5 w-5` → `h-4 w-4`
-- Heading: `text-2xl sm:text-3xl` → `text-xl sm:text-2xl`
+**2. Update `LMSSubject` interface** to hold the full context:
+```ts
+interface LMSSubject {
+  id: string;
+  name: string;
+  levelName?: string;   // e.g. "Class 9"
+  levelId?: string;
+  systemName?: string;  // e.g. "Punjab Board"
+  systemId?: string;
+}
+```
 
-### 5. Index Page — Tighter sections
-**File: `src/pages/Index.tsx`**
-- Subject grid: `grid-cols-2 md:grid-cols-4 gap-4` → `grid-cols-3 md:grid-cols-4 gap-2`
-- Feature grid: `grid-cols-2 md:grid-cols-3 gap-4` → `grid-cols-2 md:grid-cols-3 gap-2`
-- Section headings: `text-2xl` → `text-lg`, `text-xl` → `text-base`
-- Section margin-bottom: `mb-6`/`mb-5` → `mb-3`
-- Testimonials grid gap: `gap-4` → `gap-2`
-- Stats counters: `text-2xl md:text-3xl` → `text-xl md:text-2xl`
-- "View All Subjects" margin: `mt-8` → `mt-4`
+**3. Group subjects by Board in the sidebar UI:**
 
-### 6. SubjectCard — Slightly tighter
-**File: `src/components/SubjectCard.tsx`**
-- Min-height: `min-h-[120px]` → `min-h-[100px]`
+```text
+BROWSE SUBJECTS
+▼ Punjab Board            ← collapsible group header
+   Biology  [Class 9]     ← subject row with class badge
+   Physics  [Class 11]
+▼ Sindh Board
+   Biology  [Class 10]    ← same name, different board/class = clear!
+```
 
-### 7. FeatureCard — Reduce padding
-**File: `src/components/FeatureCard.tsx`**
-- Card min-height: `min-h-[100px]` → remove
-- Padding: `p-3` → `p-2.5`
+- Boards are rendered as collapsible section headers (unique — no duplicates)
+- Under each board, subjects show with a small "Class X" badge
+- Subjects without a board/class association still show in an "Other" group
 
-### Files to edit (7 files):
-1. `src/index.css` — global 14px font
-2. `src/components/subjects/SubjectGrid.tsx` — more columns
-3. `src/components/syllabus-builder/SubjectGrid.tsx` — more columns
-4. `src/pages/Tools.tsx` — denser grid
-5. `src/pages/Index.tsx` — tighter sections
-6. `src/components/SubjectCard.tsx` — smaller min-height
-7. `src/components/FeatureCard.tsx` — less padding
+**4. Update `newConversation` context** to carry `systemName + levelName` for richer chat titles:
+- Context badge in chat header: `Punjab Board · Class 9 · Biology`
+- Chat title: `Ask about Biology (Punjab Board)`
 
+### Files Changed
+- `src/pages/AskDocument.tsx` — query update, interface update, sidebar render restructure
+
+### No DB changes needed — data is already there, just not being fetched.
