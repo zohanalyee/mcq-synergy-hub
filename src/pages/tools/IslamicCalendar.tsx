@@ -39,14 +39,13 @@ function gregorianToHijri(date: Date): { year: number; month: number; day: numbe
   const gm = date.getMonth() + 1;
   const gy = date.getFullYear();
 
-  let jd: number;
-  if (gm > 2) {
-    jd = Math.floor(365.25 * (gy + 4716)) + Math.floor(30.6001 * (gm + 1)) + gd - 1524.5;
-  } else {
-    jd = Math.floor(365.25 * (gy + 4715)) + Math.floor(30.6001 * (gm + 13)) + gd - 1524.5;
-  }
+  // Standard Gregorian to Julian Day Number
+  const a = Math.floor((14 - gm) / 12);
+  const y = gy + 4800 - a;
+  const m = gm + 12 * a - 3;
+  const jdn = gd + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
 
-  const l = Math.floor(jd) - 1948440 + 10632;
+  const l = jdn - 1948440 + 10632;
   const n = Math.floor((l - 1) / 10631);
   const l2 = l - 10631 * n + 354;
   const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719)
