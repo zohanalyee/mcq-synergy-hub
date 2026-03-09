@@ -9,7 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { ChevronLeft, Plus, Trash2, Building2, Users, UserCheck, Clock, GraduationCap } from 'lucide-react';
+import { ChevronLeft, Plus, Trash2, Building2, Users, UserCheck, Clock, GraduationCap, Upload } from 'lucide-react';
+import BulkCSVUploadDialog from '@/components/tools/BulkCSVUploadDialog';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -212,7 +213,12 @@ const HRSetupPage = () => {
           {/* Students */}
           <TabsContent value="students" className="space-y-3">
             <Card>
-              <CardHeader><CardTitle className="text-base">Add Student</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Add Student</CardTitle>
+                <BulkCSVUploadDialog type="students" classes={classes} sections={sections} onSuccess={loadAll}>
+                  <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-1" /> Bulk CSV</Button>
+                </BulkCSVUploadDialog>
+              </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input placeholder="Admission No *" value={newStudent.admission_number} onChange={e => setNewStudent(p => ({ ...p, admission_number: e.target.value }))} />
                 <Input placeholder="Full Name *" value={newStudent.full_name} onChange={e => setNewStudent(p => ({ ...p, full_name: e.target.value }))} />
@@ -251,7 +257,12 @@ const HRSetupPage = () => {
           {/* Staff */}
           <TabsContent value="staff" className="space-y-3">
             <Card>
-              <CardHeader><CardTitle className="text-base">Add Staff Member</CardTitle></CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle className="text-base">Add Staff Member</CardTitle>
+                <BulkCSVUploadDialog type="staff" classes={classes} sections={sections} onSuccess={loadAll}>
+                  <Button variant="outline" size="sm"><Upload className="h-4 w-4 mr-1" /> Bulk CSV</Button>
+                </BulkCSVUploadDialog>
+              </CardHeader>
               <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <Input placeholder="Employee ID *" value={newStaff.employee_id} onChange={e => setNewStaff(p => ({ ...p, employee_id: e.target.value }))} />
                 <Input placeholder="Full Name *" value={newStaff.full_name} onChange={e => setNewStaff(p => ({ ...p, full_name: e.target.value }))} />
