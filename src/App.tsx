@@ -95,6 +95,7 @@ const PDFCompressor = lazy(() => import("./pages/tools/PDFCompressor"));
 const PDFMerger = lazy(() => import("./pages/tools/PDFMerger"));
 const ImageConverter = lazy(() => import("./pages/tools/ImageConverter"));
 const PDFToText = lazy(() => import("./pages/tools/PDFToText"));
+const PDFSplitter = lazy(() => import("./pages/tools/PDFSplitter"));
 const Stopwatch = lazy(() => import("./pages/tools/Stopwatch"));
 const WorldClock = lazy(() => import("./pages/tools/WorldClock"));
 const WordCounter = lazy(() => import("./pages/tools/WordCounter"));
@@ -221,6 +222,7 @@ const App = () => {
                       <Route path="/tools/pdf-merger" element={<Suspense fallback={null}><PDFMerger /></Suspense>} />
                       <Route path="/tools/image-converter" element={<Suspense fallback={null}><ImageConverter /></Suspense>} />
                       <Route path="/tools/pdf-to-text" element={<Suspense fallback={null}><PDFToText /></Suspense>} />
+                      <Route path="/tools/pdf-splitter" element={<Suspense fallback={null}><PDFSplitter /></Suspense>} />
                       <Route path="/tools/stopwatch" element={<Suspense fallback={null}><Stopwatch /></Suspense>} />
                       <Route path="/tools/world-clock" element={<Suspense fallback={null}><WorldClock /></Suspense>} />
                       <Route path="/tools/word-counter" element={<Suspense fallback={null}><WordCounter /></Suspense>} />
