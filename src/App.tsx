@@ -106,8 +106,13 @@ const NameGenerator = lazy(() => import("./pages/tools/NameGenerator"));
 const ColorPicker = lazy(() => import("./pages/tools/ColorPicker"));
 const RandomNumber = lazy(() => import("./pages/tools/RandomNumber"));
 const EquationSolver = lazy(() => import("./pages/tools/EquationSolver"));
-
-const App = () => {
+const AttendanceDashboard = lazy(() => import("./pages/tools/AttendanceDashboard"));
+const StudentAttendancePage = lazy(() => import("./pages/tools/StudentAttendancePage"));
+const StaffAttendancePage = lazy(() => import("./pages/tools/StaffAttendancePage"));
+const HRSetupPage = lazy(() => import("./pages/tools/HRSetupPage"));
+const LeavesPage = lazy(() => import("./pages/tools/LeavesPage"));
+const HolidaysPage = lazy(() => import("./pages/tools/HolidaysPage"));
+const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReportsPage"));
   const [queryClient] = useState(() => new QueryClient());
 
   return (
