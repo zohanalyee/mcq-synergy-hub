@@ -48,6 +48,8 @@ import Notifications from "./pages/Notifications";
 
 // Existing Tool Pages
 import CalendarTool from "./pages/tools/CalendarTool";
+const IslamicCalendar = lazy(() => import("./pages/tools/IslamicCalendar"));
+const InternationalCalendar = lazy(() => import("./pages/tools/InternationalCalendar"));
 import MathTool from "./pages/tools/MathTool";
 import AgeCalculator from "./pages/tools/AgeCalculator";
 import TimerTool from "./pages/tools/TimerTool";
