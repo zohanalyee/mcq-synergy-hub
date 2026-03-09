@@ -77,6 +77,8 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
 };
 
 export const ALL_TOOLS: ToolDefinition[] = [
+  // === HR & Attendance System ===
+  { id: 'hr-system', name: 'Attendance & HR System', description: 'Complete attendance tracking & HR management', category: 'HR & Attendance', icon: Building2, popular: true, href: '/tools/hr' },
   // === Existing (7) ===
   { id: 'calculator', name: 'Calculator', description: 'Basic & scientific calculator', category: 'Calculators', icon: Calculator, popular: true, href: '/tools/math' },
   { id: 'age-calculator', name: 'Age Calculator', description: 'Calculate exact age from date of birth', category: 'Calculators', icon: Calendar, popular: true, href: '/tools/age-calculator' },

@@ -239,6 +239,15 @@ const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReports
                       <Route path="/tools/random-number" element={<Suspense fallback={null}><RandomNumber /></Suspense>} />
                       <Route path="/tools/equation-solver" element={<Suspense fallback={null}><EquationSolver /></Suspense>} />
                       
+                      {/* HR & Attendance System */}
+                      <Route path="/tools/hr" element={<Suspense fallback={null}><AttendanceDashboard /></Suspense>} />
+                      <Route path="/tools/hr/student-attendance" element={<Suspense fallback={null}><StudentAttendancePage /></Suspense>} />
+                      <Route path="/tools/hr/staff-attendance" element={<Suspense fallback={null}><StaffAttendancePage /></Suspense>} />
+                      <Route path="/tools/hr/setup" element={<Suspense fallback={null}><HRSetupPage /></Suspense>} />
+                      <Route path="/tools/hr/leaves" element={<Suspense fallback={null}><LeavesPage /></Suspense>} />
+                      <Route path="/tools/hr/holidays" element={<Suspense fallback={null}><HolidaysPage /></Suspense>} />
+                      <Route path="/tools/hr/reports" element={<Suspense fallback={null}><AttendanceReportsPage /></Suspense>} />
+                      
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     </TooltipProvider>
