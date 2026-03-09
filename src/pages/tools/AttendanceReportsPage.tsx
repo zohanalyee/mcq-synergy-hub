@@ -70,10 +70,10 @@ const ReportsPage = () => {
               <SelectTrigger className="h-9"><SelectValue placeholder="Class" /></SelectTrigger>
               <SelectContent>{classes.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}</SelectContent>
             </Select>
-            <Select value={selectedSection} onValueChange={setSelectedSection}>
+            <Select value={selectedSection || '__all__'} onValueChange={v => setSelectedSection(v === '__all__' ? '' : v)}>
               <SelectTrigger className="h-9"><SelectValue placeholder="Section (All)" /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Sections</SelectItem>
+                <SelectItem value="__all__">All Sections</SelectItem>
                 {sections.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
               </SelectContent>
             </Select>
