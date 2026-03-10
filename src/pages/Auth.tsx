@@ -154,7 +154,7 @@ const Auth = () => {
           </div>
           <div className="space-y-4">
             {/* Google OAuth */}
-            <Button variant="outline" className="w-full h-11 font-medium gap-3 border-border/80 bg-background hover:bg-muted/80 hover:shadow-md transition-all" onClick={handleGoogleLogin} disabled={isGoogleLoading || isLoading}>
+            <Button variant="outline" className="w-full h-11 font-medium gap-3 bg-white/70 dark:bg-slate-800/60 border-white/50 dark:border-white/15 hover:bg-white/90 dark:hover:bg-slate-800/80 hover:shadow-md transition-all" onClick={handleGoogleLogin} disabled={isGoogleLoading || isLoading}>
               {isGoogleLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Connecting...</> : <><GoogleIcon />Continue with Google</>}
             </Button>
 
