@@ -228,7 +228,7 @@ const Auth = () => {
                     <Label htmlFor="confirm-password">Confirm Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="confirm-password" name="confirmPassword" type="password" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} className="pl-10" required disabled={isLoading} minLength={8} />
+                      <Input id="confirm-password" name="confirmPassword" type="password" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} className="pl-10 bg-white/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 border-white/60 dark:border-white/15" required disabled={isLoading} minLength={8} />
                     </div>
                   </div>
                   <div className="flex items-start space-x-2">
