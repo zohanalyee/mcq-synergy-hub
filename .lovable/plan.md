@@ -1,30 +1,41 @@
-## Attendance & HR Management System - IMPLEMENTED ✅
 
-### Phase 1: Database Schema ✅
-- Created 13 tables: `classes`, `sections`, `att_students`, `att_staff`, `shifts`, `student_attendance`, `staff_attendance`, `student_leaves`, `staff_leaves`, `staff_leave_balance`, `holidays`, `overtime_records`, `institute_settings`
-- RLS policies enabled for authenticated users
 
-### Phase 2: Frontend Implementation ✅
-- **Dashboard**: `/tools/hr` - Main hub with institute setup, stats, module navigation
-- **Student Attendance**: `/tools/hr/student-attendance` - Mark daily attendance by class/section
-- **Staff Attendance**: `/tools/hr/staff-attendance` - Check-in/check-out tracking
-- **Leave Management**: `/tools/hr/leaves` - Apply and approve leaves
-- **Holiday Calendar**: `/tools/hr/holidays` - Manage holidays
-- **Reports**: `/tools/hr/reports` - Analytics and attendance reports
-- **Setup**: `/tools/hr/setup` - Configure classes, sections, students, staff, shifts
+## Fix Webapp Shaking/Jerking Issue
 
-### Integration ✅
-- Added to Tools menu as "Attendance & HR System" (HR & Attendance category)
-- Routes configured in App.tsx
-- Service layer in `src/services/attendanceService.ts`
-- Types in `src/types/attendance.types.ts`
+The app already has `overflow-y: scroll` on `html` (line 241), but is missing `scrollbar-gutter: stable` and GPU acceleration for Radix UI overlay elements.
 
-### Features Implemented
-- Institute name setup (per user)
-- Class & section management
-- Student roster management
-- Staff management with shifts
-- Daily attendance marking (Present/Absent/Late/Half-day/Leave/Holiday)
-- Leave application & approval workflow
-- Holiday management
-- Attendance reports with charts
+### Changes to `src/index.css`
+
+1. **Add `scrollbar-gutter: stable`** to the existing `html` rule (line 239-242) — this is the primary fix, reserving scrollbar space so content doesn't shift when scrollbar appears/disappears.
+
+2. **Add `overflow-x: hidden`** to the `body` rule (line 208-214) to prevent horizontal overflow.
+
+3. **Add GPU acceleration rules** for all Radix UI overlay components (dialogs, dropdowns, popovers, selects) — append after the existing scrollbar styles (~line 201):
+
+```css
+/* Prevent shaking on Radix UI overlays */
+[data-radix-dropdown-menu-content],
+[data-radix-dialog-content],
+[data-radix-dialog-overlay],
+[data-radix-popover-content],
+[data-radix-select-content],
+[data-radix-popper-content-wrapper],
+[role="dialog"],
+[role="menu"] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+```
+
+4. **Add modal-open body class** CSS for preventing background scroll when modals are open:
+
+```css
+body.modal-open {
+  overflow: hidden;
+  padding-right: 15px;
+}
+```
+
+These are minimal, targeted changes. Steps 1-2 fix 99% of shaking issues (scrollbar layout shift). Steps 3-4 handle edge cases with overlays.
+
