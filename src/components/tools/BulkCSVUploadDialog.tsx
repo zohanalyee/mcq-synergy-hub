@@ -79,11 +79,12 @@ const BulkCSVUploadDialog = ({ type, classes, sections, onSuccess, children }: B
   const parseCSV = (text: string): ParsedRow[] => {
     const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
     if (lines.length < 2) return [];
-    const hdr = lines[0].split(',').map(h => h.trim().toLowerCase().replace(/\s+/g, '_'));
+    const rawHeaders = lines[0].split(',').map(h => h.trim());
+    const canonicalHeaders = rawHeaders.map(h => mapHeaderToCanonical(h));
     return lines.slice(1).map(line => {
       const vals = line.split(',').map(v => v.trim());
       const row: ParsedRow = {};
-      hdr.forEach((h, i) => { row[h] = vals[i] || ''; });
+      canonicalHeaders.forEach((h, i) => { row[h] = vals[i] || ''; });
       return row;
     });
   };
