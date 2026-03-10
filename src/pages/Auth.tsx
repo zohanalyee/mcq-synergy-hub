@@ -118,17 +118,25 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }} className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
-            <BookOpen className="w-8 h-8 text-primary-foreground" />
+    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+      {/* Mesh gradient background */}
+      <div className="absolute inset-0 bg-background">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[hsl(var(--primary)/0.3)] blur-[120px] animate-pulse" />
+        <div className="absolute top-[20%] right-[-15%] w-[50%] h-[50%] rounded-full bg-[hsl(280,80%,65%,0.25)] blur-[100px] animate-pulse [animation-delay:1s]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[55%] h-[55%] rounded-full bg-[hsl(200,90%,60%,0.2)] blur-[110px] animate-pulse [animation-delay:2s]" />
+        <div className="absolute top-[50%] left-[50%] w-[40%] h-[40%] rounded-full bg-[hsl(330,70%,60%,0.15)] blur-[90px] animate-pulse [animation-delay:3s]" />
+      </div>
+
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-[420px] relative z-10">
+        <div className="text-center mb-6">
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }} className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-2xl mb-3 shadow-lg shadow-primary/25">
+            <BookOpen className="w-7 h-7 text-primary-foreground" />
           </motion.div>
-          <h1 className="text-3xl font-bold">AI-MCQs Point</h1>
-          <p className="text-muted-foreground">Your gateway to academic excellence</p>
+          <h1 className="text-2xl font-bold text-foreground">AI-MCQs Point</h1>
+          <p className="text-sm text-muted-foreground">Your gateway to academic excellence</p>
         </div>
 
-        <Card>
+        <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-2xl rounded-3xl">
           <CardHeader>
             <CardTitle>Welcome</CardTitle>
             <CardDescription>Sign in to your account or create a new one to get started</CardDescription>
