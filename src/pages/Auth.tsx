@@ -119,15 +119,26 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
-      {/* Mesh gradient background */}
+      {/* Faux dashboard background */}
       <div className="absolute inset-0 bg-background">
-        <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] rounded-full bg-[hsl(var(--primary)/0.3)] blur-[120px] animate-pulse" />
-        <div className="absolute top-[20%] right-[-15%] w-[50%] h-[50%] rounded-full bg-[hsl(280,80%,65%,0.25)] blur-[100px] animate-pulse [animation-delay:1s]" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[55%] h-[55%] rounded-full bg-[hsl(200,90%,60%,0.2)] blur-[110px] animate-pulse [animation-delay:2s]" />
-        <div className="absolute top-[50%] left-[50%] w-[40%] h-[40%] rounded-full bg-[hsl(330,70%,60%,0.15)] blur-[90px] animate-pulse [animation-delay:3s]" />
+        {/* Simulated dashboard elements */}
+        <div className="absolute top-0 left-0 w-[220px] h-full bg-[hsl(var(--primary)/0.08)]" />
+        <div className="absolute top-0 left-[220px] right-0 h-[56px] bg-[hsl(var(--primary)/0.05)]" />
+        <div className="absolute top-[80px] left-[260px] w-[280px] h-[160px] rounded-2xl bg-[hsl(var(--primary)/0.1)]" />
+        <div className="absolute top-[80px] left-[560px] w-[280px] h-[160px] rounded-2xl bg-[hsl(280,80%,65%,0.1)]" />
+        <div className="absolute top-[80px] right-[40px] w-[200px] h-[160px] rounded-2xl bg-[hsl(200,90%,60%,0.1)]" />
+        <div className="absolute top-[270px] left-[260px] right-[40px] h-[200px] rounded-2xl bg-[hsl(var(--primary)/0.06)]" />
+        <div className="absolute bottom-[40px] left-[260px] w-[45%] h-[140px] rounded-2xl bg-[hsl(330,70%,60%,0.08)]" />
+        <div className="absolute bottom-[40px] right-[40px] w-[30%] h-[140px] rounded-2xl bg-[hsl(200,90%,60%,0.08)]" />
+        {/* Mesh gradient orbs for color richness */}
+        <div className="absolute top-[-10%] left-[10%] w-[50%] h-[50%] rounded-full bg-[hsl(var(--primary)/0.2)] blur-[120px]" />
+        <div className="absolute bottom-[-10%] right-[5%] w-[45%] h-[45%] rounded-full bg-[hsl(280,80%,65%,0.15)] blur-[100px]" />
+        <div className="absolute top-[40%] left-[50%] w-[40%] h-[40%] rounded-full bg-[hsl(200,90%,60%,0.12)] blur-[110px]" />
       </div>
+      {/* Blur overlay */}
+      <div className="absolute inset-0 backdrop-blur-md bg-background/30 z-[1]" />
 
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-[420px] relative z-10">
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-[450px] relative z-10">
         <div className="text-center mb-6">
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }} className="inline-flex items-center justify-center w-14 h-14 bg-primary rounded-2xl mb-3 shadow-lg shadow-primary/25">
             <BookOpen className="w-7 h-7 text-primary-foreground" />
@@ -136,12 +147,12 @@ const Auth = () => {
           <p className="text-sm text-muted-foreground">Your gateway to academic excellence</p>
         </div>
 
-        <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-white/30 dark:border-white/10 shadow-2xl rounded-3xl">
-          <CardHeader>
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>Sign in to your account or create a new one to get started</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+        <div className="bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] rounded-2xl p-8">
+          <div className="space-y-1 mb-6">
+            <h2 className="text-lg font-semibold leading-tight tracking-tight text-foreground">Welcome</h2>
+            <p className="text-sm text-muted-foreground">Sign in to your account or create a new one to get started</p>
+          </div>
+          <div className="space-y-4">
             {/* Google OAuth */}
             <Button variant="outline" className="w-full h-11 font-medium gap-3 border-border/80 bg-background hover:bg-muted/80 hover:shadow-md transition-all" onClick={handleGoogleLogin} disabled={isGoogleLoading || isLoading}>
               {isGoogleLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Connecting...</> : <><GoogleIcon />Continue with Google</>}
