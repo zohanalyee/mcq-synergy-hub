@@ -210,7 +210,7 @@ const Auth = () => {
                     <Label htmlFor="signup-email">Email</Label>
                     <div className="relative">
                       <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="signup-email" name="email" type="email" placeholder="Enter your email" value={formData.email} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
+                      <Input id="signup-email" name="email" type="email" placeholder="Enter your email" value={formData.email} onChange={handleInputChange} className="pl-10 bg-white/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 border-white/60 dark:border-white/15" required disabled={isLoading} />
                     </div>
                   </div>
                   <div className="space-y-2">
