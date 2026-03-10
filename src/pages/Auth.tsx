@@ -238,8 +238,8 @@ const Auth = () => {
           </CardContent>
         </Card>
 
-        <div className="text-center mt-6">
-          <Button variant="ghost" onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground">
+        <div className="text-center mt-4">
+          <Button variant="ghost" onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground text-sm">
             ← Back to Home
           </Button>
         </div>
