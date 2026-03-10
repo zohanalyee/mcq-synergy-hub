@@ -23,6 +23,34 @@ interface ParsedRow {
 const STUDENT_HEADERS = ['admission_number', 'full_name', 'class_name', 'section_name', 'roll_number', 'parent_mobile', 'parent_email'];
 const STAFF_HEADERS = ['employee_id', 'full_name', 'designation', 'department', 'mobile', 'email'];
 
+// Flexible column name aliases for robust CSV matching
+const COLUMN_ALIASES: Record<string, string[]> = {
+  admission_number: ['admission_number', 'admission_no', 'adm_no', 'admno', 'admission', 'reg_no', 'registration_number', 'registration_no'],
+  full_name: ['full_name', 'fullname', 'name', 'student_name', 'studentname', 'student'],
+  class_name: ['class_name', 'classname', 'class', 'grade', 'form', 'standard', 'std'],
+  section_name: ['section_name', 'sectionname', 'section', 'stream', 'division', 'div', 'sec'],
+  roll_number: ['roll_number', 'rollnumber', 'roll_no', 'rollno', 'roll', 'sr_no', 'serial'],
+  parent_mobile: ['parent_mobile', 'parentmobile', 'parent_phone', 'parentphone', 'mobile', 'phone', 'contact', 'father_mobile', 'mother_mobile', 'guardian_mobile'],
+  parent_email: ['parent_email', 'parentemail', 'email', 'parent_mail', 'guardian_email'],
+  employee_id: ['employee_id', 'employeeid', 'emp_id', 'empid', 'employee_no', 'emp_no'],
+  designation: ['designation', 'position', 'role', 'title', 'job_title'],
+  department: ['department', 'dept', 'department_name'],
+};
+
+function normalizeHeader(h: string): string {
+  return h.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[_\s]+/g, '_').trim();
+}
+
+function mapHeaderToCanonical(rawHeader: string): string {
+  const normalized = normalizeHeader(rawHeader);
+  for (const [canonical, aliases] of Object.entries(COLUMN_ALIASES)) {
+    if (aliases.some(a => normalized === a || normalized.startsWith(a) || a.startsWith(normalized))) {
+      return canonical;
+    }
+  }
+  return normalized;
+}
+
 const BulkCSVUploadDialog = ({ type, classes, sections, onSuccess, children }: BulkCSVUploadDialogProps) => {
   const [open, setOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
