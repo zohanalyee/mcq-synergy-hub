@@ -167,7 +167,7 @@ const Auth = () => {
                       <Input id="password" name="password" type="password" placeholder="Enter your password" value={formData.password} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
                     </div>
                     <div className="text-right">
-                      <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                      <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
                         Forgot password?
                       </Link>
                     </div>
