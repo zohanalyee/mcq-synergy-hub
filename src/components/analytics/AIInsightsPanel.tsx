@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, AlertCircle, CheckCircle, Target, Zap, BarChart3, ChevronDown, ChevronUp, BookOpen, Clock } from "lucide-react";
+import { Sparkles, AlertCircle, CheckCircle, Target, Zap, BarChart3, ChevronDown, ChevronUp, BookOpen, Clock, Lightbulb, PlayCircle, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Card } from "@/components/ui/card";
 import type { AnalyticsData } from "@/hooks/useAnalyticsData";
-import { analyzePerformance, generateStudyPlan } from "@/lib/aiCoach";
+import { analyzePerformance, generateStudyPlan, getSubjectStatus, generateRecommendation } from "@/lib/aiCoach";
+import { useNavigate } from "react-router-dom";
 
 interface Props {
   data: AnalyticsData;
@@ -27,10 +29,17 @@ const getAccuracyTextColor = (accuracy: number) => {
   return "text-red-600 dark:text-red-400";
 };
 
+type ExpandedSection = null | "analytics" | "subjects";
+
 const AIInsightsPanel = ({ data, onViewRecommendations, onGenerateTest }: Props) => {
   const insights = analyzePerformance(data);
-  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<ExpandedSection>(null);
   const studyPlan = generateStudyPlan(data);
+  const navigate = useNavigate();
+
+  const toggleSection = (section: ExpandedSection) => {
+    setExpandedSection((prev) => (prev === section ? null : section));
+  };
 
   return (
     <motion.div
@@ -77,23 +86,34 @@ const AIInsightsPanel = ({ data, onViewRecommendations, onGenerateTest }: Props)
               </Button>
               <Button
                 size="sm"
-                variant="ghost"
-                onClick={() => setShowAnalytics(!showAnalytics)}
+                variant={expandedSection === "analytics" ? "secondary" : "ghost"}
+                onClick={() => toggleSection("analytics")}
                 className="gap-1.5"
               >
                 <BarChart3 className="w-4 h-4" />
                 View Detailed Analytics
-                {showAnalytics ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                {expandedSection === "analytics" ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+              </Button>
+              <Button
+                size="sm"
+                variant={expandedSection === "subjects" ? "secondary" : "ghost"}
+                onClick={() => toggleSection("subjects")}
+                className="gap-1.5"
+              >
+                <BookOpen className="w-4 h-4" />
+                Subject-Wise Analysis
+                {expandedSection === "subjects" ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               </Button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Expandable Analytics Section */}
-      <AnimatePresence>
-        {showAnalytics && (
+      {/* Expandable Detailed Analytics */}
+      <AnimatePresence mode="wait">
+        {expandedSection === "analytics" && (
           <motion.div
+            key="analytics"
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
@@ -102,7 +122,7 @@ const AIInsightsPanel = ({ data, onViewRecommendations, onGenerateTest }: Props)
           >
             <div className="px-5 pb-5 pt-2 border-t border-blue-200/40 dark:border-blue-800/30">
               <div className="grid lg:grid-cols-2 gap-4">
-                {/* Subject-wise Analysis */}
+                {/* Subject-wise Accuracy Bars */}
                 <div className="rounded-xl bg-white/60 dark:bg-white/5 backdrop-blur-sm border border-white/40 dark:border-white/10 p-4">
                   <h4 className="text-sm font-semibold mb-3 flex items-center gap-2">
                     <BarChart3 className="w-4 h-4 text-primary" />
@@ -183,6 +203,85 @@ const AIInsightsPanel = ({ data, onViewRecommendations, onGenerateTest }: Props)
                   </div>
                 </div>
               </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Expandable Subject-Wise Analysis */}
+        {expandedSection === "subjects" && (
+          <motion.div
+            key="subjects"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.35, ease: "easeInOut" }}
+            className="overflow-hidden"
+          >
+            <div className="px-5 pb-5 pt-2 border-t border-blue-200/40 dark:border-blue-800/30">
+              <h4 className="text-sm font-semibold mb-3">Subject-Wise Analysis</h4>
+              {data.subjects.length === 0 ? (
+                <p className="text-xs text-muted-foreground">No subject data yet. Take a test to see analysis.</p>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-3">
+                  {data.subjects.map((subject) => {
+                    const status = getSubjectStatus(subject.accuracy);
+                    return (
+                      <Card key={subject.name} className="p-4">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${status.bg}`}>
+                              <BookOpen className={`w-4 h-4 ${status.icon}`} />
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-sm">{subject.name}</h3>
+                              <p className="text-xs text-muted-foreground">
+                                {subject.totalQuestions} questions • {subject.testsCount} tests
+                              </p>
+                            </div>
+                          </div>
+                          <Badge variant={status.variant}>{subject.accuracy}%</Badge>
+                        </div>
+
+                        <div className="mb-3">
+                          <div className="flex justify-between text-xs mb-1">
+                            <span className="text-muted-foreground">Accuracy</span>
+                            <span className={status.text}>{status.label}</span>
+                          </div>
+                          <Progress value={subject.accuracy} className="h-2" />
+                        </div>
+
+                        <div className="bg-muted/50 rounded-lg p-2.5 mb-3">
+                          <p className="text-xs font-medium mb-0.5 flex items-center gap-1">
+                            <Lightbulb className="w-3 h-3 text-amber-500" />
+                            AI Recommendation:
+                          </p>
+                          <p className="text-xs text-muted-foreground">{generateRecommendation(subject)}</p>
+                        </div>
+
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => navigate("/custom-syllabus")}
+                          >
+                            <PlayCircle className="w-3.5 h-3.5 mr-1" />
+                            Practice
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => navigate("/mock-tests")}
+                          >
+                            <Zap className="w-3.5 h-3.5 mr-1" />
+                            Take Test
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </motion.div>
         )}
