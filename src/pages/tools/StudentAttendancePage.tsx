@@ -62,7 +62,9 @@ const StudentAttendancePage = () => {
     try {
       const classParam = selectedClass === '__unassigned__' ? '__unassigned__' : selectedClass;
       const sectionParam = selectedClass === '__unassigned__' ? '' : selectedSection;
+      console.log('[StudentAttendance] Loading with classId:', classParam, 'sectionId:', sectionParam, 'date:', selectedDate);
       const { students: studs, attendance: att } = await getClassAttendanceForDate(classParam, sectionParam, selectedDate);
+      console.log('[StudentAttendance] Found', studs.length, 'students');
       setStudents(studs);
       const map: Record<string, { status: AttendanceStatus; remarks: string }> = {};
       studs.forEach(s => {
@@ -72,6 +74,7 @@ const StudentAttendancePage = () => {
       });
       setAttendance(map);
     } catch (e) {
+      console.error('[StudentAttendance] Error:', e);
       toast.error('Failed to load attendance');
     } finally {
       setLoading(false);
