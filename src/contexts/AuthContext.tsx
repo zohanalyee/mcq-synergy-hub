@@ -43,6 +43,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setSession(session);
         setUser(session?.user ?? null);
         
+        // Handle password recovery redirect
+        if (event === 'PASSWORD_RECOVERY') {
+          window.location.href = '/reset-password';
+          return;
+        }
+        
         // Fetch profile data when user signs in
         if (session?.user && event === 'SIGNED_IN') {
           setTimeout(async () => {
