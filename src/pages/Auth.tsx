@@ -246,8 +246,8 @@ const Auth = () => {
                 </form>
               </TabsContent>
             </Tabs>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         <div className="text-center mt-4">
           <Button variant="ghost" onClick={() => navigate("/")} className="text-muted-foreground hover:text-foreground text-sm">
