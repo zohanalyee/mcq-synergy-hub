@@ -181,15 +181,7 @@ const Analytics = () => {
           </Card>
         </div>
 
-        {/* Subject Analysis */}
-        <div ref={subjectRef}>
-          <h2 className="text-lg font-bold mb-3">Subject-Wise Analysis</h2>
-          <div className="grid md:grid-cols-2 gap-3 mb-6">
-            {data.subjects.map((subject) => (
-              <SubjectAnalysisCard key={subject.name} subject={subject} />
-            ))}
-          </div>
-        </div>
+        <div ref={subjectRef} />
 
         {/* Study Plan */}
         <StudyPlanSection data={data} />
