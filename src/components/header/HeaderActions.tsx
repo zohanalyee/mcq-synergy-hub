@@ -76,7 +76,7 @@ const HeaderActions = ({
       {!isMobile && <ThemeToggle />}
       
       {/* Tools Menu */}
-      <DropdownMenu>
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
