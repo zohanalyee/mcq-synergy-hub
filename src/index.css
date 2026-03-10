@@ -200,6 +200,26 @@ body::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground) / 0.5);
 }
 
+/* Prevent shaking on Radix UI overlays */
+[data-radix-dropdown-menu-content],
+[data-radix-dialog-content],
+[data-radix-dialog-overlay],
+[data-radix-popover-content],
+[data-radix-select-content],
+[data-radix-popper-content-wrapper],
+[role="dialog"],
+[role="menu"] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* Prevent background scroll when modal is open */
+body.modal-open {
+  overflow: hidden;
+  padding-right: 15px;
+}
+
 @layer base {
   * {
     @apply border-border;
