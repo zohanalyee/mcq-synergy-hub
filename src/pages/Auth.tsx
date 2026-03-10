@@ -183,7 +183,7 @@ const Auth = () => {
                     <Label htmlFor="password">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="password" name="password" type="password" placeholder="Enter your password" value={formData.password} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
+                      <Input id="password" name="password" type="password" placeholder="Enter your password" value={formData.password} onChange={handleInputChange} className="pl-10 bg-white/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 border-white/60 dark:border-white/15" required disabled={isLoading} />
                     </div>
                     <div className="text-right">
                       <Link to="/forgot-password" className="text-sm font-medium text-primary hover:underline">
