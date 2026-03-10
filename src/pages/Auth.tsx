@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,9 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { signIn, signUp, signInWithGoogle } from "@/services/authService";
-import { Loader2, Mail, Lock, BookOpen } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
+import { Loader2, Mail, Lock, User, BookOpen, Eye, EyeOff } from "lucide-react";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -26,29 +28,32 @@ const Auth = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [formData, setFormData] = useState({
+    fullName: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleGoogleLogin = async () => {
     setIsGoogleLoading(true);
     try {
-      const { error } = await signInWithGoogle();
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/complete-profile`,
+        },
+      });
       if (error) throw error;
     } catch (error: any) {
-      console.error("Google sign in failed:", error);
-      toast({
-        variant: "destructive",
-        title: "Google Sign In Failed",
-        description: error.message || "Failed to sign in with Google. Please try again."
-      });
+      toast({ variant: "destructive", title: "Google Sign In Failed", description: error.message || "Failed to sign in with Google." });
       setIsGoogleLoading(false);
     }
   };
@@ -64,11 +69,7 @@ const Auth = () => {
         navigate("/");
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign In Failed",
-        description: error.message || "Failed to sign in. Please check your credentials."
-      });
+      toast({ variant: "destructive", title: "Sign In Failed", description: error.message || "Failed to sign in." });
     } finally {
       setIsLoading(false);
     }
@@ -76,24 +77,41 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!agreedToTerms) {
+      toast({ variant: "destructive", title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy." });
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
+    if (formData.password.length < 8) {
+      toast({ variant: "destructive", title: "Weak Password", description: "Password must be at least 8 characters." });
+      return;
+    }
+    if (calculatePasswordStrength(formData.password) < 50) {
+      toast({ variant: "destructive", title: "Weak Password", description: "Please use a stronger password." });
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const { data, error } = await signUp(formData.email, formData.password);
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: { full_name: formData.fullName },
+          emailRedirectTo: `${window.location.origin}/verify-email`,
+        },
+      });
       if (error) throw error;
       if (data?.user) {
         toast({ title: "Account Created!", description: "Please check your email to verify your account." });
-        navigate("/");
+        navigate("/verify-email-sent");
       }
     } catch (error: any) {
-      toast({
-        variant: "destructive",
-        title: "Sign Up Failed",
-        description: error.message || "Failed to create account. Please try again."
-      });
+      toast({ variant: "destructive", title: "Sign Up Failed", description: error.message || "Failed to create account." });
     } finally {
       setIsLoading(false);
     }
@@ -101,19 +119,9 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="w-full max-w-md"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
         <div className="text-center mb-8">
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: "spring" }}
-            className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4"
-          >
+          <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ delay: 0.2, type: "spring" }} className="inline-flex items-center justify-center w-16 h-16 bg-primary rounded-full mb-4">
             <BookOpen className="w-8 h-8 text-primary-foreground" />
           </motion.div>
           <h1 className="text-3xl font-bold">AI-MCQs Point</h1>
@@ -126,40 +134,23 @@ const Auth = () => {
             <CardDescription>Sign in to your account or create a new one to get started</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* Google OAuth Button */}
-            <Button
-              variant="outline"
-              className="w-full h-11 font-medium gap-3 border-border/80 bg-background hover:bg-muted/80 hover:shadow-md transition-all"
-              onClick={handleGoogleLogin}
-              disabled={isGoogleLoading || isLoading}
-            >
-              {isGoogleLoading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Connecting...
-                </>
-              ) : (
-                <>
-                  <GoogleIcon />
-                  Continue with Google
-                </>
-              )}
+            {/* Google OAuth */}
+            <Button variant="outline" className="w-full h-11 font-medium gap-3 border-border/80 bg-background hover:bg-muted/80 hover:shadow-md transition-all" onClick={handleGoogleLogin} disabled={isGoogleLoading || isLoading}>
+              {isGoogleLoading ? <><Loader2 className="h-4 w-4 animate-spin" />Connecting...</> : <><GoogleIcon />Continue with Google</>}
             </Button>
 
-            {/* OR Divider */}
             <div className="flex items-center gap-3">
               <Separator className="flex-1" />
               <span className="text-xs text-muted-foreground font-medium uppercase">or</span>
               <Separator className="flex-1" />
             </div>
 
-            {/* Email/Password Tabs */}
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="signin">Sign In</TabsTrigger>
                 <TabsTrigger value="signup">Sign Up</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="signin">
                 <form onSubmit={handleSignIn} className="space-y-4">
                   <div className="space-y-2">
@@ -175,15 +166,27 @@ const Auth = () => {
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                       <Input id="password" name="password" type="password" placeholder="Enter your password" value={formData.password} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
                     </div>
+                    <div className="text-right">
+                      <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                        Forgot password?
+                      </Link>
+                    </div>
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-                    {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing In...</>) : "Sign In"}
+                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing In...</> : "Sign In"}
                   </Button>
                 </form>
               </TabsContent>
-              
+
               <TabsContent value="signup">
                 <form onSubmit={handleSignUp} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-name">Full Name</Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input id="signup-name" name="fullName" type="text" placeholder="Enter your full name" value={formData.fullName} onChange={handleInputChange} className="pl-10" required disabled={isLoading} />
+                    </div>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="signup-email">Email</Label>
                     <div className="relative">
@@ -195,18 +198,31 @@ const Auth = () => {
                     <Label htmlFor="signup-password">Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="signup-password" name="password" type="password" placeholder="Create a password" value={formData.password} onChange={handleInputChange} className="pl-10" required disabled={isLoading} minLength={6} />
+                      <Input id="signup-password" name="password" type={showPassword ? "text" : "password"} placeholder="Create a password" value={formData.password} onChange={handleInputChange} className="pl-10 pr-10" required disabled={isLoading} minLength={8} />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
+                    <PasswordStrengthIndicator password={formData.password} />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="confirm-password">Confirm Password</Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input id="confirm-password" name="confirmPassword" type="password" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} className="pl-10" required disabled={isLoading} minLength={6} />
+                      <Input id="confirm-password" name="confirmPassword" type="password" placeholder="Confirm your password" value={formData.confirmPassword} onChange={handleInputChange} className="pl-10" required disabled={isLoading} minLength={8} />
                     </div>
                   </div>
-                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
-                    {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating Account...</>) : "Create Account"}
+                  <div className="flex items-start space-x-2">
+                    <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked === true)} />
+                    <label htmlFor="terms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
+                      I agree to the{" "}
+                      <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>{" "}
+                      and{" "}
+                      <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                    </label>
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading || !agreedToTerms}>
+                    {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating Account...</> : "Create Account"}
                   </Button>
                 </form>
               </TabsContent>

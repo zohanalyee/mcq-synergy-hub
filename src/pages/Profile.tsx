@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useForm } from 'react-hook-form';
@@ -187,6 +188,9 @@ const Profile = () => {
               </Form>
               <div className="mt-6 pt-6 border-t">
                 <p className="text-sm text-muted-foreground mb-4">Email: {user.email}</p>
+              </div>
+              <div className="mt-6 pt-6 border-t">
+                <ChangePasswordForm />
               </div>
             </div>
           </div>

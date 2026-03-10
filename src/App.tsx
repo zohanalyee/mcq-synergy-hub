@@ -38,6 +38,11 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 import Achievements from "./pages/Achievements";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import VerifyEmailSent from "./pages/VerifyEmailSent";
+import VerifyEmail from "./pages/VerifyEmail";
+import CompleteProfile from "./pages/CompleteProfile";
 
 import Quizzes from "./pages/Quizzes";
 import SubmitContent from "./pages/SubmitContent";
@@ -158,6 +163,11 @@ const App = () => {
                       <Route path="/signup" element={<SignUp />} />
                       <Route path="/sign-up" element={<SignUp />} />
                       <Route path="/get-started" element={<GetStarted />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password" element={<ResetPassword />} />
+                      <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
+                      <Route path="/verify-email" element={<VerifyEmail />} />
+                      <Route path="/complete-profile" element={<CompleteProfile />} />
                       
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
