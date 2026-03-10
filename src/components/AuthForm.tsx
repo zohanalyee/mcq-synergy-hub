@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -100,6 +101,14 @@ const AuthForm: React.FC<AuthFormProps> = ({ mode }) => {
           )}
         />
         
+        {mode === 'login' && (
+          <div className="flex justify-end w-full pb-3">
+            <Link to="/forgot-password" className="text-sm font-bold text-primary hover:underline cursor-pointer">
+              Forgot password?
+            </Link>
+          </div>
+        )}
+
         <Button 
           type="submit" 
           className="w-full h-11 text-base font-medium" 
