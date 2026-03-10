@@ -1,30 +1,30 @@
-## Attendance & HR Management System - IMPLEMENTED ✅
 
-### Phase 1: Database Schema ✅
-- Created 13 tables: `classes`, `sections`, `att_students`, `att_staff`, `shifts`, `student_attendance`, `staff_attendance`, `student_leaves`, `staff_leaves`, `staff_leave_balance`, `holidays`, `overtime_records`, `institute_settings`
-- RLS policies enabled for authenticated users
 
-### Phase 2: Frontend Implementation ✅
-- **Dashboard**: `/tools/hr` - Main hub with institute setup, stats, module navigation
-- **Student Attendance**: `/tools/hr/student-attendance` - Mark daily attendance by class/section
-- **Staff Attendance**: `/tools/hr/staff-attendance` - Check-in/check-out tracking
-- **Leave Management**: `/tools/hr/leaves` - Apply and approve leaves
-- **Holiday Calendar**: `/tools/hr/holidays` - Manage holidays
-- **Reports**: `/tools/hr/reports` - Analytics and attendance reports
-- **Setup**: `/tools/hr/setup` - Configure classes, sections, students, staff, shifts
+## Redesign Auth Page with Premium Glassmorphism
 
-### Integration ✅
-- Added to Tools menu as "Attendance & HR System" (HR & Attendance category)
-- Routes configured in App.tsx
-- Service layer in `src/services/attendanceService.ts`
-- Types in `src/types/attendance.types.ts`
+The current Auth.tsx already has basic glassmorphism and mesh gradient blobs. The upgrade will make it look like the user is peering through frosted glass at a blurred dashboard, with richer visual depth.
 
-### Features Implemented
-- Institute name setup (per user)
-- Class & section management
-- Student roster management
-- Staff management with shifts
-- Daily attendance marking (Present/Absent/Late/Half-day/Leave/Holiday)
-- Leave application & approval workflow
-- Holiday management
-- Attendance reports with charts
+### Changes to `src/pages/Auth.tsx`
+
+**1. Background — Faux Dashboard + Blur Overlay**
+- Replace the current mesh gradient blobs with a two-layer background:
+  - **Layer 1**: A rich mesh gradient simulating a colorful dashboard (multiple positioned gradient shapes — cards, sidebar, nav hints — using CSS gradients)
+  - **Layer 2**: A `backdrop-blur-md` or direct `blur-sm` overlay on top, giving the "looking at the app through frosted glass" illusion
+- Keep `absolute inset-0 z-0` positioning
+
+**2. Glass Card — Enhanced Frost Effect**
+- Update the Card classes to: `bg-white/40 dark:bg-slate-900/50 backdrop-blur-xl border border-white/40 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.15)] rounded-2xl`
+- Remove the existing `<Card>` wrapper and use a plain `div` with these glass classes + `p-8` for direct control
+
+**3. Input Fields — Transparent Modern Style**
+- Add className overrides on all `<Input>` components: `bg-white/50 dark:bg-slate-800/50 focus:bg-white dark:focus:bg-slate-800 border-white/60 dark:border-white/15`
+
+**4. Google Button — Glass Style**
+- Update to `bg-white/70 dark:bg-slate-800/60 border-white/50 hover:bg-white/90`
+
+**5. Everything Else Stays**
+- Logo, tabs, forgot password link, T&C checkbox, form order — all unchanged functionally
+
+### Files Modified
+- `src/pages/Auth.tsx` — background, card, and input styling overhaul
+
