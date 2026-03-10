@@ -189,6 +189,9 @@ const Profile = () => {
               <div className="mt-6 pt-6 border-t">
                 <p className="text-sm text-muted-foreground mb-4">Email: {user.email}</p>
               </div>
+              <div className="mt-6 pt-6 border-t">
+                <ChangePasswordForm />
+              </div>
             </div>
           </div>
         </CardContent>
