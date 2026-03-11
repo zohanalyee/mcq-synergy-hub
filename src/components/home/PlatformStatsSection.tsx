@@ -45,6 +45,8 @@ const PlatformStatsSection = () => {
     { to: Number(data?.test_count ?? 0), suffix: "+", label: "Tests Completed" },
   ];
 
+  console.log("STATS DATA RESPONSE:", data);
+
   return (
     <motion.section
       variants={sectionReveal}
@@ -57,7 +59,7 @@ const PlatformStatsSection = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
           {stats.map((stat) => (
             <div key={stat.label} className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
-              {isLoading ? (
+              {isLoading || !data ? (
                 <Skeleton className="h-7 w-16 mx-auto mb-1 bg-white/20" />
               ) : (
                 <AnimatedCounter

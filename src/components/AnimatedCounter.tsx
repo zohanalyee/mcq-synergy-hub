@@ -26,6 +26,12 @@ const AnimatedCounter = ({
   const isInView = useInView(nodeRef, { once: true, amount: 0.5 });
   const [hasAnimated, setHasAnimated] = useState(false);
 
+  // Reset animation if target value changes
+  useEffect(() => {
+    setHasAnimated(false);
+    setCount(from);
+  }, [to, from]);
+
   useEffect(() => {
     if (isInView && !hasAnimated) {
       setHasAnimated(true);
