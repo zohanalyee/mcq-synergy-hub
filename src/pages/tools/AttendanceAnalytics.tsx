@@ -1,13 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Download, ChevronLeft, Calendar, TrendingUp, Users, UserCheck, UserX } from 'lucide-react';
+import { Download, ChevronLeft, Calendar, TrendingUp, Users, UserCheck, UserX, Edit2, Check, X } from 'lucide-react';
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
@@ -25,6 +24,45 @@ const AttendanceAnalytics = () => {
   const [searchParams] = useSearchParams();
   const [date, setDate] = useState(searchParams.get('date') || new Date().toISOString().split('T')[0]);
   const [generating, setGenerating] = useState(false);
+  const [instituteName, setInstituteName] = useState('Your Institute Name');
+  const [editingName, setEditingName] = useState(false);
+  const [tempName, setTempName] = useState('');
+
+  // Fetch institute name from DB
+  const { data: instituteData } = useQuery({
+    queryKey: ['institute-settings', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase
+        .from('institute_settings')
+        .select('institute_name')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      return data;
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (instituteData?.institute_name) {
+      setInstituteName(instituteData.institute_name);
+    }
+  }, [instituteData]);
+
+  const handleSaveName = async () => {
+    if (!user || !tempName.trim()) return;
+    try {
+      const { error } = await supabase
+        .from('institute_settings')
+        .upsert({ user_id: user.id, institute_name: tempName.trim(), updated_at: new Date().toISOString() } as any, { onConflict: 'user_id' });
+      if (error) throw error;
+      setInstituteName(tempName.trim());
+      setEditingName(false);
+      toast.success('Institute name saved');
+    } catch (e: any) {
+      toast.error(e.message || 'Failed to save');
+    }
+  };
 
   const { data: attendanceData, isLoading } = useQuery({
     queryKey: ['attendance-analytics', date, user?.id],
@@ -69,58 +107,73 @@ const AttendanceAnalytics = () => {
       const element = document.getElementById('analytics-content');
       if (!element) return;
 
+      const currentDomain = window.location.hostname;
+      const websiteURL = `https://${currentDomain}`;
+
       const canvas = await html2canvas(element, { scale: 2, logging: false, useCORS: true, backgroundColor: '#ffffff' });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pdfWidth - 20;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const margin = 10;
+      const headerHeight = 28;
+      const footerHeight = 12;
+      const contentWidth = pdfWidth - (margin * 2);
+      const availableHeight = pdfHeight - (margin * 2) - headerHeight - footerHeight;
+
+      // Scale image to fit single page
+      const canvasAspect = canvas.height / canvas.width;
+      let imgWidth = contentWidth;
+      let imgHeight = imgWidth * canvasAspect;
+
+      if (imgHeight > availableHeight) {
+        imgHeight = availableHeight;
+        imgWidth = imgHeight / canvasAspect;
+      }
+
+      const xPos = margin + (contentWidth - imgWidth) / 2;
+
+      // Watermark - very transparent
+      pdf.setFontSize(60);
+      pdf.setTextColor(200, 200, 200);
+      pdf.saveGraphicsState();
+      // @ts-ignore
+      pdf.setGState(new pdf.GState({ opacity: 0.05 }));
+      pdf.text('AI-MCQs Point', pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
+      pdf.restoreGraphicsState();
 
       // Header
       pdf.setFontSize(18);
       pdf.setFont('helvetica', 'bold');
-      pdf.text('Daily Attendance Report', pdfWidth / 2, 15, { align: 'center' });
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(instituteName, pdfWidth / 2, margin + 6, { align: 'center' });
 
-      pdf.setFontSize(11);
+      pdf.setFontSize(13);
       pdf.setFont('helvetica', 'normal');
+      pdf.text('Daily Attendance Report', pdfWidth / 2, margin + 13, { align: 'center' });
+
+      pdf.setFontSize(10);
+      pdf.setTextColor(100, 100, 100);
       const formattedDate = new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-      pdf.text(formattedDate, pdfWidth / 2, 23, { align: 'center' });
+      pdf.text(formattedDate, pdfWidth / 2, margin + 19, { align: 'center' });
 
-      // Content
-      let yPosition = 30;
-      if (imgHeight > pdfHeight - 50) {
-        let heightLeft = imgHeight;
-        let position = 0;
-        while (heightLeft > 0) {
-          pdf.addImage(imgData, 'PNG', 10, yPosition - position, imgWidth, imgHeight);
-          heightLeft -= (pdfHeight - 50);
-          position += (pdfHeight - 50);
-          if (heightLeft > 0) {
-            pdf.addPage();
-            yPosition = 10;
-          }
-        }
-      } else {
-        pdf.addImage(imgData, 'PNG', 10, yPosition, imgWidth, imgHeight);
-      }
+      // Content image
+      pdf.addImage(imgData, 'PNG', xPos, margin + headerHeight, imgWidth, imgHeight);
 
-      // Watermark
-      const pageCount = pdf.getNumberOfPages();
-      for (let i = 1; i <= pageCount; i++) {
-        pdf.setPage(i);
-        pdf.setFontSize(40);
-        pdf.setTextColor(220, 220, 220);
-        pdf.text('AI-MCQs Point', pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
-        // Footer
-        pdf.setFontSize(9);
-        pdf.setTextColor(150, 150, 150);
-        pdf.text('AI-MCQs Point | mcqsai.com', pdfWidth / 2, pdfHeight - 8, { align: 'center' });
-      }
+      // Footer
+      const footerY = pdfHeight - margin - 3;
+      pdf.setFontSize(9);
+      pdf.setTextColor(120, 120, 120);
+      pdf.text('Powered by AI-MCQs Point', pdfWidth / 2, footerY, { align: 'center' });
+      pdf.setFontSize(8);
+      pdf.setTextColor(150, 150, 150);
+      pdf.text(websiteURL, pdfWidth / 2, footerY + 4, { align: 'center' });
 
-      pdf.save(`attendance-report-${date}.pdf`);
+      const filename = `${instituteName.replace(/\s+/g, '-')}-Attendance-${date}.pdf`;
+      pdf.save(filename);
       toast.success('PDF report downloaded!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('PDF generation error:', error);
       toast.error('Failed to generate PDF');
     } finally {
@@ -160,7 +213,32 @@ const AttendanceAnalytics = () => {
               <Link to="/tools/hr"><ChevronLeft className="h-4 w-4" /> Back</Link>
             </Button>
             <div>
-              <h1 className="text-xl font-bold text-foreground">Attendance Analytics</h1>
+              {/* Editable institute name */}
+              {editingName ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={tempName}
+                    onChange={e => setTempName(e.target.value)}
+                    placeholder="Enter institute name"
+                    className="h-8 w-56"
+                    autoFocus
+                    onKeyDown={e => e.key === 'Enter' && handleSaveName()}
+                  />
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={handleSaveName}>
+                    <Check className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingName(false)}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl font-bold text-foreground">{instituteName}</h1>
+                  <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => { setEditingName(true); setTempName(instituteName); }}>
+                    <Edit2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              )}
               <p className="text-sm text-muted-foreground flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
                 {new Date(date).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
@@ -221,7 +299,7 @@ const AttendanceAnalytics = () => {
                   <CardTitle className="text-sm">Class-wise Breakdown</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={280}>
                     <BarChart data={barChartData}>
                       <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                       <XAxis dataKey="class" tick={{ fontSize: 10 }} angle={-45} textAnchor="end" height={70} />
@@ -240,14 +318,14 @@ const AttendanceAnalytics = () => {
                   <CardTitle className="text-sm">Overall Distribution</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={300}>
+                  <ResponsiveContainer width="100%" height={280}>
                     <PieChart>
                       <Pie
                         data={pieChartData}
                         cx="50%"
                         cy="50%"
                         label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                        outerRadius={100}
+                        outerRadius={90}
                         dataKey="value"
                       >
                         {pieChartData.map((entry, index) => (
