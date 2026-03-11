@@ -43,7 +43,7 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg w-[95vw] bg-background/95 backdrop-blur-xl p-4">
+      <DialogContent className="sm:max-w-lg bg-background/95 backdrop-blur-xl p-4">
         <DialogHeader className="pb-2">
           <DialogTitle className="flex items-center gap-2 text-base">
             <Settings className="h-4 w-4 text-primary" />
