@@ -16,18 +16,18 @@ const PlatformStatsSection = () => {
       const { data, error } = await supabase.rpc("get_platform_stats");
       if (error) {
         console.error("Platform stats error:", error);
-        return { mcq_count: 0, subject_count: 0, test_count: 0 };
+        return { mcq_count: 0, subject_count: 0, test_count: 0, satisfaction_pct: 98 };
       }
-      return data?.[0] ?? { mcq_count: 0, subject_count: 0, test_count: 0 };
+      return data?.[0] ?? { mcq_count: 0, subject_count: 0, test_count: 0, satisfaction_pct: 98 };
     },
     staleTime: 5 * 60 * 1000,
   });
 
   const stats = [
-    { to: Number(data?.mcq_count ?? 0), prefix: "+", label: "MCQs Available" },
-    { to: Number(data?.subject_count ?? 0), prefix: "", label: "Subjects Covered" },
-    { to: 98, suffix: "%", label: "User Satisfaction" },
-    { to: Number(data?.test_count ?? 0), prefix: "+", label: "Tests Completed" },
+    { to: Number(data?.mcq_count ?? 0), suffix: "+", label: "MCQs Available" },
+    { to: Number(data?.subject_count ?? 0), suffix: "+", label: "Subjects Covered" },
+    { to: Number((data as any)?.satisfaction_pct ?? 98), suffix: "%", label: "User Satisfaction" },
+    { to: Number(data?.test_count ?? 0), suffix: "+", label: "Tests Completed" },
   ];
 
   return (
@@ -48,7 +48,6 @@ const PlatformStatsSection = () => {
                 <AnimatedCounter
                   from={0}
                   to={stat.to}
-                  prefix={stat.prefix}
                   suffix={stat.suffix}
                   className="text-xl md:text-2xl font-bold mb-1"
                 />

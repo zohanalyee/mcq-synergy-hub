@@ -10,6 +10,7 @@ import AnimatedCounter from '@/components/AnimatedCounter';
 import TestimonialCard from '@/components/TestimonialCard';
 import HeroStatsSection from '@/components/home/HeroStatsSection';
 import PlatformStatsSection from '@/components/home/PlatformStatsSection';
+import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
@@ -516,6 +517,7 @@ const Home = () => {
           </div>
         </div>
       </footer>
+      <UserSatisfactionPopup />
       </div>
     </Header>
   );

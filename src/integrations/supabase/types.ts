@@ -2215,6 +2215,7 @@ export type Database = {
         Args: never
         Returns: {
           mcq_count: number
+          satisfaction_pct: number
           subject_count: number
           test_count: number
         }[]
