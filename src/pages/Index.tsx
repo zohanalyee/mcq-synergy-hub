@@ -7,7 +7,7 @@ import SubjectCard from '@/components/SubjectCard';
 import FeatureCard from '@/components/FeatureCard';
 import TestCategoryCard from '@/components/TestCategoryCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
-import TestimonialCard from '@/components/TestimonialCard';
+import TestimonialsSection from '@/components/reviews/TestimonialsSection';
 import HeroStatsSection from '@/components/home/HeroStatsSection';
 import PlatformStatsSection from '@/components/home/PlatformStatsSection';
 import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
@@ -154,26 +154,6 @@ const Home = () => {
     }
   ];
 
-  const testimonials = [
-    {
-      content: "AI-MCQs Point helped me prepare efficiently for my medical entrance exam. The analytics feature showed me exactly where I needed to improve.",
-      author: "Sarah Johnson",
-      role: "Medical Student",
-      rating: 5
-    },
-    {
-      content: "The custom syllabus feature is a game-changer. I could focus on my weak areas and track my progress in real-time.",
-      author: "Michael Chen",
-      role: "Engineering Student",
-      rating: 5
-    },
-    {
-      content: "I improved my test scores by 20% after just a month of consistent practice on AI-MCQs Point. The immediate feedback helps correct misconceptions.",
-      author: "Priya Sharma",
-      role: "CSS Aspirant",
-      rating: 4
-    }
-  ];
 
   const displaySubjects = subjects;
 
@@ -413,42 +393,8 @@ const Home = () => {
       {/* Stats Section */}
       <PlatformStatsSection />
       
-      {/* Testimonials Section */}
-      <motion.section
-        variants={sectionReveal}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-80px" }}
-        className="py-5"
-      >
-        <div className="container px-4 mx-auto">
-          <div className="text-center mb-3">
-            <h2 className="text-lg font-bold mb-2">What Our Users Say</h2>
-            <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              Hear from students who transformed their test preparation
-            </p>
-          </div>
-          
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true, margin: "-40px" }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-2"
-          >
-            {testimonials.map((testimonial) => (
-              <motion.div key={testimonial.author} variants={staggerItem}>
-                <TestimonialCard
-                  content={testimonial.content}
-                  author={testimonial.author}
-                  role={testimonial.role}
-                  rating={testimonial.rating}
-                />
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </motion.section>
+      {/* Testimonials Section - Real Reviews */}
+      <TestimonialsSection />
       
       {/* CTA Section */}
       <motion.section

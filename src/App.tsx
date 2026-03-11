@@ -32,6 +32,7 @@ import CustomQuizzes from "./pages/CustomQuizzes";
 import AdminPanel from "./pages/AdminPanel";
 import ExternalCuration from "./pages/admin/ExternalCuration";
 import NotFound from "./pages/NotFound";
+const ReviewsManagement = lazy(() => import("./pages/admin/ReviewsManagement"));
 import NoticeBoard from "@/components/NoticeBoard";
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -39,6 +40,7 @@ import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 import Achievements from "./pages/Achievements";
 import ForgotPassword from "./pages/ForgotPassword";
+import Reviews from "./pages/Reviews";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmailSent from "./pages/VerifyEmailSent";
 import VerifyEmail from "./pages/VerifyEmail";
@@ -171,6 +173,7 @@ const App = () => {
                       
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
+                      <Route path="/admin/reviews" element={<Suspense fallback={null}><ReviewsManagement /></Suspense>} />
                       <Route path="/subjects" element={<Subjects />} />
                       <Route path="/dashboard" element={<Analytics />} />
                       <Route path="/profile" element={<Profile />} />
@@ -193,6 +196,7 @@ const App = () => {
                       <Route path="/ask-document" element={<AskDocument />} />
                       <Route path="/test-session/:id" element={<TestSession />} />
                       <Route path="/notifications" element={<Notifications />} />
+                      <Route path="/reviews" element={<Reviews />} />
                       
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
