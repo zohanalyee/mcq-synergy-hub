@@ -184,7 +184,7 @@ const AttendanceDashboard = () => {
         {/* Modules Grid */}
         <div>
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Modules</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {modules.map((mod, i) => (
               <motion.div key={mod.href} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} whileHover={{ y: -2 }}>
                 <Link to={mod.href} className={`flex items-center gap-4 p-4 rounded-xl border ${mod.border} bg-card hover:shadow-md transition-all group`}>
