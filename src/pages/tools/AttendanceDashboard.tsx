@@ -77,10 +77,12 @@ const AttendanceDashboard = () => {
 
   const modules = [
     { icon: UserCheck, label: 'Mark Student Attendance', desc: 'Mark daily class attendance', href: '/tools/hr/student-attendance', color: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
+    { icon: PenLine, label: 'Quick Manual Entry', desc: 'Enter class-wise attendance (ECE–XII)', href: '/tools/hr/quick-entry', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400', border: 'border-emerald-200 dark:border-emerald-800' },
     { icon: Briefcase, label: 'Staff Attendance', desc: 'Track staff check-in/check-out', href: '/tools/hr/staff-attendance', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
     { icon: ClipboardList, label: 'Leave Management', desc: 'Apply & approve leave requests', href: '/tools/hr/leaves', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800' },
     { icon: Calendar, label: 'Holiday Calendar', desc: 'Manage holidays & events', href: '/tools/hr/holidays', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800' },
-    { icon: BarChart3, label: 'Reports & Analytics', desc: 'Attendance charts & reports', href: '/tools/hr/reports', color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400', border: 'border-cyan-200 dark:border-cyan-800' },
+    { icon: TrendingUp, label: 'Analytics Dashboard', desc: 'Charts, reports & PDF export', href: '/tools/hr/analytics', color: 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400', border: 'border-indigo-200 dark:border-indigo-800' },
+    { icon: BarChart3, label: 'Reports & Analytics', desc: 'Student attendance reports', href: '/tools/hr/reports', color: 'bg-cyan-100 dark:bg-cyan-900/30 text-cyan-600 dark:text-cyan-400', border: 'border-cyan-200 dark:border-cyan-800' },
     { icon: Settings, label: 'Setup & Configuration', desc: 'Students, staff, shifts & classes', href: '/tools/hr/setup', color: 'bg-rose-100 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400', border: 'border-rose-200 dark:border-rose-800' },
   ];
 
