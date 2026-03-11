@@ -245,7 +245,14 @@ const HRSetupPage = () => {
                 <Button onClick={handleAddStudent}><Plus className="h-4 w-4 mr-1" /> Add Student</Button>
               </CardContent>
             </Card>
-            <div className="text-sm text-muted-foreground">{students.length} students total</div>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">{students.length} students total</div>
+              {students.length > 0 && (
+                <Button variant="destructive" size="sm" onClick={handleDeleteAllStudents}>
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete All
+                </Button>
+              )}
+            </div>
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {students.map(s => (
                 <Card key={s.id} className="border">
