@@ -107,6 +107,15 @@ const HRSetupPage = () => {
     } catch { toast.error('Failed to delete student'); }
   };
 
+  const handleDeleteAllStudents = async () => {
+    if (!confirm(`Are you sure you want to delete all ${students.length} students? This action cannot be undone.`)) return;
+    try {
+      await deleteAllStudents();
+      toast.success(`All ${students.length} students deleted`);
+      setStudents([]);
+    } catch { toast.error('Failed to delete all students'); }
+  };
+
   const handleAddStaff = async () => {
     if (!newStaff.full_name.trim() || !newStaff.employee_id.trim() || !newStaff.designation.trim()) return;
     try {
