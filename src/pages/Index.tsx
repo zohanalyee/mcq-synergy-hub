@@ -517,6 +517,7 @@ const Home = () => {
           </div>
         </div>
       </footer>
+      <UserSatisfactionPopup />
       </div>
     </Header>
   );
