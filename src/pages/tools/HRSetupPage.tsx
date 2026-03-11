@@ -16,7 +16,7 @@ import { motion } from 'framer-motion';
 import {
   getClasses, addClass, deleteClass,
   getSections, addSection,
-  getStudents, addStudent, deleteStudent,
+  getStudents, addStudent, deleteStudent, deleteAllStudents,
   getStaff, addStaff, updateStaff,
   getShifts, addShift,
   getInstituteSettings, upsertInstituteSettings
@@ -105,6 +105,15 @@ const HRSetupPage = () => {
       toast.success('Student deleted');
       getStudents().then(setStudents);
     } catch { toast.error('Failed to delete student'); }
+  };
+
+  const handleDeleteAllStudents = async () => {
+    if (!confirm(`Are you sure you want to delete all ${students.length} students? This action cannot be undone.`)) return;
+    try {
+      await deleteAllStudents();
+      toast.success(`All ${students.length} students deleted`);
+      setStudents([]);
+    } catch { toast.error('Failed to delete all students'); }
   };
 
   const handleAddStaff = async () => {
@@ -236,7 +245,14 @@ const HRSetupPage = () => {
                 <Button onClick={handleAddStudent}><Plus className="h-4 w-4 mr-1" /> Add Student</Button>
               </CardContent>
             </Card>
-            <div className="text-sm text-muted-foreground">{students.length} students total</div>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-muted-foreground">{students.length} students total</div>
+              {students.length > 0 && (
+                <Button variant="destructive" size="sm" onClick={handleDeleteAllStudents}>
+                  <Trash2 className="h-3.5 w-3.5 mr-1" /> Delete All
+                </Button>
+              )}
+            </div>
             <div className="space-y-2 max-h-80 overflow-y-auto">
               {students.map(s => (
                 <Card key={s.id} className="border">

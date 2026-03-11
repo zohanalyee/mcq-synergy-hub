@@ -103,6 +103,11 @@ export const deleteStudent = async (id: string) => {
   if (error) throw error;
 };
 
+export const deleteAllStudents = async () => {
+  const { error } = await supabase.from('att_students').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+  if (error) throw error;
+};
+
 // ── Shifts ────────────────────────────────────────────────────────────────────
 export const getShifts = async (): Promise<Shift[]> => {
   const { data, error } = await supabase.from('shifts').select('*').eq('is_active', true).order('name');
