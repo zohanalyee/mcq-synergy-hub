@@ -122,6 +122,8 @@ const HRSetupPage = lazy(() => import("./pages/tools/HRSetupPage"));
 const LeavesPage = lazy(() => import("./pages/tools/LeavesPage"));
 const HolidaysPage = lazy(() => import("./pages/tools/HolidaysPage"));
 const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReportsPage"));
+const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
+const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -267,6 +269,8 @@ const App = () => {
                       <Route path="/tools/hr/leaves" element={<Suspense fallback={null}><LeavesPage /></Suspense>} />
                       <Route path="/tools/hr/holidays" element={<Suspense fallback={null}><HolidaysPage /></Suspense>} />
                       <Route path="/tools/hr/reports" element={<Suspense fallback={null}><AttendanceReportsPage /></Suspense>} />
+                      <Route path="/tools/hr/quick-entry" element={<Suspense fallback={null}><QuickManualEntry /></Suspense>} />
+                      <Route path="/tools/hr/analytics" element={<Suspense fallback={null}><AttendanceAnalytics /></Suspense>} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
