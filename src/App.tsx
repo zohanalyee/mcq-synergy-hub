@@ -39,6 +39,7 @@ import Profile from "./pages/Profile";
 import Feedback from "./pages/Feedback";
 import Achievements from "./pages/Achievements";
 import ForgotPassword from "./pages/ForgotPassword";
+import Reviews from "./pages/Reviews";
 import ResetPassword from "./pages/ResetPassword";
 import VerifyEmailSent from "./pages/VerifyEmailSent";
 import VerifyEmail from "./pages/VerifyEmail";
