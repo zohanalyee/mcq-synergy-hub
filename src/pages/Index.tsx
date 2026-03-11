@@ -7,7 +7,7 @@ import SubjectCard from '@/components/SubjectCard';
 import FeatureCard from '@/components/FeatureCard';
 import TestCategoryCard from '@/components/TestCategoryCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
-import TestimonialCard from '@/components/TestimonialCard';
+import TestimonialsSection from '@/components/reviews/TestimonialsSection';
 import HeroStatsSection from '@/components/home/HeroStatsSection';
 import PlatformStatsSection from '@/components/home/PlatformStatsSection';
 import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
