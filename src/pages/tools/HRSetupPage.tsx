@@ -16,7 +16,7 @@ import { motion } from 'framer-motion';
 import {
   getClasses, addClass, deleteClass,
   getSections, addSection,
-  getStudents, addStudent, deleteStudent,
+  getStudents, addStudent, deleteStudent, deleteAllStudents,
   getStaff, addStaff, updateStaff,
   getShifts, addShift,
   getInstituteSettings, upsertInstituteSettings
