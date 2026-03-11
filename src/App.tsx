@@ -173,6 +173,7 @@ const App = () => {
                       
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
+                      <Route path="/admin/reviews" element={<Suspense fallback={null}><ReviewsManagement /></Suspense>} />
                       <Route path="/subjects" element={<Subjects />} />
                       <Route path="/dashboard" element={<Analytics />} />
                       <Route path="/profile" element={<Profile />} />
