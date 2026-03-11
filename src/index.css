@@ -200,18 +200,27 @@ body::-webkit-scrollbar-thumb:hover {
   background-color: hsl(var(--muted-foreground) / 0.5);
 }
 
-/* Prevent shaking on Radix UI overlays */
+/* Prevent shaking on Radix UI overlays - exclude dialog content to preserve centering transforms */
 [data-radix-dropdown-menu-content],
-[data-radix-dialog-content],
-[data-radix-dialog-overlay],
 [data-radix-popover-content],
 [data-radix-select-content],
 [data-radix-popper-content-wrapper],
-[role="dialog"],
 [role="menu"] {
   transform: translateZ(0);
   backface-visibility: hidden;
   will-change: transform, opacity;
+}
+
+/* Dialog overlay gets GPU acceleration without conflicting transforms */
+[data-radix-dialog-overlay] {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Dialog content uses will-change only to avoid overriding centering transform */
+[data-radix-dialog-content] {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
 }
 
 /* Prevent background scroll when modal is open */
