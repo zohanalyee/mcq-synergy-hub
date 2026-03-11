@@ -1321,6 +1321,60 @@ export type Database = {
         }
         Relationships: []
       }
+      reviews: {
+        Row: {
+          comment: string | null
+          created_at: string | null
+          display_publicly: boolean | null
+          id: string
+          is_anonymous: boolean | null
+          is_verified: boolean | null
+          rating: number
+          reviewer_initials: string | null
+          reviewer_name: string | null
+          reviewer_role: string | null
+          show_name: boolean | null
+          updated_at: string | null
+          user_id: string | null
+          verified_at: string | null
+          verified_by: string | null
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string | null
+          display_publicly?: boolean | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_verified?: boolean | null
+          rating: number
+          reviewer_initials?: string | null
+          reviewer_name?: string | null
+          reviewer_role?: string | null
+          show_name?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string | null
+          display_publicly?: boolean | null
+          id?: string
+          is_anonymous?: boolean | null
+          is_verified?: boolean | null
+          rating?: number
+          reviewer_initials?: string | null
+          reviewer_name?: string | null
+          reviewer_role?: string | null
+          show_name?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
+          verified_at?: string | null
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       saved_syllabus_templates: {
         Row: {
           created_at: string | null
@@ -2255,6 +2309,19 @@ export type Database = {
       get_recently_active_users: {
         Args: { minutes_ago?: number }
         Returns: number
+      }
+      get_review_stats: {
+        Args: never
+        Returns: {
+          avg_rating: number
+          five_star: number
+          four_star: number
+          one_star: number
+          recommend_pct: number
+          three_star: number
+          total_reviews: number
+          two_star: number
+        }[]
       }
       get_student_weaknesses: {
         Args: { target_user_id: string }
