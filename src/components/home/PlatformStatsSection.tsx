@@ -13,12 +13,27 @@ const PlatformStatsSection = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["platform-stats"],
     queryFn: async () => {
+      // Try RPC first
       const { data, error } = await supabase.rpc("get_platform_stats");
-      if (error) {
-        console.error("Platform stats error:", error);
-        return { mcq_count: 0, subject_count: 0, test_count: 0, satisfaction_pct: 98 };
+      if (!error && data?.[0]) {
+        return data[0];
       }
-      return data?.[0] ?? { mcq_count: 0, subject_count: 0, test_count: 0, satisfaction_pct: 98 };
+      console.warn("RPC fallback: fetching stats directly", error);
+      // Fallback: query tables directly
+      const [mcqRes, subRes, testRes, ratingRes] = await Promise.all([
+        supabase.from("content_items").select("*", { count: "exact", head: true }).eq("category", "mcq").eq("status", "approved"),
+        supabase.from("subjects").select("*", { count: "exact", head: true }),
+        supabase.from("test_attempts").select("*", { count: "exact", head: true }),
+        supabase.from("user_ratings" as any).select("rating"),
+      ]);
+      const ratings = (ratingRes.data as any[]) || [];
+      const avgRating = ratings.length > 0 ? ratings.reduce((s: number, r: any) => s + r.rating, 0) / ratings.length : 0;
+      return {
+        mcq_count: mcqRes.count ?? 0,
+        subject_count: subRes.count ?? 0,
+        test_count: testRes.count ?? 0,
+        satisfaction_pct: ratings.length > 0 ? Math.round((avgRating / 5) * 100) : 98,
+      };
     },
     staleTime: 5 * 60 * 1000,
   });
