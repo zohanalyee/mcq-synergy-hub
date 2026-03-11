@@ -12,7 +12,7 @@ import { toast } from 'sonner';
 import { 
   Users, UserCheck, Calendar, ClipboardList, BarChart3,
   Building2, Settings, Plus, ChevronRight, Clock, AlertTriangle,
-  CheckCircle2, XCircle, Timer, Briefcase, BookOpen, Bell
+  CheckCircle2, XCircle, Timer, Briefcase, BookOpen, Bell, PenLine, TrendingUp
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { getInstituteSettings, upsertInstituteSettings, getStudents, getStaff, getStudentLeaves, getStaffLeaves } from '@/services/attendanceService';
