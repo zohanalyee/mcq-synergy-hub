@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Card, CardContent } from '@/components/ui/card';
@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Save, ChevronLeft, TrendingUp, Users, UserCheck, UserX } from 'lucide-react';
+import { Save, ChevronLeft, TrendingUp, Users, UserCheck, UserX, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+
+const STORAGE_KEY = 'attendance-quick-entry-draft';
 
 const CLASSES = [
   { id: 'ece', name: 'ECE', fullName: 'Early Childhood Education' },
@@ -31,25 +33,50 @@ const CLASSES = [
   { id: 'class-12', name: 'XII', fullName: 'Class 12' },
 ];
 
-interface ClassAttendance {
-  total: number;
-  present: number;
-  absent: number;
-  percentage: number;
-}
+const emptyAttendance = () =>
+  CLASSES.reduce((acc, cls) => ({
+    ...acc,
+    [cls.id]: { total: 0, present: 0, absent: 0, percentage: 0 },
+  }), {} as Record<string, { total: number; present: number; absent: number; percentage: number }>);
 
 const QuickManualEntry = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
-  const [attendance, setAttendance] = useState<Record<string, ClassAttendance>>(
-    CLASSES.reduce((acc, cls) => ({
-      ...acc,
-      [cls.id]: { total: 0, present: 0, absent: 0, percentage: 0 },
-    }), {})
-  );
+  const [attendance, setAttendance] = useState(emptyAttendance());
   const [submitting, setSubmitting] = useState(false);
+  const [draftLoaded, setDraftLoaded] = useState(false);
+
+  // Restore draft from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.date) setDate(parsed.date);
+        if (parsed.attendance) setAttendance(parsed.attendance);
+        toast.info('Draft restored from previous session');
+      }
+    } catch { /* ignore */ }
+    setDraftLoaded(true);
+  }, []);
+
+  // Auto-save to localStorage
+  useEffect(() => {
+    if (!draftLoaded) return;
+    const hasData = Object.values(attendance).some(a => a.total > 0);
+    if (hasData) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ date, attendance, savedAt: new Date().toISOString() }));
+    }
+  }, [date, attendance, draftLoaded]);
+
+  const handleClearDraft = () => {
+    if (!confirm('Clear all entered data?')) return;
+    setAttendance(emptyAttendance());
+    localStorage.removeItem(STORAGE_KEY);
+    toast.success('Draft cleared');
+  };
 
   const updateAttendance = (classId: string, field: 'total' | 'present', value: number) => {
     setAttendance(prev => {
@@ -101,6 +128,9 @@ const QuickManualEntry = () => {
 
       if (error) throw error;
 
+      // Clear draft on success
+      localStorage.removeItem(STORAGE_KEY);
+
       toast.success(`Attendance saved for ${records.length} classes`);
       navigate(`/tools/hr/analytics?date=${date}`);
     } catch (error: any) {
@@ -142,16 +172,21 @@ const QuickManualEntry = () => {
               <p className="text-sm text-muted-foreground">Enter attendance for all classes at once</p>
             </div>
           </div>
-          <div>
-            <Label htmlFor="att-date" className="text-xs text-muted-foreground">Date</Label>
-            <Input
-              id="att-date"
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              max={new Date().toISOString().split('T')[0]}
-              className="w-40"
-            />
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={handleClearDraft} className="text-muted-foreground">
+              <Trash2 className="h-4 w-4 mr-1" /> Clear
+            </Button>
+            <div>
+              <Label htmlFor="att-date" className="text-xs text-muted-foreground">Date</Label>
+              <Input
+                id="att-date"
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                max={new Date().toISOString().split('T')[0]}
+                className="w-40"
+              />
+            </div>
           </div>
         </motion.div>
 
