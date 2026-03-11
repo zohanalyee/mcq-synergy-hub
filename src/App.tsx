@@ -32,6 +32,7 @@ import CustomQuizzes from "./pages/CustomQuizzes";
 import AdminPanel from "./pages/AdminPanel";
 import ExternalCuration from "./pages/admin/ExternalCuration";
 import NotFound from "./pages/NotFound";
+const ReviewsManagement = lazy(() => import("./pages/admin/ReviewsManagement"));
 import NoticeBoard from "@/components/NoticeBoard";
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
