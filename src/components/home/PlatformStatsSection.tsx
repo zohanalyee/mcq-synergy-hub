@@ -21,7 +21,7 @@ const PlatformStatsSection = () => {
       console.warn("RPC fallback: fetching stats directly", error);
       // Fallback: query tables directly
       const [mcqRes, subRes, testRes, ratingRes] = await Promise.all([
-        supabase.from("content_items").select("*", { count: "exact", head: true }).eq("category", "mcq").eq("status", "approved"),
+        supabase.from("content_items").select("*", { count: "exact", head: true }),
         supabase.from("subjects").select("*", { count: "exact", head: true }),
         supabase.from("test_attempts").select("*", { count: "exact", head: true }),
         supabase.from("user_ratings" as any).select("rating"),
