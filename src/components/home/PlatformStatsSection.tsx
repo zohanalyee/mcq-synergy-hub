@@ -1,25 +1,47 @@
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import AnimatedCounter from "@/components/AnimatedCounter";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useState, useEffect } from "react";
 
 const sectionReveal = {
   hidden: { opacity: 0, y: 40 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] } }
 };
 
+/** Simple counter that animates immediately on mount — no IntersectionObserver dependency */
+const SimpleCounter = ({ to, suffix = "", className = "" }: { to: number; suffix?: string; className?: string }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    if (to <= 0) return;
+    let start = 0;
+    const duration = 2000;
+    const increment = to / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= to) {
+        setCount(to);
+        clearInterval(timer);
+      } else {
+        setCount(Math.floor(start));
+      }
+    }, 16);
+    return () => clearInterval(timer);
+  }, [to]);
+
+  return <div className={className}>{count.toLocaleString()}{suffix}</div>;
+};
+
 const PlatformStatsSection = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["platform-stats"],
     queryFn: async () => {
-      // Try RPC first
       const { data, error } = await supabase.rpc("get_platform_stats");
       if (!error && data?.[0]) {
         return data[0];
       }
       console.warn("RPC fallback: fetching stats directly", error);
-      // Fallback: query tables directly
       const [mcqRes, subRes, testRes, ratingRes] = await Promise.all([
         supabase.from("content_items").select("*", { count: "exact", head: true }),
         supabase.from("subjects").select("*", { count: "exact", head: true }),
@@ -62,8 +84,8 @@ const PlatformStatsSection = () => {
               {isLoading || !data ? (
                 <Skeleton className="h-7 w-16 mx-auto mb-1 bg-white/20" />
               ) : (
-                <AnimatedCounter
-                  from={0}
+                <SimpleCounter
+                  key={`${stat.label}-${stat.to}`}
                   to={stat.to}
                   suffix={stat.suffix}
                   className="text-xl md:text-2xl font-bold mb-1"
