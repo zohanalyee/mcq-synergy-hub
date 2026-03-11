@@ -154,26 +154,6 @@ const Home = () => {
     }
   ];
 
-  const testimonials = [
-    {
-      content: "AI-MCQs Point helped me prepare efficiently for my medical entrance exam. The analytics feature showed me exactly where I needed to improve.",
-      author: "Sarah Johnson",
-      role: "Medical Student",
-      rating: 5
-    },
-    {
-      content: "The custom syllabus feature is a game-changer. I could focus on my weak areas and track my progress in real-time.",
-      author: "Michael Chen",
-      role: "Engineering Student",
-      rating: 5
-    },
-    {
-      content: "I improved my test scores by 20% after just a month of consistent practice on AI-MCQs Point. The immediate feedback helps correct misconceptions.",
-      author: "Priya Sharma",
-      role: "CSS Aspirant",
-      rating: 4
-    }
-  ];
 
   const displaySubjects = subjects;
 
