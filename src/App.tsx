@@ -196,6 +196,7 @@ const App = () => {
                       <Route path="/ask-document" element={<AskDocument />} />
                       <Route path="/test-session/:id" element={<TestSession />} />
                       <Route path="/notifications" element={<Notifications />} />
+                      <Route path="/reviews" element={<Reviews />} />
                       
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
