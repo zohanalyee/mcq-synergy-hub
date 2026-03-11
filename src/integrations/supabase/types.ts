@@ -202,6 +202,45 @@ export type Database = {
         }
         Relationships: []
       }
+      class_attendance_summary: {
+        Row: {
+          absent_students: number
+          attendance_date: string
+          attendance_percentage: number
+          class_id: string
+          class_name: string
+          created_at: string | null
+          id: string
+          present_students: number
+          total_students: number
+          user_id: string | null
+        }
+        Insert: {
+          absent_students?: number
+          attendance_date: string
+          attendance_percentage?: number
+          class_id: string
+          class_name: string
+          created_at?: string | null
+          id?: string
+          present_students?: number
+          total_students?: number
+          user_id?: string | null
+        }
+        Update: {
+          absent_students?: number
+          attendance_date?: string
+          attendance_percentage?: number
+          class_id?: string
+          class_name?: string
+          created_at?: string | null
+          id?: string
+          present_students?: number
+          total_students?: number
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       classes: {
         Row: {
           created_at: string | null

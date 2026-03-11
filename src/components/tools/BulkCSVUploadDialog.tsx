@@ -337,11 +337,20 @@ const BulkCSVUploadDialog = ({ type, classes, sections, onSuccess, children }: B
             </Alert>
           )}
 
+          {errors.length > 0 && preview.length > 0 && (
+            <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-xs text-amber-700 dark:text-amber-300">
+                Some rows have warnings but you can still proceed with the upload. Rows with missing required fields will be skipped.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <div className="flex gap-2 justify-end">
             <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
             <Button
               onClick={handleUpload}
-              disabled={!file || errors.length > 0 || uploading || !!result}
+              disabled={!file || uploading || !!result}
             >
               {uploading ? 'Importing...' : `Import ${type === 'students' ? 'Students' : 'Staff'}`}
             </Button>
