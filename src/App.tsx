@@ -269,6 +269,8 @@ const App = () => {
                       <Route path="/tools/hr/leaves" element={<Suspense fallback={null}><LeavesPage /></Suspense>} />
                       <Route path="/tools/hr/holidays" element={<Suspense fallback={null}><HolidaysPage /></Suspense>} />
                       <Route path="/tools/hr/reports" element={<Suspense fallback={null}><AttendanceReportsPage /></Suspense>} />
+                      <Route path="/tools/hr/quick-entry" element={<Suspense fallback={null}><QuickManualEntry /></Suspense>} />
+                      <Route path="/tools/hr/analytics" element={<Suspense fallback={null}><AttendanceAnalytics /></Suspense>} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
