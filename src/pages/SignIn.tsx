@@ -10,9 +10,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
 import {
-  Loader2, Mail, Lock, User, BrainCircuit, Eye, EyeOff,
-  CheckCircle2, Sparkles, BarChart3, GraduationCap, ArrowLeft
+  Loader2, Mail, Lock, User, BrainCircuit, Eye, EyeOff, ArrowLeft
 } from "lucide-react";
+import { JoinSection } from "@/components/landing/JoinSection";
 
 const GoogleIcon = () => (
   <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
@@ -22,12 +22,6 @@ const GoogleIcon = () => (
     <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
   </svg>
 );
-
-const features = [
-  { icon: Sparkles, title: "AI-Powered Tests", description: "Generate unlimited MCQs with artificial intelligence" },
-  { icon: BarChart3, title: "Detailed Analytics", description: "Track your progress with comprehensive insights" },
-  { icon: GraduationCap, title: "Personalized Learning", description: "Adaptive paths tailored to your strengths" },
-];
 
 interface SignInPageProps {
   defaultTab?: "signin" | "signup";
