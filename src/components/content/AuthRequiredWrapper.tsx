@@ -1,8 +1,10 @@
 import { ReactNode } from "react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
+import { saveIntentRaw } from "@/hooks/useAuthIntent";
 
 interface AuthRequiredWrapperProps {
   children: ReactNode;
