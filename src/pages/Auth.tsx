@@ -67,8 +67,15 @@ const Auth = () => {
       const { data, error } = await signIn(formData.email, formData.password);
       if (error) throw error;
       if (data?.user) {
-        toast({ title: "Welcome back!", description: "You have been successfully signed in." });
-        navigate("/");
+        const intent = getIntentRaw();
+        if (intent) {
+          clearIntentRaw();
+          toast({ title: "Welcome back! 🎉", description: "Continuing where you left off..." });
+          navigate(intent.path, { state: intent.params, replace: true });
+        } else {
+          toast({ title: "Welcome back!", description: "You have been successfully signed in." });
+          navigate("/");
+        }
       }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Sign In Failed", description: error.message || "Failed to sign in." });

@@ -51,6 +51,11 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   });
 
   if (user) {
+    const intent = getIntentRaw();
+    if (intent) {
+      clearIntentRaw();
+      return <Navigate to={intent.path} replace />;
+    }
     return <Navigate to="/analytics" />;
   }
 

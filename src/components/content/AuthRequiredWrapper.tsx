@@ -49,7 +49,7 @@ const AuthRequiredWrapper = ({
         
         {showSignInButton && (
           <div className="text-center">
-            <Button onClick={() => window.location.href = '/auth'}>
+            <Button onClick={handleSignIn}>
               Sign In to Continue
             </Button>
           </div>
