@@ -278,6 +278,12 @@ const App = () => {
                       <Route path="/tools/hr/quick-entry" element={<InstantAuthGuard title="Quick Manual Entry" description="Sign in to enter attendance" actionName="Quick Entry"><Suspense fallback={null}><QuickManualEntry /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/hr/analytics" element={<InstantAuthGuard title="Attendance Analytics" description="Sign in to view attendance analytics" actionName="Analytics"><Suspense fallback={null}><AttendanceAnalytics /></Suspense></InstantAuthGuard>} />
                       
+                      {/* Legal & Info Pages */}
+                      <Route path="/about" element={<Suspense fallback={null}><About /></Suspense>} />
+                      <Route path="/contact" element={<Suspense fallback={null}><Contact /></Suspense>} />
+                      <Route path="/privacy-policy" element={<Suspense fallback={null}><PrivacyPolicy /></Suspense>} />
+                      <Route path="/terms-of-service" element={<Suspense fallback={null}><TermsOfService /></Suspense>} />
+                      
                       <Route path="*" element={<NotFound />} />
                     </Routes>
                     </TooltipProvider>
