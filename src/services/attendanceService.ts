@@ -5,6 +5,12 @@ import type {
   StaffLeave, Holiday, OvertimeRecord
 } from '@/types/attendance.types';
 
+const getCurrentUserId = async (): Promise<string> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return user.id;
+};
+
 // ── Institute Settings ────────────────────────────────────────────────────────
 export const getInstituteSettings = async (userId: string): Promise<InstituteSettings | null> => {
   const { data } = await supabase
