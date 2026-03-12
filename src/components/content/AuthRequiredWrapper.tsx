@@ -18,6 +18,15 @@ const AuthRequiredWrapper = ({
   showSignInButton = true 
 }: AuthRequiredWrapperProps) => {
   const { user, loading } = useAuth();
+  const location = useLocation();
+
+  const handleSignIn = () => {
+    saveIntentRaw({
+      action: 'Access feature',
+      path: location.pathname + location.search,
+    });
+    window.location.href = '/auth';
+  };
 
   // Show loading state
   if (loading) {
