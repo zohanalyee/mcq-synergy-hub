@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 const STORAGE_KEY = "ai-mcqs-has-rated";
 const POPUP_DELAY_MS = 2 * 60 * 1000; // 2 minutes
@@ -14,17 +15,38 @@ const UserSatisfactionPopup = () => {
   const [rating, setRating] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [alreadyRated, setAlreadyRated] = useState(false);
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return;
 
+    // Check if user already has a rating
+    const checkExisting = async () => {
+      if (!user?.id) return;
+      const { data } = await supabase
+        .from("user_ratings" as any)
+        .select("id")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (data) {
+        setAlreadyRated(true);
+        localStorage.setItem(STORAGE_KEY, "true");
+        return;
+      }
+    };
+
+    checkExisting();
+
     const timer = setTimeout(() => {
-      setVisible(true);
+      if (!localStorage.getItem(STORAGE_KEY)) {
+        setVisible(true);
+      }
     }, POPUP_DELAY_MS);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [user?.id]);
 
   const dismiss = () => {
     setVisible(false);
@@ -36,6 +58,25 @@ const UserSatisfactionPopup = () => {
     setSubmitting(true);
 
     try {
+      // Double-check for existing rating
+      if (user?.id) {
+        const { data: existing } = await supabase
+          .from("user_ratings" as any)
+          .select("id")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (existing) {
+          toast({
+            title: "You've already shared your feedback!",
+            description: "Thank you for your previous rating.",
+          });
+          localStorage.setItem(STORAGE_KEY, "true");
+          setVisible(false);
+          return;
+        }
+      }
+
       const { error } = await supabase.from("user_ratings" as any).insert({
         rating,
         user_id: user?.id ?? null,
@@ -49,6 +90,11 @@ const UserSatisfactionPopup = () => {
       });
       localStorage.setItem(STORAGE_KEY, "true");
       setVisible(false);
+
+      // Instantly refresh related queries
+      queryClient.invalidateQueries({ queryKey: ["review-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["all-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["platform-stats"] });
     } catch (err) {
       console.error("Rating submission error:", err);
       toast({
@@ -60,6 +106,8 @@ const UserSatisfactionPopup = () => {
       setSubmitting(false);
     }
   };
+
+  if (alreadyRated) return null;
 
   return (
     <AnimatePresence>

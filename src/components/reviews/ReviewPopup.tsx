@@ -34,6 +34,7 @@ const ROLES = [
 export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -43,6 +44,21 @@ export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
   const [guestName, setGuestName] = useState('');
   const [role, setRole] = useState('');
   const [loading, setLoading] = useState(false);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+
+  // Check for existing review when dialog opens
+  useEffect(() => {
+    if (!open || !user?.id) return;
+    const check = async () => {
+      const { data } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setAlreadyReviewed(true);
+    };
+    check();
+  }, [open, user?.id]);
 
   const handleSubmit = async () => {
     if (rating === 0) {
