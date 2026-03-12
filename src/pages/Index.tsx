@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import useTheme from '@/components/ThemeSwitcher';
 import { Button } from '@/components/ui/button';
 import { motion } from "framer-motion";
