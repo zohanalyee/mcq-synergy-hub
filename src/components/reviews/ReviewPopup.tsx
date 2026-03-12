@@ -61,6 +61,11 @@ export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
   }, [open, user?.id]);
 
   const handleSubmit = async () => {
+    if (alreadyReviewed) {
+      toast({ title: "You've already shared your feedback!", description: 'Thank you for your previous review.' });
+      return;
+    }
+
     if (rating === 0) {
       toast({ title: 'Rating Required', description: 'Please select a star rating', variant: 'destructive' });
       return;
