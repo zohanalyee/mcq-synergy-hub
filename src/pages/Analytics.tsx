@@ -25,21 +25,7 @@ const Analytics = () => {
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const subjectRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!user) navigate("/signin");
-  }, [user, navigate]);
-
-  if (!user) {
-    return (
-      <Header>
-        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12 text-center py-12">
-          <h1 className="text-2xl font-bold mb-3">Authentication Required</h1>
-          <p className="text-muted-foreground mb-6 text-sm">Please sign in to view your analytics.</p>
-          <Button onClick={() => navigate("/signin")}>Sign In</Button>
-        </div>
-      </Header>
-    );
-  }
+  // No auth check needed — InstantAuthGuard handles it at route level
 
   if (data.loading) {
     return (
