@@ -39,7 +39,8 @@ export const getClasses = async (): Promise<Class[]> => {
 };
 
 export const addClass = async (cls: Omit<Class, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase.from('classes').insert(cls).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase.from('classes').insert({ ...cls, user_id: userId } as any).select().single();
   if (error) throw error;
   return data;
 };
