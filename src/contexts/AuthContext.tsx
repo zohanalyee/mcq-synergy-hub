@@ -3,6 +3,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { signOut as authSignOut, signIn as authSignIn, signUp as authSignUp } from '@/services/authService';
+import { getIntentRaw, clearIntentRaw } from '@/hooks/useAuthIntent';
 
 interface AuthContextType {
   user: User | null;
@@ -51,6 +52,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Fetch profile data when user signs in
         if (session?.user && event === 'SIGNED_IN') {
+          // Check for saved auth intent (e.g. from Google OAuth redirect)
+          const savedRedirect = localStorage.getItem('redirect_after_auth');
+          if (savedRedirect) {
+            const intent = getIntentRaw();
+            if (intent) {
+              clearIntentRaw();
+              // Delay to let React render, then redirect
+              setTimeout(() => {
+                window.location.href = intent.path;
+              }, 500);
+            }
+          }
+
           setTimeout(async () => {
             try {
               const { data } = await supabase
