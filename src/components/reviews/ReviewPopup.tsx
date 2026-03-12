@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Star, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 
 interface ReviewPopupProps {
   testId?: string;
@@ -33,6 +34,7 @@ const ROLES = [
 export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
@@ -42,8 +44,28 @@ export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
   const [guestName, setGuestName] = useState('');
   const [role, setRole] = useState('');
   const [loading, setLoading] = useState(false);
+  const [alreadyReviewed, setAlreadyReviewed] = useState(false);
+
+  // Check for existing review when dialog opens
+  useEffect(() => {
+    if (!open || !user?.id) return;
+    const check = async () => {
+      const { data } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      if (data) setAlreadyReviewed(true);
+    };
+    check();
+  }, [open, user?.id]);
 
   const handleSubmit = async () => {
+    if (alreadyReviewed) {
+      toast({ title: "You've already shared your feedback!", description: 'Thank you for your previous review.' });
+      return;
+    }
+
     if (rating === 0) {
       toast({ title: 'Rating Required', description: 'Please select a star rating', variant: 'destructive' });
       return;
@@ -77,6 +99,11 @@ export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
       setGuestName('');
       setRole('');
       onClose();
+
+      // Instantly refresh related queries
+      queryClient.invalidateQueries({ queryKey: ['review-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['all-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
     } catch (error) {
       console.error('Review submission error:', error);
       toast({ title: 'Error', description: 'Failed to submit review. Please try again.', variant: 'destructive' });
@@ -224,18 +251,24 @@ export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
-              Skip for Now
-            </Button>
-            <Button onClick={handleSubmit} className="flex-1" disabled={loading || rating === 0}>
-              {loading ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
-              ) : (
-                'Submit Feedback'
-              )}
-            </Button>
-          </div>
+          {alreadyReviewed ? (
+            <p className="text-sm text-center text-muted-foreground py-2">
+              ✅ You've already shared your feedback! Thank you.
+            </p>
+          ) : (
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
+                Skip for Now
+              </Button>
+              <Button onClick={handleSubmit} className="flex-1" disabled={loading || rating === 0}>
+                {loading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
+                ) : (
+                  'Submit Feedback'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
