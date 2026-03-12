@@ -49,6 +49,11 @@ import CompleteProfile from "./pages/CompleteProfile";
 
 import Quizzes from "./pages/Quizzes";
 import SubmitContent from "./pages/SubmitContent";
+
+const About = lazy(() => import("./pages/About"));
+const Contact = lazy(() => import("./pages/Contact"));
+const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
 import QuestionBank from "./pages/QuestionBank";
 import AskDocument from "./pages/AskDocument";
 import TestSession from "./pages/TestSession";
