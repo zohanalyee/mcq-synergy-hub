@@ -197,8 +197,8 @@ const App = () => {
                       <Route path="/question-bank" element={<QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
-                      <Route path="/test-session/:id" element={<TestSession />} />
-                      <Route path="/notifications" element={<Notifications />} />
+                      <Route path="/test-session/:id" element={<InstantAuthGuard title="Test Session" description="Sign in to take this test and save your results" actionName="Test Session"><TestSession /></InstantAuthGuard>} />
+                      <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
                       <Route path="/reviews" element={<Reviews />} />
                       
                     {/* Tool Routes */}
