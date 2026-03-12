@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 import useTheme from '@/components/ThemeSwitcher';
 import { Button } from '@/components/ui/button';
 import { motion } from "framer-motion";
@@ -423,46 +424,7 @@ const Home = () => {
       </motion.section>
       
       {/* Footer */}
-      <footer className="py-8 border-t bg-muted/30">
-        <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div>
-              <h3 className="text-sm font-bold mb-2 text-gradient">AI-MCQs Point</h3>
-              <p className="text-xs text-muted-foreground">Your intelligent companion for MCQ-based test preparation.</p>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Quick Links</h3>
-              <ul className="space-y-1.5">
-                <li><button onClick={() => navigate('/')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Home</button></li>
-                <li><button onClick={() => navigate('/subjects')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Subjects</button></li>
-                <li><button onClick={() => navigate('/mock-tests')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Recruitment Tests</button></li>
-                <li><button onClick={() => navigate('/analytics')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Analytics</button></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold mb-2">Resources</h3>
-              <ul className="space-y-1.5">
-                <li><button onClick={() => navigate('/quizzes')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Quizzes</button></li>
-                <li><button onClick={() => navigate('/custom-syllabus')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Custom Syllabus</button></li>
-                <li><button onClick={() => navigate('/feedback')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Feedback</button></li>
-                <li><button onClick={() => navigate('/tools')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Tools</button></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-sm font-semibold mb-2">More</h3>
-              <ul className="space-y-1.5">
-                <li><button onClick={() => navigate('/jobs')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Jobs</button></li>
-                <li><button onClick={() => navigate('/scholarships')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Scholarships</button></li>
-                <li><button onClick={() => navigate('/leaderboard')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Leaderboard</button></li>
-                <li><button onClick={() => navigate('/ask-document')} className="text-xs text-muted-foreground hover:text-primary transition-colors">Ask Docs</button></li>
-              </ul>
-            </div>
-          </div>
-          <div className="mt-6 pt-4 border-t text-center text-muted-foreground text-xs">
-            <p>© {new Date().getFullYear()} AI-MCQs Point. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
       <UserSatisfactionPopup />
       </div>
     </Header>
