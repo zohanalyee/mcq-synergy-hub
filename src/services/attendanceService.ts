@@ -123,7 +123,8 @@ export const getShifts = async (): Promise<Shift[]> => {
 };
 
 export const addShift = async (shift: Omit<Shift, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase.from('shifts').insert(shift).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase.from('shifts').insert({ ...shift, user_id: userId } as any).select().single();
   if (error) throw error;
   return data;
 };
