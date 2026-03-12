@@ -14,6 +14,7 @@ import { DeviceCapabilityProvider } from "./contexts/DeviceCapabilityContext";
 import PageLoader from "./components/PageLoader";
 import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
+import InstantAuthGuard from "./components/auth/InstantAuthGuard";
 import Index from "./pages/Index";
 import Subjects from "./pages/Subjects";
 import MockTests from "./pages/MockTests";
@@ -177,15 +178,15 @@ const App = () => {
                       <Route path="/admin/curation" element={<ExternalCuration />} />
                       <Route path="/admin/reviews" element={<Suspense fallback={null}><ReviewsManagement /></Suspense>} />
                       <Route path="/subjects" element={<Subjects />} />
-                      <Route path="/dashboard" element={<Analytics />} />
-                      <Route path="/profile" element={<Profile />} />
-                      <Route path="/analytics" element={<Analytics />} />
-                      <Route path="/mock-tests" element={<MockTests />} />
-                      <Route path="/custom-quizzes" element={<CustomQuizzes />} />
+                      <Route path="/dashboard" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
+                      <Route path="/profile" element={<InstantAuthGuard title="Your Profile" description="Sign in to access your profile" actionName="Profile"><Profile /></InstantAuthGuard>} />
+                      <Route path="/analytics" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
+                      <Route path="/mock-tests" element={<InstantAuthGuard title="Mock Tests" description="Sign in to take tests and track progress" actionName="Mock Tests"><MockTests /></InstantAuthGuard>} />
+                      <Route path="/custom-quizzes" element={<InstantAuthGuard title="Custom Quizzes" description="Sign in to create and take custom quizzes" actionName="Custom Quizzes"><CustomQuizzes /></InstantAuthGuard>} />
                       <Route path="/custom-syllabus" element={<CustomSyllabus />} />
                       <Route path="/leaderboard" element={<Leaderboard />} />
-                      <Route path="/feedback" element={<Feedback />} />
-                      <Route path="/achievements" element={<Achievements />} />
+                      <Route path="/feedback" element={<InstantAuthGuard title="Feedback" description="Sign in to submit feedback" actionName="Feedback"><Feedback /></InstantAuthGuard>} />
+                      <Route path="/achievements" element={<InstantAuthGuard title="Achievements" description="Sign in to view your achievements" actionName="Achievements"><Achievements /></InstantAuthGuard>} />
                       <Route path="/subject/:id" element={<SubjectContent />} />
                       <Route path="/subject-content/:id" element={<SubjectContent />} />
                       <Route path="/jobs" element={<Jobs />} />
@@ -196,8 +197,8 @@ const App = () => {
                       <Route path="/question-bank" element={<QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
-                      <Route path="/test-session/:id" element={<TestSession />} />
-                      <Route path="/notifications" element={<Notifications />} />
+                      <Route path="/test-session/:id" element={<InstantAuthGuard title="Test Session" description="Sign in to take this test and save your results" actionName="Test Session"><TestSession /></InstantAuthGuard>} />
+                      <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
                       <Route path="/reviews" element={<Reviews />} />
                       
                     {/* Tool Routes */}
@@ -262,15 +263,15 @@ const App = () => {
                       <Route path="/tools/equation-solver" element={<Suspense fallback={null}><EquationSolver /></Suspense>} />
                       
                       {/* HR & Attendance System */}
-                      <Route path="/tools/hr" element={<Suspense fallback={null}><AttendanceDashboard /></Suspense>} />
-                      <Route path="/tools/hr/student-attendance" element={<Suspense fallback={null}><StudentAttendancePage /></Suspense>} />
-                      <Route path="/tools/hr/staff-attendance" element={<Suspense fallback={null}><StaffAttendancePage /></Suspense>} />
-                      <Route path="/tools/hr/setup" element={<Suspense fallback={null}><HRSetupPage /></Suspense>} />
-                      <Route path="/tools/hr/leaves" element={<Suspense fallback={null}><LeavesPage /></Suspense>} />
-                      <Route path="/tools/hr/holidays" element={<Suspense fallback={null}><HolidaysPage /></Suspense>} />
-                      <Route path="/tools/hr/reports" element={<Suspense fallback={null}><AttendanceReportsPage /></Suspense>} />
-                      <Route path="/tools/hr/quick-entry" element={<Suspense fallback={null}><QuickManualEntry /></Suspense>} />
-                      <Route path="/tools/hr/analytics" element={<Suspense fallback={null}><AttendanceAnalytics /></Suspense>} />
+                      <Route path="/tools/hr" element={<InstantAuthGuard title="Attendance & HR System" description="Sign in to manage attendance records and HR" actionName="HR Dashboard"><Suspense fallback={null}><AttendanceDashboard /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/student-attendance" element={<InstantAuthGuard title="Student Attendance" description="Sign in to mark student attendance" actionName="Student Attendance"><Suspense fallback={null}><StudentAttendancePage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/staff-attendance" element={<InstantAuthGuard title="Staff Attendance" description="Sign in to mark staff attendance" actionName="Staff Attendance"><Suspense fallback={null}><StaffAttendancePage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/setup" element={<InstantAuthGuard title="HR Setup" description="Sign in to configure HR settings" actionName="HR Setup"><Suspense fallback={null}><HRSetupPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/leaves" element={<InstantAuthGuard title="Leave Management" description="Sign in to manage leaves" actionName="Leaves"><Suspense fallback={null}><LeavesPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/holidays" element={<InstantAuthGuard title="Holiday Calendar" description="Sign in to manage holidays" actionName="Holidays"><Suspense fallback={null}><HolidaysPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/reports" element={<InstantAuthGuard title="Attendance Reports" description="Sign in to view reports" actionName="Reports"><Suspense fallback={null}><AttendanceReportsPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/quick-entry" element={<InstantAuthGuard title="Quick Manual Entry" description="Sign in to enter attendance" actionName="Quick Entry"><Suspense fallback={null}><QuickManualEntry /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/hr/analytics" element={<InstantAuthGuard title="Attendance Analytics" description="Sign in to view attendance analytics" actionName="Analytics"><Suspense fallback={null}><AttendanceAnalytics /></Suspense></InstantAuthGuard>} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
