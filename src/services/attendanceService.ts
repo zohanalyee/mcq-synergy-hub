@@ -274,7 +274,8 @@ export const getHolidays = async (): Promise<Holiday[]> => {
 };
 
 export const addHoliday = async (holiday: Omit<Holiday, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase.from('holidays').insert(holiday).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase.from('holidays').insert({ ...holiday, user_id: userId } as any).select().single();
   if (error) throw error;
   return data;
 };

@@ -63,9 +63,10 @@ function sanitizeTopic(topic: string): string {
 // Escape special chars that break PostgREST .or() parsing
 function escapePostgrestValue(value: string): string {
   return value
-    .replace(/[(),;:]/g, ' ')
+    .replace(/[(),;:*%]/g, ' ')  // Remove PostgREST special chars and wildcards
     .replace(/\s+/g, ' ')
-    .trim();
+    .trim()
+    .slice(0, 100);  // Enforce length limit
 }
 
 // Extract meaningful keywords from a compound topic string
