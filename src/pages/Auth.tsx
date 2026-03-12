@@ -125,78 +125,7 @@ const Auth = () => {
   return (
     <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2">
       {/* Left Panel - Desktop Only */}
-      <div className="hidden lg:flex relative overflow-hidden flex-col justify-center items-center p-12 text-white"
-        style={{ background: "linear-gradient(135deg, hsl(220, 90%, 45%), hsl(230, 80%, 40%), hsl(250, 70%, 35%))" }}
-      >
-        {/* Subtle dot pattern overlay */}
-        <div className="absolute inset-0 opacity-10" style={{
-          backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.3) 1px, transparent 1px)",
-          backgroundSize: "24px 24px",
-        }} />
-
-        {/* Floating decorative circles */}
-        <motion.div
-          className="absolute top-20 left-16 w-64 h-64 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, rgba(255,255,255,0.4), transparent)" }}
-          animate={{ y: [0, -20, 0], x: [0, 10, 0] }}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
-        <motion.div
-          className="absolute bottom-32 right-12 w-48 h-48 rounded-full opacity-10"
-          style={{ background: "radial-gradient(circle, rgba(255,255,255,0.3), transparent)" }}
-          animate={{ y: [0, 15, 0], x: [0, -10, 0] }}
-          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-        />
-
-        <div className="relative z-10 max-w-md">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <div className="w-16 h-16 rounded-2xl bg-white/15 backdrop-blur-sm flex items-center justify-center mb-8 shadow-lg">
-              <BrainCircuit className="w-9 h-9 text-white" />
-            </div>
-
-            <h2 className="text-3xl font-bold mb-3 leading-tight">
-              Join AI-MCQs Point
-            </h2>
-            <p className="text-blue-100 text-lg mb-10 leading-relaxed">
-              Your gateway to academic excellence
-            </p>
-          </motion.div>
-
-          <div className="space-y-5">
-            {features.map((feature, i) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 + i * 0.15 }}
-                className="flex items-start gap-4"
-              >
-                <div className="w-10 h-10 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <feature.icon className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-white mb-0.5">{feature.title}</h3>
-                  <p className="text-sm text-blue-200 leading-relaxed">{feature.description}</p>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
-            className="mt-12 flex items-center gap-2 text-blue-200 text-sm"
-          >
-            <CheckCircle2 className="w-4 h-4" />
-            <span>Trusted by thousands of students</span>
-          </motion.div>
-        </div>
-      </div>
+      <JoinSection />
 
       {/* Right Panel - Form */}
       <div className="flex-1 flex items-center justify-center p-6 sm:p-8 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(210,40%,96%)]">
