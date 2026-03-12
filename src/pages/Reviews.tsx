@@ -28,8 +28,28 @@ const starLabels: Record<string, string> = {
 };
 
 const Reviews = () => {
+  const queryClient = useQueryClient();
   const [filterRating, setFilterRating] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
+
+  // Realtime subscription for instant refresh
+  useEffect(() => {
+    const channel = supabase
+      .channel('reviews-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['all-reviews'] });
+        queryClient.invalidateQueries({ queryKey: ['review-stats'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_ratings' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
+        queryClient.invalidateQueries({ queryKey: ['review-stats'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
 
   const { data: stats } = useQuery<ReviewStats>({
     queryKey: ['review-stats'],
