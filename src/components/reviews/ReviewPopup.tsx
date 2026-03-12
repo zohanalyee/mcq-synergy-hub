@@ -99,6 +99,11 @@ export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
       setGuestName('');
       setRole('');
       onClose();
+
+      // Instantly refresh related queries
+      queryClient.invalidateQueries({ queryKey: ['review-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['all-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
     } catch (error) {
       console.error('Review submission error:', error);
       toast({ title: 'Error', description: 'Failed to submit review. Please try again.', variant: 'destructive' });
