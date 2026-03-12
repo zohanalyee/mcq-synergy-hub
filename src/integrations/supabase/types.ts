@@ -247,18 +247,21 @@ export type Database = {
           id: string
           institute_name: string | null
           name: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
           id?: string
           institute_name?: string | null
           name: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
           id?: string
           institute_name?: string | null
           name?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -951,6 +954,7 @@ export type Database = {
           institute_name: string | null
           name: string
           type: string | null
+          user_id: string | null
         }
         Insert: {
           applies_to?: string | null
@@ -961,6 +965,7 @@ export type Database = {
           institute_name?: string | null
           name: string
           type?: string | null
+          user_id?: string | null
         }
         Update: {
           applies_to?: string | null
@@ -971,6 +976,7 @@ export type Database = {
           institute_name?: string | null
           name?: string
           type?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -1453,18 +1459,21 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
+          user_id: string | null
         }
         Insert: {
           class_id: string
           created_at?: string | null
           id?: string
           name: string
+          user_id?: string | null
         }
         Update: {
           class_id?: string
           created_at?: string | null
           id?: string
           name?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1487,6 +1496,7 @@ export type Database = {
           late_threshold_minutes: number | null
           name: string
           start_time: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string | null
@@ -1498,6 +1508,7 @@ export type Database = {
           late_threshold_minutes?: number | null
           name: string
           start_time: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string | null
@@ -1509,6 +1520,7 @@ export type Database = {
           late_threshold_minutes?: number | null
           name?: string
           start_time?: string
+          user_id?: string | null
         }
         Relationships: []
       }

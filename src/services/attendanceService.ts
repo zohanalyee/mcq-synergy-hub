@@ -5,6 +5,12 @@ import type {
   StaffLeave, Holiday, OvertimeRecord
 } from '@/types/attendance.types';
 
+const getCurrentUserId = async (): Promise<string> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('Not authenticated');
+  return user.id;
+};
+
 // ── Institute Settings ────────────────────────────────────────────────────────
 export const getInstituteSettings = async (userId: string): Promise<InstituteSettings | null> => {
   const { data } = await supabase
@@ -33,7 +39,8 @@ export const getClasses = async (): Promise<Class[]> => {
 };
 
 export const addClass = async (cls: Omit<Class, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase.from('classes').insert(cls).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase.from('classes').insert({ ...cls, user_id: userId } as any).select().single();
   if (error) throw error;
   return data;
 };
@@ -116,7 +123,8 @@ export const getShifts = async (): Promise<Shift[]> => {
 };
 
 export const addShift = async (shift: Omit<Shift, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase.from('shifts').insert(shift).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase.from('shifts').insert({ ...shift, user_id: userId } as any).select().single();
   if (error) throw error;
   return data;
 };
@@ -266,7 +274,8 @@ export const getHolidays = async (): Promise<Holiday[]> => {
 };
 
 export const addHoliday = async (holiday: Omit<Holiday, 'id' | 'created_at'>) => {
-  const { data, error } = await supabase.from('holidays').insert(holiday).select().single();
+  const userId = await getCurrentUserId();
+  const { data, error } = await supabase.from('holidays').insert({ ...holiday, user_id: userId } as any).select().single();
   if (error) throw error;
   return data;
 };
