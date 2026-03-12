@@ -251,18 +251,24 @@ export const ReviewPopup = ({ testId, open, onClose }: ReviewPopupProps) => {
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <Button variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
-              Skip for Now
-            </Button>
-            <Button onClick={handleSubmit} className="flex-1" disabled={loading || rating === 0}>
-              {loading ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
-              ) : (
-                'Submit Feedback'
-              )}
-            </Button>
-          </div>
+          {alreadyReviewed ? (
+            <p className="text-sm text-center text-muted-foreground py-2">
+              ✅ You've already shared your feedback! Thank you.
+            </p>
+          ) : (
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={onClose} className="flex-1" disabled={loading}>
+                Skip for Now
+              </Button>
+              <Button onClick={handleSubmit} className="flex-1" disabled={loading || rating === 0}>
+                {loading ? (
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
+                ) : (
+                  'Submit Feedback'
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
