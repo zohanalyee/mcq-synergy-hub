@@ -140,7 +140,7 @@ const AttendanceAnalytics = () => {
       pdf.saveGraphicsState();
       // @ts-ignore
       pdf.setGState(new pdf.GState({ opacity: 0.05 }));
-      pdf.text('AI-MCQs Point', pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
+      pdf.text('MCQSAI', pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
       pdf.restoreGraphicsState();
 
       // Header
