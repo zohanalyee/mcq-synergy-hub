@@ -1,4 +1,4 @@
-import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star } from 'lucide-react';
+import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -9,6 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import StreakCounter from '@/components/gamification/StreakCounter';
 import { ALL_TOOLS } from '@/data/toolsData';
@@ -17,6 +18,7 @@ import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useLanguage, type Language } from '@/contexts/LanguageContext';
 
 
 interface HeaderActionsProps {
@@ -40,6 +42,7 @@ const HeaderActions = ({
 }: HeaderActionsProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { language, setLanguage } = useLanguage();
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -73,6 +76,26 @@ const HeaderActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
       {user && <StreakCounter />}
+      
+      {/* Language Selector */}
+      <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+        <SelectTrigger className="w-9 h-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden sm:w-32 sm:px-3 sm:justify-start sm:[&>svg.lucide-chevron-down]:block">
+          <Globe className="h-4 w-4 shrink-0 sm:mr-2" />
+          <span className="hidden sm:inline"><SelectValue /></span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="en">
+            <div className="flex items-center gap-2"><span>🇬🇧</span><span>English</span></div>
+          </SelectItem>
+          <SelectItem value="ur">
+            <div className="flex items-center gap-2"><span>🇵🇰</span><span>اردو</span></div>
+          </SelectItem>
+          <SelectItem value="sd">
+            <div className="flex items-center gap-2"><span>🇵🇰</span><span>سنڌي</span></div>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
       {!isMobile && <ThemeToggle />}
       
       {/* Tools Menu */}

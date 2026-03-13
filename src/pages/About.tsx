@@ -44,6 +44,32 @@ const About = () => {
           </section>
 
           <section>
+            <div className="bg-gradient-to-r from-green-50 to-background dark:from-green-900/10 dark:to-card rounded-2xl p-8 border-2 border-green-200 dark:border-green-800">
+              <div className="flex items-center gap-4 mb-6">
+                <span className="text-4xl">🇵🇰</span>
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Proudly Pakistani</h2>
+                  <p className="text-muted-foreground">Made in Pakistan, Made for Pakistanis</p>
+                </div>
+              </div>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">🎓 For Pakistani Students</h3>
+                  <p className="text-sm text-muted-foreground">Tailored for MDCAT, ECAT, CSS, NUST, and all Pakistani competitive exams</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">🇵🇰 By Pakistani Educators</h3>
+                  <p className="text-sm text-muted-foreground">Built by teachers who understand Pakistan's education system</p>
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground mb-2">🌐 In Pakistani Languages</h3>
+                  <p className="text-sm text-muted-foreground">Available in English, Urdu, and Sindhi for maximum accessibility</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section>
             <h2 className="text-xl font-semibold text-foreground mb-2">Contact Information</h2>
             <ul className="space-y-1.5 text-sm">
               <li>Email: <a href="mailto:hello@mcqsai.com" className="text-primary hover:underline">hello@mcqsai.com</a></li>

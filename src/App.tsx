@@ -11,7 +11,9 @@ import { LoadingProvider } from "./contexts/LoadingContext";
 import { FloatingToolsProvider } from "./contexts/FloatingToolsContext";
 import { AppearanceProvider } from "./contexts/AppearanceContext";
 import { DeviceCapabilityProvider } from "./contexts/DeviceCapabilityContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import PageLoader from "./components/PageLoader";
+import AIWelcome from "./components/AIWelcome";
 import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
@@ -142,10 +144,12 @@ const App = () => {
             <UserRoleProvider>
               <LearningProvider>
                 <DeviceCapabilityProvider>
-                  <AppearanceProvider>
+                   <AppearanceProvider>
+                    <LanguageProvider>
                     <FloatingToolsProvider>
                     <TooltipProvider>
                     <PageLoader />
+                    <AIWelcome />
                     <NavigationLoader />
                     <Toaster />
                     <Sonner 
@@ -288,6 +292,7 @@ const App = () => {
                     </Routes>
                     </TooltipProvider>
                     </FloatingToolsProvider>
+                    </LanguageProvider>
                   </AppearanceProvider>
                 </DeviceCapabilityProvider>
               </LearningProvider>

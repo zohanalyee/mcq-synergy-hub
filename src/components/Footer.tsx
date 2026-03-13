@@ -15,6 +15,9 @@ const Footer = () => {
               Pakistan's leading AI-powered MCQ preparation platform.
               Trusted by thousands of students for MDCAT, ECAT, CSS, and academic exams.
             </p>
+            <p className="text-sm font-medium mt-2" style={{ color: '#4ade80' }}>
+              🇵🇰 Made in Pakistan, Made for Pakistanis
+            </p>
           </div>
 
           {/* Quick Links */}
