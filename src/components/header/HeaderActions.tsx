@@ -76,6 +76,26 @@ const HeaderActions = ({
   return (
     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
       {user && <StreakCounter />}
+      
+      {/* Language Selector */}
+      <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+        <SelectTrigger className="w-9 h-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden sm:w-32 sm:px-3 sm:justify-start sm:[&>svg.lucide-chevron-down]:block">
+          <Globe className="h-4 w-4 shrink-0 sm:mr-2" />
+          <span className="hidden sm:inline"><SelectValue /></span>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="en">
+            <div className="flex items-center gap-2"><span>🇬🇧</span><span>English</span></div>
+          </SelectItem>
+          <SelectItem value="ur">
+            <div className="flex items-center gap-2"><span>🇵🇰</span><span>اردو</span></div>
+          </SelectItem>
+          <SelectItem value="sd">
+            <div className="flex items-center gap-2"><span>🇵🇰</span><span>سنڌي</span></div>
+          </SelectItem>
+        </SelectContent>
+      </Select>
+
       {!isMobile && <ThemeToggle />}
       
       {/* Tools Menu */}

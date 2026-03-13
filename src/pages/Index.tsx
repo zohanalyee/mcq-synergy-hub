@@ -172,6 +172,19 @@ const Home = () => {
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         
+        {/* Made in Pakistan Badge */}
+        <motion.div
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.8 }}
+          className="absolute top-24 right-8 hidden lg:block z-10"
+        >
+          <div className="flex items-center gap-2 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-border">
+            <span>🇵🇰</span>
+            <span className="text-sm font-medium text-muted-foreground">Made in Pakistan</span>
+          </div>
+        </motion.div>
+        
         {/* AI Grid overlay */}
         <div className="absolute inset-0 pointer-events-none opacity-[0.03]" style={{
           backgroundImage: `linear-gradient(rgba(139,92,246,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(139,92,246,0.3) 1px, transparent 1px)`,

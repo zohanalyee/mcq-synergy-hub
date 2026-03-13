@@ -292,6 +292,7 @@ const App = () => {
                     </Routes>
                     </TooltipProvider>
                     </FloatingToolsProvider>
+                    </LanguageProvider>
                   </AppearanceProvider>
                 </DeviceCapabilityProvider>
               </LearningProvider>
