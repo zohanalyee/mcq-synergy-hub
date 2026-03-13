@@ -82,7 +82,7 @@ const NoticeBoard = () => {
       if (result) {
         toast({
           title: "Thank you for your feedback!",
-          description: "We appreciate your input and will use it to improve MCQs Point.",
+          description: "We appreciate your input and will use it to improve MCQSAI.",
         });
         
         // Clear form
