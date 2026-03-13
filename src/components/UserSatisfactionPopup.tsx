@@ -128,7 +128,7 @@ const UserSatisfactionPopup = () => {
 
           <p className="text-sm font-semibold mb-1">How's your experience?</p>
           <p className="text-xs text-muted-foreground mb-4">
-            Rate AI-MCQs Point to help us improve
+            Rate MCQSAI to help us improve
           </p>
 
           <div className="flex gap-1 justify-center mb-4">

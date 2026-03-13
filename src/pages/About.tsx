@@ -14,13 +14,13 @@ const About = () => {
   return (
     <Header>
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold text-foreground mb-6">About AI-MCQs Point</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-6">About MCQSAI</h1>
 
         <div className="space-y-8 text-muted-foreground">
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-2">Our Mission</h2>
             <p className="leading-relaxed">
-              AI-MCQs Point is Pakistan's premier AI-powered educational platform, dedicated to helping students excel in competitive exams through intelligent practice and personalized learning.
+              MCQSAI is Pakistan's premier AI-powered educational platform, dedicated to helping students excel in competitive exams through intelligent practice and personalized learning.
             </p>
           </section>
 

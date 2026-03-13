@@ -55,7 +55,7 @@ const PageLoader = () => {
                 />
               )}
             </div>
-            <p className="text-sm font-bold text-foreground">AI-MCQs Point</p>
+            <p className="text-sm font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</p>
             <p className="text-xs text-muted-foreground">Pakistan's AI-Powered Platform 🇵🇰</p>
           </div>
         </motion.div>

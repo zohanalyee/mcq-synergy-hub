@@ -140,7 +140,7 @@ const AttendanceAnalytics = () => {
       pdf.saveGraphicsState();
       // @ts-ignore
       pdf.setGState(new pdf.GState({ opacity: 0.05 }));
-      pdf.text('AI-MCQs Point', pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
+      pdf.text('MCQSAI', pdfWidth / 2, pdfHeight / 2, { align: 'center', angle: 45 });
       pdf.restoreGraphicsState();
 
       // Header
@@ -165,7 +165,7 @@ const AttendanceAnalytics = () => {
       const footerY = pdfHeight - margin - 3;
       pdf.setFontSize(9);
       pdf.setTextColor(120, 120, 120);
-      pdf.text('Powered by AI-MCQs Point', pdfWidth / 2, footerY, { align: 'center' });
+      pdf.text('Powered by MCQSAI', pdfWidth / 2, footerY, { align: 'center' });
       pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
       pdf.text(websiteURL, pdfWidth / 2, footerY + 4, { align: 'center' });

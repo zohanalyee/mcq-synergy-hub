@@ -40,7 +40,7 @@ const FloatingFeedbackButton = () => {
                 <div>
                   <CardTitle>Provide Feedback</CardTitle>
                   <CardDescription>
-                    Help us improve AI-MCQs Point by sharing your thoughts
+                    Help us improve MCQSAI by sharing your thoughts
                   </CardDescription>
                 </div>
                 <Button

@@ -10,7 +10,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About */}
           <div className="space-y-3">
-            <h3 className="text-lg font-bold text-foreground">AI-MCQs Point</h3>
+            <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Pakistan's leading AI-powered MCQ preparation platform.
               Trusted by thousands of students for MDCAT, ECAT, CSS, and academic exams.
@@ -89,7 +89,7 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {currentYear} AI-MCQs Point. All rights reserved.</p>
+          <p>© {currentYear} MCQSAI. All rights reserved.</p>
           <div className="flex gap-4">
             <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms</Link>

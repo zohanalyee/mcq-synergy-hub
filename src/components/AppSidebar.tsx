@@ -115,9 +115,9 @@ export function AppSidebar({
                 <BrainCircuit className="h-5 w-5 text-white" />
                 <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300" />
               </div>
-              <span className="text-base">
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 font-extrabold">AI-</span>
-                <span className="font-bold tracking-tight text-foreground">MCQs Point</span>
+              <span className="text-base font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">MCQS</span>
+                <span className="text-foreground">AI</span>
               </span>
             </div>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
@@ -241,7 +241,7 @@ export function AppSidebar({
 
       <SidebarFooter className="border-t border-border/40 p-2">
         <div className={cn("text-xs text-muted-foreground text-center transition-opacity duration-300", !expanded && "opacity-0")}> 
-          <p className="animate-fade-in">© 2025 AI-MCQs Point</p>
+          <p className="animate-fade-in">© 2025 MCQSAI</p>
         </div>
       </SidebarFooter>
     </Sidebar>

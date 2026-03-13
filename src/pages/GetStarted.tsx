@@ -32,7 +32,7 @@ const GetStarted = () => {
           transition={{ duration: 0.5 }}
           className="mb-6 text-center"
         >
-          <h1 className="text-3xl font-bold mb-2">Get Started with AI-MCQs Point</h1>
+          <h1 className="text-3xl font-bold mb-2">Get Started with MCQSAI</h1>
           <p className="text-muted-foreground max-w-2xl mx-auto text-sm">
             Choose a plan that works for you and start enhancing your learning experience.
           </p>

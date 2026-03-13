@@ -82,7 +82,7 @@ const NoticeBoard = () => {
       if (result) {
         toast({
           title: "Thank you for your feedback!",
-          description: "We appreciate your input and will use it to improve MCQs Point.",
+          description: "We appreciate your input and will use it to improve MCQSAI.",
         });
         
         // Clear form
@@ -148,7 +148,7 @@ const NoticeBoard = () => {
                   <X className="h-3.5 w-3.5" />
                 </button>
                 <CardTitle className="text-primary text-2xl">
-                  Welcome to MCQs Point
+                  Welcome to MCQSAI
                 </CardTitle>
                 <CardDescription>
                   Your intelligent companion for MCQ preparation
@@ -174,7 +174,7 @@ const NoticeBoard = () => {
                       
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">
-                          MCQs Point now has user accounts! <span className="font-semibold text-primary">Sign up</span> to:
+                          MCQSAI now has user accounts! <span className="font-semibold text-primary">Sign up</span> to:
                         </p>
                         
                         <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
@@ -235,7 +235,7 @@ const NoticeBoard = () => {
                       <Textarea
                         value={feedback}
                         onChange={(e) => setFeedback(e.target.value)}
-                        placeholder="Share your thoughts about MCQs Point..."
+                        placeholder="Share your thoughts about MCQSAI..."
                         className="min-h-[100px]"
                         required
                       />

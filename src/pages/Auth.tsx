@@ -142,7 +142,7 @@ const Auth = () => {
             >
               <BrainCircuit className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Welcome to AI-MCQs Point</h1>
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Welcome to MCQSAI</h1>
             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
               {activeTab === "signin" ? "Sign in to continue your learning journey" : "Create an account to get started"}
             </p>
