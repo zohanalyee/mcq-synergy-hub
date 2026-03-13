@@ -37,7 +37,7 @@ const TermsOfService = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-foreground">4. Intellectual Property</h2>
-            <p>All content, including MCQs, analytics, and AI features, is owned by AI-MCQs Point and protected by copyright laws.</p>
+            <p>All content, including MCQs, analytics, and AI features, is owned by MCQSAI and protected by copyright laws.</p>
           </section>
 
           <section>
