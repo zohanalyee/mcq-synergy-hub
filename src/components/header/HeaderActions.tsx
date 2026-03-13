@@ -42,6 +42,7 @@ const HeaderActions = ({
 }: HeaderActionsProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
+  const { language, setLanguage } = useLanguage();
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
