@@ -11,7 +11,7 @@ const TermsOfService = () => {
         <div className="prose prose-sm dark:prose-invert max-w-none space-y-6 text-muted-foreground">
           <section>
             <h2 className="text-xl font-semibold text-foreground">1. Acceptance of Terms</h2>
-            <p>By accessing AI-MCQs Point, you agree to these Terms of Service. If you disagree, please discontinue use immediately.</p>
+            <p>By accessing MCQSAI, you agree to these Terms of Service. If you disagree, please discontinue use immediately.</p>
           </section>
 
           <section>
