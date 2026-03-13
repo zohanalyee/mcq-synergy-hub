@@ -65,7 +65,7 @@ const AIWelcome = () => {
 
               <div className="bg-muted/50 rounded-lg p-4 mb-4">
                 <p className="text-sm leading-relaxed text-foreground">
-                  Welcome back to <span className="font-semibold text-primary">AI-MCQs Point</span>! 
+                  Welcome back to <span className="font-semibold text-primary">MCQSAI</span>! 
                   I'm here to help you ace your exams. Ready to continue?
                 </p>
               </div>

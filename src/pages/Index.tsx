@@ -425,7 +425,7 @@ const Home = () => {
               Ready to Transform Your Test Preparation?
             </h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Join thousands of students who have improved their test scores with AI-MCQs Point.
+              Join thousands of students who have improved their test scores with MCQSAI.
             </p>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
               <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>

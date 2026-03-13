@@ -235,7 +235,7 @@ const NoticeBoard = () => {
                       <Textarea
                         value={feedback}
                         onChange={(e) => setFeedback(e.target.value)}
-                        placeholder="Share your thoughts about MCQs Point..."
+                        placeholder="Share your thoughts about MCQSAI..."
                         className="min-h-[100px]"
                         required
                       />

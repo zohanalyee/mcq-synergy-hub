@@ -165,7 +165,7 @@ const AttendanceAnalytics = () => {
       const footerY = pdfHeight - margin - 3;
       pdf.setFontSize(9);
       pdf.setTextColor(120, 120, 120);
-      pdf.text('Powered by AI-MCQs Point', pdfWidth / 2, footerY, { align: 'center' });
+      pdf.text('Powered by MCQSAI', pdfWidth / 2, footerY, { align: 'center' });
       pdf.setFontSize(8);
       pdf.setTextColor(150, 150, 150);
       pdf.text(websiteURL, pdfWidth / 2, footerY + 4, { align: 'center' });

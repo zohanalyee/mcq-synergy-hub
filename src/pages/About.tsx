@@ -20,7 +20,7 @@ const About = () => {
           <section>
             <h2 className="text-xl font-semibold text-foreground mb-2">Our Mission</h2>
             <p className="leading-relaxed">
-              AI-MCQs Point is Pakistan's premier AI-powered educational platform, dedicated to helping students excel in competitive exams through intelligent practice and personalized learning.
+              MCQSAI is Pakistan's premier AI-powered educational platform, dedicated to helping students excel in competitive exams through intelligent practice and personalized learning.
             </p>
           </section>
 

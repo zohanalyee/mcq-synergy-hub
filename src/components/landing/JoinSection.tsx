@@ -196,7 +196,7 @@ export const JoinSection = () => {
               </div>
 
               <h2 className="text-3xl font-bold mb-2 leading-tight tracking-tight">
-                Join AI-MCQs Point
+                Join MCQSAI
               </h2>
 
               {/* Live badge */}

@@ -55,7 +55,7 @@ const CompleteProfile = () => {
       });
       if (error) throw error;
 
-      toast({ title: "Profile Completed!", description: "Welcome to AI-MCQs Point" });
+      toast({ title: "Profile Completed!", description: "Welcome to MCQSAI" });
       navigate("/dashboard");
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message || "Failed to save profile." });

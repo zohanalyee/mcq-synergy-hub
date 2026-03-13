@@ -89,7 +89,7 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {currentYear} AI-MCQs Point. All rights reserved.</p>
+          <p>© {currentYear} MCQSAI. All rights reserved.</p>
           <div className="flex gap-4">
             <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy</Link>
             <Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms</Link>

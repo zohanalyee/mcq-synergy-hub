@@ -42,7 +42,7 @@ const TermsOfService = () => {
 
           <section>
             <h2 className="text-xl font-semibold text-foreground">5. Disclaimer</h2>
-            <p>AI-MCQs Point provides educational content "as is" without warranties. We do not guarantee exam success.</p>
+            <p>MCQSAI provides educational content "as is" without warranties. We do not guarantee exam success.</p>
           </section>
 
           <section>

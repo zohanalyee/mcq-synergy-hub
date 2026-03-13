@@ -60,9 +60,9 @@ const MobileMenu = ({
               <BrainCircuit className="h-5 w-5" />
               <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300" />
             </div>
-            <span className="text-xl">
-              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600 font-extrabold">AI-</span>
-              <span className="font-bold tracking-tight text-foreground">MCQs Point</span>
+            <span className="text-xl font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+              <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">MCQS</span>
+              <span className="text-foreground">AI</span>
             </span>
           </div>
           <button onClick={onClose} className="h-7 w-7 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:scale-110 transition-transform">
