@@ -14,7 +14,7 @@ const About = () => {
   return (
     <Header>
       <div className="max-w-3xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold text-foreground mb-6">About AI-MCQs Point</h1>
+        <h1 className="text-3xl font-bold text-foreground mb-6">About MCQSAI</h1>
 
         <div className="space-y-8 text-muted-foreground">
           <section>
