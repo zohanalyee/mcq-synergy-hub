@@ -174,7 +174,7 @@ const NoticeBoard = () => {
                       
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">
-                          MCQs Point now has user accounts! <span className="font-semibold text-primary">Sign up</span> to:
+                          MCQSAI now has user accounts! <span className="font-semibold text-primary">Sign up</span> to:
                         </p>
                         
                         <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
