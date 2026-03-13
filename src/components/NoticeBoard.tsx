@@ -148,7 +148,7 @@ const NoticeBoard = () => {
                   <X className="h-3.5 w-3.5" />
                 </button>
                 <CardTitle className="text-primary text-2xl">
-                  Welcome to MCQs Point
+                  Welcome to MCQSAI
                 </CardTitle>
                 <CardDescription>
                   Your intelligent companion for MCQ preparation
