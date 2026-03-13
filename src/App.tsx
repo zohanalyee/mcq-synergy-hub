@@ -144,10 +144,12 @@ const App = () => {
             <UserRoleProvider>
               <LearningProvider>
                 <DeviceCapabilityProvider>
-                  <AppearanceProvider>
+                   <AppearanceProvider>
+                    <LanguageProvider>
                     <FloatingToolsProvider>
                     <TooltipProvider>
                     <PageLoader />
+                    <AIWelcome />
                     <NavigationLoader />
                     <Toaster />
                     <Sonner 
