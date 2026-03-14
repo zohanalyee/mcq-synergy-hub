@@ -43,7 +43,7 @@ const HeaderActions = ({
 }: HeaderActionsProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { toast } = useToast();
 
   const handleLanguageChange = (value: Language) => {
