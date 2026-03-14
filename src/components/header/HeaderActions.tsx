@@ -200,7 +200,7 @@ const HeaderActions = ({
               {isAdmin && (
                 <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 mb-0.5">
                   <Shield className="mr-2.5 h-4 w-4 text-violet-500" />
-                  Admin Panel
+                  {t('nav.adminPanel')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 mb-0.5">
