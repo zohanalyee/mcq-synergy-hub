@@ -230,7 +230,7 @@ const HeaderActions = ({
           className="h-8 text-xs backdrop-blur-sm bg-primary hover:bg-primary/90" 
           onClick={() => onNavigate('/sign-in')}
         >
-          Sign In
+          {t('nav.signIn')}
         </Button>
       )}
 
