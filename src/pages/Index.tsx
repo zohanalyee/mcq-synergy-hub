@@ -14,6 +14,7 @@ import PlatformStatsSection from '@/components/home/PlatformStatsSection';
 import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { 
   BookOpen, 
   BrainCircuit, 
