@@ -57,6 +57,7 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     setIsLoaded(true);
