@@ -209,7 +209,7 @@ const HeaderActions = ({
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 mb-0.5">
                 <MessageSquare className="mr-2.5 h-4 w-4 text-amber-500" />
-                Feedback
+                {t('nav.feedback')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 mb-0.5">
