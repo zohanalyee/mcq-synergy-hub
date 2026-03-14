@@ -19,6 +19,7 @@ import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage, type Language } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface HeaderActionsProps {
