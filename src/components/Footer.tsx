@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { t } = useLanguage();
 
   return (
     <footer className="bg-card border-t border-border text-card-foreground">
@@ -12,25 +14,24 @@ const Footer = () => {
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Pakistan's leading AI-powered MCQ preparation platform.
-              Trusted by thousands of students for MDCAT, ECAT, CSS, and academic exams.
+              {t('footer.description')}
             </p>
             <p className="text-sm font-medium mt-2" style={{ color: '#4ade80' }}>
-              🇵🇰 Made in Pakistan, Made for Pakistanis
+              🇵🇰 {t('footer.madeInPakistan')}
             </p>
           </div>
 
           {/* Quick Links */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Quick Links</h4>
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">{t('footer.quickLinks')}</h4>
             <ul className="space-y-2 text-sm">
               {[
-                { label: 'Subjects', path: '/subjects' },
-                { label: 'Tools', path: '/tools' },
-                { label: 'Scholarships', path: '/scholarships' },
-                { label: 'Jobs', path: '/jobs' },
-                { label: 'Past Papers', path: '/past-papers' },
-                { label: 'Reviews', path: '/reviews' },
+                { label: t('nav.subjects'), path: '/subjects' },
+                { label: t('nav.tools'), path: '/tools' },
+                { label: t('nav.scholarships'), path: '/scholarships' },
+                { label: t('nav.jobs'), path: '/jobs' },
+                { label: t('footer.pastPapers'), path: '/past-papers' },
+                { label: t('footer.reviews'), path: '/reviews' },
               ].map(link => (
                 <li key={link.path}>
                   <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors">
@@ -43,13 +44,13 @@ const Footer = () => {
 
           {/* Legal */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Legal</h4>
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">{t('footer.legal')}</h4>
             <ul className="space-y-2 text-sm">
               {[
-                { label: 'About Us', path: '/about' },
-                { label: 'Privacy Policy', path: '/privacy-policy' },
-                { label: 'Terms of Service', path: '/terms-of-service' },
-                { label: 'Contact Us', path: '/contact' },
+                { label: t('footer.aboutUs'), path: '/about' },
+                { label: t('footer.privacyPolicy'), path: '/privacy-policy' },
+                { label: t('footer.termsOfService'), path: '/terms-of-service' },
+                { label: t('footer.contactUs'), path: '/contact' },
               ].map(link => (
                 <li key={link.path}>
                   <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors">
@@ -62,7 +63,7 @@ const Footer = () => {
 
           {/* Contact */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Contact Us</h4>
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">{t('footer.contactUs')}</h4>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
                 <Mail className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
@@ -89,11 +90,11 @@ const Footer = () => {
 
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
-          <p>© {currentYear} MCQSAI. All rights reserved.</p>
+          <p>© {currentYear} MCQSAI. {t('footer.allRightsReserved')}.</p>
           <div className="flex gap-4">
-            <Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy</Link>
-            <Link to="/terms-of-service" className="hover:text-primary transition-colors">Terms</Link>
-            <Link to="/contact" className="hover:text-primary transition-colors">Contact</Link>
+            <Link to="/privacy-policy" className="hover:text-primary transition-colors">{t('footer.privacy')}</Link>
+            <Link to="/terms-of-service" className="hover:text-primary transition-colors">{t('footer.terms')}</Link>
+            <Link to="/contact" className="hover:text-primary transition-colors">{t('footer.contact')}</Link>
           </div>
         </div>
       </div>
