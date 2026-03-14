@@ -214,7 +214,7 @@ const HeaderActions = ({
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 mb-0.5">
                 <Settings className="mr-2.5 h-4 w-4 text-rose-500" />
-                Settings
+                {t('nav.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40">
