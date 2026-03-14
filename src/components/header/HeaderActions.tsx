@@ -205,7 +205,7 @@ const HeaderActions = ({
               )}
               <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 mb-0.5">
                 <User className="mr-2.5 h-4 w-4 text-emerald-500" />
-                Profile
+                {t('nav.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 mb-0.5">
                 <MessageSquare className="mr-2.5 h-4 w-4 text-amber-500" />
