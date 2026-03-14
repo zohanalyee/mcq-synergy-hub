@@ -295,7 +295,7 @@ const Home = () => {
               </motion.div>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Button size="default" variant="outline" onClick={() => navigate('/subjects')}>
-                  Explore Subjects
+                  {t('hero.exploreSubjects')}
                 </Button>
               </motion.div>
             </motion.div>
