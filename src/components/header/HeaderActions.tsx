@@ -19,6 +19,7 @@ import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage, type Language } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface HeaderActionsProps {
@@ -43,6 +44,16 @@ const HeaderActions = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
   const { language, setLanguage } = useLanguage();
+  const { toast } = useToast();
+
+  const handleLanguageChange = (value: Language) => {
+    setLanguage(value);
+    const languageNames: Record<Language, string> = { en: 'English', ur: 'اردو', sd: 'سنڌي' };
+    toast({
+      title: `Language changed to ${languageNames[value]}`,
+      description: 'Full translations coming soon!',
+    });
+  };
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -78,7 +89,7 @@ const HeaderActions = ({
       {user && <StreakCounter />}
       
       {/* Language Selector */}
-      <Select value={language} onValueChange={(v) => setLanguage(v as Language)}>
+      <Select value={language} onValueChange={(v) => handleLanguageChange(v as Language)}>
         <SelectTrigger className="w-9 h-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden sm:w-32 sm:px-3 sm:justify-start sm:[&>svg.lucide-chevron-down]:block">
           <Globe className="h-4 w-4 shrink-0 sm:mr-2" />
           <span className="hidden sm:inline"><SelectValue /></span>
