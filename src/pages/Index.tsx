@@ -254,7 +254,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto"
             >
-              Personalize your test preparation with custom syllabi, analytics-driven insights, and adaptive learning.
+              {t('hero.subtitle')}
             </motion.p>
             
             <motion.div
