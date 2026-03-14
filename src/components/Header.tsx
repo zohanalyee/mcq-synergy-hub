@@ -84,10 +84,10 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   const navItems = rawNavItems.filter(item => item.title !== 'Tools');
 
   const secondaryNavItems = [
-    { title: 'Tools', path: '/tools' },
-    { title: 'Analytics', path: '/analytics' },
-    { title: 'Feedback', path: '/feedback' },
-    { title: 'Ask Docs', path: '/ask-document' },
+    { title: t('nav.tools'), path: '/tools' },
+    { title: t('nav.analytics'), path: '/analytics' },
+    { title: t('nav.feedback'), path: '/feedback' },
+    { title: t('nav.askDocs'), path: '/ask-document' },
   ];
 
   const isActive = (path: string) => {
