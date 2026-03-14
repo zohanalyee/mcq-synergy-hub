@@ -54,14 +54,16 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     }
   };
 
+  const { t } = useLanguage();
+
   const hardcodedNavItems = [
-    { title: 'Home', path: '/' },
-    { title: 'Subjects', path: '/subjects' },
-    { title: 'Quizzes', path: '/quizzes' },
-    { title: 'Recruitment Tests', path: '/mock-tests' },
-    { title: 'Jobs', path: '/jobs' },
-    { title: 'Custom Syllabus', path: '/custom-syllabus' },
-    { title: 'Scholarships', path: '/scholarships' },
+    { title: t('nav.home'), path: '/' },
+    { title: t('nav.subjects'), path: '/subjects' },
+    { title: t('nav.quizzes'), path: '/quizzes' },
+    { title: t('nav.recruitmentTests'), path: '/mock-tests' },
+    { title: t('nav.jobs'), path: '/jobs' },
+    { title: t('nav.customSyllabus'), path: '/custom-syllabus' },
+    { title: t('nav.scholarships'), path: '/scholarships' },
   ];
 
   const { data: dbNavItems } = useQuery({
