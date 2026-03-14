@@ -219,7 +219,7 @@ const HeaderActions = ({
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40">
                 <LogOut className="mr-2.5 h-4 w-4 text-red-500" />
-                <span>Sign Out</span>
+                <span>{t('nav.signOut')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
