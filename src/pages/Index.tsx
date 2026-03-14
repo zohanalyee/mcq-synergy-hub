@@ -290,7 +290,7 @@ const Home = () => {
             >
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
-                  Get Started
+                  {t('hero.getStarted')}
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
