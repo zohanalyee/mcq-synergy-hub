@@ -263,7 +263,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mb-2 md:mb-6"
             >
-              <h2 className="hidden md:block text-xl font-bold mb-3">Prepare Your Way</h2>
+              <h2 className="hidden md:block text-xl font-bold mb-3">{t('hero.prepareYourWay')}</h2>
               {/* Hero Cards - Stack on mobile, row on desktop */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 md:gap-4">
                 {testCategories.map((category, index) => (
