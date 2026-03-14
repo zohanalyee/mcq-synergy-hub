@@ -44,6 +44,16 @@ const HeaderActions = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
   const { language, setLanguage } = useLanguage();
+  const { toast } = useToast();
+
+  const handleLanguageChange = (value: Language) => {
+    setLanguage(value);
+    const languageNames: Record<Language, string> = { en: 'English', ur: 'اردو', sd: 'سنڌي' };
+    toast({
+      title: `Language changed to ${languageNames[value]}`,
+      description: 'Full translations coming soon!',
+    });
+  };
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
