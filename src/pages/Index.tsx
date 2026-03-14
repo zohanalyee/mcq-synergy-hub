@@ -183,7 +183,7 @@ const Home = () => {
         >
           <div className="flex items-center gap-2 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-border">
             <span>🇵🇰</span>
-            <span className="text-sm font-medium text-muted-foreground">Made in Pakistan</span>
+            <span className="text-sm font-medium text-muted-foreground">{t('hero.madeInPakistan')}</span>
           </div>
         </motion.div>
         
