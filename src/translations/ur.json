@@ -1,0 +1,79 @@
+{
+  "nav": {
+    "home": "ہوم",
+    "subjects": "مضامین",
+    "quizzes": "کوئز",
+    "recruitmentTests": "بھرتی ٹیسٹ",
+    "jobs": "نوکریاں",
+    "customSyllabus": "اپنا نصاب",
+    "scholarships": "وظائف",
+    "tools": "ٹولز",
+    "analytics": "تجزیات",
+    "feedback": "رائے",
+    "askDocs": "دستاویزات سے پوچھیں",
+    "signIn": "سائن ان",
+    "signOut": "سائن آؤٹ",
+    "profile": "پروفائل",
+    "settings": "ترتیبات",
+    "adminPanel": "ایڈمن پینل",
+    "aiCoach": "AI ذاتی کوچ"
+  },
+  "hero": {
+    "badge": "ہوشیار تیاری، بہتر نتائج",
+    "title": "MCQs میں مہارت حاصل کریں",
+    "titleHighlight1": "درستگی",
+    "titleHighlight2": "اعتماد",
+    "subtitle": "اپنے نصاب، تجزیاتی بصیرت، اور انکساری سیکھنے کے ساتھ اپنی ٹیسٹ کی تیاری کو ذاتی بنائیں۔",
+    "prepareYourWay": "اپنے طریقے سے تیاری کریں",
+    "getStarted": "شروع کریں",
+    "exploreSubjects": "مضامین دیکھیں",
+    "madeInPakistan": "پاکستان میں بنایا گیا"
+  },
+  "footer": {
+    "description": "پاکستان کا معروف AI سے چلنے والا MCQ تیاری پلیٹ فارم۔ MDCAT، ECAT، CSS، اور تعلیمی امتحانات کے لیے ہزاروں طلباء کا بھروسہ۔",
+    "madeInPakistan": "پاکستان میں بنایا گیا، پاکستانیوں کے لیے",
+    "quickLinks": "فوری لنکس",
+    "legal": "قانونی",
+    "contactUs": "ہم سے رابطہ کریں",
+    "aboutUs": "ہمارے بارے میں",
+    "privacyPolicy": "رازداری کی پالیسی",
+    "termsOfService": "سروس کی شرائط",
+    "allRightsReserved": "جملہ حقوق محفوظ ہیں",
+    "privacy": "رازداری",
+    "terms": "شرائط",
+    "contact": "رابطہ",
+    "pastPapers": "پچھلے پرچے",
+    "reviews": "جائزے"
+  },
+  "common": {
+    "start": "شروع",
+    "free": "مفت",
+    "login": "لاگ ان",
+    "signup": "سائن اپ",
+    "submit": "جمع کرائیں",
+    "cancel": "منسوخ",
+    "save": "محفوظ کریں",
+    "delete": "حذف کریں",
+    "edit": "ترمیم",
+    "close": "بند کریں",
+    "loading": "لوڈ ہو رہا ہے...",
+    "search": "تلاش",
+    "viewAll": "سب دیکھیں",
+    "learnMore": "مزید جانیں",
+    "startTest": "ٹیسٹ شروع کریں",
+    "viewProgress": "ترقی دیکھیں"
+  },
+  "welcome": {
+    "morning": "صبح بخیر",
+    "afternoon": "دوپہر بخیر",
+    "evening": "شام بخیر",
+    "welcomeBack": "خوش آمدید واپس",
+    "helpMessage": "میں آپ کے امتحانات میں کامیابی حاصل کرنے میں مدد کے لیے حاضر ہوں۔ جاری رکھنے کے لیے تیار ہیں؟",
+    "platformTagline": "پاکستان کا AI سے چلنے والا پلیٹ فارم"
+  },
+  "subjects": {
+    "mathematics": "ریاضی",
+    "physics": "طبیعیات",
+    "chemistry": "کیمیا"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "nav": {
+    "home": "Home",
+    "subjects": "Subjects",
+    "quizzes": "Quizzes",
+    "recruitmentTests": "Recruitment Tests",
+    "jobs": "Jobs",
+    "customSyllabus": "Custom Syllabus",
+    "scholarships": "Scholarships",
+    "tools": "Tools",
+    "analytics": "Analytics",
+    "feedback": "Feedback",
+    "askDocs": "Ask Docs",
+    "signIn": "Sign In",
+    "signOut": "Sign Out",
+    "profile": "Profile",
+    "settings": "Settings",
+    "adminPanel": "Admin Panel",
+    "aiCoach": "AI Personal Coach"
+  },
+  "hero": {
+    "badge": "Prepare Smarter, Score Higher",
+    "title": "Master MCQs with",
+    "titleHighlight1": "Precision",
+    "titleHighlight2": "Confidence",
+    "subtitle": "Personalize your test preparation with custom syllabi, analytics-driven insights, and adaptive learning.",
+    "prepareYourWay": "Prepare Your Way",
+    "getStarted": "Get Started",
+    "exploreSubjects": "Explore Subjects",
+    "madeInPakistan": "Made in Pakistan"
+  },
+  "footer": {
+    "description": "Pakistan's leading AI-powered MCQ preparation platform. Trusted by thousands of students for MDCAT, ECAT, CSS, and academic exams.",
+    "madeInPakistan": "Made in Pakistan, Made for Pakistanis",
+    "quickLinks": "Quick Links",
+    "legal": "Legal",
+    "contactUs": "Contact Us",
+    "aboutUs": "About Us",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "allRightsReserved": "All rights reserved",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "contact": "Contact",
+    "pastPapers": "Past Papers",
+    "reviews": "Reviews"
+  },
+  "common": {
+    "start": "Start",
+    "free": "Free",
+    "login": "Login",
+    "signup": "Sign Up",
+    "submit": "Submit",
+    "cancel": "Cancel",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "close": "Close",
+    "loading": "Loading...",
+    "search": "Search",
+    "viewAll": "View All",
+    "learnMore": "Learn More",
+    "startTest": "Start Test",
+    "viewProgress": "View Progress"
+  },
+  "welcome": {
+    "morning": "Good Morning",
+    "afternoon": "Good Afternoon",
+    "evening": "Good Evening",
+    "welcomeBack": "Welcome back to",
+    "helpMessage": "I'm here to help you ace your exams. Ready to continue?",
+    "platformTagline": "Pakistan's AI-Powered Platform"
+  },
+  "subjects": {
+    "mathematics": "Mathematics",
+    "physics": "Physics",
+    "chemistry": "Chemistry"
+  }
+}

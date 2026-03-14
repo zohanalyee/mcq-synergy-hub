@@ -1,0 +1,79 @@
+{
+  "nav": {
+    "home": "گهر",
+    "subjects": "مضمون",
+    "quizzes": "ڪوئز",
+    "recruitmentTests": "ڀرتي ٽيسٽ",
+    "jobs": "نوڪريون",
+    "customSyllabus": "پنهنجو نصاب",
+    "scholarships": "وظيفا",
+    "tools": "اوزار",
+    "analytics": "تجزيا",
+    "feedback": "راءِ",
+    "askDocs": "دستاويزن کان پڇو",
+    "signIn": "سائن ان",
+    "signOut": "سائن آئوٽ",
+    "profile": "پروفائيل",
+    "settings": "سيٽنگون",
+    "adminPanel": "ايڊمن پينل",
+    "aiCoach": "AI ذاتي ڪوچ"
+  },
+  "hero": {
+    "badge": "سمجهداريءَ سان تياري، بهتر نتيجا",
+    "title": "MCQs ۾ مهارت حاصل ڪريو",
+    "titleHighlight1": "صحيحيت",
+    "titleHighlight2": "اعتماد",
+    "subtitle": "پنهنجي نصاب، تجزياتي بصيرت، ۽ انڪساري سکيا سان پنهنجي ٽيسٽ جي تياري کي ذاتي بڻايو.",
+    "prepareYourWay": "پنهنجي طريقي سان تياري ڪريو",
+    "getStarted": "شروع ڪريو",
+    "exploreSubjects": "مضمون ڏسو",
+    "madeInPakistan": "پاڪستان ۾ ٺهيل"
+  },
+  "footer": {
+    "description": "پاڪستان جو مشهور AI سان هلندڙ MCQ تياري پليٽ فارم. MDCAT، ECAT، CSS، ۽ تعليمي امتحانن لاءِ هزارين شاگردن جو ڀروسو.",
+    "madeInPakistan": "پاڪستان ۾ ٺهيل، پاڪستانين لاءِ",
+    "quickLinks": "جلدي لنڪس",
+    "legal": "قانوني",
+    "contactUs": "اسان سان رابطو ڪريو",
+    "aboutUs": "اسان بابت",
+    "privacyPolicy": "رازداري پاليسي",
+    "termsOfService": "سروس جون شرطون",
+    "allRightsReserved": "سڀ حق محفوظ آهن",
+    "privacy": "رازداري",
+    "terms": "شرطون",
+    "contact": "رابطو",
+    "pastPapers": "پراڻا پرچا",
+    "reviews": "جائزا"
+  },
+  "common": {
+    "start": "شروع",
+    "free": "مفت",
+    "login": "لاگ ان",
+    "signup": "سائن اپ",
+    "submit": "جمع ڪرايو",
+    "cancel": "منسوخ",
+    "save": "محفوظ ڪريو",
+    "delete": "ختم ڪريو",
+    "edit": "ترميم",
+    "close": "بند ڪريو",
+    "loading": "لوڊ ٿي رهيو آهي...",
+    "search": "ڳولا",
+    "viewAll": "سڀ ڏسو",
+    "learnMore": "وڌيڪ سکو",
+    "startTest": "ٽيسٽ شروع ڪريو",
+    "viewProgress": "ترقي ڏسو"
+  },
+  "welcome": {
+    "morning": "صبح جو سلام",
+    "afternoon": "ٽيپهر جو سلام",
+    "evening": "شام جو سلام",
+    "welcomeBack": "واپسي تي خوش آمديد",
+    "helpMessage": "مان توهان جي امتحانن ۾ ڪاميابي حاصل ڪرڻ ۾ مدد لاءِ حاضر آهيان. جاري رکڻ لاءِ تيار آهيو؟",
+    "platformTagline": "پاڪستان جو AI سان هلندڙ پليٽ فارم"
+  },
+  "subjects": {
+    "mathematics": "رياضي",
+    "physics": "طبيعيات",
+    "chemistry": "ڪيميا"
+  }
+}
