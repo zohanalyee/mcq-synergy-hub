@@ -43,7 +43,7 @@ const HeaderActions = ({
 }: HeaderActionsProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { toast } = useToast();
 
   const handleLanguageChange = (value: Language) => {
@@ -195,31 +195,31 @@ const HeaderActions = ({
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onNavigate('/analytics')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40 mb-0.5">
                 <LayoutDashboard className="mr-2.5 h-4 w-4 text-cyan-500" />
-                AI Personal Coach
+                {t('nav.aiCoach')}
               </DropdownMenuItem>
               {isAdmin && (
                 <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 mb-0.5">
                   <Shield className="mr-2.5 h-4 w-4 text-violet-500" />
-                  Admin Panel
+                  {t('nav.adminPanel')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 mb-0.5">
                 <User className="mr-2.5 h-4 w-4 text-emerald-500" />
-                Profile
+                {t('nav.profile')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 mb-0.5">
                 <MessageSquare className="mr-2.5 h-4 w-4 text-amber-500" />
-                Feedback
+                {t('nav.feedback')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 mb-0.5">
                 <Settings className="mr-2.5 h-4 w-4 text-rose-500" />
-                Settings
+                {t('nav.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => onSignOut()} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-950/40 dark:to-rose-950/40">
                 <LogOut className="mr-2.5 h-4 w-4 text-red-500" />
-                <span>Sign Out</span>
+                <span>{t('nav.signOut')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -230,7 +230,7 @@ const HeaderActions = ({
           className="h-8 text-xs backdrop-blur-sm bg-primary hover:bg-primary/90" 
           onClick={() => onNavigate('/sign-in')}
         >
-          Sign In
+          {t('nav.signIn')}
         </Button>
       )}
 

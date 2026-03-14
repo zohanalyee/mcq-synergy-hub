@@ -3,10 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const AIWelcome = () => {
   const { user, profile } = useAuth();
   const [show, setShow] = useState(false);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (user && !sessionStorage.getItem('ai-welcomed')) {
@@ -24,8 +26,7 @@ const AIWelcome = () => {
 
   const userName = profile?.username || user.email?.split('@')[0] || 'Student';
   const hour = new Date().getHours();
-  const greetingEn = hour < 12 ? 'Good Morning' : hour < 17 ? 'Good Afternoon' : 'Good Evening';
-  const greetingUr = hour < 12 ? 'صبح بخیر' : hour < 17 ? 'دوپہر بخیر' : 'شام بخیر';
+  const greeting = hour < 12 ? t('welcome.morning') : hour < 17 ? t('welcome.afternoon') : t('welcome.evening');
 
   return (
     <AnimatePresence>
@@ -58,15 +59,13 @@ const AIWelcome = () => {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-foreground">{greetingEn}, {userName}! 👋</h3>
-                    <p className="text-sm text-muted-foreground">{greetingUr}، {userName}!</p>
+                    <h3 className="font-bold text-lg text-foreground">{greeting}, {userName}! 👋</h3>
                   </div>
                 </div>
 
                 <div className="bg-muted/50 rounded-lg p-4 mb-4">
                   <p className="text-sm leading-relaxed text-foreground">
-                    Welcome back to <span className="font-semibold text-primary">MCQSAI</span>! 
-                    I'm here to help you ace your exams. Ready to continue?
+                    {t('welcome.welcomeBack')} <span className="font-semibold text-primary">MCQSAI</span>! {t('welcome.helpMessage')}
                   </p>
                 </div>
 
@@ -76,14 +75,14 @@ const AIWelcome = () => {
                     onClick={handleClose}
                     className="px-4 py-2 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg text-sm font-medium hover:shadow-lg transition-all block text-center"
                   >
-                    Start Test
+                    {t('common.startTest')}
                   </Link>
                   <Link
                     to="/analytics"
                     onClick={handleClose}
                     className="px-4 py-2 border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors block text-center"
                   >
-                    View Progress
+                    {t('common.viewProgress')}
                   </Link>
                 </div>
 

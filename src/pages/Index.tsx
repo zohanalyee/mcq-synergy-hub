@@ -14,6 +14,7 @@ import PlatformStatsSection from '@/components/home/PlatformStatsSection';
 import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { 
   BookOpen, 
   BrainCircuit, 
@@ -56,6 +57,7 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     setIsLoaded(true);
@@ -181,7 +183,7 @@ const Home = () => {
         >
           <div className="flex items-center gap-2 bg-card/90 backdrop-blur-sm px-4 py-2 rounded-full shadow-lg border border-border">
             <span>🇵🇰</span>
-            <span className="text-sm font-medium text-muted-foreground">Made in Pakistan</span>
+            <span className="text-sm font-medium text-muted-foreground">{t('hero.madeInPakistan')}</span>
           </div>
         </motion.div>
         
@@ -232,7 +234,7 @@ const Home = () => {
               >
                 <Sparkles className="h-3 w-3 text-violet-500 animate-pulse" />
                 <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:500px_auto] animate-shimmer bg-clip-text text-transparent font-semibold">
-                  Prepare Smarter, Score Higher
+                  {t('hero.badge')}
                 </span>
               </motion.span>
             </motion.div>
@@ -243,7 +245,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight"
             >
-              Master MCQs with <span className="text-gradient text-gradient-animated">Precision</span> and <span className="text-gradient text-gradient-animated">Confidence</span>
+              <span>{t('hero.title')} </span><span className="text-gradient text-gradient-animated">{t('hero.titleHighlight1')}</span> &amp; <span className="text-gradient text-gradient-animated">{t('hero.titleHighlight2')}</span>
             </motion.h1>
             
             <motion.p
@@ -252,7 +254,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto"
             >
-              Personalize your test preparation with custom syllabi, analytics-driven insights, and adaptive learning.
+              {t('hero.subtitle')}
             </motion.p>
             
             <motion.div
@@ -261,7 +263,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="mb-2 md:mb-6"
             >
-              <h2 className="hidden md:block text-xl font-bold mb-3">Prepare Your Way</h2>
+              <h2 className="hidden md:block text-xl font-bold mb-3">{t('hero.prepareYourWay')}</h2>
               {/* Hero Cards - Stack on mobile, row on desktop */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5 md:gap-4">
                 {testCategories.map((category, index) => (
@@ -288,12 +290,12 @@ const Home = () => {
             >
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
-                  Get Started
+                  {t('hero.getStarted')}
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Button size="default" variant="outline" onClick={() => navigate('/subjects')}>
-                  Explore Subjects
+                  {t('hero.exploreSubjects')}
                 </Button>
               </motion.div>
             </motion.div>

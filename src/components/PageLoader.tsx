@@ -1,10 +1,12 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLoading } from '@/contexts/LoadingContext';
 import { useDeviceCapability } from '@/hooks/useDeviceCapability';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 const PageLoader = () => {
   const { isLoading } = useLoading();
   const { isLowEnd } = useDeviceCapability();
+  const { t } = useLanguage();
 
   return (
     <AnimatePresence>
@@ -16,14 +18,10 @@ const PageLoader = () => {
           transition={{ duration: 0.2 }}
           className="fixed inset-0 z-[9999] flex items-center justify-center"
         >
-          {/* Adaptive backdrop: minimal blur on low-end, full blur on high-end */}
           <div className={`absolute inset-0 ${isLowEnd ? 'bg-background/80' : 'bg-background/60 backdrop-blur-sm'}`} />
           
-          {/* Loader content */}
           <div className="relative flex flex-col items-center gap-4">
-            {/* Simplified loader for low-end devices */}
             <div className="relative w-16 h-16" style={{ transform: 'translateZ(0)' }}>
-              {/* Single gradient spinning ring */}
               <motion.div
                 className="absolute inset-0 rounded-full"
                 style={{
@@ -40,7 +38,6 @@ const PageLoader = () => {
                 }}
               />
               
-              {/* Center dot - static on low-end */}
               {isLowEnd ? (
                 <div className="absolute inset-0 m-auto w-3 h-3 rounded-full bg-primary" />
               ) : (
@@ -56,7 +53,7 @@ const PageLoader = () => {
               )}
             </div>
             <p className="text-sm font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</p>
-            <p className="text-xs text-muted-foreground">Pakistan's AI-Powered Platform 🇵🇰</p>
+            <p className="text-xs text-muted-foreground">{t('welcome.platformTagline')} 🇵🇰</p>
           </div>
         </motion.div>
       )}

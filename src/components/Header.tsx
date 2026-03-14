@@ -13,6 +13,7 @@ import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
 import { useDeviceCapability } from '@/hooks/useDeviceCapability';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 
 const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
@@ -53,14 +54,16 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
     }
   };
 
+  const { t } = useLanguage();
+
   const hardcodedNavItems = [
-    { title: 'Home', path: '/' },
-    { title: 'Subjects', path: '/subjects' },
-    { title: 'Quizzes', path: '/quizzes' },
-    { title: 'Recruitment Tests', path: '/mock-tests' },
-    { title: 'Jobs', path: '/jobs' },
-    { title: 'Custom Syllabus', path: '/custom-syllabus' },
-    { title: 'Scholarships', path: '/scholarships' },
+    { title: t('nav.home'), path: '/' },
+    { title: t('nav.subjects'), path: '/subjects' },
+    { title: t('nav.quizzes'), path: '/quizzes' },
+    { title: t('nav.recruitmentTests'), path: '/mock-tests' },
+    { title: t('nav.jobs'), path: '/jobs' },
+    { title: t('nav.customSyllabus'), path: '/custom-syllabus' },
+    { title: t('nav.scholarships'), path: '/scholarships' },
   ];
 
   const { data: dbNavItems } = useQuery({
@@ -81,10 +84,10 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   const navItems = rawNavItems.filter(item => item.title !== 'Tools');
 
   const secondaryNavItems = [
-    { title: 'Tools', path: '/tools' },
-    { title: 'Analytics', path: '/analytics' },
-    { title: 'Feedback', path: '/feedback' },
-    { title: 'Ask Docs', path: '/ask-document' },
+    { title: t('nav.tools'), path: '/tools' },
+    { title: t('nav.analytics'), path: '/analytics' },
+    { title: t('nav.feedback'), path: '/feedback' },
+    { title: t('nav.askDocs'), path: '/ask-document' },
   ];
 
   const isActive = (path: string) => {
