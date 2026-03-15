@@ -15,6 +15,7 @@ import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 import { 
   BookOpen, 
   BrainCircuit, 
