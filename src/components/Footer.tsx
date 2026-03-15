@@ -1,10 +1,12 @@
 import { Link } from 'react-router-dom';
 import { Mail, Phone, MapPin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { t } = useLanguage();
+  const { t, language, isRTL } = useLanguage();
+  const fontClass = isRTL ? 'font-nastaliq rtl-text' : '';
 
   return (
     <footer className="bg-card border-t border-border text-card-foreground">
