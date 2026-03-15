@@ -90,7 +90,7 @@ const QuestionCard = ({
                     >
                       {String.fromCharCode(65 + idx)}
                     </Badge>
-                    <span className="text-xs sm:text-sm leading-tight text-foreground">
+                    <span className={cn("text-xs sm:text-sm leading-tight text-foreground", isRTL && "rtl-text font-nastaliq")}>
                       {option}
                     </span>
                   </div>

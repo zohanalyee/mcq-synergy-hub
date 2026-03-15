@@ -9,7 +9,7 @@ const Footer = () => {
   const fontClass = isRTL ? 'font-nastaliq rtl-text' : '';
 
   return (
-    <footer className="bg-card border-t border-border text-card-foreground">
+    <footer className={cn("bg-card border-t border-border text-card-foreground layout-ltr", fontClass)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About */}
