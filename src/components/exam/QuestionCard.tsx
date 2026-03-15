@@ -40,7 +40,7 @@ const QuestionCard = ({
           {/* Question header */}
           <div className="flex justify-between items-start gap-2 mb-3">
             <div className="flex-1 max-h-[28vh] overflow-y-auto scrollbar-thin pr-1">
-              <h2 className="text-sm sm:text-lg font-semibold leading-snug text-foreground">
+              <h2 className={cn("text-sm sm:text-lg font-semibold leading-snug text-foreground", isRTL && "rtl-text font-nastaliq-heading")}>
                 {question.question}
               </h2>
             </div>
