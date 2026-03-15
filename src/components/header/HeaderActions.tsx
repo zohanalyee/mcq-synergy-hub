@@ -48,11 +48,13 @@ const HeaderActions = ({
 
   const handleLanguageChange = (value: Language) => {
     setLanguage(value);
-    const languageNames: Record<Language, string> = { en: 'English', ur: 'اردو', sd: 'سنڌي' };
-    toast({
-      title: `Language changed to ${languageNames[value]}`,
-      description: 'Full translations coming soon!',
-    });
+    const messages: Record<Language, { title: string; desc: string }> = {
+      en: { title: 'Language Updated', desc: 'English' },
+      ur: { title: 'زبان تبدیل', desc: 'اردو' },
+      sd: { title: 'ٻولي تبديل', desc: 'سنڌي' },
+    };
+    const msg = messages[value];
+    toast({ title: msg.title, description: msg.desc, duration: 1500 });
   };
 
   const getInitials = (email?: string) => {
