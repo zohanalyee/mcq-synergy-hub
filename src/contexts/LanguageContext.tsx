@@ -38,10 +38,10 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     return getNestedValue(translations[language], key);
   }, [language]);
 
-  const dir = (language === 'ur' || language === 'sd') ? 'rtl' : 'ltr';
+  const isRTL = language === 'ur' || language === 'sd';
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, dir }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );

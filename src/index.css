@@ -12,6 +12,30 @@
   }
 }
 
+/* RTL text utilities - layout stays LTR, only text direction changes */
+.rtl-text {
+  text-align: right;
+  direction: rtl;
+}
+
+.layout-ltr {
+  direction: ltr !important;
+}
+
+/* Urdu / Sindhi typography */
+.font-nastaliq {
+  font-family: 'Noto Nastaliq Urdu', serif;
+  line-height: 2.2;
+  font-size: 1.1em;
+}
+
+.font-nastaliq-heading {
+  font-family: 'Noto Nastaliq Urdu', serif;
+  line-height: 2.0;
+  font-size: 1.15em;
+  font-weight: 600;
+}
+
 /* Performance utility classes */
 .no-blur {
   backdrop-filter: none !important;
