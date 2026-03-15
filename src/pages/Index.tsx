@@ -57,7 +57,8 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const fontClass = isRTL ? 'font-nastaliq' : '';
 
   useEffect(() => {
     setIsLoaded(true);
