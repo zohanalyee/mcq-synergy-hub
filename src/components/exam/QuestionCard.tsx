@@ -3,6 +3,7 @@ import { Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface QuestionCardProps {
   question: {
@@ -25,6 +26,7 @@ const QuestionCard = ({
   onSelectAnswer,
   onToggleFlag,
 }: QuestionCardProps) => {
+  const { isRTL } = useLanguage();
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -38,7 +40,7 @@ const QuestionCard = ({
           {/* Question header */}
           <div className="flex justify-between items-start gap-2 mb-3">
             <div className="flex-1 max-h-[28vh] overflow-y-auto scrollbar-thin pr-1">
-              <h2 className="text-sm sm:text-lg font-semibold leading-snug text-foreground">
+              <h2 className={cn("text-sm sm:text-lg font-semibold leading-snug text-foreground", isRTL && "rtl-text font-nastaliq-heading")}>
                 {question.question}
               </h2>
             </div>
@@ -88,7 +90,7 @@ const QuestionCard = ({
                     >
                       {String.fromCharCode(65 + idx)}
                     </Badge>
-                    <span className="text-xs sm:text-sm leading-tight text-foreground">
+                    <span className={cn("text-xs sm:text-sm leading-tight text-foreground", isRTL && "rtl-text font-nastaliq")}>
                       {option}
                     </span>
                   </div>

@@ -19,9 +19,14 @@ export default {
 			}
 		},
 		extend: {
-			fontFamily: {
+		fontFamily: {
 				sans: ['SF Pro Display', 'Inter', 'system-ui', 'sans-serif'],
 				mono: ['SF Mono', 'monospace'],
+				urdu: ['Noto Nastaliq Urdu', 'serif'],
+			},
+			lineHeight: {
+				'urdu': '2.2',
+				'urdu-heading': '2.0',
 			},
 			colors: {
 				border: 'hsl(var(--border))',

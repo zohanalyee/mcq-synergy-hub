@@ -181,7 +181,7 @@ const HeaderContent = ({
   const headerLeft = isMobile ? '0' : (isExpanded ? sidebarExpandedWidth : sidebarCollapsedWidth);
   
   return (
-    <div className="min-h-screen flex w-full relative">
+    <div className="min-h-screen flex w-full relative layout-ltr">
       {/* Sidebar - Full height, flush to top-left */}
       <AppSidebar 
         navItems={navItems}

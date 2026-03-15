@@ -13,7 +13,7 @@ interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
   t: (key: string) => string;
-  dir: 'ltr' | 'rtl';
+  isRTL: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -31,18 +31,17 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
-    // Set document direction for RTL languages
-    document.documentElement.dir = (lang === 'ur' || lang === 'sd') ? 'rtl' : 'ltr';
+    // Do NOT set document.documentElement.dir - we handle RTL selectively
   };
 
   const t = useCallback((key: string): string => {
     return getNestedValue(translations[language], key);
   }, [language]);
 
-  const dir = (language === 'ur' || language === 'sd') ? 'rtl' : 'ltr';
+  const isRTL = language === 'ur' || language === 'sd';
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t, dir }}>
+    <LanguageContext.Provider value={{ language, setLanguage, t, isRTL }}>
       {children}
     </LanguageContext.Provider>
   );

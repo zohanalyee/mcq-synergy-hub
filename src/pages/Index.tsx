@@ -15,6 +15,7 @@ import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { cn } from '@/lib/utils';
 import { 
   BookOpen, 
   BrainCircuit, 
@@ -57,7 +58,8 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
+  const fontClass = isRTL ? 'font-nastaliq' : '';
 
   useEffect(() => {
     setIsLoaded(true);
@@ -243,7 +245,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight"
+              className={cn("text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight", isRTL && "rtl-text font-nastaliq-heading")}
             >
               <span>{t('hero.title')} </span><span className="text-gradient text-gradient-animated">{t('hero.titleHighlight1')}</span> &amp; <span className="text-gradient text-gradient-animated">{t('hero.titleHighlight2')}</span>
             </motion.h1>
@@ -252,7 +254,7 @@ const Home = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto"
+              className={cn("hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto", isRTL && "rtl-text font-nastaliq")}
             >
               {t('hero.subtitle')}
             </motion.p>
