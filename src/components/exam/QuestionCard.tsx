@@ -26,6 +26,7 @@ const QuestionCard = ({
   onSelectAnswer,
   onToggleFlag,
 }: QuestionCardProps) => {
+  const { isRTL } = useLanguage();
   return (
     <AnimatePresence mode="wait">
       <motion.div
