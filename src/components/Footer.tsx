@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const { t, language, isRTL } = useLanguage();
-  const fontClass = isRTL ? 'font-nastaliq rtl-text' : '';
+  const fontClass = isRTL ? 'font-nastaliq' : '';
 
   return (
     <footer className={cn("bg-card border-t border-border text-card-foreground layout-ltr", fontClass)}>
