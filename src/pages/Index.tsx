@@ -247,7 +247,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className={cn("text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight text-center", isRTL && "font-nastaliq-heading")}
             >
-              <span>{t('hero.title')} </span><span className="text-gradient text-gradient-animated">{t('hero.titleHighlight1')}</span> &amp; <span className="text-gradient text-gradient-animated">{t('hero.titleHighlight2')}</span>
+              <span>{t('hero.title')} </span><span className="text-gradient text-gradient-animated">{t('hero.titleHighlight1')}</span>{isRTL ? ' ۽ ' : ' & '}<span className="text-gradient text-gradient-animated">{t('hero.titleHighlight2')}</span>{t('hero.titleSuffix') && <span> {t('hero.titleSuffix')}</span>}
             </motion.h1>
             
             <motion.p
