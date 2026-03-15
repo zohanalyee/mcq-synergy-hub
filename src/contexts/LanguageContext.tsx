@@ -31,8 +31,7 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
   const setLanguage = (lang: Language) => {
     setLanguageState(lang);
     localStorage.setItem('language', lang);
-    // Set document direction for RTL languages
-    document.documentElement.dir = (lang === 'ur' || lang === 'sd') ? 'rtl' : 'ltr';
+    // Do NOT set document.documentElement.dir - we handle RTL selectively
   };
 
   const t = useCallback((key: string): string => {
