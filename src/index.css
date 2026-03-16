@@ -12,14 +12,6 @@
   }
 }
 
-/* Emoji flag rendering - ensures visibility across all desktop browsers */
-.language-flag-emoji {
-  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', 'Segoe UI Symbol', sans-serif;
-  font-size: 1.25em;
-  line-height: 1;
-  display: inline-block;
-  vertical-align: middle;
-}
 
 /* RTL text utilities - layout stays LTR, only text direction changes */
 .rtl-text {

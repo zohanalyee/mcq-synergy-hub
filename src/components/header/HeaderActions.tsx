@@ -95,26 +95,26 @@ const HeaderActions = ({
         <SelectTrigger className="h-9 w-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden sm:w-auto sm:min-w-[7.5rem] sm:px-3 sm:justify-start sm:rounded-md sm:border sm:border-input sm:[&>svg.lucide-chevron-down]:block">
           <Globe className="h-4 w-4 shrink-0 sm:hidden" />
           <span className="hidden sm:flex items-center gap-2">
-            <FlagIcon countryCode={language === 'en' ? 'gb' : 'pk'} />
+            <Languages className="h-4 w-4 shrink-0 text-muted-foreground" />
             <span>{language === 'en' ? 'English' : language === 'ur' ? 'اردو' : 'سنڌي'}</span>
           </span>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="en">
             <div className="flex items-center gap-2">
-              <FlagIcon countryCode="gb" />
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shrink-0">EN</span>
               <span>English</span>
             </div>
           </SelectItem>
           <SelectItem value="ur">
             <div className="flex items-center gap-2">
-              <FlagIcon countryCode="pk" />
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white shrink-0">UR</span>
               <span>اردو</span>
             </div>
           </SelectItem>
           <SelectItem value="sd">
             <div className="flex items-center gap-2">
-              <FlagIcon countryCode="pk" />
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white shrink-0">SD</span>
               <span>سنڌي</span>
             </div>
           </SelectItem>
