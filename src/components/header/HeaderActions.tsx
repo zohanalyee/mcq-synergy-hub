@@ -93,12 +93,8 @@ const HeaderActions = ({
       
       {/* Language Selector */}
       <Select value={language} onValueChange={(v) => handleLanguageChange(v as Language)}>
-        <SelectTrigger className="h-9 w-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden sm:w-auto sm:min-w-[7.5rem] sm:px-3 sm:justify-start sm:rounded-md sm:border sm:border-input sm:[&>svg.lucide-chevron-down]:block">
-          <Globe className="h-4 w-4 shrink-0 sm:hidden" />
-          <span className="hidden sm:flex items-center gap-2">
-            <Languages className="h-4 w-4 shrink-0 text-muted-foreground" />
-            <span>{language === 'en' ? 'English' : language === 'ur' ? 'اردو' : 'سنڌي'}</span>
-          </span>
+        <SelectTrigger className="h-9 w-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden">
+          <Globe className="h-4 w-4 shrink-0" />
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="en">
