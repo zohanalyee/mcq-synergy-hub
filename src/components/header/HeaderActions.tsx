@@ -1,4 +1,5 @@
 import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star, Globe } from 'lucide-react';
+import { FlagIcon } from '@/components/ui/flag-icon';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
