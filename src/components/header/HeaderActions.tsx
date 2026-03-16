@@ -1,4 +1,5 @@
 import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star, Globe } from 'lucide-react';
+import { FlagIcon } from '@/components/ui/flag-icon';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -95,26 +96,26 @@ const HeaderActions = ({
         <SelectTrigger className="h-9 w-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden sm:w-auto sm:min-w-[7.5rem] sm:px-3 sm:justify-start sm:rounded-md sm:border sm:border-input sm:[&>svg.lucide-chevron-down]:block">
           <Globe className="h-4 w-4 shrink-0 sm:hidden" />
           <span className="hidden sm:flex items-center gap-2">
-            <span className="language-flag-emoji">{language === 'en' ? '🇬🇧' : '🇵🇰'}</span>
+            <FlagIcon countryCode={language === 'en' ? 'gb' : 'pk'} />
             <span>{language === 'en' ? 'English' : language === 'ur' ? 'اردو' : 'سنڌي'}</span>
           </span>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="en">
             <div className="flex items-center gap-2">
-              <span className="language-flag-emoji">🇬🇧</span>
+              <FlagIcon countryCode="gb" />
               <span>English</span>
             </div>
           </SelectItem>
           <SelectItem value="ur">
             <div className="flex items-center gap-2">
-              <span className="language-flag-emoji">🇵🇰</span>
+              <FlagIcon countryCode="pk" />
               <span>اردو</span>
             </div>
           </SelectItem>
           <SelectItem value="sd">
             <div className="flex items-center gap-2">
-              <span className="language-flag-emoji">🇵🇰</span>
+              <FlagIcon countryCode="pk" />
               <span>سنڌي</span>
             </div>
           </SelectItem>
