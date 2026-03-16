@@ -95,19 +95,28 @@ const HeaderActions = ({
         <SelectTrigger className="h-9 w-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden sm:w-auto sm:min-w-[7.5rem] sm:px-3 sm:justify-start sm:rounded-md sm:border sm:border-input sm:[&>svg.lucide-chevron-down]:block">
           <Globe className="h-4 w-4 shrink-0 sm:hidden" />
           <span className="hidden sm:flex items-center gap-2">
-            <span>{language === 'en' ? '🇬🇧' : '🇵🇰'}</span>
+            <span className="language-flag-emoji">{language === 'en' ? '🇬🇧' : '🇵🇰'}</span>
             <span>{language === 'en' ? 'English' : language === 'ur' ? 'اردو' : 'سنڌي'}</span>
           </span>
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="en">
-            <div className="flex items-center gap-2"><span>🇬🇧</span><span>English</span></div>
+            <div className="flex items-center gap-2">
+              <span className="language-flag-emoji">🇬🇧</span>
+              <span>English</span>
+            </div>
           </SelectItem>
           <SelectItem value="ur">
-            <div className="flex items-center gap-2"><span>🇵🇰</span><span>اردو</span></div>
+            <div className="flex items-center gap-2">
+              <span className="language-flag-emoji">🇵🇰</span>
+              <span>اردو</span>
+            </div>
           </SelectItem>
           <SelectItem value="sd">
-            <div className="flex items-center gap-2"><span>🇵🇰</span><span>سنڌي</span></div>
+            <div className="flex items-center gap-2">
+              <span className="language-flag-emoji">🇵🇰</span>
+              <span>سنڌي</span>
+            </div>
           </SelectItem>
         </SelectContent>
       </Select>
