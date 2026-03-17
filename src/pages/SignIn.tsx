@@ -331,8 +331,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   <Checkbox id="terms" checked={agreedToTerms} onCheckedChange={(checked) => setAgreedToTerms(checked === true)} className="mt-0.5" />
                   <label htmlFor="terms" className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed cursor-pointer">
                     I agree to the{" "}
-                    <Link to="/terms" className="text-[hsl(var(--primary))] hover:underline">Terms of Service</Link>{" "}and{" "}
-                    <Link to="/privacy" className="text-[hsl(var(--primary))] hover:underline">Privacy Policy</Link>
+                    <Link to="/terms-of-service" className="text-[hsl(var(--primary))] hover:underline">Terms of Service</Link>{" "}and{" "}
+                    <Link to="/privacy-policy" className="text-[hsl(var(--primary))] hover:underline">Privacy Policy</Link>
                   </label>
                 </div>
 
