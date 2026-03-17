@@ -14,14 +14,14 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.1,
+        staggerChildren: 0.03,
       },
     },
   };
 
   const item = {
-    hidden: { y: 20, opacity: 0 },
-    show: { y: 0, opacity: 1 },
+    hidden: { opacity: 0 },
+    show: { opacity: 1 },
   };
 
   if (subjects.length === 0) {
