@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 
 export const useTheme = () => {
   const [theme, setTheme] = useState<string>(() => {
-    // Check for stored theme or default to system preference
     if (typeof window === 'undefined') return 'light';
     
     const storedTheme = localStorage.getItem("theme");
@@ -11,9 +10,8 @@ export const useTheme = () => {
       return storedTheme;
     }
     
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
-      ? "dark"
-      : "light";
+    // Default to light mode — dark mode only when user explicitly toggles
+    return 'light';
   });
 
   useEffect(() => {
