@@ -145,24 +145,12 @@ const SubjectCard = ({
       className="cursor-pointer w-full group"
     >
       <div 
-        className={`
-          rounded-2xl p-3 min-h-[100px] flex flex-col
-          border border-white/50 dark:border-white/20
+        className="rounded-2xl p-3 min-h-[100px] flex flex-col
+          border border-border/40 dark:border-white/10
           shadow-sm hover:shadow-lg
           transition-all duration-300
-          backdrop-blur-sm glass-card themed-card
-        `}
-        style={{ 
-          background: `linear-gradient(135deg, ${theme.pastel} 0%, rgba(var(--card-rgb), var(--cards-opacity, 0.95)) 100%)`,
-        }}
+          backdrop-blur-sm bg-white/80 dark:bg-slate-900/95"
       >
-        {/* Dark mode overlay */}
-        <div 
-          className="absolute inset-0 rounded-2xl opacity-0 dark:opacity-100 pointer-events-none -z-10"
-          style={{
-            background: `linear-gradient(135deg, ${theme.pastelDark} 0%, rgba(15, 23, 42, 0.95) 100%)`
-          }}
-        />
         
         {/* Icon Squircle - Compact with offline badge */}
         <div className="relative w-fit">
