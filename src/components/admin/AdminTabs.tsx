@@ -28,6 +28,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import AdminMessagesPanel from "./messages/AdminMessagesPanel";
 
 type AdminTabsProps = {
   activeTab: string;
