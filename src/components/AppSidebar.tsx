@@ -59,8 +59,8 @@ const getIcon = (title: string) => {
     'Ask Docs': { 
       icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
     },
-    'Tools': {
-      icon: <Wrench size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-amber-500" />
+    'AI Tools': {
+      icon: <Sparkles size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-indigo-400 animate-pulse drop-shadow-[0_0_6px_rgba(129,140,248,0.6)]" />
     },
   };
   return icons[title] || { 
