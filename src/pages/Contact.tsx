@@ -5,9 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { supabase } from '@/integrations/supabase/client';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100),
@@ -19,8 +21,10 @@ const contactSchema = z.object({
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const result = contactSchema.safeParse(formData);
     if (!result.success) {
@@ -32,8 +36,36 @@ const Contact = () => {
       return;
     }
     setErrors({});
-    toast.success('Message sent! We\'ll get back to you soon.');
-    setFormData({ name: '', email: '', subject: '', message: '' });
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase
+        .from('user_inquiries')
+        .insert({
+          name: result.data.name,
+          email: result.data.email,
+          subject: result.data.subject,
+          message: result.data.message,
+        });
+
+      if (error) {
+        console.error('Error submitting inquiry:', error);
+        toast.error('Failed to send message. Please try again.');
+        return;
+      }
+
+      setIsSuccess(true);
+      toast.success("Message sent! We'll get back to you soon.");
+      setTimeout(() => {
+        setFormData({ name: '', email: '', subject: '', message: '' });
+        setIsSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error('Submission error:', error);
+      toast.error('Something went wrong. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const update = (field: string, value: string) => {
@@ -49,29 +81,64 @@ const Contact = () => {
         <div className="grid md:grid-cols-5 gap-8">
           {/* Form */}
           <div className="md:col-span-3">
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" value={formData.name} onChange={e => update('name', e.target.value)} placeholder="Your name" />
-                {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" value={formData.email} onChange={e => update('email', e.target.value)} placeholder="you@example.com" />
-                {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
-              </div>
-              <div>
-                <Label htmlFor="subject">Subject</Label>
-                <Input id="subject" value={formData.subject} onChange={e => update('subject', e.target.value)} placeholder="How can we help?" />
-                {errors.subject && <p className="text-xs text-destructive mt-1">{errors.subject}</p>}
-              </div>
-              <div>
-                <Label htmlFor="message">Message</Label>
-                <Textarea id="message" rows={5} value={formData.message} onChange={e => update('message', e.target.value)} placeholder="Your message..." />
-                {errors.message && <p className="text-xs text-destructive mt-1">{errors.message}</p>}
-              </div>
-              <Button type="submit" className="w-full">Send Message</Button>
-            </form>
+            <AnimatePresence mode="wait">
+              {isSuccess ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="rounded-xl border border-border bg-card p-10 flex flex-col items-center justify-center text-center min-h-[300px]"
+                >
+                  <CheckCircle className="w-16 h-16 text-green-500 mb-4" />
+                  <h2 className="text-xl font-semibold text-foreground mb-2">Message Sent!</h2>
+                  <p className="text-muted-foreground">Thank you for contacting us. We'll respond within 24 hours.</p>
+                </motion.div>
+              ) : (
+                <motion.form
+                  key="form"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onSubmit={handleSubmit}
+                  className="space-y-4"
+                >
+                  <div>
+                    <Label htmlFor="name">Name</Label>
+                    <Input id="name" value={formData.name} onChange={e => update('name', e.target.value)} placeholder="Your name" disabled={isSubmitting} />
+                    {errors.name && <p className="text-xs text-destructive mt-1">{errors.name}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email</Label>
+                    <Input id="email" type="email" value={formData.email} onChange={e => update('email', e.target.value)} placeholder="you@example.com" disabled={isSubmitting} />
+                    {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="subject">Subject</Label>
+                    <Input id="subject" value={formData.subject} onChange={e => update('subject', e.target.value)} placeholder="How can we help?" disabled={isSubmitting} />
+                    {errors.subject && <p className="text-xs text-destructive mt-1">{errors.subject}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="message">Message</Label>
+                    <Textarea id="message" rows={5} value={formData.message} onChange={e => update('message', e.target.value)} placeholder="Your message..." disabled={isSubmitting} />
+                    {errors.message && <p className="text-xs text-destructive mt-1">{errors.message}</p>}
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="w-4 h-4 mr-2" />
+                        Send Message
+                      </>
+                    )}
+                  </Button>
+                </motion.form>
+              )}
+            </AnimatePresence>
           </div>
 
           {/* Info cards */}
