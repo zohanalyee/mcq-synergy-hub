@@ -81,7 +81,7 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
   });
 
   const rawNavItems = dbNavItems ?? hardcodedNavItems;
-  const navItems = rawNavItems.filter(item => item.title !== 'Tools');
+  const navItems = rawNavItems.filter(item => item.title !== 'Tools' && item.title !== 'AI Tools');
 
   const secondaryNavItems = [
     { title: t('nav.tools'), path: '/tools' },

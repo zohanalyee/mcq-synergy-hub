@@ -25,8 +25,8 @@ export function ToolsPanel() {
       <SheetContent side="right" className="w-80 sm:w-96">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-primary" />
-            Quick Tools
+            <Sparkles className="h-5 w-5 text-indigo-400 animate-pulse drop-shadow-[0_0_6px_rgba(129,140,248,0.6)]" />
+            AI Tools
           </SheetTitle>
         </SheetHeader>
 
