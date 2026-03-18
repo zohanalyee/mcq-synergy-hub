@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Wrench, ArrowRight } from 'lucide-react';
+import { Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { ALL_TOOLS } from '@/data/toolsData';
 
@@ -14,9 +14,9 @@ export function ToolsPanel() {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button variant="ghost" size="sm" className="gap-2 h-9 px-2">
-          <Wrench className="h-4 w-4" />
-          <span className="hidden sm:inline">Tools</span>
+        <Button variant="ghost" size="sm" className="gap-2 h-9 px-2 group">
+          <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse drop-shadow-[0_0_6px_rgba(129,140,248,0.6)] group-hover:animate-spin group-hover:text-indigo-300 group-hover:drop-shadow-[0_0_10px_rgba(129,140,248,0.8)] transition-colors duration-300" />
+          <span className="hidden sm:inline">AI Tools</span>
           <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4">
             {ALL_TOOLS.length}
           </Badge>
@@ -25,8 +25,8 @@ export function ToolsPanel() {
       <SheetContent side="right" className="w-80 sm:w-96">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <Wrench className="h-5 w-5 text-primary" />
-            Quick Tools
+            <Sparkles className="h-5 w-5 text-indigo-400 animate-pulse drop-shadow-[0_0_6px_rgba(129,140,248,0.6)]" />
+            AI Tools
           </SheetTitle>
         </SheetHeader>
 
