@@ -123,6 +123,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "topics", label: "Topics", icon: FolderTree },
         { value: "job-tests", label: "Job Tests", icon: Briefcase },
         { value: "navigation", label: "Navigation", icon: Navigation },
+        { value: "messages", label: "Messages", icon: Mail },
       ],
     },
   ];
