@@ -125,6 +125,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "job-tests", label: "Job Tests", icon: Briefcase },
         { value: "navigation", label: "Navigation", icon: Navigation },
         { value: "messages", label: "Messages", icon: Mail },
+        { value: "feedback-analytics", label: "Feedback", icon: Star },
       ],
     },
   ];
