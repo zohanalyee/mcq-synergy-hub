@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import AdminMessagesPanel from "./messages/AdminMessagesPanel";
+import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
 
 type AdminTabsProps = {
   activeTab: string;
