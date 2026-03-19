@@ -120,15 +120,16 @@ const HeaderActions = ({
 
       {!isMobile && <ThemeToggle />}
       
-      {/* Tools Menu */}
+      {/* AI Tools Menu */}
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button 
             variant="ghost" 
-            size="icon" 
-            className="h-9 w-9 rounded-full hover:bg-blue-50 dark:hover:bg-blue-500/10 transition-colors"
+            size="sm"
+            className="h-9 gap-1.5 px-2.5 rounded-full hover:bg-accent/50 transition-colors group"
           >
-            <LayoutGrid className="h-5 w-5 text-blue-500 hover:text-blue-600 transition-colors" />
+            <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse drop-shadow-[0_0_6px_rgba(129,140,248,0.6)] group-hover:animate-spin group-hover:text-indigo-300 group-hover:drop-shadow-[0_0_10px_rgba(129,140,248,0.8)] transition-all duration-300" />
+            <span className="hidden sm:inline text-xs font-medium text-foreground">AI Tools</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-72 bg-popover/95 backdrop-blur-xl border border-border p-0">
