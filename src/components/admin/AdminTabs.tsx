@@ -262,6 +262,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="job-tests"><JobTestManager /></TabsContent>
       <TabsContent value="navigation"><NavigationManager /></TabsContent>
       <TabsContent value="messages"><AdminMessagesPanel /></TabsContent>
+      <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
     </Tabs>
   );
 };
