@@ -2075,6 +2075,42 @@ export type Database = {
           },
         ]
       }
+      user_feedback: {
+        Row: {
+          admin_notes: string | null
+          category: string
+          created_at: string | null
+          id: string
+          message: string
+          stars: number
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          admin_notes?: string | null
+          category: string
+          created_at?: string | null
+          id?: string
+          message: string
+          stars: number
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          admin_notes?: string | null
+          category?: string
+          created_at?: string | null
+          id?: string
+          message?: string
+          stars?: number
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       user_generation_preferences: {
         Row: {
           default_difficulty: string | null
@@ -2357,6 +2393,22 @@ export type Database = {
           activity_date: string
           test_count: number
           user_count: number
+        }[]
+      }
+      get_feedback_stats: {
+        Args: never
+        Returns: {
+          avg_rating: number
+          content_count: number
+          design_count: number
+          five_stars: number
+          four_stars: number
+          one_star: number
+          other_count: number
+          technical_count: number
+          three_stars: number
+          total_feedback: number
+          two_stars: number
         }[]
       }
       get_hourly_activity_distribution: {

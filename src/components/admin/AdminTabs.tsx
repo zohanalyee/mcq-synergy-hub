@@ -18,7 +18,7 @@ import {
   Database, BarChart3, LayoutDashboard, FileText, Upload, BookOpen,
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
-  Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail,
+  Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star,
 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import AdminMessagesPanel from "./messages/AdminMessagesPanel";
+import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -124,6 +125,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "job-tests", label: "Job Tests", icon: Briefcase },
         { value: "navigation", label: "Navigation", icon: Navigation },
         { value: "messages", label: "Messages", icon: Mail },
+        { value: "feedback-analytics", label: "Feedback", icon: Star },
       ],
     },
   ];
@@ -260,6 +262,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="job-tests"><JobTestManager /></TabsContent>
       <TabsContent value="navigation"><NavigationManager /></TabsContent>
       <TabsContent value="messages"><AdminMessagesPanel /></TabsContent>
+      <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
     </Tabs>
   );
 };
