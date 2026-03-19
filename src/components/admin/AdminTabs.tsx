@@ -18,7 +18,7 @@ import {
   Database, BarChart3, LayoutDashboard, FileText, Upload, BookOpen,
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
-  Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail,
+  Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star,
 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
