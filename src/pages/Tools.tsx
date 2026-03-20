@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Wrench } from 'lucide-react';
 import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
+import { TOOL_ICON_COLORS } from '@/data/toolColors';
 import { motion } from 'framer-motion';
 
 const Tools = () => {
@@ -63,6 +64,7 @@ const Tools = () => {
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
           {filtered.map((tool, i) => {
             const colors = CATEGORY_COLORS[tool.category] || CATEGORY_COLORS['Calculators'];
+            const uniqueIcon = TOOL_ICON_COLORS[tool.id];
             return (
               <motion.div
                 key={tool.id}
@@ -81,8 +83,8 @@ const Tools = () => {
                       Popular
                     </Badge>
                   )}
-                  <div className={`h-8 w-8 rounded-xl ${colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
-                    <tool.icon className="h-4 w-4" />
+                  <div className={`h-8 w-8 rounded-xl ${uniqueIcon ? uniqueIcon.iconBg : colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
+                    <tool.icon className={`h-4 w-4 ${uniqueIcon ? uniqueIcon.iconText : ''}`} />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground leading-tight">{tool.name}</p>
