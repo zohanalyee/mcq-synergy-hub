@@ -1274,25 +1274,40 @@ export type Database = {
         Row: {
           active_learning_context: Json | null
           avatar_url: string | null
+          bio: string | null
+          city: string | null
           created_at: string | null
           id: string
+          occupation: string | null
+          profile_completed: boolean | null
           updated_at: string | null
+          user_type: string | null
           username: string | null
         }
         Insert: {
           active_learning_context?: Json | null
           avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
           created_at?: string | null
           id: string
+          occupation?: string | null
+          profile_completed?: boolean | null
           updated_at?: string | null
+          user_type?: string | null
           username?: string | null
         }
         Update: {
           active_learning_context?: Json | null
           avatar_url?: string | null
+          bio?: string | null
+          city?: string | null
           created_at?: string | null
           id?: string
+          occupation?: string | null
+          profile_completed?: boolean | null
           updated_at?: string | null
+          user_type?: string | null
           username?: string | null
         }
         Relationships: []
