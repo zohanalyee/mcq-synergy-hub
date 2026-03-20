@@ -12,7 +12,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, captchaToken?: string) => Promise<void>;
   updateProfile?: (data: any) => Promise<void>;
   uploadAvatar?: (file: File) => Promise<string>;
 }
