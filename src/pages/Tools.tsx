@@ -64,6 +64,7 @@ const Tools = () => {
         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
           {filtered.map((tool, i) => {
             const colors = CATEGORY_COLORS[tool.category] || CATEGORY_COLORS['Calculators'];
+            const uniqueIcon = TOOL_ICON_COLORS[tool.id];
             return (
               <motion.div
                 key={tool.id}
