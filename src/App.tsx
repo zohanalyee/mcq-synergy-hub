@@ -17,6 +17,7 @@ import AIWelcome from "./components/AIWelcome";
 import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
+import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
 import Index from "./pages/Index";
 import Subjects from "./pages/Subjects";
 import MockTests from "./pages/MockTests";
