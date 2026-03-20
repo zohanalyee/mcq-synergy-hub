@@ -349,9 +349,21 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   </label>
                 </div>
 
+                {/* reCAPTCHA */}
+                <div className="flex justify-center">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={(token) => setRecaptchaToken(token)}
+                    onExpired={() => setRecaptchaToken(null)}
+                    theme="light"
+                    size="normal"
+                  />
+                </div>
+
                 {/* Submit */}
                 <button
-                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms}
+                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms || !recaptchaToken}
                   className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                   style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
                 >
