@@ -24,6 +24,8 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+
 interface SignInPageProps {
   defaultTab?: "signin" | "signup";
 }
