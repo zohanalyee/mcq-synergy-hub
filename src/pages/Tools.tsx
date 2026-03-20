@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Search, Wrench } from 'lucide-react';
 import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
+import { TOOL_ICON_COLORS } from '@/data/toolColors';
 import { motion } from 'framer-motion';
 
 const Tools = () => {
