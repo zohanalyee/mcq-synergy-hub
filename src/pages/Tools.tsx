@@ -83,8 +83,8 @@ const Tools = () => {
                       Popular
                     </Badge>
                   )}
-                  <div className={`h-8 w-8 rounded-xl ${colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
-                    <tool.icon className="h-4 w-4" />
+                  <div className={`h-8 w-8 rounded-xl ${uniqueIcon ? uniqueIcon.iconBg : colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
+                    <tool.icon className={`h-4 w-4 ${uniqueIcon ? uniqueIcon.iconText : ''}`} />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-foreground leading-tight">{tool.name}</p>
