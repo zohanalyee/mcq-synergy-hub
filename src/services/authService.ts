@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 
 // Sign up with email and password
-export const signUp = async (email: string, password: string) => {
+export const signUp = async (email: string, password: string, captchaToken?: string) => {
   try {
     const redirectUrl = `${window.location.origin}/`;
     
@@ -11,7 +11,8 @@ export const signUp = async (email: string, password: string) => {
       email,
       password,
       options: {
-        emailRedirectTo: redirectUrl
+        emailRedirectTo: redirectUrl,
+        captchaToken,
       }
     });
 
