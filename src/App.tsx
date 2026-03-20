@@ -292,6 +292,7 @@ const App = () => {
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    </ProfileCompletionGuard>
                     </TooltipProvider>
                     </FloatingToolsProvider>
                     </LanguageProvider>
