@@ -92,6 +92,10 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       toast({ variant: "destructive", title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy." });
       return;
     }
+    if (!recaptchaToken) {
+      toast({ variant: "destructive", title: "reCAPTCHA Required", description: "Please complete the reCAPTCHA verification." });
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
@@ -105,10 +109,14 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       return;
     }
     try {
-      await signUp(formData.email, formData.password);
+      await signUp(formData.email, formData.password, recaptchaToken);
       toast({ title: "Account Created!", description: "Please check your email to verify your account." });
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } catch (error: any) {
       setServerError(error.message || "Failed to create account.");
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     }
   };
 
