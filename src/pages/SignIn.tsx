@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { Link, useNavigate, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
+import ReCAPTCHA from "react-google-recaptcha";
 import {
   Loader2, Mail, Lock, User, BrainCircuit, Eye, EyeOff, ArrowLeft
 } from "lucide-react";
@@ -22,6 +23,8 @@ const GoogleIcon = () => (
     <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z" fill="#EA4335"/>
   </svg>
 );
+
+const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
 
 interface SignInPageProps {
   defaultTab?: "signin" | "signup";
@@ -37,6 +40,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -87,6 +92,10 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       toast({ variant: "destructive", title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy." });
       return;
     }
+    if (!recaptchaToken) {
+      toast({ variant: "destructive", title: "reCAPTCHA Required", description: "Please complete the reCAPTCHA verification." });
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
@@ -100,10 +109,14 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       return;
     }
     try {
-      await signUp(formData.email, formData.password);
+      await signUp(formData.email, formData.password, recaptchaToken);
       toast({ title: "Account Created!", description: "Please check your email to verify your account." });
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     } catch (error: any) {
       setServerError(error.message || "Failed to create account.");
+      recaptchaRef.current?.reset();
+      setRecaptchaToken(null);
     }
   };
 
@@ -336,9 +349,21 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   </label>
                 </div>
 
+                {/* reCAPTCHA */}
+                <div className="flex justify-center">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={(token) => setRecaptchaToken(token)}
+                    onExpired={() => setRecaptchaToken(null)}
+                    theme="light"
+                    size="normal"
+                  />
+                </div>
+
                 {/* Submit */}
                 <button
-                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms}
+                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms || !recaptchaToken}
                   className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                   style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
                 >

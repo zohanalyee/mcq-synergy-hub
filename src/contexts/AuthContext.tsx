@@ -12,7 +12,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string) => Promise<void>;
+  signUp: (email: string, password: string, captchaToken?: string) => Promise<void>;
   updateProfile?: (data: any) => Promise<void>;
   uploadAvatar?: (file: File) => Promise<string>;
 }
@@ -119,9 +119,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const handleSignUp = async (email: string, password: string) => {
+  const handleSignUp = async (email: string, password: string, captchaToken?: string) => {
     try {
-      const { data, error } = await authSignUp(email, password);
+      const { data, error } = await authSignUp(email, password, captchaToken);
       if (error) throw error;
       // State will be updated by onAuthStateChange
     } catch (error) {
