@@ -170,6 +170,7 @@ const App = () => {
                     
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
+                    <ProfileCompletionGuard>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
