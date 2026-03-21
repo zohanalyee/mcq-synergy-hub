@@ -349,15 +349,13 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   </label>
                 </div>
 
-                {/* reCAPTCHA */}
+                {/* hCaptcha */}
                 <div className="flex justify-center">
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={(token) => setRecaptchaToken(token)}
-                    onExpired={() => setRecaptchaToken(null)}
-                    theme="light"
-                    size="normal"
+                  <HCaptcha
+                    ref={hcaptchaRef}
+                    sitekey={HCAPTCHA_SITE_KEY}
+                    onVerify={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken(null)}
                   />
                 </div>
 
