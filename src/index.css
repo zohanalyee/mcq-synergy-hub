@@ -8,9 +8,25 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* Prevent Radix/Shadcn modals from adding padding-right to body */
+/* Prevent Radix/Shadcn overlays from adding padding-right or overflow hidden to body */
 body[style*="padding-right"] {
   padding-right: 0 !important;
+}
+
+body[style*="overflow"] {
+  overflow: visible !important;
+  overflow-y: scroll !important;
+}
+
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  overflow: visible !important;
+  overflow-y: scroll !important;
+  margin-right: 0 !important;
+}
+
+body[style*="margin-right"] {
+  margin-right: 0 !important;
 }
 
 /* Prevent text selection on interactive elements */
@@ -269,10 +285,10 @@ body::-webkit-scrollbar-thumb:hover {
   backface-visibility: hidden;
 }
 
-/* Prevent background scroll when modal is open */
+/* Prevent background scroll when modal is open - no padding shift */
 body.modal-open {
   overflow: hidden;
-  padding-right: 15px;
+  padding-right: 0 !important;
 }
 
 @layer base {
