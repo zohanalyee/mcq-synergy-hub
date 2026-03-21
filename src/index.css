@@ -6,36 +6,11 @@
 html {
   overflow-y: scroll;
   scrollbar-gutter: stable;
-  overflow-x: hidden;
-  overscroll-behavior: none;
 }
 
-body {
-  overflow-x: hidden;
-  overscroll-behavior: none;
-}
-
-/* Prevent Radix/Shadcn modals from adding padding-right or scroll-lock to body */
+/* Prevent Radix/Shadcn modals from adding padding-right to body */
 body[style*="padding-right"] {
   padding-right: 0 !important;
-}
-body[data-scroll-locked] {
-  overflow: hidden !important;
-  padding-right: 0 !important;
-  margin-right: 0 !important;
-}
-
-/* GPU-accelerated Radix popper to prevent layout shift */
-[data-radix-popper-content-wrapper] {
-  transform: translateZ(0) !important;
-}
-
-/* Smooth dropdown animations */
-[data-radix-select-content],
-[data-radix-dropdown-menu-content],
-[data-radix-popover-content] {
-  animation-duration: 0.15s !important;
-  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
 }
 
 /* Prevent text selection on interactive elements */
@@ -46,15 +21,6 @@ button,
 [role="tab"] {
   user-select: none;
   -webkit-user-select: none;
-}
-
-/* Mobile viewport stabilisation */
-@media (max-width: 768px) {
-  body {
-    position: relative;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-  }
 }
 
 /* Reduced motion support for accessibility and low-power devices */
