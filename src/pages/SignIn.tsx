@@ -109,14 +109,14 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       return;
     }
     try {
-      await signUp(formData.email, formData.password, recaptchaToken);
+      await signUp(formData.email, formData.password, captchaToken);
       toast({ title: "Account Created!", description: "Please check your email to verify your account." });
-      recaptchaRef.current?.reset();
-      setRecaptchaToken(null);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } catch (error: any) {
       setServerError(error.message || "Failed to create account.");
-      recaptchaRef.current?.reset();
-      setRecaptchaToken(null);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     }
   };
 
