@@ -92,8 +92,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       toast({ variant: "destructive", title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy." });
       return;
     }
-    if (!recaptchaToken) {
-      toast({ variant: "destructive", title: "reCAPTCHA Required", description: "Please complete the reCAPTCHA verification." });
+    if (!captchaToken) {
+      toast({ variant: "destructive", title: "Captcha Required", description: "Please complete the hCaptcha verification." });
       return;
     }
     if (formData.password !== formData.confirmPassword) {
