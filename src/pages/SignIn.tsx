@@ -361,7 +361,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
 
                 {/* Submit */}
                 <button
-                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms || !recaptchaToken}
+                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms || !captchaToken}
                   className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                   style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
                 >
