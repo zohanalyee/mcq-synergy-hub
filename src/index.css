@@ -285,10 +285,10 @@ body::-webkit-scrollbar-thumb:hover {
   backface-visibility: hidden;
 }
 
-/* Prevent background scroll when modal is open */
+/* Prevent background scroll when modal is open - no padding shift */
 body.modal-open {
   overflow: hidden;
-  padding-right: 15px;
+  padding-right: 0 !important;
 }
 
 @layer base {
