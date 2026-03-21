@@ -26,11 +26,12 @@ const FloatingFeedbackButton = () => {
 
       {/* Feedback Dialog/Modal */}
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ width: '100vw', left: 0 }}>
           {/* Backdrop */}
           <div 
             className="absolute inset-0 bg-black/50" 
             onClick={() => setIsOpen(false)}
+            style={{ width: '100vw' }}
           />
           
           {/* Modal Content */}
