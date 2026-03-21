@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* === Layout Stability: prevent scrollbar-induced shifts === */
+html {
+  overflow-y: scroll;
+  scrollbar-gutter: stable;
+}
+
+/* Prevent Radix/Shadcn modals from adding padding-right to body */
+body[style*="padding-right"] {
+  padding-right: 0 !important;
+}
+
+/* Prevent text selection on interactive elements */
+button,
+[role="menuitem"],
+[role="option"],
+[role="combobox"],
+[role="tab"] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* Reduced motion support for accessibility and low-power devices */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
