@@ -40,8 +40,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const hcaptchaRef = useRef<HCaptcha>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
