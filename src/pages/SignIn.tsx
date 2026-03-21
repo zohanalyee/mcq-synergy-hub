@@ -9,7 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
-import ReCAPTCHA from "react-google-recaptcha";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 import {
   Loader2, Mail, Lock, User, BrainCircuit, Eye, EyeOff, ArrowLeft
 } from "lucide-react";
@@ -24,7 +24,7 @@ const GoogleIcon = () => (
   </svg>
 );
 
-const RECAPTCHA_SITE_KEY = import.meta.env.VITE_RECAPTCHA_SITE_KEY || '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI';
+const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '10000000-ffff-ffff-ffff-000000000001';
 
 interface SignInPageProps {
   defaultTab?: "signin" | "signup";
@@ -40,8 +40,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [recaptchaToken, setRecaptchaToken] = useState<string | null>(null);
-  const recaptchaRef = useRef<ReCAPTCHA>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const hcaptchaRef = useRef<HCaptcha>(null);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -92,8 +92,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       toast({ variant: "destructive", title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy." });
       return;
     }
-    if (!recaptchaToken) {
-      toast({ variant: "destructive", title: "reCAPTCHA Required", description: "Please complete the reCAPTCHA verification." });
+    if (!captchaToken) {
+      toast({ variant: "destructive", title: "Captcha Required", description: "Please complete the hCaptcha verification." });
       return;
     }
     if (formData.password !== formData.confirmPassword) {
@@ -109,14 +109,14 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       return;
     }
     try {
-      await signUp(formData.email, formData.password, recaptchaToken);
+      await signUp(formData.email, formData.password, captchaToken);
       toast({ title: "Account Created!", description: "Please check your email to verify your account." });
-      recaptchaRef.current?.reset();
-      setRecaptchaToken(null);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } catch (error: any) {
       setServerError(error.message || "Failed to create account.");
-      recaptchaRef.current?.reset();
-      setRecaptchaToken(null);
+      hcaptchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     }
   };
 
@@ -349,21 +349,19 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   </label>
                 </div>
 
-                {/* reCAPTCHA */}
+                {/* hCaptcha */}
                 <div className="flex justify-center">
-                  <ReCAPTCHA
-                    ref={recaptchaRef}
-                    sitekey={RECAPTCHA_SITE_KEY}
-                    onChange={(token) => setRecaptchaToken(token)}
-                    onExpired={() => setRecaptchaToken(null)}
-                    theme="light"
-                    size="normal"
+                  <HCaptcha
+                    ref={hcaptchaRef}
+                    sitekey={HCAPTCHA_SITE_KEY}
+                    onVerify={(token) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken(null)}
                   />
                 </div>
 
                 {/* Submit */}
                 <button
-                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms || !recaptchaToken}
+                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms || !captchaToken}
                   className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                   style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
                 >
