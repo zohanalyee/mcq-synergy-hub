@@ -2096,33 +2096,42 @@ export type Database = {
           category: string
           created_at: string | null
           id: string
-          message: string
+          is_guest: boolean | null
+          message: string | null
           stars: number
           status: string | null
           updated_at: string | null
+          user_avatar_url: string | null
           user_id: string | null
+          user_name: string | null
         }
         Insert: {
           admin_notes?: string | null
           category: string
           created_at?: string | null
           id?: string
-          message: string
+          is_guest?: boolean | null
+          message?: string | null
           stars: number
           status?: string | null
           updated_at?: string | null
+          user_avatar_url?: string | null
           user_id?: string | null
+          user_name?: string | null
         }
         Update: {
           admin_notes?: string | null
           category?: string
           created_at?: string | null
           id?: string
-          message?: string
+          is_guest?: boolean | null
+          message?: string | null
           stars?: number
           status?: string | null
           updated_at?: string | null
+          user_avatar_url?: string | null
           user_id?: string | null
+          user_name?: string | null
         }
         Relationships: []
       }
