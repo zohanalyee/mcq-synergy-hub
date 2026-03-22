@@ -18,52 +18,52 @@ interface AppSidebarProps {
   isAdmin?: boolean;
 }
 
-const getIcon = (title: string) => {
+const getIcon = (path: string) => {
   const icons: Record<string, { icon: React.ReactNode }> = {
-    'Home': { 
+    '/': { 
       icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-blue-500" />
     },
-    'Subjects': { 
+    '/subjects': { 
       icon: <FileText size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-purple-500" />
     },
-    'Quizzes': { 
+    '/quizzes': { 
       icon: <Target size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-red-500" />
     },
-    'Recruitment Tests': { 
+    '/recruitment-tests': { 
       icon: <ClipboardList size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-500" />
     },
-    'Custom Syllabus': { 
+    '/custom-syllabus': { 
       icon: <GraduationCap size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-indigo-500" />
     },
-    'Scholarships': { 
+    '/scholarships': { 
       icon: <Users size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-pink-500" />
     },
-    'Jobs': { 
+    '/jobs': { 
       icon: <Briefcase size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-teal-500" />
     },
-    'Past Papers': { 
+    '/past-papers': { 
       icon: <FileText size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-amber-500" />
     },
-    'Analytics': { 
-      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
-    },
-    'AI Personal Coach': { 
-      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
-    },
-    'Feedback': { 
-      icon: <MessageSquare size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-lime-500" />
-    },
-    'Question Bank': { 
-      icon: <Database size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500" />
-    },
-    'Ask Docs': { 
-      icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
-    },
-    'AI Tools': {
+    '/tools': {
       icon: <Sparkles size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-indigo-400 animate-pulse drop-shadow-[0_0_6px_rgba(129,140,248,0.6)]" />
     },
+    '/analytics': { 
+      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
+    },
+    '/ai-coach': { 
+      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />
+    },
+    '/feedback': { 
+      icon: <MessageSquare size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-lime-500" />
+    },
+    '/question-bank': { 
+      icon: <Database size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500" />
+    },
+    '/ask-docs': { 
+      icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
+    },
   };
-  return icons[title] || { 
+  return icons[path] || { 
     icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-gray-500" />
   };
 };
