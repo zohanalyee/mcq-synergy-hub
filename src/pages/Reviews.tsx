@@ -6,85 +6,97 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Star } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { formatDistanceToNow } from 'date-fns';
 
-interface ReviewStats {
-  avg_rating: number;
-  total_reviews: number;
-  five_star: number;
-  four_star: number;
-  three_star: number;
-  two_star: number;
-  one_star: number;
-  recommend_pct: number;
+interface FeedbackReview {
+  id: string;
+  user_name: string | null;
+  user_avatar_url: string | null;
+  stars: number;
+  message: string | null;
+  category: string;
+  created_at: string;
+  is_guest: boolean | null;
 }
-
-const starLabels: Record<string, string> = {
-  five_star: '5',
-  four_star: '4',
-  three_star: '3',
-  two_star: '2',
-  one_star: '1',
-};
 
 const Reviews = () => {
   const queryClient = useQueryClient();
   const [filterRating, setFilterRating] = useState('all');
   const [sortBy, setSortBy] = useState('recent');
 
-  // Realtime subscription for instant refresh
   useEffect(() => {
     const channel = supabase
-      .channel('reviews-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reviews' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['all-reviews'] });
-        queryClient.invalidateQueries({ queryKey: ['review-stats'] });
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_ratings' }, () => {
-        queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
-        queryClient.invalidateQueries({ queryKey: ['review-stats'] });
+      .channel('feedback-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_feedback' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['public-reviews'] });
+        queryClient.invalidateQueries({ queryKey: ['public-review-stats'] });
       })
       .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
+    return () => { supabase.removeChannel(channel); };
   }, [queryClient]);
 
-  const { data: stats } = useQuery<ReviewStats>({
-    queryKey: ['review-stats'],
+  const { data: stats } = useQuery({
+    queryKey: ['public-review-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_review_stats');
+      const { data, error } = await supabase
+        .from('user_feedback')
+        .select('stars');
       if (error) throw error;
-      const row = Array.isArray(data) ? data[0] : data;
-      return row as ReviewStats;
+      const all = data || [];
+      const total = all.length;
+      if (total === 0) return null;
+      const avg = all.reduce((s, r) => s + r.stars, 0) / total;
+      return {
+        avg_rating: Math.round(avg * 10) / 10,
+        total_reviews: total,
+        five_star: all.filter(r => r.stars === 5).length,
+        four_star: all.filter(r => r.stars === 4).length,
+        three_star: all.filter(r => r.stars === 3).length,
+        two_star: all.filter(r => r.stars === 2).length,
+        one_star: all.filter(r => r.stars === 1).length,
+      };
     },
   });
 
   const { data: reviews, isLoading } = useQuery({
-    queryKey: ['all-reviews', filterRating, sortBy],
+    queryKey: ['public-reviews', filterRating, sortBy],
     queryFn: async () => {
       let query = supabase
-        .from('reviews')
-        .select('*')
-        .eq('display_publicly', true);
+        .from('user_feedback')
+        .select('id, user_name, user_avatar_url, stars, message, category, created_at, is_guest');
 
       if (filterRating !== 'all') {
-        query = query.eq('rating', parseInt(filterRating));
+        query = query.eq('stars', parseInt(filterRating));
       }
 
       if (sortBy === 'recent') {
         query = query.order('created_at', { ascending: false });
       } else {
-        query = query.order('rating', { ascending: false });
+        query = query.order('stars', { ascending: false });
       }
 
-      const { data } = await query;
-      return data || [];
+      const { data, error } = await query;
+      if (error) {
+        console.error('Error fetching reviews:', error);
+        return [];
+      }
+      return (data || []) as FeedbackReview[];
     },
   });
 
   const starKeys = ['five_star', 'four_star', 'three_star', 'two_star', 'one_star'] as const;
+  const starLabels: Record<string, string> = {
+    five_star: '5', four_star: '4', three_star: '3', two_star: '2', one_star: '1',
+  };
+
+  const getInitials = (name: string | null, isGuest: boolean | null) => {
+    if (!name) return isGuest ? '👤' : 'U';
+    const words = name.trim().split(' ');
+    return words.length >= 2
+      ? (words[0][0] + words[1][0]).toUpperCase()
+      : words[0][0].toUpperCase();
+  };
 
   return (
     <Header>
@@ -94,7 +106,6 @@ const Reviews = () => {
           <p className="text-sm text-muted-foreground">See what our community says about MCQs AI</p>
         </div>
 
-        {/* Stats Overview */}
         {stats && stats.total_reviews > 0 && (
           <Card className="mb-6">
             <CardContent className="p-6 flex flex-col md:flex-row gap-6 items-center">
@@ -102,19 +113,15 @@ const Reviews = () => {
                 <div className="text-4xl font-bold">{stats.avg_rating}/5</div>
                 <div className="flex justify-center gap-0.5 my-1">
                   {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`h-4 w-4 ${i < Math.round(stats.avg_rating) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`}
-                    />
+                    <Star key={i} className={`h-4 w-4 ${i < Math.round(stats.avg_rating) ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`} />
                   ))}
                 </div>
                 <p className="text-xs text-muted-foreground">{stats.total_reviews} reviews</p>
               </div>
-
               <div className="flex-1 w-full space-y-1.5">
                 {starKeys.map((key) => {
-                  const count = (stats as any)[key] || 0;
-                  const pct = stats.total_reviews ? (count / stats.total_reviews) * 100 : 0;
+                  const count = stats[key] || 0;
+                  const pct = (count / stats.total_reviews) * 100;
                   return (
                     <div key={key} className="flex items-center gap-2 text-sm">
                       <span className="w-4 text-right flex items-center gap-0.5">
@@ -133,12 +140,9 @@ const Reviews = () => {
           </Card>
         )}
 
-        {/* Filters */}
         <div className="flex gap-3 mb-4">
           <Select value={filterRating} onValueChange={setFilterRating}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Filter" />
-            </SelectTrigger>
+            <SelectTrigger className="w-36"><SelectValue placeholder="Filter" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Ratings</SelectItem>
               {[5, 4, 3, 2, 1].map((r) => (
@@ -146,11 +150,8 @@ const Reviews = () => {
               ))}
             </SelectContent>
           </Select>
-
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-36">
-              <SelectValue placeholder="Sort" />
-            </SelectTrigger>
+            <SelectTrigger className="w-36"><SelectValue placeholder="Sort" /></SelectTrigger>
             <SelectContent>
               <SelectItem value="recent">Most Recent</SelectItem>
               <SelectItem value="highest">Highest Rating</SelectItem>
@@ -158,7 +159,6 @@ const Reviews = () => {
           </Select>
         </div>
 
-        {/* Reviews List */}
         <div className="space-y-3">
           {isLoading
             ? Array.from({ length: 4 }).map((_, i) => (
@@ -170,37 +170,35 @@ const Reviews = () => {
                   </CardContent>
                 </Card>
               ))
-            : reviews?.map((review: any) => (
+            : reviews?.map((review) => (
                 <Card key={review.id}>
                   <CardContent className="p-5">
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-semibold text-primary">
-                            {review.reviewer_initials || 'U'}
-                          </span>
-                        </div>
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={review.user_avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+                            {getInitials(review.user_name, review.is_guest)}
+                          </AvatarFallback>
+                        </Avatar>
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-sm font-medium">
-                              {review.show_name ? review.reviewer_name : 'Anonymous'}
+                              {review.user_name || 'Anonymous User'}
                             </span>
-                            {review.is_verified && (
-                              <span className="text-[10px] bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
-                                ✓ Verified
-                              </span>
+                            {review.is_guest && (
+                              <span className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">Guest</span>
                             )}
                           </div>
-                          <span className="text-xs text-muted-foreground">{review.reviewer_role}</span>
+                          {review.category && (
+                            <span className="text-xs text-muted-foreground">{review.category}</span>
+                          )}
                         </div>
                       </div>
                       <div className="text-right">
                         <div className="flex gap-0.5">
                           {Array.from({ length: 5 }).map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-3.5 w-3.5 ${i < review.rating ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`}
-                            />
+                            <Star key={i} className={`h-3.5 w-3.5 ${i < review.stars ? 'text-yellow-400 fill-yellow-400' : 'text-muted-foreground/30'}`} />
                           ))}
                         </div>
                         <span className="text-[10px] text-muted-foreground">
@@ -208,8 +206,8 @@ const Reviews = () => {
                         </span>
                       </div>
                     </div>
-                    {review.comment && (
-                      <p className="text-sm text-foreground/90 mt-2">&ldquo;{review.comment}&rdquo;</p>
+                    {review.message && (
+                      <p className="text-sm text-foreground/90 mt-2">&ldquo;{review.message}&rdquo;</p>
                     )}
                   </CardContent>
                 </Card>
