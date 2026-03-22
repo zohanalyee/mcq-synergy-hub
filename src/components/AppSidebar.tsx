@@ -192,7 +192,7 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu>
               {secondaryNavItems.map(item => {
-                const iconData = getIcon(item.title);
+                const iconData = getIcon(item.path);
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton 
