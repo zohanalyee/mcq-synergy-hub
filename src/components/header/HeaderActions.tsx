@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import StreakCounter from '@/components/gamification/StreakCounter';
 import { ALL_TOOLS } from '@/data/toolsData';
