@@ -92,31 +92,28 @@ const HeaderActions = ({
       {user && <StreakCounter />}
       
       {/* Language Selector */}
-      <Select value={language} onValueChange={(v) => handleLanguageChange(v as Language)}>
-        <SelectTrigger className="h-9 w-9 border-none bg-transparent hover:bg-muted rounded-full p-0 justify-center [&>svg.lucide-chevron-down]:hidden">
-          <Globe className="h-4 w-4 shrink-0" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="en">
-            <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shrink-0">EN</span>
-              <span>English</span>
-            </div>
-          </SelectItem>
-          <SelectItem value="ur">
-            <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white shrink-0">UR</span>
-              <span>اردو</span>
-            </div>
-          </SelectItem>
-          <SelectItem value="sd">
-            <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white shrink-0">SD</span>
-              <span>سنڌي</span>
-            </div>
-          </SelectItem>
-        </SelectContent>
-      </Select>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-muted">
+            <Globe className="h-4 w-4 shrink-0" />
+            <span className="sr-only">Language</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-[140px]">
+          <DropdownMenuItem onClick={() => handleLanguageChange('en')} className="gap-2 cursor-pointer">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shrink-0">EN</span>
+            <span>English</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleLanguageChange('ur')} className="gap-2 cursor-pointer">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white shrink-0">UR</span>
+            <span>اردو</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => handleLanguageChange('sd')} className="gap-2 cursor-pointer">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white shrink-0">SD</span>
+            <span>سنڌي</span>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {!isMobile && <ThemeToggle />}
       
