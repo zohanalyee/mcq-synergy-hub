@@ -76,6 +76,7 @@ export const useAnalyticsData = (): AnalyticsData => {
     thisWeekTests: 0,
     thisWeekQuestions: 0,
     weaknesses: [],
+    recentAttempts: [],
   });
   const [loading, setLoading] = useState(true);
 
