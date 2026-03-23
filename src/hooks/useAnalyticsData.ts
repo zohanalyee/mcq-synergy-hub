@@ -220,6 +220,7 @@ export const useAnalyticsData = (): AnalyticsData => {
           thisWeekTests,
           thisWeekQuestions,
           weaknesses,
+          recentAttempts: attempts.slice(0, 50),
         });
       } catch (err) {
         console.error("Analytics data error:", err);
