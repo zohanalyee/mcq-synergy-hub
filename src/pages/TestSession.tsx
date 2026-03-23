@@ -336,9 +336,17 @@ const TestSession = () => {
 
     const timeTaken = testData.time_limit * 60 - timeRemaining;
     const questionIds = questions.map((q: any) => q.id).filter(Boolean);
+    
+    // Extract subjects: prefer session subjects, fallback to extracting from questions
+    let subjects = testData.subjects || [];
+    if (Array.isArray(subjects)) subjects = subjects.filter(Boolean);
+    if (subjects.length === 0 && questions.length > 0) {
+      subjects = [...new Set(questions.map((q: any) => q.subject).filter(Boolean))];
+    }
+    
     const result = await processTestCompletion({
       score: correctAnswers, totalQuestions: questions.length, timeTaken,
-      testType: "custom_quiz", subjects: testData.subjects || [], answers,
+      testType: "custom_quiz", subjects, answers,
       questionIds,
     });
 

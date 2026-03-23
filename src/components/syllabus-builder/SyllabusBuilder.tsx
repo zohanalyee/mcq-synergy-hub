@@ -545,6 +545,11 @@ export const SyllabusBuilder = () => {
 
   // Helper to create a test session and return session ID
   const createTestSession = async (questions: any[]): Promise<string | null> => {
+    // Extract unique subject names from questions for analytics tracking
+    const uniqueSubjects = [...new Set(
+      questions.map(q => q.subject).filter(Boolean)
+    )];
+
     const { data: session, error } = await supabase
       .from('custom_test_sessions')
       .insert({
@@ -553,6 +558,7 @@ export const SyllabusBuilder = () => {
         question_count: questions.length,
         time_limit: quizSettings.timeLimit,
         topics: selectedTopicIds,
+        subjects: uniqueSubjects,
         difficulty_levels: [quizSettings.difficulty],
         questions: questions.map(q => ({
           id: q.id,
