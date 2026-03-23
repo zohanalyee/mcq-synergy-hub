@@ -171,6 +171,16 @@ const Analytics = () => {
 
         <div ref={subjectRef} />
 
+        {/* Achievements */}
+        <AchievementsSection
+          totalTests={data.totalTests}
+          averageScore={data.averageScore}
+          totalQuestions={data.totalQuestions}
+        />
+
+        {/* Test History */}
+        <TestHistorySection attempts={data.recentAttempts} />
+
         {/* Study Plan */}
         <StudyPlanSection data={data} />
 
