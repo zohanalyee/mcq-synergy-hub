@@ -40,6 +40,7 @@ export interface AnalyticsData {
   thisWeekTests: number;
   thisWeekQuestions: number;
   weaknesses: { subject: string; average_score: number; tests_count: number }[];
+  recentAttempts: any[];
   loading: boolean;
   hasData: boolean;
 }
