@@ -237,17 +237,15 @@ const Feedback = () => {
 
         {/* Info Cards */}
         {!isSuccess && user && (
-          <div className="grid grid-cols-3 gap-2 mt-6">
+          <div className="flex justify-center gap-4 mt-4 text-center">
             {[
-              { emoji: '⚡', title: 'Quick Response', desc: 'We review feedback daily' },
-              { emoji: '🔒', title: 'Private', desc: 'Your privacy matters' },
-              { emoji: '🎯', title: 'Every Voice Counts', desc: 'We value your input' },
+              { emoji: '⚡', label: 'Quick Response' },
+              { emoji: '🔒', label: 'Private' },
+              { emoji: '🎯', label: 'Every Voice' },
             ].map((item) => (
-              <Card key={item.title} className="p-3 text-center">
-                <div className="text-lg mb-1">{item.emoji}</div>
-                <div className="text-[10px] font-medium text-foreground">{item.title}</div>
-                <div className="text-[9px] text-muted-foreground mt-0.5">{item.desc}</div>
-              </Card>
+              <div key={item.label} className="text-[10px] text-muted-foreground">
+                <span className="text-sm">{item.emoji}</span> {item.label}
+              </div>
             ))}
           </div>
         )}
