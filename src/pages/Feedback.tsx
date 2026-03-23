@@ -92,14 +92,14 @@ const Feedback = () => {
 
   return (
     <Header>
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-12">
+      <div className="max-w-lg mx-auto px-4 pt-4 pb-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-full mb-3">
-            <Sparkles className="w-7 h-7 text-primary-foreground" />
+        <div className="text-center mb-4">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full mb-2">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">We Value Your Feedback</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-bold text-foreground mb-1">We Value Your Feedback</h1>
+          <p className="text-xs text-muted-foreground">
             Help us make MCQSAI better for everyone!
           </p>
         </div>
