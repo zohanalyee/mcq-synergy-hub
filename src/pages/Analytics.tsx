@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import SubjectAnalysisCard from "@/components/analytics/SubjectAnalysisCard";
 import StudyPlanSection from "@/components/analytics/StudyPlanSection";
 import TopicAnalysis from "@/components/analytics/TopicAnalysis";
 import QuickTestGenerator from "@/components/analytics/QuickTestGenerator";
+import TestHistorySection from "@/components/analytics/TestHistorySection";
+import AchievementsSection from "@/components/analytics/AchievementsSection";
 import { TrendingUp, BookOpen, Target, Award } from "lucide-react";
 
 const Analytics = () => {
@@ -168,6 +170,16 @@ const Analytics = () => {
         </div>
 
         <div ref={subjectRef} />
+
+        {/* Achievements */}
+        <AchievementsSection
+          totalTests={data.totalTests}
+          averageScore={data.averageScore}
+          totalQuestions={data.totalQuestions}
+        />
+
+        {/* Test History */}
+        <TestHistorySection attempts={data.recentAttempts} />
 
         {/* Study Plan */}
         <StudyPlanSection data={data} />

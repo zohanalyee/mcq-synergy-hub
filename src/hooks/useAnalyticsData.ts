@@ -40,6 +40,7 @@ export interface AnalyticsData {
   thisWeekTests: number;
   thisWeekQuestions: number;
   weaknesses: { subject: string; average_score: number; tests_count: number }[];
+  recentAttempts: any[];
   loading: boolean;
   hasData: boolean;
 }
@@ -75,6 +76,7 @@ export const useAnalyticsData = (): AnalyticsData => {
     thisWeekTests: 0,
     thisWeekQuestions: 0,
     weaknesses: [],
+    recentAttempts: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -218,6 +220,7 @@ export const useAnalyticsData = (): AnalyticsData => {
           thisWeekTests,
           thisWeekQuestions,
           weaknesses,
+          recentAttempts: attempts.slice(0, 50),
         });
       } catch (err) {
         console.error("Analytics data error:", err);
