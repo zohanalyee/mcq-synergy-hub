@@ -9,7 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NotificationItem from './NotificationItem';
 
@@ -17,6 +17,7 @@ const NotificationBell = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
 
   const { data: notifications = [] } = useQuery({
     queryKey: ['notifications', user?.id],
@@ -78,7 +79,7 @@ const NotificationBell = () => {
   if (!user) return null;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
@@ -134,7 +135,7 @@ const NotificationBell = () => {
         {notifications.length > 0 && (
           <div className="border-t border-border p-2">
             <button
-              onClick={() => navigate('/notifications')}
+              onClick={() => { setOpen(false); navigate('/notifications'); }}
               className="w-full text-center text-xs text-primary hover:underline py-1"
             >
               View all notifications
