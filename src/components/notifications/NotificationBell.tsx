@@ -79,7 +79,7 @@ const NotificationBell = () => {
   if (!user) return null;
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
