@@ -135,7 +135,7 @@ const NotificationBell = () => {
         {notifications.length > 0 && (
           <div className="border-t border-border p-2">
             <button
-              onClick={() => navigate('/notifications')}
+              onClick={() => { setOpen(false); navigate('/notifications'); }}
               className="w-full text-center text-xs text-primary hover:underline py-1"
             >
               View all notifications
