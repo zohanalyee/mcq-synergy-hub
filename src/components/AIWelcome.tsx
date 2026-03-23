@@ -59,7 +59,7 @@ const AIWelcome = () => {
                     </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg text-foreground">{greeting}, {userName}! 👋</h3>
+                    <h3 className="font-bold text-lg text-foreground">{greeting}</h3>
                   </div>
                 </div>
 
