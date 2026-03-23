@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { analyzePerformanceTrend } from "@/lib/aiCoach";
 import AIInsightsPanel from "@/components/analytics/AIInsightsPanel";
+import EmptyCoachState from "@/components/coach/EmptyCoachState";
 import SubjectAnalysisCard from "@/components/analytics/SubjectAnalysisCard";
 import StudyPlanSection from "@/components/analytics/StudyPlanSection";
 import TopicAnalysis from "@/components/analytics/TopicAnalysis";
@@ -47,15 +48,8 @@ const Analytics = () => {
   if (!data.hasData) {
     return (
       <Header>
-        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12 text-center py-16">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-            <BookOpen className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-2xl font-bold mb-2">Start Your Learning Journey</h1>
-          <p className="text-muted-foreground mb-6 text-sm max-w-md mx-auto">
-            Take your first test to unlock AI-powered coaching insights, personalized study plans, and performance tracking.
-          </p>
-          <Button onClick={() => navigate("/mock-tests")}>Take Your First Test</Button>
+        <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
+          <EmptyCoachState />
         </div>
       </Header>
     );

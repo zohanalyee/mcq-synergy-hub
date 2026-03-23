@@ -92,14 +92,14 @@ const Feedback = () => {
 
   return (
     <Header>
-      <div className="max-w-3xl mx-auto px-4 pt-6 pb-12">
+      <div className="max-w-lg mx-auto px-4 pt-4 pb-6">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-gradient-to-br from-primary to-accent rounded-full mb-3">
-            <Sparkles className="w-7 h-7 text-primary-foreground" />
+        <div className="text-center mb-4">
+          <div className="inline-flex items-center justify-center w-10 h-10 bg-gradient-to-br from-primary to-accent rounded-full mb-2">
+            <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mb-2">We Value Your Feedback</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-xl font-bold text-foreground mb-1">We Value Your Feedback</h1>
+          <p className="text-xs text-muted-foreground">
             Help us make MCQSAI better for everyone!
           </p>
         </div>
@@ -128,14 +128,14 @@ const Feedback = () => {
           </motion.div>
         ) : (
           <Card>
-            <CardContent className="p-4 md:p-6">
-              <form onSubmit={handleSubmit} className="space-y-6">
+            <CardContent className="p-3 md:p-4">
+              <form onSubmit={handleSubmit} className="space-y-3">
                 {/* Star Rating */}
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-3">
-                    How would you rate your experience? <span className="text-destructive">*</span>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">
+                    Rate your experience <span className="text-destructive">*</span>
                   </label>
-                  <div className="flex items-center gap-1.5 justify-center">
+                  <div className="flex items-center gap-1 justify-center">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
@@ -143,11 +143,11 @@ const Feedback = () => {
                         onClick={() => setStars(star)}
                         onMouseEnter={() => setHoveredStar(star)}
                         onMouseLeave={() => setHoveredStar(0)}
-                        className="transition-transform hover:scale-110 focus:outline-none p-1"
+                        className="transition-transform hover:scale-110 focus:outline-none p-0.5"
                       >
                         <Star
                           className={cn(
-                            'w-10 h-10 md:w-12 md:h-12 transition-colors',
+                            'w-7 h-7 md:w-8 md:h-8 transition-colors',
                             star <= (hoveredStar || stars)
                               ? 'fill-yellow-400 text-yellow-400'
                               : 'text-muted-foreground/30'
@@ -157,7 +157,7 @@ const Feedback = () => {
                     ))}
                   </div>
                   {stars > 0 && (
-                    <p className="text-center mt-2 text-xs text-muted-foreground">
+                    <p className="text-center mt-1 text-[10px] text-muted-foreground">
                       {stars === 5 && '⭐ Excellent!'}
                       {stars === 4 && '😊 Very Good!'}
                       {stars === 3 && '👍 Good'}
@@ -169,28 +169,25 @@ const Feedback = () => {
 
                 {/* Category Selection */}
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-3">
-                    What type of feedback is this? <span className="text-destructive">*</span>
+                  <label className="block text-xs font-semibold text-foreground mb-1.5">
+                    Feedback type <span className="text-destructive">*</span>
                   </label>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-1.5">
                     {categories.map((cat) => (
                       <button
                         key={cat.value}
                         type="button"
                         onClick={() => setCategory(cat.value)}
                         className={cn(
-                          'p-3 rounded-lg border-2 transition-all text-left',
+                          'p-2 rounded-lg border-2 transition-all text-left',
                           category === cat.value
                             ? 'border-primary bg-primary/5'
                             : 'border-border hover:border-muted-foreground/30'
                         )}
                       >
-                        <div className="flex items-start gap-2">
-                          <span className="text-xl">{cat.icon}</span>
-                          <div>
-                            <div className="text-xs font-semibold text-foreground">{cat.label}</div>
-                            <div className="text-[10px] text-muted-foreground mt-0.5">{cat.description}</div>
-                          </div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base">{cat.icon}</span>
+                          <span className="text-[11px] font-medium text-foreground">{cat.label}</span>
                         </div>
                       </button>
                     ))}
@@ -199,37 +196,36 @@ const Feedback = () => {
 
                 {/* Message */}
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">
+                  <label className="block text-xs font-semibold text-foreground mb-1">
                     Tell us more <span className="text-destructive">*</span>
                   </label>
                   <Textarea
-                    rows={5}
+                    rows={3}
                     value={message}
                     onChange={(e) => setMessage(e.target.value.slice(0, 500))}
-                    placeholder="Share your thoughts, suggestions, or report issues..."
-                    className="resize-none"
+                    placeholder="Share your thoughts..."
+                    className="resize-none min-h-[72px] text-sm"
                     disabled={isSubmitting}
                   />
-                  <p className="text-[10px] text-muted-foreground mt-1">
-                    Min 10 characters • {message.length}/500
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    Min 10 chars • {message.length}/500
                   </p>
                 </div>
 
                 {/* Submit */}
                 <Button
                   type="submit"
-                  size="lg"
-                  className="w-full"
+                  className="w-full h-9"
                   disabled={isSubmitting || stars === 0 || !category || message.trim().length < 10}
                 >
                   {isSubmitting ? (
                     <>
-                      <div className="w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
+                      <div className="w-3.5 h-3.5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
                       Submitting...
                     </>
                   ) : (
                     <>
-                      <MessageSquare className="w-4 h-4 mr-2" />
+                      <MessageSquare className="w-3.5 h-3.5 mr-1.5" />
                       Submit Feedback
                     </>
                   )}
@@ -241,17 +237,15 @@ const Feedback = () => {
 
         {/* Info Cards */}
         {!isSuccess && user && (
-          <div className="grid grid-cols-3 gap-2 mt-6">
+          <div className="flex justify-center gap-4 mt-4 text-center">
             {[
-              { emoji: '⚡', title: 'Quick Response', desc: 'We review feedback daily' },
-              { emoji: '🔒', title: 'Private', desc: 'Your privacy matters' },
-              { emoji: '🎯', title: 'Every Voice Counts', desc: 'We value your input' },
+              { emoji: '⚡', label: 'Quick Response' },
+              { emoji: '🔒', label: 'Private' },
+              { emoji: '🎯', label: 'Every Voice' },
             ].map((item) => (
-              <Card key={item.title} className="p-3 text-center">
-                <div className="text-lg mb-1">{item.emoji}</div>
-                <div className="text-[10px] font-medium text-foreground">{item.title}</div>
-                <div className="text-[9px] text-muted-foreground mt-0.5">{item.desc}</div>
-              </Card>
+              <div key={item.label} className="text-[10px] text-muted-foreground">
+                <span className="text-sm">{item.emoji}</span> {item.label}
+              </div>
             ))}
           </div>
         )}
