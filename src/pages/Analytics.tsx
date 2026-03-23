@@ -12,6 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { analyzePerformanceTrend } from "@/lib/aiCoach";
 import AIInsightsPanel from "@/components/analytics/AIInsightsPanel";
+import EmptyCoachState from "@/components/coach/EmptyCoachState";
 import SubjectAnalysisCard from "@/components/analytics/SubjectAnalysisCard";
 import StudyPlanSection from "@/components/analytics/StudyPlanSection";
 import TopicAnalysis from "@/components/analytics/TopicAnalysis";
