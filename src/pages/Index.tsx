@@ -169,6 +169,27 @@ const Home = () => {
     <Header theme={theme} setTheme={setTheme}>
       <div className={`min-h-screen bg-background ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
       
+      {/* Personalized Greeting for logged-in users */}
+      {greeting && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="container px-4 mx-auto pt-4"
+        >
+          <div className="bg-gradient-to-r from-primary/10 to-accent/5 rounded-xl p-4 md:p-5 border border-primary/10">
+            <h2 className={cn(
+              "text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent",
+              isRTL && "font-nastaliq-heading text-right"
+            )}>
+              {greeting}
+            </h2>
+            <p className={cn("text-sm text-muted-foreground mt-1", isRTL && "font-nastaliq text-right")}>
+              {language === 'ur' ? 'آپ کے امتحانات کی تیاری جاری رکھیں!' : language === 'sd' ? 'پنهنجي امتحانن جي تياري جاري رکو!' : 'Ready to continue your learning journey?'}
+            </p>
+          </div>
+        </motion.div>
+      )}
       
       {/* Hero Section */}
       <motion.section
