@@ -4,11 +4,12 @@ import { X, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { getLocalizedGreeting } from '@/lib/greetings';
 
 const AIWelcome = () => {
   const { user, profile } = useAuth();
   const [show, setShow] = useState(false);
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
 
   useEffect(() => {
     if (user && !sessionStorage.getItem('ai-welcomed')) {
@@ -25,8 +26,7 @@ const AIWelcome = () => {
   if (!show || !user) return null;
 
   const userName = profile?.username || user.email?.split('@')[0] || 'Student';
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? t('welcome.morning') : hour < 17 ? t('welcome.afternoon') : t('welcome.evening');
+  const greeting = getLocalizedGreeting(language, userName);
 
   return (
     <AnimatePresence>
