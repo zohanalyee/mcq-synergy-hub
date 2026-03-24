@@ -575,7 +575,17 @@ const TestSession = () => {
                   <h3 className="text-lg font-semibold">Review Answers</h3>
                   {questions.map((question: any, index: number) => {
                     const userAnswer = answers[index];
-                    const isCorrect = userAnswer === question.answer;
+                    const isCorrect = (() => {
+                      const userAns = (userAnswer || '').trim().toLowerCase();
+                      const correctAns = (question.answer || '').trim().toLowerCase();
+                      let resolved = correctAns;
+                      if (['a','b','c','d'].includes(correctAns) && question.options) {
+                        const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
+                        const idx = correctAns.charCodeAt(0) - 97;
+                        if (opts[idx]) resolved = String(opts[idx]).trim().toLowerCase();
+                      }
+                      return !!(userAns && (userAns === correctAns || userAns === resolved));
+                    })();
                     return (
                       <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
                         <div className="flex items-start gap-2">
