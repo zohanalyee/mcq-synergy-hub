@@ -33,8 +33,8 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
     <Sparkles className="absolute top-1.5 right-1.5 h-2.5 w-2.5 text-white/30" />
     
     <div className="relative z-10">
-      <div className="flex items-center gap-2 mb-1.5">
-        <div className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-1.5 mb-1">
+        <div className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
           {icon}
         </div>
         {loading ? (
