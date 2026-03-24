@@ -1,35 +1,46 @@
 
 
-## Fix Universal Shaking/Layout Shift on Dropdowns and Overlays
+# Fix RTL Text Rendering for Urdu/Sindhi
 
-### Problem
-When opening Select dropdowns (and potentially Dialogs/Sheets), Radix UI's scroll-locking injects `padding-right` and `overflow: hidden` on the body, causing the entire page to shift horizontally. The Night Mode, AI Tools, and Language Switcher dropdowns are already stable because they use `DropdownMenu` (which defaults to `modal={false}`) and `Popover` (also `modal={false}`). However, `Select`, `Dialog`, and `Sheet` components still use Radix's default modal behavior.
+## Problem
+English words (MCQs, AI, MDCAT) embedded in RTL text cause overlapping, broken flow, and poor readability due to missing bidirectional text isolation.
 
-### Root Cause
-- **`Select`** (Radix Select): Always modal, no `modal` prop available — it locks scroll by default
-- **`Dialog`** and **`Sheet`** (Radix Dialog): Modal by default, triggers scroll lock with padding-right injection
-- The existing CSS overrides in `index.css` (lines 11-30) attempt to counter this, but Radix can still cause brief flickers
+## Solution
 
-### Plan
+### 1. Create `RTLText` utility component
+**New file: `src/components/RTLText.tsx`**
 
-**1. Harden CSS overrides in `src/index.css`**
-- Add `!important` overrides targeting `[data-radix-popper-content-wrapper]` to prevent any transform-based shifts
-- Add a universal rule: `body { margin-right: 0 !important; padding-right: 0 !important; }` to completely block any injection regardless of attribute selectors
-- Ensure `html` also gets `overflow-y: scroll !important` to prevent any component from hiding the scrollbar
+A reusable component that automatically detects English words in RTL text and wraps them with `<bdi>` (bidirectional isolate) elements. This is the browser-native solution for mixed-direction text -- no CSS hacks needed.
 
-**2. Fix `Dialog` component (`src/components/ui/dialog.tsx`)**
-- Add `onOpenAutoFocus` handler with `e.preventDefault()` on DialogContent to prevent focus-triggered scroll adjustments
-- Add `will-change: transform` and `backface-visibility: hidden` to DialogContent for GPU compositing stability
+- Regex splits text on English/number sequences
+- Wraps each English segment in `<bdi dir="ltr" style="unicode-bidi: isolate">`
+- Supports rendering as any HTML element (h1, p, span, etc.)
 
-**3. Fix `Sheet` component (`src/components/ui/sheet.tsx`)**  
-- Similar treatment as Dialog — prevent body scroll lock side effects
+### 2. Add `tr()` helper to LanguageContext
+**File: `src/contexts/LanguageContext.tsx`**
 
-**4. Fix `Select` component (`src/components/ui/select.tsx`)**
-- The Radix Select primitive doesn't expose a `modal` prop, so the fix relies on the CSS overrides being robust enough to counteract its scroll-locking
+Add a `tr(key)` method that works like `t(key)` but returns React nodes with English words properly isolated. Components can use `tr()` instead of `t()` for any text that may contain English words in RTL mode.
 
-### Files to Modify
-- `src/index.css` — Strengthen universal anti-shaking CSS rules
-- `src/components/ui/dialog.tsx` — Add stability props to DialogContent
-- `src/components/ui/sheet.tsx` — Add stability props to SheetContent
-- `src/components/ui/select.tsx` — Minor stability enhancements if needed
+### 3. Update CSS for RTL typography
+**File: `src/index.css`**
+
+Enhance existing `.rtl-text` and `.font-nastaliq` classes:
+- Add `unicode-bidi: plaintext` to `.rtl-text` for better bidi algorithm handling
+- Increase line-height on `.font-nastaliq` from 2.2 to 2.4 for nuqta spacing
+- Add `.bidi-isolate` utility class
+
+### 4. Update Hero section
+**File: `src/pages/Index.tsx`**
+
+- Wrap the `titleSuffix` span (which contains "MCQs" in Sindhi/Urdu) with proper bidi isolation
+- Use `tr()` for subtitle text
+- Apply bidi isolation to the badge text
+
+### 5. Update other RTL-affected components
+- **`src/components/dashboard/DashboardHeader.tsx`** -- use RTLText for greeting
+- **`src/components/Footer.tsx`** -- use `tr()` for footer text containing English terms
+- **`src/components/exam/QuestionCard.tsx`** -- already has `rtl-text` class, add `unicode-bidi: plaintext`
+
+### Technical Approach
+Using the HTML `<bdi>` element is the W3C-recommended approach for bidirectional text isolation. It tells the browser's Unicode Bidirectional Algorithm to treat the enclosed text as an independent directional run, preventing English words from disrupting RTL flow. No `dir="rtl"` on `<html>` is needed -- the existing selective RTL approach is preserved.
 

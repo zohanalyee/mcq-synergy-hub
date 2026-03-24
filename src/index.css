@@ -4,26 +4,29 @@
 
 /* === Layout Stability: prevent scrollbar-induced shifts === */
 html {
-  overflow-y: scroll !important;
+  overflow-y: scroll;
   scrollbar-gutter: stable;
 }
 
-/* Universal body stability — block ALL Radix scroll-lock injections */
-body,
-body[style],
-body[style*="padding-right"],
-body[style*="overflow"],
-body[style*="margin-right"],
-body[data-scroll-locked] {
+/* Prevent Radix/Shadcn overlays from adding padding-right or overflow hidden to body */
+body[style*="padding-right"] {
   padding-right: 0 !important;
-  margin-right: 0 !important;
+}
+
+body[style*="overflow"] {
+  overflow: visible !important;
   overflow-y: scroll !important;
 }
 
-/* Prevent Radix popper wrappers from shifting layout */
-[data-radix-popper-content-wrapper] {
-  transform: none !important;
-  position: fixed !important;
+body[data-scroll-locked] {
+  padding-right: 0 !important;
+  overflow: visible !important;
+  overflow-y: scroll !important;
+  margin-right: 0 !important;
+}
+
+body[style*="margin-right"] {
+  margin-right: 0 !important;
 }
 
 /* Prevent text selection on interactive elements */
