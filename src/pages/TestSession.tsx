@@ -331,22 +331,9 @@ const TestSession = () => {
     });
   };
 
-  const resolveAnswer = (question: any): string => {
-    const raw = (question.answer || question.correct_option || '').trim();
-    // If it's a letter key, resolve to option text
-    if (['A','B','C','D','a','b','c','d'].includes(raw) && question.options) {
-      const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
-      const idx = raw.toUpperCase().charCodeAt(0) - 65;
-      if (opts[idx]) return String(opts[idx]).trim();
-    }
-    return raw;
-  };
-
-  const checkAnswer = (question: any, userAnswer: string | undefined): boolean => {
-    if (!userAnswer) return false;
-    const resolved = resolveAnswer(question);
-    return userAnswer.trim().toLowerCase() === resolved.toLowerCase();
-  };
+  // Use shared evaluation utilities
+  const resolveAnswer = (question: any): string => resolveCorrectAnswer(question);
+  const checkAnswer = (question: any, userAnswer: string | undefined): boolean => checkUserAnswer(question, userAnswer);
 
   const handleSubmit = async () => {
     console.log('=== TEST SUBMISSION DEBUG ===');
