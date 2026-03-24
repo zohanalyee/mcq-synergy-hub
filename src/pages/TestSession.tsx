@@ -475,67 +475,120 @@ const TestSession = () => {
           </>
         ) : (
           /* Results */
-          <Card>
-            <CardContent className="p-6 text-center">
-              <div className="mb-4">
-                <h2 className="text-2xl font-bold mb-2">Test Completed!</h2>
-                <p className="text-lg text-muted-foreground">
-                  You scored {score} out of {questions.length}
-                </p>
-                <div className="text-3xl font-bold text-primary mt-3">
-                  {Math.round((score / questions.length) * 100)}%
+          (() => {
+            const totalQ = questions.length;
+            const attemptedQ = Object.keys(answers).length;
+            const correctCount = questions.filter((q: any, i: number) => answers[i] === q.answer).length;
+            const wrongCount = attemptedQ - correctCount;
+            const skippedCount = totalQ - attemptedQ;
+            const percentage = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0;
+            const passingPercent = 50;
+            const isPassed = percentage >= passingPercent;
+            const timeTaken = testData.time_limit * 60 - timeRemaining;
+            const minutes = Math.floor(timeTaken / 60);
+            const seconds = timeTaken % 60;
+
+            return (
+              <div className="space-y-4">
+                {/* Pass/Fail Banner */}
+                <Card className={`border-2 ${isPassed ? 'border-green-500/50 bg-green-500/5' : 'border-red-500/50 bg-red-500/5'}`}>
+                  <CardContent className="py-6 text-center">
+                    {isPassed ? (
+                      <>
+                        <Award className="h-14 w-14 text-green-500 mx-auto mb-3" />
+                        <h1 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">Congratulations! 🎉</h1>
+                        <p className="text-green-600/80 dark:text-green-400/80">You passed the test!</p>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-14 w-14 text-red-500 mx-auto mb-3" />
+                        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">Keep Trying! 💪</h1>
+                        <p className="text-red-600/80 dark:text-red-400/80">You need {passingPercent}% to pass. Review and try again!</p>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Score + Stats */}
+                <Card>
+                  <CardContent className="py-5 text-center">
+                    <h2 className="text-lg font-semibold mb-1">{testData.session_name || 'Test'}</h2>
+                    <div className="text-5xl font-bold text-primary my-2">{percentage}%</div>
+                    <p className="text-muted-foreground text-sm">{correctCount} / {totalQ} correct</p>
+                    <Badge variant={isPassed ? "default" : "destructive"} className="mt-2">
+                      {isPassed ? "PASSED" : "FAILED"}
+                    </Badge>
+                  </CardContent>
+                </Card>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { icon: CheckCircle, label: 'Correct', value: correctCount, cls: 'text-green-500' },
+                    { icon: XCircle, label: 'Wrong', value: wrongCount, cls: 'text-red-500' },
+                    { icon: SkipForward, label: 'Skipped', value: skippedCount, cls: 'text-amber-500' },
+                    { icon: Clock, label: 'Time', value: `${minutes}m ${seconds}s`, cls: 'text-blue-500' },
+                  ].map((s, i) => (
+                    <Card key={i}>
+                      <CardContent className="py-3 text-center px-1">
+                        <s.icon className={`h-5 w-5 mx-auto mb-1 ${s.cls}`} />
+                        <div className="text-lg font-bold">{s.value}</div>
+                        <div className="text-[10px] text-muted-foreground">{s.label}</div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
+                <SmartFeedbackCard
+                  score={score}
+                  totalQuestions={totalQ}
+                  timeTaken={timeTaken}
+                  subjects={testData.subjects || []}
+                  testType="custom_quiz"
+                  onRetry={handleRetry}
+                  onGenerateNew={handleGenerateNew}
+                  onImprove={handleImprove}
+                  isImproving={isImproving}
+                />
+
+                {/* Answer Review */}
+                <div className="space-y-3 text-left">
+                  <h3 className="text-lg font-semibold">Review Answers</h3>
+                  {questions.map((question: any, index: number) => {
+                    const userAnswer = answers[index];
+                    const isCorrect = userAnswer === question.answer;
+                    return (
+                      <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
+                        <div className="flex items-start gap-2">
+                          {isCorrect ? (
+                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                          ) : (
+                            <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm mb-1 break-words">
+                              Q{index + 1}: {cleanQuestionText(question.question)}
+                            </p>
+                            <p className="text-xs">
+                              <span className="font-medium">Your answer:</span> {userAnswer || "Not answered"}
+                            </p>
+                            <p className="text-xs text-green-600">
+                              <span className="font-medium">Correct:</span> {question.answer}
+                            </p>
+                          </div>
+                        </div>
+                      </Alert>
+                    );
+                  })}
+                </div>
+
+                <div className="flex gap-3 justify-center flex-wrap">
+                  <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
+                  <Button size="sm" variant="outline" onClick={() => navigate("/analytics")}>AI Coach</Button>
                 </div>
               </div>
-
-              <SmartFeedbackCard
-                score={score}
-                totalQuestions={questions.length}
-                timeTaken={testData.time_limit * 60 - timeRemaining}
-                subjects={testData.subjects || []}
-                testType="custom_quiz"
-                onRetry={handleRetry}
-                onGenerateNew={handleGenerateNew}
-                onImprove={handleImprove}
-                isImproving={isImproving}
-              />
-
-              {/* Answer Review */}
-              <div className="space-y-3 mt-6 text-left">
-                <h3 className="text-lg font-semibold">Review Answers</h3>
-                {questions.map((question: any, index: number) => {
-                  const userAnswer = answers[index];
-                  const isCorrect = userAnswer === question.answer;
-                  return (
-                    <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
-                      <div className="flex items-start gap-2">
-                        {isCorrect ? (
-                          <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
-                        ) : (
-                          <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-sm mb-1 break-words">
-                            Q{index + 1}: {cleanQuestionText(question.question)}
-                          </p>
-                          <p className="text-xs">
-                            <span className="font-medium">Your answer:</span> {userAnswer || "Not answered"}
-                          </p>
-                          <p className="text-xs text-green-600">
-                            <span className="font-medium">Correct:</span> {question.answer}
-                          </p>
-                        </div>
-                      </div>
-                    </Alert>
-                  );
-                })}
-              </div>
-
-              <div className="flex gap-3 justify-center mt-6 flex-wrap">
-                <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
-                <Button size="sm" variant="outline" onClick={() => navigate("/analytics")}>AI Coach</Button>
-              </div>
-            </CardContent>
-          </Card>
+            );
+          })()
         )}
       </div>
     </Header>
