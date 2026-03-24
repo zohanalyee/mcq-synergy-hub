@@ -197,8 +197,15 @@ const TestSession = () => {
         if (fetchError) throw fetchError;
         if (!data) { setError("Test session not found"); setIsLoading(false); return; }
 
-        setTestData(data);
-        const subjectsArr = normalizeStringArray(data.subjects);
+        // Normalize all questions to canonical shape on load
+        const normalizedData = {
+          ...data,
+          questions: Array.isArray(data.questions)
+            ? (data.questions as any[]).map(normalizeQuestion)
+            : []
+        };
+        setTestData(normalizedData);
+        const subjectsArr = normalizeStringArray(normalizedData.subjects);
         const topicsArr = normalizeStringArray(data.topics);
         const difficultyArr = normalizeStringArray(data.difficulty_levels);
         const safeQuestionCount = typeof data.question_count === "number" ? data.question_count : Number(data.question_count) || 10;
