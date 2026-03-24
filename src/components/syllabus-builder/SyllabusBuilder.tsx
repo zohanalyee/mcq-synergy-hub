@@ -561,16 +561,20 @@ export const SyllabusBuilder = () => {
         topics: selectedTopicIds,
         subjects: uniqueSubjects,
         difficulty_levels: [quizSettings.difficulty],
-        questions: questions.map(q => ({
-          id: q.id,
-          question: q.title,
-          options: q.options,
-          correctOption: q.correctOption,
-          explanation: q.explanation,
-          difficulty: q.difficulty,
-          subject: q.subject,
-          topic: q.topic
-        })),
+        questions: questions.map(q => {
+          const resolved = resolveCorrectAnswer(q);
+          return {
+            id: q.id,
+            question: q.title,
+            options: q.options,
+            correctOption: q.correctOption,
+            answer: resolved, // canonical resolved answer text
+            explanation: q.explanation,
+            difficulty: q.difficulty,
+            subject: q.subject,
+            topic: q.topic
+          };
+        }),
         is_active: true
       })
       .select('id')
