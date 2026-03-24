@@ -518,6 +518,22 @@ html {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
   }
 
+  /* Branded MCQS AI text — matches logo gradient and font */
+  .brand-mcqsai {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    background: linear-gradient(to right, #7C3AED, #22D3EE);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    color: transparent;
+    unicode-bidi: isolate;
+    direction: ltr;
+    display: inline-block;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+  }
+
   /* Animated gradient shimmer for hero text */
   .text-gradient-animated {
     @apply bg-clip-text text-transparent;
