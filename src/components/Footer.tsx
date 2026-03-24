@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { t, language, isRTL } = useLanguage();
+  const { t, tr, language, isRTL } = useLanguage();
   const fontClass = isRTL ? 'font-nastaliq' : '';
 
   return (
