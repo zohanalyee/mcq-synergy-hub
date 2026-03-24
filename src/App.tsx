@@ -172,6 +172,7 @@ const App = () => {
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
                     <ProfileCompletionGuard>
+                    <Suspense fallback={<BrandingLoader message="Loading..." size="md" />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/auth" element={<Auth />} />
