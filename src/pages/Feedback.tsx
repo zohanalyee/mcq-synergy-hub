@@ -93,6 +93,11 @@ const Feedback = () => {
       setIsSuccess(true);
       toast.success('Thank you for helping us improve! 🎉');
 
+      // Refresh review queries globally
+      queryClient.invalidateQueries({ queryKey: ['public-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['public-review-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
+
       setTimeout(() => {
         setStars(0);
         setCategory('');
