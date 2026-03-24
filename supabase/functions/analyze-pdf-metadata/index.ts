@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 
 const corsHeaders = {
@@ -12,11 +13,39 @@ serve(async (req) => {
   }
 
   try {
+    // Authenticate the request
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unauthorized' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: claimsData, error: claimsError } = await supabase.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { filename, first_page_text } = await req.json();
 
-    if (!filename) {
-      throw new Error('filename is required');
+    if (!filename || typeof filename !== 'string') {
+      throw new Error('filename is required and must be a string');
     }
+
+    // Enforce input length limits
+    const sanitizedFilename = filename.substring(0, 500);
+    const sanitizedText = (first_page_text || '').substring(0, 2000);
 
     const systemPrompt = `You are an expert in Pakistani educational content categorization.
 Analyze the PDF filename and content preview to detect:
@@ -43,10 +72,10 @@ Important rules:
 
     const userPrompt = `Analyze this educational PDF:
 
-FILENAME: ${filename}
+FILENAME: ${sanitizedFilename}
 
 CONTENT PREVIEW:
-${(first_page_text || '').substring(0, 2000)}
+${sanitizedText}
 
 Detect System (Board), Level (Class), Subject, and Topic. Return only JSON.`;
 
@@ -77,7 +106,7 @@ Detect System (Board), Level (Class), Subject, and Topic. Return only JSON.`;
   } catch (error) {
     console.error('analyze-pdf-metadata error:', error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: 'An error occurred processing the request' }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
