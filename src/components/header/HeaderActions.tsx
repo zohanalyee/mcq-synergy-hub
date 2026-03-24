@@ -95,21 +95,41 @@ const HeaderActions = ({
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-muted">
-            <Globe className="h-4 w-4 shrink-0" />
+            {isMobile ? (
+              language === 'en' ? (
+                <Globe className="h-4 w-4 shrink-0" />
+              ) : (
+                <span className="text-base leading-none shrink-0">🇵🇰</span>
+              )
+            ) : (
+              <Languages className="h-4 w-4 shrink-0" />
+            )}
             <span className="sr-only">Language</span>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="min-w-[140px]">
           <DropdownMenuItem onClick={() => handleLanguageChange('en')} className="gap-2 cursor-pointer">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shrink-0">EN</span>
+            {isMobile ? (
+              <span className="text-base leading-none shrink-0">🌍</span>
+            ) : (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shrink-0">EN</span>
+            )}
             <span>English</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleLanguageChange('ur')} className="gap-2 cursor-pointer">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white shrink-0">UR</span>
+            {isMobile ? (
+              <span className="text-base leading-none shrink-0">🇵🇰</span>
+            ) : (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white shrink-0">UR</span>
+            )}
             <span>اردو</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => handleLanguageChange('sd')} className="gap-2 cursor-pointer">
-            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white shrink-0">SD</span>
+            {isMobile ? (
+              <span className="text-base leading-none shrink-0">🇵🇰</span>
+            ) : (
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white shrink-0">SD</span>
+            )}
             <span>سنڌي</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
