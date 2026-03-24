@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import AdminMessagesPanel from "./messages/AdminMessagesPanel";
 import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
+import StudySoundsManager from "./StudySoundsManager";
 
 type AdminTabsProps = {
   activeTab: string;
