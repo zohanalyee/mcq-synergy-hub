@@ -510,121 +510,58 @@ const AskDocument: React.FC = () => {
             </Button>
           </div>
 
-          {/* Messages */}
+          {/* Feature Coming Soon */}
           <ScrollArea className="flex-1 px-4 py-4">
-            {!active || active.messages.length === 0 ? (
-              /* ── Empty state ── */
-              <div className="flex flex-col items-center justify-center min-h-full py-12 gap-6 max-w-lg mx-auto">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg">
-                  <Bot className="h-8 w-8 text-white" />
-                </div>
-                <div className="text-center">
-                  <h2 className="text-xl font-bold text-foreground mb-2">
-                    {active?.context ? `Ask about ${active.context.name}` : "Ask Your Documents"}
-                  </h2>
-                  <p className="text-muted-foreground text-sm">
-                    {active?.context
-                      ? `I'll answer questions about ${active.context.name} from the course materials.`
-                      : "I can answer questions from your uploaded course materials using AI."}
-                  </p>
-                </div>
-
-                {/* Suggested questions */}
-                <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {suggestedQuestions.map((q, i) => (
-                    <motion.button
-                      key={q}
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.07 }}
-                      onClick={() => sendMessage(q)}
-                      className="text-left p-3 rounded-xl border border-border bg-muted/30 hover:bg-muted/60 hover:border-primary/40 transition-all text-sm text-muted-foreground hover:text-foreground group"
-                    >
-                      <div className="flex items-start gap-2">
-                        <Sparkles className="h-3.5 w-3.5 mt-0.5 text-primary/50 group-hover:text-primary transition-colors flex-shrink-0" />
-                        <span>{q}</span>
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-
-                {/* Browse subjects prompt */}
-                {!active && (
-                  <div className="w-full p-4 rounded-xl border border-dashed border-border bg-muted/10 text-center">
-                    <GraduationCap className="h-5 w-5 mx-auto mb-2 text-muted-foreground/50" />
-                    <p className="text-xs text-muted-foreground">
-                      Or pick a <strong>Subject / Topic</strong> from the sidebar to start a focused conversation.
-                    </p>
-                  </div>
-                )}
+            <div className="flex flex-col items-center justify-center min-h-full py-16 gap-6 max-w-lg mx-auto">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center shadow-lg">
+                <Bot className="h-8 w-8 text-white" />
               </div>
-            ) : (
-              /* ── Messages ── */
-              <div className="max-w-2xl mx-auto space-y-6 pb-2">
-                {active.messages.map(msg => (
-                  <MessageBubble key={msg.id} message={msg} />
-                ))}
-                {isLoading && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="flex gap-3"
+
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="w-full rounded-2xl border-2 border-dashed border-primary/30 bg-primary/5 p-6 text-center"
+              >
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-semibold mb-3">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  Feature Coming Soon
+                </div>
+                <h2 className="text-xl font-bold text-foreground mb-2">Ask Your Documents</h2>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  We are currently fine-tuning our AI to help you chat with your documents. Stay tuned for the launch!
+                </p>
+              </motion.div>
+
+              <div className="w-full grid grid-cols-1 sm:grid-cols-2 gap-2 opacity-40 pointer-events-none select-none">
+                {suggestedQuestions.map((q) => (
+                  <div
+                    key={q}
+                    className="text-left p-3 rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground"
                   >
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center flex-shrink-0 mt-1">
-                      <Bot className="h-4 w-4 text-white" />
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-3.5 w-3.5 mt-0.5 text-primary/50 flex-shrink-0" />
+                      <span>{q}</span>
                     </div>
-                    <div className="bg-muted/60 border border-border rounded-2xl rounded-tl-sm px-4 py-3">
-                      <TypingDots />
-                    </div>
-                  </motion.div>
-                )}
-                <div ref={scrollRef} />
+                  </div>
+                ))}
               </div>
-            )}
+            </div>
           </ScrollArea>
 
-          {/* ── Input bar ─────────────────────────────────────────── */}
-          <div className="px-4 py-3 border-t border-border bg-background/80 backdrop-blur-sm">
+          {/* Disabled Input bar */}
+          <div className="px-4 py-3 border-t border-border bg-background/80 backdrop-blur-sm opacity-50 pointer-events-none select-none">
             <div className="max-w-2xl mx-auto">
-              {documentsCount === 0 && (
-                <div className="mb-2 flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg px-3 py-2">
-                  <FileText className="h-3.5 w-3.5" />
-                  No documents indexed yet. Ask your admin to upload course materials.
-                </div>
-              )}
               <div className="flex gap-2 items-end">
                 <Textarea
-                  ref={textareaRef}
-                  value={input}
-                  onChange={e => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder={
-                    active?.context
-                      ? `Ask about ${active.context.name}...`
-                      : "Ask a question about your course materials..."
-                  }
-                  disabled={isLoading}
+                  disabled
+                  placeholder="Chat is currently disabled — coming soon..."
                   rows={1}
-                  className="flex-1 resize-none min-h-[44px] max-h-32 rounded-xl border-border focus-visible:ring-primary/30 text-sm"
-                  style={{ height: "auto" }}
-                  onInput={e => {
-                    const el = e.currentTarget;
-                    el.style.height = "auto";
-                    el.style.height = Math.min(el.scrollHeight, 128) + "px";
-                  }}
+                  className="flex-1 resize-none min-h-[44px] max-h-32 rounded-xl border-border text-sm cursor-not-allowed"
                 />
-                <Button
-                  onClick={() => sendMessage()}
-                  disabled={!input.trim() || isLoading}
-                  size="icon"
-                  className="h-11 w-11 rounded-xl flex-shrink-0"
-                >
-                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                <Button disabled size="icon" className="h-11 w-11 rounded-xl flex-shrink-0">
+                  <Send className="h-4 w-4" />
                 </Button>
               </div>
-              <p className="text-[10px] text-muted-foreground/50 mt-1.5 text-center">
-                Answers are grounded in uploaded course materials. Press Enter to send.
-              </p>
             </div>
           </div>
         </div>
