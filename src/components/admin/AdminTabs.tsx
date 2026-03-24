@@ -18,7 +18,7 @@ import {
   Database, BarChart3, LayoutDashboard, FileText, Upload, BookOpen,
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
-  Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star,
+  Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import AdminMessagesPanel from "./messages/AdminMessagesPanel";
 import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
+import StudySoundsManager from "./StudySoundsManager";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -124,6 +125,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "topics", label: "Topics", icon: FolderTree },
         { value: "job-tests", label: "Job Tests", icon: Briefcase },
         { value: "navigation", label: "Navigation", icon: Navigation },
+        { value: "study-sounds", label: "Study Sounds", icon: Music },
         { value: "messages", label: "Messages", icon: Mail },
         { value: "feedback-analytics", label: "Feedback", icon: Star },
       ],
@@ -261,6 +263,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="topics"><TopicManager /></TabsContent>
       <TabsContent value="job-tests"><JobTestManager /></TabsContent>
       <TabsContent value="navigation"><NavigationManager /></TabsContent>
+      <TabsContent value="study-sounds"><StudySoundsManager /></TabsContent>
       <TabsContent value="messages"><AdminMessagesPanel /></TabsContent>
       <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
     </Tabs>

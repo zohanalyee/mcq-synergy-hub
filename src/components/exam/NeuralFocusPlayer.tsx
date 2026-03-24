@@ -1,28 +1,39 @@
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { Play, Pause, Volume2, VolumeX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-// Free royalty-free ambient audio URLs (replace with your own)
-const PLAYLISTS = [
+const DEFAULT_PLAYLISTS = [
   {
     id: "focus",
     label: "🧠 Deep Focus",
     url: "https://cdn.pixabay.com/audio/2024/11/28/audio_3e2c2a1da3.mp3",
+    category: "focus",
   },
   {
     id: "lofi",
     label: "🎵 Lo-Fi Beats",
     url: "https://cdn.pixabay.com/audio/2024/06/11/audio_4abab29086.mp3",
+    category: "lofi",
   },
   {
     id: "rain",
     label: "🌧️ Rain Sounds",
     url: "https://cdn.pixabay.com/audio/2022/09/08/audio_ee677fffdf.mp3",
+    category: "ambient",
   },
-] as const;
+];
+
+const CATEGORY_EMOJI: Record<string, string> = {
+  ambient: "🌧️",
+  lofi: "🎵",
+  focus: "🧠",
+  classical: "🎹",
+};
 
 interface NeuralFocusPlayerProps {
   isOpen: boolean;
@@ -32,9 +43,37 @@ const NeuralFocusPlayer = ({ isOpen }: NeuralFocusPlayerProps) => {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
-  const [activePlaylist, setActivePlaylist] = useState<string>("focus");
+  const [activeTrackId, setActiveTrackId] = useState<string>("focus");
 
-  // Create / update audio element
+  // Fetch admin-uploaded tracks
+  const { data: adminTracks = [] } = useQuery({
+    queryKey: ["study-sounds-player"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("study_audio_tracks")
+        .select("*")
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  // Merge default + admin tracks
+  const allTracks = [
+    ...DEFAULT_PLAYLISTS.map((p) => ({
+      id: p.id,
+      label: p.label,
+      url: p.url,
+    })),
+    ...adminTracks.map((t: any) => ({
+      id: t.id,
+      label: `${CATEGORY_EMOJI[t.category] || "🎶"} ${t.title}`,
+      url: t.file_url,
+    })),
+  ];
+
+  // Create / cleanup audio element
   useEffect(() => {
     if (!audioRef.current) {
       audioRef.current = new Audio();
@@ -57,16 +96,13 @@ const NeuralFocusPlayer = ({ isOpen }: NeuralFocusPlayerProps) => {
     }
   }, [volume]);
 
-  const handlePlaylistChange = (playlistId: string) => {
-    const playlist = PLAYLISTS.find((p) => p.id === playlistId);
-    if (!playlist || !audioRef.current) return;
+  const handleTrackChange = (trackId: string) => {
+    const track = allTracks.find((t) => t.id === trackId);
+    if (!track || !audioRef.current) return;
 
-    setActivePlaylist(playlistId);
-    audioRef.current.src = playlist.url;
-    audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {
-      // Autoplay blocked
-      setIsPlaying(false);
-    });
+    setActiveTrackId(trackId);
+    audioRef.current.src = track.url;
+    audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
   };
 
   const togglePlayPause = () => {
@@ -76,14 +112,11 @@ const NeuralFocusPlayer = ({ isOpen }: NeuralFocusPlayerProps) => {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
-      // If no src yet, load the active playlist
       if (!audioRef.current.src || audioRef.current.src === window.location.href) {
-        const playlist = PLAYLISTS.find((p) => p.id === activePlaylist);
-        if (playlist) audioRef.current.src = playlist.url;
+        const track = allTracks.find((t) => t.id === activeTrackId);
+        if (track) audioRef.current.src = track.url;
       }
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {
-        setIsPlaying(false);
-      });
+      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => setIsPlaying(false));
     }
   };
 
@@ -93,23 +126,28 @@ const NeuralFocusPlayer = ({ isOpen }: NeuralFocusPlayerProps) => {
     <div className="glass-card rounded-2xl p-3 mb-2 border border-border/50">
       <div className="flex items-center gap-2 mb-2">
         <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-          Neural Focus
+          Study Sounds
         </span>
+        {adminTracks.length > 0 && (
+          <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">
+            +{adminTracks.length} custom
+          </Badge>
+        )}
       </div>
 
-      {/* Playlist chips */}
+      {/* Track chips */}
       <div className="flex flex-wrap gap-1.5 mb-3">
-        {PLAYLISTS.map((playlist) => (
+        {allTracks.map((track) => (
           <Badge
-            key={playlist.id}
-            variant={activePlaylist === playlist.id ? "default" : "secondary"}
+            key={track.id}
+            variant={activeTrackId === track.id ? "default" : "secondary"}
             className={cn(
               "cursor-pointer text-[10px] sm:text-xs transition-all",
-              activePlaylist === playlist.id && "bg-primary text-primary-foreground"
+              activeTrackId === track.id && "bg-primary text-primary-foreground"
             )}
-            onClick={() => handlePlaylistChange(playlist.id)}
+            onClick={() => handleTrackChange(track.id)}
           >
-            {playlist.label}
+            {track.label}
           </Badge>
         ))}
       </div>
@@ -118,7 +156,7 @@ const NeuralFocusPlayer = ({ isOpen }: NeuralFocusPlayerProps) => {
       <div className="flex items-center gap-2">
         <Button
           variant="ghost"
-          size="icon-sm"
+          size="icon"
           className="h-8 w-8 shrink-0"
           onClick={togglePlayPause}
         >

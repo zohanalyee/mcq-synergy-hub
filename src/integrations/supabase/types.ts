@@ -1786,6 +1786,39 @@ export type Database = {
           },
         ]
       }
+      study_audio_tracks: {
+        Row: {
+          category: string
+          created_at: string
+          file_url: string
+          id: string
+          is_active: boolean
+          sort_order: number
+          title: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          file_url: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          file_url?: string
+          id?: string
+          is_active?: boolean
+          sort_order?: number
+          title?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           admin_reviewed_at: string | null
