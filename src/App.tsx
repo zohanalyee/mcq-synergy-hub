@@ -273,8 +273,8 @@ const App = () => {
                       <Route path="/tools/random-number" element={<Suspense fallback={null}><RandomNumber /></Suspense>} />
                       <Route path="/tools/equation-solver" element={<Suspense fallback={null}><EquationSolver /></Suspense>} />
                       
-                      {/* HR & Attendance System */}
-                      <Route path="/tools/hr" element={<InstantAuthGuard title="Attendance & HR System" description="Sign in to manage attendance records and HR" actionName="HR Dashboard"><Suspense fallback={null}><AttendanceDashboard /></Suspense></InstantAuthGuard>} />
+                      {/* School Attendance System */}
+                      <Route path="/tools/hr" element={<InstantAuthGuard title="School Attendance  System" description="Complete attendance tracking  management" actionName="HR Dashboard"><Suspense fallback={null}><AttendanceDashboard /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/hr/student-attendance" element={<InstantAuthGuard title="Student Attendance" description="Sign in to mark student attendance" actionName="Student Attendance"><Suspense fallback={null}><StudentAttendancePage /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/hr/staff-attendance" element={<InstantAuthGuard title="Staff Attendance" description="Sign in to mark staff attendance" actionName="Staff Attendance"><Suspense fallback={null}><StaffAttendancePage /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/hr/setup" element={<InstantAuthGuard title="HR Setup" description="Sign in to configure HR settings" actionName="HR Setup"><Suspense fallback={null}><HRSetupPage /></Suspense></InstantAuthGuard>} />

@@ -13,7 +13,7 @@ export interface ToolDefinition {
   id: string;
   name: string;
   description: string;
-  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'HR & Attendance' | 'PDF Tools';
+  category: 'Calculators' | 'Student Tools' | 'Productivity' | 'Converters' | 'Generators' | 'Student & Staff' | 'PDF Tools';
   icon: LucideIcon;
   popular?: boolean;
   href: string;
@@ -21,7 +21,7 @@ export interface ToolDefinition {
 
 export const TOOL_CATEGORIES = [
   'All',
-  'HR & Attendance',
+  'Student & Staff',
   'PDF Tools',
   'Calculators',
   'Student Tools',
@@ -31,7 +31,7 @@ export const TOOL_CATEGORIES = [
 ] as const;
 
 export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg: string; hover: string; badge: string }> = {
-  'HR & Attendance': {
+  'Student & Staff': {
     icon: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400',
     border: 'border-emerald-200/60 dark:border-emerald-800/50',
     bg: 'bg-emerald-50/50 dark:bg-emerald-950/20',
@@ -83,8 +83,8 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
 };
 
 export const ALL_TOOLS: ToolDefinition[] = [
-  // === HR & Attendance System ===
-  { id: 'hr-system', name: 'Attendance & HR System', description: 'Complete attendance tracking & HR management', category: 'HR & Attendance', icon: Building2, popular: true, href: '/tools/hr' },
+  // === School Attendance System ===
+  { id: 'hr-system', name: 'School Attendance  System', description: 'Complete attendance tracking  management', category: 'Student & Staff', icon: Building2, popular: true, href: '/tools/hr' },
   // === Existing (7) ===
   { id: 'calculator', name: 'Calculator', description: 'Basic & scientific calculator', category: 'Calculators', icon: Calculator, popular: true, href: '/tools/math' },
   { id: 'age-calculator', name: 'Age Calculator', description: 'Calculate exact age from date of birth', category: 'Calculators', icon: Calendar, popular: true, href: '/tools/age-calculator' },

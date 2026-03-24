@@ -1,7 +1,7 @@
 // Unique per-tool icon color overrides for the Tools listing page
 // Each tool gets its own distinct icon background + text color
 export const TOOL_ICON_COLORS: Record<string, { iconBg: string; iconText: string }> = {
-  // HR & Attendance
+  // Student & Staff
   'hr-system':              { iconBg: 'bg-emerald-500/15 dark:bg-emerald-500/20', iconText: 'text-emerald-600 dark:text-emerald-400' },
   // Calculators
   'calculator':             { iconBg: 'bg-blue-500/15 dark:bg-blue-500/20', iconText: 'text-blue-600 dark:text-blue-400' },

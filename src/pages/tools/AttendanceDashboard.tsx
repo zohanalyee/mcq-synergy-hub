@@ -99,7 +99,7 @@ const AttendanceDashboard = () => {
       <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-4">
         <Building2 className="h-16 w-16 text-muted-foreground mx-auto" />
         <h2 className="text-xl font-bold">Sign in Required</h2>
-        <p className="text-muted-foreground">Please sign in to access the Attendance & HR System.</p>
+        <p className="text-muted-foreground">Please sign in to access the School Attendance  System.</p>
         <Button asChild><Link to="/signin">Sign In</Link></Button>
       </div>
     </Header>
@@ -112,8 +112,8 @@ const AttendanceDashboard = () => {
           <div className="inline-flex items-center justify-center h-20 w-20 rounded-2xl bg-primary/10 mb-4">
             <Building2 className="h-10 w-10 text-primary" />
           </div>
-          <h1 className="text-2xl font-bold text-foreground">Attendance & HR System</h1>
-          <p className="text-muted-foreground mt-2">Set up your institute to get started with comprehensive attendance tracking and HR management.</p>
+          <h1 className="text-2xl font-bold text-foreground">School Attendance  System</h1>
+          <p className="text-muted-foreground mt-2">Set up your institute to get started with comprehensive attendance tracking  management.</p>
           
           <div className="mt-8 p-6 rounded-2xl border border-border bg-card space-y-4 text-left">
             <h2 className="font-semibold text-foreground">Institute Setup</h2>
