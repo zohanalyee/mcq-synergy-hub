@@ -280,7 +280,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className={cn("hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto text-center", isRTL && "font-nastaliq")}
             >
-              {t('hero.subtitle')}
+              {tr('hero.subtitle')}
             </motion.p>
             
             <motion.div
