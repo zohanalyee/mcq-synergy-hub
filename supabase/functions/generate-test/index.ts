@@ -846,12 +846,7 @@ serve(async (req) => {
           
           dbQuestions = shuffledDbResults
             .filter(q => q.title && q.options && q.correct_option)
-            .map(q => ({
-              question: q.title,
-              options: Array.isArray(q.options) ? q.options : [],
-              answer: q.correct_option,
-              explanation: q.explanation || undefined
-            }));
+            .map(normalizeDbQuestion);
           
           existingQuestionTexts = dbQuestions.map(q => q.question);
           
