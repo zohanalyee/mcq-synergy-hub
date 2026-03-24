@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentCategory } from '@/interfaces/content';
 import { parseCSV, generateCSVTemplate, CSVProcessingResult, CSV_TEMPLATES } from '@/services/csvProcessorService';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { parseAiken } from '@/services/aikenParser';
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
