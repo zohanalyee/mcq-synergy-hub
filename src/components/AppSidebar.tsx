@@ -21,7 +21,7 @@ interface AppSidebarProps {
 const getIcon = (path: string) => {
   const icons: Record<string, { icon: React.ReactNode }> = {
     '/': { 
-      icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-blue-500" />
+      icon: <Home size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-blue-500" />
     },
     '/subjects': { 
       icon: <FileText size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-purple-500" />
