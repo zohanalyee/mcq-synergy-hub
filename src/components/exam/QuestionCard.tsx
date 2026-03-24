@@ -3,6 +3,7 @@ import { Flag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { cleanQuestionText } from "@/lib/questionUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 interface QuestionCardProps {
