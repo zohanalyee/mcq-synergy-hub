@@ -24,11 +24,11 @@ const Tools = () => {
         <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-5">
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-lg">
             <Wrench className="h-4 w-4" />
             {ALL_TOOLS.length}+ Free Tools
           </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Free Online Tools</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Free Online AI Tools</h1>
           <p className="text-muted-foreground max-w-lg mx-auto">
             Premium tools for students, professionals, and everyone — fast, smooth & free forever.
           </p>
