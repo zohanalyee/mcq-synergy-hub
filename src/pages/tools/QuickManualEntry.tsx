@@ -1,17 +1,19 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Save, ChevronLeft, TrendingUp, Users, UserCheck, UserX, Trash2 } from 'lucide-react';
+import { Save, ChevronLeft, TrendingUp, Users, UserCheck, UserX, Trash2, CalendarClock, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { cn } from '@/lib/utils';
+import { format, parseISO, isToday } from 'date-fns';
 
 const STORAGE_KEY = 'attendance-quick-entry-draft';
 
@@ -47,8 +49,53 @@ const QuickManualEntry = () => {
   const [attendance, setAttendance] = useState(emptyAttendance());
   const [submitting, setSubmitting] = useState(false);
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [fetching, setFetching] = useState(false);
+  const [hasExistingData, setHasExistingData] = useState(false);
 
-  // Restore draft from localStorage
+  const isPastDate = !isToday(parseISO(date));
+  const formattedDate = format(parseISO(date), 'EEEE, MMM d, yyyy');
+
+  // Fetch existing attendance for the selected date
+  const fetchExistingAttendance = useCallback(async (selectedDate: string) => {
+    if (!user) return;
+    setFetching(true);
+    try {
+      const { data: existing, error } = await supabase
+        .from('class_attendance_summary' as any)
+        .select('*')
+        .eq('attendance_date', selectedDate)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      if (existing && (existing as any[]).length > 0) {
+        const restored = emptyAttendance();
+        (existing as any[]).forEach((row: any) => {
+          if (restored[row.class_id]) {
+            restored[row.class_id] = {
+              total: row.total_students || 0,
+              present: row.present_students || 0,
+              absent: row.absent_students || 0,
+              percentage: row.attendance_percentage || 0,
+            };
+          }
+        });
+        setAttendance(restored);
+        setHasExistingData(true);
+        toast.info(`Loaded existing attendance for ${format(parseISO(selectedDate), 'MMM d, yyyy')}`);
+      } else {
+        setAttendance(emptyAttendance());
+        setHasExistingData(false);
+      }
+    } catch (err: any) {
+      console.error('Fetch error:', err);
+      toast.error('Failed to fetch existing attendance');
+    } finally {
+      setFetching(false);
+    }
+  }, [user]);
+
+  // Restore draft only on first mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -62,6 +109,12 @@ const QuickManualEntry = () => {
     setDraftLoaded(true);
   }, []);
 
+  // Fetch existing data when date changes (after initial draft load)
+  useEffect(() => {
+    if (!draftLoaded || !user) return;
+    fetchExistingAttendance(date);
+  }, [date, draftLoaded, user, fetchExistingAttendance]);
+
   // Auto-save to localStorage
   useEffect(() => {
     if (!draftLoaded) return;
@@ -74,6 +127,7 @@ const QuickManualEntry = () => {
   const handleClearDraft = () => {
     if (!confirm('Clear all entered data?')) return;
     setAttendance(emptyAttendance());
+    setHasExistingData(false);
     localStorage.removeItem(STORAGE_KEY);
     toast.success('Draft cleared');
   };
@@ -128,10 +182,10 @@ const QuickManualEntry = () => {
 
       if (error) throw error;
 
-      // Clear draft on success
       localStorage.removeItem(STORAGE_KEY);
 
-      toast.success(`Attendance saved for ${records.length} classes`);
+      const action = hasExistingData ? 'updated' : 'saved';
+      toast.success(`Attendance ${action} for ${records.length} classes on ${format(parseISO(date), 'MMM d, yyyy')}`);
       navigate(`/tools/hr/analytics?date=${date}`);
     } catch (error: any) {
       console.error('Submit error:', error);
@@ -189,6 +243,31 @@ const QuickManualEntry = () => {
             </div>
           </div>
         </motion.div>
+
+        {/* Past Date Notice */}
+        {isPastDate && (
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}>
+            <div className="flex items-center gap-2 rounded-lg border border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 px-4 py-2.5">
+              <CalendarClock className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+                Editing attendance for {formattedDate}
+              </span>
+              {hasExistingData && (
+                <Badge variant="outline" className="ml-auto border-amber-400 text-amber-700 dark:text-amber-300 text-xs">
+                  Existing data loaded — changes will overwrite
+                </Badge>
+              )}
+            </div>
+          </motion.div>
+        )}
+
+        {/* Loading indicator when fetching */}
+        {fetching && (
+          <div className="flex items-center justify-center gap-2 py-3 text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span className="text-sm">Loading attendance data...</span>
+          </div>
+        )}
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -331,11 +410,11 @@ const QuickManualEntry = () => {
         {/* Submit */}
         <div className="flex gap-3 justify-end sticky bottom-4">
           <Button variant="outline" onClick={() => navigate('/tools/hr')}>Cancel</Button>
-          <Button onClick={handleSubmit} disabled={submitting} className="min-w-[160px]">
+          <Button onClick={handleSubmit} disabled={submitting || fetching} className="min-w-[160px]">
             {submitting ? (
               <><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" /> Saving...</>
             ) : (
-              <><Save className="h-4 w-4 mr-2" /> Submit Attendance</>
+              <><Save className="h-4 w-4 mr-2" /> {hasExistingData ? 'Update Attendance' : 'Submit Attendance'}</>
             )}
           </Button>
         </div>
