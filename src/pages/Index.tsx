@@ -59,7 +59,7 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { t, isRTL, language } = useLanguage();
+  const { t, tr, isRTL, language } = useLanguage();
   const fontClass = isRTL ? 'font-nastaliq' : '';
   const displayName = profile?.username || user?.email?.split('@')[0] || null;
   const greeting = user ? getLocalizedGreeting(language, displayName) : null;
