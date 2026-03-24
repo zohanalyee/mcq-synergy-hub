@@ -22,18 +22,16 @@ const UserSatisfactionPopup = () => {
   useEffect(() => {
     if (localStorage.getItem(STORAGE_KEY)) return;
 
-    // Check if user already has a rating
     const checkExisting = async () => {
       if (!user?.id) return;
       const { data } = await supabase
-        .from("user_ratings" as any)
+        .from("user_feedback")
         .select("id")
         .eq("user_id", user.id)
         .maybeSingle();
       if (data) {
         setAlreadyRated(true);
         localStorage.setItem(STORAGE_KEY, "true");
-        return;
       }
     };
 
@@ -58,10 +56,10 @@ const UserSatisfactionPopup = () => {
     setSubmitting(true);
 
     try {
-      // Double-check for existing rating
+      // Double-check for existing feedback
       if (user?.id) {
         const { data: existing } = await supabase
-          .from("user_ratings" as any)
+          .from("user_feedback")
           .select("id")
           .eq("user_id", user.id)
           .maybeSingle();
@@ -77,10 +75,33 @@ const UserSatisfactionPopup = () => {
         }
       }
 
-      const { error } = await supabase.from("user_ratings" as any).insert({
-        rating,
+      // Fetch user profile for name & avatar
+      let userName: string | null = null;
+      let userAvatarUrl: string | null = null;
+      const isGuest = !user;
+
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("username, avatar_url")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (profile) {
+          userName = profile.username;
+          userAvatarUrl = profile.avatar_url;
+        }
+      }
+
+      const { error } = await supabase.from("user_feedback").insert({
+        stars: rating,
+        category: "Other",
+        message: null,
         user_id: user?.id ?? null,
-      } as any);
+        user_name: userName,
+        user_avatar_url: userAvatarUrl,
+        is_guest: isGuest,
+      });
 
       if (error) throw error;
 
@@ -91,7 +112,9 @@ const UserSatisfactionPopup = () => {
       localStorage.setItem(STORAGE_KEY, "true");
       setVisible(false);
 
-      // Instantly refresh related queries
+      // Refresh all review-related queries
+      queryClient.invalidateQueries({ queryKey: ["public-reviews"] });
+      queryClient.invalidateQueries({ queryKey: ["public-review-stats"] });
       queryClient.invalidateQueries({ queryKey: ["review-stats"] });
       queryClient.invalidateQueries({ queryKey: ["all-reviews"] });
       queryClient.invalidateQueries({ queryKey: ["platform-stats"] });

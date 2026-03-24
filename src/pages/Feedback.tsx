@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,6 +21,7 @@ const categories = [
 
 const Feedback = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [stars, setStars] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [category, setCategory] = useState('');
@@ -58,6 +60,19 @@ const Feedback = () => {
     setIsSubmitting(true);
 
     try {
+      // Fetch profile for name & avatar
+      let userName: string | null = null;
+      let userAvatarUrl: string | null = null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profile) {
+        userName = profile.username;
+        userAvatarUrl = profile.avatar_url;
+      }
+
       const { error } = await supabase
         .from('user_feedback')
         .insert({
@@ -65,6 +80,9 @@ const Feedback = () => {
           stars,
           category,
           message: message.trim(),
+          user_name: userName,
+          user_avatar_url: userAvatarUrl,
+          is_guest: false,
         });
 
       if (error) {
@@ -75,6 +93,11 @@ const Feedback = () => {
 
       setIsSuccess(true);
       toast.success('Thank you for helping us improve! 🎉');
+
+      // Refresh review queries globally
+      queryClient.invalidateQueries({ queryKey: ['public-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['public-review-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['platform-stats'] });
 
       setTimeout(() => {
         setStars(0);
