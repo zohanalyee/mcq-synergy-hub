@@ -10,6 +10,7 @@ import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward }
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/lib/questionUtils";
+import { resolveCorrectAnswer, checkUserAnswer, normalizeQuestion } from "@/lib/testEvaluation";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
 import { processTestCompletion } from "@/utils/gamification";
 import ExamHeader from "@/components/exam/ExamHeader";
