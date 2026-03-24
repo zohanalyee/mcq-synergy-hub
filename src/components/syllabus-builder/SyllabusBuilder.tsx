@@ -609,21 +609,23 @@ export const SyllabusBuilder = () => {
       </motion.div>
 
       {/* Search + Filter Row */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="flex-1">
+      <div className="flex items-center gap-2 mb-3 flex-nowrap min-w-0">
+        <div className="flex-1 min-w-0">
           <GlassSearchInput
             placeholder="Search subjects or topics..."
             onSelect={handleSmartSearchSelect}
           />
         </div>
-        <GlassFilterSidebar
-          systems={systems}
-          availableLevels={availableLevels}
-          filterState={filterState}
-          toggleSystemFilter={toggleSystemFilter}
-          toggleLevelFilter={toggleLevelFilter}
-          clearFilters={clearFilters}
-        />
+        <div className="flex-shrink-0">
+          <GlassFilterSidebar
+            systems={systems}
+            availableLevels={availableLevels}
+            filterState={filterState}
+            toggleSystemFilter={toggleSystemFilter}
+            toggleLevelFilter={toggleLevelFilter}
+            clearFilters={clearFilters}
+          />
+        </div>
       </div>
 
       {/* Subject Cards Grid (full width) */}
