@@ -58,6 +58,19 @@ const Feedback = () => {
     setIsSubmitting(true);
 
     try {
+      // Fetch profile for name & avatar
+      let userName: string | null = null;
+      let userAvatarUrl: string | null = null;
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('username, avatar_url')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (profile) {
+        userName = profile.username;
+        userAvatarUrl = profile.avatar_url;
+      }
+
       const { error } = await supabase
         .from('user_feedback')
         .insert({
@@ -65,6 +78,9 @@ const Feedback = () => {
           stars,
           category,
           message: message.trim(),
+          user_name: userName,
+          user_avatar_url: userAvatarUrl,
+          is_guest: false,
         });
 
       if (error) {
