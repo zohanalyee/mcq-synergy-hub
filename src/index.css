@@ -54,6 +54,12 @@ button,
 .rtl-text {
   text-align: right;
   direction: rtl;
+  unicode-bidi: plaintext;
+}
+
+/* Bidirectional isolate utility for mixed LTR/RTL content */
+.bidi-isolate {
+  unicode-bidi: isolate;
 }
 
 .layout-ltr {
