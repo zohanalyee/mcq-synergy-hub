@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { cleanQuestionText } from "@/lib/questionUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
