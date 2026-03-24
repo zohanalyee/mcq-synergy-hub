@@ -1,46 +1,60 @@
 
+I reviewed the current flow and I do know what the issue is.
 
-# Fix RTL Text Rendering for Urdu/Sindhi
+Root cause:
+- `src/pages/TestSession.tsx` checks answers using `question.answer` or `question.correct_option`.
+- But some test sessions are saved with `correctOption` instead, especially from:
+  - `src/components/syllabus-builder/SyllabusBuilder.tsx`
+  - `src/services/questionBankService.ts`
+- In those sessions, the result page cannot resolve the correct answer text, so:
+  - every answer can be marked wrong
+  - the `Correct:` line appears empty
+- `QuestionCard` stores the user’s selected value as option text, so result checking must always resolve the stored correct key/text into comparable option text first.
 
-## Problem
-English words (MCQs, AI, MDCAT) embedded in RTL text cause overlapping, broken flow, and poor readability due to missing bidirectional text isolation.
+Implementation plan:
+1. Create one shared answer-normalization path
+- Add a small utility for test evaluation logic (either in `src/lib/` or directly reused inside `TestSession.tsx`).
+- It will:
+  - read correct answer from `answer`, `correct_option`, or `correctOption`
+  - resolve `A/B/C/D` keys to option text
+  - support options stored as arrays or `{ A, B, C, D }` objects
+  - normalize both user answer and correct answer with `trim().toLowerCase()`
 
-## Solution
+2. Fix `TestSession.tsx` to use the shared evaluator everywhere
+- Use the same helper for:
+  - submit scoring
+  - top result counts
+  - pass/fail percentage
+  - review-answer red/green styling
+  - `Correct:` display text
+- This removes duplicated comparison logic and prevents the summary and review from disagreeing.
 
-### 1. Create `RTLText` utility component
-**New file: `src/components/RTLText.tsx`**
+3. Normalize loaded session questions on fetch
+- When `custom_test_sessions.questions` is loaded, map each question into one consistent shape before rendering.
+- That ensures older sessions and mixed sources still work even if they were saved with different field names.
 
-A reusable component that automatically detects English words in RTL text and wraps them with `<bdi>` (bidirectional isolate) elements. This is the browser-native solution for mixed-direction text -- no CSS hacks needed.
+4. Harden session creation for future tests
+- Update session writers so newly saved sessions include a canonical correct-answer field as well:
+  - `src/components/syllabus-builder/SyllabusBuilder.tsx`
+  - `src/services/questionBankService.ts`
+- I’ll keep backward compatibility, but make future sessions less error-prone.
 
-- Regex splits text on English/number sequences
-- Wraps each English segment in `<bdi dir="ltr" style="unicode-bidi: isolate">`
-- Supports rendering as any HTML element (h1, p, span, etc.)
+5. Tighten edge-function compatibility without changing the DB-first strategy
+- `supabase/functions/generate-test/index.ts` already follows the intended order: DB first, AI second, cache fallback if AI is unavailable.
+- I’ll keep that behavior and make the response shape more explicit/consistent so the client can safely evaluate both cached and AI-generated questions.
 
-### 2. Add `tr()` helper to LanguageContext
-**File: `src/contexts/LanguageContext.tsx`**
+6. Add temporary targeted debugging for verification
+- Keep concise console logs around:
+  - raw correct field found
+  - resolved correct text
+  - selected user answer
+  - final match result
+- This will help verify the exact format during the next end-to-end test and can be removed once confirmed stable.
 
-Add a `tr(key)` method that works like `t(key)` but returns React nodes with English words properly isolated. Components can use `tr()` instead of `t()` for any text that may contain English words in RTL mode.
+Files likely affected:
+- `src/pages/TestSession.tsx`
+- `src/components/syllabus-builder/SyllabusBuilder.tsx`
+- `src/services/questionBankService.ts`
+- `supabase/functions/generate-test/index.ts`
 
-### 3. Update CSS for RTL typography
-**File: `src/index.css`**
-
-Enhance existing `.rtl-text` and `.font-nastaliq` classes:
-- Add `unicode-bidi: plaintext` to `.rtl-text` for better bidi algorithm handling
-- Increase line-height on `.font-nastaliq` from 2.2 to 2.4 for nuqta spacing
-- Add `.bidi-isolate` utility class
-
-### 4. Update Hero section
-**File: `src/pages/Index.tsx`**
-
-- Wrap the `titleSuffix` span (which contains "MCQs" in Sindhi/Urdu) with proper bidi isolation
-- Use `tr()` for subtitle text
-- Apply bidi isolation to the badge text
-
-### 5. Update other RTL-affected components
-- **`src/components/dashboard/DashboardHeader.tsx`** -- use RTLText for greeting
-- **`src/components/Footer.tsx`** -- use `tr()` for footer text containing English terms
-- **`src/components/exam/QuestionCard.tsx`** -- already has `rtl-text` class, add `unicode-bidi: plaintext`
-
-### Technical Approach
-Using the HTML `<bdi>` element is the W3C-recommended approach for bidirectional text isolation. It tells the browser's Unicode Bidirectional Algorithm to treat the enclosed text as an independent directional run, preventing English words from disrupting RTL flow. No `dir="rtl"` on `<html>` is needed -- the existing selective RTL approach is preserved.
-
+No database migration is needed for this fix.
