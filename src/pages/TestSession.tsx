@@ -510,17 +510,7 @@ const TestSession = () => {
           (() => {
             const totalQ = questions.length;
             const attemptedQ = Object.keys(answers).length;
-            const correctCount = questions.filter((q: any, i: number) => {
-              const userAns = (answers[i] || '').trim().toLowerCase();
-              const correctAns = (q.answer || '').trim().toLowerCase();
-              let resolved = correctAns;
-              if (['a','b','c','d'].includes(correctAns) && q.options) {
-                const opts = Array.isArray(q.options) ? q.options : Object.values(q.options || {});
-                const idx = correctAns.charCodeAt(0) - 97;
-                if (opts[idx]) resolved = String(opts[idx]).trim().toLowerCase();
-              }
-              return userAns && (userAns === correctAns || userAns === resolved);
-            }).length;
+            const correctCount = questions.filter((q: any, i: number) => checkAnswer(q, answers[i])).length;
             const wrongCount = attemptedQ - correctCount;
             const skippedCount = totalQ - attemptedQ;
             const percentage = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0;
