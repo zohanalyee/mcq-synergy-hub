@@ -76,9 +76,11 @@ button,
 
 .font-nastaliq-heading {
   font-family: 'Noto Nastaliq Urdu', serif;
-  line-height: 2.2;
-  font-size: 1.15em;
+  line-height: 2.6;
+  font-size: 0.9em;
   font-weight: 600;
+  letter-spacing: 0;
+  padding-bottom: 0.4em;
   unicode-bidi: plaintext;
 }
 
