@@ -59,7 +59,7 @@ const Home = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const navigate = useNavigate();
   const { user, profile } = useAuth();
-  const { t, isRTL, language } = useLanguage();
+  const { t, tr, isRTL, language } = useLanguage();
   const fontClass = isRTL ? 'font-nastaliq' : '';
   const displayName = profile?.username || user?.email?.split('@')[0] || null;
   const greeting = user ? getLocalizedGreeting(language, displayName) : null;
@@ -260,7 +260,7 @@ const Home = () => {
               >
                 <Sparkles className="h-3 w-3 text-violet-500 animate-pulse" />
                 <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:500px_auto] animate-shimmer bg-clip-text text-transparent font-semibold">
-                  {t('hero.badge')}
+                  {tr('hero.badge')}
                 </span>
               </motion.span>
             </motion.div>
@@ -271,7 +271,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className={cn("text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight text-center", isRTL && "font-nastaliq-heading")}
             >
-              <span>{t('hero.title')} </span><span className="text-gradient text-gradient-animated">{t('hero.titleHighlight1')}</span>{language === 'sd' ? ' ۽ ' : language === 'ur' ? ' اور ' : ' & '}<span className="text-gradient text-gradient-animated">{t('hero.titleHighlight2')}</span>{t('hero.titleSuffix') ? <span> {t('hero.titleSuffix')}</span> : null}
+              <span>{tr('hero.title')} </span><span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight1')}</span>{language === 'sd' ? ' ۽ ' : language === 'ur' ? ' اور ' : ' & '}<span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight2')}</span>{t('hero.titleSuffix') ? <span> {tr('hero.titleSuffix')}</span> : null}
             </motion.h1>
             
             <motion.p
@@ -280,7 +280,7 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className={cn("hidden md:block text-base text-muted-foreground mb-6 max-w-2xl mx-auto text-center", isRTL && "font-nastaliq")}
             >
-              {t('hero.subtitle')}
+              {tr('hero.subtitle')}
             </motion.p>
             
             <motion.div

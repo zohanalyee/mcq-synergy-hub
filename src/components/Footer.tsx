@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { t, language, isRTL } = useLanguage();
+  const { t, tr, language, isRTL } = useLanguage();
   const fontClass = isRTL ? 'font-nastaliq' : '';
 
   return (
@@ -16,7 +16,7 @@ const Footer = () => {
           <div className="space-y-3">
             <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {t('footer.description')}
+              {tr('footer.description')}
             </p>
             <p className="text-sm font-medium mt-2" style={{ color: '#4ade80' }}>
               🇵🇰 {t('footer.madeInPakistan')}
