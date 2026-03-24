@@ -527,7 +527,7 @@ const AskDocument: React.FC = () => {
                   Feature Coming Soon
                 </div>
                 <h2 className="text-xl font-bold text-foreground mb-2">Ask Your Documents</h2>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="text-4xl font-bold text-red-700 rounded-lg opacity-85 leading-relaxed">
                   We are currently fine-tuning our AI to help you chat with your documents. Stay tuned for the launch!
                 </p>
               </motion.div>
