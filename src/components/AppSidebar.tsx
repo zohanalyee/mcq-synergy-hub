@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { BrainCircuit, Sparkles, Home, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, ClipboardCheck, FileSearch, BookOpen } from 'lucide-react';
+import { BrainCircuit, Sparkles, Home, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, ClipboardCheck, FileSearch, BookOpen } from 'lucide-react'; // updated icons
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
