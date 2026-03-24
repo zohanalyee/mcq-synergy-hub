@@ -159,17 +159,26 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-     // ============= OPTIONAL AUTHENTICATION =============
-     let userId: string | null = null;
+     // ============= MANDATORY AUTHENTICATION =============
      const authHeader = req.headers.get("Authorization");
-     if (authHeader?.startsWith("Bearer ")) {
-       const token = authHeader.replace("Bearer ", "");
-       const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
-         global: { headers: { Authorization: authHeader } },
-       });
-       const { data: { user } } = await supabaseAuth.auth.getUser(token);
-       if (user) userId = user.id;
+     if (!authHeader?.startsWith("Bearer ")) {
+       return new Response(
+         JSON.stringify({ error: "Unauthorized: Authentication required to search documents" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
      }
+     const token = authHeader.replace("Bearer ", "");
+     const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+       global: { headers: { Authorization: authHeader } },
+     });
+     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+     if (claimsError || !claimsData?.claims?.sub) {
+       return new Response(
+         JSON.stringify({ error: "Unauthorized: Invalid or expired token" }),
+         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+       );
+     }
+     const userId: string = claimsData.claims.sub;
  
      // ============= RATE LIMITING (by userId or IP) =============
      const rateLimitKey = userId || req.headers.get("x-forwarded-for") || "anonymous";

@@ -99,8 +99,47 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
   const geminiApiKey = Deno.env.get("GEMINI_API_KEY")!;
+
+  // ============= AUTHENTICATION (admin only) =============
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Missing authorization header" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const token = authHeader.replace("Bearer ", "");
+  const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+  if (claimsError || !claimsData?.claims?.sub) {
+    return new Response(
+      JSON.stringify({ error: "Unauthorized: Invalid token" }),
+      { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const userId = claimsData.claims.sub;
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Verify admin role
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin")
+    .single();
+
+  if (!roleData) {
+    return new Response(
+      JSON.stringify({ error: "Forbidden: Admin access required" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
 
   try {
     // Get next pending job
