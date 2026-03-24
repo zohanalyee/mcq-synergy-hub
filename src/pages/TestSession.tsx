@@ -323,20 +323,43 @@ const TestSession = () => {
     });
   };
 
+  const resolveAnswer = (question: any): string => {
+    const raw = (question.answer || question.correct_option || '').trim();
+    // If it's a letter key, resolve to option text
+    if (['A','B','C','D','a','b','c','d'].includes(raw) && question.options) {
+      const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
+      const idx = raw.toUpperCase().charCodeAt(0) - 65;
+      if (opts[idx]) return String(opts[idx]).trim();
+    }
+    return raw;
+  };
+
+  const checkAnswer = (question: any, userAnswer: string | undefined): boolean => {
+    if (!userAnswer) return false;
+    const resolved = resolveAnswer(question);
+    return userAnswer.trim().toLowerCase() === resolved.toLowerCase();
+  };
+
   const handleSubmit = async () => {
+    console.log('=== TEST SUBMISSION DEBUG ===');
     let correctAnswers = 0;
     questions.forEach((question: any, index: number) => {
-      const userAns = (answers[index] || '').trim().toLowerCase();
-      const correctAns = (question.answer || '').trim().toLowerCase();
-      // Also check if answer is a letter key (A/B/C/D) that maps to an option
-      let resolvedCorrectAns = correctAns;
-      if (['a','b','c','d'].includes(correctAns) && question.options) {
-        const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
-        const idx = correctAns.charCodeAt(0) - 97; // a=0, b=1, etc.
-        if (opts[idx]) resolvedCorrectAns = String(opts[idx]).trim().toLowerCase();
-      }
-      if (userAns && (userAns === correctAns || userAns === resolvedCorrectAns)) correctAnswers++;
+      const userAns = answers[index];
+      const resolvedAns = resolveAnswer(question);
+      const isCorrect = checkAnswer(question, userAns);
+      
+      console.log(`Q${index + 1}:`, {
+        rawAnswer: question.answer,
+        resolvedAnswer: resolvedAns,
+        userAnswer: userAns,
+        optionsType: Array.isArray(question.options) ? 'array' : typeof question.options,
+        options: question.options,
+        isCorrect
+      });
+      
+      if (isCorrect) correctAnswers++;
     });
+    console.log(`=== RESULT: ${correctAnswers}/${questions.length} ===`);
 
     setScore(correctAnswers);
     setIsSubmitted(true);
@@ -487,17 +510,7 @@ const TestSession = () => {
           (() => {
             const totalQ = questions.length;
             const attemptedQ = Object.keys(answers).length;
-            const correctCount = questions.filter((q: any, i: number) => {
-              const userAns = (answers[i] || '').trim().toLowerCase();
-              const correctAns = (q.answer || '').trim().toLowerCase();
-              let resolved = correctAns;
-              if (['a','b','c','d'].includes(correctAns) && q.options) {
-                const opts = Array.isArray(q.options) ? q.options : Object.values(q.options || {});
-                const idx = correctAns.charCodeAt(0) - 97;
-                if (opts[idx]) resolved = String(opts[idx]).trim().toLowerCase();
-              }
-              return userAns && (userAns === correctAns || userAns === resolved);
-            }).length;
+            const correctCount = questions.filter((q: any, i: number) => checkAnswer(q, answers[i])).length;
             const wrongCount = attemptedQ - correctCount;
             const skippedCount = totalQ - attemptedQ;
             const percentage = totalQ > 0 ? Math.round((correctCount / totalQ) * 100) : 0;
@@ -575,17 +588,8 @@ const TestSession = () => {
                   <h3 className="text-lg font-semibold">Review Answers</h3>
                   {questions.map((question: any, index: number) => {
                     const userAnswer = answers[index];
-                    const isCorrect = (() => {
-                      const userAns = (userAnswer || '').trim().toLowerCase();
-                      const correctAns = (question.answer || '').trim().toLowerCase();
-                      let resolved = correctAns;
-                      if (['a','b','c','d'].includes(correctAns) && question.options) {
-                        const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
-                        const idx = correctAns.charCodeAt(0) - 97;
-                        if (opts[idx]) resolved = String(opts[idx]).trim().toLowerCase();
-                      }
-                      return !!(userAns && (userAns === correctAns || userAns === resolved));
-                    })();
+                    const isCorrect = checkAnswer(question, userAnswer);
+                    const correctText = resolveAnswer(question);
                     return (
                       <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
                         <div className="flex items-start gap-2">
@@ -602,15 +606,7 @@ const TestSession = () => {
                               <span className="font-medium">Your answer:</span> {userAnswer || "Not answered"}
                             </p>
                             <p className="text-xs text-green-600">
-                              <span className="font-medium">Correct:</span> {(() => {
-                                const ans = question.answer || '';
-                                if (['A','B','C','D','a','b','c','d'].includes(ans) && question.options) {
-                                  const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
-                                  const idx = ans.toUpperCase().charCodeAt(0) - 65;
-                                  if (opts[idx]) return String(opts[idx]);
-                                }
-                                return ans;
-                              })()}
+                              <span className="font-medium">Correct:</span> {correctText}
                             </p>
                           </div>
                         </div>
