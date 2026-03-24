@@ -69,15 +69,17 @@ button,
 /* Urdu / Sindhi typography */
 .font-nastaliq {
   font-family: 'Noto Nastaliq Urdu', serif;
-  line-height: 2.2;
+  line-height: 2.4;
   font-size: 1.1em;
+  unicode-bidi: plaintext;
 }
 
 .font-nastaliq-heading {
   font-family: 'Noto Nastaliq Urdu', serif;
-  line-height: 2.0;
+  line-height: 2.2;
   font-size: 1.15em;
   font-weight: 600;
+  unicode-bidi: plaintext;
 }
 
 /* Performance utility classes */
