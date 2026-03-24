@@ -83,7 +83,7 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
 };
 
 export const ALL_TOOLS: ToolDefinition[] = [
-  // === HR & Attendance System ===
+  // === School Attendance System ===
   { id: 'hr-system', name: 'School Attendance  System', description: 'Complete attendance tracking  management', category: 'Student & Staff', icon: Building2, popular: true, href: '/tools/hr' },
   // === Existing (7) ===
   { id: 'calculator', name: 'Calculator', description: 'Basic & scientific calculator', category: 'Calculators', icon: Calculator, popular: true, href: '/tools/math' },
