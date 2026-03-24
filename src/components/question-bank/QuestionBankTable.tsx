@@ -1,4 +1,5 @@
 import { useState } from "react";
+import BrandingLoader from "@/components/BrandingLoader";
 import { cleanQuestionText } from "@/lib/questionUtils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -112,9 +113,7 @@ export const QuestionBankTable = ({
     return (
       <Card>
         <CardContent className="p-6">
-          <div className="flex items-center justify-center h-32">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-          </div>
+          <BrandingLoader message="Loading questions..." size="sm" inline />
         </CardContent>
       </Card>
     );
