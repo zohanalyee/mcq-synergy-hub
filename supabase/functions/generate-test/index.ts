@@ -11,6 +11,32 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
+// Convert DB options (object {A:"...",B:"..."} or array) to array, and resolve answer letter to text
+function normalizeDbQuestion(q: any): { question: string; options: string[]; answer: string; explanation?: string } {
+  let optionsArray: string[];
+  let answerText: string = q.correct_option || '';
+
+  if (Array.isArray(q.options)) {
+    optionsArray = q.options;
+  } else if (q.options && typeof q.options === 'object') {
+    const keys = ['A', 'B', 'C', 'D'];
+    optionsArray = keys.map(k => q.options[k]).filter(Boolean);
+    // Resolve letter answer to full text
+    if (answerText && q.options[answerText]) {
+      answerText = q.options[answerText];
+    }
+  } else {
+    optionsArray = [];
+  }
+
+  return {
+    question: q.title,
+    options: optionsArray,
+    answer: answerText,
+    explanation: q.explanation || undefined
+  };
+}
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
@@ -820,12 +846,7 @@ serve(async (req) => {
           
           dbQuestions = shuffledDbResults
             .filter(q => q.title && q.options && q.correct_option)
-            .map(q => ({
-              question: q.title,
-              options: Array.isArray(q.options) ? q.options : [],
-              answer: q.correct_option,
-              explanation: q.explanation || undefined
-            }));
+            .map(normalizeDbQuestion);
           
           existingQuestionTexts = dbQuestions.map(q => q.question);
           
@@ -1240,12 +1261,7 @@ serve(async (req) => {
               const shuffledDbResults = shuffleArray(existingQuestions);
               dbQuestions = shuffledDbResults
                 .filter(q => q.title && q.options && q.correct_option)
-                .map(q => ({
-                  question: q.title,
-                  options: Array.isArray(q.options) ? q.options : [],
-                  answer: q.correct_option,
-                  explanation: q.explanation || undefined
-                }));
+                .map(normalizeDbQuestion);
 
               existingQuestionTexts = dbQuestions.map(q => q.question);
               console.log(`✅ Cache fallback: found ${dbQuestions.length} questions`);
