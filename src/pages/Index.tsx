@@ -260,7 +260,7 @@ const Home = () => {
               >
                 <Sparkles className="h-3 w-3 text-violet-500 animate-pulse" />
                 <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:500px_auto] animate-shimmer bg-clip-text text-transparent font-semibold">
-                  {t('hero.badge')}
+                  {tr('hero.badge')}
                 </span>
               </motion.span>
             </motion.div>
