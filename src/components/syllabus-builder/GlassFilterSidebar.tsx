@@ -208,5 +208,6 @@ export const GlassFilterSidebar = ({
         </div>
       </CollapsibleContent>
     </Collapsible>
+    </div>
   );
 };
