@@ -34,6 +34,7 @@ export const GlassFilterSidebar = ({
   };
 
   return (
+    <div className="relative">
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       {/* Compact Filter Toggle Button */}
       <CollapsibleTrigger asChild>
@@ -66,13 +67,13 @@ export const GlassFilterSidebar = ({
       </CollapsibleTrigger>
 
       {/* Expandable Filter Panel */}
-      <CollapsibleContent>
+      <CollapsibleContent className="absolute right-0 top-full z-50 mt-2 w-[calc(100vw-32px)] max-w-[400px]">
         <div className={cn(
-          "mt-3 rounded-3xl p-4",
-          "bg-white/80 dark:bg-slate-900/80",
+          "rounded-3xl p-4",
+          "bg-white/95 dark:bg-slate-900/95",
           "backdrop-blur-md",
           "border border-white/50 dark:border-white/20",
-          "shadow-lg"
+          "shadow-xl"
         )}>
           {/* Header with Clear */}
           {hasActiveFilters && (
@@ -207,5 +208,6 @@ export const GlassFilterSidebar = ({
         </div>
       </CollapsibleContent>
     </Collapsible>
+    </div>
   );
 };
