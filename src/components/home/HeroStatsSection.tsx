@@ -18,7 +18,7 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
     initial={{ opacity: 0, y: 10 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ duration: 0.4, delay }}
-    className={`relative overflow-hidden rounded-2xl p-3 md:p-4
+    className={`relative overflow-hidden rounded-xl p-2 md:p-3
                bg-gradient-to-br ${gradient}
                shadow-md hover:shadow-lg transition-all duration-300 text-white`}
   >
@@ -33,8 +33,8 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
     <Sparkles className="absolute top-1.5 right-1.5 h-2.5 w-2.5 text-white/30" />
     
     <div className="relative z-10">
-      <div className="flex items-center gap-2 mb-1.5">
-        <div className="w-7 h-7 md:w-9 md:h-9 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+      <div className="flex items-center gap-1.5 mb-1">
+        <div className="w-6 h-6 md:w-7 md:h-7 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
           {icon}
         </div>
         {loading ? (
@@ -50,7 +50,7 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
         <p className="text-[10px] md:text-xs text-white/80 truncate">{label}</p>
       )}
       
-      <div className="mt-1.5 h-1 rounded-full bg-white/20 overflow-hidden">
+      <div className="mt-1 h-0.5 rounded-full bg-white/20 overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(progress, 100)}%` }}
