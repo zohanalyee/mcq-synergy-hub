@@ -196,7 +196,7 @@ const AskDocument: React.FC = () => {
   const [subjects, setSubjects] = useState<LMSSubject[]>([]);
   const [expandedSubject, setExpandedSubject] = useState<string | null>(null);
   const [subjectTopics, setSubjectTopics] = useState<Record<string, { id: string; name: string }[]>>({});
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
