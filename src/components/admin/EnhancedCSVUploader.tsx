@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentCategory } from '@/interfaces/content';
 import { parseCSV, generateCSVTemplate, CSVProcessingResult, CSV_TEMPLATES } from '@/services/csvProcessorService';
 import { toast } from 'sonner';
-import * as XLSX from 'xlsx';
+import ExcelJS from 'exceljs';
 import { parseAiken } from '@/services/aikenParser';
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -50,9 +50,16 @@ const EnhancedCSVUploader = ({
 
   const getFirstSheetCSV = async (file: File): Promise<string> => {
     const data = await file.arrayBuffer();
-    const wb = XLSX.read(data, { type: 'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_csv(ws);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(data);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return '';
+    const rows: string[] = [];
+    worksheet.eachRow((row) => {
+      const values = (row.values as (string | number | boolean | null)[]).slice(1); // ExcelJS is 1-indexed
+      rows.push(values.map(v => v != null ? String(v) : '').join(','));
+    });
+    return rows.join('\n');
   };
 
   const applyHeaderMappingToFirstLine = (csv: string, map: Record<string, string>): string => {
