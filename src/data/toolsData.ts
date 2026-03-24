@@ -21,7 +21,7 @@ export interface ToolDefinition {
 
 export const TOOL_CATEGORIES = [
   'All',
-  'HR & Attendance',
+  'Student & Staff',
   'PDF Tools',
   'Calculators',
   'Student Tools',
