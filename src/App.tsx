@@ -38,7 +38,7 @@ import AdminPanel from "./pages/AdminPanel";
 import ExternalCuration from "./pages/admin/ExternalCuration";
 import NotFound from "./pages/NotFound";
 const ReviewsManagement = lazy(() => import("./pages/admin/ReviewsManagement"));
-import NoticeBoard from "@/components/NoticeBoard";
+
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import Profile from "./pages/Profile";
@@ -167,7 +167,6 @@ const App = () => {
                       }}
                       visibleToasts={5}
                     />
-                    <NoticeBoard />
                     
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
