@@ -50,9 +50,16 @@ const EnhancedCSVUploader = ({
 
   const getFirstSheetCSV = async (file: File): Promise<string> => {
     const data = await file.arrayBuffer();
-    const wb = XLSX.read(data, { type: 'array' });
-    const ws = wb.Sheets[wb.SheetNames[0]];
-    return XLSX.utils.sheet_to_csv(ws);
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(data);
+    const worksheet = workbook.worksheets[0];
+    if (!worksheet) return '';
+    const rows: string[] = [];
+    worksheet.eachRow((row) => {
+      const values = (row.values as (string | number | boolean | null)[]).slice(1); // ExcelJS is 1-indexed
+      rows.push(values.map(v => v != null ? String(v) : '').join(','));
+    });
+    return rows.join('\n');
   };
 
   const applyHeaderMappingToFirstLine = (csv: string, map: Record<string, string>): string => {
