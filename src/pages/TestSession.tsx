@@ -514,7 +514,7 @@ const TestSession = () => {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-sm mb-1 break-words">
-                            Q{index + 1}: {question.question}
+                            Q{index + 1}: {cleanQuestionText(question.question)}
                           </p>
                           <p className="text-xs">
                             <span className="font-medium">Your answer:</span> {userAnswer || "Not answered"}
