@@ -75,17 +75,8 @@ const BrandingLoader = ({
         <motion.div
           className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-violet-500"
           style={{ backgroundSize: '200% 100%' }}
-          animate={{ backgroundPosition: ['0% 0%', '200% 0%'] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
-          initial={{ width: '0%' }}
-        />
-        {/* Indeterminate fill animation */}
-        <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-violet-500 -mt-full"
-          style={{ marginTop: '-100%', backgroundSize: '200% 100%' }}
           animate={{
-            width: ['0%', '70%', '100%', '70%', '0%'],
-            x: ['0%', '0%', '0%', '30%', '100%'],
+            width: ['0%', '60%', '100%', '60%', '0%'],
             backgroundPosition: ['0% 0%', '100% 0%', '200% 0%'],
           }}
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
