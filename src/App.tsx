@@ -294,6 +294,8 @@ const App = () => {
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
+                    </Routes>
+                    </Suspense>
                     </ProfileCompletionGuard>
                     </TooltipProvider>
                     </FloatingToolsProvider>

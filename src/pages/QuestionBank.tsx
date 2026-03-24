@@ -27,6 +27,7 @@ const QuestionBank = () => {
   const [activeTab, setActiveTab] = useState("bank");
   const [questions, setQuestions] = useState<QuestionBankItem[]>([]);
   const [loading, setLoading] = useState(true);
+  // BrandingLoader is used via QuestionBankTable's loading prop
   const [filters, setFilters] = useState<QuestionFilters>({});
   const [stats, setStats] = useState<any>(null);
   const [selectedQuestion, setSelectedQuestion] = useState<QuestionBankItem | null>(null);
