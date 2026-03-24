@@ -323,20 +323,43 @@ const TestSession = () => {
     });
   };
 
+  const resolveAnswer = (question: any): string => {
+    const raw = (question.answer || question.correct_option || '').trim();
+    // If it's a letter key, resolve to option text
+    if (['A','B','C','D','a','b','c','d'].includes(raw) && question.options) {
+      const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
+      const idx = raw.toUpperCase().charCodeAt(0) - 65;
+      if (opts[idx]) return String(opts[idx]).trim();
+    }
+    return raw;
+  };
+
+  const checkAnswer = (question: any, userAnswer: string | undefined): boolean => {
+    if (!userAnswer) return false;
+    const resolved = resolveAnswer(question);
+    return userAnswer.trim().toLowerCase() === resolved.toLowerCase();
+  };
+
   const handleSubmit = async () => {
+    console.log('=== TEST SUBMISSION DEBUG ===');
     let correctAnswers = 0;
     questions.forEach((question: any, index: number) => {
-      const userAns = (answers[index] || '').trim().toLowerCase();
-      const correctAns = (question.answer || '').trim().toLowerCase();
-      // Also check if answer is a letter key (A/B/C/D) that maps to an option
-      let resolvedCorrectAns = correctAns;
-      if (['a','b','c','d'].includes(correctAns) && question.options) {
-        const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
-        const idx = correctAns.charCodeAt(0) - 97; // a=0, b=1, etc.
-        if (opts[idx]) resolvedCorrectAns = String(opts[idx]).trim().toLowerCase();
-      }
-      if (userAns && (userAns === correctAns || userAns === resolvedCorrectAns)) correctAnswers++;
+      const userAns = answers[index];
+      const resolvedAns = resolveAnswer(question);
+      const isCorrect = checkAnswer(question, userAns);
+      
+      console.log(`Q${index + 1}:`, {
+        rawAnswer: question.answer,
+        resolvedAnswer: resolvedAns,
+        userAnswer: userAns,
+        optionsType: Array.isArray(question.options) ? 'array' : typeof question.options,
+        options: question.options,
+        isCorrect
+      });
+      
+      if (isCorrect) correctAnswers++;
     });
+    console.log(`=== RESULT: ${correctAnswers}/${questions.length} ===`);
 
     setScore(correctAnswers);
     setIsSubmitted(true);
