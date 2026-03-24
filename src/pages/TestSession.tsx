@@ -326,7 +326,16 @@ const TestSession = () => {
   const handleSubmit = async () => {
     let correctAnswers = 0;
     questions.forEach((question: any, index: number) => {
-      if (answers[index] === question.answer) correctAnswers++;
+      const userAns = (answers[index] || '').trim().toLowerCase();
+      const correctAns = (question.answer || '').trim().toLowerCase();
+      // Also check if answer is a letter key (A/B/C/D) that maps to an option
+      let resolvedCorrectAns = correctAns;
+      if (['a','b','c','d'].includes(correctAns) && question.options) {
+        const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
+        const idx = correctAns.charCodeAt(0) - 97; // a=0, b=1, etc.
+        if (opts[idx]) resolvedCorrectAns = String(opts[idx]).trim().toLowerCase();
+      }
+      if (userAns && (userAns === correctAns || userAns === resolvedCorrectAns)) correctAnswers++;
     });
 
     setScore(correctAnswers);
