@@ -30,7 +30,7 @@ const getIcon = (path: string) => {
       icon: <Target size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-red-500" />
     },
     '/recruitment-tests': { 
-      icon: <ClipboardList size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-500" />
+      icon: <ClipboardCheck size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-500" />
     },
     '/custom-syllabus': { 
       icon: <GraduationCap size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-indigo-500" />
