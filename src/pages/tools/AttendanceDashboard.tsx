@@ -99,7 +99,7 @@ const AttendanceDashboard = () => {
       <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-4">
         <Building2 className="h-16 w-16 text-muted-foreground mx-auto" />
         <h2 className="text-xl font-bold">Sign in Required</h2>
-        <p className="text-muted-foreground">Please sign in to access the Attendance & HR System.</p>
+        <p className="text-muted-foreground">Please sign in to access the School Attendance  System.</p>
         <Button asChild><Link to="/signin">Sign In</Link></Button>
       </div>
     </Header>
