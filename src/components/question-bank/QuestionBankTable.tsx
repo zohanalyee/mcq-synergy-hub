@@ -190,7 +190,7 @@ export const QuestionBankTable = ({
                           {question.is_featured && (
                             <Star className="h-4 w-4 text-yellow-500 fill-current" />
                           )}
-                          <span className="truncate">{question.question}</span>
+                          <span className="truncate">{cleanQuestionText(question.question)}</span>
                           <Eye className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                         </div>
                       </TableCell>
