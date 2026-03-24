@@ -60,7 +60,7 @@ const getIcon = (path: string) => {
       icon: <Database size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500" />
     },
     '/ask-docs': { 
-      icon: <BookOpen size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
+      icon: <FileSearch size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
     },
   };
   return icons[path] || { 
