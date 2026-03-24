@@ -111,12 +111,11 @@ export function AppSidebar({
               className="flex items-center gap-2 cursor-pointer transition-all duration-300"
               onClick={() => onNavigate('/')}
             >
-              <div className="relative rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 p-1.5 animate-pulse drop-shadow-[0_0_8px_rgba(79,70,229,0.5)]">
-                <BrainCircuit className="h-5 w-5 text-white" />
-                <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300" />
+              <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/25">
+                <Brain className="h-5 w-5 text-white" />
               </div>
               <span className="text-base font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-indigo-600">MCQS</span>
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-cyan-500">MCQS</span>
                 <span className="text-foreground">AI</span>
               </span>
             </div>
