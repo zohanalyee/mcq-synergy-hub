@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CheckCircle, XCircle, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cleanQuestionText } from "@/lib/questionUtils";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
 import { processTestCompletion } from "@/utils/gamification";
 import ExamHeader from "@/components/exam/ExamHeader";
