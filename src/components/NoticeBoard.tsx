@@ -163,15 +163,6 @@ const NoticeBoard = () => {
                     transition={{ delay: 0.2 }}
                   >
                     <div className="space-y-4">
-                      <div className="rounded-md bg-amber-50 p-4 border border-amber-200 dark:bg-amber-950/30 dark:border-amber-800">
-                        <p className="text-amber-800 dark:text-amber-200 font-medium">
-                          🚧 Website Under Development 🚧
-                        </p>
-                        <p className="text-amber-700 dark:text-amber-300 text-sm mt-1">
-                          We're working hard to bring you the best MCQ preparation experience. Some features may be limited or unavailable.
-                        </p>
-                      </div>
-                      
                       <div className="space-y-2">
                         <p className="text-sm text-muted-foreground">
                           MCQSAI now has user accounts! <span className="font-semibold text-primary">Sign up</span> to:

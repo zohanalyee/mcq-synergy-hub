@@ -1,5 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
-import { BrainCircuit, Sparkles, Home, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, ClipboardCheck, FileSearch, BookOpen } from 'lucide-react'; // updated icons
+import { BrainCircuit, Sparkles, Home, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, ClipboardCheck, BotMessageSquare, BookOpen, FileSignature } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
@@ -30,7 +30,7 @@ const getIcon = (path: string) => {
       icon: <Target size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-red-500" />
     },
     '/recruitment-tests': { 
-      icon: <ClipboardCheck size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-500" />
+      icon: <FileSignature size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-500" />
     },
     '/custom-syllabus': { 
       icon: <GraduationCap size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-indigo-500" />
@@ -60,7 +60,7 @@ const getIcon = (path: string) => {
       icon: <Database size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-violet-500" />
     },
     '/ask-docs': { 
-      icon: <FileSearch size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
+      icon: <BotMessageSquare size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-emerald-600" />
     },
   };
   return icons[path] || { 
