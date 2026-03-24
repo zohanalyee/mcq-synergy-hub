@@ -151,7 +151,9 @@ const TestSession = () => {
       if (data?.questions && data.questions.length > currentQuestionCount) {
         const existingQuestions = testData.questions || [];
         const existingQuestionTexts = new Set(existingQuestions.map((q: any) => q.question));
-        const newQuestions = data.questions.filter((q: any) => !existingQuestionTexts.has(q.question));
+        const newQuestions = data.questions
+          .filter((q: any) => !existingQuestionTexts.has(q.question))
+          .map(normalizeQuestion);
 
         if (newQuestions.length > 0) {
           setTestData((prev: any) => ({ ...prev, questions: [...(prev?.questions || []), ...newQuestions] }));
