@@ -34,6 +34,7 @@ export const GlassFilterSidebar = ({
   };
 
   return (
+    <div className="relative">
     <Collapsible open={isOpen} onOpenChange={setIsOpen}>
       {/* Compact Filter Toggle Button */}
       <CollapsibleTrigger asChild>
