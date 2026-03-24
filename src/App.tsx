@@ -167,7 +167,6 @@ const App = () => {
                       }}
                       visibleToasts={5}
                     />
-                    <NoticeBoard />
                     
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
