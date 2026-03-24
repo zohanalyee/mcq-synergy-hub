@@ -602,7 +602,15 @@ const TestSession = () => {
                               <span className="font-medium">Your answer:</span> {userAnswer || "Not answered"}
                             </p>
                             <p className="text-xs text-green-600">
-                              <span className="font-medium">Correct:</span> {question.answer}
+                              <span className="font-medium">Correct:</span> {(() => {
+                                const ans = question.answer || '';
+                                if (['A','B','C','D','a','b','c','d'].includes(ans) && question.options) {
+                                  const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
+                                  const idx = ans.toUpperCase().charCodeAt(0) - 65;
+                                  if (opts[idx]) return String(opts[idx]);
+                                }
+                                return ans;
+                              })()}
                             </p>
                           </div>
                         </div>
