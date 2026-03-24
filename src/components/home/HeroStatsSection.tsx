@@ -50,7 +50,7 @@ const StatCard = ({ icon, value, label, gradient, delay, progress, loading }: St
         <p className="text-[10px] md:text-xs text-white/80 truncate">{label}</p>
       )}
       
-      <div className="mt-1.5 h-1 rounded-full bg-white/20 overflow-hidden">
+      <div className="mt-1 h-0.5 rounded-full bg-white/20 overflow-hidden">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: `${Math.min(progress, 100)}%` }}

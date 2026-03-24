@@ -177,7 +177,7 @@ const Home = () => {
           transition={{ duration: 0.4 }}
           className="container px-4 mx-auto pt-4"
         >
-          <div className="bg-gradient-to-r from-primary/10 to-accent/5 rounded-xl p-4 md:p-5 border border-primary/10">
+          <div className="bg-gradient-to-r from-primary/10 to-accent/5 rounded-xl p-2.5 md:p-3 border border-primary/10">
             <h2 className={cn(
               "text-lg md:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent",
               isRTL && "font-nastaliq-heading text-right"
