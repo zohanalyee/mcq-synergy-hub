@@ -21,6 +21,7 @@ const categories = [
 
 const Feedback = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [stars, setStars] = useState(0);
   const [hoveredStar, setHoveredStar] = useState(0);
   const [category, setCategory] = useState('');
