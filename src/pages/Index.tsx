@@ -259,7 +259,26 @@ const Home = () => {
               transition={{ duration: 0.5, delay: 0.1 }}
               className={cn("text-xl md:text-4xl lg:text-5xl font-bold mt-2 mb-2 md:mt-4 md:mb-4 tracking-tight text-center", isRTL && "font-nastaliq-heading")}
             >
-              <span>{tr('hero.title')} </span><span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight1')}</span>{language === 'sd' ? ' ۽ ' : language === 'ur' ? ' اور ' : ' & '}<span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight2')}</span>{t('hero.titleSuffix') ? <span> {tr('hero.titleSuffix')}</span> : null}
+              {language === 'en' ? (
+                <>
+                  <span>{t('hero.title')} </span>
+                  <span className="brand-mcqsai">{t('hero.brandName')}</span>
+                  <span> {t('hero.titleSuffix')} </span>
+                  <span className="text-gradient text-gradient-animated">{t('hero.titleHighlight1')}</span>
+                  <span> & </span>
+                  <span className="text-gradient text-gradient-animated">{t('hero.titleHighlight2')}</span>
+                </>
+              ) : (
+                <>
+                  <span>{tr('hero.title')} </span>
+                  <span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight1')}</span>
+                  {language === 'sd' ? ' ۽ ' : ' اور '}
+                  <span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight2')}</span>
+                  <span> {tr('hero.titleSuffix')} </span>
+                  <span className="brand-mcqsai">{t('hero.brandName')}</span>
+                  <span> {tr('hero.titlePrefix')}</span>
+                </>
+              )}
             </motion.h1>
             
             <motion.p
