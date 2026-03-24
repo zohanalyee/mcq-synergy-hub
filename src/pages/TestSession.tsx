@@ -10,6 +10,7 @@ import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward }
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/lib/questionUtils";
+import { resolveCorrectAnswer, checkUserAnswer, normalizeQuestion } from "@/lib/testEvaluation";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
 import { processTestCompletion } from "@/utils/gamification";
 import ExamHeader from "@/components/exam/ExamHeader";
@@ -150,7 +151,9 @@ const TestSession = () => {
       if (data?.questions && data.questions.length > currentQuestionCount) {
         const existingQuestions = testData.questions || [];
         const existingQuestionTexts = new Set(existingQuestions.map((q: any) => q.question));
-        const newQuestions = data.questions.filter((q: any) => !existingQuestionTexts.has(q.question));
+        const newQuestions = data.questions
+          .filter((q: any) => !existingQuestionTexts.has(q.question))
+          .map(normalizeQuestion);
 
         if (newQuestions.length > 0) {
           setTestData((prev: any) => ({ ...prev, questions: [...(prev?.questions || []), ...newQuestions] }));
@@ -196,8 +199,15 @@ const TestSession = () => {
         if (fetchError) throw fetchError;
         if (!data) { setError("Test session not found"); setIsLoading(false); return; }
 
-        setTestData(data);
-        const subjectsArr = normalizeStringArray(data.subjects);
+        // Normalize all questions to canonical shape on load
+        const normalizedData = {
+          ...data,
+          questions: Array.isArray(data.questions)
+            ? (data.questions as any[]).map(normalizeQuestion)
+            : []
+        };
+        setTestData(normalizedData);
+        const subjectsArr = normalizeStringArray(normalizedData.subjects);
         const topicsArr = normalizeStringArray(data.topics);
         const difficultyArr = normalizeStringArray(data.difficulty_levels);
         const safeQuestionCount = typeof data.question_count === "number" ? data.question_count : Number(data.question_count) || 10;
@@ -323,22 +333,9 @@ const TestSession = () => {
     });
   };
 
-  const resolveAnswer = (question: any): string => {
-    const raw = (question.answer || question.correct_option || '').trim();
-    // If it's a letter key, resolve to option text
-    if (['A','B','C','D','a','b','c','d'].includes(raw) && question.options) {
-      const opts = Array.isArray(question.options) ? question.options : Object.values(question.options || {});
-      const idx = raw.toUpperCase().charCodeAt(0) - 65;
-      if (opts[idx]) return String(opts[idx]).trim();
-    }
-    return raw;
-  };
-
-  const checkAnswer = (question: any, userAnswer: string | undefined): boolean => {
-    if (!userAnswer) return false;
-    const resolved = resolveAnswer(question);
-    return userAnswer.trim().toLowerCase() === resolved.toLowerCase();
-  };
+  // Use shared evaluation utilities
+  const resolveAnswer = (question: any): string => resolveCorrectAnswer(question);
+  const checkAnswer = (question: any, userAnswer: string | undefined): boolean => checkUserAnswer(question, userAnswer);
 
   const handleSubmit = async () => {
     console.log('=== TEST SUBMISSION DEBUG ===');
