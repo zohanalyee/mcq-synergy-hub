@@ -27,6 +27,15 @@ export const useAuth = () => {
   return context;
 };
 
+// Safe version that returns defaults instead of throwing - for contexts that depend on AuthProvider
+export const useAuthSafe = () => {
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    return { user: null, session: null, profile: null, loading: true, signOut: async () => {}, signIn: async () => {}, signUp: async () => {} } as AuthContextType;
+  }
+  return context;
+};
+
 interface AuthProviderProps {
   children: ReactNode;
 }
