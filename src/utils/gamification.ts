@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import confetti from "canvas-confetti";
 import { createNotification, NotificationType } from "@/services/notificationService";
+import { trackTestCompletion } from "@/utils/analytics";
 
 interface TestCompletionData {
   score: number;
