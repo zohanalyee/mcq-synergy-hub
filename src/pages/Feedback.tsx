@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '@/components/SEOHead';
 import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
