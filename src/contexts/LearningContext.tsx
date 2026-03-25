@@ -31,7 +31,18 @@ interface LearningProviderProps {
 }
 
 export const LearningProvider: React.FC<LearningProviderProps> = ({ children }) => {
-  const { user, profile } = useAuth();
+  // Use a safe version that won't crash during HMR if AuthProvider hasn't mounted yet
+  let authUser: any = null;
+  let authProfile: any = null;
+  try {
+    const auth = useAuth();
+    authUser = auth.user;
+    authProfile = auth.profile;
+  } catch {
+    // AuthProvider not ready yet (can happen during HMR)
+  }
+  const user = authUser;
+  const profile = authProfile;
   const [systems, setSystems] = useState<EducationalSystem[]>([]);
   const [levels, setLevels] = useState<Level[]>([]);
   const [activeContext, setActiveContextState] = useState<ActiveLearningContext | null>(null);
