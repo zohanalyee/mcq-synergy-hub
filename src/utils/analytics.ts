@@ -1,5 +1,5 @@
 // Google Analytics 4 utility
-const GA_MEASUREMENT_ID = 'G-G8VCGQ5CYL';
+const GA_MEASUREMENT_ID = 'G-92HVL8ZQFC';
 
 declare global {
   interface Window {
