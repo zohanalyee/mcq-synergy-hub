@@ -29,11 +29,12 @@ export const signUp = async (email: string, password: string, captchaToken?: str
 };
 
 // Sign in with email and password
-export const signIn = async (email: string, password: string) => {
+export const signIn = async (email: string, password: string, captchaToken?: string) => {
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
-      password
+      password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
     });
 
     if (error) {

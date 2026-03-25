@@ -1,6 +1,6 @@
 
-import React, { useState, useRef } from "react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
 import { signInWithGoogle } from "@/services/authService";
@@ -30,24 +30,44 @@ interface SignInPageProps {
   defaultTab?: "signin" | "signup";
 }
 
+type AuthTab = "signin" | "signup";
+
 const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const { user, signIn, signUp, loading } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<"signin" | "signup">(defaultTab);
+  const queryTab = searchParams.get("tab");
+  const resolvedDefaultTab: AuthTab = queryTab === "signup" || queryTab === "signin" ? queryTab : defaultTab;
+  const [activeTab, setActiveTab] = useState<AuthTab>(resolvedDefaultTab);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState<AuthTab | null>(null);
+  const [showSignInPassword, setShowSignInPassword] = useState(false);
+  const [showSignUpPassword, setShowSignUpPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-  const hcaptchaRef = useRef<HCaptcha>(null);
-  const [formData, setFormData] = useState({
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
+  const [signInCaptchaToken, setSignInCaptchaToken] = useState<string | null>(null);
+  const [signUpCaptchaToken, setSignUpCaptchaToken] = useState<string | null>(null);
+  const signInCaptchaRef = useRef<HCaptcha>(null);
+  const signUpCaptchaRef = useRef<HCaptcha>(null);
+  const [signInData, setSignInData] = useState({
+    email: "",
+    password: "",
+  });
+  const [signUpData, setSignUpData] = useState({
     fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
   });
+
+  useEffect(() => {
+    setActiveTab(resolvedDefaultTab);
+    setServerError(null);
+    setCaptchaError(null);
+  }, [resolvedDefaultTab]);
 
   if (user) {
     const intent = getIntentRaw();
@@ -58,9 +78,29 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     return <Navigate to="/analytics" />;
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const resetCaptchaState = () => {
+    setCaptchaError(null);
+    setSignInCaptchaToken(null);
+    setSignUpCaptchaToken(null);
+    signInCaptchaRef.current?.resetCaptcha();
+    signUpCaptchaRef.current?.resetCaptcha();
+  };
+
+  const handleTabChange = (nextTab: AuthTab) => {
+    setActiveTab(nextTab);
+    setServerError(null);
+    resetCaptchaState();
+  };
+
+  const handleSignInInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setSignInData((prev) => ({ ...prev, [name]: value }));
+    setServerError(null);
+  };
+
+  const handleSignUpInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setSignUpData((prev) => ({ ...prev, [name]: value }));
     setServerError(null);
   };
 
@@ -78,45 +118,59 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setServerError(null);
+    setCaptchaError(null);
+    if (!signInCaptchaToken) {
+      toast({ variant: "destructive", title: "Captcha Required", description: "Please complete the hCaptcha verification before signing in." });
+      return;
+    }
+    setIsSubmitting("signin");
     try {
-      await signIn(formData.email, formData.password);
+      await signIn(signInData.email, signInData.password, signInCaptchaToken);
     } catch (error: any) {
       setServerError(error.message || "Failed to sign in.");
+      signInCaptchaRef.current?.resetCaptcha();
+      setSignInCaptchaToken(null);
+    } finally {
+      setIsSubmitting(null);
     }
   };
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setServerError(null);
+    setCaptchaError(null);
     if (!agreedToTerms) {
       toast({ variant: "destructive", title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy." });
       return;
     }
-    if (!captchaToken) {
+    if (!signUpCaptchaToken) {
       toast({ variant: "destructive", title: "Captcha Required", description: "Please complete the hCaptcha verification." });
       return;
     }
-    if (formData.password !== formData.confirmPassword) {
+    if (signUpData.password !== signUpData.confirmPassword) {
       toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
-    if (formData.password.length < 8) {
+    if (signUpData.password.length < 8) {
       toast({ variant: "destructive", title: "Weak Password", description: "Password must be at least 8 characters." });
       return;
     }
-    if (calculatePasswordStrength(formData.password) < 50) {
+    if (calculatePasswordStrength(signUpData.password) < 50) {
       toast({ variant: "destructive", title: "Weak Password", description: "Please use a stronger password." });
       return;
     }
+    setIsSubmitting("signup");
     try {
-      await signUp(formData.email, formData.password, captchaToken);
+      await signUp(signUpData.email, signUpData.password, signUpCaptchaToken);
       toast({ title: "Account Created!", description: "Please check your email to verify your account." });
-      hcaptchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
+      signUpCaptchaRef.current?.resetCaptcha();
+      setSignUpCaptchaToken(null);
     } catch (error: any) {
       setServerError(error.message || "Failed to create account.");
-      hcaptchaRef.current?.resetCaptcha();
-      setCaptchaToken(null);
+      signUpCaptchaRef.current?.resetCaptcha();
+      setSignUpCaptchaToken(null);
+    } finally {
+      setIsSubmitting(null);
     }
   };
 
@@ -124,6 +178,42 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     "w-full h-11 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 pl-10 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all duration-200 outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed";
 
   const isLoading = loading;
+  const isBusy = isLoading || isGoogleLoading || isSubmitting !== null;
+  const renderCaptcha = ({
+    captchaRef,
+    token,
+    onVerify,
+  }: {
+    captchaRef: React.RefObject<HCaptcha | null>;
+    token: string | null;
+    onVerify: (token: string) => void;
+  }) => (
+    <div className="space-y-2 rounded-xl border border-border/60 bg-muted/30 p-3">
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="text-muted-foreground">Complete the security check</span>
+        <span className={token ? "text-primary font-medium" : "text-muted-foreground"}>
+          {token ? "Verified" : "Required"}
+        </span>
+      </div>
+      <div className="flex justify-center overflow-hidden">
+        <HCaptcha
+          ref={captchaRef}
+          sitekey={HCAPTCHA_SITE_KEY}
+          theme="light"
+          onVerify={(value) => {
+            onVerify(value);
+            setCaptchaError(null);
+            setServerError(null);
+          }}
+          onExpire={() => onVerify("")}
+          onError={() => {
+            setCaptchaError("Captcha failed to load. Check your hCaptcha site key in Supabase/Auth settings or disable captcha for local testing.");
+          }}
+        />
+      </div>
+      {captchaError && <p className="text-xs text-destructive">{captchaError}</p>}
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2">
@@ -175,14 +265,16 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           {/* Segmented Tab Toggle */}
           <div className="bg-[hsl(var(--muted))] rounded-full p-1 flex mb-6 relative">
             <button
-              onClick={() => setActiveTab("signin")}
+              type="button"
+              onClick={() => handleTabChange("signin")}
               className="flex-1 relative z-10 text-sm font-medium py-2 rounded-full transition-colors duration-200"
               style={{ color: activeTab === "signin" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
             >
               Sign In
             </button>
             <button
-              onClick={() => setActiveTab("signup")}
+              type="button"
+              onClick={() => handleTabChange("signup")}
               className="flex-1 relative z-10 text-sm font-medium py-2 rounded-full transition-colors duration-200"
               style={{ color: activeTab === "signup" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
             >
@@ -223,8 +315,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                     <input
                       name="email" type="email" placeholder="yourname@example.com"
-                      value={formData.email} onChange={handleInputChange}
-                      className={inputBaseClass} required disabled={isLoading}
+                        value={signInData.email} onChange={handleSignInInputChange}
+                        className={inputBaseClass} required disabled={isBusy}
                       autoComplete="username"
                     />
                   </div>
@@ -237,14 +329,14 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                     <input
                       name="password" type={showPassword ? "text" : "password"} placeholder="••••••••"
-                      value={formData.password} onChange={handleInputChange}
-                      className={`${inputBaseClass} pr-10`} required disabled={isLoading}
+                        value={signInData.password} onChange={handleSignInInputChange}
+                        className={`${inputBaseClass} pr-10`} required disabled={isBusy}
                       autoComplete="current-password"
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      <button type="button" onClick={() => setShowSignInPassword(!showSignInPassword)}
                       className="absolute right-3 top-3 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showSignInPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                   <div className="text-right">
@@ -254,13 +346,19 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   </div>
                 </div>
 
+                  {renderCaptcha({
+                    captchaRef: signInCaptchaRef,
+                    token: signInCaptchaToken,
+                    onVerify: (token) => setSignInCaptchaToken(token || null),
+                  })}
+
                 {/* Submit */}
                 <button
-                  type="submit" disabled={isLoading || isGoogleLoading}
+                    type="submit" disabled={isBusy || !signInCaptchaToken}
                   className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                   style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
                 >
-                  {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing In...</> : "Sign In"}
+                    {isSubmitting === "signin" ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing In...</> : "Sign In"}
                 </button>
               </motion.form>
             ) : (
@@ -280,8 +378,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                     <User className="absolute left-3 top-3 h-4 w-4 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                     <input
                       name="fullName" type="text" placeholder="Enter your full name"
-                      value={formData.fullName} onChange={handleInputChange}
-                      className={inputBaseClass} required disabled={isLoading}
+                        value={signUpData.fullName} onChange={handleSignUpInputChange}
+                        className={inputBaseClass} required disabled={isBusy}
                     />
                   </div>
                 </div>
@@ -293,8 +391,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                     <Mail className="absolute left-3 top-3 h-4 w-4 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                     <input
                       name="email" type="email" placeholder="yourname@example.com"
-                      value={formData.email} onChange={handleInputChange}
-                      className={inputBaseClass} required disabled={isLoading}
+                        value={signUpData.email} onChange={handleSignUpInputChange}
+                        className={inputBaseClass} required disabled={isBusy}
                       autoComplete="email"
                     />
                   </div>
@@ -305,19 +403,19 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   <label className="text-sm font-medium text-[hsl(var(--foreground))]">Password</label>
                   <div className="relative group">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
-                    <input
-                      name="password" type={showPassword ? "text" : "password"} placeholder="Create a password"
-                      value={formData.password} onChange={handleInputChange}
-                      className={`${inputBaseClass} pr-10`} required disabled={isLoading} minLength={8}
+                      <input
+                        name="password" type={showSignUpPassword ? "text" : "password"} placeholder="Create a password"
+                        value={signUpData.password} onChange={handleSignUpInputChange}
+                        className={`${inputBaseClass} pr-10`} required disabled={isBusy} minLength={8}
                       autoComplete="new-password"
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)}
+                      <button type="button" onClick={() => setShowSignUpPassword(!showSignUpPassword)}
                       className="absolute right-3 top-3 text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors"
                     >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showSignUpPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <PasswordStrengthIndicator password={formData.password} />
+                    <PasswordStrengthIndicator password={signUpData.password} />
                 </div>
 
                 {/* Confirm Password */}
@@ -327,8 +425,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
                     <input
                       name="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Confirm your password"
-                      value={formData.confirmPassword} onChange={handleInputChange}
-                      className={`${inputBaseClass} pr-10`} required disabled={isLoading} minLength={8}
+                        value={signUpData.confirmPassword} onChange={handleSignUpInputChange}
+                        className={`${inputBaseClass} pr-10`} required disabled={isBusy} minLength={8}
                       autoComplete="new-password"
                     />
                     <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -350,22 +448,19 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 </div>
 
                 {/* hCaptcha */}
-                <div className="flex justify-center">
-                  <HCaptcha
-                    ref={hcaptchaRef}
-                    sitekey={HCAPTCHA_SITE_KEY}
-                    onVerify={(token) => setCaptchaToken(token)}
-                    onExpire={() => setCaptchaToken(null)}
-                  />
-                </div>
+                {renderCaptcha({
+                  captchaRef: signUpCaptchaRef,
+                  token: signUpCaptchaToken,
+                  onVerify: (token) => setSignUpCaptchaToken(token || null),
+                })}
 
                 {/* Submit */}
                 <button
-                  type="submit" disabled={isLoading || isGoogleLoading || !agreedToTerms || !captchaToken}
+                  type="submit" disabled={isBusy || !agreedToTerms || !signUpCaptchaToken}
                   className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                   style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
                 >
-                  {isLoading ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating Account...</> : "Create Account"}
+                  {isSubmitting === "signup" ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating Account...</> : "Create Account"}
                 </button>
               </motion.form>
             )}
