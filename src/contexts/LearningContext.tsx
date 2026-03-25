@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from './AuthContext';
+import { useAuthSafe } from './AuthContext';
 import { EducationalSystem, Level, ActiveLearningContext } from '@/types/lms.types';
 import { getEducationalSystems, getLevelsBySystem } from '@/services/lmsStructureService';
 
