@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SEOHead from '@/components/SEOHead';
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import JobsHeader from "@/components/jobs/JobsHeader";
