@@ -6,6 +6,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState, lazy, Suspense } from "react";
 
 import StructuredData from "./components/StructuredData";
+import GA4PageTracker from "./components/GA4PageTracker";
 import BrandingLoader from "./components/BrandingLoader";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { AuthProvider } from "./contexts/AuthContext";
