@@ -67,6 +67,12 @@ const Analytics = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="AI Personal Coach & Performance Analytics"
+        description="Track your exam preparation progress with AI-powered analytics, personalized insights, and performance trends."
+        keywords="performance analytics, AI coach, study progress, exam tracking, personalized insights"
+        noindex
+      />
       <div className="max-w-7xl mx-auto px-4 pt-6 pb-20">
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="mb-4">
           <h1 className="text-2xl font-bold">AI Personal Coach</h1>

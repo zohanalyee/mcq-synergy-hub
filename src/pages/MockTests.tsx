@@ -46,6 +46,11 @@ const CompetitiveExams = () => {
   
   return (
     <Header>
+      <SEOHead
+        title="Mock Tests & Competitive Exam Simulations"
+        description="Practice full-length mock tests for PPSC, NTS, FPSC, CSS and other competitive exams with instant results."
+        keywords="mock test, competitive exam, PPSC test, NTS practice, FPSC exam, CSS mock test"
+      />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}

@@ -168,7 +168,12 @@ const Home = () => {
 
   return (
     <Header theme={theme} setTheme={setTheme}>
-      <div className={`min-h-screen bg-background ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
+       <div className={`min-h-screen bg-background ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
+      <SEOHead
+        title="AI-Powered MCQ Practice Platform"
+        description="Master MDCAT, ECAT, CSS, PPSC, NTS exams with 6000+ MCQs, AI personal coach, and Urdu support. Best free exam preparation in Pakistan."
+        keywords="MDCAT MCQs, ECAT preparation, CSS exam, PPSC test, NTS practice, Pakistan exams, اردو MCQs, AI learning, MCQSAI"
+      />
       
       {/* Personalized Greeting for logged-in users */}
       {greeting && (

@@ -101,6 +101,11 @@ const Reviews = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Student Reviews & Testimonials"
+        description="Read real reviews from students using MCQsAI for exam preparation. See how MCQsAI helps students succeed."
+        keywords="MCQsAI reviews, student testimonials, exam prep reviews, user feedback"
+      />
       <div className="container px-4 mx-auto py-8 max-w-4xl">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold mb-2">User Reviews</h1>

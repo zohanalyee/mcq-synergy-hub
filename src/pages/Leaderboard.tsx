@@ -12,6 +12,11 @@ const Leaderboard = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Leaderboard - Top Performers"
+        description="See the top-performing students on MCQsAI. Compete with others and climb the leaderboard."
+        keywords="leaderboard, top students, rankings, competition, MCQ scores"
+      />
       <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
