@@ -3,8 +3,6 @@ import { Search, Filter, X, Building2, MapPin, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useUserRole } from "@/contexts/UserRoleContext";
-import QuickSubmissionDialog from "@/components/admin/QuickSubmissionDialog";
 import { cn } from "@/lib/utils";
 import { SectorType, RegionType, ExternalOpportunityFilters } from "@/types/externalOpportunities";
 
@@ -38,7 +36,6 @@ const GlassJobsFilters = ({
   filters,
   onFiltersChange 
 }: GlassJobsFiltersProps) => {
-  const { isAdmin } = useUserRole();
   const [filterOpen, setFilterOpen] = useState(false);
 
   const hasActiveFilters = 
@@ -232,13 +229,6 @@ const GlassJobsFilters = ({
           </PopoverContent>
         </Popover>
 
-        {/* Admin Quick Add Button */}
-        {isAdmin && (
-          <QuickSubmissionDialog 
-            category="job" 
-            buttonText="Add Job"
-          />
-        )}
       </div>
 
       {/* Active Filter Chips */}
