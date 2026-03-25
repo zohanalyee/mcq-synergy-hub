@@ -1,6 +1,7 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
+import { trackSignUp } from "@/utils/analytics";
 
 // Sign up with email and password
 export const signUp = async (email: string, password: string, captchaToken?: string) => {
@@ -21,6 +22,7 @@ export const signUp = async (email: string, password: string, captchaToken?: str
       throw error;
     }
 
+    trackSignUp('email');
     return { data, error: null };
   } catch (error) {
     console.error('Failed to sign up:', error);
