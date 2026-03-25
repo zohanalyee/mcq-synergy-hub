@@ -327,8 +327,8 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   <label className="text-sm font-medium text-[hsl(var(--foreground))]">Password</label>
                   <div className="relative group">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-[hsl(var(--muted-foreground))] group-focus-within:text-[hsl(var(--primary))] transition-colors" />
-                    <input
-                      name="password" type={showPassword ? "text" : "password"} placeholder="••••••••"
+                      <input
+                        name="password" type={showSignInPassword ? "text" : "password"} placeholder="••••••••"
                         value={signInData.password} onChange={handleSignInInputChange}
                         className={`${inputBaseClass} pr-10`} required disabled={isBusy}
                       autoComplete="current-password"
