@@ -234,13 +234,6 @@ const GlassScholarshipsFilters = ({
           </PopoverContent>
         </Popover>
 
-        {/* Admin Quick Add Button */}
-        {user && isAdmin && (
-          <QuickSubmissionDialog 
-            category="scholarship" 
-            buttonText="Add Scholarship"
-          />
-        )}
       </div>
 
       {/* Active Filter Chips */}

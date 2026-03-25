@@ -232,13 +232,6 @@ const GlassJobsFilters = ({
           </PopoverContent>
         </Popover>
 
-        {/* Admin Quick Add Button */}
-        {isAdmin && (
-          <QuickSubmissionDialog 
-            category="job" 
-            buttonText="Add Job"
-          />
-        )}
       </div>
 
       {/* Active Filter Chips */}
