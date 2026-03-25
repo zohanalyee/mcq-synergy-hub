@@ -1,4 +1,5 @@
 import Header from '@/components/Header';
+import SEOHead from '@/components/SEOHead';
 import Footer from '@/components/Footer';
 import { BrainCircuit, Target, BarChart3, Wrench, GraduationCap } from 'lucide-react';
 
