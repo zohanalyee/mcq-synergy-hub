@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SEOHead from '@/components/SEOHead';
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -135,6 +136,11 @@ const QuestionBank = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Question Bank - MCQ Repository"
+        description="Browse 6000+ MCQs with smart filtering by subject, topic, and difficulty. Generate custom tests from the question bank."
+        keywords="question bank, MCQ repository, exam questions, test generation, MCQ database"
+      />
       <div className="container mx-auto px-4 pt-8 pb-16">
         <div className="space-y-6">
           {/* Header */}

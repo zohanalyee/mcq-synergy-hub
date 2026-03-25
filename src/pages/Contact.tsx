@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '@/components/SEOHead';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,11 @@ const Contact = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Contact Us"
+        description="Get in touch with MCQsAI team. We'd love to hear from you about suggestions, feedback, or partnerships."
+        keywords="contact MCQsAI, support, feedback, help"
+      />
       <div className="max-w-5xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-8">Contact Us</h1>
 

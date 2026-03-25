@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import SEOHead from '@/components/SEOHead';
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Sparkles, Loader2, Wifi } from "lucide-react";
@@ -94,6 +95,11 @@ const Subjects = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Practice MCQs by Subject"
+        description="Practice Biology, Chemistry, Physics, English, Urdu, Mathematics MCQs for MDCAT, ECAT, and competitive exams in Pakistan."
+        keywords="Biology MCQs, Chemistry MCQs, Physics MCQs, subject-wise practice, MDCAT subjects, ECAT subjects"
+      />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-24">
         {/* Enhanced Header Section */}
         <motion.div

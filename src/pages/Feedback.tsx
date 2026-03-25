@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '@/components/SEOHead';
 import { useQueryClient } from '@tanstack/react-query';
 import Header from '@/components/Header';
 import { Button } from '@/components/ui/button';
@@ -115,6 +116,7 @@ const Feedback = () => {
 
   return (
     <Header>
+      <SEOHead title="Share Your Feedback" description="Help us improve MCQsAI by sharing your feedback and suggestions." noindex />
       <div className="max-w-lg mx-auto px-4 pt-4 pb-6">
         {/* Header */}
         <div className="text-center mb-4">

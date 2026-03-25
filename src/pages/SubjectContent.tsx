@@ -1,4 +1,5 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import SEOHead from '@/components/SEOHead';
 import { motion } from "framer-motion";
 import { Book, Sparkles, AlertCircle } from "lucide-react";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
@@ -523,6 +524,11 @@ const SubjectContent = () => {
   
   return (
     <Header>
+      <SEOHead
+        title={title ? `${title} MCQs - Practice Questions` : 'Subject Practice'}
+        description={title ? `Practice ${title} MCQs with detailed explanations. Free online ${title} quiz for MDCAT, ECAT, and competitive exams.` : undefined}
+        keywords={title ? `${title} MCQs, ${title} quiz, ${title} practice, ${title} questions` : undefined}
+      />
       {/* Generation Loader Overlay */}
       <TestGenerationLoader 
         isVisible={isGenerating} 

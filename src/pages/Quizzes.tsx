@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SEOHead from '@/components/SEOHead';
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -90,6 +91,11 @@ const Quizzes = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Online Quiz Practice Tests"
+        description="Take free online quizzes for MDCAT, ECAT, CSS, PPSC preparation. AI-powered quizzes with instant results and explanations."
+        keywords="online quiz, practice test, MCQ quiz, MDCAT quiz, ECAT quiz, free practice"
+      />
       <div className="container mx-auto px-4 pt-2 pb-4">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}

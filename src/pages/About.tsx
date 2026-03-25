@@ -1,4 +1,5 @@
 import Header from '@/components/Header';
+import SEOHead from '@/components/SEOHead';
 import Footer from '@/components/Footer';
 import { BrainCircuit, Target, BarChart3, Wrench, GraduationCap } from 'lucide-react';
 
@@ -13,6 +14,11 @@ const features = [
 const About = () => {
   return (
     <Header>
+      <SEOHead
+        title="About MCQsAI"
+        description="MCQsAI is Pakistan's AI-powered MCQ practice platform with 6000+ questions, 50+ tools, and comprehensive exam preparation for MDCAT, ECAT, CSS, and more."
+        keywords="about MCQsAI, AI exam platform, Pakistan education, EdTech"
+      />
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-6">About MCQSAI</h1>
 

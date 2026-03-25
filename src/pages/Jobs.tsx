@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import SEOHead from '@/components/SEOHead';
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import JobsHeader from "@/components/jobs/JobsHeader";
@@ -54,6 +55,11 @@ const Jobs = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Latest Jobs in Pakistan"
+        description="Find latest government and private job opportunities in Pakistan. PPSC, FPSC, NTS job listings and application details."
+        keywords="Pakistan jobs, government jobs, PPSC jobs, FPSC jobs, NTS jobs, career opportunities"
+      />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
         <JobsHeader />
         

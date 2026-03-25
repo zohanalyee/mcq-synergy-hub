@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import SEOHead from '@/components/SEOHead';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Input } from '@/components/ui/input';
@@ -21,6 +22,11 @@ const Tools = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Free Online Student Tools & Calculators"
+        description="50+ free online tools for students — GPA calculator, age calculator, unit converter, periodic table, and more."
+        keywords="free tools, GPA calculator, age calculator, unit converter, student tools, online calculators"
+      />
         <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-5">
         {/* Hero */}
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
