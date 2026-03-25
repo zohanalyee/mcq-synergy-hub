@@ -67,7 +67,7 @@ const PlatformStatsSection = () => {
     { to: Number(data?.test_count ?? 0), suffix: "+", label: "Tests Completed" },
   ];
 
-  console.log("STATS DATA RESPONSE:", data);
+  
 
   return (
     <motion.section
