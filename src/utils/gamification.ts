@@ -134,7 +134,15 @@ export const processTestCompletion = async (data: TestCompletionData): Promise<{
       });
     }
 
-    // 5. Trigger celebration effects
+    // 5. Track in GA4
+    trackTestCompletion({
+      score: data.score,
+      totalQuestions: data.totalQuestions,
+      testType: data.testType,
+      percentage: Math.round(percentage),
+    });
+
+    // 6. Trigger celebration effects
     if (percentage === 100) {
       triggerBigConfetti();
     } else if (percentage >= 70) {

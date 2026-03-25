@@ -22,6 +22,7 @@ export const signUp = async (email: string, password: string, captchaToken?: str
       throw error;
     }
 
+    trackSignUp('email');
     return { data, error: null };
   } catch (error) {
     console.error('Failed to sign up:', error);

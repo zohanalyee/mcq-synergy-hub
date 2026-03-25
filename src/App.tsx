@@ -144,6 +144,7 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
+        <GA4PageTracker />
         <StructuredData />
         <LoadingProvider>
           <AuthProvider>
