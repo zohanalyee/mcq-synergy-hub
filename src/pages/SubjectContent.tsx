@@ -1,4 +1,5 @@
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import SEOHead from '@/components/SEOHead';
 import { motion } from "framer-motion";
 import { Book, Sparkles, AlertCircle } from "lucide-react";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
