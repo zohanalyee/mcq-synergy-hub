@@ -141,7 +141,6 @@ const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <Router>
         <StructuredData />
