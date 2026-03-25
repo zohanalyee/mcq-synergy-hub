@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState, lazy, Suspense } from "react";
+import { HelmetProvider } from "react-helmet-async";
+import StructuredData from "./components/StructuredData";
 import BrandingLoader from "./components/BrandingLoader";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { AuthProvider } from "./contexts/AuthContext";
