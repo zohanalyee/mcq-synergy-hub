@@ -190,36 +190,45 @@ export const JobTestCard = ({
         </div>
 
         {/* Syllabus Expansion Panel */}
-        {isExpanded && (
-          <div className="px-3 pb-3 pt-0 border-t border-slate-100 dark:border-slate-700">
-            <div className="pt-2">
-              <h4 className="font-medium text-[10px] text-slate-700 dark:text-slate-300 mb-1.5">
-                Official Syllabus
-              </h4>
-              <div className="grid grid-cols-1 gap-0.5 max-h-32 overflow-y-auto">
-                {test.syllabus.map((item, index) => (
-                  <div 
-                    key={index}
-                    className="flex items-center justify-between py-1 px-1.5 rounded-lg 
-                               bg-white/50 dark:bg-slate-800/50"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <span className="text-[10px] text-slate-700 dark:text-slate-300 flex-1 line-clamp-1">
-                      {item.topic}
-                    </span>
-                    <Badge 
-                      variant="outline" 
-                      className="text-[8px] h-3.5 ml-1 px-1"
-                      style={{ borderColor: theme.main, color: theme.main }}
+        <AnimatePresence initial={false}>
+          {isExpanded && (
+            <motion.div
+              key="syllabus"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25, ease: "easeInOut" }}
+              className="overflow-hidden border-t border-slate-100 dark:border-slate-700"
+            >
+              <div className="px-3 pb-3 pt-2">
+                <h4 className="font-medium text-[10px] text-slate-700 dark:text-slate-300 mb-1.5">
+                  Official Syllabus
+                </h4>
+                <div className="grid grid-cols-1 gap-0.5 max-h-32 overflow-y-auto">
+                  {test.syllabus.map((item, index) => (
+                    <div 
+                      key={index}
+                      className="flex items-center justify-between py-1 px-1.5 rounded-lg 
+                                 bg-white/50 dark:bg-slate-800/50"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      {item.percentage}%
-                    </Badge>
-                  </div>
-                ))}
+                      <span className="text-[10px] text-slate-700 dark:text-slate-300 flex-1 line-clamp-1">
+                        {item.topic}
+                      </span>
+                      <Badge 
+                        variant="outline" 
+                        className="text-[8px] h-3.5 ml-1 px-1"
+                        style={{ borderColor: theme.main, color: theme.main }}
+                      >
+                        {item.percentage}%
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          </div>
-        )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Customization Panel */}
         {isCustomizing && (
