@@ -1,28 +1,27 @@
 
 
-# Fix Sitemap 404 Error
+# Fix 401 Unauthorized on `generate-test` Edge Function
 
 ## Problem
-The `_redirects` catch-all rule `/* /index.html 200` intercepts ALL requests including static files like `sitemap.xml` and `robots.txt`, serving the SPA's `index.html` instead of the actual file.
+The `generate-test` edge function returns **401 Unauthorized** on every call. No function logs exist, meaning the request is rejected at the Supabase gateway level before the function code executes.
 
-Lovable uses its own hosting infrastructure. The `_redirects` file needs to explicitly exclude static files from the SPA fallback.
+The `supabase/config.toml` has `verify_jwt = false` for this function, but the deployed function likely has a stale configuration where JWT verification is still enabled at the gateway level. The function itself also has in-code JWT validation (lines 676-714) which handles auth properly -- the issue is the gateway rejecting requests before they reach the function.
 
-## Solution
+## Root Cause
+The `config.toml` with `verify_jwt = false` needs to be re-deployed to take effect. The function must be redeployed so the gateway picks up the updated config.
 
-### Step 1: Update `_redirects` to serve static files first
-Add explicit rules for `sitemap.xml` and `robots.txt` BEFORE the catch-all:
+## Plan
 
-```
-/sitemap.xml    /sitemap.xml    200
-/robots.txt     /robots.txt     200
-/*              /index.html     200
-```
+### Step 1: Redeploy the edge function
+Use `supabase--deploy_edge_functions` to redeploy `generate-test`. This will sync the `verify_jwt = false` config to the gateway, allowing requests through to the function code (which handles its own auth).
 
-Redirect rules are processed top-to-bottom; the first match wins. This ensures these files are served directly.
+### Step 2: Test the function
+Use `supabase--curl_edge_functions` to verify the function responds (not 401) after redeployment.
 
-### Step 2: Verify build output
-Run a build to confirm `sitemap.xml` and `robots.txt` exist in `dist/`. Vite automatically copies everything from `public/` to the build output, so this should already work -- but we'll verify.
+### Step 3: Fix minor browser issues (optional)
+- The **CORB warning** on `js?id=G-G8VCGQ5CYL` is a known Chrome behavior with GA4 and is harmless -- no action needed.
+- The **form field missing id/name** warning can be addressed by adding `id` attributes to Select components if desired.
 
 ## Files Modified
-- `public/_redirects` -- add explicit static file rules above the catch-all
+- No code changes needed -- only a redeployment of the existing edge function.
 
