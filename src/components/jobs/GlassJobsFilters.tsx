@@ -36,7 +36,6 @@ const GlassJobsFilters = ({
   filters,
   onFiltersChange 
 }: GlassJobsFiltersProps) => {
-  const { isAdmin } = useUserRole();
   const [filterOpen, setFilterOpen] = useState(false);
 
   const hasActiveFilters = 

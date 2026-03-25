@@ -102,7 +102,7 @@ const Scholarships = () => {
         </div>
 
         {/* Glass Search & Filter Bar */}
-        <div className="max-w-3xl mx-auto mb-6">
+        <div className="max-w-2xl mx-auto mb-6">
           <GlassScholarshipsFilters 
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}

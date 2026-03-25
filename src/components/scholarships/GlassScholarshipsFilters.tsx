@@ -36,8 +36,6 @@ const GlassScholarshipsFilters = ({
   filters,
   onFiltersChange 
 }: GlassScholarshipsFiltersProps) => {
-  const { isAdmin } = useUserRole();
-  const { user } = useAuth();
   const [filterOpen, setFilterOpen] = useState(false);
 
   const hasActiveFilters = 
