@@ -1,60 +1,53 @@
+# Fix Console Warnings
 
-I reviewed the current flow and I do know what the issue is.
+## Issues Found
 
-Root cause:
-- `src/pages/TestSession.tsx` checks answers using `question.answer` or `question.correct_option`.
-- But some test sessions are saved with `correctOption` instead, especially from:
-  - `src/components/syllabus-builder/SyllabusBuilder.tsx`
-  - `src/services/questionBankService.ts`
-- In those sessions, the result page cannot resolve the correct answer text, so:
-  - every answer can be marked wrong
-  - the `Correct:` line appears empty
-- `QuestionCard` stores the user’s selected value as option text, so result checking must always resolve the stored correct key/text into comparable option text first.
+1. **Debug console.log left in production** — `PlatformStatsSection.tsx` line 70 logs `STATS DATA RESPONSE` on every render, including when data is still `undefined`.
+2. **Missing** `DialogDescription` **in multiple dialogs** — Radix UI requires either a `DialogDescription` or an `aria-describedby` attribute on `DialogContent`. Several dialog components are missing this, causing the React warning.
 
-Implementation plan:
-1. Create one shared answer-normalization path
-- Add a small utility for test evaluation logic (either in `src/lib/` or directly reused inside `TestSession.tsx`).
-- It will:
-  - read correct answer from `answer`, `correct_option`, or `correctOption`
-  - resolve `A/B/C/D` keys to option text
-  - support options stored as arrays or `{ A, B, C, D }` objects
-  - normalize both user answer and correct answer with `trim().toLowerCase()`
+## Plan
 
-2. Fix `TestSession.tsx` to use the shared evaluator everywhere
-- Use the same helper for:
-  - submit scoring
-  - top result counts
-  - pass/fail percentage
-  - review-answer red/green styling
-  - `Correct:` display text
-- This removes duplicated comparison logic and prevents the summary and review from disagreeing.
+### Step 1: Remove debug console.log
 
-3. Normalize loaded session questions on fetch
-- When `custom_test_sessions.questions` is loaded, map each question into one consistent shape before rendering.
-- That ensures older sessions and mixed sources still work even if they were saved with different field names.
+**File:** `src/components/home/PlatformStatsSection.tsx`
 
-4. Harden session creation for future tests
-- Update session writers so newly saved sessions include a canonical correct-answer field as well:
-  - `src/components/syllabus-builder/SyllabusBuilder.tsx`
-  - `src/services/questionBankService.ts`
-- I’ll keep backward compatibility, but make future sessions less error-prone.
+- Remove line 70: `console.log("STATS DATA RESPONSE:", data);`
 
-5. Tighten edge-function compatibility without changing the DB-first strategy
-- `supabase/functions/generate-test/index.ts` already follows the intended order: DB first, AI second, cache fallback if AI is unavailable.
-- I’ll keep that behavior and make the response shape more explicit/consistent so the client can safely evaluate both cached and AI-generated questions.
+### Step 2: Add hidden DialogDescription to dialog.tsx base component
 
-6. Add temporary targeted debugging for verification
-- Keep concise console logs around:
-  - raw correct field found
-  - resolved correct text
-  - selected user answer
-  - final match result
-- This will help verify the exact format during the next end-to-end test and can be removed once confirmed stable.
+**File:** `src/components/ui/dialog.tsx`
 
-Files likely affected:
-- `src/pages/TestSession.tsx`
-- `src/components/syllabus-builder/SyllabusBuilder.tsx`
-- `src/services/questionBankService.ts`
-- `supabase/functions/generate-test/index.ts`
+- Import `VisuallyHidden` from Radix or use `sr-only` class
+- This is the cleanest fix: update the `DialogContent` component to suppress the warning globally by accepting an optional `aria-describedby` or by documenting that consumers must add `DialogDescription`
 
-No database migration is needed for this fix.
+**Better approach**: Fix the specific dialogs that trigger warnings on the index page. Based on the console output, the warning fires when dialogs open. The most impactful fix is to add a visually-hidden `DialogDescription` to the base `DialogContent` component so ALL dialogs are covered automatically.
+
+Update `DialogContent` in `dialog.tsx`:
+
+- After the `{children}` render, add a fallback: if no `DialogDescription` is provided, render a visually hidden one
+- Simpler alternative: just add `aria-describedby={undefined}` to suppress the warning
+
+### Technical Detail
+
+In `dialog.tsx`, add `aria-describedby={undefined}` as a default prop on `DialogPrimitive.Content` — this tells Radix not to warn about the missing description when one isn't needed.
+
+### Files Modified
+
+1. `src/components/home/PlatformStatsSection.tsx` — remove debug log
+2. `src/components/ui/dialog.tsx` — add `aria-describedby={undefined}` default to suppress warning for dialogs that intentionally skip descriptions
+
+&nbsp;
+
+Console Hygiene & Stability" Prompt:
+
+"Clean up Console Warnings and Debug Logs:
+
+1. Remove Debug Logs: In src/components/home/PlatformStatsSection.tsx, remove the console.log on line 70 that triggers 'STATS DATA RESPONSE' on every render. We no longer need this for production.
+
+2. Fix Dialog Accessibility Warnings: > * In src/components/ui/dialog.tsx, update the DialogContent component to suppress the Radix UI accessibility warning.
+
+The Fix: Add aria-describedby={undefined} as a default prop to the DialogPrimitive.Content. This informs Radix that a description is intentionally omitted for these dialogs.
+
+3. Add Loading Guard: In the PlatformStatsSection, ensure that the component handles undefined data gracefully without attempting to map or log it until the Supabase fetch is complete.
+
+4. Verification: After applying, the console should no longer show the 'Missing Description' warning or the constant 'STATS DATA' logs
