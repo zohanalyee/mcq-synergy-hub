@@ -310,6 +310,7 @@ const App = () => {
         </LoadingProvider>
       </Router>
     </QueryClientProvider>
+    </HelmetProvider>
   );
 };
 
