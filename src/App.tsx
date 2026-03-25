@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { useState, lazy, Suspense } from "react";
-import { HelmetProvider } from "react-helmet-async";
+
 import StructuredData from "./components/StructuredData";
 import BrandingLoader from "./components/BrandingLoader";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
@@ -141,7 +141,6 @@ const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
   return (
-    <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <Router>
         <StructuredData />
@@ -310,7 +309,6 @@ const App = () => {
         </LoadingProvider>
       </Router>
     </QueryClientProvider>
-    </HelmetProvider>
   );
 };
 
