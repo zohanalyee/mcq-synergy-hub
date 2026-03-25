@@ -75,10 +75,10 @@ export const JobTestCard = ({
     <motion.div
       whileHover={{ y: -2 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className="cursor-pointer group h-full"
+      className="cursor-pointer group"
     >
       <div
-        className="h-full rounded-2xl border border-white/50 dark:border-white/20 shadow-sm 
+        className="rounded-2xl border border-white/50 dark:border-white/20 shadow-sm 
                    hover:shadow-lg transition-all duration-300 overflow-hidden glass-card themed-card"
         style={{
           background: `linear-gradient(135deg, ${theme.pastel} 0%, rgba(var(--card-rgb), var(--cards-opacity, 0.95)) 100%)`,
