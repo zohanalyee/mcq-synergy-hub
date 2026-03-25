@@ -3,8 +3,6 @@ import { Search, Filter, X, Building2, MapPin, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useUserRole } from "@/contexts/UserRoleContext";
-import QuickSubmissionDialog from "@/components/admin/QuickSubmissionDialog";
 import { cn } from "@/lib/utils";
 import { SectorType, RegionType, ExternalOpportunityFilters } from "@/types/externalOpportunities";
 
