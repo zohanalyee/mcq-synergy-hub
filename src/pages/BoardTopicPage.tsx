@@ -16,6 +16,9 @@ import { Loader2, Sparkles, BookOpen } from 'lucide-react';
 import { cleanQuestionText } from '@/lib/questionUtils';
 import { motion } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
+import { trackEmptyTopicView } from '@/utils/analytics';
+import { supabase as supabaseClient } from '@/integrations/supabase/client';
+import { useEffect } from 'react';
 
 interface MCQOption { key: string; text: string; }
 
