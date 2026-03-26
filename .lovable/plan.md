@@ -1,73 +1,50 @@
 
 
-# Fix: BoardTopicPage Query Matching, Debug Info, and Welcome Modal
+# Data Visibility & Admin Override Fix
 
-## Problems
-1. **Welcome modal appears on every page** — AIWelcome checks `sessionStorage` but shows globally on all routes including `/boards/*`, blocking content
-2. **BoardTopicPage query fails to match** — `fromSlug("sindh-text-book-board")` produces "Sindh Text Book Board" but the DB name might be "Sindh Textbook Board" or similar; the `ILIKE '%...%'` with full name may not match
-3. **No debug info** when queries return empty — admins can't tell which step failed
+## Problem
+The MCQ query on BoardTopicPage hardcodes `.eq('status', 'approved')`, hiding any pending/draft MCQs. Admins cannot verify if data exists but is unapproved.
 
 ## Changes
 
-### 1. AIWelcome — Restrict to Home/Landing Only
-**File**: `src/components/AIWelcome.tsx`
+### `src/pages/BoardTopicPage.tsx`
 
-- Import `useLocation` from react-router-dom
-- Add a route check: only show on `/` (home page)
-- If `location.pathname !== '/'`, return null immediately
-- This ensures the modal never interrupts `/boards`, `/blog`, `/faq`, or any other internal page
+1. **Admin sees all statuses**: Remove `.eq('status', 'approved')` when user is admin. Add `isAdmin` from `useUserRole()` into the query key and pass it into the queryFn.
 
-### 2. BoardTopicPage — Improve Query Matching + Admin Debug
-**File**: `src/pages/BoardTopicPage.tsx`
+2. **Show unapproved count message**: After fetching, split MCQs into approved vs unapproved. For admins, show all. For non-admins, show only approved. When admin sees unapproved MCQs, display a warning banner: "X questions found but not approved yet" with status badges.
 
-**Better slug-to-name matching:**
-- Instead of converting slug to title case and using `ILIKE '%name%'`, split the slug into individual words and search with multiple `ILIKE` conditions
-- Create a helper that converts `sindh-text-book-board` → search for rows where name ILIKE `%sindh%` AND ILIKE `%board%` (using the most distinctive words)
-- Alternative simpler approach: fetch ALL educational systems (they're few) and do client-side fuzzy matching using word overlap scoring
+3. **Add status badge on each MCQ card for admins**: Show a small colored badge (pending=amber, rejected=red) next to the question number when admin is viewing.
 
-**Concrete approach — client-side fuzzy match for systems/levels/subjects:**
-- For educational_systems: fetch all active systems, then find the best match by comparing slug words against each name
-- For levels: fetch all levels for the matched system, find one containing the class number
-- For subjects: fetch all subjects for the matched level, fuzzy match against slug
-- For topics: same pattern
+4. **Enhanced debug info**: Add `mcqTotalCount` (before status filter) and `mcqApprovedCount` to the debug panel so admins can see the breakdown.
 
-**Admin debug panel:**
-- Track which step failed (system/level/subject/topic) in a `debugInfo` object
-- When `mcqs.length === 0` and user is admin (`useAuth` + admin check), show a collapsible debug card with:
-  - Which entity was found/not found at each step
-  - The slug values used
-  - The resolved DB names
+5. **Canonical slug matching verification**: In the fallback branch (when `topic` is null and query uses `canonical_topic_name`), log the slug being compared in the debug info so admins can verify if it matches.
 
-### 3. Add Missing Intermediate Routes (bonus)
-The screenshot shows `/boards/sindh-text-book-board/class-3` which has no route — but this is a separate issue. The plan focuses on the requested fixes.
+### Concrete code changes
 
----
+**Query modification** (line ~107-114):
+```typescript
+// For admins, fetch all statuses; for public, only approved
+let mcqQuery = supabase
+  .from('content_items')
+  .select('id, title, options, correct_option, explanation, difficulty, status')
+  .eq('category', 'mcq')
+  .limit(50);
+
+if (!isAdmin) {
+  mcqQuery = mcqQuery.eq('status', 'approved');
+}
+```
+
+**Warning banner** (in the empty/results section):
+- Count unapproved: `mcqs.filter(m => m.status !== 'approved').length`
+- Show amber alert: "{N} questions exist but are not approved yet"
+
+**Debug panel enhancement**:
+- Show `canonicalSlugUsed` when topic falls back to canonical matching
+- Show total vs approved count breakdown
 
 ## Files Modified
-- `src/components/AIWelcome.tsx` — add route restriction to `/` only
-- `src/pages/BoardTopicPage.tsx` — rewrite query to use client-side fuzzy matching, add admin debug panel
+- `src/pages/BoardTopicPage.tsx` — admin status bypass, unapproved warning, enhanced debug
 
-## Technical Details
-
-**Fuzzy matching algorithm:**
-```text
-slugWords = "sindh-text-book-board".split("-") → ["sindh", "text", "book", "board"]
-For each DB system name, compute overlap:
-  "Sindh Board" → words ["sindh", "board"] → overlap 2/4 = 0.5
-  "Sindh Textbook Board" → words ["sindh", "textbook", "board"] → overlap 2/4 = 0.5
-  But "textbook" contains "text" AND "book" → bonus matching
-Best match wins.
-```
-
-Simpler alternative: just fetch all systems and use `name.toLowerCase().replace(/\s+/g, '-')` to convert DB name to slug, then compare slugs directly. This is the most reliable approach.
-
-**Debug info structure:**
-```typescript
-{ systemFound: boolean, systemName: string | null,
-  levelFound: boolean, levelName: string | null,
-  subjectFound: boolean, subjectName: string | null,
-  topicFound: boolean, topicName: string | null }
-```
-
-Shown in a yellow alert card only for admin users when no MCQs are found.
+No database changes needed.
 
