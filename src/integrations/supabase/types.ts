@@ -2701,6 +2701,10 @@ export type Database = {
           topic_count: number
         }[]
       }
+      increment_empty_topic_view: {
+        Args: { p_path: string }
+        Returns: undefined
+      }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
       match_document_sections: {
         Args: {
