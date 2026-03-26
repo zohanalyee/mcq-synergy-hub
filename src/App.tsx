@@ -235,9 +235,12 @@ const App = () => {
                       <Route path="/faq" element={<Suspense fallback={null}><FAQ /></Suspense>} />
                       <Route path="/study-guides" element={<Suspense fallback={null}><StudyGuides /></Suspense>} />
                       
-                      {/* Programmatic SEO - Board Routes */}
-                      <Route path="/boards" element={<Suspense fallback={null}><Boards /></Suspense>} />
+                      {/* Programmatic SEO - Board Routes (most specific first) */}
                       <Route path="/boards/:boardSlug/class-:classNumber/:subjectSlug/:topicSlug" element={<Suspense fallback={null}><BoardTopicPage /></Suspense>} />
+                      <Route path="/boards/:boardSlug/class-:classNumber/:subjectSlug" element={<Suspense fallback={null}><BoardSubjectPage /></Suspense>} />
+                      <Route path="/boards/:boardSlug/class-:classNumber" element={<Suspense fallback={null}><BoardClassPage /></Suspense>} />
+                      <Route path="/boards/:boardSlug" element={<Suspense fallback={null}><BoardLandingPage /></Suspense>} />
+                      <Route path="/boards" element={<Suspense fallback={null}><Boards /></Suspense>} />
                       
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
