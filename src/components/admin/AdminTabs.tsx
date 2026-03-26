@@ -21,6 +21,7 @@ import {
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
   PenSquare, HelpCircle,
 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
 import NavigationManager from "./NavigationManager";
@@ -34,6 +35,7 @@ import { motion } from "framer-motion";
 import AdminMessagesPanel from "./messages/AdminMessagesPanel";
 import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
 import StudySoundsManager from "./StudySoundsManager";
+import SocialLinksManager from "./SocialLinksManager";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -133,6 +135,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "study-sounds", label: "Study Sounds", icon: Music },
         { value: "messages", label: "Messages", icon: Mail },
         { value: "feedback-analytics", label: "Feedback", icon: Star },
+        { value: "social-links", label: "Social Links", icon: Share2 },
       ],
     },
   ];
@@ -273,6 +276,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
       <TabsContent value="blog-manager"><BlogManager /></TabsContent>
       <TabsContent value="faq-manager"><FAQManager /></TabsContent>
+      <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
     </Tabs>
   );
 };

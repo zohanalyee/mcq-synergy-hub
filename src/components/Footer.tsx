@@ -1,12 +1,22 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin } from 'lucide-react';
+import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { useSocialLinks } from '@/hooks/useSocialLinks';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
   const { t, tr, language, isRTL } = useLanguage();
   const fontClass = isRTL ? 'font-nastaliq' : '';
+  const { data: socialLinks } = useSocialLinks();
+
+  const activeSocials = [
+    { key: 'facebook', url: socialLinks?.facebook, icon: Facebook, label: 'Facebook' },
+    { key: 'instagram', url: socialLinks?.instagram, icon: Instagram, label: 'Instagram' },
+    { key: 'tiktok', url: socialLinks?.tiktok, icon: null, label: 'TikTok' },
+    { key: 'twitter', url: socialLinks?.twitter, icon: Twitter, label: 'Twitter' },
+    { key: 'youtube', url: socialLinks?.youtube, icon: Youtube, label: 'YouTube' },
+  ].filter(s => s.url);
 
   return (
     <footer className={cn("bg-card border-t border-border text-card-foreground layout-ltr", fontClass)}>
@@ -21,6 +31,28 @@ const Footer = () => {
             <p className="text-sm font-medium mt-2" style={{ color: '#4ade80' }}>
               🇵🇰 {t('footer.madeInPakistan')}
             </p>
+            {activeSocials.length > 0 && (
+              <div className="flex items-center gap-3 pt-2">
+                {activeSocials.map(({ key, url, icon: Icon, label }) => (
+                  <a
+                    key={key}
+                    href={url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={label}
+                    className="text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {Icon ? (
+                      <Icon className="h-5 w-5" />
+                    ) : (
+                      <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.27 6.27 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.34-6.34V8.93a8.16 8.16 0 004.77 1.52V7a4.85 4.85 0 01-1.01-.31z"/>
+                      </svg>
+                    )}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Popular Subjects */}
