@@ -144,6 +144,9 @@ const BlogPost = lazy(() => import("./pages/BlogPost"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const StudyGuides = lazy(() => import("./pages/StudyGuides"));
 const Boards = lazy(() => import("./pages/Boards"));
+const BoardLandingPage = lazy(() => import("./pages/BoardLandingPage"));
+const BoardClassPage = lazy(() => import("./pages/BoardClassPage"));
+const BoardSubjectPage = lazy(() => import("./pages/BoardSubjectPage"));
 const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
 
 const App = () => {
