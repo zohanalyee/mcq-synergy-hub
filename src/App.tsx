@@ -143,6 +143,8 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const StudyGuides = lazy(() => import("./pages/StudyGuides"));
+const Boards = lazy(() => import("./pages/Boards"));
+const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
