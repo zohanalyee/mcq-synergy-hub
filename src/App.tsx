@@ -138,6 +138,12 @@ const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReports
 const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
 const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
 
+// Content & SEO pages
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const StudyGuides = lazy(() => import("./pages/StudyGuides"));
+
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
