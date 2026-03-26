@@ -65,16 +65,16 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Legal */}
+          {/* Resources */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">{t('footer.legal')}</h4>
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Resources</h4>
             <ul className="space-y-2 text-sm">
               {[
+                { label: 'Blog', path: '/blog' },
+                { label: 'FAQ', path: '/faq' },
+                { label: 'Study Guides', path: '/study-guides' },
                 { label: t('footer.aboutUs'), path: '/about' },
-                { label: t('nav.scholarships'), path: '/scholarships' },
-                { label: t('nav.jobs'), path: '/jobs' },
                 { label: t('footer.privacyPolicy'), path: '/privacy-policy' },
-                { label: t('footer.termsOfService'), path: '/terms-of-service' },
                 { label: t('footer.contactUs'), path: '/contact' },
               ].map(link => (
                 <li key={link.path}>

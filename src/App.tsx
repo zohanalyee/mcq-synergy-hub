@@ -138,6 +138,12 @@ const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReports
 const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
 const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
 
+// Content & SEO pages
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const FAQ = lazy(() => import("./pages/FAQ"));
+const StudyGuides = lazy(() => import("./pages/StudyGuides"));
+
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
 
@@ -217,6 +223,12 @@ const App = () => {
                       <Route path="/test-session/:id" element={<InstantAuthGuard title="Test Session" description="Sign in to take this test and save your results" actionName="Test Session"><TestSession /></InstantAuthGuard>} />
                       <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
                       <Route path="/reviews" element={<Reviews />} />
+                      
+                      {/* Content & SEO Pages */}
+                      <Route path="/blog" element={<Suspense fallback={null}><Blog /></Suspense>} />
+                      <Route path="/blog/:slug" element={<Suspense fallback={null}><BlogPost /></Suspense>} />
+                      <Route path="/faq" element={<Suspense fallback={null}><FAQ /></Suspense>} />
+                      <Route path="/study-guides" element={<Suspense fallback={null}><StudyGuides /></Suspense>} />
                       
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />

@@ -19,10 +19,13 @@ import {
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
+  PenSquare, HelpCircle,
 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
 import NavigationManager from "./NavigationManager";
+import BlogManager from "./BlogManager";
+import FAQManager from "./FAQManager";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -78,6 +81,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "review-duplicates", label: "Review Duplicates", icon: AlertTriangle },
         { value: "submit-content", label: "Submit", icon: FileText },
         { value: "bulk-upload", label: "Bulk Upload", icon: Upload },
+        { value: "blog-manager", label: "Blog", icon: PenSquare },
+        { value: "faq-manager", label: "FAQ", icon: HelpCircle },
       ],
     },
     {
@@ -266,6 +271,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="study-sounds"><StudySoundsManager /></TabsContent>
       <TabsContent value="messages"><AdminMessagesPanel /></TabsContent>
       <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
+      <TabsContent value="blog-manager"><BlogManager /></TabsContent>
+      <TabsContent value="faq-manager"><FAQManager /></TabsContent>
     </Tabs>
   );
 };
