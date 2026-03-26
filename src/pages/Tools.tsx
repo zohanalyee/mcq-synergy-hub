@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import SEOHead from '@/components/SEOHead';
+import PageBreadcrumb from '@/components/PageBreadcrumb';
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import { Input } from '@/components/ui/input';
@@ -28,7 +29,7 @@ const Tools = () => {
         keywords="free tools, GPA calculator, age calculator, unit converter, student tools, online calculators"
       />
         <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-5">
-        {/* Hero */}
+        <PageBreadcrumb items={[{ title: 'Tools', href: '/tools', isCurrent: true }]} showHomeButton={true} />
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-lg">
             <Wrench className="h-4 w-4" />

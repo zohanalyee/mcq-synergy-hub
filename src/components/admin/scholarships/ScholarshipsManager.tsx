@@ -186,7 +186,7 @@ export function ScholarshipsManager() {
                             {scholarship.imageUrl && (
                               <img 
                                 src={scholarship.imageUrl} 
-                                alt="" 
+                                alt={scholarship.title} 
                                 className="h-8 w-8 rounded object-cover"
                               />
                             )}

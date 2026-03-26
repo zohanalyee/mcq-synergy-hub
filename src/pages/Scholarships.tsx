@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import SEOHead from '@/components/SEOHead';
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Award, Calendar, ExternalLink, AlertCircle } from "lucide-react";
@@ -87,7 +88,7 @@ const Scholarships = () => {
         keywords="Pakistan scholarships, HEC scholarship, student funding, educational grants, scholarship opportunities"
       />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-16">
-        {/* Header Section */}
+        <PageBreadcrumb items={[{ title: 'Scholarships', href: '/scholarships', isCurrent: true }]} showHomeButton={true} />
         <div className="mb-6 text-center">
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}

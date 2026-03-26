@@ -175,7 +175,7 @@ export function JobsManager() {
                           {job.imageUrl && (
                             <img 
                               src={job.imageUrl} 
-                              alt="" 
+                              alt={job.title} 
                               className="h-8 w-8 rounded object-cover"
                             />
                           )}

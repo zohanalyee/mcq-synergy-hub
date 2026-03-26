@@ -11,9 +11,9 @@ const Footer = () => {
   return (
     <footer className={cn("bg-card border-t border-border text-card-foreground layout-ltr", fontClass)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
           {/* About */}
-          <div className="space-y-3">
+          <div className="space-y-3 col-span-2 sm:col-span-1">
             <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</h3>
             <p className="text-sm text-muted-foreground leading-relaxed">
               {tr('footer.description')}
@@ -23,16 +23,37 @@ const Footer = () => {
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Popular Subjects */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">{t('footer.quickLinks')}</h4>
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Popular Subjects</h4>
+            <ul className="space-y-2 text-sm">
+              {[
+                { label: 'Biology MCQs', path: '/subjects' },
+                { label: 'Chemistry MCQs', path: '/subjects' },
+                { label: 'Physics MCQs', path: '/subjects' },
+                { label: 'English MCQs', path: '/subjects' },
+                { label: 'Mathematics MCQs', path: '/subjects' },
+                { label: 'Computer Science', path: '/subjects' },
+              ].map(link => (
+                <li key={link.label}>
+                  <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Practice & Tests */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Practice & Tests</h4>
             <ul className="space-y-2 text-sm">
               {[
                 { label: t('nav.subjects'), path: '/subjects' },
-                { label: t('nav.tools'), path: '/tools' },
-                { label: t('nav.scholarships'), path: '/scholarships' },
-                { label: t('nav.jobs'), path: '/jobs' },
+                { label: 'Mock Tests', path: '/mock-tests' },
+                { label: 'Custom Syllabus', path: '/custom-syllabus' },
                 { label: t('footer.pastPapers'), path: '/past-papers' },
+                { label: t('nav.tools'), path: '/tools' },
                 { label: t('footer.reviews'), path: '/reviews' },
               ].map(link => (
                 <li key={link.path}>
@@ -50,6 +71,8 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               {[
                 { label: t('footer.aboutUs'), path: '/about' },
+                { label: t('nav.scholarships'), path: '/scholarships' },
+                { label: t('nav.jobs'), path: '/jobs' },
                 { label: t('footer.privacyPolicy'), path: '/privacy-policy' },
                 { label: t('footer.termsOfService'), path: '/terms-of-service' },
                 { label: t('footer.contactUs'), path: '/contact' },

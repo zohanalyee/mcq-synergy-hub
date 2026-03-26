@@ -203,7 +203,7 @@ const ImageConverter = () => {
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {files.map((f, i) => (
                     <div key={i} className="flex items-center gap-3 p-2 rounded-lg border border-border/40 bg-muted/20">
-                      <img src={previews[i]} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
+                      <img src={previews[i]} alt={f.name} className="h-10 w-10 rounded object-cover shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground truncate">{f.name}</p>
                         <p className="text-xs text-muted-foreground">{formatBytes(f.size)}</p>
@@ -288,7 +288,7 @@ const ImageConverter = () => {
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                   {results.map((r, i) => (
                     <div key={i} className="flex items-center gap-3 p-2 rounded-lg border border-border/40 bg-muted/20">
-                      <img src={r.converted.url} alt="" className="h-10 w-10 rounded object-cover shrink-0" />
+                      <img src={r.converted.url} alt={r.converted.fileName} className="h-10 w-10 rounded object-cover shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-medium text-foreground truncate">{r.converted.fileName}</p>
                         <p className="text-xs text-muted-foreground">{formatBytes(r.original.size)} → {formatBytes(r.converted.size)}</p>

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { FileText, Download, Calendar, GraduationCap, Search } from "lucide-react";
 import Header from "@/components/Header";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,7 @@ const PastPapers = () => {
   return (
     <Header>
       <div className="container mx-auto px-4 pt-4 pb-10">
+        <PageBreadcrumb items={[{ title: 'Past Papers', href: '/past-papers', isCurrent: true }]} showHomeButton={true} />
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
