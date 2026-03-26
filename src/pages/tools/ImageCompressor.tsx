@@ -436,7 +436,7 @@ const ImageCompressor = () => {
                   <div className="rounded-xl border border-border/60 overflow-hidden bg-muted/20">
                     <p className="text-xs font-medium text-muted-foreground text-center py-1.5 bg-muted/50">Original</p>
                     <div className="aspect-video flex items-center justify-center p-2">
-                      <img src={preview} alt="Original" className="max-w-full max-h-full object-contain rounded" />
+                      <img src={preview} alt="Original image before compression" className="max-w-full max-h-full object-contain rounded" />
                     </div>
                   </div>
                   <div className="rounded-xl border border-primary/30 overflow-hidden bg-primary/5">
