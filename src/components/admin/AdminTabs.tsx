@@ -21,6 +21,7 @@ import {
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
   PenSquare, HelpCircle,
 } from "lucide-react";
+import { Share2 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
 import NavigationManager from "./NavigationManager";
