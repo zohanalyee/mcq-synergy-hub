@@ -24,7 +24,7 @@ const RelatedTopics = ({ topics, boardSlug, classNumber, subjectSlug }: RelatedT
         {topics.map((topic) => (
           <Link
             key={topic.id}
-            to={`/boards/${boardSlug}/class-${classNumber}/${subjectSlug}/${toSlug(topic.name)}`}
+            to={`/boards/${boardSlug}/${classNumber}/${subjectSlug}/${toSlug(topic.name)}`}
             className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors group"
           >
             <span className="text-sm font-medium text-foreground">{topic.name}</span>

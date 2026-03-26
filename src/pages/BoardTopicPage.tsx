@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fromSlug, toSlug, findBestMatch } from '@/lib/slugUtils';
+import { fromSlug, toSlug, findBestMatch, findMatchingLevel, normalizeClassNumber } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -39,6 +39,7 @@ const BoardTopicPage = () => {
     boardSlug: string; classNumber: string; subjectSlug: string; topicSlug: string;
   }>();
   const { isAdmin } = useUserRole();
+  const resolvedClassNumber = normalizeClassNumber(classNumber || '');
 
   const boardName = fromSlug(boardSlug || '');
   const subjectName = fromSlug(subjectSlug || '');
@@ -71,7 +72,7 @@ const BoardTopicPage = () => {
         .from('levels').select('id, name').eq('system_id', sys.id);
       debug.levelsChecked = allLevels?.length || 0;
 
-      const level = allLevels?.find(l => l.name.toLowerCase().includes(classNumber || ''));
+      const level = findMatchingLevel(allLevels || [], classNumber || '');
       if (!level) return { ...empty, resolvedNames: { ...empty.resolvedNames, board: sys.name } };
       debug.levelFound = true;
       debug.levelName = level.name;
@@ -137,26 +138,26 @@ const BoardTopicPage = () => {
   const debugInfo = data?.debug;
   const subjectId = (names as any).subjectId;
 
-  const seoTitle = `${names.topic} MCQs - ${names.subject} Class ${classNumber} | ${names.board}`;
-  const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${classNumber} (${names.board}). Free online preparation with explanations.`;
-  const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/class-${classNumber}/${subjectSlug}/${topicSlug}`;
+  const seoTitle = `${names.topic} MCQs - ${names.subject} Class ${resolvedClassNumber || classNumber} | ${names.board}`;
+  const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${resolvedClassNumber || classNumber} (${names.board}). Free online preparation with explanations.`;
+  const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${topicSlug}`;
 
   useEffect(() => {
     if (!isLoading && mcqs.length === 0 && names.topic) {
-      const pagePath = `/boards/${boardSlug}/class-${classNumber}/${subjectSlug}/${topicSlug}`;
-      trackEmptyTopicView({ board: names.board, subject: names.subject, topic: names.topic, classNumber: classNumber || '', url: pagePath });
+      const pagePath = `/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${topicSlug}`;
+      trackEmptyTopicView({ board: names.board, subject: names.subject, topic: names.topic, classNumber: resolvedClassNumber || classNumber || '', url: pagePath });
       supabaseClient.from('empty_topic_analytics' as any).upsert(
-        { board_name: names.board, subject_name: names.subject, topic_name: names.topic, class_number: classNumber || '', page_path: pagePath, view_count: 1, last_viewed_at: new Date().toISOString() },
+        { board_name: names.board, subject_name: names.subject, topic_name: names.topic, class_number: resolvedClassNumber || classNumber || '', page_path: pagePath, view_count: 1, last_viewed_at: new Date().toISOString() },
         { onConflict: 'page_path' }
       ).then(({ error }) => {
         if (error) supabaseClient.rpc('increment_empty_topic_view' as any, { p_path: pagePath }).then(() => {});
       });
     }
-  }, [isLoading, mcqs.length, names.topic, boardSlug, classNumber, subjectSlug, topicSlug]);
+  }, [isLoading, mcqs.length, names.topic, boardSlug, classNumber, resolvedClassNumber, subjectSlug, topicSlug]);
 
   const quizSchema = mcqs.length > 0 ? {
     '@context': 'https://schema.org', '@type': 'Quiz', name: seoTitle,
-    about: { '@type': 'Thing', name: names.topic }, educationalLevel: `Class ${classNumber}`,
+    about: { '@type': 'Thing', name: names.topic }, educationalLevel: `Class ${resolvedClassNumber || classNumber}`,
     numberOfQuestions: mcqs.length, provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
   } : null;
 
@@ -169,13 +170,13 @@ const BoardTopicPage = () => {
         <PageBreadcrumb items={[
           { title: 'Home', href: '/' }, { title: 'Boards', href: '/boards' },
           { title: names.board, href: `/boards/${boardSlug}` },
-          { title: `Class ${classNumber}`, href: `/boards/${boardSlug}/class-${classNumber}` },
-          { title: names.subject, href: `/boards/${boardSlug}/class-${classNumber}/${subjectSlug}` },
+          { title: `Class ${resolvedClassNumber || classNumber}`, href: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}` },
+          { title: names.subject, href: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}` },
           { title: names.topic, href: '#', isCurrent: true },
         ]} />
 
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-1">{names.topic} MCQs</h1>
-        <p className="text-muted-foreground mb-3">{names.subject} · Class {classNumber} · {names.board}</p>
+        <p className="text-muted-foreground mb-3">{names.subject} · Class {resolvedClassNumber || classNumber} · {names.board}</p>
 
         {isLoading ? (
           <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -244,7 +245,7 @@ const BoardTopicPage = () => {
                 );
               })}
             </div>
-            <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={classNumber || ''} subjectSlug={subjectSlug || ''} />
+            <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
           </>
         )}
       </div>

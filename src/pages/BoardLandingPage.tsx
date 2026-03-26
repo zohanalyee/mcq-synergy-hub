@@ -66,7 +66,7 @@ const BoardLandingPage = () => {
               const classNum = classMatch ? classMatch[1] : level.name;
               return (
                 <motion.div key={level.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                  <Link to={`/boards/${boardSlug}/class-${classNum}`}>
+                   <Link to={`/boards/${boardSlug}/${classNum}`}>
                     <Card className="hover:shadow-lg transition-shadow text-center">
                       <CardHeader className="pb-2">
                         <GraduationCap className="h-8 w-8 mx-auto text-primary" />

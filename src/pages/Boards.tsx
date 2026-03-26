@@ -94,7 +94,7 @@ const Boards = () => {
                           return (
                             <Link
                               key={level.id}
-                              to={`/boards/${toSlug(sys.name)}/class-${classNum}`}
+                               to={`/boards/${toSlug(sys.name)}/${classNum}`}
                               className="text-sm px-3 py-1.5 rounded-md bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
                             >
                               {level.name}
