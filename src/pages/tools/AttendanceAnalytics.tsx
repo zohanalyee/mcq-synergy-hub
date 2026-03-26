@@ -210,7 +210,7 @@ const AttendanceAnalytics = () => {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/tools/hr"><ChevronLeft className="h-4 w-4" /> Back</Link>
+              <Link to="/tools/school-attendance-system"><ChevronLeft className="h-4 w-4" /> Back</Link>
             </Button>
             <div>
               {/* Editable institute name */}
@@ -263,7 +263,7 @@ const AttendanceAnalytics = () => {
             <h2 className="text-lg font-semibold">No Data for This Date</h2>
             <p className="text-muted-foreground text-sm mt-1">Use Quick Manual Entry to record attendance first.</p>
             <Button className="mt-4" asChild>
-              <Link to="/tools/hr/quick-entry">Go to Quick Entry</Link>
+              <Link to="/tools/school-attendance-system/quick-entry">Go to Quick Entry</Link>
             </Button>
           </Card>
         ) : (

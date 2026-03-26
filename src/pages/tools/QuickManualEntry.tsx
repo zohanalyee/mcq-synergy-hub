@@ -186,7 +186,7 @@ const QuickManualEntry = () => {
 
       const action = hasExistingData ? 'updated' : 'saved';
       toast.success(`Attendance ${action} for ${records.length} classes on ${format(parseISO(date), 'MMM d, yyyy')}`);
-      navigate(`/tools/hr/analytics?date=${date}`);
+      navigate(`/tools/school-attendance-system/analytics?date=${date}`);
     } catch (error: any) {
       console.error('Submit error:', error);
       toast.error(error.message || 'Failed to save attendance');
@@ -219,7 +219,7 @@ const QuickManualEntry = () => {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="sm" asChild>
-              <Link to="/tools/hr"><ChevronLeft className="h-4 w-4" /> Back</Link>
+              <Link to="/tools/school-attendance-system"><ChevronLeft className="h-4 w-4" /> Back</Link>
             </Button>
             <div>
               <h1 className="text-xl font-bold text-foreground">Quick Manual Entry</h1>
@@ -409,7 +409,7 @@ const QuickManualEntry = () => {
 
         {/* Submit */}
         <div className="flex gap-3 justify-end sticky bottom-4">
-          <Button variant="outline" onClick={() => navigate('/tools/hr')}>Cancel</Button>
+          <Button variant="outline" onClick={() => navigate('/tools/school-attendance-system')}>Cancel</Button>
           <Button onClick={handleSubmit} disabled={submitting || fetching} className="min-w-[160px]">
             {submitting ? (
               <><span className="animate-spin h-4 w-4 border-2 border-current border-t-transparent rounded-full mr-2" /> Saving...</>

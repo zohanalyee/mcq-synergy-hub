@@ -130,7 +130,7 @@ const StudentAttendancePage = () => {
         {/* Back + Title */}
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/tools/hr"><ChevronLeft className="h-4 w-4" /> Back</Link>
+            <Link to="/tools/school-attendance-system"><ChevronLeft className="h-4 w-4" /> Back</Link>
           </Button>
           <div>
             <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
@@ -262,7 +262,7 @@ const StudentAttendancePage = () => {
         {students.length === 0 && !loading && selectedClass && selectedSection && (
           <div className="text-center py-12 text-muted-foreground">
             <Users className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>No students found. Add students in <Link to="/tools/hr/setup" className="text-primary underline">Setup</Link>.</p>
+            <p>No students found. Add students in <Link to="/tools/school-attendance-system/setup" className="text-primary underline">Setup</Link>.</p>
           </div>
         )}
 
@@ -270,7 +270,7 @@ const StudentAttendancePage = () => {
           <div className="text-center py-12 text-muted-foreground">
             <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-30" />
             <p>Select a class and section to begin marking attendance.</p>
-            {classes.length === 0 && <p className="mt-2 text-sm">No classes yet. <Link to="/tools/hr/setup" className="text-primary underline">Add classes first</Link>.</p>}
+            {classes.length === 0 && <p className="mt-2 text-sm">No classes yet. <Link to="/tools/school-attendance-system/setup" className="text-primary underline">Add classes first</Link>.</p>}
           </div>
         )}
       </div>

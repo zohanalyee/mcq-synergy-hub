@@ -86,7 +86,7 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
 
 export const ALL_TOOLS: ToolDefinition[] = [
   // === School Attendance System ===
-  { id: 'hr-system', name: 'School Attendance System', description: 'Complete attendance tracking management', category: 'Student & Staff', icon: Building2, popular: true, href: '/tools/hr',
+  { id: 'hr-system', name: 'School Attendance System', description: 'Complete attendance tracking management', category: 'Student & Staff', icon: Building2, popular: true, href: '/tools/school-attendance-system',
     seoDescription: 'Free online school attendance tracking system. Mark student and staff attendance, generate reports, and manage leave records effortlessly.',
     howToUse: ['Add your classes and students', 'Mark daily attendance with one click', 'View reports and export attendance data'] },
 
