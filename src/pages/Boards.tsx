@@ -39,21 +39,14 @@ const Boards = () => {
   });
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+    <Header>
       <SEOHead
         title="Boards – Browse by Educational Board"
         description="Browse MCQs by educational board and class. Practice for Sindh Board, Federal Board, Punjab Board, and more."
         keywords="Pakistan board MCQs, Sindh Board, Federal Board, Punjab Board, educational boards"
       />
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 w-full">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <PageBreadcrumb
-          items={[
-            { title: 'Home', href: '/' },
-            { title: 'Boards', href: '/boards', isCurrent: true },
-          ]}
-        />
-
         <h1 className="text-3xl font-bold text-foreground mb-2">Educational Boards</h1>
         <p className="text-muted-foreground mb-8">Browse MCQs organized by board and class level.</p>
 
