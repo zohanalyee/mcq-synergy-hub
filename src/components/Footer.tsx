@@ -8,6 +8,15 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
   const { t, tr, language, isRTL } = useLanguage();
   const fontClass = isRTL ? 'font-nastaliq' : '';
+  const { data: socialLinks } = useSocialLinks();
+
+  const activeSocials = [
+    { key: 'facebook', url: socialLinks?.facebook, icon: Facebook, label: 'Facebook' },
+    { key: 'instagram', url: socialLinks?.instagram, icon: Instagram, label: 'Instagram' },
+    { key: 'tiktok', url: socialLinks?.tiktok, icon: null, label: 'TikTok' },
+    { key: 'twitter', url: socialLinks?.twitter, icon: Twitter, label: 'Twitter' },
+    { key: 'youtube', url: socialLinks?.youtube, icon: Youtube, label: 'YouTube' },
+  ].filter(s => s.url);
 
   return (
     <footer className={cn("bg-card border-t border-border text-card-foreground layout-ltr", fontClass)}>
