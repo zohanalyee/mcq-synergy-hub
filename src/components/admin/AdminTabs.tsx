@@ -23,6 +23,8 @@ import {
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
 import NavigationManager from "./NavigationManager";
+import BlogManager from "./BlogManager";
+import FAQManager from "./FAQManager";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
