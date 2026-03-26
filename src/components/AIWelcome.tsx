@@ -12,22 +12,19 @@ const AIWelcome = () => {
   const { t, language } = useLanguage();
   const location = useLocation();
 
-  // Only show on home page
-  if (location.pathname !== '/') return null;
-
   useEffect(() => {
-    if (user && !sessionStorage.getItem('ai-welcomed')) {
+    if (user && location.pathname === '/' && !sessionStorage.getItem('ai-welcomed')) {
       const timer = setTimeout(() => setShow(true), 1000);
       return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, location.pathname]);
 
   const handleClose = () => {
     setShow(false);
     sessionStorage.setItem('ai-welcomed', 'true');
   };
 
-  if (!show || !user) return null;
+  if (!show || !user || location.pathname !== '/') return null;
 
   const userName = profile?.username || user.email?.split('@')[0] || 'Student';
   const greeting = getLocalizedGreeting(language, userName);
