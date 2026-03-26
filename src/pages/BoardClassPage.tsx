@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { findBestMatch, toSlug } from '@/lib/slugUtils';
+import { findBestMatch, findMatchingLevel, normalizeClassNumber, toSlug } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -12,6 +12,7 @@ import { motion } from 'framer-motion';
 
 const BoardClassPage = () => {
   const { boardSlug, classNumber } = useParams<{ boardSlug: string; classNumber: string }>();
+  const resolvedClassNumber = normalizeClassNumber(classNumber || '');
 
   const { data, isLoading } = useQuery({
     queryKey: ['board-class', boardSlug, classNumber],
@@ -29,7 +30,7 @@ const BoardClassPage = () => {
         .select('id, name')
         .eq('system_id', system.id);
 
-      const level = levels?.find(l => l.name.toLowerCase().includes(classNumber || ''));
+      const level = findMatchingLevel(levels || [], classNumber || '');
       if (!level) return { system, level: null, subjects: [] };
 
       const { data: subjects } = await supabase
@@ -44,7 +45,7 @@ const BoardClassPage = () => {
   });
 
   const boardName = data?.system?.name || boardSlug || '';
-  const levelName = data?.level?.name || `Class ${classNumber}`;
+  const levelName = data?.level?.name || `Class ${resolvedClassNumber || classNumber}`;
 
   return (
     <Header>
@@ -75,7 +76,7 @@ const BoardClassPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {data.subjects.map((subject, i) => (
               <motion.div key={subject.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <Link to={`/boards/${boardSlug}/class-${classNumber}/${toSlug(subject.name)}`}>
+                 <Link to={`/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${toSlug(subject.name)}`}>
                   <Card className="h-full hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <div className="flex items-center gap-2">

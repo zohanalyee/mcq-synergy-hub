@@ -59,3 +59,35 @@ export const findBestMatch = <T extends { name: string }>(
   // Require at least some match
   return bestScore >= 2 ? bestItem : null;
 };
+
+export const normalizeClassNumber = (value: string): string => {
+  const trimmed = value.toLowerCase().trim();
+  const digits = trimmed.match(/\d+/)?.[0];
+
+  if (digits) return digits;
+
+  return trimmed
+    .replace(/^class[-\s]*/i, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+};
+
+export const findMatchingLevel = <T extends { name: string }>(
+  items: T[],
+  targetClass: string
+): T | null => {
+  if (!items.length) return null;
+
+  const normalizedTarget = normalizeClassNumber(targetClass);
+  if (!normalizedTarget) return null;
+
+  const exact = items.find((item) => normalizeClassNumber(item.name) === normalizedTarget);
+  if (exact) return exact;
+
+  return (
+    findBestMatch(items, targetClass) ||
+    findBestMatch(items, `class-${normalizedTarget}`) ||
+    findBestMatch(items, normalizedTarget)
+  );
+};

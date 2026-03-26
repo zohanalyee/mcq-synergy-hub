@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { findBestMatch, toSlug } from '@/lib/slugUtils';
+import { findBestMatch, findMatchingLevel, normalizeClassNumber, toSlug } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -15,6 +15,7 @@ const BoardSubjectPage = () => {
   const { boardSlug, classNumber, subjectSlug } = useParams<{
     boardSlug: string; classNumber: string; subjectSlug: string;
   }>();
+  const resolvedClassNumber = normalizeClassNumber(classNumber || '');
 
   const { data, isLoading } = useQuery({
     queryKey: ['board-subject', boardSlug, classNumber, subjectSlug],
@@ -32,7 +33,7 @@ const BoardSubjectPage = () => {
         .select('id, name')
         .eq('system_id', system.id);
 
-      const level = levels?.find(l => l.name.toLowerCase().includes(classNumber || ''));
+      const level = findMatchingLevel(levels || [], classNumber || '');
       if (!level) return { system, level: null, subject: null, topics: [] };
 
       const { data: subjects } = await supabase
@@ -55,7 +56,7 @@ const BoardSubjectPage = () => {
   });
 
   const boardName = data?.system?.name || boardSlug || '';
-  const levelName = data?.level?.name || `Class ${classNumber}`;
+  const levelName = data?.level?.name || `Class ${resolvedClassNumber || classNumber}`;
   const subjectName = data?.subject?.name || subjectSlug || '';
 
   return (
@@ -69,7 +70,7 @@ const BoardSubjectPage = () => {
           { title: 'Home', href: '/' },
           { title: 'Boards', href: '/boards' },
           { title: boardName, href: `/boards/${boardSlug}` },
-          { title: levelName, href: `/boards/${boardSlug}/class-${classNumber}` },
+          { title: levelName, href: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}` },
           { title: subjectName, href: '#', isCurrent: true },
         ]} />
 
@@ -88,7 +89,7 @@ const BoardSubjectPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {data.topics.map((topic, i) => (
               <motion.div key={topic.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.02 }}>
-                <Link to={`/boards/${boardSlug}/class-${classNumber}/${subjectSlug}/${toSlug(topic.name)}`}>
+                 <Link to={`/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${toSlug(topic.name)}`}>
                   <Card className="hover:shadow-md transition-shadow">
                     <CardContent className="flex items-center gap-3 py-4">
                       <FileText className="h-5 w-5 text-primary shrink-0" />
