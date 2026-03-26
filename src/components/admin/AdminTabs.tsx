@@ -71,6 +71,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { value: "analytics", label: "Analytics", icon: BarChart3 },
         { value: "inventory", label: "Inventory", icon: Archive },
+        { value: "empty-topics", label: "Content Gaps", icon: TrendingUp },
       ],
     },
     {
