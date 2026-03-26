@@ -102,7 +102,7 @@ const Subjects = () => {
         keywords="Biology MCQs, Chemistry MCQs, Physics MCQs, subject-wise practice, MDCAT subjects, ECAT subjects"
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-24">
-        {/* Enhanced Header Section */}
+        <PageBreadcrumb items={[{ title: 'Subjects', href: '/subjects', isCurrent: true }]} showHomeButton={true} />
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}

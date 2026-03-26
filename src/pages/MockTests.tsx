@@ -54,6 +54,7 @@ const CompetitiveExams = () => {
       />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
         <PageBreadcrumb items={[{ title: 'Mock Tests', href: '/mock-tests', isCurrent: true }]} showHomeButton={true} />
+        <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
