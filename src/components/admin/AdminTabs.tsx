@@ -279,6 +279,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="blog-manager"><BlogManager /></TabsContent>
       <TabsContent value="faq-manager"><FAQManager /></TabsContent>
       <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
+      <TabsContent value="empty-topics"><EmptyTopicAnalytics /></TabsContent>
     </Tabs>
   );
 };
