@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedGreeting } from '@/lib/greetings';
 
@@ -10,20 +10,21 @@ const AIWelcome = () => {
   const { user, profile } = useAuth();
   const [show, setShow] = useState(false);
   const { t, language } = useLanguage();
+  const location = useLocation();
 
   useEffect(() => {
-    if (user && !sessionStorage.getItem('ai-welcomed')) {
+    if (user && location.pathname === '/' && !sessionStorage.getItem('ai-welcomed')) {
       const timer = setTimeout(() => setShow(true), 1000);
       return () => clearTimeout(timer);
     }
-  }, [user]);
+  }, [user, location.pathname]);
 
   const handleClose = () => {
     setShow(false);
     sessionStorage.setItem('ai-welcomed', 'true');
   };
 
-  if (!show || !user) return null;
+  if (!show || !user || location.pathname !== '/') return null;
 
   const userName = profile?.username || user.email?.split('@')[0] || 'Student';
   const greeting = getLocalizedGreeting(language, userName);

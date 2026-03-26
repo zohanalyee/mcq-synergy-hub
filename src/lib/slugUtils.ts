@@ -20,3 +20,42 @@ export const fromSlug = (slug: string): string => {
     .replace(/-/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 };
+
+/**
+ * Find the best matching item from a list by comparing slug representations.
+ * Converts each item's name to a slug and compares against the target slug.
+ * Falls back to word-overlap scoring for fuzzy matches.
+ */
+export const findBestMatch = <T extends { name: string }>(
+  items: T[],
+  targetSlug: string
+): T | null => {
+  if (!items.length) return null;
+
+  // 1. Exact slug match
+  const exact = items.find(item => toSlug(item.name) === targetSlug);
+  if (exact) return exact;
+
+  // 2. Word overlap scoring
+  const slugWords = targetSlug.split('-').filter(w => w.length > 1);
+  let bestScore = 0;
+  let bestItem: T | null = null;
+
+  for (const item of items) {
+    const nameWords = item.name.toLowerCase().split(/\s+/);
+    let score = 0;
+    for (const sw of slugWords) {
+      for (const nw of nameWords) {
+        if (nw === sw) { score += 2; break; }
+        if (nw.includes(sw) || sw.includes(nw)) { score += 1; break; }
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestItem = item;
+    }
+  }
+
+  // Require at least some match
+  return bestScore >= 2 ? bestItem : null;
+};
