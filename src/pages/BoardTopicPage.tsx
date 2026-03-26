@@ -184,9 +184,9 @@ const BoardTopicPage = () => {
             })}
           </div>
         )}
-      </main>
+      </div>
       <Footer />
-    </div>
+    </Header>
   );
 };
 

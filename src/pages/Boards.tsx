@@ -106,9 +106,9 @@ const Boards = () => {
             ))}
           </div>
         )}
-      </main>
+      </div>
       <Footer />
-    </div>
+    </Header>
   );
 };
 
