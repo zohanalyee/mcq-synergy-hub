@@ -64,7 +64,7 @@ const Footer = () => {
                 { label: 'Chemistry MCQs', path: '/subjects' },
                 { label: 'Physics MCQs', path: '/subjects' },
                 { label: 'English MCQs', path: '/subjects' },
-                { label: 'Mathematics MCQs', path: '/subjects' },
+                { label: 'Browse by Board', path: '/boards' },
                 { label: 'Computer Science', path: '/subjects' },
               ].map(link => (
                 <li key={link.label}>
