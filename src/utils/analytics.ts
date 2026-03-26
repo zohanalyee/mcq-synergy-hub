@@ -32,3 +32,13 @@ export const trackTestCompletion = (params: {
 }) => {
   trackEvent('test_completion', params);
 };
+
+export const trackEmptyTopicView = (params: {
+  board: string;
+  subject: string;
+  topic: string;
+  classNumber: string;
+  url: string;
+}) => {
+  trackEvent('empty_topic_view', params);
+};

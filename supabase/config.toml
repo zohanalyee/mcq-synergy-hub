@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.convert-document-mcqs]
 verify_jwt = false
+
+[functions.generate-sitemap]
+verify_jwt = false

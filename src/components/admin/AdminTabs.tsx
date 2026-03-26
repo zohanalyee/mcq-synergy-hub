@@ -19,7 +19,7 @@ import {
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
-  PenSquare, HelpCircle,
+  PenSquare, HelpCircle, TrendingUp,
 } from "lucide-react";
 import { Share2 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
@@ -36,6 +36,7 @@ import AdminMessagesPanel from "./messages/AdminMessagesPanel";
 import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
 import StudySoundsManager from "./StudySoundsManager";
 import SocialLinksManager from "./SocialLinksManager";
+import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -70,6 +71,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
         { value: "analytics", label: "Analytics", icon: BarChart3 },
         { value: "inventory", label: "Inventory", icon: Archive },
+        { value: "empty-topics", label: "Content Gaps", icon: TrendingUp },
       ],
     },
     {
@@ -277,6 +279,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="blog-manager"><BlogManager /></TabsContent>
       <TabsContent value="faq-manager"><FAQManager /></TabsContent>
       <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
+      <TabsContent value="empty-topics"><EmptyTopicAnalytics /></TabsContent>
     </Tabs>
   );
 };

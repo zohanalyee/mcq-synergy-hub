@@ -31,9 +31,9 @@ const SEOHead = ({
   const finalTitle = title ? `${title} | MCQsAI` : defaultTitle;
   const finalDescription = description || defaultDescription;
   const finalKeywords = keywords || defaultKeywords;
-  const finalUrl = url || (typeof window !== 'undefined' ? window.location.href : 'https://mcqsai.com');
-  const finalLocale = language === 'ur' ? 'ur_PK' : language === 'sd' ? 'sd_PK' : 'en_US';
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const canonicalUrl = url || `https://mcqsai.com${pathname}`;
+  const finalLocale = language === 'ur' ? 'ur_PK' : language === 'sd' ? 'sd_PK' : 'en_US';
 
   return (
     <Helmet>
@@ -41,11 +41,11 @@ const SEOHead = ({
       <meta name="description" content={finalDescription} />
       <meta name="keywords" content={finalKeywords} />
       <meta name="robots" content={noindex ? 'noindex,nofollow' : 'index,follow'} />
-      <link rel="canonical" href={finalUrl} />
+      <link rel="canonical" href={canonicalUrl} />
 
       {/* Open Graph */}
       <meta property="og:type" content={type} />
-      <meta property="og:url" content={finalUrl} />
+      <meta property="og:url" content={canonicalUrl} />
       <meta property="og:title" content={finalTitle} />
       <meta property="og:description" content={finalDescription} />
       <meta property="og:image" content={image} />
@@ -54,7 +54,7 @@ const SEOHead = ({
 
       {/* Twitter */}
       <meta name="twitter:card" content="summary_large_image" />
-      <meta name="twitter:url" content={finalUrl} />
+      <meta name="twitter:url" content={canonicalUrl} />
       <meta name="twitter:title" content={finalTitle} />
       <meta name="twitter:description" content={finalDescription} />
       <meta name="twitter:image" content={image} />
