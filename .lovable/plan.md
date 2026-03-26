@@ -1,50 +1,66 @@
 
 
-# Data Visibility & Admin Override Fix
+# Fix 404 Errors: Add Missing Board Hierarchy Routes
 
 ## Problem
-The MCQ query on BoardTopicPage hardcodes `.eq('status', 'approved')`, hiding any pending/draft MCQs. Admins cannot verify if data exists but is unapproved.
+Only `/boards` and `/boards/:boardSlug/class-:classNumber/:subjectSlug/:topicSlug` routes exist. Intermediate URLs like `/boards/sindh-text-book-board/class-12` hit the 404 catch-all because no components or routes exist for them.
 
-## Changes
+## Solution
+Create 3 new page components and register them in App.tsx.
 
-### `src/pages/BoardTopicPage.tsx`
+---
 
-1. **Admin sees all statuses**: Remove `.eq('status', 'approved')` when user is admin. Add `isAdmin` from `useUserRole()` into the query key and pass it into the queryFn.
+## New Files
 
-2. **Show unapproved count message**: After fetching, split MCQs into approved vs unapproved. For admins, show all. For non-admins, show only approved. When admin sees unapproved MCQs, display a warning banner: "X questions found but not approved yet" with status badges.
+### 1. `src/pages/BoardLandingPage.tsx`
+- Route: `/boards/:boardSlug`
+- Resolves boardSlug to an educational system using `findBestMatch`
+- Fetches all levels for that system, displays them as clickable cards
+- Links to `/boards/${boardSlug}/class-${classNum}`
 
-3. **Add status badge on each MCQ card for admins**: Show a small colored badge (pending=amber, rejected=red) next to the question number when admin is viewing.
+### 2. `src/pages/BoardClassPage.tsx`
+- Route: `/boards/:boardSlug/class-:classNumber`
+- Resolves board + class using same fuzzy matching
+- Fetches all subjects for that level, displays as a grid
+- Links to `/boards/${boardSlug}/class-${classNumber}/${subjectSlug}`
 
-4. **Enhanced debug info**: Add `mcqTotalCount` (before status filter) and `mcqApprovedCount` to the debug panel so admins can see the breakdown.
+### 3. `src/pages/BoardSubjectPage.tsx`
+- Route: `/boards/:boardSlug/class-:classNumber/:subjectSlug`
+- Resolves board + class + subject
+- Fetches all topics for that subject, displays as a list/grid
+- Links to `/boards/${boardSlug}/class-${classNumber}/${subjectSlug}/${topicSlug}`
 
-5. **Canonical slug matching verification**: In the fallback branch (when `topic` is null and query uses `canonical_topic_name`), log the slug being compared in the debug info so admins can verify if it matches.
+All three pages use:
+- `findBestMatch` from `slugUtils.ts` for fuzzy slug resolution
+- `<Header>` wrapper pattern (children inside Header)
+- `<PageBreadcrumb>` with correct hierarchy
+- `<SEOHead>` with dynamic title/description
+- `<Footer />` inside Header
+- Loading spinner + empty state
 
-### Concrete code changes
+---
 
-**Query modification** (line ~107-114):
-```typescript
-// For admins, fetch all statuses; for public, only approved
-let mcqQuery = supabase
-  .from('content_items')
-  .select('id, title, options, correct_option, explanation, difficulty, status')
-  .eq('category', 'mcq')
-  .limit(50);
+## Modified Files
 
-if (!isAdmin) {
-  mcqQuery = mcqQuery.eq('status', 'approved');
-}
+### `src/App.tsx`
+Add 3 new routes (order matters -- more specific before less specific):
+
+```
+<Route path="/boards/:boardSlug/class-:classNumber/:subjectSlug/:topicSlug" ... />
+<Route path="/boards/:boardSlug/class-:classNumber/:subjectSlug" element={<BoardSubjectPage />} />
+<Route path="/boards/:boardSlug/class-:classNumber" element={<BoardClassPage />} />
+<Route path="/boards/:boardSlug" element={<BoardLandingPage />} />
+<Route path="/boards" element={<Boards />} />
 ```
 
-**Warning banner** (in the empty/results section):
-- Count unapproved: `mcqs.filter(m => m.status !== 'approved').length`
-- Show amber alert: "{N} questions exist but are not approved yet"
+### `src/pages/Boards.tsx`
+Update class links from `/boards/${toSlug(sys.name)}/class-${classNum}` -- this already looks correct, no change needed. The issue was purely missing routes.
 
-**Debug panel enhancement**:
-- Show `canonicalSlugUsed` when topic falls back to canonical matching
-- Show total vs approved count breakdown
+---
 
-## Files Modified
-- `src/pages/BoardTopicPage.tsx` — admin status bypass, unapproved warning, enhanced debug
-
-No database changes needed.
+## Technical Details
+- Each page follows the exact same Supabase resolution pattern as BoardTopicPage: fetch all candidates, then `findBestMatch` client-side
+- URL param `classNumber` uses `class-:classNumber` pattern consistent with existing route
+- All pages use `useQuery` with appropriate cache keys and `staleTime: 5min`
+- Lazy-loaded with `Suspense` wrapper in App.tsx
 
