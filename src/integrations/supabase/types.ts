@@ -884,6 +884,42 @@ export type Database = {
         }
         Relationships: []
       }
+      empty_topic_analytics: {
+        Row: {
+          board_name: string
+          class_number: string
+          created_at: string
+          id: string
+          last_viewed_at: string
+          page_path: string
+          subject_name: string
+          topic_name: string
+          view_count: number
+        }
+        Insert: {
+          board_name: string
+          class_number: string
+          created_at?: string
+          id?: string
+          last_viewed_at?: string
+          page_path: string
+          subject_name: string
+          topic_name: string
+          view_count?: number
+        }
+        Update: {
+          board_name?: string
+          class_number?: string
+          created_at?: string
+          id?: string
+          last_viewed_at?: string
+          page_path?: string
+          subject_name?: string
+          topic_name?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       external_opportunities: {
         Row: {
           apply_url: string

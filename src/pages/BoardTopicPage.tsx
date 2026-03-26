@@ -173,6 +173,7 @@ const BoardTopicPage = () => {
         title={seoTitle}
         description={seoDesc}
         keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`}
+        url={canonicalUrl}
       />
       {quizSchema && (
         <Helmet>
