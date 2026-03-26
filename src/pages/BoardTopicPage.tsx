@@ -108,14 +108,13 @@ const BoardTopicPage = () => {
   const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${classNumber} (${names.board}). Free online preparation with explanations.`;
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <Header />
+    <Header>
       <SEOHead
         title={seoTitle}
         description={seoDesc}
         keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`}
       />
-      <main className="flex-1 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-12 w-full">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <PageBreadcrumb
           items={[
             { title: 'Home', href: '/' },

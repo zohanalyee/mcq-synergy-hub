@@ -47,6 +47,11 @@ const Boards = () => {
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <PageBreadcrumb
+          items={[
+            { title: 'Home', href: '/' },
+            { title: 'Boards', href: '/boards', isCurrent: true },
+          ]}
+        />
         <h1 className="text-3xl font-bold text-foreground mb-2">Educational Boards</h1>
         <p className="text-muted-foreground mb-8">Browse MCQs organized by board and class level.</p>
 
