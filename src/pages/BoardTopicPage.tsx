@@ -106,8 +106,12 @@ const BoardTopicPage = () => {
       // 6. Fetch MCQs
       let mcqQuery = supabase
         .from('content_items')
-        .select('id, title, options, correct_option, explanation, difficulty')
-        .eq('category', 'mcq').eq('status', 'approved').limit(50);
+        .select('id, title, options, correct_option, explanation, difficulty, status')
+        .eq('category', 'mcq').limit(50);
+
+      if (!isAdmin) {
+        mcqQuery = mcqQuery.eq('status', 'approved');
+      }
 
       if (topic) {
         mcqQuery = mcqQuery.eq('topic_id', topic.id);
