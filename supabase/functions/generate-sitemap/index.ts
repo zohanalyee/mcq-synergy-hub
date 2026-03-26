@@ -19,7 +19,7 @@ function extractClassNumber(levelName: string): string | null {
 }
 
 const TOOL_PATHS = [
-  "/tools/hr", "/tools/math", "/tools/age-calculator", "/tools/timer",
+  "/tools/school-attendance-system", "/tools/math", "/tools/age-calculator", "/tools/timer",
   "/tools/gpa-calculator", "/tools/units", "/tools/notes", "/tools/calendar",
   "/tools/islamic-calendar", "/tools/international-calendar",
   "/tools/bmi-calculator", "/tools/percentage-calculator", "/tools/salary-calculator",

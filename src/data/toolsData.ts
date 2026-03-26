@@ -86,9 +86,9 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
 
 export const ALL_TOOLS: ToolDefinition[] = [
   // === School Attendance System ===
-  { id: 'hr-system', name: 'School Attendance System', description: 'Complete attendance tracking management', category: 'Student & Staff', icon: Building2, popular: true, href: '/tools/hr',
-    seoDescription: 'Free online school attendance tracking system. Mark student and staff attendance, generate reports, and manage leave records effortlessly.',
-    howToUse: ['Add your classes and students', 'Mark daily attendance with one click', 'View reports and export attendance data'] },
+  { id: 'school-attendance-system', name: 'School Attendance System', description: 'School & Staff Attendance Management System with PDF Reports', category: 'Student & Staff', icon: Building2, popular: true, href: '/tools/school-attendance-system',
+    seoDescription: 'School & Staff Attendance Management System with PDF Reports. Free school attendance tool for daily staff attendance tracking, student attendance marking, leave management, and downloadable PDF attendance reports.',
+    howToUse: ['Add your classes, students, and staff members', 'Mark daily student and staff attendance with one click', 'Track leaves, holidays, and generate PDF attendance reports'] },
 
   // === Existing (7) ===
   { id: 'calculator', name: 'Calculator', description: 'Basic & scientific calculator', category: 'Calculators', icon: Calculator, popular: true, href: '/tools/math',

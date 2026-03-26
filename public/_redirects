@@ -1,3 +1,5 @@
 /sitemap.xml    /sitemap.xml    200
 /robots.txt     /robots.txt     200
+/tools/hr/*     /tools/school-attendance-system/:splat  301
+/tools/hr       /tools/school-attendance-system         301
 /*    /index.html   200

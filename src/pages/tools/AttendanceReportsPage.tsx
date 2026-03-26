@@ -56,7 +56,7 @@ const ReportsPage = () => {
       <div className="max-w-5xl mx-auto px-4 py-4 space-y-4">
         <div className="flex items-center gap-3">
           <Button variant="ghost" size="sm" asChild>
-            <Link to="/tools/hr"><ChevronLeft className="h-4 w-4" /> Back</Link>
+            <Link to="/tools/school-attendance-system"><ChevronLeft className="h-4 w-4" /> Back</Link>
           </Button>
           <h1 className="text-lg font-bold text-foreground flex items-center gap-2">
             <BarChart3 className="h-5 w-5 text-cyan-600" /> Reports & Analytics
