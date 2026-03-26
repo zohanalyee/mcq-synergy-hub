@@ -1,4 +1,5 @@
 import Header from "@/components/Header";
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { SyllabusBuilder } from "@/components/syllabus-builder/SyllabusBuilder";
 import SEOHead from '@/components/SEOHead';
 
