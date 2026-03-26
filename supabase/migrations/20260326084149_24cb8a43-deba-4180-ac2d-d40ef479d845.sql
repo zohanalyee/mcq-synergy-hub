@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "Public can view all feedback" ON public.user_feedback;
