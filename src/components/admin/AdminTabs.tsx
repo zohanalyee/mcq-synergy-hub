@@ -36,6 +36,7 @@ import AdminMessagesPanel from "./messages/AdminMessagesPanel";
 import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
 import StudySoundsManager from "./StudySoundsManager";
 import SocialLinksManager from "./SocialLinksManager";
+import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
 
 type AdminTabsProps = {
   activeTab: string;
