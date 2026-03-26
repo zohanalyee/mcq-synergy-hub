@@ -31,9 +31,9 @@ const SEOHead = ({
   const finalTitle = title ? `${title} | MCQsAI` : defaultTitle;
   const finalDescription = description || defaultDescription;
   const finalKeywords = keywords || defaultKeywords;
-  const finalUrl = url || (typeof window !== 'undefined' ? window.location.href : 'https://mcqsai.com');
-  const finalLocale = language === 'ur' ? 'ur_PK' : language === 'sd' ? 'sd_PK' : 'en_US';
   const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
+  const canonicalUrl = url || `https://mcqsai.com${pathname}`;
+  const finalLocale = language === 'ur' ? 'ur_PK' : language === 'sd' ? 'sd_PK' : 'en_US';
 
   return (
     <Helmet>
