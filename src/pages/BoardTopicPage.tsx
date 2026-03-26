@@ -12,6 +12,8 @@ import PracticeModeButtons from '@/components/board-topic/PracticeModeButtons';
 import RelatedTopics from '@/components/board-topic/RelatedTopics';
 import TopicProgressCard from '@/components/board-topic/TopicProgressCard';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
 import { Loader2, Sparkles, BookOpen, AlertTriangle } from 'lucide-react';
 import { cleanQuestionText } from '@/lib/questionUtils';
 import { motion } from 'framer-motion';
