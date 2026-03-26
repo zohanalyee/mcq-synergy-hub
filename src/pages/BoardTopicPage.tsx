@@ -214,17 +214,33 @@ const BoardTopicPage = () => {
           </motion.div>
         ) : (
           <>
+            {isAdmin && unapprovedCount > 0 && (
+              <Alert className="mb-4 border-amber-300 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-700">
+                <AlertTriangle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-amber-800 dark:text-amber-300">
+                  {unapprovedCount} question{unapprovedCount !== 1 ? 's' : ''} found but not approved yet (visible to admins only).
+                </AlertDescription>
+              </Alert>
+            )}
             <TopicStatsBar mcqs={mcqs} />
             <TopicProgressCard topicName={names.topic} subjectName={names.subject} />
             {subjectId && <PracticeModeButtons subjectId={subjectId} topicName={names.topic} />}
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">{mcqs.length} question{mcqs.length !== 1 ? 's' : ''} found</p>
-              {mcqs.map((mcq, index) => {
+              {mcqs.map((mcq: any, index: number) => {
                 const options: MCQOption[] = Array.isArray(mcq.options)
                   ? (mcq.options as any[]).map((o: any) => ({ key: o.key || '', text: o.text || '' }))
                   : [];
+                const statusLabel = mcq.status !== 'approved' ? mcq.status : null;
                 return (
-                  <PracticeMCQCard key={mcq.id} id={mcq.id} title={`Q${index + 1}`} question={cleanQuestionText(mcq.title)} options={options} correctOption={mcq.correct_option || ''} explanation={mcq.explanation || ''} difficulty={(mcq.difficulty as 'Easy' | 'Medium' | 'Hard') || 'Medium'} mode="practice" index={index} />
+                  <div key={mcq.id} className="relative">
+                    {isAdmin && statusLabel && (
+                      <Badge className={`absolute -top-2 right-2 z-10 text-xs ${statusLabel === 'pending' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-destructive'}`}>
+                        {statusLabel}
+                      </Badge>
+                    )}
+                    <PracticeMCQCard id={mcq.id} title={`Q${index + 1}`} question={cleanQuestionText(mcq.title)} options={options} correctOption={mcq.correct_option || ''} explanation={mcq.explanation || ''} difficulty={(mcq.difficulty as 'Easy' | 'Medium' | 'Hard') || 'Medium'} mode="practice" index={index} />
+                  </div>
                 );
               })}
             </div>
