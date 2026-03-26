@@ -45,7 +45,6 @@ const FAQ = () => {
     return map;
   }, [filtered]);
 
-  // JSON-LD FAQPage schema
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -60,7 +59,7 @@ const FAQ = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <SEOHead
         title="FAQ - Frequently Asked Questions"
         description="Find answers to common questions about MCQsAI, exam preparation, mock tests, and study tools for Pakistani students."
@@ -69,80 +68,81 @@ const FAQ = () => {
       <Helmet>
         <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
       </Helmet>
-      <Header />
-      <main className="max-w-3xl mx-auto px-4 py-8">
-        <PageBreadcrumb
-          items={[
-            { title: "Home", href: "/" },
-            { title: "FAQ", href: "/faq", isCurrent: true },
-          ]}
-        />
+      <Header>
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <PageBreadcrumb
+            items={[
+              { title: "Home", href: "/" },
+              { title: "FAQ", href: "/faq", isCurrent: true },
+            ]}
+          />
 
-        <div className="text-center mb-8">
-          <HelpCircle className="h-10 w-10 text-primary mx-auto mb-3" />
-          <h1 className="text-3xl font-bold text-foreground mb-2">Frequently Asked Questions</h1>
-          <p className="text-muted-foreground">Everything you need to know about MCQsAI</p>
-        </div>
+          <div className="text-center mb-8">
+            <HelpCircle className="h-10 w-10 text-primary mx-auto mb-3" />
+            <h1 className="text-3xl font-bold text-foreground mb-2">Frequently Asked Questions</h1>
+            <p className="text-muted-foreground">Everything you need to know about MCQsAI</p>
+          </div>
 
-        {/* Search & Filter */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search questions..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            {categories.map((c) => (
-              <Badge
-                key={c}
-                variant={activeCategory === c ? "default" : "outline"}
-                className="cursor-pointer capitalize"
-                onClick={() => setActiveCategory(c)}
-              >
-                {c}
-              </Badge>
-            ))}
-          </div>
-        </div>
-
-        {isLoading ? (
-          <div className="space-y-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="h-14 bg-muted rounded animate-pulse" />
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12">No questions match your search.</p>
-        ) : (
-          Object.entries(grouped).map(([cat, catItems]) => (
-            <div key={cat} className="mb-8">
-              <h2 className="text-lg font-semibold text-foreground mb-3 capitalize">{cat}</h2>
-              <Accordion type="single" collapsible className="space-y-2">
-                {catItems.map((item) => (
-                  <AccordionItem
-                    key={item.id}
-                    value={item.id}
-                    className="border rounded-lg px-4 bg-card"
-                  >
-                    <AccordionTrigger className="text-left text-sm font-medium">
-                      {item.question}
-                    </AccordionTrigger>
-                    <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
-                      {item.answer}
-                    </AccordionContent>
-                  </AccordionItem>
-                ))}
-              </Accordion>
+          {/* Search & Filter */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search questions..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
             </div>
-          ))
-        )}
-      </main>
-      <Footer />
-    </div>
+            <div className="flex gap-2 flex-wrap">
+              {categories.map((c) => (
+                <Badge
+                  key={c}
+                  variant={activeCategory === c ? "default" : "outline"}
+                  className="cursor-pointer capitalize"
+                  onClick={() => setActiveCategory(c)}
+                >
+                  {c}
+                </Badge>
+              ))}
+            </div>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-14 bg-muted rounded animate-pulse" />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">No questions match your search.</p>
+          ) : (
+            Object.entries(grouped).map(([cat, catItems]) => (
+              <div key={cat} className="mb-8">
+                <h2 className="text-lg font-semibold text-foreground mb-3 capitalize">{cat}</h2>
+                <Accordion type="single" collapsible className="space-y-2">
+                  {catItems.map((item) => (
+                    <AccordionItem
+                      key={item.id}
+                      value={item.id}
+                      className="border rounded-lg px-4 bg-card"
+                    >
+                      <AccordionTrigger className="text-left text-sm font-medium">
+                        {item.question}
+                      </AccordionTrigger>
+                      <AccordionContent className="text-sm text-muted-foreground leading-relaxed">
+                        {item.answer}
+                      </AccordionContent>
+                    </AccordionItem>
+                  ))}
+                </Accordion>
+              </div>
+            ))
+          )}
+        </div>
+        <Footer />
+      </Header>
+    </>
   );
 };
 
