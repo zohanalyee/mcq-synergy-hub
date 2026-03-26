@@ -19,6 +19,7 @@ import {
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
+  PenSquare, HelpCircle,
 } from "lucide-react";
 import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
 import DocumentMCQConverter from "./DocumentMCQConverter";
