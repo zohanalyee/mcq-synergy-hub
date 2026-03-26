@@ -296,7 +296,7 @@ const ImageCompressor = () => {
                   <div className="space-y-3">
                     <p className="text-sm font-medium text-muted-foreground">Preview</p>
                     <div className="relative rounded-xl border border-border/60 overflow-hidden bg-muted/30 aspect-video flex items-center justify-center">
-                      <img src={preview} alt="Preview" className="max-w-full max-h-full object-contain" />
+                      <img src={preview} alt="Image preview before compression" className="max-w-full max-h-full object-contain" />
                     </div>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       <FileImage className="h-4 w-4 shrink-0" />
