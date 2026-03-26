@@ -127,7 +127,9 @@ const BoardTopicPage = () => {
     staleTime: 5 * 60 * 1000,
   });
 
-  const mcqs = data?.mcqs || [];
+  const allMcqs = data?.mcqs || [];
+  const unapprovedCount = allMcqs.filter((m: any) => m.status !== 'approved').length;
+  const mcqs = allMcqs;
   const relatedTopics = data?.relatedTopics || [];
   const names = data?.resolvedNames || { board: boardName, subject: subjectName, topic: topicName };
   const debugInfo = data?.debug;
