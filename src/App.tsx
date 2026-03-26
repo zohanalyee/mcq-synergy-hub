@@ -224,6 +224,12 @@ const App = () => {
                       <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
                       <Route path="/reviews" element={<Reviews />} />
                       
+                      {/* Content & SEO Pages */}
+                      <Route path="/blog" element={<Suspense fallback={null}><Blog /></Suspense>} />
+                      <Route path="/blog/:slug" element={<Suspense fallback={null}><BlogPost /></Suspense>} />
+                      <Route path="/faq" element={<Suspense fallback={null}><FAQ /></Suspense>} />
+                      <Route path="/study-guides" element={<Suspense fallback={null}><StudyGuides /></Suspense>} />
+                      
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
                       <Route path="/tools/calendar" element={<CalendarTool />} />
