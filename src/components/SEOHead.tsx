@@ -41,11 +41,11 @@ const SEOHead = ({
       <meta name="description" content={finalDescription} />
       <meta name="keywords" content={finalKeywords} />
       <meta name="robots" content={noindex ? 'noindex,nofollow' : 'index,follow'} />
-      <link rel="canonical" href={finalUrl} />
+      <link rel="canonical" href={canonicalUrl} />
 
       {/* Open Graph */}
       <meta property="og:type" content={type} />
-      <meta property="og:url" content={finalUrl} />
+      <meta property="og:url" content={canonicalUrl} />
       <meta property="og:title" content={finalTitle} />
       <meta property="og:description" content={finalDescription} />
       <meta property="og:image" content={image} />
