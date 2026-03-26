@@ -143,6 +143,8 @@ const Blog = lazy(() => import("./pages/Blog"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const FAQ = lazy(() => import("./pages/FAQ"));
 const StudyGuides = lazy(() => import("./pages/StudyGuides"));
+const Boards = lazy(() => import("./pages/Boards"));
+const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -229,6 +231,10 @@ const App = () => {
                       <Route path="/blog/:slug" element={<Suspense fallback={null}><BlogPost /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={null}><FAQ /></Suspense>} />
                       <Route path="/study-guides" element={<Suspense fallback={null}><StudyGuides /></Suspense>} />
+                      
+                      {/* Programmatic SEO - Board Routes */}
+                      <Route path="/boards" element={<Suspense fallback={null}><Boards /></Suspense>} />
+                      <Route path="/boards/:boardSlug/class-:classNumber/:subjectSlug/:topicSlug" element={<Suspense fallback={null}><BoardTopicPage /></Suspense>} />
                       
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
