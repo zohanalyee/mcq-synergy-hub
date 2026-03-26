@@ -442,7 +442,7 @@ const ImageCompressor = () => {
                   <div className="rounded-xl border border-primary/30 overflow-hidden bg-primary/5">
                     <p className="text-xs font-medium text-primary text-center py-1.5 bg-primary/10">Compressed</p>
                     <div className="aspect-video flex items-center justify-center p-2">
-                      <img src={result.url} alt="Compressed" className="max-w-full max-h-full object-contain rounded" />
+                      <img src={result.url} alt="Compressed image result" className="max-w-full max-h-full object-contain rounded" />
                     </div>
                   </div>
                 </div>
