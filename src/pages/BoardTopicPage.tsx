@@ -122,6 +122,39 @@ const BoardTopicPage = () => {
 
   const seoTitle = `${names.topic} MCQs - ${names.subject} Class ${classNumber} | ${names.board}`;
   const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${classNumber} (${names.board}). Free online preparation with explanations.`;
+  const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/class-${classNumber}/${subjectSlug}/${topicSlug}`;
+
+  // Track empty topic views for analytics
+  useEffect(() => {
+    if (!isLoading && mcqs.length === 0 && names.topic) {
+      const pagePath = `/boards/${boardSlug}/class-${classNumber}/${subjectSlug}/${topicSlug}`;
+      trackEmptyTopicView({
+        board: names.board,
+        subject: names.subject,
+        topic: names.topic,
+        classNumber: classNumber || '',
+        url: pagePath,
+      });
+      // Upsert to DB
+      supabaseClient.from('empty_topic_analytics' as any).upsert(
+        {
+          board_name: names.board,
+          subject_name: names.subject,
+          topic_name: names.topic,
+          class_number: classNumber || '',
+          page_path: pagePath,
+          view_count: 1,
+          last_viewed_at: new Date().toISOString(),
+        },
+        { onConflict: 'page_path' }
+      ).then(({ error }) => {
+        if (error) {
+          // If upsert fails (no increment), try raw update
+          supabaseClient.rpc('increment_empty_topic_view' as any, { p_path: pagePath }).then(() => {});
+        }
+      });
+    }
+  }, [isLoading, mcqs.length, names.topic, boardSlug, classNumber, subjectSlug, topicSlug]);
 
   // Quiz schema for rich results
   const quizSchema = mcqs.length > 0 ? {
