@@ -18,6 +18,27 @@ function extractClassNumber(levelName: string): string | null {
   return match ? match[1] : null;
 }
 
+const TOOL_PATHS = [
+  "/tools/hr", "/tools/math", "/tools/age-calculator", "/tools/timer",
+  "/tools/gpa-calculator", "/tools/units", "/tools/notes", "/tools/calendar",
+  "/tools/islamic-calendar", "/tools/international-calendar",
+  "/tools/bmi-calculator", "/tools/percentage-calculator", "/tools/salary-calculator",
+  "/tools/emi-calculator", "/tools/tip-calculator", "/tools/loan-calculator",
+  "/tools/discount-calculator", "/tools/bmr-calculator", "/tools/duration-calculator",
+  "/tools/ratio-calculator", "/tools/speed-calculator", "/tools/area-calculator",
+  "/tools/fraction-calculator", "/tools/date-calculator", "/tools/fuel-calculator",
+  "/tools/cgpa-calculator", "/tools/gpa-to-percentage", "/tools/percentage-to-gpa",
+  "/tools/grade-calculator", "/tools/marks-calculator", "/tools/attendance-calculator",
+  "/tools/result-calculator", "/tools/formula-sheet", "/tools/periodic-table",
+  "/tools/multiplication-table", "/tools/currency-converter", "/tools/temperature-converter",
+  "/tools/roman-converter", "/tools/binary-converter", "/tools/case-converter",
+  "/tools/image-resizer", "/tools/image-compressor", "/tools/image-converter",
+  "/tools/pdf-compressor", "/tools/pdf-merger", "/tools/pdf-to-text", "/tools/pdf-splitter",
+  "/tools/stopwatch", "/tools/world-clock", "/tools/word-counter", "/tools/character-counter",
+  "/tools/qr-generator", "/tools/password-generator", "/tools/name-generator",
+  "/tools/color-picker", "/tools/random-number", "/tools/equation-solver",
+];
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -37,6 +58,10 @@ Deno.serve(async (req) => {
   try {
     if (type === "static") {
       return new Response(generateStaticSitemap(), { headers: corsHeaders });
+    }
+
+    if (type === "tools") {
+      return new Response(generateToolsSitemap(), { headers: corsHeaders });
     }
 
     if (type === "blog") {
@@ -88,7 +113,6 @@ Deno.serve(async (req) => {
     }
 
     // Default: sitemap index
-    // Count total board topic URLs
     const { count } = await supabase
       .from("topics")
       .select("id", { count: "exact", head: true });
@@ -98,6 +122,7 @@ Deno.serve(async (req) => {
 
     const sitemaps: string[] = [
       `<sitemap><loc>${edgeFnBase}?type=static</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}?type=tools</loc><lastmod>${now}</lastmod></sitemap>`,
       `<sitemap><loc>${edgeFnBase}?type=blog</loc><lastmod>${now}</lastmod></sitemap>`,
     ];
 
@@ -149,6 +174,19 @@ function generateStaticSitemap(): string {
   const urls = pages.map(
     (p) =>
       `<url><loc>${BASE_URL}${p.loc}</loc><lastmod>${now}</lastmod><changefreq>${p.freq}</changefreq><priority>${p.priority}</priority></url>`
+  );
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
+</urlset>`;
+}
+
+function generateToolsSitemap(): string {
+  const now = new Date().toISOString().split("T")[0];
+  const urls = TOOL_PATHS.map(
+    (path) =>
+      `<url><loc>${BASE_URL}${path}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.6</priority></url>`
   );
 
   return `<?xml version="1.0" encoding="UTF-8"?>

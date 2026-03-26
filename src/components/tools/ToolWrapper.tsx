@@ -3,9 +3,11 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Copy } from 'lucide-react';
-import { getRelatedTools } from '@/data/toolsData';
+import { ALL_TOOLS, getRelatedTools } from '@/data/toolsData';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
+import SEOHead from '@/components/SEOHead';
+import { Helmet } from 'react-helmet-async';
 
 interface ToolWrapperProps {
   toolId: string;
@@ -18,9 +20,36 @@ interface ToolWrapperProps {
 const ToolWrapper = ({ toolId, title, description, category, children }: ToolWrapperProps) => {
   const relatedTools = getRelatedTools(toolId, 4);
   const navigate = useNavigate();
+  const toolData = ALL_TOOLS.find(t => t.id === toolId);
+  const seoDescription = toolData?.seoDescription || description;
+  const howToUse = toolData?.howToUse || [];
+
+  const seoTitle = `${title} - Free Online Tool`;
+  const toolUrl = toolData?.href ? `https://mcqsai.com${toolData.href}` : undefined;
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'WebApplication',
+    name: title,
+    description: seoDescription,
+    url: toolUrl,
+    applicationCategory: 'UtilitiesApplication',
+    operatingSystem: 'Any',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+    provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
+  };
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
+      <SEOHead
+        title={seoTitle}
+        description={seoDescription}
+        url={toolUrl}
+      />
+      <Helmet>
+        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+      </Helmet>
+
       {/* Back Button */}
       <Button
         variant="ghost"
@@ -49,7 +78,7 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         transition={{ duration: 0.3 }}
       >
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{title}</h1>
-        <p className="text-muted-foreground mt-1">{description}</p>
+        <p className="text-muted-foreground mt-1">{seoDescription}</p>
       </motion.div>
 
       {/* Tool Content */}
@@ -64,6 +93,20 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* How to Use */}
+      {howToUse.length > 0 && (
+        <Card className="border-border/50">
+          <CardContent className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-3">How to Use</h2>
+            <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+              {howToUse.map((step, i) => (
+                <li key={i} className="text-sm leading-relaxed">{step}</li>
+              ))}
+            </ol>
+          </CardContent>
+        </Card>
+      )}
 
       {/* MCQ CTA */}
       <Card className="border-primary/20 bg-primary/5">
