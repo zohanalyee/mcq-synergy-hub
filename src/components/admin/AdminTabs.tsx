@@ -135,6 +135,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "study-sounds", label: "Study Sounds", icon: Music },
         { value: "messages", label: "Messages", icon: Mail },
         { value: "feedback-analytics", label: "Feedback", icon: Star },
+        { value: "social-links", label: "Social Links", icon: Share2 },
       ],
     },
   ];
