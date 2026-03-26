@@ -31,117 +31,118 @@ const Blog = () => {
   }, [posts, search, category]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <>
       <SEOHead
         title="Blog - Exam Tips & Study Guides"
         description="Read expert articles on MDCAT preparation, study techniques, college guides, and exam strategies for Pakistani students."
         keywords="MDCAT blog, exam tips Pakistan, study guides, medical college guide"
       />
-      <Header />
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <PageBreadcrumb
-          items={[
-            { title: "Home", href: "/" },
-            { title: "Blog", href: "/blog", isCurrent: true },
-          ]}
-        />
+      <Header>
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <PageBreadcrumb
+            items={[
+              { title: "Home", href: "/" },
+              { title: "Blog", href: "/blog", isCurrent: true },
+            ]}
+          />
 
-        <h1 className="text-3xl font-bold text-foreground mb-2">Blog</h1>
-        <p className="text-muted-foreground mb-6">
-          Expert articles on exam preparation, study tips, and career guidance.
-        </p>
+          <h1 className="text-3xl font-bold text-foreground mb-2">Blog</h1>
+          <p className="text-muted-foreground mb-6">
+            Expert articles on exam preparation, study tips, and career guidance.
+          </p>
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-8">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search articles..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9"
-            />
+          {/* Filters */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-8">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search articles..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex gap-2 flex-wrap">
+              {CATEGORIES.map((c) => (
+                <Badge
+                  key={c}
+                  variant={category === c ? "default" : "outline"}
+                  className="cursor-pointer capitalize"
+                  onClick={() => setCategory(c)}
+                >
+                  {c === "all" ? "All" : c}
+                </Badge>
+              ))}
+            </div>
           </div>
-          <div className="flex gap-2 flex-wrap">
-            {CATEGORIES.map((c) => (
-              <Badge
-                key={c}
-                variant={category === c ? "default" : "outline"}
-                className="cursor-pointer capitalize"
-                onClick={() => setCategory(c)}
-              >
-                {c === "all" ? "All" : c}
-              </Badge>
-            ))}
-          </div>
-        </div>
 
-        {/* Posts Grid */}
-        {isLoading ? (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader><div className="h-6 bg-muted rounded w-3/4" /></CardHeader>
-                <CardContent><div className="h-16 bg-muted rounded" /></CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : filtered.length === 0 ? (
-          <p className="text-center text-muted-foreground py-12">No articles found.</p>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((post, i) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-              >
-                <Link to={`/blog/${post.slug}`}>
-                  <Card className="h-full hover:shadow-lg transition-shadow border-border/50 hover:border-primary/30">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center gap-2 mb-2">
-                        {post.category && (
-                          <Badge variant="secondary" className="capitalize text-xs">
-                            {post.category}
-                          </Badge>
-                        )}
-                      </div>
-                      <CardTitle className="text-lg leading-tight line-clamp-2">
-                        {post.title}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {post.excerpt && (
-                        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                          {post.excerpt}
-                        </p>
-                      )}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <div className="flex items-center gap-3">
-                          <span className="flex items-center gap-1">
-                            <User className="h-3 w-3" />
-                            {post.author_name}
-                          </span>
-                          {post.published_at && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(post.published_at), "MMM d, yyyy")}
-                            </span>
+          {/* Posts Grid */}
+          {isLoading ? (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="animate-pulse">
+                  <CardHeader><div className="h-6 bg-muted rounded w-3/4" /></CardHeader>
+                  <CardContent><div className="h-16 bg-muted rounded" /></CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">No articles found.</p>
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((post, i) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                >
+                  <Link to={`/blog/${post.slug}`}>
+                    <Card className="h-full hover:shadow-lg transition-shadow border-border/50 hover:border-primary/30">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center gap-2 mb-2">
+                          {post.category && (
+                            <Badge variant="secondary" className="capitalize text-xs">
+                              {post.category}
+                            </Badge>
                           )}
                         </div>
-                        <ArrowRight className="h-4 w-4 text-primary" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </main>
-      <Footer />
-    </div>
+                        <CardTitle className="text-lg leading-tight line-clamp-2">
+                          {post.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {post.excerpt && (
+                          <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                            {post.excerpt}
+                          </p>
+                        )}
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              {post.author_name}
+                            </span>
+                            {post.published_at && (
+                              <span className="flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(post.published_at), "MMM d, yyyy")}
+                              </span>
+                            )}
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-primary" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+        <Footer />
+      </Header>
+    </>
   );
 };
 
