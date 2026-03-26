@@ -1,90 +1,113 @@
 
 
-# SEO Optimization: Images, Headings, Internal Links, and Breadcrumbs
+# Phase 3: Content & SEO Expansion — Blog, FAQ, Study Guides
 
-## Summary
-Four improvements to boost SEO and accessibility: fix image alt attributes, enforce heading hierarchy, enhance footer with subject links, and add breadcrumbs to key pages.
-
----
-
-## 1. Image Alt Attributes
-
-**Current state**: Several `<img>` tags have `alt=""` or generic alts like `"Preview"`.
-
-**Changes**:
-- `ScholarshipsManager.tsx` -- change `alt=""` to `alt={scholarship.title}`
-- `JobsManager.tsx` -- change `alt=""` to `alt={job.title}`
-- `ImageConverter.tsx` -- change `alt=""` to `alt={f.name}` (input) and `alt={r.converted.fileName}` (output)
-- `ImageCompressor.tsx` -- change `alt="Preview"` to `alt="Image preview before compression"`, `alt="Original"` to `alt="Original image before compression"`, `alt="Compressed"` to `alt="Compressed image result"`
-- `HeaderLogo.tsx` -- the logo uses a Lucide icon (SVG), not `<img>`. Add `aria-label="MCQSAI Logo"` to the logo container div.
-- Subject icons are Lucide React components (SVGs) -- add `aria-label` attributes where appropriate in `SubjectCard` or pass through props.
-
-## 2. Heading Hierarchy (h1/h2/h3)
-
-**Current state**: Multiple pages use only `<h1>` with no `<h2>`/`<h3>` structure. The home page (`Index.tsx`) needs audit for section headings.
-
-**Changes**:
-- **Index.tsx**: Ensure one `<h1>` for the hero. Demote section titles (Popular Subjects, Features, etc.) to `<h2>`. Card titles within sections become `<h3>`.
-- **Subjects.tsx**: Keep one `<h1>` ("Subjects"). Already correct.
-- **MockTests.tsx**: Keep one `<h1>`. Section sub-headings to `<h2>`.
-- **SubjectContent.tsx**: Keep subject name as `<h1>`. Topic headings as `<h2>`.
-- **Tool pages** (ImageConverter, ImageCompressor, Timer, Calendar): Already have single `<h1>` -- verify no duplicates.
-- Review `SubjectsHeader.tsx` component -- ensure it doesn't add a second `<h1>` when used alongside page-level `<h1>`.
-
-**Files to modify**: ~8-10 page files for heading adjustments.
-
-## 3. Internal Linking -- Enhanced Footer
-
-**Current state**: Footer has 6 quick links (Subjects, Tools, Scholarships, Jobs, Past Papers, Reviews). No subject-specific links.
-
-**Changes to `Footer.tsx`**:
-- Add a new "Popular Subjects" column (replacing or alongside existing columns) with links to top subjects: Biology, Chemistry, Physics, English, Mathematics, Computer Science. These will link to `/subjects` with appropriate search params.
-- Add a "Practice Tests" column with links: Mock Tests, Custom Quizzes, Past Papers, Question Bank.
-
-**Subject page cross-linking (`SubjectContent.tsx`)**:
-- Add a "Related Practice" section at the bottom of subject content pages linking to Mock Tests and Custom Quizzes pages. This keeps users on-site longer.
-
-## 4. Breadcrumb Navigation
-
-**Current state**: `PageBreadcrumb` component exists and is used only on `SubjectContent.tsx`.
-
-**Changes -- Add breadcrumbs to**:
-- `Subjects.tsx` -- Home > Subjects
-- `MockTests.tsx` -- Home > Mock Tests
-- `TestSession.tsx` -- Home > Mock Tests > Test Session
-- `Scholarships.tsx` -- Home > Scholarships
-- `Jobs.tsx` -- Home > Jobs
-- `PastPapers.tsx` -- Home > Past Papers
-- `CustomSyllabus.tsx` -- Home > Custom Syllabus
-- `Quizzes.tsx` -- Home > Custom Quizzes
-- `Tools.tsx` -- Home > Tools
-- Tool sub-pages -- Home > Tools > [Tool Name]
-
-Each page will import `PageBreadcrumb` and pass the appropriate `items` array.
+## Overview
+Create three new database-driven pages (`/blog`, `/faq`, `/study-guides`) plus admin management, all backed by two new Supabase tables so content can be managed without redeployment.
 
 ---
 
-## Technical Details
+## Database Changes (2 new tables)
 
-**Files created**: None.
+### Table: `blog_posts`
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid PK | default gen_random_uuid() |
+| title | text NOT NULL | |
+| slug | text NOT NULL UNIQUE | URL-friendly identifier |
+| content | text NOT NULL | Markdown body |
+| excerpt | text | Short summary for list view |
+| category | text | e.g. 'preparation', 'colleges', 'tips' |
+| tags | text[] | default '{}' |
+| image_url | text | Featured image |
+| author_name | text | default 'MCQSAI Team' |
+| status | text NOT NULL | default 'draft' ('draft', 'published') |
+| published_at | timestamptz | |
+| created_at / updated_at | timestamptz | |
+| created_by | uuid | |
+| meta_title / meta_description | text | SEO fields |
 
-**Files modified** (~18 files):
-- `src/components/header/HeaderLogo.tsx` -- add `aria-label`
-- `src/components/Footer.tsx` -- add Popular Subjects and Practice Tests columns
-- `src/components/admin/jobs/JobsManager.tsx` -- fix alt
-- `src/components/admin/scholarships/ScholarshipsManager.tsx` -- fix alt
-- `src/pages/tools/ImageConverter.tsx` -- fix alt
-- `src/pages/tools/ImageCompressor.tsx` -- fix alt
-- `src/pages/Index.tsx` -- heading hierarchy audit
-- `src/pages/Subjects.tsx` -- add breadcrumb
-- `src/pages/MockTests.tsx` -- add breadcrumb
-- `src/pages/TestSession.tsx` -- add breadcrumb
-- `src/pages/Scholarships.tsx` -- add breadcrumb
-- `src/pages/Jobs.tsx` -- add breadcrumb
-- `src/pages/PastPapers.tsx` -- add breadcrumb
-- `src/pages/CustomSyllabus.tsx` -- add breadcrumb
-- `src/pages/Quizzes.tsx` -- add breadcrumb (if exists as custom quizzes)
-- `src/pages/Tools.tsx` -- add breadcrumb
-- `src/pages/SubjectContent.tsx` -- add Related Practice section
-- Tool sub-pages as needed
+**RLS**: Public SELECT where `status = 'published'`, admin ALL via `is_admin()`.
+
+### Table: `faq_items`
+| Column | Type | Notes |
+|--------|------|-------|
+| id | uuid PK | |
+| question | text NOT NULL | |
+| answer | text NOT NULL | Markdown |
+| category | text | e.g. 'General', 'Exams', 'Technical' |
+| sort_order | int | default 0 |
+| is_active | boolean | default true |
+| created_at / updated_at | timestamptz | |
+
+**RLS**: Public SELECT where `is_active = true`, admin ALL via `is_admin()`.
+
+Seed 5 blog posts and ~8 FAQ items via the migration.
+
+---
+
+## New Pages
+
+### 1. `/blog` — Blog List Page
+- Grid of blog post cards (image, title, excerpt, date, category badge)
+- Search bar + category filter chips
+- SEOHead + breadcrumb
+- Links to individual posts
+
+### 2. `/blog/:slug` — Blog Post Detail
+- Full markdown-rendered post (use `react-markdown`)
+- Author, date, category, tags
+- "Related Posts" sidebar/section
+- SEOHead with post-specific meta
+
+### 3. `/faq` — FAQ Page
+- Accordion layout grouped by category
+- Search/filter
+- SEOHead + breadcrumb + JSON-LD FAQPage schema
+
+### 4. Study Guides Section
+- Add a `/study-guides` route that queries `content_items` where `category = 'mcq'` grouped by subject/topic, showing topic-wise summaries
+- Simple cards linking to `/subject/:id` with topic filters
+- No new table needed — leverages existing subject/topic data
+
+---
+
+## Admin Management
+
+Add two new tabs in AdminTabs.tsx under the "Content" group:
+- **Blog Manager** — CRUD for blog posts (title, slug auto-generation, markdown editor via textarea, status toggle, image URL)
+- **FAQ Manager** — CRUD for FAQ items (question, answer, category, sort order, active toggle)
+
+Both use standard Supabase client queries — no edge functions needed.
+
+---
+
+## Routing & Navigation
+
+- Add routes in `App.tsx`: `/blog`, `/blog/:slug`, `/faq`, `/study-guides`
+- Add links in Footer under a new "Resources" column: Blog, FAQ, Study Guides
+- Update `sitemap.xml` with new routes
+- Update `StructuredData.tsx` FAQPage schema to pull from database
+
+---
+
+## New Dependencies
+- `react-markdown` — for rendering blog post content
+
+## Files Created (~8)
+- `src/pages/Blog.tsx` — blog list
+- `src/pages/BlogPost.tsx` — single post
+- `src/pages/FAQ.tsx` — FAQ page
+- `src/pages/StudyGuides.tsx` — study guides
+- `src/components/admin/BlogManager.tsx` — admin blog CRUD
+- `src/components/admin/FAQManager.tsx` — admin FAQ CRUD
+- `src/hooks/useBlogPosts.ts` — data fetching hook
+- `src/hooks/useFAQItems.ts` — data fetching hook
+
+## Files Modified (~5)
+- `src/App.tsx` — add routes
+- `src/components/admin/AdminTabs.tsx` — add Blog/FAQ tabs
+- `src/components/admin/AdminContent.tsx` — exclude new tabs from content table
+- `src/components/Footer.tsx` — add Resources column
+- `public/sitemap.xml` — add new URLs
 
