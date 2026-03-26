@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import SEOHead from '@/components/SEOHead';
+import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Sparkles, Loader2, Wifi } from "lucide-react";
