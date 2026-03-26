@@ -53,6 +53,7 @@ const Footer = () => {
                 ))}
               </div>
             )}
+          </div>
 
           {/* Popular Subjects */}
           <div className="space-y-3">
