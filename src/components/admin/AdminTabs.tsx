@@ -35,6 +35,7 @@ import { motion } from "framer-motion";
 import AdminMessagesPanel from "./messages/AdminMessagesPanel";
 import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
 import StudySoundsManager from "./StudySoundsManager";
+import SocialLinksManager from "./SocialLinksManager";
 
 type AdminTabsProps = {
   activeTab: string;
