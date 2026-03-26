@@ -81,6 +81,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "review-duplicates", label: "Review Duplicates", icon: AlertTriangle },
         { value: "submit-content", label: "Submit", icon: FileText },
         { value: "bulk-upload", label: "Bulk Upload", icon: Upload },
+        { value: "blog-manager", label: "Blog", icon: PenSquare },
+        { value: "faq-manager", label: "FAQ", icon: HelpCircle },
       ],
     },
     {
