@@ -663,6 +663,25 @@ const SubjectContent = () => {
               </Button>
             </div>
           )}
+
+          {/* Related Practice Section */}
+          <div className="mt-12 pt-8 border-t border-border">
+            <h2 className="text-lg font-bold mb-4">Continue Practicing</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <Link to="/mock-tests" className="p-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-center">
+                <h3 className="font-semibold text-sm">Mock Tests</h3>
+                <p className="text-xs text-muted-foreground mt-1">Full-length competitive exam simulations</p>
+              </Link>
+              <Link to="/custom-syllabus" className="p-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-center">
+                <h3 className="font-semibold text-sm">Custom Syllabus</h3>
+                <p className="text-xs text-muted-foreground mt-1">Build your own test from multiple subjects</p>
+              </Link>
+              <Link to="/past-papers" className="p-4 rounded-xl border border-border hover:border-primary/40 hover:bg-primary/5 transition-all text-center">
+                <h3 className="font-semibold text-sm">Past Papers</h3>
+                <p className="text-xs text-muted-foreground mt-1">Practice with previous exam papers</p>
+              </Link>
+            </div>
+          </div>
         </motion.div>
       </div>
     </Header>
