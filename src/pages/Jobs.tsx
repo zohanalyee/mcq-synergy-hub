@@ -62,7 +62,7 @@ const Jobs = () => {
         keywords="Pakistan jobs, government jobs, PPSC jobs, FPSC jobs, NTS jobs, career opportunities"
       />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
-        <JobsHeader />
+        <PageBreadcrumb items={[{ title: 'Jobs', href: '/jobs', isCurrent: true }]} showHomeButton={true} />
         
         {/* Glass Search & Filter Bar */}
         <div className="mt-4">
