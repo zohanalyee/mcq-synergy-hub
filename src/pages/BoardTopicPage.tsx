@@ -43,7 +43,7 @@ const BoardTopicPage = () => {
   const topicName = fromSlug(topicSlug || '');
 
   const { data, isLoading } = useQuery({
-    queryKey: ['board-topic', boardSlug, classNumber, subjectSlug, topicSlug],
+    queryKey: ['board-topic', boardSlug, classNumber, subjectSlug, topicSlug, isAdmin],
     queryFn: async () => {
       const debug: DebugInfo = {
         systemFound: false, systemName: null, systemsChecked: 0,
