@@ -322,6 +322,33 @@ export type Database = {
         }
         Relationships: []
       }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          message: string
+          name: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          message: string
+          name: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          message?: string
+          name?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       content_downloads: {
         Row: {
           content_filter: Json | null
@@ -1357,6 +1384,7 @@ export type Database = {
           total_batches: number | null
           total_pages: number
           updated_at: string
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -1371,6 +1399,7 @@ export type Database = {
           total_batches?: number | null
           total_pages: number
           updated_at?: string
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -1385,6 +1414,7 @@ export type Database = {
           total_batches?: number | null
           total_pages?: number
           updated_at?: string
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -2248,6 +2278,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_documents: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          file_type: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_feedback: {
         Row: {
