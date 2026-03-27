@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils';
 import { getLocalizedGreeting } from '@/lib/greetings';
 import { 
   BookOpen, 
+  Brain,
   BrainCircuit, 
   Trophy, 
   BarChart3, 
