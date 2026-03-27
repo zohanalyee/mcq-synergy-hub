@@ -76,7 +76,7 @@ const TestimonialsSection = () => {
             Be among the first to share your experience and help shape our platform
           </p>
           <Button asChild size="sm">
-            <Link to="/get-started">Get Started Free</Link>
+            <Link to="/boards">Get Started Free</Link>
           </Button>
         </div>
       </section>

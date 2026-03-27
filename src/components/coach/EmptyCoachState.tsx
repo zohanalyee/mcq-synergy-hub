@@ -1,6 +1,5 @@
 import { BookOpen, Brain, Briefcase, Target } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { motion } from 'framer-motion';
@@ -14,18 +13,18 @@ const suggestions = [
     descEn: 'Build your own test with Syllabus Builder',
     descUr: 'Syllabus Builder سے اپنا ٹیسٹ بنائیں',
     descSd: 'Syllabus Builder سان پنهنجو ٽيسٽ ٺاهيو',
-    path: '/syllabus-builder',
+    path: '/custom-syllabus',
     color: 'text-blue-500',
   },
   {
     icon: Brain,
-    titleEn: 'Take Quick Quiz',
-    titleUr: 'فوری Quiz لیں',
-    titleSd: 'جلدي Quiz وٺو',
-    descEn: 'Practice with ready-made quizzes',
-    descUr: 'تیار شدہ Quiz سے پریکٹس کریں',
-    descSd: 'تيار ڪيل Quiz سان مشق ڪريو',
-    path: '/quiz',
+    titleEn: 'Browse Boards',
+    titleUr: 'بورڈز دیکھیں',
+    titleSd: 'بورڊز ڏسو',
+    descEn: 'Explore board-wise MCQ practice',
+    descUr: 'بورڈ کے مطابق MCQs کی پریکٹس',
+    descSd: 'بورڊ جي لحاظ کان MCQs جي مشق',
+    path: '/boards',
     color: 'text-purple-500',
   },
   {
