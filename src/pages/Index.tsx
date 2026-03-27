@@ -233,17 +233,21 @@ const Home = () => {
               transition={{ duration: 0.5 }}
               className="flex flex-col items-center"
             >
-              {/* AI Brand Icon */}
-              <div className="relative mb-2 hidden md:flex items-center justify-center">
+              {/* AI Brand Icon - Large */}
+              <div className="relative mb-3 flex flex-col items-center justify-center">
                 <motion.div
-                  className="absolute inset-0 rounded-full bg-violet-500/20 blur-lg"
-                  animate={{ scale: [1, 1.4, 1], opacity: [0.3, 0.6, 0.3] }}
+                  className="absolute w-24 h-24 md:w-32 md:h-32 rounded-2xl bg-violet-500/20 blur-2xl"
+                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
                   transition={{ duration: 2.5, repeat: Infinity }}
                 />
-                <div className="relative flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600">
-                  <BrainCircuit className="h-5 w-5 text-white" />
-                  <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-300 animate-pulse" />
+                <div className="relative flex items-center justify-center w-20 h-20 md:w-28 md:h-28 rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-xl shadow-violet-500/30">
+                  <Brain className="h-10 w-10 md:h-14 md:w-14 text-white" />
+                  <Sparkles className="absolute -top-2 -right-2 h-5 w-5 text-yellow-300 animate-pulse" />
                 </div>
+                <span className="mt-3 text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-cyan-500">MCQS</span>
+                  <span className="text-foreground">AI</span>
+                </span>
               </div>
               
               <motion.span
