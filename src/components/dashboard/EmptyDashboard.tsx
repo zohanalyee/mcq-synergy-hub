@@ -1,4 +1,4 @@
-import { BookOpen, Target, TrendingUp } from "lucide-react";
+import { BookOpen, Target, TrendingUp, LayoutGrid } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +24,11 @@ const EmptyDashboard = () => {
             and get AI-powered recommendations for improvement.
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
-            <Button onClick={() => navigate("/custom-syllabus")} className="gap-2">
+            <Button onClick={() => navigate("/boards")} className="gap-2">
+              <LayoutGrid className="h-4 w-4" />
+              Browse Boards
+            </Button>
+            <Button variant="outline" onClick={() => navigate("/custom-syllabus")} className="gap-2">
               <BookOpen className="h-4 w-4" />
               Create Custom Quiz
             </Button>

@@ -72,7 +72,7 @@ const AIWelcome = () => {
 
                 <div className="grid grid-cols-2 gap-2">
                   <Link
-                    to="/subjects"
+                    to="/boards"
                     onClick={handleClose}
                     className="px-4 py-2 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-lg text-sm font-medium hover:shadow-lg transition-all block text-center"
                   >

@@ -328,7 +328,7 @@ const Home = () => {
               className="hidden sm:flex flex-row gap-3 justify-center"
             >
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
+              <Button size="default" className="btn-shine" onClick={() => navigate('/boards')}>
                   {t('hero.getStarted')}
                 </Button>
               </motion.div>
@@ -469,7 +469,7 @@ const Home = () => {
               Join thousands of students who have improved their test scores with MCQSAI.
             </p>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Button size="default" className="btn-shine" onClick={() => navigate('/get-started')}>
+              <Button size="default" className="btn-shine" onClick={() => navigate('/boards')}>
                 Get Started Now
               </Button>
             </motion.div>
