@@ -245,7 +245,7 @@ const Home = () => {
                   <Brain className="h-5 w-5 md:h-6 md:w-6 text-white" />
                   <Sparkles className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 text-yellow-300 animate-pulse" />
                 </div>
-                <span className="mt-3 text-2xl md:text-3xl font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
+                <span className="mt-2 text-lg md:text-xl font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
                   <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-cyan-500">MCQS</span>
                   <span className="text-foreground">AI</span>
                 </span>
