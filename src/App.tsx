@@ -148,6 +148,9 @@ const BoardLandingPage = lazy(() => import("./pages/BoardLandingPage"));
 const BoardClassPage = lazy(() => import("./pages/BoardClassPage"));
 const BoardSubjectPage = lazy(() => import("./pages/BoardSubjectPage"));
 const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
+const ExamLandingPage = lazy(() => import("./pages/exams/ExamLandingPage"));
+const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
+const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -225,7 +228,9 @@ const App = () => {
                       <Route path="/achievements" element={<InstantAuthGuard title="Achievements" description="Sign in to view your achievements" actionName="Achievements"><Achievements /></InstantAuthGuard>} />
                       <Route path="/subject/:id" element={<SubjectContent />} />
                       <Route path="/subject-content/:id" element={<SubjectContent />} />
+                      <Route path="/jobs/:jobSlug" element={<Suspense fallback={null}><JobDetailPage /></Suspense>} />
                       <Route path="/jobs" element={<Jobs />} />
+                      <Route path="/scholarships/:scholarshipSlug" element={<Suspense fallback={null}><ScholarshipDetailPage /></Suspense>} />
                       <Route path="/scholarships" element={<Scholarships />} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
@@ -238,6 +243,7 @@ const App = () => {
                       <Route path="/reviews" element={<Reviews />} />
                       
                       {/* Content & SEO Pages */}
+                      <Route path="/exams/:examSlug" element={<Suspense fallback={null}><ExamLandingPage /></Suspense>} />
                       <Route path="/blog" element={<Suspense fallback={null}><Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={null}><BlogPost /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={null}><FAQ /></Suspense>} />

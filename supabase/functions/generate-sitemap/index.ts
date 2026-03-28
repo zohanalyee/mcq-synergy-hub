@@ -64,6 +64,50 @@ Deno.serve(async (req) => {
       return new Response(generateToolsSitemap(), { headers: corsHeaders });
     }
 
+    if (type === "exams") {
+      return new Response(generateExamsSitemap(), { headers: corsHeaders });
+    }
+
+    if (type === "jobs") {
+      const { data: ciJobs } = await supabase
+        .from("content_items")
+        .select("title, updated_at")
+        .eq("category", "job")
+        .eq("status", "approved");
+
+      const { data: eoJobs } = await supabase
+        .from("external_opportunities")
+        .select("title, updated_at")
+        .eq("type", "job")
+        .eq("status", "approved");
+
+      const allJobs = [
+        ...(ciJobs || []).map(j => ({ slug: toSlug(j.title), lastmod: j.updated_at.split("T")[0] })),
+        ...(eoJobs || []).map(j => ({ slug: toSlug(j.title), lastmod: j.updated_at.split("T")[0] })),
+      ];
+      return new Response(generateUrlSetFromSlugs(allJobs, "/jobs/"), { headers: corsHeaders });
+    }
+
+    if (type === "scholarships") {
+      const { data: ciSchol } = await supabase
+        .from("content_items")
+        .select("title, updated_at")
+        .eq("category", "scholarship")
+        .eq("status", "approved");
+
+      const { data: eoSchol } = await supabase
+        .from("external_opportunities")
+        .select("title, updated_at")
+        .eq("type", "scholarship")
+        .eq("status", "approved");
+
+      const allSchol = [
+        ...(ciSchol || []).map(s => ({ slug: toSlug(s.title), lastmod: s.updated_at.split("T")[0] })),
+        ...(eoSchol || []).map(s => ({ slug: toSlug(s.title), lastmod: s.updated_at.split("T")[0] })),
+      ];
+      return new Response(generateUrlSetFromSlugs(allSchol, "/scholarships/"), { headers: corsHeaders });
+    }
+
     if (type === "blog") {
       const { data: posts } = await supabase
         .from("blog_posts")
@@ -123,6 +167,9 @@ Deno.serve(async (req) => {
     const sitemaps: string[] = [
       `<sitemap><loc>${edgeFnBase}?type=static</loc><lastmod>${now}</lastmod></sitemap>`,
       `<sitemap><loc>${edgeFnBase}?type=tools</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}?type=exams</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}?type=jobs</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}?type=scholarships</loc><lastmod>${now}</lastmod></sitemap>`,
       `<sitemap><loc>${edgeFnBase}?type=blog</loc><lastmod>${now}</lastmod></sitemap>`,
     ];
 
@@ -167,6 +214,12 @@ function generateStaticSitemap(): string {
     { loc: "/faq", priority: "0.7", freq: "monthly" },
     { loc: "/study-guides", priority: "0.7", freq: "weekly" },
     { loc: "/boards", priority: "0.8", freq: "weekly" },
+    { loc: "/exams/mdcat", priority: "0.9", freq: "monthly" },
+    { loc: "/exams/ecat", priority: "0.9", freq: "monthly" },
+    { loc: "/exams/css", priority: "0.9", freq: "monthly" },
+    { loc: "/exams/ppsc", priority: "0.8", freq: "monthly" },
+    { loc: "/exams/fpsc", priority: "0.8", freq: "monthly" },
+    { loc: "/exams/nts", priority: "0.8", freq: "monthly" },
     { loc: "/privacy-policy", priority: "0.3", freq: "yearly" },
     { loc: "/terms-of-service", priority: "0.3", freq: "yearly" },
   ];
@@ -216,5 +269,33 @@ function generateUrlSet(urls: { loc: string; lastmod: string }[]): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 ${entries.join("\n")}
+</urlset>`;
+}
+
+const EXAM_SLUGS = ["mdcat", "ecat", "css", "ppsc", "fpsc", "nts"];
+
+function generateExamsSitemap(): string {
+  const now = new Date().toISOString().split("T")[0];
+  const urls = EXAM_SLUGS.map(
+    (slug) =>
+      `<url><loc>${BASE_URL}/exams/${slug}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>`
+  );
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
+</urlset>`;
+}
+
+function generateUrlSetFromSlugs(items: { slug: string; lastmod: string }[], prefix: string): string {
+  const seen = new Set<string>();
+  const urls = items
+    .filter(i => { if (seen.has(i.slug)) return false; seen.add(i.slug); return true; })
+    .map(
+      (i) =>
+        `<url><loc>${BASE_URL}${prefix}${i.slug}</loc><lastmod>${i.lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`
+    );
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
 </urlset>`;
 }

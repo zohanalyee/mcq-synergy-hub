@@ -2,14 +2,30 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
     <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=static</loc>
-    <lastmod>2026-03-26</lastmod>
+    <lastmod>2026-03-28</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=tools</loc>
+    <lastmod>2026-03-28</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=exams</loc>
+    <lastmod>2026-03-28</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=jobs</loc>
+    <lastmod>2026-03-28</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=scholarships</loc>
+    <lastmod>2026-03-28</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=blog</loc>
-    <lastmod>2026-03-26</lastmod>
+    <lastmod>2026-03-28</lastmod>
   </sitemap>
   <sitemap>
     <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=boards&amp;page=1</loc>
-    <lastmod>2026-03-26</lastmod>
+    <lastmod>2026-03-28</lastmod>
   </sitemap>
 </sitemapindex>

@@ -11,6 +11,27 @@ const features = [
   { icon: GraduationCap, text: 'Comprehensive exam prep (MDCAT, ECAT, CSS, etc.)' },
 ];
 
+const aboutJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: 'About MCQsAI',
+  description: "MCQsAI is Pakistan's AI-powered MCQ practice platform with 6000+ questions, 50+ tools, and comprehensive exam preparation.",
+  mainEntity: {
+    '@type': 'Organization',
+    name: 'MCQsAI',
+    url: 'https://mcqsai.com',
+    foundingCountry: 'PK',
+    description: "Pakistan's premier AI-powered educational platform",
+    contactPoint: {
+      '@type': 'ContactPoint',
+      email: 'hello@mcqsai.com',
+      telephone: '+92-300-1234567',
+      contactType: 'customer support',
+      availableLanguage: ['English', 'Urdu', 'Sindhi'],
+    },
+  },
+};
+
 const About = () => {
   return (
     <Header>
@@ -19,6 +40,7 @@ const About = () => {
         description="MCQsAI is Pakistan's AI-powered MCQ practice platform with 6000+ questions, 50+ tools, and comprehensive exam preparation for MDCAT, ECAT, CSS, and more."
         keywords="about MCQsAI, AI exam platform, Pakistan education, EdTech"
       />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutJsonLd) }} />
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-6">About MCQSAI</h1>
 
