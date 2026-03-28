@@ -265,3 +265,31 @@ function generateUrlSet(urls: { loc: string; lastmod: string }[]): string {
 ${entries.join("\n")}
 </urlset>`;
 }
+
+const EXAM_SLUGS = ["mdcat", "ecat", "css", "ppsc", "fpsc", "nts"];
+
+function generateExamsSitemap(): string {
+  const now = new Date().toISOString().split("T")[0];
+  const urls = EXAM_SLUGS.map(
+    (slug) =>
+      `<url><loc>${BASE_URL}/exams/${slug}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>`
+  );
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
+</urlset>`;
+}
+
+function generateUrlSetFromSlugs(items: { slug: string; lastmod: string }[], prefix: string): string {
+  const seen = new Set<string>();
+  const urls = items
+    .filter(i => { if (seen.has(i.slug)) return false; seen.add(i.slug); return true; })
+    .map(
+      (i) =>
+        `<url><loc>${BASE_URL}${prefix}${i.slug}</loc><lastmod>${i.lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.6</priority></url>`
+    );
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.join("\n")}
+</urlset>`;
+}
