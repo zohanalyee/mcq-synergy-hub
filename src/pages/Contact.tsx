@@ -103,6 +103,7 @@ const Contact = () => {
         description="Get in touch with MCQsAI team. We'd love to hear from you about suggestions, feedback, or partnerships."
         keywords="contact MCQsAI, support, feedback, help"
       />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contactJsonLd) }} />
       <div className="max-w-5xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-8">Contact Us</h1>
 
