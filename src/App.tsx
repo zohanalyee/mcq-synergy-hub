@@ -148,6 +148,9 @@ const BoardLandingPage = lazy(() => import("./pages/BoardLandingPage"));
 const BoardClassPage = lazy(() => import("./pages/BoardClassPage"));
 const BoardSubjectPage = lazy(() => import("./pages/BoardSubjectPage"));
 const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
+const ExamLandingPage = lazy(() => import("./pages/exams/ExamLandingPage"));
+const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
+const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
