@@ -167,6 +167,9 @@ Deno.serve(async (req) => {
     const sitemaps: string[] = [
       `<sitemap><loc>${edgeFnBase}?type=static</loc><lastmod>${now}</lastmod></sitemap>`,
       `<sitemap><loc>${edgeFnBase}?type=tools</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}?type=exams</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}?type=jobs</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}?type=scholarships</loc><lastmod>${now}</lastmod></sitemap>`,
       `<sitemap><loc>${edgeFnBase}?type=blog</loc><lastmod>${now}</lastmod></sitemap>`,
     ];
 
