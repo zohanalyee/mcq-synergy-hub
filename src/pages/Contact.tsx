@@ -19,6 +19,28 @@ const contactSchema = z.object({
   message: z.string().trim().min(1, 'Message is required').max(2000),
 });
 
+const contactJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ContactPage',
+  name: 'Contact MCQsAI',
+  description: 'Get in touch with the MCQsAI team for support, feedback, or partnerships.',
+  mainEntity: {
+    '@type': 'Organization',
+    name: 'MCQsAI',
+    url: 'https://mcqsai.com',
+    contactPoint: [
+      { '@type': 'ContactPoint', email: 'hello@mcqsai.com', contactType: 'general inquiry' },
+      { '@type': 'ContactPoint', email: 'support@mcqsai.com', contactType: 'customer support' },
+    ],
+    address: {
+      '@type': 'PostalAddress',
+      addressLocality: 'Karachi',
+      addressRegion: 'Sindh',
+      addressCountry: 'PK',
+    },
+  },
+};
+
 const Contact = () => {
   const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [errors, setErrors] = useState<Record<string, string>>({});
