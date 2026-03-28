@@ -64,6 +64,50 @@ Deno.serve(async (req) => {
       return new Response(generateToolsSitemap(), { headers: corsHeaders });
     }
 
+    if (type === "exams") {
+      return new Response(generateExamsSitemap(), { headers: corsHeaders });
+    }
+
+    if (type === "jobs") {
+      const { data: ciJobs } = await supabase
+        .from("content_items")
+        .select("title, updated_at")
+        .eq("category", "job")
+        .eq("status", "approved");
+
+      const { data: eoJobs } = await supabase
+        .from("external_opportunities")
+        .select("title, updated_at")
+        .eq("type", "job")
+        .eq("status", "approved");
+
+      const allJobs = [
+        ...(ciJobs || []).map(j => ({ slug: toSlug(j.title), lastmod: j.updated_at.split("T")[0] })),
+        ...(eoJobs || []).map(j => ({ slug: toSlug(j.title), lastmod: j.updated_at.split("T")[0] })),
+      ];
+      return new Response(generateUrlSetFromSlugs(allJobs, "/jobs/"), { headers: corsHeaders });
+    }
+
+    if (type === "scholarships") {
+      const { data: ciSchol } = await supabase
+        .from("content_items")
+        .select("title, updated_at")
+        .eq("category", "scholarship")
+        .eq("status", "approved");
+
+      const { data: eoSchol } = await supabase
+        .from("external_opportunities")
+        .select("title, updated_at")
+        .eq("type", "scholarship")
+        .eq("status", "approved");
+
+      const allSchol = [
+        ...(ciSchol || []).map(s => ({ slug: toSlug(s.title), lastmod: s.updated_at.split("T")[0] })),
+        ...(eoSchol || []).map(s => ({ slug: toSlug(s.title), lastmod: s.updated_at.split("T")[0] })),
+      ];
+      return new Response(generateUrlSetFromSlugs(allSchol, "/scholarships/"), { headers: corsHeaders });
+    }
+
     if (type === "blog") {
       const { data: posts } = await supabase
         .from("blog_posts")
