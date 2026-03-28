@@ -1,73 +1,89 @@
 
 
-# Programmatic SEO for Tools
+# SEO Status Audit & Pending Work Plan
 
-## Overview
-Enhance tool pages with proper SEO metadata, "How to Use" guides, and update the sitemap to include all 53+ tool URLs. The existing architecture already has individual routes per tool -- the work is adding SEO content and sitemap entries.
+## What's Already Done
+- **Tools SEO (Item 1)**: FULLY COMPLETE. All 53 tools have `seoDescription` + `howToUse` in `toolsData.ts`. `ToolWrapper.tsx` renders SEOHead, JSON-LD WebApplication schema, How-to-Use guide, and Related Tools sidebar. Sitemap includes all 53 tool URLs via `?type=tools`.
+- **Boards SEO**: Complete (2000+ programmatic pages with dynamic sitemaps)
+- **Dynamic sitemaps**: Complete (index, static, blog, boards, tools)
+- **Meta tags automation**: SEOHead used across 26+ pages
+- **Structured data**: StructuredData.tsx + per-page JSON-LD
+
+## What's Still Pending
+
+### 1. Jobs Page SEO (no detail pages exist)
+The `/jobs` page has basic SEOHead but lacks:
+- **Individual job detail pages** (`/jobs/:jobSlug`) -- no route or component exists
+- **Category pages** (`/jobs/category/:category`) -- no route exists
+- **JSON-LD JobPosting schema** on detail pages
+- **Sitemap entries** for job URLs
+
+**Plan:**
+- Create `src/pages/JobDetailPage.tsx` with SEOHead, JSON-LD `JobPosting` schema, breadcrumbs
+- Create `src/pages/JobCategoryPage.tsx` for category landing pages
+- Add routes in App.tsx: `/jobs/:jobSlug` and `/jobs/category/:category`
+- Add `type=jobs` handler in generate-sitemap edge function (query `content_items` where `category='job'` + `external_opportunities` where `type='job'`)
+
+### 2. Scholarships Page SEO (no detail pages exist)
+Same situation as Jobs:
+- **Individual scholarship detail pages** (`/scholarships/:slug`) -- missing
+- **No JSON-LD Scholarship schema**
+- **No sitemap entries**
+
+**Plan:**
+- Create `src/pages/ScholarshipDetailPage.tsx` with SEOHead, JSON-LD schema
+- Add route `/scholarships/:slug` in App.tsx
+- Add `type=scholarships` handler in sitemap edge function
+
+### 3. Competitive Tests Landing Pages (no dedicated pages)
+Currently MDCAT/ECAT/CSS are only mentioned in meta tags and subject descriptions. No dedicated landing pages exist.
+
+**Plan:**
+- Create `src/pages/exams/ExamLandingPage.tsx` -- a template component that takes exam type as param
+- Create static data file `src/data/examData.ts` with SEO content for each exam (MDCAT, ECAT, CSS, PPSC, FPSC, NTS) including description, subjects, eligibility, tips
+- Add routes: `/exams/mdcat`, `/exams/ecat`, `/exams/css`, `/exams/ppsc`, `/exams/fpsc`, `/exams/nts`
+- Each page gets: SEOHead, JSON-LD `Course` schema, subject links, related MCQs CTA
+- Add these URLs to static sitemap
+
+### 4. Main Pages Polish
+Current state: All main pages already have SEOHead with titles/descriptions/keywords. Minor improvements needed:
+
+**Home (`Index.tsx`):**
+- Add JSON-LD `WebSite` + `Organization` schema (currently only in StructuredData.tsx which may not render on Index)
+- Verify StructuredData component is mounted
+
+**About (`About.tsx`):**
+- Add JSON-LD `AboutPage` schema
+- Add `keywords` prop (already has basic ones)
+
+**Contact (`Contact.tsx`):**
+- Add JSON-LD `ContactPage` schema with contact points
+
+**FAQ (`FAQ.tsx`):**
+- Already has JSON-LD FAQPage schema -- DONE
+- Could expand with more FAQ items via admin panel (not a code change)
 
 ---
 
-## 1. Add SEO Content Data to toolsData.ts
+## Files to Create/Modify
 
-Extend `ToolDefinition` with two new optional fields:
-- `howToUse: string[]` -- array of step strings for each tool
-- `seoDescription: string` -- unique long-form meta description
+| Action | File | Purpose |
+|--------|------|---------|
+| Create | `src/pages/JobDetailPage.tsx` | Individual job page with SEO |
+| Create | `src/pages/JobCategoryPage.tsx` | Job category landing page |
+| Create | `src/pages/ScholarshipDetailPage.tsx` | Individual scholarship page with SEO |
+| Create | `src/data/examData.ts` | Static SEO content for 6 exam types |
+| Create | `src/pages/exams/ExamLandingPage.tsx` | Template for MDCAT/ECAT/CSS/etc. pages |
+| Modify | `src/App.tsx` | Add 8+ new routes |
+| Modify | `supabase/functions/generate-sitemap/index.ts` | Add jobs + scholarships + exams sitemap types |
+| Modify | `public/sitemap.xml` | Add new sitemap entries |
+| Modify | `src/pages/Index.tsx` | Ensure StructuredData renders |
+| Modify | `src/pages/About.tsx` | Add JSON-LD AboutPage schema |
+| Modify | `src/pages/Contact.tsx` | Add JSON-LD ContactPage schema |
 
-Add these for all 53 tools in `ALL_TOOLS`. Example:
-```typescript
-{ id: 'age-calculator', ..., 
-  seoDescription: 'Calculate your exact age in years, months, and days from your date of birth. Free online age calculator with precise results.',
-  howToUse: ['Enter your date of birth', 'Click Calculate', 'View your exact age breakdown'] }
-```
-
-## 2. Enhance ToolWrapper with SEO + "How to Use"
-
-**File**: `src/components/tools/ToolWrapper.tsx`
-
-- Import `SEOHead` and `Helmet`
-- Add `seoDescription?: string` and `howToUse?: string[]` to props
-- Inject `<SEOHead>` with title formula: `{title} - Free Online Tool | MCQsAI`
-- Add JSON-LD `WebApplication` schema for rich results
-- Render a "How to Use" section (numbered list) below the tool card, above the MCQ CTA
-- Already has Related Tools sidebar -- no change needed there
-
-## 3. Update Individual Tool Pages
-
-Each tool page that uses `ToolWrapper` will pass the new `howToUse` and `seoDescription` props. For tools that don't use ToolWrapper (like `CalendarTool`), wrap them or add SEOHead directly.
-
-Since there are 53 tools and modifying each individually is expensive, we'll:
-- Store `howToUse` and `seoDescription` in `toolsData.ts` centrally
-- Have `ToolWrapper` look up the data by `toolId` from `ALL_TOOLS` automatically (no need to pass props from each page)
-
-## 4. Update Sitemap Edge Function
-
-**File**: `supabase/functions/generate-sitemap/index.ts`
-
-Add a `type=tools` handler that generates URLs for all tool paths. Since tool definitions are static, hardcode the tool slugs (extracted from href) directly in the edge function:
-
-```typescript
-if (type === "tools") {
-  return new Response(generateToolsSitemap(), { headers: corsHeaders });
-}
-```
-
-Add `generateToolsSitemap()` function with all 53 tool hrefs at priority 0.6, changefreq monthly.
-
-Add a `<sitemap>` entry for `?type=tools` in the index.
-
-## 5. Internal Linking (Already Done)
-
-The `/tools` page already links to individual tool pages via `tool.href`. No changes needed.
-
----
-
-## Files Modified
-
-| Action | File |
-|--------|------|
-| Modify | `src/data/toolsData.ts` -- add `howToUse` + `seoDescription` to interface and all 53 tools |
-| Modify | `src/components/tools/ToolWrapper.tsx` -- add SEOHead, JSON-LD schema, "How to Use" section; auto-lookup data by toolId |
-| Modify | `supabase/functions/generate-sitemap/index.ts` -- add tools sitemap type with all 53 URLs |
-
-No new routes needed -- all tools already have individual routes in App.tsx.
+## Implementation Priority
+1. Competitive Tests pages (highest SEO value -- MDCAT/ECAT keywords are high-traffic)
+2. Jobs detail pages (already have data in DB)
+3. Scholarships detail pages (already have data in DB)
+4. Main pages polish (quick wins)
 
