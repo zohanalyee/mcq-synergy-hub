@@ -243,6 +243,7 @@ const App = () => {
                       <Route path="/reviews" element={<Reviews />} />
                       
                       {/* Content & SEO Pages */}
+                      <Route path="/exams/:examSlug" element={<Suspense fallback={null}><ExamLandingPage /></Suspense>} />
                       <Route path="/blog" element={<Suspense fallback={null}><Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={null}><BlogPost /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={null}><FAQ /></Suspense>} />
