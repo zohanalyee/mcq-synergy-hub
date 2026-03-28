@@ -228,7 +228,9 @@ const App = () => {
                       <Route path="/achievements" element={<InstantAuthGuard title="Achievements" description="Sign in to view your achievements" actionName="Achievements"><Achievements /></InstantAuthGuard>} />
                       <Route path="/subject/:id" element={<SubjectContent />} />
                       <Route path="/subject-content/:id" element={<SubjectContent />} />
+                      <Route path="/jobs/:jobSlug" element={<Suspense fallback={null}><JobDetailPage /></Suspense>} />
                       <Route path="/jobs" element={<Jobs />} />
+                      <Route path="/scholarships/:scholarshipSlug" element={<Suspense fallback={null}><ScholarshipDetailPage /></Suspense>} />
                       <Route path="/scholarships" element={<Scholarships />} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
