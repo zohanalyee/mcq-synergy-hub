@@ -1,12 +1,17 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Loader2, TrendingUp, Eye, Sparkles } from "lucide-react";
+import { Loader2, TrendingUp, Eye, Sparkles, Bot, CheckCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { format } from "date-fns";
+import { toast } from "sonner";
 
 const EmptyTopicAnalytics = () => {
+  const [generatingTopics, setGeneratingTopics] = useState<Set<string>>(new Set());
+  const [completedTopics, setCompletedTopics] = useState<Set<string>>(new Set());
+
   const { data, isLoading } = useQuery({
     queryKey: ["empty-topic-analytics"],
     queryFn: async () => {
@@ -19,6 +24,46 @@ const EmptyTopicAnalytics = () => {
       return data;
     },
   });
+
+  const triggerAutoFillForTopic = async (row: any) => {
+    const topicKey = row.id;
+    setGeneratingTopics((prev) => new Set(prev).add(topicKey));
+
+    try {
+      const response = await supabase.functions.invoke("generate-test", {
+        body: {
+          mode: "bank_only",
+          subject: row.subject_name,
+          topic: row.topic_name,
+          count: 20,
+          difficulty: "mixed",
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      const result = response.data;
+      const saved = result?.savedCount || result?.questions_saved || 0;
+
+      setCompletedTopics((prev) => new Set(prev).add(topicKey));
+      toast.success(`Generated ${saved} MCQs for "${row.topic_name}"`, {
+        description: `Subject: ${row.subject_name} | Board: ${row.board_name}`,
+      });
+    } catch (err: any) {
+      console.error("MCQ generation failed:", err);
+      toast.error(`Failed to generate MCQs for "${row.topic_name}"`, {
+        description: err.message || "Check AI quota and try again.",
+      });
+    } finally {
+      setGeneratingTopics((prev) => {
+        const next = new Set(prev);
+        next.delete(topicKey);
+        return next;
+      });
+    }
+  };
 
   return (
     <Card className="border-amber-500/20">
@@ -52,28 +97,50 @@ const EmptyTopicAnalytics = () => {
                     <Eye className="h-3.5 w-3.5 inline" /> Views
                   </th>
                   <th className="pb-2 font-medium">Last Viewed</th>
-                  <th className="pb-2 font-medium">Action</th>
+                  <th className="pb-2 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {data.map((row: any) => (
-                  <tr key={row.id} className="border-b border-border/50 hover:bg-muted/30">
-                    <td className="py-2 font-medium">{row.topic_name}</td>
-                    <td className="py-2 text-muted-foreground">{row.subject_name}</td>
-                    <td className="py-2 text-muted-foreground">{row.board_name}</td>
-                    <td className="py-2 text-center font-semibold text-amber-400">{row.view_count}</td>
-                    <td className="py-2 text-muted-foreground text-xs">
-                      {format(new Date(row.last_viewed_at), "MMM d, yyyy")}
-                    </td>
-                    <td className="py-2">
-                      <Link to={row.page_path}>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
-                          <Sparkles className="h-3 w-3" /> Generate
-                        </Button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
+                {data.map((row: any) => {
+                  const isGenerating = generatingTopics.has(row.id);
+                  const isCompleted = completedTopics.has(row.id);
+
+                  return (
+                    <tr key={row.id} className="border-b border-border/50 hover:bg-muted/30">
+                      <td className="py-2 font-medium">{row.topic_name}</td>
+                      <td className="py-2 text-muted-foreground">{row.subject_name}</td>
+                      <td className="py-2 text-muted-foreground">{row.board_name}</td>
+                      <td className="py-2 text-center font-semibold text-amber-400">{row.view_count}</td>
+                      <td className="py-2 text-muted-foreground text-xs">
+                        {format(new Date(row.last_viewed_at), "MMM d, yyyy")}
+                      </td>
+                      <td className="py-2">
+                        <div className="flex items-center gap-1.5">
+                          <Link to={row.page_path}>
+                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1">
+                              <Sparkles className="h-3 w-3" /> View
+                            </Button>
+                          </Link>
+                          <Button
+                            size="sm"
+                            variant={isCompleted ? "default" : "outline"}
+                            className={`h-7 text-xs gap-1 ${isCompleted ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "border-violet-500/30 text-violet-400 hover:bg-violet-500/10"}`}
+                            onClick={() => triggerAutoFillForTopic(row)}
+                            disabled={isGenerating || isCompleted}
+                          >
+                            {isGenerating ? (
+                              <><Loader2 className="h-3 w-3 animate-spin" /> Generating...</>
+                            ) : isCompleted ? (
+                              <><CheckCircle className="h-3 w-3" /> Done</>
+                            ) : (
+                              <><Bot className="h-3 w-3" /> Generate 20 MCQs</>
+                            )}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
