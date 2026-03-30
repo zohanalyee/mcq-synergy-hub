@@ -1,3 +1,6 @@
+https://www.mcqsai.com/*  https://mcqsai.com/:splat  301!
+http://www.mcqsai.com/*   https://mcqsai.com/:splat  301!
+http://mcqsai.com/*       https://mcqsai.com/:splat  301!
 /sitemap.xml    /sitemap.xml    200
 /robots.txt     /robots.txt     200
 /tools/hr/*     /tools/school-attendance-system/:splat  301
