@@ -37,6 +37,7 @@ import AdminFeedbackPanel from "./feedback/AdminFeedbackPanel";
 import StudySoundsManager from "./StudySoundsManager";
 import SocialLinksManager from "./SocialLinksManager";
 import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
+import AgentDashboard from "./AgentDashboard";
 
 type AdminTabsProps = {
   activeTab: string;
