@@ -41,3 +41,9 @@ verify_jwt = false
 
 [functions.generate-sitemap]
 verify_jwt = false
+
+[functions.generate-blog]
+verify_jwt = false
+
+[functions.process-agent-tasks]
+verify_jwt = false
