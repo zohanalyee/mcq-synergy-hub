@@ -214,12 +214,6 @@ function generateStaticSitemap(): string {
     { loc: "/faq", priority: "0.7", freq: "monthly" },
     { loc: "/study-guides", priority: "0.7", freq: "weekly" },
     { loc: "/boards", priority: "0.8", freq: "weekly" },
-    { loc: "/exams/mdcat", priority: "0.9", freq: "monthly" },
-    { loc: "/exams/ecat", priority: "0.9", freq: "monthly" },
-    { loc: "/exams/css", priority: "0.9", freq: "monthly" },
-    { loc: "/exams/ppsc", priority: "0.8", freq: "monthly" },
-    { loc: "/exams/fpsc", priority: "0.8", freq: "monthly" },
-    { loc: "/exams/nts", priority: "0.8", freq: "monthly" },
     { loc: "/privacy-policy", priority: "0.3", freq: "yearly" },
     { loc: "/terms-of-service", priority: "0.3", freq: "yearly" },
   ];
