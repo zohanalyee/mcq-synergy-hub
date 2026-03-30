@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_tasks: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          error_message: string | null
+          id: string
+          input_data: Json
+          needs_review: boolean | null
+          output_data: Json | null
+          priority: number
+          quality_score: Json | null
+          retry_count: number | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["agent_task_status"]
+          task_type: Database["public"]["Enums"]["agent_task_type"]
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          input_data?: Json
+          needs_review?: boolean | null
+          output_data?: Json | null
+          priority?: number
+          quality_score?: Json | null
+          retry_count?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["agent_task_status"]
+          task_type: Database["public"]["Enums"]["agent_task_type"]
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          error_message?: string | null
+          id?: string
+          input_data?: Json
+          needs_review?: boolean | null
+          output_data?: Json | null
+          priority?: number
+          quality_score?: Json | null
+          retry_count?: number | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["agent_task_status"]
+          task_type?: Database["public"]["Enums"]["agent_task_type"]
+        }
+        Relationships: []
+      }
       ai_usage_logs: {
         Row: {
           ai_provider: string | null
@@ -2783,7 +2834,13 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      agent_task_status:
+        | "pending"
+        | "processing"
+        | "completed"
+        | "failed"
+        | "review"
+      agent_task_type: "blog" | "mcq" | "scholarship" | "job"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2910,6 +2967,15 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      agent_task_status: [
+        "pending",
+        "processing",
+        "completed",
+        "failed",
+        "review",
+      ],
+      agent_task_type: ["blog", "mcq", "scholarship", "job"],
+    },
   },
 } as const
