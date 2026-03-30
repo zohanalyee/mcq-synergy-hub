@@ -104,6 +104,16 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       ],
     },
     {
+      label: "AI Agent",
+      colorClass: "hover:bg-fuchsia-500/10 dark:hover:bg-fuchsia-500/10",
+      activeColorClass: "bg-gradient-to-r from-fuchsia-500/20 to-pink-500/20 text-fuchsia-300 border border-fuchsia-500/30 shadow-[0_0_12px_rgba(217,70,239,0.2)]",
+      iconColorClass: "text-fuchsia-400",
+      glowColor: "from-fuchsia-500/20",
+      items: [
+        { value: "agent", label: "Agent Dashboard", icon: Brain },
+      ],
+    },
+    {
       label: "External",
       colorClass: "hover:bg-amber-500/10 dark:hover:bg-amber-500/10",
       activeColorClass: "bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30 shadow-[0_0_12px_rgba(245,158,11,0.15)]",
