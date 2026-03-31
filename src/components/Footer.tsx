@@ -104,14 +104,21 @@ const Footer = () => {
               {[
                 { label: 'Blog', path: '/blog' },
                 { label: 'FAQ', path: '/faq' },
-                { label: 'Study Guides', path: '/study-guides' },
+                { label: 'Scholarships', path: '/scholarships' },
+                { label: 'Jobs', path: '/jobs' },
+                { label: 'Government Tenders', path: '/tenders', badge: '🔥' },
+                { label: 'Board Results', path: '/board-results', badge: 'New' },
                 { label: t('footer.aboutUs'), path: '/about' },
-                { label: t('footer.privacyPolicy'), path: '/privacy-policy' },
                 { label: t('footer.contactUs'), path: '/contact' },
               ].map(link => (
                 <li key={link.path}>
-                  <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors">
+                  <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5">
                     {link.label}
+                    {link.badge && (
+                      <span className="text-[10px] font-bold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full leading-none">
+                        {link.badge}
+                      </span>
+                    )}
                   </Link>
                 </li>
               ))}
