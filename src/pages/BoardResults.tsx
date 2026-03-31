@@ -32,7 +32,7 @@ const BoardResults = () => {
       />
       <Header />
 
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
+      <div className="max-w-7xl mx-auto px-4 pt-24 pb-8 md:pl-20">
         {/* Hero */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-2">
