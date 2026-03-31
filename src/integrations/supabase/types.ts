@@ -310,6 +310,50 @@ export type Database = {
         }
         Relationships: []
       }
+      board_result_announcements: {
+        Row: {
+          announced_at: string | null
+          blog_generated: boolean | null
+          blog_id: string | null
+          board_name: string
+          created_at: string | null
+          exam_type: string
+          id: string
+          result_url: string
+          year: number
+        }
+        Insert: {
+          announced_at?: string | null
+          blog_generated?: boolean | null
+          blog_id?: string | null
+          board_name: string
+          created_at?: string | null
+          exam_type: string
+          id?: string
+          result_url: string
+          year: number
+        }
+        Update: {
+          announced_at?: string | null
+          blog_generated?: boolean | null
+          blog_id?: string | null
+          board_name?: string
+          created_at?: string | null
+          exam_type?: string
+          id?: string
+          result_url?: string
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_result_announcements_blog_id_fkey"
+            columns: ["blog_id"]
+            isOneToOne: false
+            referencedRelation: "blog_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       class_attendance_summary: {
         Row: {
           absent_students: number
@@ -1004,11 +1048,13 @@ export type Database = {
           created_at: string
           deadline_date: string | null
           description: string | null
+          document_url: string | null
           id: string
           image_url: string | null
           location: string | null
           metadata: Json | null
           organization: string | null
+          pre_bid_meeting: string | null
           region: string | null
           reviewed_at: string | null
           reviewed_by: string | null
@@ -1016,6 +1062,9 @@ export type Database = {
           sector: string | null
           source_name: string
           status: string
+          tender_category: string | null
+          tender_number: string | null
+          tender_value: string | null
           title: string
           type: string
           updated_at: string
@@ -1025,11 +1074,13 @@ export type Database = {
           created_at?: string
           deadline_date?: string | null
           description?: string | null
+          document_url?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
           metadata?: Json | null
           organization?: string | null
+          pre_bid_meeting?: string | null
           region?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -1037,6 +1088,9 @@ export type Database = {
           sector?: string | null
           source_name: string
           status?: string
+          tender_category?: string | null
+          tender_number?: string | null
+          tender_value?: string | null
           title: string
           type: string
           updated_at?: string
@@ -1046,11 +1100,13 @@ export type Database = {
           created_at?: string
           deadline_date?: string | null
           description?: string | null
+          document_url?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
           metadata?: Json | null
           organization?: string | null
+          pre_bid_meeting?: string | null
           region?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
@@ -1058,6 +1114,9 @@ export type Database = {
           sector?: string | null
           source_name?: string
           status?: string
+          tender_category?: string | null
+          tender_number?: string | null
+          tender_value?: string | null
           title?: string
           type?: string
           updated_at?: string
