@@ -19,6 +19,11 @@ export interface ExternalOpportunity {
   sector: SectorType | null;
   region: RegionType | null;
   scholarship_scope: ScholarshipScope | null;
+  tender_number: string | null;
+  tender_value: string | null;
+  tender_category: string | null;
+  document_url: string | null;
+  pre_bid_meeting: string | null;
   metadata: Record<string, any>;
   created_at: string;
   updated_at: string;

@@ -354,6 +354,11 @@ const AgentDashboard = () => {
           <QuotaMonitor />
         </TabsContent>
 
+        {/* Sources Tab */}
+        <TabsContent value="sources">
+          <ScrapingSourcesManager />
+        </TabsContent>
+
         {/* Review Tab */}
         <TabsContent value="review" className="space-y-4">
           {reviewTasks.length > 0 && (
