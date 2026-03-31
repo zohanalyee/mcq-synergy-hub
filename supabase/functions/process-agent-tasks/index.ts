@@ -147,6 +147,21 @@ serve(async (req) => {
             break;
           }
 
+          case 'tender': {
+            const input = task.input_data as any;
+            response = await fetch(`${functionUrl}/scrape-tenders`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${serviceKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                sourceUrl: input.sourceUrl || null,
+              }),
+            });
+            break;
+          }
+
           default:
             throw new Error(`Unknown task type: ${task.task_type}`);
         }

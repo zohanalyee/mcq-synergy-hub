@@ -151,6 +151,8 @@ const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
 const ExamLandingPage = lazy(() => import("./pages/exams/ExamLandingPage"));
 const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
+const Tenders = lazy(() => import("./pages/Tenders"));
+const BoardResults = lazy(() => import("./pages/BoardResults"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -232,6 +234,8 @@ const App = () => {
                       <Route path="/jobs" element={<Jobs />} />
                       <Route path="/scholarships/:scholarshipSlug" element={<Suspense fallback={null}><ScholarshipDetailPage /></Suspense>} />
                       <Route path="/scholarships" element={<Scholarships />} />
+                      <Route path="/tenders" element={<Suspense fallback={null}><Tenders /></Suspense>} />
+                      <Route path="/board-results" element={<Suspense fallback={null}><BoardResults /></Suspense>} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
                       <Route path="/quizzes" element={<Quizzes />} />

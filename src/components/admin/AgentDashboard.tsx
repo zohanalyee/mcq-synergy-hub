@@ -27,6 +27,7 @@ import {
 import QuotaMonitor from "./QuotaMonitor";
 import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
+import ScrapingSourcesManager from "./ScrapingSourcesManager";
 
 const typeIcons: Record<AgentTaskType, React.ElementType> = {
   blog: FileText,
@@ -175,6 +176,7 @@ const AgentDashboard = () => {
           <TabsTrigger value="queue">Task Queue</TabsTrigger>
           <TabsTrigger value="gaps">Content Gaps</TabsTrigger>
           <TabsTrigger value="quota">AI Usage</TabsTrigger>
+          <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="review">Review ({reviewTasks.length})</TabsTrigger>
         </TabsList>
 
@@ -350,6 +352,11 @@ const AgentDashboard = () => {
         {/* AI Usage Tab */}
         <TabsContent value="quota">
           <QuotaMonitor />
+        </TabsContent>
+
+        {/* Sources Tab */}
+        <TabsContent value="sources">
+          <ScrapingSourcesManager />
         </TabsContent>
 
         {/* Review Tab */}
