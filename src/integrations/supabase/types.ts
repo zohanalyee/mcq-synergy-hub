@@ -1675,6 +1675,54 @@ export type Database = {
         }
         Relationships: []
       }
+      scraping_sources: {
+        Row: {
+          created_at: string | null
+          custom_selectors: Json | null
+          id: string
+          is_active: boolean | null
+          last_scrape_found: number | null
+          last_scrape_saved: number | null
+          last_scraped_at: string | null
+          name: string
+          notes: string | null
+          scraping_frequency: string | null
+          type: string
+          updated_at: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string | null
+          custom_selectors?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_scrape_found?: number | null
+          last_scrape_saved?: number | null
+          last_scraped_at?: string | null
+          name: string
+          notes?: string | null
+          scraping_frequency?: string | null
+          type: string
+          updated_at?: string | null
+          url: string
+        }
+        Update: {
+          created_at?: string | null
+          custom_selectors?: Json | null
+          id?: string
+          is_active?: boolean | null
+          last_scrape_found?: number | null
+          last_scrape_saved?: number | null
+          last_scraped_at?: string | null
+          name?: string
+          notes?: string | null
+          scraping_frequency?: string | null
+          type?: string
+          updated_at?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       sections: {
         Row: {
           class_id: string
