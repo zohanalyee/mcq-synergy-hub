@@ -53,3 +53,9 @@ verify_jwt = false
 
 [functions.scrape-jobs]
 verify_jwt = false
+
+[functions.scrape-tenders]
+verify_jwt = false
+
+[functions.detect-board-results]
+verify_jwt = false

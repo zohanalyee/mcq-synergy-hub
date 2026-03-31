@@ -234,6 +234,8 @@ const App = () => {
                       <Route path="/jobs" element={<Jobs />} />
                       <Route path="/scholarships/:scholarshipSlug" element={<Suspense fallback={null}><ScholarshipDetailPage /></Suspense>} />
                       <Route path="/scholarships" element={<Scholarships />} />
+                      <Route path="/tenders" element={<Suspense fallback={null}><Tenders /></Suspense>} />
+                      <Route path="/board-results" element={<Suspense fallback={null}><BoardResults /></Suspense>} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
                       <Route path="/quizzes" element={<Quizzes />} />

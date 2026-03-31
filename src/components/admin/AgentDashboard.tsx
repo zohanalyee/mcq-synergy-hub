@@ -175,6 +175,7 @@ const AgentDashboard = () => {
           <TabsTrigger value="queue">Task Queue</TabsTrigger>
           <TabsTrigger value="gaps">Content Gaps</TabsTrigger>
           <TabsTrigger value="quota">AI Usage</TabsTrigger>
+          <TabsTrigger value="sources">Sources</TabsTrigger>
           <TabsTrigger value="review">Review ({reviewTasks.length})</TabsTrigger>
         </TabsList>
 

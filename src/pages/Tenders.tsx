@@ -47,7 +47,7 @@ const Tenders = () => {
         title="Government Tenders Pakistan 2026 | PPRA, WAPDA, Railways"
         description="Latest government tenders from PPRA, WAPDA, Pakistan Railways and all major procurement authorities. Find construction, IT, supply and service tenders."
         keywords="Pakistan tenders, PPRA tenders, government tenders, procurement, bid opportunities"
-        canonicalUrl="https://mcq-synergy-hub.lovable.app/tenders"
+        url="https://mcq-synergy-hub.lovable.app/tenders"
       />
       <Header />
 

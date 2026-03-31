@@ -28,7 +28,7 @@ const BoardResults = () => {
         title="Board Results 2026 Pakistan | SSC HSC Results - All Boards"
         description="Latest board examination results from BISE Karachi, Lahore, FBISE and all Pakistani education boards. Check SSC and HSC results instantly."
         keywords="board results 2026, BISE results, SSC result, HSC result, matric result, inter result, Pakistan board results"
-        canonicalUrl="https://mcq-synergy-hub.lovable.app/board-results"
+        url="https://mcq-synergy-hub.lovable.app/board-results"
       />
       <Header />
 
