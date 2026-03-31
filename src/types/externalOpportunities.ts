@@ -1,4 +1,4 @@
-export type OpportunityType = 'job' | 'scholarship';
+export type OpportunityType = 'job' | 'scholarship' | 'tender';
 export type OpportunityStatus = 'pending' | 'approved' | 'rejected';
 export type SectorType = 'government' | 'private';
 export type RegionType = 'sindh' | 'punjab' | 'kpk' | 'balochistan' | 'federal' | 'international' | 'other';
