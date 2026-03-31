@@ -133,17 +133,18 @@ serve(async (req) => {
           }
 
           case 'scholarship': {
-            console.log(`[process-agent-tasks] Scholarship tasks not yet supported, marking for review`);
-            await adminClient
-              .from('agent_tasks')
-              .update({
-                status: 'review',
-                needs_review: true,
-                output_data: { message: 'Scholarship automation not yet implemented' },
-              })
-              .eq('id', task.id);
-            results.push({ id: task.id, type: task.task_type, status: 'review' });
-            continue;
+            const input = task.input_data as any;
+            response = await fetch(`${functionUrl}/scrape-scholarships`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${serviceKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                sourceUrl: input.sourceUrl || null,
+              }),
+            });
+            break;
           }
 
           default:
