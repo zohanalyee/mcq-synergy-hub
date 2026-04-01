@@ -56,6 +56,7 @@ const ScrapingSourcesManager = () => {
   const [scrapingId, setScrapingId] = useState<string | null>(null);
   const [smartSearching, setSmartSearching] = useState(false);
   const [configSource, setConfigSource] = useState<ScrapingSource | null>(null);
+  const [approvingAll, setApprovingAll] = useState(false);
 
   const { data: sources = [], isLoading } = useQuery({
     queryKey: ["scraping-sources", typeFilter],
@@ -67,6 +68,35 @@ const ScrapingSourcesManager = () => {
       return (data || []) as ScrapingSource[];
     },
   });
+
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["pending-opportunities-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("external_opportunities")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const handleApproveAll = async () => {
+    setApprovingAll(true);
+    try {
+      const { error } = await supabase
+        .from("external_opportunities")
+        .update({ status: "approved", reviewed_at: new Date().toISOString() })
+        .eq("status", "pending");
+      if (error) throw error;
+      toast.success(`Approved all pending items!`);
+      queryClient.invalidateQueries({ queryKey: ["pending-opportunities-count"] });
+    } catch (err: any) {
+      toast.error(`Failed to approve: ${err.message}`);
+    } finally {
+      setApprovingAll(false);
+    }
+  };
 
   const handleToggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase
