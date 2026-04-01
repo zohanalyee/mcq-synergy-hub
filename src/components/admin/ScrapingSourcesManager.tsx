@@ -188,6 +188,20 @@ const ScrapingSourcesManager = () => {
               <><Search className="h-3.5 w-3.5 mr-1" /> Smart Search All</>
             )}
           </Button>
+          {pendingCount > 0 && (
+            <Button
+              size="sm"
+              onClick={handleApproveAll}
+              disabled={approvingAll}
+              className="h-8 text-xs bg-gradient-to-r from-emerald-600 to-green-600 border-0"
+            >
+              {approvingAll ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Approving...</>
+              ) : (
+                <><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve All ({pendingCount})</>
+              )}
+            </Button>
+          )}
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[150px] h-8 text-xs">
               <SelectValue placeholder="Filter type" />
