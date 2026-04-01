@@ -1734,17 +1734,63 @@ export type Database = {
         }
         Relationships: []
       }
+      scraping_attempts: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          execution_time_ms: number | null
+          id: string
+          items_found: number | null
+          scraper_used: string
+          source_id: string
+          success: boolean
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          items_found?: number | null
+          scraper_used: string
+          source_id: string
+          success: boolean
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          execution_time_ms?: number | null
+          id?: string
+          items_found?: number | null
+          scraper_used?: string
+          source_id?: string
+          success?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scraping_attempts_source_id_fkey"
+            columns: ["source_id"]
+            isOneToOne: false
+            referencedRelation: "scraping_sources"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       scraping_sources: {
         Row: {
           created_at: string | null
           custom_selectors: Json | null
+          firecrawl_crawl_enabled: boolean | null
+          firecrawl_max_depth: number | null
           id: string
           is_active: boolean | null
           last_scrape_found: number | null
           last_scrape_saved: number | null
           last_scraped_at: string | null
+          last_scraper_used: string | null
           name: string
+          needs_firecrawl: boolean | null
           notes: string | null
+          scraper_preference: string | null
           scraping_frequency: string | null
           type: string
           updated_at: string | null
@@ -1753,13 +1799,18 @@ export type Database = {
         Insert: {
           created_at?: string | null
           custom_selectors?: Json | null
+          firecrawl_crawl_enabled?: boolean | null
+          firecrawl_max_depth?: number | null
           id?: string
           is_active?: boolean | null
           last_scrape_found?: number | null
           last_scrape_saved?: number | null
           last_scraped_at?: string | null
+          last_scraper_used?: string | null
           name: string
+          needs_firecrawl?: boolean | null
           notes?: string | null
+          scraper_preference?: string | null
           scraping_frequency?: string | null
           type: string
           updated_at?: string | null
@@ -1768,13 +1819,18 @@ export type Database = {
         Update: {
           created_at?: string | null
           custom_selectors?: Json | null
+          firecrawl_crawl_enabled?: boolean | null
+          firecrawl_max_depth?: number | null
           id?: string
           is_active?: boolean | null
           last_scrape_found?: number | null
           last_scrape_saved?: number | null
           last_scraped_at?: string | null
+          last_scraper_used?: string | null
           name?: string
+          needs_firecrawl?: boolean | null
           notes?: string | null
+          scraper_preference?: string | null
           scraping_frequency?: string | null
           type?: string
           updated_at?: string | null
