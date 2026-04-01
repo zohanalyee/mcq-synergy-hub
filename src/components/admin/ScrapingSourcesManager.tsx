@@ -169,6 +169,11 @@ const ScrapingSourcesManager = () => {
           <Globe className="h-5 w-5 text-blue-400" />
           <h3 className="text-sm font-semibold">Scraping Sources</h3>
           <Badge variant="outline" className="text-xs">{sources.length} sources</Badge>
+          {pendingCount > 0 && (
+            <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">
+              {pendingCount} pending
+            </Badge>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button
