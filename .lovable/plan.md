@@ -1,71 +1,80 @@
 
 
-# Hybrid Scraping Infrastructure Plan
+# Root Cause Analysis & Fix Plan
 
-## Overview
-Add Firecrawl as a fallback scraper behind the existing free deno-dom scrapers. When Cheerio/deno-dom fails (JS-heavy sites), the system automatically falls back to Firecrawl. Includes per-source config, attempt logging, Smart Search All button, and analytics.
+## Problem 1: Data Invisibility (CONFIRMED)
 
-## Prerequisites
-- **Firecrawl Connector**: You have `MCQSAI_Scraper` (Firecrawl) available but not linked to this project. We need to connect it first so `FIRECRAWL_API_KEY` is available in edge functions.
+**Root cause**: All three public pages filter by `status = 'approved'`, but the scraper saves items with `status: 'pending'`.
+
+| Page | File | Line | Filter |
+|------|------|------|--------|
+| Tenders | `src/pages/Tenders.tsx` | 26 | `.eq("status", "approved")` |
+| Scholarships | `src/services/externalOpportunitiesService.ts` | 86 | `.eq('status', 'approved')` |
+| Jobs | `src/services/externalOpportunitiesService.ts` | 86 | Same function |
+
+The scraper inserts with `status: 'pending'` (line 360 of `scrape-hybrid/index.ts`). The RLS policy also only allows public SELECT for `status = 'approved'`.
+
+**Fix**: This is by design (admin review before publishing). The fix is NOT to change the filter, but to give admins a way to bulk-approve scraped items. We should also show pending count on the public pages so admins know items are waiting.
+
+**Two options**:
+- **Option A (Recommended)**: Add a one-click "Approve All Pending" button in the admin ScrapingSourcesManager or AgentDashboard, so after scraping, admins can quickly approve items.
+- **Option B**: Change the scraper to save items as `status: 'approved'` directly (skip review). Faster but less safe.
+
+## Problem 2: Zero-Item Fetching for FPSC/BISE Larkana
+
+**Root cause**: The `parseMarkdown` function (line 227-246 of `scrape-hybrid/index.ts`) only splits by `## ` or `### ` headings and checks for keywords. Pakistani government sites like FPSC and BISE boards:
+
+1. Don't structure content with markdown headings — they use tables, PDFs, and flat HTML
+2. The keyword lists are too narrow: `board_result` keywords are `['result', 'announcement', 'gazette']` but BISE sites use terms like "matric", "intermediate", "SSC", "HSC", "annual", "supplementary"
+3. The Cheerio fallback also requires keyword matches in headings, missing table-based layouts
+
+**Fix**:
+- Expand keyword lists for `board_result` and `job` types
+- Add broader content extraction in `parseMarkdown`: also split by `\n\n` (paragraphs), `|` (table rows in markdown), and bullet points
+- For Cheerio: add `dl, dd, dt, li` to the table-row fallback selectors
+- Add site-specific patterns for known Pakistani portals (FPSC uses specific CSS classes)
+
+## Problem 3: Deduplication
+
+**Root cause**: Line 346-348 of `scrape-hybrid/index.ts`:
+```
+const { data: existing } = await adminClient
+  .from('external_opportunities').select('apply_url').eq('type', source.type);
+const existingUrls = new Set((existing || []).map((e: any) => e.apply_url));
+```
+
+This loads ALL existing URLs of that type across ALL sources, then checks `item.applyUrl`. The problem: when Cheerio or Firecrawl can't extract a specific link, it falls back to the source page URL itself (e.g., `https://www.fpsc.gov.pk/jobs`). So the first item saves with that URL, and all subsequent items from the same page are treated as duplicates.
+
+**Fix**: Change deduplication to use `title + organization` as the key instead of (or in addition to) `apply_url`. Also prevent saving items where `applyUrl === source.url` (the base page URL) as-is — append a title hash to make it unique.
+
+## Problem 4: "Ani Quota" Issue
+
+This is not a code issue. There is no "Ani quota" in the codebase. This likely refers to **Lovable AI credit quota** — the platform's usage limit for AI-assisted code generation. This is managed at the account level in Lovable's billing settings, not in the project code.
 
 ---
 
-## Step 1: Connect Firecrawl
-Link the existing `MCQSAI_Scraper` Firecrawl connection to this project.
+## Implementation Steps
 
-## Step 2: Database Migration
-- Add columns to `scraping_sources`: `needs_firecrawl` (bool), `scraper_preference` (text), `last_scraper_used` (text), `firecrawl_crawl_enabled` (bool), `firecrawl_max_depth` (int)
-- Create `scraping_attempts` table with RLS (admin-only) for tracking every scrape attempt with scraper used, success, items found, execution time, error message
-- Enable RLS on `scraping_attempts`
-
-## Step 3: Create `scrape-hybrid` Edge Function
+### Step 1: Fix Deduplication Logic
 **File**: `supabase/functions/scrape-hybrid/index.ts`
+- Change dedup key from `apply_url` alone to `title.toLowerCase() + '|' + type`
+- When `applyUrl === source.url`, append `#item-{index}` or a title-based hash to differentiate
+- Query existing by both `apply_url` and `title` to prevent both kinds of duplicates
 
-Core logic:
-1. Accept `sourceId` (or `sourceUrl`) + optional `forceFirecrawl` flag
-2. Load source config from `scraping_sources`
-3. **If** `scraper_preference === 'firecrawl'` or `needs_firecrawl === true` or `forceFirecrawl`: go directly to Firecrawl
-4. **Else**: try deno-dom first (reuse existing parse functions from scrape-scholarships/jobs/tenders)
-5. **If** deno-dom returns 0 items: fallback to Firecrawl, and auto-set `needs_firecrawl = true` on the source
-6. Log attempt to `scraping_attempts`
-7. Save new items to `external_opportunities` with deduplication
-8. Update `scraping_sources` stats
+### Step 2: Expand Keyword Lists & Parsing
+**File**: `supabase/functions/scrape-hybrid/index.ts`
+- Add to `board_result` keywords: `'matric', 'intermediate', 'SSC', 'HSC', 'annual', 'supplementary', 'exam'`
+- Add to `job` keywords: `'apply', 'advertisement', 'notice', 'employment', 'opportunity'`
+- In `parseMarkdown`: also split by double-newlines and table-row markers (`|`)
+- In Cheerio fallback: add `li, dd, dt, .notice, .notification` selectors
 
-Firecrawl integration uses `FIRECRAWL_API_KEY` env var directly (not gateway, since connector `uses connector gateway: false`). Supports both scrape and crawl modes.
-
-Register in `supabase/config.toml` with `verify_jwt = false`.
-
-## Step 4: Update ScrapingSourcesManager UI
+### Step 3: Add Bulk Approve in Admin
 **File**: `src/components/admin/ScrapingSourcesManager.tsx`
+- Add "Approve All Pending" button that calls `externalOpportunitiesService` to bulk-update status
+- Show count of pending items per type
 
-Changes:
-- Update `ScrapingSource` interface with new fields (`needs_firecrawl`, `scraper_preference`, `last_scraper_used`)
-- Change `handleScrapeNow` to invoke `scrape-hybrid` instead of type-specific functions
-- Add **Smart Search All** button that iterates all active sources sequentially
-- Show scraper badge per source row (lightning for Cheerio, fire for Firecrawl)
-- Add settings icon per row to open config dialog
-- Update table header to include "Scraper" column
-
-## Step 5: Create SourceConfigDialog Component
-**File**: `src/components/admin/SourceConfigDialog.tsx`
-
-Dialog with:
-- Scraper preference dropdown (Auto / Cheerio Only / Firecrawl Only)
-- Force Firecrawl toggle
-- Enable deep crawling toggle
-- Max crawl depth input (1-5)
-- Save updates to `scraping_sources`
-
-## Step 6: Create ScrapingAnalytics Component
-**File**: `src/components/admin/ScrapingAnalytics.tsx`
-
-Simple stats cards (no recharts dependency needed):
-- Cheerio stats: attempts, success rate, avg time
-- Firecrawl stats: attempts, success rate, avg time
-- Total items found
-- Queried from `scraping_attempts` table (last 30 days)
-
-Integrate into AgentDashboard Sources tab below the sources table.
+### Step 4: Redeploy Edge Function
+Deploy updated `scrape-hybrid` function.
 
 ---
 
@@ -73,11 +82,7 @@ Integrate into AgentDashboard Sources tab below the sources table.
 
 | Action | File |
 |--------|------|
-| Migration | Add hybrid columns to `scraping_sources` + create `scraping_attempts` table |
-| Create | `supabase/functions/scrape-hybrid/index.ts` |
-| Modify | `supabase/config.toml` - register `scrape-hybrid` |
-| Modify | `src/components/admin/ScrapingSourcesManager.tsx` - hybrid UI + Smart Search |
-| Create | `src/components/admin/SourceConfigDialog.tsx` |
-| Create | `src/components/admin/ScrapingAnalytics.tsx` |
-| Modify | `src/components/admin/AgentDashboard.tsx` - add analytics below sources |
+| Modify | `supabase/functions/scrape-hybrid/index.ts` — fix dedup + expand keywords + improve parsing |
+| Modify | `src/components/admin/ScrapingSourcesManager.tsx` — add bulk approve button |
+| Deploy | `scrape-hybrid` edge function |
 
