@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import {
   Globe, Play, Loader2, RefreshCw, ExternalLink, Clock,
-  GraduationCap, Briefcase, FileText, Award, Zap, Flame, Settings2, Search,
+  GraduationCap, Briefcase, FileText, Award, Zap, Flame, Settings2, Search, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
