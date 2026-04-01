@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import {
   Globe, Play, Loader2, RefreshCw, ExternalLink, Clock,
-  GraduationCap, Briefcase, FileText, Award, Zap, Flame, Settings2, Search,
+  GraduationCap, Briefcase, FileText, Award, Zap, Flame, Settings2, Search, CheckCircle2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
@@ -56,6 +56,7 @@ const ScrapingSourcesManager = () => {
   const [scrapingId, setScrapingId] = useState<string | null>(null);
   const [smartSearching, setSmartSearching] = useState(false);
   const [configSource, setConfigSource] = useState<ScrapingSource | null>(null);
+  const [approvingAll, setApprovingAll] = useState(false);
 
   const { data: sources = [], isLoading } = useQuery({
     queryKey: ["scraping-sources", typeFilter],
@@ -67,6 +68,35 @@ const ScrapingSourcesManager = () => {
       return (data || []) as ScrapingSource[];
     },
   });
+
+  const { data: pendingCount = 0 } = useQuery({
+    queryKey: ["pending-opportunities-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("external_opportunities")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (error) throw error;
+      return count || 0;
+    },
+  });
+
+  const handleApproveAll = async () => {
+    setApprovingAll(true);
+    try {
+      const { error } = await supabase
+        .from("external_opportunities")
+        .update({ status: "approved", reviewed_at: new Date().toISOString() })
+        .eq("status", "pending");
+      if (error) throw error;
+      toast.success(`Approved all pending items!`);
+      queryClient.invalidateQueries({ queryKey: ["pending-opportunities-count"] });
+    } catch (err: any) {
+      toast.error(`Failed to approve: ${err.message}`);
+    } finally {
+      setApprovingAll(false);
+    }
+  };
 
   const handleToggleActive = async (id: string, current: boolean) => {
     const { error } = await supabase
@@ -139,6 +169,11 @@ const ScrapingSourcesManager = () => {
           <Globe className="h-5 w-5 text-blue-400" />
           <h3 className="text-sm font-semibold">Scraping Sources</h3>
           <Badge variant="outline" className="text-xs">{sources.length} sources</Badge>
+          {pendingCount > 0 && (
+            <Badge className="text-xs bg-amber-500/20 text-amber-400 border-amber-500/30">
+              {pendingCount} pending
+            </Badge>
+          )}
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button
@@ -153,6 +188,20 @@ const ScrapingSourcesManager = () => {
               <><Search className="h-3.5 w-3.5 mr-1" /> Smart Search All</>
             )}
           </Button>
+          {pendingCount > 0 && (
+            <Button
+              size="sm"
+              onClick={handleApproveAll}
+              disabled={approvingAll}
+              className="h-8 text-xs bg-gradient-to-r from-emerald-600 to-green-600 border-0"
+            >
+              {approvingAll ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" /> Approving...</>
+              ) : (
+                <><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Approve All ({pendingCount})</>
+              )}
+            </Button>
+          )}
           <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-[150px] h-8 text-xs">
               <SelectValue placeholder="Filter type" />

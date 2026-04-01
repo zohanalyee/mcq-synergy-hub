@@ -37,6 +37,25 @@ function resolveUrl(href: string, baseUrl: string): string {
   try { return new URL(href, baseUrl).href; } catch { return baseUrl; }
 }
 
+function simpleHash(str: string): string {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return Math.abs(hash).toString(36);
+}
+
+// ─── Expanded keyword lists for Pakistani sites ───
+
+const keywords: Record<string, string[]> = {
+  scholarship: ['scholarship', 'fellowship', 'grant', 'financial aid', 'stipend', 'award', 'bursary', 'merit', 'need-based', 'hec', 'funded'],
+  job: ['vacancy', 'post', 'position', 'job', 'recruitment', 'career', 'hiring', 'apply', 'advertisement', 'notice', 'employment', 'opportunity', 'walk-in', 'interview', 'bps', 'grade', 'ppsc', 'fpsc', 'nts', 'ots', 'ets'],
+  tender: ['tender', 'procurement', 'bid', 'rfp', 'nit', 'eoi', 'expression of interest', 'quotation', 'pre-bid', 'ppra', 'auction', 'supply'],
+  board_result: ['result', 'announcement', 'gazette', 'merit', 'matric', 'intermediate', 'ssc', 'hsc', 'annual', 'supplementary', 'exam', 'board', 'bise', 'passing', 'marks', 'grade', 'position holders', 'toppers'],
+};
+
 // ─── Cheerio (deno-dom) scraping ───
 
 async function scrapeWithCheerio(url: string, sourceType: string, sourceName: string, selectors: any): Promise<ScrapeResult> {
@@ -45,8 +64,9 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
     console.log(`[cheerio] Fetching: ${url}`);
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; MCQsAI-Bot/1.0)',
-        'Accept': 'text/html,application/xhtml+xml',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
       },
       signal: AbortSignal.timeout(15000),
     });
@@ -57,12 +77,7 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
     if (!doc) throw new Error('Failed to parse HTML');
 
     let items: any[] = [];
-    const keywords: Record<string, string[]> = {
-      scholarship: ['scholarship', 'fellowship', 'grant', 'financial aid', 'stipend', 'award'],
-      job: ['vacancy', 'post', 'position', 'job', 'recruitment', 'career', 'hiring'],
-      tender: ['tender', 'procurement', 'bid', 'rfp', 'nit', 'eoi'],
-      board_result: ['result', 'announcement', 'gazette', 'merit'],
-    };
+    const kws = keywords[sourceType] || [];
 
     // Try custom selectors first
     if (selectors?.container) {
@@ -89,8 +104,7 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
 
     // Fallback: keyword-based heading scan
     if (items.length === 0) {
-      const kws = keywords[sourceType] || [];
-      const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6, .title, .heading');
+      const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6, .title, .heading, .notice-title, .notification-title');
       for (const heading of headings) {
         const text = heading.textContent?.trim() || '';
         const lower = text.toLowerCase();
@@ -110,12 +124,11 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
       }
     }
 
-    // Fallback: table rows
+    // Fallback: table rows, list items, notices
     if (items.length === 0) {
-      const rows = doc.querySelectorAll('table tr, .list-item, .card, article');
+      const rows = doc.querySelectorAll('table tr, .list-item, .card, article, li, dd, .notice, .notification, .news-item, .latest-news li');
       for (const row of rows) {
         const text = row.textContent?.trim() || '';
-        const kws = keywords[sourceType] || [];
         if (text.length < 10 || !kws.some(kw => text.toLowerCase().includes(kw))) continue;
         const linkEl = row.querySelector('a[href]');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
@@ -190,13 +203,6 @@ async function scrapeWithFirecrawl(
     const data = await response.json();
     let markdown = '';
     let items: any[] = [];
-
-    const keywords: Record<string, string[]> = {
-      scholarship: ['scholarship', 'fellowship', 'grant', 'award'],
-      job: ['vacancy', 'job', 'position', 'recruitment'],
-      tender: ['tender', 'procurement', 'bid', 'rfp'],
-      board_result: ['result', 'announcement', 'gazette'],
-    };
     const kws = keywords[sourceType] || [];
 
     if (enableCrawl && Array.isArray(data.data)) {
@@ -224,17 +230,23 @@ async function scrapeWithFirecrawl(
   }
 }
 
-function parseMarkdown(markdown: string, keywords: string[], sourceName: string, url: string): any[] {
+function parseMarkdown(markdown: string, kws: string[], sourceName: string, url: string): any[] {
   const items: any[] = [];
-  const sections = markdown.split(/^#{2,3}\s+/m);
-  for (const section of sections) {
+  const seen = new Set<string>();
+
+  // Strategy 1: Split by markdown headings
+  const headingSections = markdown.split(/^#{1,4}\s+/m);
+  for (const section of headingSections) {
     const lines = section.split('\n');
     const title = lines[0]?.trim() || '';
     const text = section.toLowerCase();
-    if (keywords.some(kw => text.includes(kw)) && title.length > 5) {
+    if (kws.some(kw => text.includes(kw)) && title.length > 5) {
+      const key = title.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
       const linkMatch = section.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
       items.push({
-        title,
+        title: title.substring(0, 200),
         description: section.substring(0, 500).trim(),
         deadline: extractDeadlineFromText(section),
         organization: sourceName,
@@ -242,6 +254,54 @@ function parseMarkdown(markdown: string, keywords: string[], sourceName: string,
       });
     }
   }
+
+  // Strategy 2: Split by double-newlines (paragraphs) if headings yielded nothing
+  if (items.length === 0) {
+    const paragraphs = markdown.split(/\n\n+/);
+    for (const para of paragraphs) {
+      const trimmed = para.trim();
+      if (trimmed.length < 15) continue;
+      const lower = trimmed.toLowerCase();
+      if (!kws.some(kw => lower.includes(kw))) continue;
+      const firstLine = trimmed.split('\n')[0].replace(/^[#*\-|>\s]+/, '').trim();
+      if (firstLine.length < 5) continue;
+      const key = firstLine.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const linkMatch = trimmed.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
+      items.push({
+        title: firstLine.substring(0, 200),
+        description: trimmed.substring(0, 500).trim(),
+        deadline: extractDeadlineFromText(trimmed),
+        organization: sourceName,
+        applyUrl: linkMatch ? linkMatch[1] : url,
+      });
+    }
+  }
+
+  // Strategy 3: Split by table rows (markdown tables)
+  if (items.length === 0) {
+    const tableRows = markdown.split('\n').filter(line => line.includes('|') && !line.match(/^[\s\-|]+$/));
+    for (const row of tableRows) {
+      const cells = row.split('|').map(c => c.trim()).filter(c => c.length > 0);
+      const rowText = cells.join(' ').toLowerCase();
+      if (!kws.some(kw => rowText.includes(kw))) continue;
+      const title = cells[0] || cells[1] || '';
+      if (title.length < 5) continue;
+      const key = title.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const linkMatch = row.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
+      items.push({
+        title: title.substring(0, 200),
+        description: cells.join(' ').substring(0, 500),
+        deadline: extractDeadlineFromText(row),
+        organization: sourceName,
+        applyUrl: linkMatch ? linkMatch[1] : url,
+      });
+    }
+  }
+
   return items;
 }
 
@@ -264,18 +324,15 @@ serve(async (req) => {
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: authHeader || '' } },
       });
-      const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(
-        (authHeader || '').replace('Bearer ', '')
-      );
-      if (claimsError || !claimsData?.claims) {
+      const { data: { user }, error: userError } = await userClient.auth.getUser();
+      if (userError || !user) {
         return new Response(JSON.stringify({ error: 'Unauthorized' }), {
           status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
-      const userId = claimsData.claims.sub as string;
       const { data: adminCheck } = await adminClient
         .from('user_roles').select('role')
-        .eq('user_id', userId).eq('role', 'admin').maybeSingle();
+        .eq('user_id', user.id).eq('role', 'admin').maybeSingle();
       if (!adminCheck) {
         return new Response(JSON.stringify({ error: 'Admin access required' }), {
           status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -340,20 +397,43 @@ serve(async (req) => {
       execution_time_ms: result.executionTimeMs,
     });
 
-    // Save items to database
+    // Save items — improved deduplication using title+type AND apply_url
     let savedCount = 0;
     if (result.success && result.items.length > 0) {
-      const { data: existing } = await adminClient
-        .from('external_opportunities').select('apply_url').eq('type', source.type);
-      const existingUrls = new Set((existing || []).map((e: any) => e.apply_url));
+      // Load existing by both apply_url and title for this type
+      const { data: existingByUrl } = await adminClient
+        .from('external_opportunities').select('apply_url, title').eq('type', source.type);
+      const existingUrls = new Set((existingByUrl || []).map((e: any) => e.apply_url));
+      const existingTitles = new Set((existingByUrl || []).map((e: any) => (e.title || '').toLowerCase().trim()));
 
-      for (const item of result.items) {
-        if (existingUrls.has(item.applyUrl)) continue;
+      for (let i = 0; i < result.items.length; i++) {
+        const item = result.items[i];
+        const titleKey = (item.title || '').toLowerCase().trim();
+
+        // Skip if title already exists (prevents semantic duplicates)
+        if (existingTitles.has(titleKey)) {
+          console.log(`[dedup] Skipping duplicate title: ${item.title.substring(0, 50)}`);
+          continue;
+        }
+
+        // If applyUrl equals the source base URL, make it unique with title hash
+        let finalUrl = item.applyUrl;
+        if (finalUrl === source.url || existingUrls.has(finalUrl)) {
+          if (finalUrl === source.url) {
+            finalUrl = `${source.url}#item-${simpleHash(titleKey)}`;
+          } else if (existingUrls.has(finalUrl) && !existingTitles.has(titleKey)) {
+            // Same URL but different title — it's a new item, make URL unique
+            finalUrl = `${finalUrl}#${simpleHash(titleKey)}`;
+          } else {
+            continue; // True duplicate
+          }
+        }
+
         const { error: insertError } = await adminClient.from('external_opportunities').insert({
           type: source.type,
           title: item.title,
           description: item.description,
-          apply_url: item.applyUrl,
+          apply_url: finalUrl,
           organization: item.organization,
           deadline_date: item.deadline,
           source_name: source.name,
@@ -366,7 +446,10 @@ serve(async (req) => {
         });
         if (!insertError) {
           savedCount++;
-          existingUrls.add(item.applyUrl);
+          existingUrls.add(finalUrl);
+          existingTitles.add(titleKey);
+        } else {
+          console.warn(`[save] Insert error: ${insertError.message}`);
         }
       }
     }
