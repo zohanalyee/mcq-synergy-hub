@@ -258,19 +258,29 @@ function parseMarkdown(markdown: string, kws: string[], sourceName: string, url:
   const headingSections = markdown.split(/^#{1,4}\s+/m);
   for (const section of headingSections) {
     const lines = section.split('\n');
-    const title = lines[0]?.trim() || '';
+    const rawTitle = lines[0]?.trim() || '';
     const text = section.toLowerCase();
-    if (kws.some(kw => text.includes(kw)) && title.length > 5) {
+    if (kws.some(kw => text.includes(kw)) && rawTitle.length > 5) {
+      // Extract image from markdown ![alt](url)
+      const imageMatch = section.match(/!\[.*?\]\((https?:\/\/[^\)]+)\)/);
+      const imageUrl = imageMatch ? imageMatch[1] : null;
+      // Clean title: remove image markdown
+      const title = rawTitle
+        .replace(/!\[.*?\]\(.*?\)/g, '')
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+        .trim();
+      if (title.length < 5) continue;
       const key = title.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
       const linkMatch = section.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
       items.push({
         title: title.substring(0, 200),
-        description: section.substring(0, 500).trim(),
+        description: section.replace(/!\[.*?\]\(.*?\)/g, '').substring(0, 500).trim(),
         deadline: extractDeadlineFromText(section),
         organization: sourceName,
         applyUrl: linkMatch ? linkMatch[1] : url,
+        imageUrl,
       });
     }
   }
