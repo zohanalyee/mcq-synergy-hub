@@ -457,6 +457,8 @@ serve(async (req) => {
           organization: item.organization,
           deadline_date: item.deadline,
           source_name: source.name,
+          image_url: item.imageUrl || null,
+          document_url: item.documentUrl || null,
           status: 'pending',
           metadata: {
             scraped_at: new Date().toISOString(),
