@@ -363,6 +363,11 @@ const AgentDashboard = () => {
 
         {/* Review Tab */}
         <TabsContent value="review" className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-semibold">Opportunity Review</h3>
+            <ManualOpportunityCreator onSuccess={() => queryClient.invalidateQueries({ queryKey: ["pending-opportunities"] })} />
+          </div>
+          <OpportunityReviewQueue />
           {reviewTasks.length > 0 && (
             <Card className="border-amber-500/20">
               <CardHeader className="pb-2">
