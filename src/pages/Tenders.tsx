@@ -154,17 +154,12 @@ const Tenders = () => {
                       </div>
                     )}
 
-                    <div className="flex gap-2 pt-2">
-                      <Link to={`/opportunity/${tender.id}`} className="flex-1">
+                    <div className="pt-2">
+                      <Link to={`/opportunity/${tender.id}`} className="block">
                         <Button size="sm" variant="outline" className="w-full h-7 text-xs">
-                          <Eye className="h-3 w-3 mr-1" /> Details
+                          <Eye className="h-3 w-3 mr-1" /> View Details
                         </Button>
                       </Link>
-                      <a href={tender.apply_url} target="_blank" rel="noopener noreferrer">
-                        <Button size="sm" className="h-7 text-xs">
-                          <ExternalLink className="h-3 w-3 mr-1" /> View
-                        </Button>
-                      </a>
                     </div>
 
                     {tender.created_at && (

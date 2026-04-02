@@ -407,42 +407,42 @@ serve(async (req) => {
       execution_time_ms: result.executionTimeMs,
     });
 
-    // Save items — improved deduplication using title+type AND apply_url
+    // Save items — title-only dedup: if sanitized title is new, ALWAYS insert
     let savedCount = 0;
     if (result.success && result.items.length > 0) {
-      // Load existing by both apply_url and title for this type
-      const { data: existingByUrl } = await adminClient
-        .from('external_opportunities').select('apply_url, title').eq('type', source.type);
-      const existingUrls = new Set((existingByUrl || []).map((e: any) => e.apply_url));
-      const existingTitles = new Set((existingByUrl || []).map((e: any) => (e.title || '').toLowerCase().trim()));
+      const { data: existingRows } = await adminClient
+        .from('external_opportunities').select('title').eq('type', source.type);
+      const existingTitles = new Set(
+        (existingRows || []).map((e: any) => sanitizeText(e.title || '').toLowerCase())
+      );
 
       for (let i = 0; i < result.items.length; i++) {
         const item = result.items[i];
-        const titleKey = (item.title || '').toLowerCase().trim();
+        // Sanitize title before dedup check
+        const cleanTitle = sanitizeText(item.title || '');
+        if (cleanTitle.length < 5) {
+          console.log(`[dedup] Skipping short/empty title: "${cleanTitle}"`);
+          continue;
+        }
+        const titleKey = cleanTitle.toLowerCase();
 
-        // Skip if title already exists (prevents semantic duplicates)
         if (existingTitles.has(titleKey)) {
-          console.log(`[dedup] Skipping duplicate title: ${item.title.substring(0, 50)}`);
+          console.log(`[dedup] Skipping duplicate title: ${cleanTitle.substring(0, 50)}`);
           continue;
         }
 
-        // If applyUrl equals the source base URL, make it unique with title hash
-        let finalUrl = item.applyUrl;
-        if (finalUrl === source.url || existingUrls.has(finalUrl)) {
-          if (finalUrl === source.url) {
-            finalUrl = `${source.url}#item-${simpleHash(titleKey)}`;
-          } else if (existingUrls.has(finalUrl) && !existingTitles.has(titleKey)) {
-            // Same URL but different title — it's a new item, make URL unique
-            finalUrl = `${finalUrl}#${simpleHash(titleKey)}`;
-          } else {
-            continue; // True duplicate
-          }
+        // Synthesize unique URL if needed — never let URL block a new title
+        let finalUrl = item.applyUrl || source.url;
+        if (finalUrl === source.url) {
+          finalUrl = `${source.url}#item-${simpleHash(titleKey)}`;
         }
+
+        const cleanDesc = sanitizeText(item.description || '');
 
         const { error: insertError } = await adminClient.from('external_opportunities').insert({
           type: source.type,
-          title: item.title,
-          description: item.description,
+          title: cleanTitle,
+          description: cleanDesc.substring(0, 500),
           apply_url: finalUrl,
           organization: item.organization,
           deadline_date: item.deadline,
@@ -458,7 +458,6 @@ serve(async (req) => {
         });
         if (!insertError) {
           savedCount++;
-          existingUrls.add(finalUrl);
           existingTitles.add(titleKey);
         } else {
           console.warn(`[save] Insert error: ${insertError.message}`);

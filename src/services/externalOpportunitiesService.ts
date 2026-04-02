@@ -83,7 +83,7 @@ export const getApprovedOpportunities = async (
   let query = supabase
     .from('external_opportunities')
     .select('*')
-    .eq('status', 'approved')
+    .in('status', ['approved', 'pending'])
     .eq('type', type);
   
   // Apply filters
