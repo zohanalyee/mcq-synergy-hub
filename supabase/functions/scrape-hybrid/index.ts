@@ -91,10 +91,13 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
           const linkEl = container.querySelector('a[href]');
           const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
           const text = container.textContent || '';
+          // Extract image
+          const imgEl = container.querySelector('img[src]');
+          const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
           items.push({
             title, description: text.substring(0, 500).trim(),
             deadline: extractDeadlineFromText(text), organization: sourceName,
-            applyUrl,
+            applyUrl, imageUrl,
           });
         }
       } catch (e) {
@@ -114,12 +117,15 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
         const fullText = parent?.textContent || text;
         const linkEl = (parent || heading).querySelector?.('a[href]') || heading.closest?.('a');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute?.('href') || '', url) : url;
+        // Extract image
+        const imgEl = (parent || heading).querySelector?.('img[src]');
+        const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute?.('src') || '', url) : null;
 
         items.push({
           title: text.substring(0, 200),
           description: fullText.substring(0, 500).trim(),
           deadline: extractDeadlineFromText(fullText),
-          organization: sourceName, applyUrl,
+          organization: sourceName, applyUrl, imageUrl,
         });
       }
     }
@@ -133,10 +139,24 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
         const linkEl = row.querySelector('a[href]');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
         const title = linkEl?.textContent?.trim() || text.substring(0, 200);
+        // Check for PDF links
+        let pdfUrl: string | null = null;
+        const allLinks = row.querySelectorAll('a[href]');
+        for (const l of allLinks) {
+          const href = l.getAttribute('href') || '';
+          if (href.endsWith('.pdf') || href.includes('download')) {
+            pdfUrl = resolveUrl(href, url);
+            break;
+          }
+        }
+        // Extract image
+        const imgEl = row.querySelector('img[src]');
+        const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
         items.push({
           title, description: text.substring(0, 500).trim(),
           deadline: extractDeadlineFromText(text),
           organization: sourceName, applyUrl,
+          imageUrl, documentUrl: pdfUrl,
         });
       }
     }
