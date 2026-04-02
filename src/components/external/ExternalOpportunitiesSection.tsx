@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap, Globe, Building } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Eye, Calendar, Building2, MapPin, Briefcase, GraduationCap, Globe, Building } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
