@@ -153,6 +153,7 @@ const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
+const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
@@ -236,6 +237,7 @@ const App = () => {
                       <Route path="/scholarships" element={<Scholarships />} />
                       <Route path="/tenders" element={<Suspense fallback={null}><Tenders /></Suspense>} />
                       <Route path="/board-results" element={<Suspense fallback={null}><BoardResults /></Suspense>} />
+                      <Route path="/opportunity/:id" element={<Suspense fallback={null}><OpportunityDetail /></Suspense>} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
                       <Route path="/quizzes" element={<Quizzes />} />

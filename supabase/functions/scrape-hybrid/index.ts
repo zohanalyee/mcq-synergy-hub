@@ -91,10 +91,13 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
           const linkEl = container.querySelector('a[href]');
           const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
           const text = container.textContent || '';
+          // Extract image
+          const imgEl = container.querySelector('img[src]');
+          const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
           items.push({
             title, description: text.substring(0, 500).trim(),
             deadline: extractDeadlineFromText(text), organization: sourceName,
-            applyUrl,
+            applyUrl, imageUrl,
           });
         }
       } catch (e) {
@@ -114,12 +117,15 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
         const fullText = parent?.textContent || text;
         const linkEl = (parent || heading).querySelector?.('a[href]') || heading.closest?.('a');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute?.('href') || '', url) : url;
+        // Extract image
+        const imgEl = (parent || heading).querySelector?.('img[src]');
+        const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute?.('src') || '', url) : null;
 
         items.push({
           title: text.substring(0, 200),
           description: fullText.substring(0, 500).trim(),
           deadline: extractDeadlineFromText(fullText),
-          organization: sourceName, applyUrl,
+          organization: sourceName, applyUrl, imageUrl,
         });
       }
     }
@@ -133,10 +139,24 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
         const linkEl = row.querySelector('a[href]');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
         const title = linkEl?.textContent?.trim() || text.substring(0, 200);
+        // Check for PDF links
+        let pdfUrl: string | null = null;
+        const allLinks = row.querySelectorAll('a[href]');
+        for (const l of allLinks) {
+          const href = l.getAttribute('href') || '';
+          if (href.endsWith('.pdf') || href.includes('download')) {
+            pdfUrl = resolveUrl(href, url);
+            break;
+          }
+        }
+        // Extract image
+        const imgEl = row.querySelector('img[src]');
+        const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
         items.push({
           title, description: text.substring(0, 500).trim(),
           deadline: extractDeadlineFromText(text),
           organization: sourceName, applyUrl,
+          imageUrl, documentUrl: pdfUrl,
         });
       }
     }
@@ -238,19 +258,29 @@ function parseMarkdown(markdown: string, kws: string[], sourceName: string, url:
   const headingSections = markdown.split(/^#{1,4}\s+/m);
   for (const section of headingSections) {
     const lines = section.split('\n');
-    const title = lines[0]?.trim() || '';
+    const rawTitle = lines[0]?.trim() || '';
     const text = section.toLowerCase();
-    if (kws.some(kw => text.includes(kw)) && title.length > 5) {
+    if (kws.some(kw => text.includes(kw)) && rawTitle.length > 5) {
+      // Extract image from markdown ![alt](url)
+      const imageMatch = section.match(/!\[.*?\]\((https?:\/\/[^\)]+)\)/);
+      const imageUrl = imageMatch ? imageMatch[1] : null;
+      // Clean title: remove image markdown
+      const title = rawTitle
+        .replace(/!\[.*?\]\(.*?\)/g, '')
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+        .trim();
+      if (title.length < 5) continue;
       const key = title.toLowerCase();
       if (seen.has(key)) continue;
       seen.add(key);
       const linkMatch = section.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
       items.push({
         title: title.substring(0, 200),
-        description: section.substring(0, 500).trim(),
+        description: section.replace(/!\[.*?\]\(.*?\)/g, '').substring(0, 500).trim(),
         deadline: extractDeadlineFromText(section),
         organization: sourceName,
         applyUrl: linkMatch ? linkMatch[1] : url,
+        imageUrl,
       });
     }
   }
@@ -437,6 +467,8 @@ serve(async (req) => {
           organization: item.organization,
           deadline_date: item.deadline,
           source_name: source.name,
+          image_url: item.imageUrl || null,
+          document_url: item.documentUrl || null,
           status: 'pending',
           metadata: {
             scraped_at: new Date().toISOString(),
