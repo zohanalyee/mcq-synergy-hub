@@ -19,6 +19,19 @@ interface ScrapeResult {
 
 // ─── Shared helpers ───
 
+// Strict title sanitizer — strips all markdown noise
+function sanitizeText(text: string): string {
+  return text
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')       // Remove ![alt](url)
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')    // [text](url) → text
+    .replace(/\[\]\([^)]*\)/g, '')               // Remove empty []()
+    .replace(/\[([^\]]*)\]/g, '$1')              // Remove leftover [text]
+    .replace(/\([^)]*\)/g, '')                   // Remove leftover (url)
+    .replace(/[#*_~>`|]/g, '')                   // Remove markdown formatting chars
+    .replace(/\s+/g, ' ')                        // Collapse whitespace
+    .trim();
+}
+
 function extractDeadlineFromText(text: string): string | null {
   const patterns = [
     /(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i,
