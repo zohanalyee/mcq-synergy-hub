@@ -28,6 +28,8 @@ import QuotaMonitor from "./QuotaMonitor";
 import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
 import ScrapingSourcesManager from "./ScrapingSourcesManager";
+import ManualOpportunityCreator from "./ManualOpportunityCreator";
+import OpportunityReviewQueue from "./OpportunityReviewQueue";
 
 const typeIcons: Record<AgentTaskType, React.ElementType> = {
   blog: FileText,
