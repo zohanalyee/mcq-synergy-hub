@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, Download, ExternalLink, MapPin, Building2, Loader2, Eye } from "lucide-react";
+import { Calendar, MapPin, Building2, Loader2, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 const categories = ["All", "Construction", "IT", "Consultancy", "Supply", "Services", "Equipment", "General"];
