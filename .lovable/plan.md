@@ -1,88 +1,103 @@
 
+Goal: force the missing updates into the actual files that currently still power the app, because the codebase shows a partial/misaligned implementation.
 
-# Root Cause Analysis & Fix Plan
+What I found
+- The route already exists in `src/App.tsx`: `/opportunity/:id` is present.
+- The Review tab already exists in `src/components/admin/AgentDashboard.tsx`, and it already renders `ManualOpportunityCreator` + `OpportunityReviewQueue`.
+- The public pages are still wired to old components/services:
+  - `src/pages/Scholarships.tsx` and `src/pages/Jobs.tsx` still call `getApprovedOpportunities(...)`, which hard-filters `status = 'approved'`.
+  - `src/components/external/ExternalOpportunitiesSection.tsx` still renders an external `Apply Now` button, which is why the live UI still shows old behavior.
+- `src/pages/Tenders.tsx` is partially updated, but still shows a mixed CTA pattern (`Details` + external `View`) rather than the requested forced “View Details” flow.
+- `supabase/functions/scrape-hybrid/index.ts` still blocks inserts by title:
+  - save loop checks `existingTitles.has(titleKey)` and skips
+  - URL collision logic can still continue/skip
+  - title cleanup is incomplete, which is why broken HEC markdown like `![](...)` can survive
+- Database evidence confirms the issue:
+  - `HEC Scholarships` has a saved row with title `![](https://www.hec.gov.pk/_layouts/15/images/spcommon.png?rev=43)`
+  - PPRA/BISE sources show `last_scrape_found > 0` and `last_scrape_saved = 0`, confirming dedup/save logic is still blocking them
+  - current DB currently has only approved jobs/scholarships and no tender rows, so public invisibility is also caused by page/service filtering
 
-## Problem 1: Data Invisibility (CONFIRMED)
+Implementation changes to apply
+1. `supabase/functions/scrape-hybrid/index.ts`
+- Add a strict title sanitizer used everywhere before dedup/save:
+  - strip all `![...]()` image markdown
+  - strip all `[text](url)` link markdown down to `text`
+  - strip raw leftover `[]()` noise
+  - collapse whitespace
+- Update `parseMarkdown(...)` so every extracted title and description is sanitized before returning items.
+- Change save logic to the user-requested rule:
+  - if sanitized title is empty/too short, skip
+  - only use normalized title for duplicate prevention
+  - do not let `apply_url` block a new title
+  - if URL is missing, equals source URL, or collides, synthesize a unique URL suffix from title hash instead of skipping
+- Keep insert status as `pending` unless you explicitly want auto-publish later.
+- Result: PPRA/BISE/HEC items with new titles will insert even if they share base URLs.
 
-**Root cause**: All three public pages filter by `status = 'approved'`, but the scraper saves items with `status: 'pending'`.
+2. `src/services/externalOpportunitiesService.ts`
+- Replace `getApprovedOpportunities` behavior so public opportunity feeds query:
+  - `.in('status', ['approved', 'pending'])`
+  - retain type and existing filters
+- This is necessary because `Jobs.tsx` and `Scholarships.tsx` still depend on this service.
 
-| Page | File | Line | Filter |
-|------|------|------|--------|
-| Tenders | `src/pages/Tenders.tsx` | 26 | `.eq("status", "approved")` |
-| Scholarships | `src/services/externalOpportunitiesService.ts` | 86 | `.eq('status', 'approved')` |
-| Jobs | `src/services/externalOpportunitiesService.ts` | 86 | Same function |
+3. `src/components/external/ExternalOpportunitiesSection.tsx`
+- Replace the external-only CTA with internal detail navigation:
+  - primary button/link to `/opportunity/:id`
+  - label “View Details”
+- Optionally keep a small secondary external link, but the requested forced behavior is detail-page-first.
+- Add pending badge so mixed-status content is visible.
 
-The scraper inserts with `status: 'pending'` (line 360 of `scrape-hybrid/index.ts`). The RLS policy also only allows public SELECT for `status = 'approved'`.
+4. `src/pages/Scholarships.tsx`
+- Keep internal scholarship cards as-is if desired, but external scholarship cards section will now show pending+approved and “View Details” after the shared section is updated.
+- If you want the page itself fully forced, also convert page-level external display to detail-first behavior and avoid any remaining “Apply” wording.
 
-**Fix**: This is by design (admin review before publishing). The fix is NOT to change the filter, but to give admins a way to bulk-approve scraped items. We should also show pending count on the public pages so admins know items are waiting.
+5. `src/pages/Jobs.tsx`
+- Same fix path as Scholarships:
+  - because it uses `ExternalOpportunitiesSection`, the visible “Apply Now” issue will be resolved there
+  - pending + approved will start showing after service update
 
-**Two options**:
-- **Option A (Recommended)**: Add a one-click "Approve All Pending" button in the admin ScrapingSourcesManager or AgentDashboard, so after scraping, admins can quickly approve items.
-- **Option B**: Change the scraper to save items as `status: 'approved'` directly (skip review). Faster but less safe.
+6. `src/pages/Tenders.tsx`
+- Force the card CTA copy and flow:
+  - make the main button `View Details` linking to `/opportunity/:id`
+  - keep optional secondary external button only if needed
+- Keep `.in("status", ["approved", "pending"])`
+- Preserve image card layout and pending badge
 
-## Problem 2: Zero-Item Fetching for FPSC/BISE Larkana
+7. `src/components/admin/AgentDashboard.tsx`
+- Since the Review tab is already present in code, I would verify/fix only if there is a rendering/import issue:
+  - ensure `ManualOpportunityCreator` and `OpportunityReviewQueue` imports are correct
+  - ensure the review tab remains in the rendered `TabsList`
+- The more likely reason you “don’t see it” is stale frontend deployment rather than missing source code, but I would still rewrite this section cleanly to remove doubt.
 
-**Root cause**: The `parseMarkdown` function (line 227-246 of `scrape-hybrid/index.ts`) only splits by `## ` or `### ` headings and checks for keywords. Pakistani government sites like FPSC and BISE boards:
+Files to overwrite
+- `supabase/functions/scrape-hybrid/index.ts`
+- `src/services/externalOpportunitiesService.ts`
+- `src/components/external/ExternalOpportunitiesSection.tsx`
+- `src/pages/Jobs.tsx`
+- `src/pages/Scholarships.tsx`
+- `src/pages/Tenders.tsx`
+- `src/components/admin/AgentDashboard.tsx`
+- `src/App.tsx` only to reassert the route if you want a no-ambiguity rewrite
 
-1. Don't structure content with markdown headings — they use tables, PDFs, and flat HTML
-2. The keyword lists are too narrow: `board_result` keywords are `['result', 'announcement', 'gazette']` but BISE sites use terms like "matric", "intermediate", "SSC", "HSC", "annual", "supplementary"
-3. The Cheerio fallback also requires keyword matches in headings, missing table-based layouts
+Technical notes
+- Root cause of “Apply Now still visible” is not `App.tsx`; it is `ExternalOpportunitiesSection.tsx`.
+- Root cause of missing pending jobs/scholarships is not the scraper alone; it is `getApprovedOpportunities()` filtering approved only.
+- Root cause of PPRA/BISE “Saved 0” is the current save loop in `scrape-hybrid/index.ts`:
+  - `existingTitles.has(titleKey)` hard-skips
+  - URL collision path can still skip
+- Root cause of broken HEC markdown title is incomplete sanitization in `parseMarkdown`, plus already-bad rows in DB.
+- Important limitation: fixing code will not retro-clean already-saved broken rows in Supabase. If you want old malformed titles corrected too, that needs a follow-up data cleanup migration/update job.
 
-**Fix**:
-- Expand keyword lists for `board_result` and `job` types
-- Add broader content extraction in `parseMarkdown`: also split by `\n\n` (paragraphs), `|` (table rows in markdown), and bullet points
-- For Cheerio: add `dl, dd, dt, li` to the table-row fallback selectors
-- Add site-specific patterns for known Pakistani portals (FPSC uses specific CSS classes)
+Order of execution after approval in build mode
+1. Rewrite scraper sanitizer + save loop
+2. Rewrite public service status filter
+3. Rewrite external cards CTA to internal detail route
+4. Rewrite Jobs/Scholarships/Tenders pages to ensure detail-first behavior
+5. Re-save AgentDashboard review tab section
+6. Reconfirm `/opportunity/:id` route in `App.tsx`
 
-## Problem 3: Deduplication
-
-**Root cause**: Line 346-348 of `scrape-hybrid/index.ts`:
-```
-const { data: existing } = await adminClient
-  .from('external_opportunities').select('apply_url').eq('type', source.type);
-const existingUrls = new Set((existing || []).map((e: any) => e.apply_url));
-```
-
-This loads ALL existing URLs of that type across ALL sources, then checks `item.applyUrl`. The problem: when Cheerio or Firecrawl can't extract a specific link, it falls back to the source page URL itself (e.g., `https://www.fpsc.gov.pk/jobs`). So the first item saves with that URL, and all subsequent items from the same page are treated as duplicates.
-
-**Fix**: Change deduplication to use `title + organization` as the key instead of (or in addition to) `apply_url`. Also prevent saving items where `applyUrl === source.url` (the base page URL) as-is — append a title hash to make it unique.
-
-## Problem 4: "Ani Quota" Issue
-
-This is not a code issue. There is no "Ani quota" in the codebase. This likely refers to **Lovable AI credit quota** — the platform's usage limit for AI-assisted code generation. This is managed at the account level in Lovable's billing settings, not in the project code.
-
----
-
-## Implementation Steps
-
-### Step 1: Fix Deduplication Logic
-**File**: `supabase/functions/scrape-hybrid/index.ts`
-- Change dedup key from `apply_url` alone to `title.toLowerCase() + '|' + type`
-- When `applyUrl === source.url`, append `#item-{index}` or a title-based hash to differentiate
-- Query existing by both `apply_url` and `title` to prevent both kinds of duplicates
-
-### Step 2: Expand Keyword Lists & Parsing
-**File**: `supabase/functions/scrape-hybrid/index.ts`
-- Add to `board_result` keywords: `'matric', 'intermediate', 'SSC', 'HSC', 'annual', 'supplementary', 'exam'`
-- Add to `job` keywords: `'apply', 'advertisement', 'notice', 'employment', 'opportunity'`
-- In `parseMarkdown`: also split by double-newlines and table-row markers (`|`)
-- In Cheerio fallback: add `li, dd, dt, .notice, .notification` selectors
-
-### Step 3: Add Bulk Approve in Admin
-**File**: `src/components/admin/ScrapingSourcesManager.tsx`
-- Add "Approve All Pending" button that calls `externalOpportunitiesService` to bulk-update status
-- Show count of pending items per type
-
-### Step 4: Redeploy Edge Function
-Deploy updated `scrape-hybrid` function.
-
----
-
-## Files Summary
-
-| Action | File |
-|--------|------|
-| Modify | `supabase/functions/scrape-hybrid/index.ts` — fix dedup + expand keywords + improve parsing |
-| Modify | `src/components/admin/ScrapingSourcesManager.tsx` — add bulk approve button |
-| Deploy | `scrape-hybrid` edge function |
-
+Expected outcome
+- New scrapes stop saving markdown garbage titles
+- PPRA/BISE new-title items save instead of `Saved 0`
+- Jobs/Scholarships/Tenders show `pending` + `approved`
+- External cards show `View Details` instead of `Apply Now`
+- Review tab remains visible with Manual Creator + Opportunity Review Queue
