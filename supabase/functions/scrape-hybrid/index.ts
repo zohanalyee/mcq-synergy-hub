@@ -19,6 +19,19 @@ interface ScrapeResult {
 
 // ─── Shared helpers ───
 
+// Strict title sanitizer — strips all markdown noise
+function sanitizeText(text: string): string {
+  return text
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')       // Remove ![alt](url)
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')    // [text](url) → text
+    .replace(/\[\]\([^)]*\)/g, '')               // Remove empty []()
+    .replace(/\[([^\]]*)\]/g, '$1')              // Remove leftover [text]
+    .replace(/\([^)]*\)/g, '')                   // Remove leftover (url)
+    .replace(/[#*_~>`|]/g, '')                   // Remove markdown formatting chars
+    .replace(/\s+/g, ' ')                        // Collapse whitespace
+    .trim();
+}
+
 function extractDeadlineFromText(text: string): string | null {
   const patterns = [
     /(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i,
@@ -254,62 +267,53 @@ function parseMarkdown(markdown: string, kws: string[], sourceName: string, url:
   const items: any[] = [];
   const seen = new Set<string>();
 
+  function addItem(rawTitle: string, section: string, fallbackUrl: string) {
+    // Extract image BEFORE sanitizing
+    const imageMatch = section.match(/!\[[^\]]*\]\((https?:\/\/[^)]+)\)/);
+    const imageUrl = imageMatch ? imageMatch[1] : null;
+    // Extract link BEFORE sanitizing
+    const linkMatch = section.match(/\[[^\]]*\]\((https?:\/\/[^)]+)\)/);
+    const applyUrl = linkMatch ? linkMatch[1] : fallbackUrl;
+
+    const title = sanitizeText(rawTitle);
+    if (title.length < 5) return;
+    const key = title.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+
+    items.push({
+      title: title.substring(0, 200),
+      description: sanitizeText(section).substring(0, 500),
+      deadline: extractDeadlineFromText(section),
+      organization: sourceName,
+      applyUrl, imageUrl,
+    });
+  }
+
   // Strategy 1: Split by markdown headings
   const headingSections = markdown.split(/^#{1,4}\s+/m);
   for (const section of headingSections) {
     const lines = section.split('\n');
     const rawTitle = lines[0]?.trim() || '';
     const text = section.toLowerCase();
-    if (kws.some(kw => text.includes(kw)) && rawTitle.length > 5) {
-      // Extract image from markdown ![alt](url)
-      const imageMatch = section.match(/!\[.*?\]\((https?:\/\/[^\)]+)\)/);
-      const imageUrl = imageMatch ? imageMatch[1] : null;
-      // Clean title: remove image markdown
-      const title = rawTitle
-        .replace(/!\[.*?\]\(.*?\)/g, '')
-        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-        .trim();
-      if (title.length < 5) continue;
-      const key = title.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const linkMatch = section.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
-      items.push({
-        title: title.substring(0, 200),
-        description: section.replace(/!\[.*?\]\(.*?\)/g, '').substring(0, 500).trim(),
-        deadline: extractDeadlineFromText(section),
-        organization: sourceName,
-        applyUrl: linkMatch ? linkMatch[1] : url,
-        imageUrl,
-      });
+    if (kws.some(kw => text.includes(kw)) && rawTitle.length > 3) {
+      addItem(rawTitle, section, url);
     }
   }
 
-  // Strategy 2: Split by double-newlines (paragraphs) if headings yielded nothing
+  // Strategy 2: paragraphs
   if (items.length === 0) {
     const paragraphs = markdown.split(/\n\n+/);
     for (const para of paragraphs) {
       const trimmed = para.trim();
       if (trimmed.length < 15) continue;
-      const lower = trimmed.toLowerCase();
-      if (!kws.some(kw => lower.includes(kw))) continue;
+      if (!kws.some(kw => trimmed.toLowerCase().includes(kw))) continue;
       const firstLine = trimmed.split('\n')[0].replace(/^[#*\-|>\s]+/, '').trim();
-      if (firstLine.length < 5) continue;
-      const key = firstLine.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const linkMatch = trimmed.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
-      items.push({
-        title: firstLine.substring(0, 200),
-        description: trimmed.substring(0, 500).trim(),
-        deadline: extractDeadlineFromText(trimmed),
-        organization: sourceName,
-        applyUrl: linkMatch ? linkMatch[1] : url,
-      });
+      addItem(firstLine, trimmed, url);
     }
   }
 
-  // Strategy 3: Split by table rows (markdown tables)
+  // Strategy 3: table rows
   if (items.length === 0) {
     const tableRows = markdown.split('\n').filter(line => line.includes('|') && !line.match(/^[\s\-|]+$/));
     for (const row of tableRows) {
@@ -317,18 +321,7 @@ function parseMarkdown(markdown: string, kws: string[], sourceName: string, url:
       const rowText = cells.join(' ').toLowerCase();
       if (!kws.some(kw => rowText.includes(kw))) continue;
       const title = cells[0] || cells[1] || '';
-      if (title.length < 5) continue;
-      const key = title.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      const linkMatch = row.match(/\[.*?\]\((https?:\/\/[^\)]+)\)/);
-      items.push({
-        title: title.substring(0, 200),
-        description: cells.join(' ').substring(0, 500),
-        deadline: extractDeadlineFromText(row),
-        organization: sourceName,
-        applyUrl: linkMatch ? linkMatch[1] : url,
-      });
+      addItem(title, row, url);
     }
   }
 
@@ -427,42 +420,42 @@ serve(async (req) => {
       execution_time_ms: result.executionTimeMs,
     });
 
-    // Save items — improved deduplication using title+type AND apply_url
+    // Save items — title-only dedup: if sanitized title is new, ALWAYS insert
     let savedCount = 0;
     if (result.success && result.items.length > 0) {
-      // Load existing by both apply_url and title for this type
-      const { data: existingByUrl } = await adminClient
-        .from('external_opportunities').select('apply_url, title').eq('type', source.type);
-      const existingUrls = new Set((existingByUrl || []).map((e: any) => e.apply_url));
-      const existingTitles = new Set((existingByUrl || []).map((e: any) => (e.title || '').toLowerCase().trim()));
+      const { data: existingRows } = await adminClient
+        .from('external_opportunities').select('title').eq('type', source.type);
+      const existingTitles = new Set(
+        (existingRows || []).map((e: any) => sanitizeText(e.title || '').toLowerCase())
+      );
 
       for (let i = 0; i < result.items.length; i++) {
         const item = result.items[i];
-        const titleKey = (item.title || '').toLowerCase().trim();
+        // Sanitize title before dedup check
+        const cleanTitle = sanitizeText(item.title || '');
+        if (cleanTitle.length < 5) {
+          console.log(`[dedup] Skipping short/empty title: "${cleanTitle}"`);
+          continue;
+        }
+        const titleKey = cleanTitle.toLowerCase();
 
-        // Skip if title already exists (prevents semantic duplicates)
         if (existingTitles.has(titleKey)) {
-          console.log(`[dedup] Skipping duplicate title: ${item.title.substring(0, 50)}`);
+          console.log(`[dedup] Skipping duplicate title: ${cleanTitle.substring(0, 50)}`);
           continue;
         }
 
-        // If applyUrl equals the source base URL, make it unique with title hash
-        let finalUrl = item.applyUrl;
-        if (finalUrl === source.url || existingUrls.has(finalUrl)) {
-          if (finalUrl === source.url) {
-            finalUrl = `${source.url}#item-${simpleHash(titleKey)}`;
-          } else if (existingUrls.has(finalUrl) && !existingTitles.has(titleKey)) {
-            // Same URL but different title — it's a new item, make URL unique
-            finalUrl = `${finalUrl}#${simpleHash(titleKey)}`;
-          } else {
-            continue; // True duplicate
-          }
+        // Synthesize unique URL if needed — never let URL block a new title
+        let finalUrl = item.applyUrl || source.url;
+        if (finalUrl === source.url) {
+          finalUrl = `${source.url}#item-${simpleHash(titleKey)}`;
         }
+
+        const cleanDesc = sanitizeText(item.description || '');
 
         const { error: insertError } = await adminClient.from('external_opportunities').insert({
           type: source.type,
-          title: item.title,
-          description: item.description,
+          title: cleanTitle,
+          description: cleanDesc.substring(0, 500),
           apply_url: finalUrl,
           organization: item.organization,
           deadline_date: item.deadline,
@@ -478,7 +471,6 @@ serve(async (req) => {
         });
         if (!insertError) {
           savedCount++;
-          existingUrls.add(finalUrl);
           existingTitles.add(titleKey);
         } else {
           console.warn(`[save] Insert error: ${insertError.message}`);

@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
-import { ExternalLink, Calendar, Building2, MapPin, Briefcase, GraduationCap, Globe, Building } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Eye, Calendar, Building2, MapPin, Briefcase, GraduationCap, Globe, Building } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -175,16 +176,21 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                   </div>
                 </div>
 
+                {(opp as any).status === 'pending' && (
+                  <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 mb-2">
+                    Pending Review
+                  </Badge>
+                )}
                 <Button
                   size="sm"
                   variant="outline"
                   className="w-full gap-1"
                   asChild
                 >
-                  <a href={opp.apply_url} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3" />
-                    Apply Now
-                  </a>
+                  <Link to={`/opportunity/${opp.id}`}>
+                    <Eye className="h-3 w-3" />
+                    View Details
+                  </Link>
                 </Button>
               </CardContent>
             </Card>
