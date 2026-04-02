@@ -153,6 +153,7 @@ const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
+const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient());
