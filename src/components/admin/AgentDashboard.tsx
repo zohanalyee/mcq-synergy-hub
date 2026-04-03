@@ -368,48 +368,13 @@ const AgentDashboard = () => {
           <ScrapingSourcesManager />
         </TabsContent>
 
-        {/* Review Tab */}
+        {/* Review Tab — Scraped content review */}
         <TabsContent value="review" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-semibold">Opportunity Review</h3>
+            <h3 className="text-sm font-semibold">Scraped Content Review</h3>
             <ManualOpportunityCreator onSuccess={() => queryClient.invalidateQueries({ queryKey: ["pending-opportunities"] })} />
           </div>
           <OpportunityReviewQueue />
-          {reviewTasks.length > 0 && (
-            <Card className="border-amber-500/20">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-400" />
-                  Agent Tasks Pending Review ({reviewTasks.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {reviewTasks.map((task) => {
-                  const TypeIcon = typeIcons[task.task_type];
-                  return (
-                    <div key={task.id} className="flex items-center justify-between p-2 rounded-lg bg-amber-500/5 border border-amber-500/10">
-                      <div className="flex items-center gap-2">
-                        <TypeIcon className={cn("h-4 w-4", typeColors[task.task_type].split(' ')[0])} />
-                        <div>
-                          <span className="text-sm font-medium">{(task.input_data as any)?.title || task.task_type}</span>
-                          {task.error_message && <p className="text-[10px] text-red-400">{task.error_message}</p>}
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-500/20 text-emerald-400" onClick={() => handleApprove(task.id)}>
-                          <ThumbsUp className="h-3 w-3 mr-1" /> Approve
-                        </Button>
-                        <Button size="sm" variant="outline" className="h-7 text-xs border-red-500/20 text-red-400" onClick={() => handleReject(task.id)}>
-                          <ThumbsDown className="h-3 w-3 mr-1" /> Reject
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
-          )}
-          <DuplicateReviewQueue />
         </TabsContent>
       </Tabs>
 
