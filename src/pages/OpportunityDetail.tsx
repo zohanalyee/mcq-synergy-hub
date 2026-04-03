@@ -154,6 +154,42 @@ const OpportunityDetail = () => {
                 </div>
               )}
 
+              {/* Job specific */}
+              {opportunity.type === "job" && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {opportunity.qualification && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Qualification</p>
+                      <p className="text-sm font-medium">{opportunity.qualification}</p>
+                    </div>
+                  )}
+                  {opportunity.salary && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Salary</p>
+                      <p className="text-sm font-medium text-emerald-500">{opportunity.salary}</p>
+                    </div>
+                  )}
+                  {opportunity.experience && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Experience</p>
+                      <p className="text-sm font-medium">{opportunity.experience}</p>
+                    </div>
+                  )}
+                  {opportunity.positions && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Positions</p>
+                      <p className="text-sm font-medium">{opportunity.positions}</p>
+                    </div>
+                  )}
+                  {opportunity.department && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Department</p>
+                      <p className="text-sm font-medium">{opportunity.department}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Tender specific */}
               {opportunity.type === "tender" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -179,10 +215,38 @@ const OpportunityDetail = () => {
               )}
 
               {/* Scholarship specific */}
-              {opportunity.type === "scholarship" && opportunity.scholarship_scope && (
-                <div>
-                  <span className="text-xs text-muted-foreground">Scope: </span>
-                  <Badge variant="outline">{opportunity.scholarship_scope}</Badge>
+              {opportunity.type === "scholarship" && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                  {opportunity.scholarship_scope && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Scope</p>
+                      <p className="text-sm font-medium">{opportunity.scholarship_scope}</p>
+                    </div>
+                  )}
+                  {opportunity.eligibility && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Eligibility</p>
+                      <p className="text-sm font-medium">{opportunity.eligibility}</p>
+                    </div>
+                  )}
+                  {opportunity.amount && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Amount</p>
+                      <p className="text-sm font-medium text-emerald-500">{opportunity.amount}</p>
+                    </div>
+                  )}
+                  {opportunity.field_of_study && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Field of Study</p>
+                      <p className="text-sm font-medium">{opportunity.field_of_study}</p>
+                    </div>
+                  )}
+                  {opportunity.education_level && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-[10px] text-muted-foreground">Education Level</p>
+                      <p className="text-sm font-medium">{opportunity.education_level}</p>
+                    </div>
+                  )}
                 </div>
               )}
 

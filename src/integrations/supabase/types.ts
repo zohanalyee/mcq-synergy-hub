@@ -1044,20 +1044,29 @@ export type Database = {
       }
       external_opportunities: {
         Row: {
+          amount: string | null
           apply_url: string
           created_at: string
           deadline_date: string | null
+          department: string | null
           description: string | null
           document_url: string | null
+          education_level: string | null
+          eligibility: string | null
+          experience: string | null
+          field_of_study: string | null
           id: string
           image_url: string | null
           location: string | null
           metadata: Json | null
           organization: string | null
+          positions: number | null
           pre_bid_meeting: string | null
+          qualification: string | null
           region: string | null
           reviewed_at: string | null
           reviewed_by: string | null
+          salary: string | null
           scholarship_scope: string | null
           sector: string | null
           source_name: string
@@ -1070,20 +1079,29 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          amount?: string | null
           apply_url: string
           created_at?: string
           deadline_date?: string | null
+          department?: string | null
           description?: string | null
           document_url?: string | null
+          education_level?: string | null
+          eligibility?: string | null
+          experience?: string | null
+          field_of_study?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
           metadata?: Json | null
           organization?: string | null
+          positions?: number | null
           pre_bid_meeting?: string | null
+          qualification?: string | null
           region?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          salary?: string | null
           scholarship_scope?: string | null
           sector?: string | null
           source_name: string
@@ -1096,20 +1114,29 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          amount?: string | null
           apply_url?: string
           created_at?: string
           deadline_date?: string | null
+          department?: string | null
           description?: string | null
           document_url?: string | null
+          education_level?: string | null
+          eligibility?: string | null
+          experience?: string | null
+          field_of_study?: string | null
           id?: string
           image_url?: string | null
           location?: string | null
           metadata?: Json | null
           organization?: string | null
+          positions?: number | null
           pre_bid_meeting?: string | null
+          qualification?: string | null
           region?: string | null
           reviewed_at?: string | null
           reviewed_by?: string | null
+          salary?: string | null
           scholarship_scope?: string | null
           sector?: string | null
           source_name?: string
