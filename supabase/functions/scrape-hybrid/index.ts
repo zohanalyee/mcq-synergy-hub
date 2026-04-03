@@ -19,16 +19,15 @@ interface ScrapeResult {
 
 // ─── Shared helpers ───
 
-// Strict title sanitizer — strips all markdown noise
 function sanitizeText(text: string): string {
   return text
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')       // Remove ![alt](url)
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')    // [text](url) → text
-    .replace(/\[\]\([^)]*\)/g, '')               // Remove empty []()
-    .replace(/\[([^\]]*)\]/g, '$1')              // Remove leftover [text]
-    .replace(/\([^)]*\)/g, '')                   // Remove leftover (url)
-    .replace(/[#*_~>`|]/g, '')                   // Remove markdown formatting chars
-    .replace(/\s+/g, ' ')                        // Collapse whitespace
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/\[\]\([^)]*\)/g, '')
+    .replace(/\[([^\]]*)\]/g, '$1')
+    .replace(/\([^)]*\)/g, '')
+    .replace(/[#*_~>`|]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -36,6 +35,10 @@ function extractDeadlineFromText(text: string): string | null {
   const patterns = [
     /(\d{1,2})\s+(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{4})/i,
     /(January|February|March|April|May|June|July|August|September|October|November|December)\s+(\d{1,2}),?\s+(\d{4})/i,
+    /last\s+date[:\s]+([^\n.,;]{8,25})/i,
+    /closing\s+date[:\s]+([^\n.,;]{8,25})/i,
+    /deadline[:\s]+([^\n.,;]{8,25})/i,
+    /due\s+date[:\s]+([^\n.,;]{8,25})/i,
     /(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})/,
     /(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})/,
   ];
@@ -58,6 +61,197 @@ function simpleHash(str: string): string {
     hash |= 0;
   }
   return Math.abs(hash).toString(36);
+}
+
+// ─── Field extraction helpers ───
+
+function extractLocation(text: string): string | null {
+  const cities = [
+    'Karachi', 'Lahore', 'Islamabad', 'Rawalpindi', 'Faisalabad',
+    'Multan', 'Hyderabad', 'Gujranwala', 'Peshawar', 'Quetta',
+    'Sialkot', 'Sukkur', 'Larkana', 'Mardan', 'Abbottabad',
+    'Swat', 'Gilgit', 'Muzaffarabad', 'Gwadar', 'Sargodha',
+  ];
+  const provinces = ['Sindh', 'Punjab', 'KPK', 'Khyber Pakhtunkhwa', 'Balochistan', 'AJK', 'Gilgit-Baltistan'];
+  const lower = text.toLowerCase();
+  for (const city of cities) {
+    if (lower.includes(city.toLowerCase())) return city;
+  }
+  for (const province of provinces) {
+    if (lower.includes(province.toLowerCase())) return province;
+  }
+  if (/all\s+pakistan|nationwide|country\s*wide/i.test(text)) return 'All Pakistan';
+  return null;
+}
+
+function extractQualification(text: string): string | null {
+  const qualifications = [
+    'PhD', 'Doctorate', 'M.Phil', 'Masters', 'MS', 'MSc', 'MBA', 'MA',
+    'Bachelor', 'BS', 'BSc', 'BA', 'BE', 'B.Tech',
+    'Intermediate', 'FSc', 'FA', 'HSC',
+    'Matric', 'SSC', 'O-Level', 'A-Level',
+    'Graduate', 'Post-Graduate',
+  ];
+  const lower = text.toLowerCase();
+  for (const qual of qualifications) {
+    if (lower.includes(qual.toLowerCase())) return qual;
+  }
+  const match = text.match(/qualification[:\s]+([^\n.,;]{5,50})/i);
+  return match ? match[1].trim() : null;
+}
+
+function extractSalary(text: string): string | null {
+  const patterns = [
+    /(?:BPS|Grade|Scale)[-:\s]*(\d+)(?:\s*to\s*|\s*-\s*)?(\d+)?/i,
+    /(?:PKR|Rs\.?|Rupees)\s*([\d,]+)(?:\s*to\s*|\s*-\s*)?([\d,]+)?/i,
+    /salary[:\s]*([\d,]+)(?:\s*to\s*|\s*-\s*)?([\d,]+)?/i,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[0];
+  }
+  return null;
+}
+
+function extractExperience(text: string): string | null {
+  const patterns = [
+    /(\d+)\s*(?:to|\-)\s*(\d+)\s*years?\s*(?:of\s*)?experience/i,
+    /(\d+)\+?\s*years?\s*(?:of\s*)?experience/i,
+    /experience[:\s]+([^\n.,;]{5,40})/i,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[0];
+  }
+  if (/fresh|no\s+experience|entry\s+level/i.test(text)) return 'Fresh/Entry Level';
+  return null;
+}
+
+function extractPositions(text: string): number | null {
+  const match = text.match(/(\d+)\s*(?:post|position|vacancy|vacancies|seat)/i);
+  return match ? parseInt(match[1]) : null;
+}
+
+function extractDepartment(text: string): string | null {
+  const match = text.match(/department[:\s]+([^\n.,;]{5,50})/i);
+  return match ? match[1].trim() : null;
+}
+
+function extractEligibility(text: string): string | null {
+  const match = text.match(/eligibility[:\s]+([^\n]{20,200})/i);
+  if (match) return match[1].trim();
+  const phrases = [
+    /Pakistani\s+(?:citizens|nationals|students)/i,
+    /domicile\s+of\s+\w+/i,
+    /minimum\s+(?:CGPA|percentage)[:\s]+[\d.]+/i,
+  ];
+  for (const phrase of phrases) {
+    const m = text.match(phrase);
+    if (m) return m[0];
+  }
+  return null;
+}
+
+function extractAmount(text: string): string | null {
+  const patterns = [
+    /(?:amount|value|worth|stipend)[:\s]*(?:PKR|Rs\.?|USD)?\s*([\d,]+)/i,
+    /(?:PKR|Rs\.?|USD)\s*([\d,]+)\s*(?:per\s+month)?/i,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[0];
+  }
+  return null;
+}
+
+function extractFieldOfStudy(text: string): string | null {
+  const fields = [
+    'Engineering', 'Computer Science', 'IT', 'Software',
+    'Medicine', 'Medical', 'MBBS', 'BDS',
+    'Business', 'Management', 'Finance',
+    'Sciences', 'Physics', 'Chemistry', 'Biology',
+    'Arts', 'Social Sciences', 'Humanities',
+    'Law', 'Education', 'Agriculture',
+  ];
+  const lower = text.toLowerCase();
+  for (const field of fields) {
+    if (lower.includes(field.toLowerCase())) return field;
+  }
+  return null;
+}
+
+function extractEducationLevel(text: string): string | null {
+  if (/phd|doctorate|doctoral/i.test(text)) return 'PhD';
+  if (/masters?|ms |mphil|m\.phil/i.test(text)) return 'Masters';
+  if (/undergraduate|bachelor|bs |bsc/i.test(text)) return 'Undergraduate';
+  if (/intermediate|hsc|fsc|a\s*level/i.test(text)) return 'Intermediate';
+  if (/matric|ssc|o\s*level/i.test(text)) return 'Matric';
+  return null;
+}
+
+function extractTenderNumber(text: string): string | null {
+  const patterns = [
+    /(?:tender|nit|ref|no)[.:\s#]*([A-Z0-9\/-]{5,30})/i,
+    /([A-Z]{2,}[-\/]\d+[-\/]\d+)/,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1].trim();
+  }
+  return null;
+}
+
+function extractTenderValue(text: string): string | null {
+  const match = text.match(/([\d,]+(?:\.\d+)?)\s*(?:million|lakh|crore|billion)?\s*(?:PKR|Rs\.?)?/i);
+  return match ? match[0] : null;
+}
+
+function extractTenderCategory(text: string): string | null {
+  const categories: Record<string, string[]> = {
+    'Construction': ['construction', 'building', 'civil', 'road', 'bridge', 'infrastructure'],
+    'IT': ['it', 'software', 'computer', 'digital', 'technology', 'system'],
+    'Consultancy': ['consultancy', 'consultant', 'advisory'],
+    'Supply': ['supply', 'procurement', 'purchase', 'goods', 'equipment'],
+    'Services': ['services', 'maintenance', 'cleaning', 'security', 'transport'],
+    'Medical': ['medical', 'healthcare', 'hospital', 'medicine'],
+  };
+  const lower = text.toLowerCase();
+  for (const [category, keywords] of Object.entries(categories)) {
+    if (keywords.some(kw => lower.includes(kw))) return category;
+  }
+  return 'General';
+}
+
+function extractDocumentUrl(containerOrText: string, baseUrl: string): string | null {
+  const pdfMatch = containerOrText.match(/href=["']([^"']*\.pdf[^"']*)/i);
+  if (pdfMatch) return resolveUrl(pdfMatch[1], baseUrl);
+  const downloadMatch = containerOrText.match(/href=["']([^"']*(?:download|document)[^"']*)/i);
+  if (downloadMatch) return resolveUrl(downloadMatch[1], baseUrl);
+  return null;
+}
+
+// Enrich item with type-specific fields based on full text
+function enrichItem(item: any, fullText: string, sourceType: string): any {
+  const location = extractLocation(fullText);
+  if (location) item.location = location;
+
+  if (sourceType === 'job') {
+    item.qualification = extractQualification(fullText);
+    item.salary = extractSalary(fullText);
+    item.experience = extractExperience(fullText);
+    item.positions = extractPositions(fullText);
+    item.department = extractDepartment(fullText);
+  } else if (sourceType === 'scholarship') {
+    item.eligibility = extractEligibility(fullText);
+    item.amount = extractAmount(fullText);
+    item.field_of_study = extractFieldOfStudy(fullText);
+    item.education_level = extractEducationLevel(fullText);
+  } else if (sourceType === 'tender') {
+    item.tender_number = extractTenderNumber(fullText);
+    item.tender_value = extractTenderValue(fullText);
+    item.tender_category = extractTenderCategory(fullText);
+  }
+  return item;
 }
 
 // ─── Expanded keyword lists for Pakistani sites ───
@@ -104,14 +298,15 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
           const linkEl = container.querySelector('a[href]');
           const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
           const text = container.textContent || '';
-          // Extract image
           const imgEl = container.querySelector('img[src]');
           const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
-          items.push({
+          const item: any = {
             title, description: text.substring(0, 500).trim(),
             deadline: extractDeadlineFromText(text), organization: sourceName,
             applyUrl, imageUrl,
-          });
+          };
+          enrichItem(item, text, sourceType);
+          items.push(item);
         }
       } catch (e) {
         console.warn(`[cheerio] Custom selector failed:`, e.message);
@@ -130,16 +325,17 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
         const fullText = parent?.textContent || text;
         const linkEl = (parent || heading).querySelector?.('a[href]') || heading.closest?.('a');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute?.('href') || '', url) : url;
-        // Extract image
         const imgEl = (parent || heading).querySelector?.('img[src]');
         const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute?.('src') || '', url) : null;
 
-        items.push({
+        const item: any = {
           title: text.substring(0, 200),
           description: fullText.substring(0, 500).trim(),
           deadline: extractDeadlineFromText(fullText),
           organization: sourceName, applyUrl, imageUrl,
-        });
+        };
+        enrichItem(item, fullText, sourceType);
+        items.push(item);
       }
     }
 
@@ -152,7 +348,6 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
         const linkEl = row.querySelector('a[href]');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
         const title = linkEl?.textContent?.trim() || text.substring(0, 200);
-        // Check for PDF links
         let pdfUrl: string | null = null;
         const allLinks = row.querySelectorAll('a[href]');
         for (const l of allLinks) {
@@ -162,15 +357,16 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
             break;
           }
         }
-        // Extract image
         const imgEl = row.querySelector('img[src]');
         const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
-        items.push({
+        const item: any = {
           title, description: text.substring(0, 500).trim(),
           deadline: extractDeadlineFromText(text),
           organization: sourceName, applyUrl,
           imageUrl, documentUrl: pdfUrl,
-        });
+        };
+        enrichItem(item, text, sourceType);
+        items.push(item);
       }
     }
 
@@ -225,7 +421,7 @@ async function scrapeWithFirecrawl(
       method: 'POST',
       headers: { 'Authorization': `Bearer ${firecrawlKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000), // 60s timeout (was 30s)
     });
 
     if (!response.ok) {
@@ -241,11 +437,11 @@ async function scrapeWithFirecrawl(
     if (enableCrawl && Array.isArray(data.data)) {
       for (const page of data.data) {
         markdown += (page.markdown || '') + '\n';
-        items.push(...parseMarkdown(page.markdown || '', kws, sourceName, page.metadata?.sourceURL || url));
+        items.push(...parseMarkdown(page.markdown || '', kws, sourceName, page.metadata?.sourceURL || url, sourceType));
       }
     } else if (data.data?.markdown) {
       markdown = data.data.markdown;
-      items = parseMarkdown(markdown, kws, sourceName, url);
+      items = parseMarkdown(markdown, kws, sourceName, url, sourceType);
     }
 
     return {
@@ -263,15 +459,13 @@ async function scrapeWithFirecrawl(
   }
 }
 
-function parseMarkdown(markdown: string, kws: string[], sourceName: string, url: string): any[] {
+function parseMarkdown(markdown: string, kws: string[], sourceName: string, url: string, sourceType: string): any[] {
   const items: any[] = [];
   const seen = new Set<string>();
 
   function addItem(rawTitle: string, section: string, fallbackUrl: string) {
-    // Extract image BEFORE sanitizing
     const imageMatch = section.match(/!\[[^\]]*\]\((https?:\/\/[^)]+)\)/);
     const imageUrl = imageMatch ? imageMatch[1] : null;
-    // Extract link BEFORE sanitizing
     const linkMatch = section.match(/\[[^\]]*\]\((https?:\/\/[^)]+)\)/);
     const applyUrl = linkMatch ? linkMatch[1] : fallbackUrl;
 
@@ -281,13 +475,15 @@ function parseMarkdown(markdown: string, kws: string[], sourceName: string, url:
     if (seen.has(key)) return;
     seen.add(key);
 
-    items.push({
+    const item: any = {
       title: title.substring(0, 200),
       description: sanitizeText(section).substring(0, 500),
       deadline: extractDeadlineFromText(section),
       organization: sourceName,
       applyUrl, imageUrl,
-    });
+    };
+    enrichItem(item, section, sourceType);
+    items.push(item);
   }
 
   // Strategy 1: Split by markdown headings
@@ -420,7 +616,7 @@ serve(async (req) => {
       execution_time_ms: result.executionTimeMs,
     });
 
-    // Save items — title-only dedup: if sanitized title is new, ALWAYS insert
+    // Save items — title-only dedup
     let savedCount = 0;
     if (result.success && result.items.length > 0) {
       const { data: existingRows } = await adminClient
@@ -431,7 +627,6 @@ serve(async (req) => {
 
       for (let i = 0; i < result.items.length; i++) {
         const item = result.items[i];
-        // Sanitize title before dedup check
         const cleanTitle = sanitizeText(item.title || '');
         if (cleanTitle.length < 5) {
           console.log(`[dedup] Skipping short/empty title: "${cleanTitle}"`);
@@ -444,7 +639,7 @@ serve(async (req) => {
           continue;
         }
 
-        // Synthesize unique URL if needed — never let URL block a new title
+        // Synthesize unique URL if needed
         let finalUrl = item.applyUrl || source.url;
         if (finalUrl === source.url) {
           finalUrl = `${source.url}#item-${simpleHash(titleKey)}`;
@@ -452,7 +647,7 @@ serve(async (req) => {
 
         const cleanDesc = sanitizeText(item.description || '');
 
-        const { error: insertError } = await adminClient.from('external_opportunities').insert({
+        const insertData: any = {
           type: source.type,
           title: cleanTitle,
           description: cleanDesc.substring(0, 500),
@@ -462,18 +657,40 @@ serve(async (req) => {
           source_name: source.name,
           image_url: item.imageUrl || null,
           document_url: item.documentUrl || null,
+          location: item.location || null,
           status: 'pending',
           metadata: {
             scraped_at: new Date().toISOString(),
             scraper_used: result.scraperUsed,
             source_url: source.url,
           },
-        });
+        };
+
+        // Add type-specific fields
+        if (source.type === 'job') {
+          insertData.qualification = item.qualification || null;
+          insertData.salary = item.salary || null;
+          insertData.experience = item.experience || null;
+          insertData.positions = item.positions || null;
+          insertData.department = item.department || null;
+        } else if (source.type === 'scholarship') {
+          insertData.eligibility = item.eligibility || null;
+          insertData.amount = item.amount || null;
+          insertData.field_of_study = item.field_of_study || null;
+          insertData.education_level = item.education_level || null;
+          insertData.scholarship_scope = item.scholarship_scope || null;
+        } else if (source.type === 'tender') {
+          insertData.tender_number = item.tender_number || null;
+          insertData.tender_value = item.tender_value || null;
+          insertData.tender_category = item.tender_category || null;
+        }
+
+        const { error: insertError } = await adminClient.from('external_opportunities').insert(insertData);
         if (!insertError) {
           savedCount++;
           existingTitles.add(titleKey);
         } else {
-          console.warn(`[save] Insert error: ${insertError.message}`);
+          console.warn(`[save] Insert error for "${cleanTitle.substring(0, 40)}": ${insertError.message}`);
         }
       }
     }

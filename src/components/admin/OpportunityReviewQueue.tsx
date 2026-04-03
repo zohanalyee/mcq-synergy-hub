@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Check, X, Edit, ExternalLink, Loader2 } from "lucide-react";
+import { Check, X, Edit, ExternalLink, Loader2, CheckCheck } from "lucide-react";
 
 export default function OpportunityReviewQueue() {
   const queryClient = useQueryClient();
@@ -41,7 +41,7 @@ export default function OpportunityReviewQueue() {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("external_opportunities")
-        .update({ status: "approved", reviewed_at: new Date().toISOString() })
+        .update({ status: "approved", reviewed_at: new Date().toISOString() } as any)
         .eq("id", id);
       if (error) throw error;
     },
@@ -52,11 +52,22 @@ export default function OpportunityReviewQueue() {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from("external_opportunities")
-        .update({ status: "rejected", reviewed_at: new Date().toISOString() })
+        .update({ status: "rejected", reviewed_at: new Date().toISOString() } as any)
         .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => { toast.success("Rejected"); invalidate(); },
+  });
+
+  const bulkApproveMut = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("external_opportunities")
+        .update({ status: "approved", reviewed_at: new Date().toISOString() } as any)
+        .eq("status", "pending");
+      if (error) throw error;
+    },
+    onSuccess: () => { toast.success("All pending items approved!"); invalidate(); },
   });
 
   const handleEdit = (item: any) => {
@@ -68,14 +79,33 @@ export default function OpportunityReviewQueue() {
       apply_url: item.apply_url,
       deadline_date: item.deadline_date,
       image_url: item.image_url,
+      location: item.location,
+      qualification: item.qualification,
+      salary: item.salary,
+      experience: item.experience,
+      positions: item.positions,
+      department: item.department,
+      eligibility: item.eligibility,
+      amount: item.amount,
+      field_of_study: item.field_of_study,
+      education_level: item.education_level,
+      tender_number: item.tender_number,
+      tender_value: item.tender_value,
+      tender_category: item.tender_category,
+      document_url: item.document_url,
     });
   };
 
   const handleSaveEdit = async () => {
     try {
+      // Remove empty strings → null
+      const cleanForm: any = {};
+      for (const [key, value] of Object.entries(editForm)) {
+        cleanForm[key] = value === "" ? null : value;
+      }
       const { error } = await supabase
         .from("external_opportunities")
-        .update(editForm)
+        .update(cleanForm)
         .eq("id", editingItem.id);
       if (error) throw error;
       toast.success("Saved!");
@@ -90,7 +120,19 @@ export default function OpportunityReviewQueue() {
     <>
       <Card className="border-border/30">
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm">Pending Review ({pending.length})</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm">Pending Review ({pending.length})</CardTitle>
+            {pending.length > 0 && (
+              <Button
+                size="sm" variant="outline"
+                className="h-7 text-xs border-emerald-500/20 text-emerald-400"
+                onClick={() => bulkApproveMut.mutate()}
+                disabled={bulkApproveMut.isPending}
+              >
+                <CheckCheck className="h-3 w-3 mr-1" /> Approve All
+              </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -115,6 +157,7 @@ export default function OpportunityReviewQueue() {
                     </div>
                     <p className="text-[10px] text-muted-foreground truncate">
                       {item.organization} • {item.source_name}
+                      {item.location && ` • ${item.location}`}
                     </p>
                     <div className="flex gap-1 mt-2">
                       <Button size="sm" className="h-6 text-[10px] bg-emerald-600 hover:bg-emerald-700" onClick={() => approveMut.mutate(item.id)} disabled={approveMut.isPending}>
@@ -141,11 +184,12 @@ export default function OpportunityReviewQueue() {
       </Card>
 
       <Dialog open={!!editingItem} onOpenChange={(open) => { if (!open) setEditingItem(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-sm">Edit Opportunity</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
+            {/* Common fields */}
             <div>
               <Label className="text-xs">Title</Label>
               <Input className="h-8 text-sm" value={editForm.title || ""} onChange={(e) => setEditForm({ ...editForm, title: e.target.value })} />
@@ -154,26 +198,120 @@ export default function OpportunityReviewQueue() {
               <Label className="text-xs">Description</Label>
               <Textarea value={editForm.description || ""} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} rows={3} className="text-sm" />
             </div>
-            <div>
-              <Label className="text-xs">Organization</Label>
-              <Input className="h-8 text-sm" value={editForm.organization || ""} onChange={(e) => setEditForm({ ...editForm, organization: e.target.value })} />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Organization</Label>
+                <Input className="h-8 text-sm" value={editForm.organization || ""} onChange={(e) => setEditForm({ ...editForm, organization: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">Location</Label>
+                <Input className="h-8 text-sm" value={editForm.location || ""} onChange={(e) => setEditForm({ ...editForm, location: e.target.value })} />
+              </div>
             </div>
-            <div>
-              <Label className="text-xs">Apply URL</Label>
-              <Input className="h-8 text-sm" value={editForm.apply_url || ""} onChange={(e) => setEditForm({ ...editForm, apply_url: e.target.value })} />
-            </div>
-            <div>
-              <Label className="text-xs">Deadline</Label>
-              <Input className="h-8 text-sm" value={editForm.deadline_date || ""} onChange={(e) => setEditForm({ ...editForm, deadline_date: e.target.value })} type="date" />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Apply URL</Label>
+                <Input className="h-8 text-sm" value={editForm.apply_url || ""} onChange={(e) => setEditForm({ ...editForm, apply_url: e.target.value })} />
+              </div>
+              <div>
+                <Label className="text-xs">Deadline</Label>
+                <Input className="h-8 text-sm" value={editForm.deadline_date || ""} onChange={(e) => setEditForm({ ...editForm, deadline_date: e.target.value })} type="date" />
+              </div>
             </div>
             <div>
               <Label className="text-xs">Image URL</Label>
               <Input className="h-8 text-sm" value={editForm.image_url || ""} onChange={(e) => setEditForm({ ...editForm, image_url: e.target.value })} />
               {editForm.image_url && (
-                <img src={editForm.image_url} alt="Preview" className="mt-2 w-full h-32 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                <img src={editForm.image_url} alt="Preview" className="mt-2 w-full h-24 object-cover rounded" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               )}
             </div>
-            <div className="flex gap-2">
+
+            {/* Job fields */}
+            {editingItem?.type === "job" && (
+              <>
+                <p className="text-xs font-semibold text-muted-foreground pt-2 border-t border-border/20">Job Details</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Qualification</Label>
+                    <Input className="h-8 text-sm" value={editForm.qualification || ""} onChange={(e) => setEditForm({ ...editForm, qualification: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Salary</Label>
+                    <Input className="h-8 text-sm" value={editForm.salary || ""} onChange={(e) => setEditForm({ ...editForm, salary: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <div>
+                    <Label className="text-xs">Experience</Label>
+                    <Input className="h-8 text-sm" value={editForm.experience || ""} onChange={(e) => setEditForm({ ...editForm, experience: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Positions</Label>
+                    <Input className="h-8 text-sm" type="number" value={editForm.positions || ""} onChange={(e) => setEditForm({ ...editForm, positions: e.target.value ? parseInt(e.target.value) : null })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Department</Label>
+                    <Input className="h-8 text-sm" value={editForm.department || ""} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Scholarship fields */}
+            {editingItem?.type === "scholarship" && (
+              <>
+                <p className="text-xs font-semibold text-muted-foreground pt-2 border-t border-border/20">Scholarship Details</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Eligibility</Label>
+                    <Input className="h-8 text-sm" value={editForm.eligibility || ""} onChange={(e) => setEditForm({ ...editForm, eligibility: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Amount</Label>
+                    <Input className="h-8 text-sm" value={editForm.amount || ""} onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Field of Study</Label>
+                    <Input className="h-8 text-sm" value={editForm.field_of_study || ""} onChange={(e) => setEditForm({ ...editForm, field_of_study: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Education Level</Label>
+                    <Input className="h-8 text-sm" value={editForm.education_level || ""} onChange={(e) => setEditForm({ ...editForm, education_level: e.target.value })} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* Tender fields */}
+            {editingItem?.type === "tender" && (
+              <>
+                <p className="text-xs font-semibold text-muted-foreground pt-2 border-t border-border/20">Tender Details</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Tender Number</Label>
+                    <Input className="h-8 text-sm" value={editForm.tender_number || ""} onChange={(e) => setEditForm({ ...editForm, tender_number: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Tender Value</Label>
+                    <Input className="h-8 text-sm" value={editForm.tender_value || ""} onChange={(e) => setEditForm({ ...editForm, tender_value: e.target.value })} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Category</Label>
+                    <Input className="h-8 text-sm" value={editForm.tender_category || ""} onChange={(e) => setEditForm({ ...editForm, tender_category: e.target.value })} />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Document URL</Label>
+                    <Input className="h-8 text-sm" value={editForm.document_url || ""} onChange={(e) => setEditForm({ ...editForm, document_url: e.target.value })} />
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="flex gap-2 pt-2">
               <Button variant="outline" onClick={() => setEditingItem(null)} className="flex-1 h-8 text-sm">Cancel</Button>
               <Button onClick={handleSaveEdit} className="flex-1 h-8 text-sm">Save</Button>
             </div>
