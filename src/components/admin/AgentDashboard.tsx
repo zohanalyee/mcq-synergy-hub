@@ -78,9 +78,16 @@ const AgentDashboard = () => {
     refetchInterval: 10000,
   });
 
-  const { data: reviewTasks = [] } = useQuery<AgentTask[]>({
-    queryKey: ["agent-tasks-review"],
-    queryFn: () => getTasks({ needs_review: true, limit: 20 }),
+  const { data: pendingOpportunityCount = 0 } = useQuery({
+    queryKey: ["pending-opportunities-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("external_opportunities")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "pending");
+      if (error) throw error;
+      return count || 0;
+    },
     refetchInterval: 15000,
   });
 
