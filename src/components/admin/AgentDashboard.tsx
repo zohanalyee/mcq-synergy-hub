@@ -26,7 +26,7 @@ import {
 } from "@/lib/agentQueue";
 import QuotaMonitor from "./QuotaMonitor";
 import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
-import DuplicateReviewQueue from "./DuplicateReviewQueue";
+import { supabase } from "@/integrations/supabase/client";
 import ScrapingSourcesManager from "./ScrapingSourcesManager";
 import ManualOpportunityCreator from "./ManualOpportunityCreator";
 import OpportunityReviewQueue from "./OpportunityReviewQueue";
