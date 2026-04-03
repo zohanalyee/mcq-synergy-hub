@@ -1,103 +1,77 @@
 
-Goal: force the missing updates into the actual files that currently still power the app, because the codebase shows a partial/misaligned implementation.
 
-What I found
-- The route already exists in `src/App.tsx`: `/opportunity/:id` is present.
-- The Review tab already exists in `src/components/admin/AgentDashboard.tsx`, and it already renders `ManualOpportunityCreator` + `OpportunityReviewQueue`.
-- The public pages are still wired to old components/services:
-  - `src/pages/Scholarships.tsx` and `src/pages/Jobs.tsx` still call `getApprovedOpportunities(...)`, which hard-filters `status = 'approved'`.
-  - `src/components/external/ExternalOpportunitiesSection.tsx` still renders an external `Apply Now` button, which is why the live UI still shows old behavior.
-- `src/pages/Tenders.tsx` is partially updated, but still shows a mixed CTA pattern (`Details` + external `View`) rather than the requested forced “View Details” flow.
-- `supabase/functions/scrape-hybrid/index.ts` still blocks inserts by title:
-  - save loop checks `existingTitles.has(titleKey)` and skips
-  - URL collision logic can still continue/skip
-  - title cleanup is incomplete, which is why broken HEC markdown like `![](...)` can survive
-- Database evidence confirms the issue:
-  - `HEC Scholarships` has a saved row with title `![](https://www.hec.gov.pk/_layouts/15/images/spcommon.png?rev=43)`
-  - PPRA/BISE sources show `last_scrape_found > 0` and `last_scrape_saved = 0`, confirming dedup/save logic is still blocking them
-  - current DB currently has only approved jobs/scholarships and no tender rows, so public invisibility is also caused by page/service filtering
+# Complete Fix: Scraping, UI, Detail Pages, Admin Tools
 
-Implementation changes to apply
-1. `supabase/functions/scrape-hybrid/index.ts`
-- Add a strict title sanitizer used everywhere before dedup/save:
-  - strip all `![...]()` image markdown
-  - strip all `[text](url)` link markdown down to `text`
-  - strip raw leftover `[]()` noise
-  - collapse whitespace
-- Update `parseMarkdown(...)` so every extracted title and description is sanitized before returning items.
-- Change save logic to the user-requested rule:
-  - if sanitized title is empty/too short, skip
-  - only use normalized title for duplicate prevention
-  - do not let `apply_url` block a new title
-  - if URL is missing, equals source URL, or collides, synthesize a unique URL suffix from title hash instead of skipping
-- Keep insert status as `pending` unless you explicitly want auto-publish later.
-- Result: PPRA/BISE/HEC items with new titles will insert even if they share base URLs.
+## Root Cause Analysis
 
-2. `src/services/externalOpportunitiesService.ts`
-- Replace `getApprovedOpportunities` behavior so public opportunity feeds query:
-  - `.in('status', ['approved', 'pending'])`
-  - retain type and existing filters
-- This is necessary because `Jobs.tsx` and `Scholarships.tsx` still depend on this service.
+| Problem | Root Cause |
+|---------|-----------|
+| Jobs: No images/details | Scraper only extracts title, description, URL. No location/salary/qualification extraction |
+| Scholarships: Missing fields | Same — no eligibility/amount/scope extraction |
+| Board Results: 0 found, 0 saved | BoardResults page reads from `board_result_announcements` table, but scraper writes to `external_opportunities`. Two disconnected systems |
+| Tenders: Empty page | All tender sources use Firecrawl which times out at 30s. No tender records exist in DB |
+| Admin: Can't edit scraping links | `SourceConfigDialog` exists but only configures Firecrawl settings, not URL/selectors |
+| Admin: Can't see/fix extracted data | `OpportunityReviewQueue` exists but edit form only has 6 fields (title, desc, org, url, deadline, image). Missing location, salary, etc. |
+| Review tab shows DuplicateReviewQueue | `DuplicateReviewQueue` is for MCQ question deduplication, not scraped content — wrong component in the Review tab |
+| Review badge shows wrong count | Badge counts `agent_tasks` with `needs_review=true`, not pending opportunities |
 
-3. `src/components/external/ExternalOpportunitiesSection.tsx`
-- Replace the external-only CTA with internal detail navigation:
-  - primary button/link to `/opportunity/:id`
-  - label “View Details”
-- Optionally keep a small secondary external link, but the requested forced behavior is detail-page-first.
-- Add pending badge so mixed-status content is visible.
+## Implementation Plan
 
-4. `src/pages/Scholarships.tsx`
-- Keep internal scholarship cards as-is if desired, but external scholarship cards section will now show pending+approved and “View Details” after the shared section is updated.
-- If you want the page itself fully forced, also convert page-level external display to detail-first behavior and avoid any remaining “Apply” wording.
+### Step 1: Database Schema — Add Missing Columns
+Add columns to `external_opportunities` for enhanced field extraction:
+- `qualification TEXT` — e.g. "Masters", "BSc"
+- `salary TEXT` — e.g. "BPS-17", "PKR 80,000"
+- `experience TEXT` — e.g. "3-5 years"
+- `positions INTEGER` — number of vacancies
+- `department TEXT`
+- `eligibility TEXT`
+- `amount TEXT` — scholarship value
+- `field_of_study TEXT`
+- `education_level TEXT`
 
-5. `src/pages/Jobs.tsx`
-- Same fix path as Scholarships:
-  - because it uses `ExternalOpportunitiesSection`, the visible “Apply Now” issue will be resolved there
-  - pending + approved will start showing after service update
+### Step 2: Enhanced Scraper (`scrape-hybrid/index.ts`)
+- Add field extraction functions: `extractLocation()`, `extractQualification()`, `extractSalary()`, `extractExperience()`, `extractPositions()`, `extractDepartment()`, `extractEligibility()`, `extractAmount()`, `extractTenderNumber()`, `extractTenderValue()`, `extractTenderCategory()`
+- Apply extraction to every parsed item based on source type
+- Increase Firecrawl timeout from 30s to 60s to fix tender timeouts
+- Save all extracted fields in the insert statement
+- Add better logging on skip/insert errors
 
-6. `src/pages/Tenders.tsx`
-- Force the card CTA copy and flow:
-  - make the main button `View Details` linking to `/opportunity/:id`
-  - keep optional secondary external button only if needed
-- Keep `.in("status", ["approved", "pending"])`
-- Preserve image card layout and pending badge
+### Step 3: Fix Board Results Flow
+Update `BoardResults.tsx` to ALSO query `external_opportunities` where `type = 'board_result'`, merging results from both `board_result_announcements` and `external_opportunities` into a unified display.
 
-7. `src/components/admin/AgentDashboard.tsx`
-- Since the Review tab is already present in code, I would verify/fix only if there is a rendering/import issue:
-  - ensure `ManualOpportunityCreator` and `OpportunityReviewQueue` imports are correct
-  - ensure the review tab remains in the rendered `TabsList`
-- The more likely reason you “don’t see it” is stale frontend deployment rather than missing source code, but I would still rewrite this section cleanly to remove doubt.
+### Step 4: Fix Agent Dashboard Review Tab
+- **Remove** `DuplicateReviewQueue` from the Review tab (it's for MCQ questions, not scraped content)
+- **Fix review badge count**: Change from `agent_tasks.needs_review` count to `external_opportunities.status='pending'` count
+- **Enhance** `OpportunityReviewQueue` edit form to include all new fields (location, salary, qualification, eligibility, etc.)
 
-Files to overwrite
-- `supabase/functions/scrape-hybrid/index.ts`
-- `src/services/externalOpportunitiesService.ts`
-- `src/components/external/ExternalOpportunitiesSection.tsx`
-- `src/pages/Jobs.tsx`
-- `src/pages/Scholarships.tsx`
-- `src/pages/Tenders.tsx`
-- `src/components/admin/AgentDashboard.tsx`
-- `src/App.tsx` only to reassert the route if you want a no-ambiguity rewrite
+### Step 5: Enhance Source Editor
+Update `SourceConfigDialog` (or create `SourceEditor`):
+- Add URL editing field
+- Add custom CSS selectors editor (JSON textarea)
+- Add notes field
+- Keep existing Firecrawl config options
 
-Technical notes
-- Root cause of “Apply Now still visible” is not `App.tsx`; it is `ExternalOpportunitiesSection.tsx`.
-- Root cause of missing pending jobs/scholarships is not the scraper alone; it is `getApprovedOpportunities()` filtering approved only.
-- Root cause of PPRA/BISE “Saved 0” is the current save loop in `scrape-hybrid/index.ts`:
-  - `existingTitles.has(titleKey)` hard-skips
-  - URL collision path can still skip
-- Root cause of broken HEC markdown title is incomplete sanitization in `parseMarkdown`, plus already-bad rows in DB.
-- Important limitation: fixing code will not retro-clean already-saved broken rows in Supabase. If you want old malformed titles corrected too, that needs a follow-up data cleanup migration/update job.
+### Step 6: Enhance OpportunityDetail Page
+Update `OpportunityDetail.tsx` to display all new fields:
+- Job details section: qualification, salary, experience, positions, department
+- Scholarship details: eligibility, amount, field_of_study, education_level
+- Already has tender details (tender_number, tender_value, tender_category)
 
-Order of execution after approval in build mode
-1. Rewrite scraper sanitizer + save loop
-2. Rewrite public service status filter
-3. Rewrite external cards CTA to internal detail route
-4. Rewrite Jobs/Scholarships/Tenders pages to ensure detail-first behavior
-5. Re-save AgentDashboard review tab section
-6. Reconfirm `/opportunity/:id` route in `App.tsx`
+### Step 7: Redeploy Edge Function
+Deploy updated `scrape-hybrid` with enhanced extraction and longer timeout.
 
-Expected outcome
-- New scrapes stop saving markdown garbage titles
-- PPRA/BISE new-title items save instead of `Saved 0`
-- Jobs/Scholarships/Tenders show `pending` + `approved`
-- External cards show `View Details` instead of `Apply Now`
-- Review tab remains visible with Manual Creator + Opportunity Review Queue
+---
+
+## Files Summary
+
+| Action | File |
+|--------|------|
+| Migration | Add 9 columns to `external_opportunities` |
+| Modify | `supabase/functions/scrape-hybrid/index.ts` — enhanced extraction + longer timeout |
+| Modify | `src/components/admin/AgentDashboard.tsx` — fix Review tab (remove DuplicateReviewQueue, fix badge count) |
+| Modify | `src/components/admin/OpportunityReviewQueue.tsx` — add all new fields to edit form |
+| Modify | `src/components/admin/SourceConfigDialog.tsx` — add URL/selectors editing |
+| Modify | `src/pages/BoardResults.tsx` — also show external_opportunities board_result items |
+| Modify | `src/pages/OpportunityDetail.tsx` — display new fields |
+| Deploy | `scrape-hybrid` edge function |
+
