@@ -1,77 +1,86 @@
 
 
-# Complete Fix: Scraping, UI, Detail Pages, Admin Tools
+# AI Content Studio — Implementation Plan
 
-## Root Cause Analysis
+## What We're Building
 
-| Problem | Root Cause |
-|---------|-----------|
-| Jobs: No images/details | Scraper only extracts title, description, URL. No location/salary/qualification extraction |
-| Scholarships: Missing fields | Same — no eligibility/amount/scope extraction |
-| Board Results: 0 found, 0 saved | BoardResults page reads from `board_result_announcements` table, but scraper writes to `external_opportunities`. Two disconnected systems |
-| Tenders: Empty page | All tender sources use Firecrawl which times out at 30s. No tender records exist in DB |
-| Admin: Can't edit scraping links | `SourceConfigDialog` exists but only configures Firecrawl settings, not URL/selectors |
-| Admin: Can't see/fix extracted data | `OpportunityReviewQueue` exists but edit form only has 6 fields (title, desc, org, url, deadline, image). Missing location, salary, etc. |
-| Review tab shows DuplicateReviewQueue | `DuplicateReviewQueue` is for MCQ question deduplication, not scraped content — wrong component in the Review tab |
-| Review badge shows wrong count | Badge counts `agent_tasks` with `needs_review=true`, not pending opportunities |
+An "AI Content Studio" inside the Agent Dashboard that lets an admin paste raw text from a job ad, scholarship notice, tender, or board result, click "Enhance with AI Magic", and get back a professionally formatted, SEO-optimized listing — published in under 3 minutes. This replaces unreliable scraping with human-curated, AI-polished content.
 
-## Implementation Plan
+## Architecture
 
-### Step 1: Database Schema — Add Missing Columns
-Add columns to `external_opportunities` for enhanced field extraction:
-- `qualification TEXT` — e.g. "Masters", "BSc"
-- `salary TEXT` — e.g. "BPS-17", "PKR 80,000"
-- `experience TEXT` — e.g. "3-5 years"
-- `positions INTEGER` — number of vacancies
-- `department TEXT`
-- `eligibility TEXT`
-- `amount TEXT` — scholarship value
-- `field_of_study TEXT`
-- `education_level TEXT`
+```text
+Admin pastes raw text + URLs
+        │
+        ▼
+┌──────────────────────────┐
+│  enhance-content         │  (new Edge Function)
+│  Gemini API (free tier)  │
+│  → structured JSON       │
+└──────────┬───────────────┘
+           ▼
+  ManualOpportunityCreator
+  (enhanced with AI step)
+        │
+        ▼
+  external_opportunities table
+  status = 'approved'
+        │
+        ▼
+  Detail page with embedded PDF/image viewer
+```
 
-### Step 2: Enhanced Scraper (`scrape-hybrid/index.ts`)
-- Add field extraction functions: `extractLocation()`, `extractQualification()`, `extractSalary()`, `extractExperience()`, `extractPositions()`, `extractDepartment()`, `extractEligibility()`, `extractAmount()`, `extractTenderNumber()`, `extractTenderValue()`, `extractTenderCategory()`
-- Apply extraction to every parsed item based on source type
-- Increase Firecrawl timeout from 30s to 60s to fix tender timeouts
-- Save all extracted fields in the insert statement
-- Add better logging on skip/insert errors
+## Implementation Steps
 
-### Step 3: Fix Board Results Flow
-Update `BoardResults.tsx` to ALSO query `external_opportunities` where `type = 'board_result'`, merging results from both `board_result_announcements` and `external_opportunities` into a unified display.
+### Step 1: Create `enhance-content` Edge Function
+**File:** `supabase/functions/enhance-content/index.ts`
 
-### Step 4: Fix Agent Dashboard Review Tab
-- **Remove** `DuplicateReviewQueue` from the Review tab (it's for MCQ questions, not scraped content)
-- **Fix review badge count**: Change from `agent_tasks.needs_review` count to `external_opportunities.status='pending'` count
-- **Enhance** `OpportunityReviewQueue` edit form to include all new fields (location, salary, qualification, eligibility, etc.)
+- Accepts `{ rawText, category, organization?, sourceUrl? }`
+- Validates admin auth (JWT check against `user_roles`)
+- Calls Gemini API directly (`GEMINI_API_KEY`, fallback to `EXTERNAL_JOBS_GEMINI_KEY`)
+- Uses category-specific prompts (job → extract salary/qualification/positions; scholarship → eligibility/amount; tender → tender number/value; board_result → board name/exam type)
+- Returns structured JSON: `{ title, description, deadline, keywords[], extractedFields: { organization, location, qualification, salary, ... } }`
+- Register in `supabase/config.toml` with `verify_jwt = false`
 
-### Step 5: Enhance Source Editor
-Update `SourceConfigDialog` (or create `SourceEditor`):
-- Add URL editing field
-- Add custom CSS selectors editor (JSON textarea)
-- Add notes field
-- Keep existing Firecrawl config options
+### Step 2: Upgrade `ManualOpportunityCreator` Component
+**File:** `src/components/admin/ManualOpportunityCreator.tsx`
 
-### Step 6: Enhance OpportunityDetail Page
-Update `OpportunityDetail.tsx` to display all new fields:
-- Job details section: qualification, salary, experience, positions, department
-- Scholarship details: eligibility, amount, field_of_study, education_level
-- Already has tender details (tender_number, tender_value, tender_category)
+Current state: Simple form with basic fields (title, description, org, URL, deadline, image, location, sector, region). No AI. No raw text input. No document URL. No type-specific fields.
 
-### Step 7: Redeploy Edge Function
-Deploy updated `scrape-hybrid` with enhanced extraction and longer timeout.
+New version:
+- **Step 1 — Input**: Category selector (Job/Scholarship/Tender/Board Result), organization, source URL, image URL (with preview), PDF/document URL, and a large raw text area
+- **Step 2 — AI Enhancement**: "Enhance with AI Magic" button calls `enhance-content` edge function. Populates all fields automatically from raw text
+- **Step 3 — Review & Edit**: Shows AI-generated title, description, keywords (as badges), deadline, location, and type-specific fields (qualification/salary/positions for jobs, eligibility/amount for scholarships, tender_number/tender_value for tenders). All editable
+- **Step 4 — Publish**: Inserts into `external_opportunities` with `status: 'approved'`, all extracted fields, and metadata including keywords and source URL
+- Dialog size: `max-w-4xl` to accommodate the richer form
 
----
+### Step 3: Enhance Detail Page with Embedded Media
+**File:** `src/pages/OpportunityDetail.tsx`
+
+- Add embedded PDF viewer: If `document_url` ends with `.pdf`, render an `<iframe>` to display it inline so users can read the notice without leaving the site
+- Add embedded image viewer: If `image_url` is a newspaper ad/poster, show it full-width in a dedicated "Original Notice" section
+- Add SEO keywords from `metadata.keywords` to the `<SEOHead>` component
+- Add OG image support using the opportunity's `image_url`
+
+### Step 4: Update SEOHead for Keywords
+**File:** `src/components/SEOHead.tsx`
+
+- Accept optional `keywords` and `image` props
+- Render `<meta name="keywords">` and `og:image` tags
 
 ## Files Summary
 
 | Action | File |
 |--------|------|
-| Migration | Add 9 columns to `external_opportunities` |
-| Modify | `supabase/functions/scrape-hybrid/index.ts` — enhanced extraction + longer timeout |
-| Modify | `src/components/admin/AgentDashboard.tsx` — fix Review tab (remove DuplicateReviewQueue, fix badge count) |
-| Modify | `src/components/admin/OpportunityReviewQueue.tsx` — add all new fields to edit form |
-| Modify | `src/components/admin/SourceConfigDialog.tsx` — add URL/selectors editing |
-| Modify | `src/pages/BoardResults.tsx` — also show external_opportunities board_result items |
-| Modify | `src/pages/OpportunityDetail.tsx` — display new fields |
-| Deploy | `scrape-hybrid` edge function |
+| Create | `supabase/functions/enhance-content/index.ts` |
+| Modify | `supabase/config.toml` — register `enhance-content` |
+| Rewrite | `src/components/admin/ManualOpportunityCreator.tsx` — full AI Content Studio |
+| Modify | `src/pages/OpportunityDetail.tsx` — embedded PDF/image viewer |
+| Modify | `src/components/SEOHead.tsx` — keywords + og:image |
+
+## Technical Notes
+
+- Uses existing `GEMINI_API_KEY` secret (already configured) — $0 cost
+- No new database columns needed (all fields already exist from the previous migration)
+- No new tables or migrations required
+- The existing Review tab in AgentDashboard already works correctly for reviewing scraped content — no changes needed there
 
