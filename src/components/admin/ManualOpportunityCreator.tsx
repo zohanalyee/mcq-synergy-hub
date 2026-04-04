@@ -116,7 +116,14 @@ export default function ManualOpportunityCreator({ onSuccess }: { onSuccess: () 
     }
     setLoading(true);
     try {
-      const insertData: Record<string, any> = {
+      const meta: Record<string, unknown> = {
+        created_manually: true,
+        ai_enhanced: true,
+        keywords: form.keywords,
+        source_url: form.sourceUrl || null,
+        created_at: new Date().toISOString(),
+      };
+      const insertData: Record<string, unknown> = {
         type: form.type,
         title: form.title,
         description: form.description || null,
@@ -130,13 +137,7 @@ export default function ManualOpportunityCreator({ onSuccess }: { onSuccess: () 
         region: form.region || null,
         status: "approved",
         source_name: "AI Content Studio",
-        metadata: {
-          created_manually: true,
-          ai_enhanced: true,
-          keywords: form.keywords,
-          source_url: form.sourceUrl || null,
-          created_at: new Date().toISOString(),
-        },
+        metadata: meta,
       };
 
       // Type-specific fields
