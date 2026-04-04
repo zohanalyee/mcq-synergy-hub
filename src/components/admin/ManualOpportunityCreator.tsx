@@ -162,7 +162,7 @@ export default function ManualOpportunityCreator({ onSuccess }: { onSuccess: () 
         insertData.department = form.department || null;
       }
 
-      const { error } = await supabase.from("external_opportunities").insert(insertData);
+      const { error } = await supabase.from("external_opportunities").insert(insertData as any);
       if (error) throw error;
 
       toast.success("🚀 Published successfully!");
