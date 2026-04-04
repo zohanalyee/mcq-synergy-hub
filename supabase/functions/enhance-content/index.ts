@@ -62,34 +62,80 @@ const categoryPrompts: Record<string, string> = {
 - keywords: Array of 5-8 SEO keywords`,
 };
 
-async function callGemini(apiKey: string, systemPrompt: string, userPrompt: string): Promise<string> {
-  const url = `${GEMINI_API_BASE}/gemini-2.0-flash:generateContent?key=${apiKey}`;
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [
-        { role: "user", parts: [{ text: systemPrompt }] },
-        { role: "model", parts: [{ text: "Understood." }] },
-        { role: "user", parts: [{ text: userPrompt }] },
-      ],
-      generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
-      safetySettings: [
-        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-      ],
-    }),
-  });
+async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {
+  const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
+  const lovableKey = Deno.env.get("LOVABLE_API_KEY");
 
-  if (!response.ok) {
-    const errText = await response.text();
-    throw new Error(`Gemini error ${response.status}: ${errText.substring(0, 200)}`);
+  // Try Gemini first (free)
+  if (geminiKey) {
+    try {
+      const url = `${GEMINI_API_BASE}/gemini-2.0-flash:generateContent?key=${geminiKey}`;
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [
+            { role: "user", parts: [{ text: systemPrompt }] },
+            { role: "model", parts: [{ text: "Understood." }] },
+            { role: "user", parts: [{ text: userPrompt }] },
+          ],
+          generationConfig: { temperature: 0.3, maxOutputTokens: 4096 },
+          safetySettings: [
+            { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+            { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
+          ],
+        }),
+      });
+      if (response.status === 429) {
+        console.warn("[enhance-content] Gemini quota hit, falling back to Lovable AI...");
+      } else if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Gemini error ${response.status}: ${errText.substring(0, 200)}`);
+      } else {
+        const data = await response.json();
+        const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+        if (text) return text;
+      }
+    } catch (e: any) {
+      if (!e.message?.includes("429")) {
+        throw e;
+      }
+      console.warn("[enhance-content] Gemini failed, trying Lovable AI...");
+    }
   }
 
-  const data = await response.json();
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+  // Fallback: Lovable AI Gateway
+  if (lovableKey) {
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${lovableKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        temperature: 0.3,
+        max_tokens: 4096,
+      }),
+    });
+
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error(`Lovable AI error ${response.status}: ${errText.substring(0, 200)}`);
+    }
+
+    const data = await response.json();
+    const text = data.choices?.[0]?.message?.content?.trim();
+    if (text) return text;
+  }
+
+  throw new Error("All AI providers unavailable");
 }
 
 serve(async (req) => {
