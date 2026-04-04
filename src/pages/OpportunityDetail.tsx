@@ -82,6 +82,8 @@ const OpportunityDetail = () => {
       <SEOHead
         title={`${opportunity.title} | MCQSAI`}
         description={opportunity.description?.substring(0, 160) || `${opportunity.type} opportunity from ${opportunity.organization || opportunity.source_name}`}
+        keywords={(opportunity.metadata as any)?.keywords?.join(', ') || undefined}
+        image={opportunity.image_url || undefined}
       />
       <Header>
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-8">

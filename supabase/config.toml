@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.scrape-hybrid]
 verify_jwt = false
+
+[functions.enhance-content]
+verify_jwt = false
