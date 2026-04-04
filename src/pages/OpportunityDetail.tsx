@@ -250,6 +250,39 @@ const OpportunityDetail = () => {
                 </div>
               )}
 
+              {/* Embedded PDF Viewer */}
+              {opportunity.document_url && opportunity.document_url.toLowerCase().endsWith('.pdf') && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2">📄 Original Notice / Document</h2>
+                  <iframe
+                    src={opportunity.document_url}
+                    className="w-full h-[500px] rounded-lg border border-border/30"
+                    title="Document viewer"
+                  />
+                </div>
+              )}
+
+              {/* Embedded Image Viewer (newspaper ad) */}
+              {opportunity.image_url && opportunity.image_url !== placeholderImages[opportunity.type] && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2">📰 Original Advertisement</h2>
+                  <img
+                    src={opportunity.image_url}
+                    alt={`${opportunity.title} - Original Notice`}
+                    className="w-full rounded-lg border border-border/30"
+                  />
+                </div>
+              )}
+
+              {/* SEO Keywords */}
+              {(opportunity.metadata as any)?.keywords?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {((opportunity.metadata as any).keywords as string[]).map((k: string) => (
+                    <Badge key={k} variant="outline" className="text-[9px]">{k}</Badge>
+                  ))}
+                </div>
+              )}
+
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
                 <a href={opportunity.apply_url} target="_blank" rel="noopener noreferrer">
