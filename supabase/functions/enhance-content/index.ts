@@ -153,14 +153,6 @@ serve(async (req) => {
       });
     }
 
-    const geminiKey = Deno.env.get("GEMINI_API_KEY") || Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
-    if (!geminiKey) {
-      return new Response(JSON.stringify({ error: "No AI API key configured" }), {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const categoryPrompt = categoryPrompts[category] || categoryPrompts.job;
 
     const systemPrompt = `You are an expert content curator for a Pakistani education and opportunities portal (mcqsai.com).
@@ -185,7 +177,7 @@ ${categoryPrompt}
 
 Return a single JSON object with all the fields listed above. Use null for missing values.`;
 
-    const result = await callGemini(geminiKey, systemPrompt, userPrompt);
+    const result = await callAI(systemPrompt, userPrompt);
 
     // Extract JSON from response (handle possible markdown fences)
     let jsonStr = result;
