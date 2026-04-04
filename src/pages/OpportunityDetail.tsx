@@ -82,6 +82,8 @@ const OpportunityDetail = () => {
       <SEOHead
         title={`${opportunity.title} | MCQSAI`}
         description={opportunity.description?.substring(0, 160) || `${opportunity.type} opportunity from ${opportunity.organization || opportunity.source_name}`}
+        keywords={(opportunity.metadata as any)?.keywords?.join(', ') || undefined}
+        image={opportunity.image_url || undefined}
       />
       <Header>
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-8">
@@ -247,6 +249,39 @@ const OpportunityDetail = () => {
                       <p className="text-sm font-medium">{opportunity.education_level}</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Embedded PDF Viewer */}
+              {opportunity.document_url && opportunity.document_url.toLowerCase().endsWith('.pdf') && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2">📄 Original Notice / Document</h2>
+                  <iframe
+                    src={opportunity.document_url}
+                    className="w-full h-[500px] rounded-lg border border-border/30"
+                    title="Document viewer"
+                  />
+                </div>
+              )}
+
+              {/* Embedded Image Viewer (newspaper ad) */}
+              {opportunity.image_url && opportunity.image_url !== placeholderImages[opportunity.type] && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2">📰 Original Advertisement</h2>
+                  <img
+                    src={opportunity.image_url}
+                    alt={`${opportunity.title} - Original Notice`}
+                    className="w-full rounded-lg border border-border/30"
+                  />
+                </div>
+              )}
+
+              {/* SEO Keywords */}
+              {(opportunity.metadata as any)?.keywords?.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {((opportunity.metadata as any).keywords as string[]).map((k: string) => (
+                    <Badge key={k} variant="outline" className="text-[9px]">{k}</Badge>
+                  ))}
                 </div>
               )}
 
