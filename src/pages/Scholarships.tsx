@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from "@/components/PageBreadcrumb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Award, Calendar, ExternalLink, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
