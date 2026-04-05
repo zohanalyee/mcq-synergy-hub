@@ -414,13 +414,14 @@ The AI will automatically extract:
                   </div>
                   <div className="col-span-2">
                     <Label className="text-xs">Scope</Label>
-                    <Select value={form.scholarship_scope || "national"} onValueChange={(v) => set("scholarship_scope", v)}>
-                      <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="national">National</SelectItem>
-                        <SelectItem value="international">International</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <select
+                      value={form.scholarship_scope || "national"}
+                      onChange={(e) => set("scholarship_scope", e.target.value)}
+                      className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                    >
+                      <option value="national">National</option>
+                      <option value="international">International</option>
+                    </select>
                   </div>
                 </div>
               </div>
