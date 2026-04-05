@@ -3,7 +3,7 @@ import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Award, Calendar, ExternalLink, AlertCircle } from "lucide-react";
+import { Award, Calendar, Eye, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
