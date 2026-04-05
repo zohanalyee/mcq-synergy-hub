@@ -96,79 +96,79 @@ const Tenders = () => {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tenders.map((tender: any) => (
-                <Card key={tender.id} className="border-border/30 hover:border-primary/30 transition-colors overflow-hidden group">
-                  {/* Image */}
-                  <div className="relative h-36 bg-muted">
-                    <img
-                      src={tender.image_url || placeholderImage}
-                      alt={tender.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => { (e.target as HTMLImageElement).src = placeholderImage; }}
-                    />
-                    <div className="absolute top-2 left-2 flex gap-1">
-                      {tender.tender_category && (
-                        <Badge className="text-[10px] bg-primary/80 text-primary-foreground">
-                          {tender.tender_category}
-                        </Badge>
-                      )}
-                      {tender.status === "pending" && (
-                        <Badge className="text-[10px] bg-amber-500/80 text-white">
-                          Pending
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-
-                  <CardContent className="p-4 space-y-2">
-                    {tender.tender_number && (
-                      <Badge variant="outline" className="text-[10px] font-mono">
-                        {tender.tender_number}
-                      </Badge>
-                    )}
-
-                    <h2 className="text-sm font-semibold leading-tight line-clamp-2">
-                      {tender.title}
-                    </h2>
-
-                    <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Building2 className="h-3 w-3" />
-                        {tender.organization || tender.source_name}
-                      </span>
-                      {tender.location && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="h-3 w-3" />
-                          {tender.location}
-                        </span>
-                      )}
-                    </div>
-
-                    {tender.tender_value && (
-                      <span className="text-xs font-medium text-emerald-500">💰 {tender.tender_value}</span>
-                    )}
-
-                    {tender.deadline_date && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Calendar className="h-3 w-3" />
-                        Deadline: {new Date(tender.deadline_date).toLocaleDateString()}
+                <Link key={tender.id} to={`/opportunity/${tender.id}`} className="block group">
+                  <Card className="border-border/30 hover:border-primary/30 transition-colors overflow-hidden h-full">
+                    {/* Image */}
+                    <div className="relative h-36 bg-muted">
+                      <img
+                        src={tender.image_url || placeholderImage}
+                        alt={tender.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => { (e.target as HTMLImageElement).src = placeholderImage; }}
+                      />
+                      <div className="absolute top-2 left-2 flex gap-1">
+                        {tender.tender_category && (
+                          <Badge className="text-[10px] bg-primary/80 text-primary-foreground">
+                            {tender.tender_category}
+                          </Badge>
+                        )}
+                        {tender.status === "pending" && (
+                          <Badge className="text-[10px] bg-amber-500/80 text-white">
+                            Pending
+                          </Badge>
+                        )}
                       </div>
-                    )}
+                    </div>
 
-                    <div className="pt-2">
-                      <Link to={`/opportunity/${tender.id}`} className="block">
+                    <CardContent className="p-4 space-y-2">
+                      {tender.tender_number && (
+                        <Badge variant="outline" className="text-[10px] font-mono">
+                          {tender.tender_number}
+                        </Badge>
+                      )}
+
+                      <h2 className="text-sm font-semibold leading-tight line-clamp-2">
+                        {tender.title}
+                      </h2>
+
+                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {tender.organization || tender.source_name}
+                        </span>
+                        {tender.location && (
+                          <span className="flex items-center gap-1">
+                            <MapPin className="h-3 w-3" />
+                            {tender.location}
+                          </span>
+                        )}
+                      </div>
+
+                      {tender.tender_value && (
+                        <span className="text-xs font-medium text-emerald-500">💰 {tender.tender_value}</span>
+                      )}
+
+                      {tender.deadline_date && (
+                        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Calendar className="h-3 w-3" />
+                          Deadline: {new Date(tender.deadline_date).toLocaleDateString()}
+                        </div>
+                      )}
+
+                      <div className="pt-2">
                         <Button size="sm" variant="outline" className="w-full h-7 text-xs">
                           <Eye className="h-3 w-3 mr-1" /> View Details
                         </Button>
-                      </Link>
-                    </div>
+                      </div>
 
-                    {tender.created_at && (
-                      <span className="text-[10px] text-muted-foreground block">
-                        Posted {formatDistanceToNow(new Date(tender.created_at), { addSuffix: true })}
-                      </span>
-                    )}
-                  </CardContent>
-                </Card>
+                      {tender.created_at && (
+                        <span className="text-[10px] text-muted-foreground block">
+                          Posted {formatDistanceToNow(new Date(tender.created_at), { addSuffix: true })}
+                        </span>
+                      )}
+                    </CardContent>
+                  </Card>
+                </Link>
               ))}
             </div>
           )}

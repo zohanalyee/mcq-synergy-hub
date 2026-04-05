@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from "@/components/PageBreadcrumb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Award, Calendar, ExternalLink, AlertCircle } from "lucide-react";
+import { Award, Calendar, Eye, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -185,16 +185,12 @@ const Scholarships = () => {
                     )}
                     
                     <div className="flex justify-end mt-auto pt-2 border-t border-border/50">
-                      {scholarship.fileUrl ? (
-                        <Button size="sm" asChild className="h-7 text-xs">
-                          <a href={scholarship.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                            <ExternalLink className="h-3 w-3" />
-                            Apply
-                          </a>
-                        </Button>
-                      ) : (
-                        <Button variant="outline" size="sm" className="h-7 text-xs">View</Button>
-                      )}
+                      <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
+                        <Link to={`/opportunity/${scholarship.id}`} className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          View Details
+                        </Link>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

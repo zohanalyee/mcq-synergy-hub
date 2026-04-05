@@ -33,6 +33,8 @@ const placeholderImages: Record<string, string> = {
   board_result: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800",
 };
 
+const isPdfUrl = (url: string) => url.toLowerCase().endsWith('.pdf');
+
 const OpportunityDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -54,7 +56,7 @@ const OpportunityDetail = () => {
   if (isLoading) {
     return (
       <Header>
-        <div className="max-w-4xl mx-auto px-4 pt-4 pb-8 flex justify-center py-20">
+        <div className="max-w-4xl mx-auto px-4 py-20 flex justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       </Header>
@@ -64,7 +66,7 @@ const OpportunityDetail = () => {
   if (!opportunity) {
     return (
       <Header>
-        <div className="max-w-4xl mx-auto px-4 pt-4 pb-8 text-center py-20">
+        <div className="max-w-4xl mx-auto px-4 py-20 text-center">
           <h2 className="text-xl font-semibold mb-4">Opportunity not found</h2>
           <Button onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
@@ -75,23 +77,23 @@ const OpportunityDetail = () => {
   }
 
   const TypeIcon = typeIcons[opportunity.type] || FileText;
-  const imageUrl = opportunity.image_url || placeholderImages[opportunity.type] || placeholderImages.job;
+  const heroImage = opportunity.image_url || placeholderImages[opportunity.type] || placeholderImages.job;
+  const hasRealImage = !!opportunity.image_url && !Object.values(placeholderImages).includes(opportunity.image_url);
+  const hasPdf = !!opportunity.document_url && isPdfUrl(opportunity.document_url);
+  const hasDocument = !!opportunity.document_url && !hasPdf;
+  const keywords = (opportunity.metadata as any)?.keywords as string[] | undefined;
 
   return (
     <>
       <SEOHead
         title={`${opportunity.title} | MCQSAI`}
         description={opportunity.description?.substring(0, 160) || `${opportunity.type} opportunity from ${opportunity.organization || opportunity.source_name}`}
-        keywords={(opportunity.metadata as any)?.keywords?.join(', ') || undefined}
+        keywords={keywords?.join(', ') || undefined}
         image={opportunity.image_url || undefined}
       />
       <Header>
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-8">
-          <Button
-            variant="ghost" size="sm"
-            onClick={() => navigate(-1)}
-            className="mb-4"
-          >
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
 
@@ -99,7 +101,7 @@ const OpportunityDetail = () => {
             {/* Hero Image */}
             <div className="relative h-48 sm:h-64 bg-muted">
               <img
-                src={imageUrl}
+                src={heroImage}
                 alt={opportunity.title}
                 className="w-full h-full object-cover"
                 onError={(e) => {
@@ -110,7 +112,7 @@ const OpportunityDetail = () => {
               <div className="absolute bottom-3 left-4 flex gap-2">
                 <Badge className={typeColors[opportunity.type] || ""}>
                   <TypeIcon className="h-3 w-3 mr-1" />
-                  {opportunity.type}
+                  {opportunity.type?.replace('_', ' ')}
                 </Badge>
                 {opportunity.status === "pending" && (
                   <Badge className="bg-amber-500/20 text-amber-400 border-amber-500/30">
@@ -122,9 +124,7 @@ const OpportunityDetail = () => {
 
             <CardContent className="p-5 sm:p-6 space-y-5">
               {/* Title */}
-              <h1 className="text-xl sm:text-2xl font-bold leading-tight">
-                {opportunity.title}
-              </h1>
+              <h1 className="text-xl sm:text-2xl font-bold leading-tight">{opportunity.title}</h1>
 
               {/* Meta row */}
               <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
@@ -156,7 +156,7 @@ const OpportunityDetail = () => {
                 </div>
               )}
 
-              {/* Job specific */}
+              {/* Job specific fields */}
               {opportunity.type === "job" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {opportunity.qualification && (
@@ -192,7 +192,7 @@ const OpportunityDetail = () => {
                 </div>
               )}
 
-              {/* Tender specific */}
+              {/* Tender specific fields */}
               {opportunity.type === "tender" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {opportunity.tender_number && (
@@ -216,7 +216,7 @@ const OpportunityDetail = () => {
                 </div>
               )}
 
-              {/* Scholarship specific */}
+              {/* Scholarship specific fields */}
               {opportunity.type === "scholarship" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {opportunity.scholarship_scope && (
@@ -252,34 +252,50 @@ const OpportunityDetail = () => {
                 </div>
               )}
 
-              {/* Embedded PDF Viewer */}
-              {opportunity.document_url && opportunity.document_url.toLowerCase().endsWith('.pdf') && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-2">📄 Original Notice / Document</h2>
-                  <iframe
-                    src={opportunity.document_url}
-                    className="w-full h-[500px] rounded-lg border border-border/30"
-                    title="Document viewer"
-                  />
+              {/* ========== NATIVE PDF VIEWER ========== */}
+              {hasPdf && (
+                <div className="space-y-2">
+                  <h2 className="text-base font-semibold flex items-center gap-2">
+                    📄 Original Notice / Document
+                  </h2>
+                  <div className="rounded-lg border border-border/40 overflow-hidden bg-muted/20">
+                    <iframe
+                      src={opportunity.document_url!}
+                      className="w-full h-[600px] sm:h-[700px]"
+                      title="Official Document PDF Viewer"
+                      allow="fullscreen"
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    Can't see the PDF? <a href={opportunity.document_url!} target="_blank" rel="noopener noreferrer" className="underline text-primary">Open in new tab</a>
+                  </p>
                 </div>
               )}
 
-              {/* Embedded Image Viewer (newspaper ad) */}
-              {opportunity.image_url && opportunity.image_url !== placeholderImages[opportunity.type] && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-2">📰 Original Advertisement</h2>
-                  <img
-                    src={opportunity.image_url}
-                    alt={`${opportunity.title} - Original Notice`}
-                    className="w-full rounded-lg border border-border/30"
-                  />
+              {/* ========== NATIVE IMAGE VIEWER (Original Ad) ========== */}
+              {hasRealImage && (
+                <div className="space-y-2">
+                  <h2 className="text-base font-semibold flex items-center gap-2">
+                    📰 Original Advertisement
+                  </h2>
+                  <div className="rounded-lg border border-border/40 overflow-hidden bg-muted/20 p-2">
+                    <img
+                      src={opportunity.image_url!}
+                      alt={`${opportunity.title} - Original Notice`}
+                      className="w-full rounded-md"
+                      loading="lazy"
+                    />
+                  </div>
+                  <p className="text-[10px] text-muted-foreground">
+                    This is the original advertisement as published. Read all details above before applying.
+                  </p>
                 </div>
               )}
 
               {/* SEO Keywords */}
-              {(opportunity.metadata as any)?.keywords?.length > 0 && (
+              {keywords && keywords.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {((opportunity.metadata as any).keywords as string[]).map((k: string) => (
+                  {keywords.map((k: string) => (
                     <Badge key={k} variant="outline" className="text-[9px]">{k}</Badge>
                   ))}
                 </div>
@@ -287,14 +303,16 @@ const OpportunityDetail = () => {
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
-                <a href={opportunity.apply_url} target="_blank" rel="noopener noreferrer">
-                  <Button>
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    {opportunity.type === "tender" ? "View Tender" : "Apply Now"}
-                  </Button>
-                </a>
-                {opportunity.document_url && (
-                  <a href={opportunity.document_url} target="_blank" rel="noopener noreferrer">
+                {opportunity.apply_url && (
+                  <a href={opportunity.apply_url} target="_blank" rel="noopener noreferrer">
+                    <Button>
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      {opportunity.type === "tender" ? "Visit Official Tender Page" : "Apply on Official Website"}
+                    </Button>
+                  </a>
+                )}
+                {(hasPdf || hasDocument) && (
+                  <a href={opportunity.document_url!} target="_blank" rel="noopener noreferrer">
                     <Button variant="outline">
                       <Download className="h-4 w-4 mr-2" /> Download Document
                     </Button>
