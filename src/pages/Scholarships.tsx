@@ -185,16 +185,12 @@ const Scholarships = () => {
                     )}
                     
                     <div className="flex justify-end mt-auto pt-2 border-t border-border/50">
-                      {scholarship.fileUrl ? (
-                        <Button size="sm" asChild className="h-7 text-xs">
-                          <a href={scholarship.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1">
-                            <ExternalLink className="h-3 w-3" />
-                            Apply
-                          </a>
-                        </Button>
-                      ) : (
-                        <Button variant="outline" size="sm" className="h-7 text-xs">View</Button>
-                      )}
+                      <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
+                        <Link to={`/opportunity/${scholarship.id}`} className="flex items-center gap-1">
+                          <Eye className="h-3 w-3" />
+                          View Details
+                        </Link>
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
