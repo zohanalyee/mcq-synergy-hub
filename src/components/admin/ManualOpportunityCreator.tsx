@@ -6,9 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -203,15 +200,16 @@ export default function ManualOpportunityCreator({ onSuccess }: { onSuccess: () 
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <Label className="text-xs font-medium">Category *</Label>
-                <Select value={form.type} onValueChange={(v) => set("type", v)}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="job">💼 Job</SelectItem>
-                    <SelectItem value="scholarship">🎓 Scholarship</SelectItem>
-                    <SelectItem value="tender">🏛️ Tender</SelectItem>
-                    <SelectItem value="board_result">📋 Board Result</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={form.type}
+                  onChange={(e) => set("type", e.target.value)}
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="job">💼 Job</option>
+                  <option value="scholarship">🎓 Scholarship</option>
+                  <option value="tender">🏛️ Tender</option>
+                  <option value="board_result">📋 Board Result</option>
+                </select>
               </div>
               <div>
                 <Label className="text-xs font-medium">Organization</Label>
@@ -340,26 +338,28 @@ The AI will automatically extract:
               </div>
               <div>
                 <Label className="text-xs">Sector</Label>
-                <Select value={form.sector} onValueChange={(v) => set("sector", v)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="government">Government</SelectItem>
-                    <SelectItem value="private">Private</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={form.sector}
+                  onChange={(e) => set("sector", e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="government">Government</option>
+                  <option value="private">Private</option>
+                </select>
               </div>
               <div>
                 <Label className="text-xs">Region</Label>
-                <Select value={form.region} onValueChange={(v) => set("region", v)}>
-                  <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="federal">Federal</SelectItem>
-                    <SelectItem value="sindh">Sindh</SelectItem>
-                    <SelectItem value="punjab">Punjab</SelectItem>
-                    <SelectItem value="kpk">KPK</SelectItem>
-                    <SelectItem value="balochistan">Balochistan</SelectItem>
-                  </SelectContent>
-                </Select>
+                <select
+                  value={form.region}
+                  onChange={(e) => set("region", e.target.value)}
+                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="federal">Federal</option>
+                  <option value="sindh">Sindh</option>
+                  <option value="punjab">Punjab</option>
+                  <option value="kpk">KPK</option>
+                  <option value="balochistan">Balochistan</option>
+                </select>
               </div>
             </div>
 
