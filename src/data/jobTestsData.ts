@@ -6,7 +6,7 @@ export interface SyllabusItem {
 }
 
 export interface JobTest {
-  id: number;
+  id: string;
   title: string;
   description: string;
   organization: string;
@@ -17,7 +17,7 @@ export interface JobTest {
 
 export const jobTests: JobTest[] = [
   {
-    id: 1,
+    id: "seed-1",
     title: "Election Officer (BPS-17)",
     description: "Comprehensive test for Election Officer position based on official syllabus",
     organization: "Election Commission",
@@ -34,7 +34,7 @@ export const jobTests: JobTest[] = [
     ]
   },
   {
-    id: 2,
+    id: "seed-2",
     title: "Assistant Director (BPS-17)",
     description: "Test for Assistant Director position in Federal Government",
     organization: "Federal Public Service Commission",
@@ -50,7 +50,7 @@ export const jobTests: JobTest[] = [
     ]
   },
   {
-    id: 3,
+    id: "seed-3",
     title: "Banking Officer (OG-2)",
     description: "Recruitment test for Banking Officer positions",
     organization: "State Bank of Pakistan",
@@ -66,7 +66,7 @@ export const jobTests: JobTest[] = [
     ]
   },
   {
-    id: 4,
+    id: "seed-4",
     title: "Civil Judge (BPS-18)",
     description: "Provincial test for Civil Judge positions",
     organization: "Provincial Judicial Service",
@@ -81,7 +81,7 @@ export const jobTests: JobTest[] = [
     ]
   },
   {
-    id: 5,
+    id: "seed-5",
     title: "Lecturer (BPS-17)",
     description: "Public Service Commission test for Lecturer positions",
     organization: "Provincial Public Service Commission",

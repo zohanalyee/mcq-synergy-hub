@@ -7,7 +7,7 @@ import { JobTest } from "@/data/jobTestsData";
 
 interface JobTestTableProps {
   jobTests: JobTest[];
-  onRemove: (id: number) => void;
+  onRemove: (id: string) => void;
 }
 
 const JobTestTable = ({ jobTests, onRemove }: JobTestTableProps) => {
