@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { motion } from "framer-motion";
@@ -13,19 +13,17 @@ const CompetitiveExams = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState<ExamFilters>({ organization: 'all', duration: 'all' });
   const [isLoaded, setIsLoaded] = useState(false);
-  const [jobTests, setJobTests] = useState(initialJobTests);
-  
-  useEffect(() => {
-    const managedJobTests = getJobTests();
-    if (managedJobTests.length > 0) {
-      setJobTests(managedJobTests);
-    }
-    setIsLoaded(true);
-  }, []);
 
-  // Apply all filters
+  const { data: dbJobTests = [] } = useQuery({
+    queryKey: ["job-tests"],
+    queryFn: getJobTests,
+  });
+
+  const jobTests = dbJobTests.length > 0 ? dbJobTests : initialJobTests.map(t => ({ ...t, id: String(t.id) }));
+
+  useEffect(() => { setIsLoaded(true); }, []);
+
   const filteredTests = jobTests.filter(test => {
-    // Search
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       const matchesSearch =
@@ -34,39 +32,41 @@ const CompetitiveExams = () => {
         test.organization.toLowerCase().includes(q);
       if (!matchesSearch) return false;
     }
-    // Organization
     if (filters.organization !== 'all' && test.organization !== filters.organization) return false;
-    // Duration
     if (filters.duration !== 'all') {
-      if (filters.duration === 'short' && test.duration > 90) return false;
-      if (filters.duration === 'medium' && (test.duration <= 90 || test.duration > 120)) return false;
-      if (filters.duration === 'long' && test.duration <= 120) return false;
+      const dur = parseInt(filters.duration);
+      if (dur === 60 && test.duration > 60) return false;
+      if (dur === 90 && (test.duration <= 60 || test.duration > 90)) return false;
+      if (dur === 120 && test.duration <= 90) return false;
     }
     return true;
   });
-  
-  return (
-    <Header>
-      <SEOHead
-        title="Mock Tests & Competitive Exam Simulations"
-        description="Practice full-length mock tests for PPSC, NTS, FPSC, CSS and other competitive exams with instant results."
-        keywords="mock test, competitive exam, PPSC test, NTS practice, FPSC exam, CSS mock test"
-      />
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
-        <PageBreadcrumb items={[{ title: 'Mock Tests', href: '/mock-tests', isCurrent: true }]} showHomeButton={true} />
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-4 text-center"
-        >
-          <h1 className="text-xl font-bold mb-1 text-gradient">Competitive Exams</h1>
-          <p className="text-xs text-muted-foreground max-w-xl mx-auto">
-            Practice full-length job recruitment and competitive exam simulations.
-          </p>
-        </motion.div>
 
-        <div className="mb-4">
+  return (
+    <>
+      <SEOHead
+        title="Competitive Exam Practice Tests | MCQs AI"
+        description="Practice for competitive exams including FPSC, PPSC, NTS, and more with AI-powered mock tests."
+      />
+      <Header />
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <PageBreadcrumb
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Competitive Exams" }
+          ]}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
+          transition={{ duration: 0.5 }}
+          className="mt-6"
+        >
+          <h1 className="text-3xl font-bold mb-2">Competitive Exam Practice</h1>
+          <p className="text-muted-foreground mb-6">
+            Prepare for Pakistan's top competitive exams with AI-powered practice tests
+          </p>
+
           <ExamFiltersBar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
@@ -74,15 +74,13 @@ const CompetitiveExams = () => {
             onFiltersChange={setFilters}
             jobTests={jobTests}
           />
-        </div>
 
-        <JobTestsTab 
-          jobTests={filteredTests}
-          isLoaded={isLoaded}
-          searchQuery=""
-        />
+          <div className="mt-6">
+            <JobTestsTab jobTests={filteredTests} />
+          </div>
+        </motion.div>
       </div>
-    </Header>
+    </>
   );
 };
 

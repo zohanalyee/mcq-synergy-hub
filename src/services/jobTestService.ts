@@ -49,7 +49,8 @@ export const addJobTest = async (jobTest: Omit<JobTest, "id">): Promise<JobTest 
     console.error("Error adding job test:", error);
     return null;
   }
-  return { ...data, syllabus: Array.isArray(data.syllabus) ? data.syllabus : JSON.parse(data.syllabus || "[]") };
+  const syllabus = typeof data.syllabus === 'string' ? JSON.parse(data.syllabus) : (data.syllabus as any[] || []);
+  return { ...data, syllabus } as JobTest;
 };
 
 export const updateJobTest = async (jobTest: JobTest): Promise<JobTest | null> => {
