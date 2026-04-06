@@ -11,24 +11,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
-  isLoaded: boolean;
-  searchQuery: string;
 };
 
-export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProps) => {
+export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
   const navigate = useNavigate();
-  const [expandedJobTest, setExpandedJobTest] = useState<number | null>(null);
-  const [customizeJobTest, setCustomizeJobTest] = useState<number | null>(null);
-  const [generatingTestId, setGeneratingTestId] = useState<number | null>(null);
+  const [expandedJobTest, setExpandedJobTest] = useState<string | null>(null);
+  const [customizeJobTest, setCustomizeJobTest] = useState<string | null>(null);
+  const [generatingTestId, setGeneratingTestId] = useState<string | null>(null);
   const [generatingTopicName, setGeneratingTopicName] = useState<string>("");
   const [dialogTest, setDialogTest] = useState<JobTest | null>(null);
   
-  const filteredJobTests = jobTests.filter(test => 
-    !searchQuery || 
-    test.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    test.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    test.organization.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredJobTests = jobTests;
   
   // DISABLED: AI features paused
   const handleStartJobTest = async (test: JobTest, customSettings?: any) => {
@@ -38,16 +31,16 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
     });
   };
   
-  const toggleExpandJobTest = (testId: number) => {
+  const toggleExpandJobTest = (testId: string) => {
     if (expandedJobTest === testId) {
       setExpandedJobTest(null);
     } else {
       setExpandedJobTest(testId);
-      setCustomizeJobTest(null); // Close any open customize panel
+      setCustomizeJobTest(null);
     }
   };
   
-  const toggleCustomizeJobTest = (testId: number, event: React.MouseEvent) => {
+  const toggleCustomizeJobTest = (testId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const test = jobTests.find(t => t.id === testId);
     if (test) {
@@ -99,7 +92,7 @@ export const JobTestsTab = ({ jobTests, isLoaded, searchQuery }: JobTestsTabProp
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start"
           variants={container} 
           initial="hidden" 
-          animate={isLoaded ? "visible" : "hidden"}
+          animate="visible"
         >
           {filteredJobTests.map(test => (
             <motion.div key={test.id} variants={item}>

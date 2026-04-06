@@ -1330,6 +1330,42 @@ export type Database = {
         }
         Relationships: []
       }
+      job_tests: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          duration: number | null
+          id: string
+          organization: string
+          questions: number | null
+          syllabus: Json
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          id?: string
+          organization: string
+          questions?: number | null
+          syllabus?: Json
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          duration?: number | null
+          id?: string
+          organization?: string
+          questions?: number | null
+          syllabus?: Json
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       levels: {
         Row: {
           admin_reviewed_at: string | null

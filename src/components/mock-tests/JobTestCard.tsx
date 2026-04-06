@@ -22,7 +22,7 @@ import { getCardTheme } from "@/components/ui/GlassCard";
 
 export type JobTestCardProps = {
   test: {
-    id: number;
+    id: string;
     title: string;
     description: string;
     organization: string;
@@ -30,10 +30,10 @@ export type JobTestCardProps = {
     questions: number;
     syllabus: SyllabusItem[];
   };
-  expandedJobTest: number | null;
-  customizeJobTest: number | null;
-  toggleExpandJobTest: (testId: number) => void;
-  toggleCustomizeJobTest: (testId: number, event: React.MouseEvent) => void;
+  expandedJobTest: string | null;
+  customizeJobTest: string | null;
+  toggleExpandJobTest: (testId: string) => void;
+  toggleCustomizeJobTest: (testId: string, event: React.MouseEvent) => void;
   handleStartJobTest: (test: any, settings?: any) => void;
   isGenerating?: boolean;
 };
