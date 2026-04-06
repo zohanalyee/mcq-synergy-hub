@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import ScrapingSourcesManager from "./ScrapingSourcesManager";
 import ManualOpportunityCreator from "./ManualOpportunityCreator";
 import OpportunityReviewQueue from "./OpportunityReviewQueue";
+import PublishedOpportunitiesManager from "./PublishedOpportunitiesManager";
 
 const typeIcons: Record<AgentTaskType, React.ElementType> = {
   blog: FileText,
@@ -375,6 +376,11 @@ const AgentDashboard = () => {
             <ManualOpportunityCreator onSuccess={() => queryClient.invalidateQueries({ queryKey: ["pending-opportunities"] })} />
           </div>
           <OpportunityReviewQueue />
+
+          <div className="mt-6">
+            <h3 className="text-sm font-semibold mb-3">Published Content Management</h3>
+            <PublishedOpportunitiesManager />
+          </div>
         </TabsContent>
       </Tabs>
 
