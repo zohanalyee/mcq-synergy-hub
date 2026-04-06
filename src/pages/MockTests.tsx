@@ -52,8 +52,8 @@ const CompetitiveExams = () => {
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         <PageBreadcrumb
           items={[
-            { label: "Home", href: "/" },
-            { label: "Competitive Exams" }
+            { title: "Home", href: "/" },
+            { title: "Competitive Exams" }
           ]}
         />
         <motion.div
