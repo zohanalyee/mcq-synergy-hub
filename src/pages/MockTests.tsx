@@ -53,7 +53,7 @@ const CompetitiveExams = () => {
         <PageBreadcrumb
           items={[
             { title: "Home", href: "/" },
-            { title: "Competitive Exams" }
+            { title: "Competitive Exams", href: "/mock-tests", isCurrent: true }
           ]}
         />
         <motion.div
