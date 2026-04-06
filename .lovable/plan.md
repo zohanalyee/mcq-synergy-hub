@@ -1,86 +1,89 @@
 
 
-# AI Content Studio — Implementation Plan
+# Fix Plan: 3 Critical UX Bugs
 
-## What We're Building
+## Bug 1: AI Content Studio Modal Closes on Outside Click
 
-An "AI Content Studio" inside the Agent Dashboard that lets an admin paste raw text from a job ad, scholarship notice, tender, or board result, click "Enhance with AI Magic", and get back a professionally formatted, SEO-optimized listing — published in under 3 minutes. This replaces unreliable scraping with human-curated, AI-polished content.
+**Problem**: `<DialogContent>` in `ManualOpportunityCreator.tsx` (line 186) has no protection against accidental outside clicks, wiping all entered data.
 
-## Architecture
+**Fix**: Add `onInteractOutside` and `onPointerDownOutside` event prevention to the `<DialogContent>` element.
 
-```text
-Admin pastes raw text + URLs
-        │
-        ▼
-┌──────────────────────────┐
-│  enhance-content         │  (new Edge Function)
-│  Gemini API (free tier)  │
-│  → structured JSON       │
-└──────────┬───────────────┘
-           ▼
-  ManualOpportunityCreator
-  (enhanced with AI step)
-        │
-        ▼
-  external_opportunities table
-  status = 'approved'
-        │
-        ▼
-  Detail page with embedded PDF/image viewer
+**File**: `src/components/admin/ManualOpportunityCreator.tsx`
+- Line 186: Add `onInteractOutside={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}` to `<DialogContent>`
+
+---
+
+## Bug 2: No Way to Edit/Delete Published External Opportunities
+
+**Problem**: Once items are approved in `external_opportunities`, there is no admin UI to manage them. The existing `OpportunityReviewQueue` only shows `status = 'pending'`.
+
+**Fix**: Create a new `PublishedOpportunitiesManager` component and add it as a new "Published" sub-tab inside the Agent Dashboard Review tab area.
+
+**New file**: `src/components/admin/PublishedOpportunitiesManager.tsx`
+- Fetches `external_opportunities` where `status = 'approved'`, ordered by `created_at` desc
+- Displays a data table with columns: Title, Type, Organization, Deadline, Actions
+- Edit button opens a dialog pre-filled with all fields (title, description, organization, deadline, location, apply_url, image_url, document_url, type-specific fields)
+- Delete button with confirmation dialog, calls `supabase.from('external_opportunities').delete().eq('id', id)`
+- Search/filter by type (job/scholarship/tender/board_result)
+- Uses React Query with key `['published-opportunities']`
+
+**Modified file**: `src/components/admin/AgentDashboard.tsx`
+- Import `PublishedOpportunitiesManager`
+- Add a sub-tab system inside the Review `TabsContent` with two sections: "Pending Review" (existing) and "Published Content" (new manager)
+- Or simpler: add the `PublishedOpportunitiesManager` component below the `OpportunityReviewQueue` in the review tab, separated by a heading
+
+---
+
+## Bug 3: Bulk Job Test Import Only Saves to localStorage
+
+**Problem**: The `bulkImportJobTests` function in `src/services/bulkJobTestService.ts` saves to `localStorage` only. There is no `job_tests` table in Supabase — the entire Job Tests system runs on localStorage, which means data disappears on browser change or clear.
+
+**Fix**: 
+1. Create a `job_tests` database table via migration
+2. Update `bulkJobTestService.ts` to insert into Supabase instead of localStorage
+3. Update `jobTestService.ts` to read/write from Supabase
+4. Update `useJobTestManagement.tsx` to use React Query
+
+**Database migration**:
+```sql
+CREATE TABLE public.job_tests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  title text NOT NULL,
+  description text DEFAULT '',
+  organization text NOT NULL,
+  duration integer DEFAULT 90,
+  questions integer DEFAULT 100,
+  syllabus jsonb NOT NULL DEFAULT '[]',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+ALTER TABLE public.job_tests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can read job tests" ON public.job_tests
+  FOR SELECT TO anon, authenticated USING (true);
+
+CREATE POLICY "Admins can manage job tests" ON public.job_tests
+  FOR ALL TO authenticated USING (public.is_admin(auth.uid()));
 ```
 
-## Implementation Steps
+**Modified files**:
+- `src/services/jobTestService.ts` — rewrite all functions to use `supabase.from('job_tests')` instead of localStorage
+- `src/services/bulkJobTestService.ts` — rewrite `bulkImportJobTests` to use `supabase.from('job_tests').insert()`
+- `src/hooks/useJobTestManagement.tsx` — use React Query for fetching, add `queryClient.invalidateQueries`
+- `src/data/jobTestsData.ts` — keep interface definitions, seed data can be used for initial migration if desired
 
-### Step 1: Create `enhance-content` Edge Function
-**File:** `supabase/functions/enhance-content/index.ts`
-
-- Accepts `{ rawText, category, organization?, sourceUrl? }`
-- Validates admin auth (JWT check against `user_roles`)
-- Calls Gemini API directly (`GEMINI_API_KEY`, fallback to `EXTERNAL_JOBS_GEMINI_KEY`)
-- Uses category-specific prompts (job → extract salary/qualification/positions; scholarship → eligibility/amount; tender → tender number/value; board_result → board name/exam type)
-- Returns structured JSON: `{ title, description, deadline, keywords[], extractedFields: { organization, location, qualification, salary, ... } }`
-- Register in `supabase/config.toml` with `verify_jwt = false`
-
-### Step 2: Upgrade `ManualOpportunityCreator` Component
-**File:** `src/components/admin/ManualOpportunityCreator.tsx`
-
-Current state: Simple form with basic fields (title, description, org, URL, deadline, image, location, sector, region). No AI. No raw text input. No document URL. No type-specific fields.
-
-New version:
-- **Step 1 — Input**: Category selector (Job/Scholarship/Tender/Board Result), organization, source URL, image URL (with preview), PDF/document URL, and a large raw text area
-- **Step 2 — AI Enhancement**: "Enhance with AI Magic" button calls `enhance-content` edge function. Populates all fields automatically from raw text
-- **Step 3 — Review & Edit**: Shows AI-generated title, description, keywords (as badges), deadline, location, and type-specific fields (qualification/salary/positions for jobs, eligibility/amount for scholarships, tender_number/tender_value for tenders). All editable
-- **Step 4 — Publish**: Inserts into `external_opportunities` with `status: 'approved'`, all extracted fields, and metadata including keywords and source URL
-- Dialog size: `max-w-4xl` to accommodate the richer form
-
-### Step 3: Enhance Detail Page with Embedded Media
-**File:** `src/pages/OpportunityDetail.tsx`
-
-- Add embedded PDF viewer: If `document_url` ends with `.pdf`, render an `<iframe>` to display it inline so users can read the notice without leaving the site
-- Add embedded image viewer: If `image_url` is a newspaper ad/poster, show it full-width in a dedicated "Original Notice" section
-- Add SEO keywords from `metadata.keywords` to the `<SEOHead>` component
-- Add OG image support using the opportunity's `image_url`
-
-### Step 4: Update SEOHead for Keywords
-**File:** `src/components/SEOHead.tsx`
-
-- Accept optional `keywords` and `image` props
-- Render `<meta name="keywords">` and `og:image` tags
+---
 
 ## Files Summary
 
 | Action | File |
 |--------|------|
-| Create | `supabase/functions/enhance-content/index.ts` |
-| Modify | `supabase/config.toml` — register `enhance-content` |
-| Rewrite | `src/components/admin/ManualOpportunityCreator.tsx` — full AI Content Studio |
-| Modify | `src/pages/OpportunityDetail.tsx` — embedded PDF/image viewer |
-| Modify | `src/components/SEOHead.tsx` — keywords + og:image |
-
-## Technical Notes
-
-- Uses existing `GEMINI_API_KEY` secret (already configured) — $0 cost
-- No new database columns needed (all fields already exist from the previous migration)
-- No new tables or migrations required
-- The existing Review tab in AgentDashboard already works correctly for reviewing scraped content — no changes needed there
+| Modify | `src/components/admin/ManualOpportunityCreator.tsx` — prevent outside click close |
+| Create | `src/components/admin/PublishedOpportunitiesManager.tsx` — manage approved items |
+| Modify | `src/components/admin/AgentDashboard.tsx` — add published content section |
+| Migration | Create `job_tests` table |
+| Modify | `src/services/jobTestService.ts` — Supabase backend |
+| Modify | `src/services/bulkJobTestService.ts` — Supabase insert |
+| Modify | `src/hooks/useJobTestManagement.tsx` — React Query |
 
