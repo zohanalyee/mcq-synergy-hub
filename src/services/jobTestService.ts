@@ -1,79 +1,83 @@
+import { supabase } from "@/integrations/supabase/client";
 
-import { JobTest } from "@/data/jobTestsData";
+export interface SyllabusItem {
+  topic: string;
+  percentage: number;
+}
 
-// Job Tests Management
-export const getJobTests = (): JobTest[] => {
-  try {
-    const savedJobTests = localStorage.getItem('jobTests');
-    if (savedJobTests) {
-      return JSON.parse(savedJobTests);
-    }
-  } catch (error) {
+export interface JobTest {
+  id: string;
+  title: string;
+  description: string;
+  organization: string;
+  duration: number;
+  questions: number;
+  syllabus: SyllabusItem[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const getJobTests = async (): Promise<JobTest[]> => {
+  const { data, error } = await supabase
+    .from("job_tests")
+    .select("*")
+    .order("created_at", { ascending: false });
+  if (error) {
     console.error("Error loading job tests:", error);
+    return [];
   }
-  
-  // If we can't load from localStorage, return an empty array
-  return [];
+  return (data || []).map((d: any) => ({
+    ...d,
+    syllabus: Array.isArray(d.syllabus) ? d.syllabus : JSON.parse(d.syllabus || "[]"),
+  }));
 };
 
-export const saveJobTests = (jobTests: JobTest[]) => {
-  try {
-    localStorage.setItem('jobTests', JSON.stringify(jobTests));
-    return true;
-  } catch (error) {
-    console.error("Error saving job tests:", error);
-    return false;
-  }
-};
-
-export const addJobTest = (jobTest: Omit<JobTest, "id">) => {
-  try {
-    const jobTests = getJobTests();
-    
-    // Generate an ID
-    const newId = jobTests.length > 0 
-      ? Math.max(...jobTests.map(t => t.id)) + 1 
-      : 1;
-    
-    const newJobTest: JobTest = {
-      ...jobTest,
-      id: newId
-    };
-    
-    const updatedJobTests = [...jobTests, newJobTest];
-    saveJobTests(updatedJobTests);
-    
-    return newJobTest;
-  } catch (error) {
+export const addJobTest = async (jobTest: Omit<JobTest, "id">): Promise<JobTest | null> => {
+  const { data, error } = await supabase
+    .from("job_tests")
+    .insert({
+      title: jobTest.title,
+      description: jobTest.description || "",
+      organization: jobTest.organization,
+      duration: jobTest.duration,
+      questions: jobTest.questions,
+      syllabus: jobTest.syllabus as any,
+    })
+    .select()
+    .single();
+  if (error) {
     console.error("Error adding job test:", error);
     return null;
   }
+  return { ...data, syllabus: Array.isArray(data.syllabus) ? data.syllabus : JSON.parse(data.syllabus || "[]") };
 };
 
-export const updateJobTest = (jobTest: JobTest) => {
-  try {
-    const jobTests = getJobTests();
-    const updatedJobTests = jobTests.map(t => 
-      t.id === jobTest.id ? jobTest : t
-    );
-    
-    saveJobTests(updatedJobTests);
-    return jobTest;
-  } catch (error) {
+export const updateJobTest = async (jobTest: JobTest): Promise<JobTest | null> => {
+  const { data, error } = await supabase
+    .from("job_tests")
+    .update({
+      title: jobTest.title,
+      description: jobTest.description,
+      organization: jobTest.organization,
+      duration: jobTest.duration,
+      questions: jobTest.questions,
+      syllabus: jobTest.syllabus as any,
+    })
+    .eq("id", jobTest.id)
+    .select()
+    .single();
+  if (error) {
     console.error("Error updating job test:", error);
     return null;
   }
+  return { ...data, syllabus: Array.isArray(data.syllabus) ? data.syllabus : JSON.parse(data.syllabus || "[]") };
 };
 
-export const removeJobTest = (id: number) => {
-  try {
-    const jobTests = getJobTests();
-    const updatedJobTests = jobTests.filter(t => t.id !== id);
-    
-    saveJobTests(updatedJobTests);
-    return true;
-  } catch (error) {
+export const removeJobTest = async (id: string): Promise<boolean> => {
+  const { error } = await supabase.from("job_tests").delete().eq("id", id);
+  if (error) {
     console.error("Error removing job test:", error);
     return false;
   }
+  return true;
 };
