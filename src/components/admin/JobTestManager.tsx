@@ -1,29 +1,25 @@
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useJobTestManagement } from '@/hooks/useJobTestManagement';
 import AddJobTestDialog from './job-test/AddJobTestDialog';
 import JobTestTable from './job-test/JobTestTable';
 import { BulkJobTestImportDialog } from './job-test/BulkJobTestImportDialog';
 import { Button } from '@/components/ui/button';
 import { FileJson } from 'lucide-react';
-import { getJobTests } from '@/services/jobTestService';
 
 const JobTestManager = () => {
+  const queryClient = useQueryClient();
   const [isBulkImportOpen, setIsBulkImportOpen] = useState(false);
   
   const {
     jobTests,
     isAddDialogOpen,
     setIsAddDialogOpen,
-    title,
-    setTitle,
-    description,
-    setDescription,
-    organization,
-    setOrganization,
-    duration,
-    setDuration,
-    questions,
-    setQuestions,
+    title, setTitle,
+    description, setDescription,
+    organization, setOrganization,
+    duration, setDuration,
+    questions, setQuestions,
     syllabusItems,
     handleAddSyllabusItem,
     handleRemoveSyllabusItem,
@@ -33,10 +29,8 @@ const JobTestManager = () => {
     resetForm
   } = useJobTestManagement();
 
-  // Refresh job tests after bulk import
   const handleBulkImportSuccess = () => {
-    // Force re-render by getting fresh data
-    window.location.reload();
+    queryClient.invalidateQueries({ queryKey: ["job-tests"] });
   };
 
   return (
