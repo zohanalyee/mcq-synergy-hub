@@ -67,11 +67,49 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
       const generatedTest = await generateCustomTest(options);
       
-      toast.success(`Test ready!`, {
-        description: `${generatedTest.questions.length} questions loaded`
-      });
+      // Save session to DB and navigate by ID
+      const { data: { user } } = await supabase.auth.getUser();
+      const sessionPayload = {
+        user_id: user?.id || null,
+        session_name: `Test: ${test.title}`,
+        subjects: options.subjects as any,
+        topics: options.topics as any,
+        subtopics: [] as any,
+        difficulty_levels: [options.difficulty] as any,
+        question_count: options.questionCount,
+        time_limit: options.timeLimit,
+        questions: generatedTest.questions as any,
+        is_active: true,
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      const { data: session, error: sessionError } = await supabase
+        .from('custom_test_sessions')
+        .insert(sessionPayload)
+        .select('id')
+        .single();
+
+      if (sessionError) throw sessionError;
+
+      const bankCount = generatedTest.questions.length;
+      const deficit = generatedTest.deficit;
+
+      if (deficit > 0) {
+        toast.info(`Starting with ${bankCount} questions — AI generating ${deficit} more in background`, { duration: 4000 });
+        // Trigger background AI generation
+        supabase.functions.invoke('generate-test', {
+          body: {
+            topic: test.title,
+            difficulty: options.difficulty === 'mixed' ? 'Medium' : options.difficulty,
+            question_count: options.questionCount,
+            session_id: session.id
+          }
+        }).catch(err => console.error('Background AI generation error:', err));
+      } else {
+        toast.success(`Test ready!`, { description: `${bankCount} questions loaded` });
+      }
       
-      navigate('/test-session', { state: { test: generatedTest } });
+      navigate(`/test-session/${session.id}`, { state: { returnPath: '/mock-tests' } });
     } catch (error) {
       console.error('Error generating test:', error);
       toast.error('Failed to generate test', {
