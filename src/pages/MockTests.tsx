@@ -43,13 +43,12 @@ const CompetitiveExams = () => {
   });
 
   return (
-    <>
+    <Header>
       <SEOHead
         title="Competitive Exam Practice Tests | MCQs AI"
         description="Practice for competitive exams including FPSC, PPSC, NTS, and more with AI-powered mock tests."
       />
-      <Header />
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
+      <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
         <PageBreadcrumb
           items={[
             { title: "Home", href: "/" },
@@ -80,7 +79,7 @@ const CompetitiveExams = () => {
           </div>
         </motion.div>
       </div>
-    </>
+    </Header>
   );
 };
 
