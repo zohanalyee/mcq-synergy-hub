@@ -398,15 +398,11 @@ const TestSession = () => {
   };
 
   const handleGenerateNew = async () => {
-    toast.error("AI Quiz Generation Temporarily Unavailable", {
-      description: "New quiz generation is paused. Please start a new test from Custom Syllabus or Quizzes page.",
-    });
+    navigate(lastUsedContext.returnPath || "/custom-syllabus");
   };
 
   const handleImprove = async () => {
-    toast.error("AI Improvement Quiz Temporarily Unavailable", {
-      description: "This feature is paused while we upgrade our AI system. Please start a new test from Custom Syllabus.",
-    });
+    navigate(lastUsedContext.returnPath || "/custom-syllabus");
   };
 
   const handleCreateAnother = () => {

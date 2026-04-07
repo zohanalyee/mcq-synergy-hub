@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { JobTest } from "@/data/jobTestsData";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -23,12 +24,46 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
   
   const filteredJobTests = jobTests;
   
-  // DISABLED: AI features paused
   const handleStartJobTest = async (test: JobTest, customSettings?: any) => {
-    // AI generation temporarily disabled
-    toast.error("AI Test Generation Temporarily Unavailable", {
-      description: "Test generation is paused while we upgrade our AI system. Please use existing questions from the Question Bank.",
-    });
+    setGeneratingTestId(test.id);
+    setGeneratingTopicName(test.title);
+
+    try {
+      const settings = customSettings || {
+        difficulty: "mixed",
+        questionCount: test.questions,
+        duration: test.duration
+      };
+
+      const subjects: string[] = test.syllabus.map(item => item.topic);
+
+      const options: TestGenerationOptions = {
+        subjects: subjects,
+        topics: [],
+        difficulty: settings.difficulty.toLowerCase(),
+        questionCount: settings.questionCount,
+        timeLimit: settings.duration,
+        includeExplanations: true,
+        shuffleQuestions: true,
+        shuffleOptions: true
+      };
+
+      const generatedTest = await generateCustomTest(options);
+      
+      toast.success(`${test.title} ready!`, {
+        description: `${generatedTest.questions.length} questions loaded`
+      });
+      
+      navigate('/test-session', { state: { test: generatedTest } });
+    } catch (error) {
+      console.error('Error generating job test:', error);
+      toast.error('Failed to generate test', {
+        description: error instanceof Error ? error.message : 'Questions may not be available for this job test syllabus'
+      });
+    } finally {
+      setGeneratingTestId(null);
+      setGeneratingTopicName("");
+    }
   };
   
   const toggleExpandJobTest = (testId: string) => {
@@ -43,25 +78,17 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
   const toggleCustomizeJobTest = (testId: string, event: React.MouseEvent) => {
     event.stopPropagation();
     const test = jobTests.find(t => t.id === testId);
-    if (test) {
-      setDialogTest(test);
-    }
+    if (test) setDialogTest(test);
   };
 
   const handleDialogStart = (settings: { difficulty: "easy" | "medium" | "hard"; questionCount: number; duration: number }) => {
-    if (dialogTest) {
-      handleStartJobTest(dialogTest, settings);
-    }
+    if (dialogTest) handleStartJobTest(dialogTest, settings);
   };
   
   const container = {
     hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
   };
-  
   const item = {
     hidden: { y: 20, opacity: 0 },
     visible: { y: 0, opacity: 1 }
@@ -69,13 +96,10 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
 
   return (
     <>
-      {/* Full-screen Loader */}
       <TestGenerationLoader 
         isVisible={generatingTestId !== null} 
         topicName={generatingTopicName} 
       />
-
-      {/* Customize Dialog */}
       <CustomizeTestDialog
         isOpen={dialogTest !== null}
         onClose={() => setDialogTest(null)}
@@ -86,7 +110,6 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         onStart={handleDialogStart}
         isGenerating={generatingTestId === dialogTest?.id}
       />
-
       {filteredJobTests.length > 0 ? (
         <motion.div 
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start"
@@ -111,13 +134,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
       ) : (
         <div className="text-center py-16 bg-secondary/10 rounded-lg">
           <p className="text-muted-foreground mb-4">No job tests match your search criteria.</p>
-          <Button
-            onClick={() => {
-              // This is passed from the parent component
-            }}
-          >
-            Clear Search
-          </Button>
+          <Button onClick={() => {}}>Clear Search</Button>
         </div>
       )}
     </>
