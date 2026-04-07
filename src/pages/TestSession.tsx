@@ -215,7 +215,14 @@ const TestSession = () => {
         const safeTotalQuestions = Array.isArray(data.questions) ? data.questions.length : 0;
 
         setExpectedTotal(safeQuestionCount);
-        setRemainingCount(Math.max(0, safeQuestionCount - safeTotalQuestions));
+        const initialDeficit = Math.max(0, safeQuestionCount - safeTotalQuestions);
+        setRemainingCount(initialDeficit);
+        
+        if (initialDeficit > 0 && safeTotalQuestions > 0) {
+          toast.info(`Starting with ${safeTotalQuestions} questions — AI generating ${initialDeficit} more in background`, { duration: 5000 });
+        } else if (initialDeficit > 0 && safeTotalQuestions === 0) {
+          toast.info(`AI is generating ${safeQuestionCount} questions...`, { duration: 5000 });
+        }
 
         setLastUsedContext({
           subject: subjectsArr[0], topic: extractTopicString(data.topics) || topicsArr[0],

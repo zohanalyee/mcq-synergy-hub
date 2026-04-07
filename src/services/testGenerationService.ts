@@ -1,5 +1,4 @@
 import { getQuestionBank, QuestionFilters, QuestionBankItem } from './questionBankService';
-import { MCQItem } from '@/interfaces/content';
 
 export interface TestGenerationOptions {
   subjects: string[];
@@ -20,6 +19,8 @@ export interface GeneratedTest {
   timeLimit: number;
   totalMarks: number;
   instructions: string[];
+  deficit: number;
+  aiGenerationNeeded: boolean;
   metadata: {
     subjects: string[];
     topics: string[];
@@ -58,7 +59,7 @@ export const generateTestFromSyllabus = async (
   }
 };
 
-// Generate custom test with specific options
+// Generate custom test — NEVER throws, always returns a valid test object
 export const generateCustomTest = async (options: TestGenerationOptions): Promise<GeneratedTest> => {
   console.log('🎯 Generating test with options:', {
     subjects: options.subjects,
@@ -68,58 +69,75 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     timeLimit: options.timeLimit
   });
 
+  // --- Step 1: Strict filter (subject + topic + difficulty) ---
   const filters: QuestionFilters = {
     subjects: options.subjects,
     topics: options.topics.length > 0 ? options.topics : undefined,
     subtopics: options.subtopics,
-    limit: options.questionCount * 3 // Get more questions for better selection
+    limit: options.questionCount * 3
   };
 
-  // Handle difficulty filtering
   if (options.difficulty !== 'mixed') {
-    const difficultyMap = {
-      'easy': ['Easy'],
-      'medium': ['Medium'],
-      'hard': ['Hard']
-    };
+    const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
     filters.difficulties = difficultyMap[options.difficulty];
   }
 
-  const availableQuestions = await getQuestionBank(filters);
+  let availableQuestions = await getQuestionBank(filters);
+  console.log(`📊 Strict filter: found ${availableQuestions.length} questions`);
 
-  console.log(`📊 Found ${availableQuestions.length} questions for criteria`);
+  // --- Step 2: Difficulty fallback (same subjects/topics, any difficulty) ---
+  if (availableQuestions.length < options.questionCount && options.difficulty !== 'mixed') {
+    console.log('🔄 Fallback: removing difficulty filter');
+    const fallbackFilters = { ...filters };
+    delete fallbackFilters.difficulties;
+    const fallbackQuestions = await getQuestionBank(fallbackFilters);
+    // Merge without duplicates
+    const existingIds = new Set(availableQuestions.map(q => q.id));
+    const newQuestions = fallbackQuestions.filter(q => !existingIds.has(q.id));
+    availableQuestions = [...availableQuestions, ...newQuestions];
+    console.log(`📊 After difficulty fallback: ${availableQuestions.length} questions`);
+  }
+
+  // --- Step 3: Subject-only fallback (cross-pollination — topics from any subject) ---
+  if (availableQuestions.length < options.questionCount && options.topics.length > 0) {
+    console.log('🔄 Fallback: topic-only cross-pollination');
+    const topicOnlyFilters: QuestionFilters = {
+      topics: options.topics,
+      limit: options.questionCount * 3
+    };
+    const crossQuestions = await getQuestionBank(topicOnlyFilters);
+    const existingIds = new Set(availableQuestions.map(q => q.id));
+    const newQuestions = crossQuestions.filter(q => !existingIds.has(q.id));
+    availableQuestions = [...availableQuestions, ...newQuestions];
+    console.log(`📊 After cross-pollination: ${availableQuestions.length} questions`);
+  }
+
+  // --- Step 4: Broader subject fallback (any topic from same subjects) ---
+  if (availableQuestions.length < options.questionCount) {
+    console.log('🔄 Fallback: subject-only (any topic)');
+    const subjectOnlyFilters: QuestionFilters = {
+      subjects: options.subjects,
+      limit: options.questionCount * 3
+    };
+    const subjectQuestions = await getQuestionBank(subjectOnlyFilters);
+    const existingIds = new Set(availableQuestions.map(q => q.id));
+    const newQuestions = subjectQuestions.filter(q => !existingIds.has(q.id));
+    availableQuestions = [...availableQuestions, ...newQuestions];
+    console.log(`📊 After subject fallback: ${availableQuestions.length} questions`);
+  }
+
   console.log('📚 Available subjects:', [...new Set(availableQuestions.map(q => q.subject))]);
   console.log('📖 Available topics:', [...new Set(availableQuestions.map(q => q.topic))]);
 
+  // Select questions (never throw)
+  let selectedQuestions: QuestionBankItem[];
+
   if (availableQuestions.length === 0) {
-    throw new Error(
-      `No questions available for the selected criteria.\n\n` +
-      `Subjects: ${options.subjects.join(', ')}\n` +
-      `Topics: ${options.topics.length > 0 ? options.topics.join(', ') : 'All'}\n\n` +
-      `Please try:\n` +
-      `• Selecting different subjects or topics\n` +
-      `• Reducing the difficulty level\n` +
-      `• Checking if questions exist in the Question Bank for this selection`
-    );
-  }
-
-  if (availableQuestions.length < options.questionCount) {
-    throw new Error(
-      `Not enough questions available.\n\n` +
-      `Found: ${availableQuestions.length} questions\n` +
-      `Requested: ${options.questionCount} questions\n\n` +
-      `Please reduce the number of questions or select additional topics.`
-    );
-  }
-
-  let selectedQuestions = availableQuestions;
-
-  // If mixed difficulty, try to balance the questions
-  if (options.difficulty === 'mixed') {
+    selectedQuestions = [];
+  } else if (options.difficulty === 'mixed' && availableQuestions.length >= options.questionCount) {
     selectedQuestions = balanceQuestionsByDifficulty(availableQuestions, options.questionCount);
   } else {
-    // Shuffle and select the requested number
-    selectedQuestions = selectedQuestions
+    selectedQuestions = availableQuestions
       .sort(() => Math.random() - 0.5)
       .slice(0, options.questionCount);
   }
@@ -134,22 +152,27 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     selectedQuestions = selectedQuestions.map(shuffleQuestionOptions);
   }
 
+  const deficit = Math.max(0, options.questionCount - selectedQuestions.length);
+
   const generatedTest: GeneratedTest = {
     id: crypto.randomUUID(),
     title: generateTestTitle(options.subjects, options.topics),
     questions: selectedQuestions,
     timeLimit: options.timeLimit,
-    totalMarks: selectedQuestions.length, // 1 mark per question
+    totalMarks: options.questionCount,
     instructions: generateTestInstructions(options),
+    deficit,
+    aiGenerationNeeded: deficit > 0,
     metadata: {
       subjects: options.subjects,
       topics: options.topics,
       difficulty: options.difficulty,
-      questionCount: selectedQuestions.length,
+      questionCount: options.questionCount,
       generatedAt: new Date().toISOString()
     }
   };
 
+  console.log(`✅ Test generated: ${selectedQuestions.length} from bank, deficit: ${deficit}`);
   return generatedTest;
 };
 
@@ -159,19 +182,15 @@ const balanceQuestionsByDifficulty = (questions: QuestionBankItem[], targetCount
   const mediumQuestions = questions.filter(q => q.difficulty === 'Medium');
   const hardQuestions = questions.filter(q => q.difficulty === 'Hard');
 
-  // Aim for 40% easy, 40% medium, 20% hard
   const easyCount = Math.floor(targetCount * 0.4);
   const mediumCount = Math.floor(targetCount * 0.4);
   const hardCount = targetCount - easyCount - mediumCount;
 
   const selectedQuestions: QuestionBankItem[] = [];
-
-  // Add questions from each difficulty level
   selectedQuestions.push(...easyQuestions.sort(() => Math.random() - 0.5).slice(0, easyCount));
   selectedQuestions.push(...mediumQuestions.sort(() => Math.random() - 0.5).slice(0, mediumCount));
   selectedQuestions.push(...hardQuestions.sort(() => Math.random() - 0.5).slice(0, hardCount));
 
-  // If we don't have enough questions in some difficulties, fill from available questions
   if (selectedQuestions.length < targetCount) {
     const remaining = questions.filter(q => !selectedQuestions.find(sq => sq.id === q.id));
     selectedQuestions.push(...remaining.sort(() => Math.random() - 0.5).slice(0, targetCount - selectedQuestions.length));
@@ -183,12 +202,11 @@ const balanceQuestionsByDifficulty = (questions: QuestionBankItem[], targetCount
 // Shuffle question options while maintaining correct answer
 const shuffleQuestionOptions = (question: QuestionBankItem): QuestionBankItem => {
   const options = ['A', 'B', 'C', 'D'];
-  const shuffledOptions = options.sort(() => Math.random() - 0.5);
+  const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
   
   const originalOptions = { ...question.options };
   const newOptions = { A: '', B: '', C: '', D: '' };
   
-  // Create new option mapping
   const optionMap: Record<string, string> = {};
   shuffledOptions.forEach((newKey, index) => {
     const originalKey = options[index];
@@ -246,7 +264,6 @@ export const generateQuizOfTheDay = async (subject?: string): Promise<GeneratedT
     const featuredQuestions = await getQuestionBank(filters);
 
     if (featuredQuestions.length === 0) {
-      // Fallback to any recent questions if no featured questions
       const recentQuestions = await getQuestionBank({
         subjects: subject ? [subject] : undefined,
         limit: 5
@@ -262,6 +279,8 @@ export const generateQuizOfTheDay = async (subject?: string): Promise<GeneratedT
         questions: recentQuestions.slice(0, 5),
         timeLimit: 5,
         totalMarks: 5,
+        deficit: 0,
+        aiGenerationNeeded: false,
         instructions: [
           "Daily quiz challenge - 5 questions",
           "Time limit: 5 minutes",
@@ -283,6 +302,8 @@ export const generateQuizOfTheDay = async (subject?: string): Promise<GeneratedT
       questions: featuredQuestions.slice(0, 5),
       timeLimit: 5,
       totalMarks: 5,
+      deficit: 0,
+      aiGenerationNeeded: false,
       instructions: [
         "Featured questions of the day",
         "Time limit: 5 minutes",
