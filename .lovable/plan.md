@@ -1,89 +1,67 @@
 
 
-# Fix Plan: 3 Critical UX Bugs
+# Fill the Gap Hybrid Test Generation
 
-## Bug 1: AI Content Studio Modal Closes on Outside Click
+## Problem Summary
 
-**Problem**: `<DialogContent>` in `ManualOpportunityCreator.tsx` (line 186) has no protection against accidental outside clicks, wiping all entered data.
+The test generation flow has two critical failures:
+1. **Hard errors block users** — `generateCustomTest()` in `testGenerationService.ts` throws when DB has fewer questions than requested (lines 94-113)
+2. **Navigation mismatch** — Mock test tabs navigate to `/test-session` with `state: { test }`, but the route expects `/test-session/:id` and only reads from DB. The state-based test data is never consumed.
 
-**Fix**: Add `onInteractOutside` and `onPointerDownOutside` event prevention to the `<DialogContent>` element.
+## Solution
 
-**File**: `src/components/admin/ManualOpportunityCreator.tsx`
-- Line 186: Add `onInteractOutside={(e) => e.preventDefault()} onPointerDownOutside={(e) => e.preventDefault()}` to `<DialogContent>`
+### Step 1: Rewrite `generateCustomTest` — Remove Hard Errors, Return Partial Results
 
----
+**File**: `src/services/testGenerationService.ts`
 
-## Bug 2: No Way to Edit/Delete Published External Opportunities
+- Remove both `throw new Error` blocks (lines 94-113)
+- If 0 questions found: instead of throwing, return a test with empty questions array + a `deficit` count and `aiGenerationNeeded: true` flag
+- If partial questions found (e.g., 10 of 100): return those immediately with metadata indicating the deficit
+- Add `deficit` and `aiGenerationNeeded` fields to the `GeneratedTest` interface
+- The function never throws — always returns a valid test object
 
-**Problem**: Once items are approved in `external_opportunities`, there is no admin UI to manage them. The existing `OpportunityReviewQueue` only shows `status = 'pending'`.
+### Step 2: Update Mock Test Tabs — Save Session to DB, Navigate with ID
 
-**Fix**: Create a new `PublishedOpportunitiesManager` component and add it as a new "Published" sub-tab inside the Agent Dashboard Review tab area.
+**Files**: `src/components/mock-tests/SubjectTestsTab.tsx`, `src/components/mock-tests/JobTestsTab.tsx`
 
-**New file**: `src/components/admin/PublishedOpportunitiesManager.tsx`
-- Fetches `external_opportunities` where `status = 'approved'`, ordered by `created_at` desc
-- Displays a data table with columns: Title, Type, Organization, Deadline, Actions
-- Edit button opens a dialog pre-filled with all fields (title, description, organization, deadline, location, apply_url, image_url, document_url, type-specific fields)
-- Delete button with confirmation dialog, calls `supabase.from('external_opportunities').delete().eq('id', id)`
-- Search/filter by type (job/scholarship/tender/board_result)
-- Uses React Query with key `['published-opportunities']`
+- After `generateCustomTest()` returns, save the test as a `custom_test_sessions` row in Supabase (same pattern as `questionBankService.ts` line 164-180)
+- Navigate to `/test-session/${sessionId}` instead of `/test-session` with state
+- Show a toast: "Starting test with X questions..." (non-blocking)
+- If there's a deficit, trigger AI generation in the background via `supabase.functions.invoke('generate-test', { body: { topic, difficulty, question_count: deficit } })`
 
-**Modified file**: `src/components/admin/AgentDashboard.tsx`
-- Import `PublishedOpportunitiesManager`
-- Add a sub-tab system inside the Review `TabsContent` with two sections: "Pending Review" (existing) and "Published Content" (new manager)
-- Or simpler: add the `PublishedOpportunitiesManager` component below the `OpportunityReviewQueue` in the review tab, separated by a heading
+### Step 3: TestSession — Handle Partial Load + Background AI Fill
 
----
+**File**: `src/pages/TestSession.tsx`
 
-## Bug 3: Bulk Job Test Import Only Saves to localStorage
+The existing `pollForMoreQuestions` logic (lines 121-174) and `remainingCount` state already support background loading. The only change needed:
+- When `remainingCount > 0` on initial load, show a non-blocking toast: "AI is generating X more questions in the background..."
+- The existing polling mechanism already appends new questions as they arrive
 
-**Problem**: The `bulkImportJobTests` function in `src/services/bulkJobTestService.ts` saves to `localStorage` only. There is no `job_tests` table in Supabase — the entire Job Tests system runs on localStorage, which means data disappears on browser change or clear.
+### Step 4: AI-Generated Questions Persist to Question Bank
 
-**Fix**: 
-1. Create a `job_tests` database table via migration
-2. Update `bulkJobTestService.ts` to insert into Supabase instead of localStorage
-3. Update `jobTestService.ts` to read/write from Supabase
-4. Update `useJobTestManagement.tsx` to use React Query
+**File**: `supabase/functions/generate-test/index.ts`
 
-**Database migration**:
-```sql
-CREATE TABLE public.job_tests (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  title text NOT NULL,
-  description text DEFAULT '',
-  organization text NOT NULL,
-  duration integer DEFAULT 90,
-  questions integer DEFAULT 100,
-  syllabus jsonb NOT NULL DEFAULT '[]',
-  created_at timestamptz DEFAULT now(),
-  updated_at timestamptz DEFAULT now()
-);
+This already saves generated questions to `content_items` (the question bank). Verify and confirm this is working — no changes expected here.
 
-ALTER TABLE public.job_tests ENABLE ROW LEVEL SECURITY;
+### Step 5: Cross-Pollination — Tag-Based Fetching for Job Tests
 
-CREATE POLICY "Anyone can read job tests" ON public.job_tests
-  FOR SELECT TO anon, authenticated USING (true);
+**File**: `src/components/mock-tests/JobTestsTab.tsx`
 
-CREATE POLICY "Admins can manage job tests" ON public.job_tests
-  FOR ALL TO authenticated USING (public.is_admin(auth.uid()));
-```
+- Currently passes `subjects: test.syllabus.map(item => item.topic)` which searches by subject name
+- Change to also pass individual syllabus topics as the `topics` filter, so "English Grammar" questions are shared across FPSC, PPSC, NTS etc.
+- In `questionBankService.ts`, the query already uses `in('subject', subjects)` and `in('topic', topics)` — this works for cross-pollination as long as topics are passed correctly
 
-**Modified files**:
-- `src/services/jobTestService.ts` — rewrite all functions to use `supabase.from('job_tests')` instead of localStorage
-- `src/services/bulkJobTestService.ts` — rewrite `bulkImportJobTests` to use `supabase.from('job_tests').insert()`
-- `src/hooks/useJobTestManagement.tsx` — use React Query for fetching, add `queryClient.invalidateQueries`
-- `src/data/jobTestsData.ts` — keep interface definitions, seed data can be used for initial migration if desired
+**File**: `src/services/testGenerationService.ts`
 
----
+- In `generateCustomTest`, if no questions found with strict subject+topic filter, retry with just topics (broader search) before falling back to AI
 
 ## Files Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/components/admin/ManualOpportunityCreator.tsx` — prevent outside click close |
-| Create | `src/components/admin/PublishedOpportunitiesManager.tsx` — manage approved items |
-| Modify | `src/components/admin/AgentDashboard.tsx` — add published content section |
-| Migration | Create `job_tests` table |
-| Modify | `src/services/jobTestService.ts` — Supabase backend |
-| Modify | `src/services/bulkJobTestService.ts` — Supabase insert |
-| Modify | `src/hooks/useJobTestManagement.tsx` — React Query |
+| Modify | `src/services/testGenerationService.ts` — remove hard errors, add deficit metadata, broader fallback queries |
+| Modify | `src/components/mock-tests/SubjectTestsTab.tsx` — save to DB, navigate with ID, trigger background AI |
+| Modify | `src/components/mock-tests/JobTestsTab.tsx` — save to DB, navigate with ID, cross-pollinate topics |
+| No change | `src/pages/TestSession.tsx` — existing polling already handles background fill (minor toast addition) |
+| No change | `supabase/functions/generate-test/index.ts` — already persists to question bank |
 
