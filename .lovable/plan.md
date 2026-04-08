@@ -1,67 +1,71 @@
 
 
-# Fill the Gap Hybrid Test Generation
+# Fix: MCQ Generation Quality + Pakistani Exam Standards
 
-## Problem Summary
+## Problem
+AI-generated questions show as descriptive statements ("Benevolent means...") instead of proper MCQs, options are missing/malformed, and questions don't follow Pakistani competitive exam patterns (NTS/FPSC/PPSC style).
 
-The test generation flow has two critical failures:
-1. **Hard errors block users** — `generateCustomTest()` in `testGenerationService.ts` throws when DB has fewer questions than requested (lines 94-113)
-2. **Navigation mismatch** — Mock test tabs navigate to `/test-session` with `state: { test }`, but the route expects `/test-session/:id` and only reads from DB. The state-based test data is never consumed.
+## Root Causes
+1. The AI prompt (line 329-355 in `generate-test/index.ts`) is generic — no Pakistani exam context, no strict MCQ format enforcement
+2. `parseAIResponse` (line 220-286) has no validation for option count, question format, or answer validity
+3. No corrupted-data guard in QuestionCard UI
 
-## Solution
+## Changes
 
-### Step 1: Rewrite `generateCustomTest` — Remove Hard Errors, Return Partial Results
+### 1. Rewrite AI Prompt — Pakistani Exam Standards
+**File**: `supabase/functions/generate-test/index.ts` (lines 324-359)
 
-**File**: `src/services/testGenerationService.ts`
+Replace the generic system prompt in `generateQuestionsInBatches` with a strict Pakistani exam prompt that:
+- Specifies FPSC/PPSC/NTS/STS exam patterns
+- Requires questions to start with interrogative words and end with `?`
+- Enforces exactly 4 options (A, B, C, D) as an object, not array
+- Includes subject-specific guidance (English grammar/vocab, Math arithmetic, Pakistan Studies, GK, Computer Science)
+- Provides example MCQs in the exact JSON format expected
+- Requests the AI return `correctOption` as a letter (A/B/C/D) plus `explanation`
 
-- Remove both `throw new Error` blocks (lines 94-113)
-- If 0 questions found: instead of throwing, return a test with empty questions array + a `deficit` count and `aiGenerationNeeded: true` flag
-- If partial questions found (e.g., 10 of 100): return those immediately with metadata indicating the deficit
-- Add `deficit` and `aiGenerationNeeded` fields to the `GeneratedTest` interface
-- The function never throws — always returns a valid test object
+Update the JSON output schema to use `{ "questions": [...] }` with options as `{ "A": "...", "B": "...", "C": "...", "D": "..." }` and `correctOption` as a letter.
 
-### Step 2: Update Mock Test Tabs — Save Session to DB, Navigate with ID
-
-**Files**: `src/components/mock-tests/SubjectTestsTab.tsx`, `src/components/mock-tests/JobTestsTab.tsx`
-
-- After `generateCustomTest()` returns, save the test as a `custom_test_sessions` row in Supabase (same pattern as `questionBankService.ts` line 164-180)
-- Navigate to `/test-session/${sessionId}` instead of `/test-session` with state
-- Show a toast: "Starting test with X questions..." (non-blocking)
-- If there's a deficit, trigger AI generation in the background via `supabase.functions.invoke('generate-test', { body: { topic, difficulty, question_count: deficit } })`
-
-### Step 3: TestSession — Handle Partial Load + Background AI Fill
-
-**File**: `src/pages/TestSession.tsx`
-
-The existing `pollForMoreQuestions` logic (lines 121-174) and `remainingCount` state already support background loading. The only change needed:
-- When `remainingCount > 0` on initial load, show a non-blocking toast: "AI is generating X more questions in the background..."
-- The existing polling mechanism already appends new questions as they arrive
-
-### Step 4: AI-Generated Questions Persist to Question Bank
-
+### 2. Add Strict MCQ Validation + Sanitization
 **File**: `supabase/functions/generate-test/index.ts`
 
-This already saves generated questions to `content_items` (the question bank). Verify and confirm this is working — no changes expected here.
+Add two new functions after `parseAIResponse`:
+- **`validateMCQ(mcq)`**: Checks question is a string ending with `?`, options object has all 4 keys (A/B/C/D) as non-empty strings, correctOption is a valid letter, explanation exists. Returns boolean.
+- **`sanitizeMCQ(mcq)`**: Trims all fields, normalizes difficulty. If question doesn't end with `?`, appends it.
 
-### Step 5: Cross-Pollination — Tag-Based Fetching for Job Tests
+Update `parseAIResponse` to:
+- Also try parsing the new format (`correctOption` letter + options object)
+- Convert validated MCQs back to the existing `Question` interface (options as array, answer as full text of correct option) so existing DB save logic works unchanged
 
-**File**: `src/components/mock-tests/JobTestsTab.tsx`
+### 3. Add Corrupted Data Guard to QuestionCard
+**File**: `src/components/exam/QuestionCard.tsx`
 
-- Currently passes `subjects: test.syllabus.map(item => item.topic)` which searches by subject name
-- Change to also pass individual syllabus topics as the `topics` filter, so "English Grammar" questions are shared across FPSC, PPSC, NTS etc.
-- In `questionBankService.ts`, the query already uses `in('subject', subjects)` and `in('topic', topics)` — this works for cross-pollination as long as topics are passed correctly
+Before rendering, check if `question.options` is a non-empty array (or non-empty object). If not, show a styled "Corrupted question" alert with skip guidance instead of rendering blank space.
 
-**File**: `src/services/testGenerationService.ts`
+### 4. Add Admin Corrupted Data Cleaner
+**File**: `src/components/admin/CorruptedDataCleaner.tsx` (new)
 
-- In `generateCustomTest`, if no questions found with strict subject+topic filter, retry with just topics (broader search) before falling back to AI
+A simple component that:
+- Queries `content_items` where category=mcq and filters client-side for items missing valid options/question
+- Shows count + list with delete buttons
+- Bulk cleanup option
+
+**File**: `src/components/admin/AgentDashboard.tsx` — add CorruptedDataCleaner to the Content/Review tab
+
+### 5. Deploy Edge Function
+Deploy `generate-test` after changes.
 
 ## Files Summary
 
 | Action | File |
 |--------|------|
-| Modify | `src/services/testGenerationService.ts` — remove hard errors, add deficit metadata, broader fallback queries |
-| Modify | `src/components/mock-tests/SubjectTestsTab.tsx` — save to DB, navigate with ID, trigger background AI |
-| Modify | `src/components/mock-tests/JobTestsTab.tsx` — save to DB, navigate with ID, cross-pollinate topics |
-| No change | `src/pages/TestSession.tsx` — existing polling already handles background fill (minor toast addition) |
-| No change | `supabase/functions/generate-test/index.ts` — already persists to question bank |
+| Modify | `supabase/functions/generate-test/index.ts` — Pakistani exam prompt, MCQ validation, sanitization |
+| Modify | `src/components/exam/QuestionCard.tsx` — corrupted data guard |
+| Create | `src/components/admin/CorruptedDataCleaner.tsx` — admin cleanup tool |
+| Modify | `src/components/admin/AgentDashboard.tsx` — add cleaner to dashboard |
+| Deploy | `generate-test` edge function |
+
+## Technical Notes
+- The existing `Question` interface uses `options: string[]` and `answer: string` (full text). The new prompt will generate with letter-based answers, and the validation layer will convert back to this format for compatibility.
+- The existing `callAIWithAutoSwitch` in `_shared/gemini.ts` handles Gemini free tier + Lovable gateway fallback — no changes needed there.
+- No database migration needed — questions still save to `content_items` with existing columns.
 
