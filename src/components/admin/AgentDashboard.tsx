@@ -31,6 +31,7 @@ import ScrapingSourcesManager from "./ScrapingSourcesManager";
 import ManualOpportunityCreator from "./ManualOpportunityCreator";
 import OpportunityReviewQueue from "./OpportunityReviewQueue";
 import PublishedOpportunitiesManager from "./PublishedOpportunitiesManager";
+import CorruptedDataCleaner from "./CorruptedDataCleaner";
 
 const typeIcons: Record<AgentTaskType, React.ElementType> = {
   blog: FileText,
@@ -380,6 +381,10 @@ const AgentDashboard = () => {
           <div className="mt-6">
             <h3 className="text-sm font-semibold mb-3">Published Content Management</h3>
             <PublishedOpportunitiesManager />
+          </div>
+
+          <div className="mt-6">
+            <CorruptedDataCleaner />
           </div>
         </TabsContent>
       </Tabs>
