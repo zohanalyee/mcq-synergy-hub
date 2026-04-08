@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Flag } from "lucide-react";
+import { Flag, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { cleanQuestionText } from "@/lib/questionUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuestionCardProps {
   question: {
@@ -28,6 +29,28 @@ const QuestionCard = ({
   onToggleFlag,
 }: QuestionCardProps) => {
   const { isRTL } = useLanguage();
+
+  // Guard: check if options are valid
+  const optionsData = Array.isArray(question.options)
+    ? question.options
+    : question.options && typeof question.options === 'object'
+      ? Object.values(question.options)
+      : [];
+
+  if (!question.question || optionsData.length === 0) {
+    return (
+      <div className="glass-card rounded-2xl p-3 sm:p-4">
+        <Alert variant="destructive" className="border-destructive/30 bg-destructive/5">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription className="text-sm">
+            This question has corrupted data (missing question text or options). 
+            It has been skipped. Please report to admin.
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
   return (
     <AnimatePresence mode="wait">
       <motion.div

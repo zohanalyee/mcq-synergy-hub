@@ -217,6 +217,83 @@ function buildSyllabusSearchConditions(topic: string, sanitizedTopic: string, sy
 }
 
 // Robust JSON parser with repair logic for truncated responses
+// ============= STRICT MCQ VALIDATION (Pakistani Exam Standards) =============
+
+function validateMCQ(mcq: any): boolean {
+  if (!mcq.question || typeof mcq.question !== 'string' || mcq.question.trim().length < 10) {
+    console.warn('[validate] Missing or too-short question');
+    return false;
+  }
+
+  // Check options - support both object {A,B,C,D} and array formats
+  if (mcq.options && typeof mcq.options === 'object' && !Array.isArray(mcq.options)) {
+    const keys = ['A', 'B', 'C', 'D'];
+    for (const k of keys) {
+      if (!mcq.options[k] || typeof mcq.options[k] !== 'string' || mcq.options[k].trim().length < 1) {
+        console.warn(`[validate] Missing or empty option ${k}`);
+        return false;
+      }
+    }
+  } else if (Array.isArray(mcq.options)) {
+    if (mcq.options.length !== 4 || mcq.options.some((o: any) => !o || typeof o !== 'string' || o.trim().length < 1)) {
+      console.warn('[validate] Options array invalid (need exactly 4 non-empty strings)');
+      return false;
+    }
+  } else {
+    console.warn('[validate] Options missing or invalid type');
+    return false;
+  }
+
+  // Must have a correct answer indicator
+  const hasCorrectOption = mcq.correctOption && ['A', 'B', 'C', 'D'].includes(mcq.correctOption);
+  const hasAnswer = mcq.answer && typeof mcq.answer === 'string' && mcq.answer.trim().length > 0;
+  if (!hasCorrectOption && !hasAnswer) {
+    console.warn('[validate] No valid correctOption or answer');
+    return false;
+  }
+
+  return true;
+}
+
+function sanitizeMCQ(mcq: any): Question {
+  let optionsArray: string[];
+  let answerText: string;
+
+  // Convert options object {A,B,C,D} to array format
+  if (mcq.options && typeof mcq.options === 'object' && !Array.isArray(mcq.options)) {
+    optionsArray = ['A', 'B', 'C', 'D'].map(k => mcq.options[k]?.trim() || '');
+    // Resolve letter-based correctOption to full text
+    if (mcq.correctOption && mcq.options[mcq.correctOption]) {
+      answerText = mcq.options[mcq.correctOption].trim();
+    } else {
+      answerText = mcq.answer?.trim() || optionsArray[0];
+    }
+  } else {
+    optionsArray = (mcq.options as string[]).map((o: string) => o.trim());
+    answerText = mcq.answer?.trim() || '';
+    // If correctOption letter given, resolve it
+    if (mcq.correctOption && ['A', 'B', 'C', 'D'].includes(mcq.correctOption)) {
+      const idx = mcq.correctOption.charCodeAt(0) - 65;
+      if (idx >= 0 && idx < optionsArray.length) {
+        answerText = optionsArray[idx];
+      }
+    }
+  }
+
+  // Ensure question ends with ?
+  let questionText = mcq.question.trim();
+  if (!questionText.endsWith('?') && !questionText.endsWith('.') && !questionText.endsWith(':')) {
+    questionText += '?';
+  }
+
+  return {
+    question: questionText,
+    options: optionsArray,
+    answer: answerText,
+    explanation: (mcq.explanation || '').trim() || undefined,
+  };
+}
+
 function parseAIResponse(text: string): Question[] {
   let jsonText = text.trim();
   
@@ -226,22 +303,28 @@ function parseAIResponse(text: string): Question[] {
     jsonText = jsonText.replace(/```\n?/, '').replace(/\n?```$/, '');
   }
   
+  // Try direct parse - supports both {questions:[...]} and bare [...] array
   try {
     const parsed = JSON.parse(jsonText);
-    return parsed.questions || [];
+    const rawQuestions = parsed.questions || (Array.isArray(parsed) ? parsed : []);
+    return rawQuestions.filter(validateMCQ).map(sanitizeMCQ);
   } catch (e) {
     console.log('Initial JSON parse failed, attempting repair...');
   }
   
+  // Repair: extract individual question objects
   try {
-    const questionsStart = jsonText.indexOf('"questions"');
-    if (questionsStart === -1) {
-      throw new Error('No questions array found');
+    // Find the array start (either after "questions" key or bare array)
+    let arrayStart = -1;
+    const questionsKey = jsonText.indexOf('"questions"');
+    if (questionsKey !== -1) {
+      arrayStart = jsonText.indexOf('[', questionsKey);
+    } else {
+      arrayStart = jsonText.indexOf('[');
     }
     
-    const arrayStart = jsonText.indexOf('[', questionsStart);
     if (arrayStart === -1) {
-      throw new Error('No array start found');
+      throw new Error('No array found');
     }
     
     let arrayContent = jsonText.substring(arrayStart);
@@ -261,13 +344,8 @@ function parseAIResponse(text: string): Question[] {
           const objStr = arrayContent.substring(objStart, i + 1);
           try {
             const q = JSON.parse(objStr);
-            if (q.question && q.options && q.answer) {
-              questions.push({
-                question: q.question,
-                options: Array.isArray(q.options) ? q.options : [],
-                answer: q.answer,
-                explanation: q.explanation || undefined
-              });
+            if (validateMCQ(q)) {
+              questions.push(sanitizeMCQ(q));
             }
           } catch {
             // Skip malformed question
@@ -326,37 +404,101 @@ async function generateQuestionsInBatches(
       ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
       : '';
     
-    const systemPrompt = `You are a strict JSON generator for educational quizzes. Create high-quality, UNIQUE multiple choice questions.
+    const systemPrompt = `You are an expert MCQ examiner for Pakistani competitive exams (FPSC, PPSC, NTS, SPSC, STS, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
 
-🎯 CRITICAL DIVERSITY REQUIREMENTS:
-1. Each question MUST cover a DIFFERENT sub-concept or aspect of the topic
-2. Use VARIED question formats across the batch:
-   - Definition questions (What is...?)
-   - Application questions (How would you...?)
-   - Comparison questions (What is the difference between...?)
-   - Calculation/Analysis (Calculate..., Analyze...)
-   - True reasoning (Which statement is correct about...?)
-   - Cause/Effect (What happens when...?)
-3. NEVER repeat the same concept even with different wording
-4. NEVER generate questions that are paraphrases of each other
-5. If the topic has limited scope, explore edge cases, exceptions, and advanced scenarios
-6. Each question should test a DISTINCT piece of knowledge
+🇵🇰 PAKISTANI EXAM STANDARDS — MANDATORY:
 
-Output ONLY raw JSON in this exact structure (no markdown, no explanations):
+1. EVERY question MUST be a proper MCQ ending with "?" 
+2. Start questions with: What, Which, How, When, Where, Who, In which, Fill in the blank
+3. NEVER write definition-style statements like "Benevolent means kind" — always frame as a question
+4. EXACTLY 4 options per question labeled A, B, C, D
+5. All options must be plausible distractors (not obviously wrong)
+6. Use Pakistani context: Pakistani names, cities, institutions, currency (PKR), history
+7. Each question must test a DIFFERENT sub-concept
+
+SUBJECT-SPECIFIC GUIDANCE:
+
+For English:
+- Grammar: tenses, prepositions, articles, active/passive voice, direct/indirect narration
+- Vocabulary: synonyms, antonyms, one-word substitutions, idioms & phrases
+- Fill in the blanks, error detection, sentence correction
+- Example: "Fill in the blank: She _____ to school every day."
+
+For Mathematics/Quantitative:
+- Arithmetic: percentage, ratio, average, profit/loss, simple/compound interest
+- Algebra: linear equations, quadratic equations, inequalities
+- Geometry: areas, volumes, angles, triangles
+- Number theory: HCF, LCM, prime numbers, divisibility
+
+For General Knowledge/Pakistan Affairs:
+- Pakistan history: creation, important dates, constitutional amendments
+- Geography: rivers, mountains, provinces, districts
+- Current affairs: recent events, international organizations
+- Islamic Studies: basic concepts, pillars, history
+
+For Computer Science/IT:
+- MS Office: Word, Excel, PowerPoint shortcuts and features
+- Internet, networking, email basics
+- Operating systems, file management
+- Programming fundamentals, data types
+
+For Science (Physics/Chemistry/Biology):
+- MDCAT/ECAT level conceptual questions
+- Numerical problems with calculations
+- Application-based scenarios
+
+🎯 DIVERSITY REQUIREMENTS:
+- Each question MUST cover a DIFFERENT sub-concept
+- Mix question types: factual recall, application, analysis, fill-in-the-blank
+- NEVER repeat same concept with different wording
+- Explore edge cases and advanced scenarios for limited topics
+
+EXAMPLE MCQs (follow this EXACT format):
+
 {
-  "questions": [
-    {
-      "question": "Question text here?",
-      "options": ["Option 1", "Option 2", "Option 3", "Option 4"],
-      "answer": "The exact text of the correct option",
-      "explanation": "Brief explanation of the correct answer"
-    }
-  ]
-}${avoidSection}`;
+  "question": "Fill in the blank: She _____ to the market every Sunday.",
+  "options": {"A": "go", "B": "goes", "C": "going", "D": "gone"},
+  "correctOption": "B",
+  "explanation": "The subject 'She' is third person singular in simple present tense, requiring 'goes'.",
+  "difficulty": "easy"
+}
 
-    const userPrompt = `Create exactly ${batchSize} UNIQUE and DIVERSE multiple choice questions about "${topic}" at ${difficulty} difficulty level. 
+{
+  "question": "If 20% of a number is 50, what is the number?",
+  "options": {"A": "200", "B": "250", "C": "300", "D": "350"},
+  "correctOption": "B",
+  "explanation": "20% of x = 50, so x = 50 × 100/20 = 250.",
+  "difficulty": "medium"
+}
 
-REMEMBER: Each question must test a DIFFERENT concept or sub-topic. No duplicates or paraphrases allowed. Each question must have exactly 4 options and include a brief explanation. Return ONLY valid JSON.`;
+{
+  "question": "In which year was the Lahore Resolution passed?",
+  "options": {"A": "1930", "B": "1940", "C": "1945", "D": "1947"},
+  "correctOption": "B",
+  "explanation": "The Lahore Resolution (Pakistan Resolution) was passed on March 23, 1940.",
+  "difficulty": "easy"
+}
+
+OUTPUT FORMAT — Return ONLY this JSON, NO markdown, NO extra text:
+[
+  {
+    "question": "...",
+    "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+    "correctOption": "A",
+    "explanation": "...",
+    "difficulty": "${difficulty}"
+  }
+]${avoidSection}`;
+
+    const userPrompt = `Generate exactly ${batchSize} UNIQUE Pakistani exam-style MCQs about "${topic}" at ${difficulty} difficulty.
+
+RULES:
+- Every question MUST end with "?" (no statements or definitions)
+- Every question MUST have options as {A, B, C, D} object
+- Include "correctOption" as letter (A/B/C/D) and "explanation"
+- Follow FPSC/PPSC/NTS exam patterns
+- Use Pakistani context where relevant
+- Return ONLY a valid JSON array, no wrapping object needed`;
 
     try {
       // Use the robust fallback mechanism
