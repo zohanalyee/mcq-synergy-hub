@@ -1,10 +1,11 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { Flag } from "lucide-react";
+import { Flag, AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { cleanQuestionText } from "@/lib/questionUtils";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface QuestionCardProps {
   question: {
