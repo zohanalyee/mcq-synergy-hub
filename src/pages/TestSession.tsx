@@ -285,6 +285,22 @@ const TestSession = () => {
     markQuestionArrival();
   }, [currentQuestion, markQuestionArrival]);
 
+  // Syllabus tracker data - must be before early returns to satisfy hooks rules
+  const questions = testData?.questions || [];
+  const syllabusMap = useMemo(() => {
+    if (!questions.length) return [];
+    const subjectMap = new Map<string, { name: string; total: number; attempted: number; isCurrent: boolean }>();
+    questions.forEach((q: any, index: number) => {
+      const subjectName = q.subject || "General";
+      const existing = subjectMap.get(subjectName) || { name: subjectName, total: 0, attempted: 0, isCurrent: false };
+      existing.total++;
+      if (answers[index] !== undefined) existing.attempted++;
+      if (index === currentQuestion) existing.isCurrent = true;
+      subjectMap.set(subjectName, existing);
+    });
+    return Array.from(subjectMap.values());
+  }, [questions, answers, currentQuestion]);
+
   // Loading skeleton
   if (isLoading) {
     return (
@@ -433,20 +449,6 @@ const TestSession = () => {
 
   const sourceBadge = getSourceBadge();
 
-  // Syllabus tracker data
-  const syllabusMap = useMemo(() => {
-    if (!questions.length) return [];
-    const subjectMap = new Map<string, { name: string; total: number; attempted: number; isCurrent: boolean }>();
-    questions.forEach((q: any, index: number) => {
-      const subjectName = q.subject || "General";
-      const existing = subjectMap.get(subjectName) || { name: subjectName, total: 0, attempted: 0, isCurrent: false };
-      existing.total++;
-      if (answers[index] !== undefined) existing.attempted++;
-      if (index === currentQuestion) existing.isCurrent = true;
-      subjectMap.set(subjectName, existing);
-    });
-    return Array.from(subjectMap.values());
-  }, [questions, answers, currentQuestion]);
 
   return (
     <Header>
