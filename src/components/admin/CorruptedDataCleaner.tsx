@@ -4,12 +4,65 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Trash2, AlertTriangle, ShieldCheck } from "lucide-react";
+import { Trash2, AlertTriangle, ShieldCheck, RefreshCw } from "lucide-react";
+
+type CorruptionReason = string;
+
+interface CorruptedItem {
+  id: string;
+  title: string;
+  subject: string | null;
+  topic: string | null;
+  difficulty: string | null;
+  options: any;
+  correct_option: string | null;
+  created_at: string;
+  reasons: CorruptionReason[];
+}
+
+const getCorruptionReasons = (item: any): CorruptionReason[] => {
+  const reasons: CorruptionReason[] = [];
+  const opts = item.options as any;
+
+  // Title check
+  if (!item.title || item.title.trim().length < 5) {
+    reasons.push("Short/empty title");
+  }
+
+  // Options existence
+  if (!opts) {
+    reasons.push("No options");
+    return reasons;
+  }
+
+  if (Array.isArray(opts)) {
+    if (opts.length < 4) reasons.push(`Only ${opts.length} options`);
+    if (opts.some((o: any) => !o || (typeof o === "string" && o.trim() === ""))) {
+      reasons.push("Empty option string");
+    }
+  } else if (typeof opts === "object") {
+    const keys = ["A", "B", "C", "D"];
+    for (const k of keys) {
+      if (!opts[k] || (typeof opts[k] === "string" && opts[k].trim() === "")) {
+        reasons.push(`Option ${k} empty`);
+      }
+    }
+  } else {
+    reasons.push("Invalid options format");
+  }
+
+  // Correct option check
+  if (!item.correct_option || (typeof item.correct_option === "string" && item.correct_option.trim() === "")) {
+    reasons.push("No correct answer");
+  }
+
+  return reasons;
+};
 
 const CorruptedDataCleaner = () => {
   const queryClient = useQueryClient();
 
-  const { data: corrupted = [], isLoading } = useQuery({
+  const { data: corrupted = [], isLoading, refetch } = useQuery({
     queryKey: ["corrupted-mcqs"],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -17,19 +70,18 @@ const CorruptedDataCleaner = () => {
         .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
         .eq("category", "mcq")
         .order("created_at", { ascending: false })
-        .limit(200);
+        .limit(500);
 
       if (error) throw error;
 
-      return (data || []).filter((item) => {
-        const opts = item.options as any;
-        if (!opts) return true;
-        if (Array.isArray(opts)) return opts.length < 4 || opts.some((o: any) => !o);
-        if (typeof opts === "object") {
-          return !opts.A || !opts.B || !opts.C || !opts.D;
+      const results: CorruptedItem[] = [];
+      for (const item of data || []) {
+        const reasons = getCorruptionReasons(item);
+        if (reasons.length > 0) {
+          results.push({ ...item, reasons });
         }
-        return true;
-      });
+      }
+      return results;
     },
   });
 
@@ -58,21 +110,32 @@ const CorruptedDataCleaner = () => {
             <AlertTriangle className="h-4 w-4 text-amber-400" />
             Corrupted MCQ Cleanup
           </CardTitle>
-          {corrupted.length > 0 && (
+          <div className="flex gap-2">
             <Button
               size="sm"
-              variant="destructive"
-              onClick={() => {
-                if (confirm(`Delete ${corrupted.length} corrupted questions?`)) {
-                  cleanupMutation.mutate(corrupted.map((q) => q.id));
-                }
-              }}
-              disabled={cleanupMutation.isPending}
+              variant="outline"
+              onClick={() => refetch()}
+              disabled={isLoading}
             >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Clean All ({corrupted.length})
+              <RefreshCw className={`h-3 w-3 mr-1 ${isLoading ? "animate-spin" : ""}`} />
+              Scan Again
             </Button>
-          )}
+            {corrupted.length > 0 && (
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => {
+                  if (confirm(`Delete ${corrupted.length} corrupted questions?`)) {
+                    cleanupMutation.mutate(corrupted.map((q) => q.id));
+                  }
+                }}
+                disabled={cleanupMutation.isPending}
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                Clean All ({corrupted.length})
+              </Button>
+            )}
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -85,65 +148,39 @@ const CorruptedDataCleaner = () => {
           </div>
         ) : (
           <div className="space-y-2 max-h-64 overflow-y-auto">
-            {corrupted.map((item) => {
-              const opts = item.options as any;
-              return (
-                <div
-                  key={item.id}
-                  className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border/20"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{item.title || "No title"}</p>
-                    <div className="flex gap-1 mt-1">
-                      <Badge variant="outline" className="text-[10px]">
-                        {item.subject || "?"}
-                      </Badge>
+            {corrupted.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border border-border/20"
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-medium truncate">{item.title || "No title"}</p>
+                  <div className="flex gap-1 mt-1 flex-wrap">
+                    <Badge variant="outline" className="text-[10px]">
+                      {item.subject || "?"}
+                    </Badge>
+                    {item.reasons.map((reason, i) => (
                       <Badge
+                        key={i}
                         variant="outline"
-                        className={`text-[10px] ${
-                          opts?.A ? "text-emerald-400 border-emerald-500/30" : "text-red-400 border-red-500/30"
-                        }`}
+                        className="text-[10px] text-red-400 border-red-500/30"
                       >
-                        A:{opts?.A ? "✓" : "✗"}
+                        {reason}
                       </Badge>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] ${
-                          opts?.B ? "text-emerald-400 border-emerald-500/30" : "text-red-400 border-red-500/30"
-                        }`}
-                      >
-                        B:{opts?.B ? "✓" : "✗"}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] ${
-                          opts?.C ? "text-emerald-400 border-emerald-500/30" : "text-red-400 border-red-500/30"
-                        }`}
-                      >
-                        C:{opts?.C ? "✓" : "✗"}
-                      </Badge>
-                      <Badge
-                        variant="outline"
-                        className={`text-[10px] ${
-                          opts?.D ? "text-emerald-400 border-emerald-500/30" : "text-red-400 border-red-500/30"
-                        }`}
-                      >
-                        D:{opts?.D ? "✓" : "✗"}
-                      </Badge>
-                    </div>
+                    ))}
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="h-6 w-6 shrink-0 text-red-400 hover:text-red-300"
-                    onClick={() => cleanupMutation.mutate([item.id])}
-                    disabled={cleanupMutation.isPending}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </Button>
                 </div>
-              );
-            })}
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6 shrink-0 text-red-400 hover:text-red-300"
+                  onClick={() => cleanupMutation.mutate([item.id])}
+                  disabled={cleanupMutation.isPending}
+                >
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </CardContent>
