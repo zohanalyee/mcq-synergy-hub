@@ -286,7 +286,6 @@ const TestSession = () => {
   }, [currentQuestion, markQuestionArrival]);
 
   // Syllabus tracker data - must be before early returns to satisfy hooks rules
-  const questions = testData?.questions || [];
   const syllabusMap = useMemo(() => {
     if (!questions.length) return [];
     const subjectMap = new Map<string, { name: string; total: number; attempted: number; isCurrent: boolean }>();
