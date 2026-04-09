@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/lib/questionUtils";
@@ -432,9 +433,24 @@ const TestSession = () => {
 
   const sourceBadge = getSourceBadge();
 
+  // Syllabus tracker data
+  const syllabusMap = useMemo(() => {
+    if (!questions.length) return [];
+    const subjectMap = new Map<string, { name: string; total: number; attempted: number; isCurrent: boolean }>();
+    questions.forEach((q: any, index: number) => {
+      const subjectName = q.subject || "General";
+      const existing = subjectMap.get(subjectName) || { name: subjectName, total: 0, attempted: 0, isCurrent: false };
+      existing.total++;
+      if (answers[index] !== undefined) existing.attempted++;
+      if (index === currentQuestion) existing.isCurrent = true;
+      subjectMap.set(subjectName, existing);
+    });
+    return Array.from(subjectMap.values());
+  }, [questions, answers, currentQuestion]);
+
   return (
     <Header>
-      <div className="max-w-5xl mx-auto px-3 sm:px-4 pt-0 pb-2 test-container">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-0 pb-2 test-container">
         {!isSubmitted ? (
           <>
             {/* Exam Header */}
@@ -455,8 +471,40 @@ const TestSession = () => {
             {/* Music Player (collapsible) */}
             <NeuralFocusPlayer isOpen={isMusicOpen} />
 
-            {/* Two-column layout: Question + Palette */}
+            {/* Three-column layout: Syllabus + Question + Palette */}
             <div className="flex gap-4 flex-1 min-h-0">
+              {/* Syllabus Tracker Sidebar (desktop only) */}
+              <div className="hidden lg:block w-56 shrink-0">
+                <Card className="sticky top-4">
+                  <CardContent className="p-3">
+                    <h4 className="text-xs font-semibold text-muted-foreground mb-3 flex items-center gap-1.5">
+                      <BookOpen className="h-3.5 w-3.5" />
+                      Syllabus Map
+                    </h4>
+                    <div className="space-y-3">
+                      {syllabusMap.map((subject) => {
+                        const pct = subject.total > 0 ? Math.round((subject.attempted / subject.total) * 100) : 0;
+                        return (
+                          <div key={subject.name} className={`p-2 rounded-lg border transition-colors ${subject.isCurrent ? "border-primary/50 bg-primary/5" : "border-border/30"}`}>
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-medium truncate">{subject.name}</span>
+                              {subject.isCurrent && (
+                                <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4">
+                                  Now
+                                </Badge>
+                              )}
+                            </div>
+                            <Progress value={pct} className="h-1.5" />
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {subject.attempted}/{subject.total} done
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
               {/* Main question area */}
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-thin">
@@ -590,6 +638,7 @@ const TestSession = () => {
                     const userAnswer = answers[index];
                     const isCorrect = checkAnswer(question, userAnswer);
                     const correctText = resolveAnswer(question);
+                    const explanation = question.explanation;
                     return (
                       <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
                         <div className="flex items-start gap-2">
@@ -608,6 +657,15 @@ const TestSession = () => {
                             <p className="text-xs text-green-600">
                               <span className="font-medium">Correct:</span> {correctText}
                             </p>
+                            {explanation && (
+                              <div className={`mt-2 p-2.5 rounded-md text-xs ${isCorrect ? "bg-blue-500/10 border border-blue-500/20" : "bg-amber-500/10 border border-amber-500/20"}`}>
+                                <p className={`font-semibold mb-0.5 flex items-center gap-1 ${isCorrect ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"}`}>
+                                  <BookOpen className="h-3 w-3" />
+                                  {isCorrect ? "Why this is correct:" : "Explanation:"}
+                                </p>
+                                <p className="text-muted-foreground leading-relaxed">{explanation}</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </Alert>

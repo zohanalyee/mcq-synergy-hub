@@ -1,5 +1,15 @@
 import { getQuestionBank, QuestionFilters, QuestionBankItem } from './questionBankService';
 
+// Fisher-Yates shuffle for true randomization
+const fisherYatesShuffle = <T,>(array: T[]): T[] => {
+  const shuffled = [...array];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
+};
+
 export interface TestGenerationOptions {
   subjects: string[];
   topics: string[];
@@ -129,6 +139,9 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
   console.log('📚 Available subjects:', [...new Set(availableQuestions.map(q => q.subject))]);
   console.log('📖 Available topics:', [...new Set(availableQuestions.map(q => q.topic))]);
 
+  // CRITICAL: Enforce strict limit after all fallbacks + deep shuffle
+  availableQuestions = fisherYatesShuffle(availableQuestions);
+
   // Select questions (never throw)
   let selectedQuestions: QuestionBankItem[];
 
@@ -137,14 +150,12 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
   } else if (options.difficulty === 'mixed' && availableQuestions.length >= options.questionCount) {
     selectedQuestions = balanceQuestionsByDifficulty(availableQuestions, options.questionCount);
   } else {
-    selectedQuestions = availableQuestions
-      .sort(() => Math.random() - 0.5)
-      .slice(0, options.questionCount);
+    selectedQuestions = availableQuestions.slice(0, options.questionCount);
   }
 
-  // Shuffle questions if requested
+  // Shuffle questions if requested (Fisher-Yates)
   if (options.shuffleQuestions) {
-    selectedQuestions = selectedQuestions.sort(() => Math.random() - 0.5);
+    selectedQuestions = fisherYatesShuffle(selectedQuestions);
   }
 
   // Shuffle options if requested
@@ -187,9 +198,9 @@ const balanceQuestionsByDifficulty = (questions: QuestionBankItem[], targetCount
   const hardCount = targetCount - easyCount - mediumCount;
 
   const selectedQuestions: QuestionBankItem[] = [];
-  selectedQuestions.push(...easyQuestions.sort(() => Math.random() - 0.5).slice(0, easyCount));
-  selectedQuestions.push(...mediumQuestions.sort(() => Math.random() - 0.5).slice(0, mediumCount));
-  selectedQuestions.push(...hardQuestions.sort(() => Math.random() - 0.5).slice(0, hardCount));
+  selectedQuestions.push(...fisherYatesShuffle(easyQuestions).slice(0, easyCount));
+  selectedQuestions.push(...fisherYatesShuffle(mediumQuestions).slice(0, mediumCount));
+  selectedQuestions.push(...fisherYatesShuffle(hardQuestions).slice(0, hardCount));
 
   if (selectedQuestions.length < targetCount) {
     const remaining = questions.filter(q => !selectedQuestions.find(sq => sq.id === q.id));
