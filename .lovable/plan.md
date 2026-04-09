@@ -1,71 +1,53 @@
 
 
-# Fix: MCQ Generation Quality + Pakistani Exam Standards
+# Fix Plan: 4 Critical Exam Engine Issues
 
-## Problem
-AI-generated questions show as descriptive statements ("Benevolent means...") instead of proper MCQs, options are missing/malformed, and questions don't follow Pakistani competitive exam patterns (NTS/FPSC/PPSC style).
+## Fix 1: Over-fetching + Corrupted Cleaner
 
-## Root Causes
-1. The AI prompt (line 329-355 in `generate-test/index.ts`) is generic — no Pakistani exam context, no strict MCQ format enforcement
-2. `parseAIResponse` (line 220-286) has no validation for option count, question format, or answer validity
-3. No corrupted-data guard in QuestionCard UI
+**Problem**: After fallback cascading, `availableQuestions` can exceed `questionCount` (e.g., 135 when 100 requested). The corrupted cleaner doesn't catch empty-string options or short titles.
 
-## Changes
+**File**: `src/services/testGenerationService.ts` (after line 127)
+- Add Fisher-Yates deep shuffle function replacing `Math.random() - 0.5`
+- After all 4 fallback steps (line 127), enforce `availableQuestions = fisherYatesShuffle(availableQuestions).slice(0, options.questionCount * 2)` before selection logic
+- Replace the `sort(() => Math.random() - 0.5)` on line 141 with Fisher-Yates
 
-### 1. Rewrite AI Prompt — Pakistani Exam Standards
-**File**: `supabase/functions/generate-test/index.ts` (lines 324-359)
+**File**: `src/components/admin/CorruptedDataCleaner.tsx`
+- Strengthen filter: also flag items where `!item.title || item.title.trim().length < 5`
+- Also flag items where option values are empty strings: `opts.A?.trim() === ''` etc.
+- Also flag items with no `correct_option`
+- Add a "Scan Again" button using `refetch()`
+- Show corruption reason badges per item
 
-Replace the generic system prompt in `generateQuestionsInBatches` with a strict Pakistani exam prompt that:
-- Specifies FPSC/PPSC/NTS/STS exam patterns
-- Requires questions to start with interrogative words and end with `?`
-- Enforces exactly 4 options (A, B, C, D) as an object, not array
-- Includes subject-specific guidance (English grammar/vocab, Math arithmetic, Pakistan Studies, GK, Computer Science)
-- Provides example MCQs in the exact JSON format expected
-- Requests the AI return `correctOption` as a letter (A/B/C/D) plus `explanation`
+## Fix 2: Show Explanations in Test Review
 
-Update the JSON output schema to use `{ "questions": [...] }` with options as `{ "A": "...", "B": "...", "C": "...", "D": "..." }` and `correctOption` as a letter.
+**Problem**: The review section (lines 587-616 in TestSession.tsx) only shows correct/wrong answer text but never displays `question.explanation`.
 
-### 2. Add Strict MCQ Validation + Sanitization
-**File**: `supabase/functions/generate-test/index.ts`
+**File**: `src/pages/TestSession.tsx` (lines 593-614)
+- After the "Correct: ..." line (line 609), add an explanation block
+- Show `question.explanation` in a styled box with a book icon
+- Use distinct styling: blue/info for correct answers, amber for wrong answers to emphasize learning
 
-Add two new functions after `parseAIResponse`:
-- **`validateMCQ(mcq)`**: Checks question is a string ending with `?`, options object has all 4 keys (A/B/C/D) as non-empty strings, correctOption is a valid letter, explanation exists. Returns boolean.
-- **`sanitizeMCQ(mcq)`**: Trims all fields, normalizes difficulty. If question doesn't end with `?`, appends it.
+## Fix 3: Custom Settings Already Work (Minor Shuffle Fix)
 
-Update `parseAIResponse` to:
-- Also try parsing the new format (`correctOption` letter + options object)
-- Convert validated MCQs back to the existing `Question` interface (options as array, answer as full text of correct option) so existing DB save logic works unchanged
+The `handleStartJobTest` and `handleStartTest` already correctly pass `customSettings` from the dialog through to `generateCustomTest`. The dialog's `handleDialogStart` passes `{ difficulty, questionCount, duration }` which maps correctly to `settings.questionCount` and `settings.duration`.
 
-### 3. Add Corrupted Data Guard to QuestionCard
-**File**: `src/components/exam/QuestionCard.tsx`
+**Only fix needed**: The shuffle quality in `testGenerationService.ts` — replace `Math.random() - 0.5` with Fisher-Yates (already covered in Fix 1).
 
-Before rendering, check if `question.options` is a non-empty array (or non-empty object). If not, show a styled "Corrupted question" alert with skip guidance instead of rendering blank space.
+## Fix 4: Syllabus Tracker Sidebar
 
-### 4. Add Admin Corrupted Data Cleaner
-**File**: `src/components/admin/CorruptedDataCleaner.tsx` (new)
+**Problem**: Users can't see which subject section they're in during a test.
 
-A simple component that:
-- Queries `content_items` where category=mcq and filters client-side for items missing valid options/question
-- Shows count + list with delete buttons
-- Bulk cleanup option
+**File**: `src/pages/TestSession.tsx`
+- Add a `useMemo` that extracts unique subjects from `questions` array, counts total/attempted per subject, and flags the current question's subject
+- In the exam layout (line 459), add a left sidebar `hidden lg:block w-56 border-r` before the main question area
+- Sidebar shows: "Syllabus Map" heading, vertical list of subjects with progress bars, active subject highlighted with a colored badge
+- On smaller screens, this sidebar is hidden (the existing palette handles mobile)
 
-**File**: `src/components/admin/AgentDashboard.tsx` — add CorruptedDataCleaner to the Content/Review tab
+## Files to Modify
 
-### 5. Deploy Edge Function
-Deploy `generate-test` after changes.
-
-## Files Summary
-
-| Action | File |
-|--------|------|
-| Modify | `supabase/functions/generate-test/index.ts` — Pakistani exam prompt, MCQ validation, sanitization |
-| Modify | `src/components/exam/QuestionCard.tsx` — corrupted data guard |
-| Create | `src/components/admin/CorruptedDataCleaner.tsx` — admin cleanup tool |
-| Modify | `src/components/admin/AgentDashboard.tsx` — add cleaner to dashboard |
-| Deploy | `generate-test` edge function |
-
-## Technical Notes
-- The existing `Question` interface uses `options: string[]` and `answer: string` (full text). The new prompt will generate with letter-based answers, and the validation layer will convert back to this format for compatibility.
-- The existing `callAIWithAutoSwitch` in `_shared/gemini.ts` handles Gemini free tier + Lovable gateway fallback — no changes needed there.
-- No database migration needed — questions still save to `content_items` with existing columns.
+| File | Change |
+|------|--------|
+| `src/services/testGenerationService.ts` | Fisher-Yates shuffle, enforce slice after fallbacks |
+| `src/components/admin/CorruptedDataCleaner.tsx` | Stronger filter (title length, empty strings, correct_option), scan button |
+| `src/pages/TestSession.tsx` | Explanation display in review + syllabus sidebar |
 
