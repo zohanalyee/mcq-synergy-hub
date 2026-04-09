@@ -1,53 +1,63 @@
 
 
-# Fix Plan: 4 Critical Exam Engine Issues
+# Fix Plan: 4 Critical Test Engine Flaws
 
-## Fix 1: Over-fetching + Corrupted Cleaner
+## Fix 1: Syllabus Percentage Math + Strict Limits
 
-**Problem**: After fallback cascading, `availableQuestions` can exceed `questionCount` (e.g., 135 when 100 requested). The corrupted cleaner doesn't catch empty-string options or short titles.
+**File**: `src/services/testGenerationService.ts`
 
-**File**: `src/services/testGenerationService.ts` (after line 127)
-- Add Fisher-Yates deep shuffle function replacing `Math.random() - 0.5`
-- After all 4 fallback steps (line 127), enforce `availableQuestions = fisherYatesShuffle(availableQuestions).slice(0, options.questionCount * 2)` before selection logic
-- Replace the `sort(() => Math.random() - 0.5)` on line 141 with Fisher-Yates
+**Problem**: When a job test has syllabus with percentages (e.g., English 40%, Math 10%), the engine ignores these weights and just dumps all subjects into one flat query. Also, after fallback cascading, no final `.slice()` enforces the exact count.
 
-**File**: `src/components/admin/CorruptedDataCleaner.tsx`
-- Strengthen filter: also flag items where `!item.title || item.title.trim().length < 5`
-- Also flag items where option values are empty strings: `opts.A?.trim() === ''` etc.
-- Also flag items with no `correct_option`
-- Add a "Scan Again" button using `refetch()`
-- Show corruption reason badges per item
+**Changes**:
+- Add `syllabusWeights` as an optional field on `TestGenerationOptions`: `syllabusWeights?: Record<string, number>`
+- When `syllabusWeights` is provided, calculate per-subject quotas (e.g., 20 questions × 0.40 = 8 English). Fetch each subject separately with its exact quota. Merge results.
+- Add a final hard `selectedQuestions = selectedQuestions.slice(0, options.questionCount)` after ALL selection logic (line ~163) as an absolute safety net.
 
-## Fix 2: Show Explanations in Test Review
+**File**: `src/components/mock-tests/JobTestsTab.tsx`
+- Parse `test.syllabus` array (which has `{ topic, percentage }`) into a `syllabusWeights` map and pass it into `TestGenerationOptions`.
 
-**Problem**: The review section (lines 587-616 in TestSession.tsx) only shows correct/wrong answer text but never displays `question.explanation`.
+## Fix 2: Anti-Repetition (Exclude Previously Answered Questions)
 
-**File**: `src/pages/TestSession.tsx` (lines 593-614)
-- After the "Correct: ..." line (line 609), add an explanation block
-- Show `question.explanation` in a styled box with a book icon
-- Use distinct styling: blue/info for correct answers, amber for wrong answers to emphasize learning
+**File**: `src/services/testGenerationService.ts`
 
-## Fix 3: Custom Settings Already Work (Minor Shuffle Fix)
+**Problem**: Users get the same questions repeatedly. No mechanism excludes previously answered questions.
 
-The `handleStartJobTest` and `handleStartTest` already correctly pass `customSettings` from the dialog through to `generateCustomTest`. The dialog's `handleDialogStart` passes `{ difficulty, questionCount, duration }` which maps correctly to `settings.questionCount` and `settings.duration`.
+**Changes**:
+- Add `excludeQuestionIds?: string[]` to `TestGenerationOptions`.
+- Before calling `generateCustomTest`, query `custom_test_sessions` for this user's past sessions, extract all question IDs from the `questions` JSONB column, and pass them as `excludeQuestionIds`.
+- In `getQuestionBank` (`questionBankService.ts`), when `excludeIds` filter is provided, append `.not('id', 'in', `(${ids})`)` to the Supabase query. This naturally causes a "cache miss" when fresh DB questions run out, triggering the AI deficit fill.
 
-**Only fix needed**: The shuffle quality in `testGenerationService.ts` — replace `Math.random() - 0.5` with Fisher-Yates (already covered in Fix 1).
+**Files**: `src/services/questionBankService.ts` (add `excludeIds` filter), `src/components/mock-tests/JobTestsTab.tsx` and `SubjectTestsTab.tsx` (fetch user's past question IDs before generating).
 
-## Fix 4: Syllabus Tracker Sidebar
+## Fix 3: Fix Difficulty Dropdown in CustomizeTestDialog
 
-**Problem**: Users can't see which subject section they're in during a test.
+**File**: `src/components/mock-tests/CustomizeTestDialog.tsx`
 
-**File**: `src/pages/TestSession.tsx`
-- Add a `useMemo` that extracts unique subjects from `questions` array, counts total/attempted per subject, and flags the current question's subject
-- In the exam layout (line 459), add a left sidebar `hidden lg:block w-56 border-r` before the main question area
-- Sidebar shows: "Syllabus Map" heading, vertical list of subjects with progress bars, active subject highlighted with a colored badge
-- On smaller screens, this sidebar is hidden (the existing palette handles mobile)
+**Problem**: The Shadcn `<Select>` inside a `<Dialog>` has pointer-event conflicts causing the dropdown to appear stuck/unresponsive.
+
+**Fix**: Replace the Shadcn `<Select>` with a native HTML `<select>` element styled with Tailwind, identical to the fix already applied in `ManualOpportunityCreator.tsx`. The `onChange` handler updates state via `setSettings(prev => ({ ...prev, difficulty: e.target.value }))`. This eliminates the Dialog overlay z-index/pointer-event conflict entirely.
+
+## Fix 4: Pakistani Examiner AI Prompt Enhancement
+
+**File**: `supabase/functions/generate-test/index.ts`
+
+**Problem**: The existing prompt (lines 407-491) is already decent but can be tightened. The user wants a more direct, stricter tone matching FPSC/PPSC/STS exam style — shorter questions, no verbose western scenarios.
+
+**Changes** (to the system prompt around line 407):
+- Add opening line: "You are a strict examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur)."
+- Add explicit instruction: "Generate SHORT, DIRECT, FACTUAL questions. Maximum 2 lines per question. For MS Office: ask specific shortcut keys, ribbon tab locations, formula syntax. For English: direct synonym/antonym, preposition fill-in-blank, sentence correction. Do NOT use long verbose western-style scenarios or paragraphs."
+- Add: "Keep strictly to the syllabus topic provided. Do not drift to unrelated subjects."
+- Redeploy the edge function after changes.
 
 ## Files to Modify
 
-| File | Change |
-|------|--------|
-| `src/services/testGenerationService.ts` | Fisher-Yates shuffle, enforce slice after fallbacks |
-| `src/components/admin/CorruptedDataCleaner.tsx` | Stronger filter (title length, empty strings, correct_option), scan button |
-| `src/pages/TestSession.tsx` | Explanation display in review + syllabus sidebar |
+| Action | File |
+|--------|------|
+| Modify | `src/services/testGenerationService.ts` — syllabus weights, excludeIds, final slice |
+| Modify | `src/services/questionBankService.ts` — add excludeIds filter |
+| Modify | `src/components/mock-tests/JobTestsTab.tsx` — pass syllabus weights + user's past question IDs |
+| Modify | `src/components/mock-tests/SubjectTestsTab.tsx` — pass user's past question IDs |
+| Modify | `src/components/mock-tests/CustomizeTestDialog.tsx` — replace Shadcn Select with native select |
+| Modify | `supabase/functions/generate-test/index.ts` — stricter Pakistani exam prompt |
+| Deploy | `generate-test` edge function |
 
