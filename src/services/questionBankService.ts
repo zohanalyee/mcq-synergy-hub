@@ -36,6 +36,7 @@ export interface QuestionFilters {
   is_featured?: boolean;
   limit?: number;
   offset?: number;
+  excludeIds?: string[]; // IDs to exclude (anti-repetition)
 }
 
 export interface CustomTestSession {
@@ -61,7 +62,7 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       .select('*')
       .eq('category', 'mcq')
       .eq('status', 'approved')
-      .eq('question_type', 'mcq'); // Ensure only MCQ type questions
+      .eq('question_type', 'mcq');
 
     // Apply filters - only if arrays have items
     if (filters.subjects?.length && filters.subjects.length > 0) {
@@ -81,6 +82,14 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
     }
     if (filters.is_featured !== undefined) {
       query = query.eq('is_featured', filters.is_featured);
+    }
+
+    // Anti-repetition: exclude already-answered question IDs
+    if (filters.excludeIds?.length && filters.excludeIds.length > 0) {
+      // Supabase PostgREST supports .not('id', 'in', '(id1,id2,...)')
+      const idList = `(${filters.excludeIds.join(',')})`;
+      query = query.not('id', 'in', idList);
+      console.log(`🚫 Excluding ${filters.excludeIds.length} previously answered questions`);
     }
 
     // Apply pagination
@@ -130,16 +139,44 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
   }
 };
 
+// Helper: Fetch previously answered question IDs for a user
+export const getUserAnsweredQuestionIds = async (userId: string): Promise<string[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('custom_test_sessions')
+      .select('questions')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(50); // Last 50 sessions
+
+    if (error || !data) return [];
+
+    const ids = new Set<string>();
+    for (const session of data) {
+      const questions = session.questions as any[];
+      if (Array.isArray(questions)) {
+        for (const q of questions) {
+          if (q?.id) ids.add(q.id);
+        }
+      }
+    }
+    console.log(`📋 Found ${ids.size} previously answered question IDs for user`);
+    return Array.from(ids);
+  } catch (error) {
+    console.error("Error fetching answered question IDs:", error);
+    return [];
+  }
+};
+
 // Generate custom test from question bank
 export const generateCustomTest = async (criteria: Omit<CustomTestSession, 'id' | 'questions'>): Promise<CustomTestSession | null> => {
   try {
-    // Get questions based on criteria
     const questions = await getQuestionBank({
       subjects: criteria.subjects,
       topics: criteria.topics,
       subtopics: criteria.subtopics,
       difficulties: criteria.difficulty_levels,
-      limit: criteria.question_count * 2 // Get more questions to have variety
+      limit: criteria.question_count * 2
     });
 
     if (questions.length === 0) {
@@ -147,18 +184,15 @@ export const generateCustomTest = async (criteria: Omit<CustomTestSession, 'id' 
       return null;
     }
 
-    // Shuffle and select the requested number of questions
     const shuffledQuestions = questions.sort(() => Math.random() - 0.5);
     const selectedQuestions = shuffledQuestions.slice(0, criteria.question_count);
 
-    // Create test session
     const testSession: CustomTestSession = {
       ...criteria,
       questions: selectedQuestions,
-      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 hours from now
+      expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
     };
 
-    // Save to database if user is authenticated
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data, error } = await supabase
@@ -187,7 +221,6 @@ export const generateCustomTest = async (criteria: Omit<CustomTestSession, 'id' 
       }
     }
 
-    // Update usage count for selected questions
     await Promise.all(selectedQuestions.map(q => 
       supabase
         .from('content_items')

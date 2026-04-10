@@ -404,30 +404,38 @@ async function generateQuestionsInBatches(
       ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
       : '';
     
-    const systemPrompt = `You are an expert MCQ examiner for Pakistani competitive exams (FPSC, PPSC, NTS, SPSC, STS, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
+    const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
 
-🇵🇰 PAKISTANI EXAM STANDARDS — MANDATORY:
+🇵🇰 MANDATORY RULES — PAKISTANI EXAM STYLE:
 
-1. EVERY question MUST be a proper MCQ ending with "?" 
-2. Start questions with: What, Which, How, When, Where, Who, In which, Fill in the blank
-3. NEVER write definition-style statements like "Benevolent means kind" — always frame as a question
-4. EXACTLY 4 options per question labeled A, B, C, D
-5. All options must be plausible distractors (not obviously wrong)
-6. Use Pakistani context: Pakistani names, cities, institutions, currency (PKR), history
-7. Each question must test a DIFFERENT sub-concept
+1. Generate SHORT, DIRECT, FACTUAL questions. Maximum 2 lines per question.
+2. EVERY question MUST end with "?"
+3. Start with: What, Which, How, When, Where, Who, In which, Fill in the blank
+4. NEVER use long verbose western-style scenarios or paragraphs
+5. EXACTLY 4 options per question labeled A, B, C, D
+6. All options must be plausible distractors (not obviously wrong)
+7. Use Pakistani context: Pakistani names, cities, institutions, currency (PKR), history
+8. Each question must test a DIFFERENT sub-concept
+9. Keep STRICTLY to the syllabus topic provided. Do NOT drift to unrelated subjects.
 
-SUBJECT-SPECIFIC GUIDANCE:
+SUBJECT-SPECIFIC PATTERNS (follow FPSC/PPSC/NTS style):
+
+For MS Office / Computer / IT:
+- Ask about SPECIFIC shortcut keys (e.g., "Which shortcut key is used to save a file?")
+- Ask about ribbon tab locations (e.g., "The 'Mail Merge' option is found in which tab?")
+- Ask formula syntax (e.g., "Which Excel function returns the highest value?")
+- Keep questions about one specific feature, NOT general overviews
 
 For English:
-- Grammar: tenses, prepositions, articles, active/passive voice, direct/indirect narration
-- Vocabulary: synonyms, antonyms, one-word substitutions, idioms & phrases
-- Fill in the blanks, error detection, sentence correction
-- Example: "Fill in the blank: She _____ to school every day."
+- Direct synonym/antonym questions (e.g., "What is the synonym of 'Benevolent'?")
+- Preposition fill-in-blank (e.g., "He is good ___ mathematics.")
+- Sentence correction (e.g., "Identify the error in the sentence:")
+- One-word substitution, idioms & phrases
+- NO long reading comprehension passages
 
 For Mathematics/Quantitative:
 - Arithmetic: percentage, ratio, average, profit/loss, simple/compound interest
-- Algebra: linear equations, quadratic equations, inequalities
-- Geometry: areas, volumes, angles, triangles
+- Short numerical problems with direct calculations
 - Number theory: HCF, LCM, prime numbers, divisibility
 
 For General Knowledge/Pakistan Affairs:
@@ -436,38 +444,31 @@ For General Knowledge/Pakistan Affairs:
 - Current affairs: recent events, international organizations
 - Islamic Studies: basic concepts, pillars, history
 
-For Computer Science/IT:
-- MS Office: Word, Excel, PowerPoint shortcuts and features
-- Internet, networking, email basics
-- Operating systems, file management
-- Programming fundamentals, data types
-
 For Science (Physics/Chemistry/Biology):
 - MDCAT/ECAT level conceptual questions
-- Numerical problems with calculations
-- Application-based scenarios
+- Short factual recall questions
+- Direct formula-based questions
 
 🎯 DIVERSITY REQUIREMENTS:
 - Each question MUST cover a DIFFERENT sub-concept
-- Mix question types: factual recall, application, analysis, fill-in-the-blank
+- Mix question types: factual recall, application, fill-in-the-blank
 - NEVER repeat same concept with different wording
-- Explore edge cases and advanced scenarios for limited topics
 
 EXAMPLE MCQs (follow this EXACT format):
 
 {
-  "question": "Fill in the blank: She _____ to the market every Sunday.",
-  "options": {"A": "go", "B": "goes", "C": "going", "D": "gone"},
-  "correctOption": "B",
-  "explanation": "The subject 'She' is third person singular in simple present tense, requiring 'goes'.",
+  "question": "Which shortcut key is used to undo the last action in MS Word?",
+  "options": {"A": "Ctrl+Z", "B": "Ctrl+Y", "C": "Ctrl+X", "D": "Ctrl+V"},
+  "correctOption": "A",
+  "explanation": "Ctrl+Z is the universal shortcut for Undo in MS Office applications.",
   "difficulty": "easy"
 }
 
 {
-  "question": "If 20% of a number is 50, what is the number?",
-  "options": {"A": "200", "B": "250", "C": "300", "D": "350"},
-  "correctOption": "B",
-  "explanation": "20% of x = 50, so x = 50 × 100/20 = 250.",
+  "question": "What is the antonym of 'Eloquent'?",
+  "options": {"A": "Fluent", "B": "Articulate", "C": "Inarticulate", "D": "Verbose"},
+  "correctOption": "C",
+  "explanation": "Inarticulate means unable to express ideas clearly, the opposite of eloquent.",
   "difficulty": "medium"
 }
 

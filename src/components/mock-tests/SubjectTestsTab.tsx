@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
+import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
 
 type SubjectTestsTabProps = {
   allMockTests: any[];
@@ -54,6 +55,13 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
       const topicsForTest = customSettings?.selectedTopics || selectedTopics[test.id];
       const finalTopics = topicsForTest && topicsForTest.length > 0 ? topicsForTest : [];
 
+      // Fetch user's previously answered question IDs
+      const { data: { user } } = await supabase.auth.getUser();
+      let excludeQuestionIds: string[] = [];
+      if (user) {
+        excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
+      }
+
       const options: TestGenerationOptions = {
         subjects: [test.title],
         topics: finalTopics,
@@ -62,13 +70,12 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         timeLimit: settings.duration,
         includeExplanations: true,
         shuffleQuestions: true,
-        shuffleOptions: true
+        shuffleOptions: true,
+        excludeQuestionIds: excludeQuestionIds.length > 0 ? excludeQuestionIds : undefined,
       };
 
       const generatedTest = await generateCustomTest(options);
       
-      // Save session to DB and navigate by ID
-      const { data: { user } } = await supabase.auth.getUser();
       const sessionPayload = {
         user_id: user?.id || null,
         session_name: `Test: ${test.title}`,
@@ -96,7 +103,6 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
       if (deficit > 0) {
         toast.info(`Starting with ${bankCount} questions — AI generating ${deficit} more in background`, { duration: 4000 });
-        // Trigger background AI generation
         supabase.functions.invoke('generate-test', {
           body: {
             topic: test.title,
