@@ -20,6 +20,8 @@ export interface TestGenerationOptions {
   includeExplanations: boolean;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
+  syllabusWeights?: Record<string, number>; // e.g. { "English": 40, "Math": 10 }
+  excludeQuestionIds?: string[]; // IDs of questions user has already answered
 }
 
 export interface GeneratedTest {
@@ -69,22 +71,16 @@ export const generateTestFromSyllabus = async (
   }
 };
 
-// Generate custom test — NEVER throws, always returns a valid test object
-export const generateCustomTest = async (options: TestGenerationOptions): Promise<GeneratedTest> => {
-  console.log('🎯 Generating test with options:', {
-    subjects: options.subjects,
-    topics: options.topics,
-    difficulty: options.difficulty,
-    questionCount: options.questionCount,
-    timeLimit: options.timeLimit
-  });
-
-  // --- Step 1: Strict filter (subject + topic + difficulty) ---
+// Fetch questions for a single subject with quota
+const fetchSubjectQuota = async (
+  subject: string,
+  quota: number,
+  options: TestGenerationOptions
+): Promise<QuestionBankItem[]> => {
   const filters: QuestionFilters = {
-    subjects: options.subjects,
-    topics: options.topics.length > 0 ? options.topics : undefined,
-    subtopics: options.subtopics,
-    limit: options.questionCount * 3
+    topics: [subject],  // Search by topic name (syllabus topics map to DB topics)
+    limit: quota * 3,
+    excludeIds: options.excludeQuestionIds,
   };
 
   if (options.difficulty !== 'mixed') {
@@ -92,66 +88,139 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     filters.difficulties = difficultyMap[options.difficulty];
   }
 
-  let availableQuestions = await getQuestionBank(filters);
-  console.log(`📊 Strict filter: found ${availableQuestions.length} questions`);
+  let questions = await getQuestionBank(filters);
 
-  // --- Step 2: Difficulty fallback (same subjects/topics, any difficulty) ---
-  if (availableQuestions.length < options.questionCount && options.difficulty !== 'mixed') {
-    console.log('🔄 Fallback: removing difficulty filter');
-    const fallbackFilters = { ...filters };
-    delete fallbackFilters.difficulties;
-    const fallbackQuestions = await getQuestionBank(fallbackFilters);
-    // Merge without duplicates
-    const existingIds = new Set(availableQuestions.map(q => q.id));
-    const newQuestions = fallbackQuestions.filter(q => !existingIds.has(q.id));
-    availableQuestions = [...availableQuestions, ...newQuestions];
-    console.log(`📊 After difficulty fallback: ${availableQuestions.length} questions`);
-  }
-
-  // --- Step 3: Subject-only fallback (cross-pollination — topics from any subject) ---
-  if (availableQuestions.length < options.questionCount && options.topics.length > 0) {
-    console.log('🔄 Fallback: topic-only cross-pollination');
-    const topicOnlyFilters: QuestionFilters = {
-      topics: options.topics,
-      limit: options.questionCount * 3
+  // Fallback: try subject field instead of topic
+  if (questions.length < quota) {
+    const subjectFilters: QuestionFilters = {
+      subjects: [subject],
+      limit: quota * 3,
+      excludeIds: options.excludeQuestionIds,
     };
-    const crossQuestions = await getQuestionBank(topicOnlyFilters);
-    const existingIds = new Set(availableQuestions.map(q => q.id));
-    const newQuestions = crossQuestions.filter(q => !existingIds.has(q.id));
-    availableQuestions = [...availableQuestions, ...newQuestions];
-    console.log(`📊 After cross-pollination: ${availableQuestions.length} questions`);
+    if (options.difficulty !== 'mixed') {
+      const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
+      subjectFilters.difficulties = difficultyMap[options.difficulty];
+    }
+    const extra = await getQuestionBank(subjectFilters);
+    const existingIds = new Set(questions.map(q => q.id));
+    questions = [...questions, ...extra.filter(q => !existingIds.has(q.id))];
   }
 
-  // --- Step 4: Broader subject fallback (any topic from same subjects) ---
-  if (availableQuestions.length < options.questionCount) {
-    console.log('🔄 Fallback: subject-only (any topic)');
-    const subjectOnlyFilters: QuestionFilters = {
-      subjects: options.subjects,
-      limit: options.questionCount * 3
+  // Fallback: remove difficulty filter
+  if (questions.length < quota && options.difficulty !== 'mixed') {
+    const relaxedFilters: QuestionFilters = {
+      topics: [subject],
+      subjects: [subject],
+      limit: quota * 3,
+      excludeIds: options.excludeQuestionIds,
     };
-    const subjectQuestions = await getQuestionBank(subjectOnlyFilters);
-    const existingIds = new Set(availableQuestions.map(q => q.id));
-    const newQuestions = subjectQuestions.filter(q => !existingIds.has(q.id));
-    availableQuestions = [...availableQuestions, ...newQuestions];
-    console.log(`📊 After subject fallback: ${availableQuestions.length} questions`);
+    const extra = await getQuestionBank(relaxedFilters);
+    const existingIds = new Set(questions.map(q => q.id));
+    questions = [...questions, ...extra.filter(q => !existingIds.has(q.id))];
   }
 
-  console.log('📚 Available subjects:', [...new Set(availableQuestions.map(q => q.subject))]);
-  console.log('📖 Available topics:', [...new Set(availableQuestions.map(q => q.topic))]);
+  return fisherYatesShuffle(questions).slice(0, quota);
+};
 
-  // CRITICAL: Enforce strict limit after all fallbacks + deep shuffle
-  availableQuestions = fisherYatesShuffle(availableQuestions);
+// Generate custom test — NEVER throws, always returns a valid test object
+export const generateCustomTest = async (options: TestGenerationOptions): Promise<GeneratedTest> => {
+  console.log('🎯 Generating test with options:', {
+    subjects: options.subjects,
+    topics: options.topics,
+    difficulty: options.difficulty,
+    questionCount: options.questionCount,
+    timeLimit: options.timeLimit,
+    syllabusWeights: options.syllabusWeights,
+    excludeCount: options.excludeQuestionIds?.length || 0,
+  });
 
-  // Select questions (never throw)
   let selectedQuestions: QuestionBankItem[];
 
-  if (availableQuestions.length === 0) {
-    selectedQuestions = [];
-  } else if (options.difficulty === 'mixed' && availableQuestions.length >= options.questionCount) {
-    selectedQuestions = balanceQuestionsByDifficulty(availableQuestions, options.questionCount);
+  // ============= SYLLABUS WEIGHTS PATH =============
+  if (options.syllabusWeights && Object.keys(options.syllabusWeights).length > 0) {
+    console.log('📐 Using syllabus percentage math for per-subject quotas');
+    const totalWeight = Object.values(options.syllabusWeights).reduce((a, b) => a + b, 0);
+    const allQuestions: QuestionBankItem[] = [];
+
+    for (const [subject, weight] of Object.entries(options.syllabusWeights)) {
+      const quota = Math.max(1, Math.round((weight / totalWeight) * options.questionCount));
+      console.log(`  📊 ${subject}: ${weight}% → ${quota} questions`);
+      const subjectQuestions = await fetchSubjectQuota(subject, quota, options);
+      console.log(`  ✅ ${subject}: fetched ${subjectQuestions.length}/${quota}`);
+      allQuestions.push(...subjectQuestions);
+    }
+
+    selectedQuestions = fisherYatesShuffle(allQuestions);
   } else {
-    selectedQuestions = availableQuestions.slice(0, options.questionCount);
+    // ============= ORIGINAL FLAT PATH (with excludeIds support) =============
+    const filters: QuestionFilters = {
+      subjects: options.subjects,
+      topics: options.topics.length > 0 ? options.topics : undefined,
+      subtopics: options.subtopics,
+      limit: options.questionCount * 3,
+      excludeIds: options.excludeQuestionIds,
+    };
+
+    if (options.difficulty !== 'mixed') {
+      const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
+      filters.difficulties = difficultyMap[options.difficulty];
+    }
+
+    let availableQuestions = await getQuestionBank(filters);
+    console.log(`📊 Strict filter: found ${availableQuestions.length} questions`);
+
+    // --- Step 2: Difficulty fallback ---
+    if (availableQuestions.length < options.questionCount && options.difficulty !== 'mixed') {
+      console.log('🔄 Fallback: removing difficulty filter');
+      const fallbackFilters = { ...filters };
+      delete fallbackFilters.difficulties;
+      const fallbackQuestions = await getQuestionBank(fallbackFilters);
+      const existingIds = new Set(availableQuestions.map(q => q.id));
+      availableQuestions = [...availableQuestions, ...fallbackQuestions.filter(q => !existingIds.has(q.id))];
+      console.log(`📊 After difficulty fallback: ${availableQuestions.length} questions`);
+    }
+
+    // --- Step 3: Cross-pollination ---
+    if (availableQuestions.length < options.questionCount && options.topics.length > 0) {
+      console.log('🔄 Fallback: topic-only cross-pollination');
+      const topicOnlyFilters: QuestionFilters = {
+        topics: options.topics,
+        limit: options.questionCount * 3,
+        excludeIds: options.excludeQuestionIds,
+      };
+      const crossQuestions = await getQuestionBank(topicOnlyFilters);
+      const existingIds = new Set(availableQuestions.map(q => q.id));
+      availableQuestions = [...availableQuestions, ...crossQuestions.filter(q => !existingIds.has(q.id))];
+      console.log(`📊 After cross-pollination: ${availableQuestions.length} questions`);
+    }
+
+    // --- Step 4: Subject-only fallback ---
+    if (availableQuestions.length < options.questionCount) {
+      console.log('🔄 Fallback: subject-only (any topic)');
+      const subjectOnlyFilters: QuestionFilters = {
+        subjects: options.subjects,
+        limit: options.questionCount * 3,
+        excludeIds: options.excludeQuestionIds,
+      };
+      const subjectQuestions = await getQuestionBank(subjectOnlyFilters);
+      const existingIds = new Set(availableQuestions.map(q => q.id));
+      availableQuestions = [...availableQuestions, ...subjectQuestions.filter(q => !existingIds.has(q.id))];
+      console.log(`📊 After subject fallback: ${availableQuestions.length} questions`);
+    }
+
+    availableQuestions = fisherYatesShuffle(availableQuestions);
+
+    if (availableQuestions.length === 0) {
+      selectedQuestions = [];
+    } else if (options.difficulty === 'mixed' && availableQuestions.length >= options.questionCount) {
+      selectedQuestions = balanceQuestionsByDifficulty(availableQuestions, options.questionCount);
+    } else {
+      selectedQuestions = availableQuestions.slice(0, options.questionCount);
+    }
   }
+
+  // ============= ABSOLUTE SAFETY NET: STRICT SLICE =============
+  selectedQuestions = selectedQuestions.slice(0, options.questionCount);
 
   // Shuffle questions if requested (Fisher-Yates)
   if (options.shuffleQuestions) {
@@ -204,7 +273,7 @@ const balanceQuestionsByDifficulty = (questions: QuestionBankItem[], targetCount
 
   if (selectedQuestions.length < targetCount) {
     const remaining = questions.filter(q => !selectedQuestions.find(sq => sq.id === q.id));
-    selectedQuestions.push(...remaining.sort(() => Math.random() - 0.5).slice(0, targetCount - selectedQuestions.length));
+    selectedQuestions.push(...fisherYatesShuffle(remaining).slice(0, targetCount - selectedQuestions.length));
   }
 
   return selectedQuestions.slice(0, targetCount);
@@ -213,7 +282,7 @@ const balanceQuestionsByDifficulty = (questions: QuestionBankItem[], targetCount
 // Shuffle question options while maintaining correct answer
 const shuffleQuestionOptions = (question: QuestionBankItem): QuestionBankItem => {
   const options = ['A', 'B', 'C', 'D'];
-  const shuffledOptions = [...options].sort(() => Math.random() - 0.5);
+  const shuffledOptions = fisherYatesShuffle(options);
   
   const originalOptions = { ...question.options };
   const newOptions = { A: '', B: '', C: '', D: '' };

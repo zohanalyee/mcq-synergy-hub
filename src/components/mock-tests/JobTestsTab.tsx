@@ -9,6 +9,7 @@ import { JobTest } from "@/data/jobTestsData";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
+import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -35,24 +36,41 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         duration: test.duration
       };
 
-      // Cross-pollination: use syllabus topics as both subjects AND topics
-      const syllabusTopics: string[] = test.syllabus.map(item => item.topic);
+      // Build syllabus weights from test.syllabus percentages
+      const syllabusWeights: Record<string, number> = {};
+      const syllabusTopics: string[] = [];
+      for (const item of test.syllabus) {
+        syllabusTopics.push(item.topic);
+        if (item.percentage && item.percentage > 0) {
+          syllabusWeights[item.topic] = item.percentage;
+        }
+      }
+
+      // Fetch user's previously answered question IDs for anti-repetition
+      const { data: { user } } = await supabase.auth.getUser();
+      let excludeQuestionIds: string[] = [];
+      if (user) {
+        excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
+      }
+
+      const hasSyllabusWeights = Object.keys(syllabusWeights).length > 0;
 
       const options: TestGenerationOptions = {
         subjects: syllabusTopics,
-        topics: syllabusTopics, // Cross-pollinate: search by topic name across all subjects
+        topics: syllabusTopics,
         difficulty: settings.difficulty.toLowerCase(),
         questionCount: settings.questionCount,
         timeLimit: settings.duration,
         includeExplanations: true,
         shuffleQuestions: true,
-        shuffleOptions: true
+        shuffleOptions: true,
+        syllabusWeights: hasSyllabusWeights ? syllabusWeights : undefined,
+        excludeQuestionIds: excludeQuestionIds.length > 0 ? excludeQuestionIds : undefined,
       };
 
       const generatedTest = await generateCustomTest(options);
       
       // Save session to DB and navigate by ID
-      const { data: { user } } = await supabase.auth.getUser();
       const sessionPayload = {
         user_id: user?.id || null,
         session_name: `Job Test: ${test.title}`,
@@ -80,7 +98,6 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
 
       if (deficit > 0) {
         toast.info(`Starting with ${bankCount} questions — AI generating ${deficit} more in background`, { duration: 4000 });
-        // Trigger background AI generation for the primary topic
         supabase.functions.invoke('generate-test', {
           body: {
             topic: test.title,

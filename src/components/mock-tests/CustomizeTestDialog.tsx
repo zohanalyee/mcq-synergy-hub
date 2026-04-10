@@ -7,9 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Play, Clock, HelpCircle, Zap } from "lucide-react";
 
@@ -62,39 +60,23 @@ export const CustomizeTestDialog = ({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Difficulty */}
+          {/* Difficulty — Native select to avoid Radix Dialog pointer-event conflicts */}
           <div className="space-y-2">
             <Label className="text-sm font-medium">Difficulty Level</Label>
-            <Select
+            <select
               value={settings.difficulty}
-              onValueChange={(value: "easy" | "medium" | "hard") =>
-                setSettings((prev) => ({ ...prev, difficulty: value }))
+              onChange={(e) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  difficulty: e.target.value as "easy" | "medium" | "hard",
+                }))
               }
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="easy">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                    Easy
-                  </div>
-                </SelectItem>
-                <SelectItem value="medium">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-yellow-500" />
-                    Medium
-                  </div>
-                </SelectItem>
-                <SelectItem value="hard">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-500" />
-                    Hard
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
+              <option value="easy">🟢 Easy</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="hard">🔴 Hard</option>
+            </select>
           </div>
 
           {/* Question Count */}
