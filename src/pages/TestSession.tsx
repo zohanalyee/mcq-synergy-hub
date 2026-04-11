@@ -563,6 +563,7 @@ const TestSession = () => {
               </div>
             </div>
           </>
+          )
         ) : (
           /* Results */
           (() => {
