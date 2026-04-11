@@ -136,15 +136,42 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
 
   let selectedQuestions: QuestionBankItem[];
 
-  // ============= SYLLABUS WEIGHTS PATH =============
+  // ============= SYLLABUS WEIGHTS PATH (Largest-Remainder Allocation) =============
   if (options.syllabusWeights && Object.keys(options.syllabusWeights).length > 0) {
-    console.log('📐 Using syllabus percentage math for per-subject quotas');
+    console.log('📐 Using largest-remainder allocation for per-subject quotas');
     const totalWeight = Object.values(options.syllabusWeights).reduce((a, b) => a + b, 0);
-    const allQuestions: QuestionBankItem[] = [];
+    const targetCount = options.questionCount;
 
-    for (const [subject, weight] of Object.entries(options.syllabusWeights)) {
-      const quota = Math.max(1, Math.round((weight / totalWeight) * options.questionCount));
-      console.log(`  📊 ${subject}: ${weight}% → ${quota} questions`);
+    // Step 1: Calculate exact fractions and floors
+    const entries = Object.entries(options.syllabusWeights).map(([subject, weight]) => {
+      const exact = (weight / totalWeight) * targetCount;
+      const floor = Math.floor(exact);
+      return { subject, weight, exact, floor, remainder: exact - floor };
+    });
+
+    // Step 2: Distribute remainder to subjects with largest fractional parts
+    let sumFloors = entries.reduce((s, e) => s + e.floor, 0);
+    let distributable = targetCount - sumFloors;
+    const sorted = [...entries].sort((a, b) => b.remainder - a.remainder);
+    const quotas = new Map<string, number>();
+    for (const entry of entries) {
+      quotas.set(entry.subject, entry.floor);
+    }
+    for (const entry of sorted) {
+      if (distributable <= 0) break;
+      quotas.set(entry.subject, (quotas.get(entry.subject) || 0) + 1);
+      distributable--;
+    }
+    // Ensure every subject gets at least 1
+    for (const entry of entries) {
+      if ((quotas.get(entry.subject) || 0) === 0) {
+        quotas.set(entry.subject, 1);
+      }
+    }
+
+    const allQuestions: QuestionBankItem[] = [];
+    for (const [subject, quota] of quotas.entries()) {
+      console.log(`  📊 ${subject}: ${options.syllabusWeights[subject]}% → ${quota} questions`);
       const subjectQuestions = await fetchSubjectQuota(subject, quota, options);
       console.log(`  ✅ ${subject}: fetched ${subjectQuestions.length}/${quota}`);
       allQuestions.push(...subjectQuestions);
