@@ -68,7 +68,7 @@ const Tools = () => {
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {filtered.map((tool, i) => {
             const colors = CATEGORY_COLORS[tool.category] || CATEGORY_COLORS['Calculators'];
             const uniqueIcon = TOOL_ICON_COLORS[tool.id];
@@ -79,24 +79,25 @@ const Tools = () => {
                 animate={{ opacity: 1, y: 0 }}
                 whileHover={{ y: -4 }}
                 whileTap={{ scale: 0.97 }}
-                transition={{ delay: Math.min(i * 0.02, 0.3), type: "spring", stiffness: 300, damping: 20 }}
+                transition={{ delay: Math.min(i * 0.015, 0.2), type: "spring", stiffness: 300, damping: 20 }}
+                className="will-change-transform"
               >
                 <Link
                   to={tool.href}
-                  className={`relative flex flex-col items-center gap-2 p-3 rounded-xl border ${colors.border} ${colors.bg} ${colors.hover} hover:shadow-md transition-all text-center group h-full`}
+                  className={`relative flex flex-col items-center gap-2.5 p-4 rounded-xl border overflow-hidden min-h-[120px] ${colors.border} ${colors.bg} ${colors.hover} hover:shadow-md transition-all text-center group h-full bg-background`}
                 >
                   {tool.popular && (
                     <Badge className="absolute top-2 right-2 text-[9px] px-1.5 py-0 bg-primary/90">
                       Popular
                     </Badge>
                   )}
-                  <div className={`h-8 w-8 rounded-xl ${uniqueIcon ? uniqueIcon.iconBg : colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
-                    <tool.icon className={`h-4 w-4 ${uniqueIcon ? uniqueIcon.iconText : ''}`} />
+                  <div className={`h-10 w-10 rounded-xl ${uniqueIcon ? uniqueIcon.iconBg : colors.icon} flex items-center justify-center group-hover:scale-110 transition-all`}>
+                    <tool.icon className={`h-5 w-5 ${uniqueIcon ? uniqueIcon.iconText : ''}`} />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-foreground leading-tight">{tool.name}</p>
+                    <p className="text-sm font-semibold text-foreground leading-tight">{tool.name}</p>
                     <p className={`text-[10px] font-medium mt-0.5 ${colors.badge}`}>{tool.category}</p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">{tool.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1 line-clamp-2">{tool.description}</p>
                   </div>
                 </Link>
               </motion.div>

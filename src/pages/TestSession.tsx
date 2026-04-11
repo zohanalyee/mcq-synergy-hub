@@ -21,6 +21,7 @@ import ExamNavBar from "@/components/exam/ExamNavBar";
 import NeuralFocusPlayer from "@/components/exam/NeuralFocusPlayer";
 import { useExamMotivation } from "@/components/exam/useExamMotivation";
 import { useExamPersistence } from "@/components/exam/useExamPersistence";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 
 type LastUsedTestContext = {
   subject?: string;
@@ -66,6 +67,7 @@ const TestSession = () => {
   const [flaggedQuestions, setFlaggedQuestions] = useState<Set<number>>(new Set());
   const [isImproving, setIsImproving] = useState(false);
   const [isMusicOpen, setIsMusicOpen] = useState(false);
+  const [syllabusSheetOpen, setSyllabusSheetOpen] = useState(false);
 
   // Smart Background Loading state
   const [expectedTotal, setExpectedTotal] = useState(0);
@@ -481,6 +483,51 @@ const TestSession = () => {
             {/* Music Player (collapsible) */}
             <NeuralFocusPlayer isOpen={isMusicOpen} />
 
+            {/* Mobile Syllabus Map Button */}
+            {syllabusMap.length > 0 && (
+              <div className="lg:hidden mb-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full h-8 text-xs gap-1.5"
+                  onClick={() => setSyllabusSheetOpen(true)}
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Syllabus Map
+                  <Badge variant="secondary" className="text-[9px] px-1.5 py-0 ml-auto">
+                    {Object.keys(answers).length}/{questions.length}
+                  </Badge>
+                </Button>
+              </div>
+            )}
+
+            {/* Mobile Syllabus Sheet */}
+            <Sheet open={syllabusSheetOpen} onOpenChange={setSyllabusSheetOpen}>
+              <SheetContent side="bottom" className="max-h-[70vh] overflow-y-auto">
+                <SheetTitle className="text-sm font-semibold flex items-center gap-1.5 mb-3">
+                  <BookOpen className="h-4 w-4" />
+                  Syllabus Map
+                </SheetTitle>
+                <div className="space-y-3">
+                  {syllabusMap.map((subject) => {
+                    const pct = subject.total > 0 ? Math.round((subject.attempted / subject.total) * 100) : 0;
+                    return (
+                      <div key={subject.name} className={`p-2.5 rounded-lg border transition-colors ${subject.isCurrent ? "border-primary/50 bg-primary/5" : "border-border/30"}`}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium truncate">{subject.name}</span>
+                          {subject.isCurrent && (
+                            <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4">Now</Badge>
+                          )}
+                        </div>
+                        <Progress value={pct} className="h-1.5" />
+                        <p className="text-xs text-muted-foreground mt-1">{subject.attempted}/{subject.total} done</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </SheetContent>
+            </Sheet>
+
             {/* Three-column layout: Syllabus + Question + Palette */}
             <div className="flex gap-4 flex-1 min-h-0">
               {/* Syllabus Tracker Sidebar (desktop only) */}
@@ -499,15 +546,11 @@ const TestSession = () => {
                             <div className="flex items-center justify-between mb-1">
                               <span className="text-xs font-medium truncate">{subject.name}</span>
                               {subject.isCurrent && (
-                                <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4">
-                                  Now
-                                </Badge>
+                                <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4">Now</Badge>
                               )}
                             </div>
                             <Progress value={pct} className="h-1.5" />
-                            <p className="text-[10px] text-muted-foreground mt-1">
-                              {subject.attempted}/{subject.total} done
-                            </p>
+                            <p className="text-[10px] text-muted-foreground mt-1">{subject.attempted}/{subject.total} done</p>
                           </div>
                         );
                       })}
