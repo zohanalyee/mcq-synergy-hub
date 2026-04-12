@@ -1,57 +1,44 @@
 
 
-# Fix Plan: Tools Layout, Color Shedding, Syllabus Quotas, Mobile Syllabus Map
+# Fix Plan: Strict Subject Lock, Per-Subject AI Trigger, Subject Badges
 
-## Fix 1: Tools Page Grid Layout (src/pages/Tools.tsx)
+## Fix 1: Strict Subject Lock in `fetchSubjectQuota` (testGenerationService.ts)
 
-The current grid uses `grid-cols-3` on mobile (360px), which is too dense and causes broken rendering. The tool cards are tiny and the layout appears glitched.
-
-**Changes**:
-- Change grid to `grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6` with `gap-3`
-- Increase card padding and make icons/text more readable
-- Add `min-h-[120px]` to cards for consistent sizing
-- Keep the existing category colors, Popular badge, and animation system
-
-## Fix 2: Color Shedding Bug
-
-The screenshots show horizontal glitch lines across the page - this is caused by the tool cards' background/border colors bleeding or not rendering properly on mobile browsers. The `motion.div` animations combined with semi-transparent borders and backgrounds can cause paint artifacts on low-end devices.
-
-**Changes in src/pages/Tools.tsx**:
-- Add `will-change-transform` to animated cards to force GPU compositing
-- Reduce animation stagger delay to prevent rendering bottleneck
-- Ensure all containers use `bg-background text-foreground` explicitly
-- Add `overflow-hidden` to card containers to prevent border bleed
-
-## Fix 3: Strict Syllabus Quota Math (src/services/testGenerationService.ts)
-
-**Problem**: `Math.round()` on multiple subjects can sum to more than `questionCount` (e.g., 40% of 20 = 8, but multiple rounds add up to 22).
+**Problem**: The fallback logic in `fetchSubjectQuota` (lines 93-120) queries by subject name when topic query falls short, then relaxes difficulty. This causes English (which has the most questions in the DB) to overflow into other subjects' slots because the `topic` and `subject` fields overlap across subjects.
 
 **Changes**:
-- Replace `Math.round` with a largest-remainder allocation algorithm:
-  1. Calculate `Math.floor((weight / totalWeight) * questionCount)` for each subject
-  2. Sum all floors. Remainder = `questionCount - sum`
-  3. Sort subjects by fractional part descending
-  4. Distribute remainder 1 question at a time to highest-fraction subjects
-- This guarantees quotas sum to exactly `questionCount`
-- `fetchSubjectQuota` already slices to quota (line 122) - this is correct
-- Keep the final safety net slice at line 223
+- Remove ALL fallback logic from `fetchSubjectQuota`. It should do ONE query (by topic, then by subject if 0 results), slice to quota, and return whatever it found -- even if 0.
+- No cross-filling. If Math quota is 2 and DB has 0 Math, return 0 Math questions. The deficit is tracked per-subject.
 
-## Fix 4: Mobile Syllabus Map (src/pages/TestSession.tsx)
+**Also add to `GeneratedTest` interface**:
+- `subjectDeficits?: Record<string, number>` — maps subject name to how many questions were missing from the bank.
 
-**Problem**: Syllabus Map sidebar is `hidden lg:block` - invisible on mobile.
+**In the syllabus weights path** (lines 172-178):
+- After fetching each subject, compute `deficit = quota - fetched.length` and store it in a `subjectDeficits` map.
+- Pass `subjectDeficits` into the returned `GeneratedTest`.
+
+## Fix 2: Per-Subject AI Trigger (JobTestsTab.tsx)
+
+**Problem**: Lines 101-108 send `topic: test.title` (e.g., "Junior Clerk") to the AI, which generates generic/English questions.
 
 **Changes**:
-- Import `Sheet, SheetContent, SheetTrigger, SheetTitle` from `@/components/ui/sheet`
-- Add a `md:hidden` button near the ExamHeader (or inside ExamNavBar) with a `BookOpen` icon labeled "Syllabus"
-- Wire it to a `<Sheet>` that opens from the bottom
-- Inside `<SheetContent side="bottom">`, render the exact same syllabus map UI (progress bars, subject breakdown, "Now" badge)
-- Add state `const [syllabusSheetOpen, setSyllabusSheetOpen] = useState(false)`
+- After getting `generatedTest`, read `generatedTest.subjectDeficits`.
+- For each subject with deficit > 0, invoke `generate-test` edge function with `topic: subjectName` and `question_count: deficit` instead of the overall test title.
+- This ensures AI generates specifically "Mathematics" or "MS Office" questions.
+
+## Fix 3: Subject Badge on Question Cards (TestSession.tsx)
+
+**During test-taking** (line ~564, before QuestionCard):
+- Add a `Badge` showing `Section: {questions[currentQuestion]?.subject || questions[currentQuestion]?.topic || 'General'}` above the QuestionCard.
+
+**In Review Answers** (line ~704-706):
+- Add a `Badge` showing `Section: {question.subject || question.topic || 'General'}` above each question text.
 
 ## Files to Modify
 
 | File | Change |
 |------|--------|
-| `src/pages/Tools.tsx` | Responsive grid fix, card sizing, GPU compositing |
-| `src/services/testGenerationService.ts` | Largest-remainder quota algorithm |
-| `src/pages/TestSession.tsx` | Mobile syllabus Sheet |
+| `src/services/testGenerationService.ts` | Strip fallbacks from `fetchSubjectQuota`, add `subjectDeficits` to `GeneratedTest` |
+| `src/components/mock-tests/JobTestsTab.tsx` | Per-subject AI deficit triggers |
+| `src/pages/TestSession.tsx` | Subject badges during test and in review |
 
