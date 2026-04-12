@@ -691,7 +691,7 @@ async function saveQuestionsInBackground(
           title: finalTitle,
           description: q.explanation || '',
           category: 'mcq',
-          subject: sanitizedTopic,
+          subject: topic,
           topic: topic,
           canonical_topic_name: canonicalTopicName,
           difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
