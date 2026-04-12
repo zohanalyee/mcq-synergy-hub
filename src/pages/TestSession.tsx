@@ -561,6 +561,9 @@ const TestSession = () => {
               {/* Main question area */}
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-thin">
+                  <Badge variant="secondary" className="mb-2 ml-1">
+                    Section: {questions[currentQuestion]?.subject || questions[currentQuestion]?.topic || 'General'}
+                  </Badge>
                   <QuestionCard
                     question={questions[currentQuestion]}
                     questionIndex={currentQuestion}
@@ -702,6 +705,9 @@ const TestSession = () => {
                             <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
                           )}
                           <div className="flex-1 min-w-0">
+                            <Badge variant="outline" className="mb-1 text-[10px]">
+                              Section: {question.subject || question.topic || 'General'}
+                            </Badge>
                             <p className="font-medium text-sm mb-1 break-words">
                               Q{index + 1}: {cleanQuestionText(question.question)}
                             </p>

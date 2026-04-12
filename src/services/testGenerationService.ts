@@ -254,6 +254,8 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
 
   const deficit = Math.max(0, options.questionCount - selectedQuestions.length);
 
+  const subjectDeficits = (options as any)._subjectDeficits as Record<string, number> | undefined;
+
   const generatedTest: GeneratedTest = {
     id: crypto.randomUUID(),
     title: generateTestTitle(options.subjects, options.topics),
@@ -263,6 +265,7 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     instructions: generateTestInstructions(options),
     deficit,
     aiGenerationNeeded: deficit > 0,
+    subjectDeficits: subjectDeficits && Object.keys(subjectDeficits).length > 0 ? subjectDeficits : undefined,
     metadata: {
       subjects: options.subjects,
       topics: options.topics,
