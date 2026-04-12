@@ -122,26 +122,26 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     difficulty: options.difficulty,
     questionCount: options.questionCount,
     timeLimit: options.timeLimit,
+    syllabusData: options.syllabusData,
     syllabusWeights: options.syllabusWeights,
     excludeCount: options.excludeQuestionIds?.length || 0,
   });
 
   let selectedQuestions: QuestionBankItem[];
 
-  // ============= SYLLABUS WEIGHTS PATH (Largest-Remainder Allocation) =============
-  if (options.syllabusWeights && Object.keys(options.syllabusWeights).length > 0) {
-    console.log('📐 Using largest-remainder allocation for per-subject quotas');
-    const totalWeight = Object.values(options.syllabusWeights).reduce((a, b) => a + b, 0);
+  // ============= RAW SYLLABUS DATA PATH (highest priority for Job Tests) =============
+  if (options.syllabusData && options.syllabusData.length > 0) {
+    console.log('📐 Using RAW syllabusData for strict per-subject quotas');
+    const totalPercentage = options.syllabusData.reduce((a, b) => a + b.percentage, 0);
     const targetCount = options.questionCount;
 
-    // Step 1: Calculate exact fractions and floors
-    const entries = Object.entries(options.syllabusWeights).map(([subject, weight]) => {
-      const exact = (weight / totalWeight) * targetCount;
+    // Largest-remainder allocation from raw syllabus
+    const entries = options.syllabusData.map(item => {
+      const exact = (item.percentage / totalPercentage) * targetCount;
       const floor = Math.floor(exact);
-      return { subject, weight, exact, floor, remainder: exact - floor };
+      return { subject: item.topic, percentage: item.percentage, exact, floor, remainder: exact - floor };
     });
 
-    // Step 2: Distribute remainder to subjects with largest fractional parts
     let sumFloors = entries.reduce((s, e) => s + e.floor, 0);
     let distributable = targetCount - sumFloors;
     const sorted = [...entries].sort((a, b) => b.remainder - a.remainder);
@@ -164,6 +164,53 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     const allQuestions: QuestionBankItem[] = [];
     const subjectDeficitsMap: Record<string, number> = {};
     for (const [subject, quota] of quotas.entries()) {
+      const pct = entries.find(e => e.subject === subject)?.percentage || 0;
+      console.log(`  📊 ${subject}: ${pct}% → ${quota} questions`);
+      const subjectQuestions = await fetchSubjectQuota(subject, quota, options);
+      const deficit = quota - subjectQuestions.length;
+      if (deficit > 0) {
+        subjectDeficitsMap[subject] = deficit;
+      }
+      console.log(`  ✅ ${subject}: fetched ${subjectQuestions.length}/${quota}, deficit: ${deficit}`);
+      allQuestions.push(...subjectQuestions);
+    }
+
+    selectedQuestions = fisherYatesShuffle(allQuestions);
+    (options as any)._subjectDeficits = subjectDeficitsMap;
+
+  // ============= LEGACY SYLLABUS WEIGHTS PATH =============
+  } else if (options.syllabusWeights && Object.keys(options.syllabusWeights).length > 0) {
+    console.log('📐 Using legacy syllabusWeights for per-subject quotas');
+    const totalWeight = Object.values(options.syllabusWeights).reduce((a, b) => a + b, 0);
+    const targetCount = options.questionCount;
+
+    const entries = Object.entries(options.syllabusWeights).map(([subject, weight]) => {
+      const exact = (weight / totalWeight) * targetCount;
+      const floor = Math.floor(exact);
+      return { subject, weight, exact, floor, remainder: exact - floor };
+    });
+
+    let sumFloors = entries.reduce((s, e) => s + e.floor, 0);
+    let distributable = targetCount - sumFloors;
+    const sorted = [...entries].sort((a, b) => b.remainder - a.remainder);
+    const quotas = new Map<string, number>();
+    for (const entry of entries) {
+      quotas.set(entry.subject, entry.floor);
+    }
+    for (const entry of sorted) {
+      if (distributable <= 0) break;
+      quotas.set(entry.subject, (quotas.get(entry.subject) || 0) + 1);
+      distributable--;
+    }
+    for (const entry of entries) {
+      if ((quotas.get(entry.subject) || 0) === 0) {
+        quotas.set(entry.subject, 1);
+      }
+    }
+
+    const allQuestions: QuestionBankItem[] = [];
+    const subjectDeficitsMap: Record<string, number> = {};
+    for (const [subject, quota] of quotas.entries()) {
       console.log(`  📊 ${subject}: ${options.syllabusWeights[subject]}% → ${quota} questions`);
       const subjectQuestions = await fetchSubjectQuota(subject, quota, options);
       const deficit = quota - subjectQuestions.length;
@@ -175,7 +222,6 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     }
 
     selectedQuestions = fisherYatesShuffle(allQuestions);
-    // Store deficits for caller to use
     (options as any)._subjectDeficits = subjectDeficitsMap;
   } else {
     // ============= ORIGINAL FLAT PATH (with excludeIds support) =============
