@@ -33,6 +33,7 @@ export interface GeneratedTest {
   instructions: string[];
   deficit: number;
   aiGenerationNeeded: boolean;
+  subjectDeficits?: Record<string, number>;
   metadata: {
     subjects: string[];
     topics: string[];
@@ -71,27 +72,26 @@ export const generateTestFromSyllabus = async (
   }
 };
 
-// Fetch questions for a single subject with quota
+// Fetch questions for a single subject with quota — STRICT, no cross-filling
 const fetchSubjectQuota = async (
   subject: string,
   quota: number,
   options: TestGenerationOptions
 ): Promise<QuestionBankItem[]> => {
+  // Query 1: by topic name
   const filters: QuestionFilters = {
-    topics: [subject],  // Search by topic name (syllabus topics map to DB topics)
+    topics: [subject],
     limit: quota * 3,
     excludeIds: options.excludeQuestionIds,
   };
-
   if (options.difficulty !== 'mixed') {
     const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
     filters.difficulties = difficultyMap[options.difficulty];
   }
-
   let questions = await getQuestionBank(filters);
 
-  // Fallback: try subject field instead of topic
-  if (questions.length < quota) {
+  // Query 2: if topic returned 0, try subject field (but ONLY for this same subject)
+  if (questions.length === 0) {
     const subjectFilters: QuestionFilters = {
       subjects: [subject],
       limit: quota * 3,
@@ -101,24 +101,10 @@ const fetchSubjectQuota = async (
       const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
       subjectFilters.difficulties = difficultyMap[options.difficulty];
     }
-    const extra = await getQuestionBank(subjectFilters);
-    const existingIds = new Set(questions.map(q => q.id));
-    questions = [...questions, ...extra.filter(q => !existingIds.has(q.id))];
+    questions = await getQuestionBank(subjectFilters);
   }
 
-  // Fallback: remove difficulty filter
-  if (questions.length < quota && options.difficulty !== 'mixed') {
-    const relaxedFilters: QuestionFilters = {
-      topics: [subject],
-      subjects: [subject],
-      limit: quota * 3,
-      excludeIds: options.excludeQuestionIds,
-    };
-    const extra = await getQuestionBank(relaxedFilters);
-    const existingIds = new Set(questions.map(q => q.id));
-    questions = [...questions, ...extra.filter(q => !existingIds.has(q.id))];
-  }
-
+  // STRICT SLICE: never return more than quota
   return fisherYatesShuffle(questions).slice(0, quota);
 };
 
@@ -170,14 +156,21 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     }
 
     const allQuestions: QuestionBankItem[] = [];
+    const subjectDeficitsMap: Record<string, number> = {};
     for (const [subject, quota] of quotas.entries()) {
       console.log(`  📊 ${subject}: ${options.syllabusWeights[subject]}% → ${quota} questions`);
       const subjectQuestions = await fetchSubjectQuota(subject, quota, options);
-      console.log(`  ✅ ${subject}: fetched ${subjectQuestions.length}/${quota}`);
+      const deficit = quota - subjectQuestions.length;
+      if (deficit > 0) {
+        subjectDeficitsMap[subject] = deficit;
+      }
+      console.log(`  ✅ ${subject}: fetched ${subjectQuestions.length}/${quota}, deficit: ${deficit}`);
       allQuestions.push(...subjectQuestions);
     }
 
     selectedQuestions = fisherYatesShuffle(allQuestions);
+    // Store deficits for caller to use
+    (options as any)._subjectDeficits = subjectDeficitsMap;
   } else {
     // ============= ORIGINAL FLAT PATH (with excludeIds support) =============
     const filters: QuestionFilters = {
@@ -261,6 +254,8 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
 
   const deficit = Math.max(0, options.questionCount - selectedQuestions.length);
 
+  const subjectDeficits = (options as any)._subjectDeficits as Record<string, number> | undefined;
+
   const generatedTest: GeneratedTest = {
     id: crypto.randomUUID(),
     title: generateTestTitle(options.subjects, options.topics),
@@ -270,6 +265,7 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
     instructions: generateTestInstructions(options),
     deficit,
     aiGenerationNeeded: deficit > 0,
+    subjectDeficits: subjectDeficits && Object.keys(subjectDeficits).length > 0 ? subjectDeficits : undefined,
     metadata: {
       subjects: options.subjects,
       topics: options.topics,

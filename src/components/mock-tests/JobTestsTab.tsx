@@ -95,8 +95,25 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
 
       const bankCount = generatedTest.questions.length;
       const deficit = generatedTest.deficit;
+      const subjectDeficits = generatedTest.subjectDeficits;
 
-      if (deficit > 0) {
+      if (deficit > 0 && subjectDeficits && Object.keys(subjectDeficits).length > 0) {
+        const deficitEntries = Object.entries(subjectDeficits);
+        const deficitSummary = deficitEntries.map(([s, c]) => `${c} ${s}`).join(', ');
+        toast.info(`Starting with ${bankCount} questions — AI generating ${deficitSummary} in background`, { duration: 5000 });
+
+        // Trigger AI generation per missing subject
+        for (const [subjectName, subjectDeficit] of deficitEntries) {
+          supabase.functions.invoke('generate-test', {
+            body: {
+              topic: subjectName,
+              difficulty: options.difficulty === 'mixed' ? 'Medium' : options.difficulty,
+              question_count: subjectDeficit,
+              session_id: session.id
+            }
+          }).catch(err => console.error(`Background AI generation error for ${subjectName}:`, err));
+        }
+      } else if (deficit > 0) {
         toast.info(`Starting with ${bankCount} questions — AI generating ${deficit} more in background`, { duration: 4000 });
         supabase.functions.invoke('generate-test', {
           body: {
