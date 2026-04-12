@@ -20,7 +20,8 @@ export interface TestGenerationOptions {
   includeExplanations: boolean;
   shuffleQuestions: boolean;
   shuffleOptions: boolean;
-  syllabusWeights?: Record<string, number>; // e.g. { "English": 40, "Math": 10 }
+  syllabusWeights?: Record<string, number>; // legacy, kept for compat
+  syllabusData?: { topic: string; percentage: number }[]; // RAW syllabus from job_tests
   excludeQuestionIds?: string[]; // IDs of questions user has already answered
 }
 
@@ -73,14 +74,15 @@ export const generateTestFromSyllabus = async (
 };
 
 // Fetch questions for a single subject with quota — STRICT, no cross-filling
+// Forces subject/topic labels on returned questions so UI badges are never "General"
 const fetchSubjectQuota = async (
-  subject: string,
+  subjectName: string,
   quota: number,
   options: TestGenerationOptions
 ): Promise<QuestionBankItem[]> => {
   // Query 1: by topic name
   const filters: QuestionFilters = {
-    topics: [subject],
+    topics: [subjectName],
     limit: quota * 3,
     excludeIds: options.excludeQuestionIds,
   };
@@ -90,10 +92,10 @@ const fetchSubjectQuota = async (
   }
   let questions = await getQuestionBank(filters);
 
-  // Query 2: if topic returned 0, try subject field (but ONLY for this same subject)
+  // Query 2: if topic returned 0, try subject field (but ONLY for this same subject name)
   if (questions.length === 0) {
     const subjectFilters: QuestionFilters = {
-      subjects: [subject],
+      subjects: [subjectName],
       limit: quota * 3,
       excludeIds: options.excludeQuestionIds,
     };
@@ -104,8 +106,12 @@ const fetchSubjectQuota = async (
     questions = await getQuestionBank(subjectFilters);
   }
 
-  // STRICT SLICE: never return more than quota
-  return fisherYatesShuffle(questions).slice(0, quota);
+  // STRICT SLICE + FORCE subject/topic labels for UI badges
+  return fisherYatesShuffle(questions).slice(0, quota).map(q => ({
+    ...q,
+    subject: subjectName,
+    topic: subjectName,
+  }));
 };
 
 // Generate custom test — NEVER throws, always returns a valid test object
