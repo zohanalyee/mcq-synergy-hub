@@ -1,44 +1,50 @@
 
+Fix the issue at the actual data-flow level, not just the badge UI.
 
-# Fix Plan: Strict Subject Lock, Per-Subject AI Trigger, Subject Badges
+1. Update `src/components/mock-tests/JobTestsTab.tsx`
+- Stop building `syllabusWeights` in the component.
+- Pass raw `test.syllabus` into the generator as `syllabusData`.
+- Save the raw syllabus into the session payload too, so later logic can use the exact breakdown.
+- Keep per-subject AI triggers, but send the exact missing syllabus topic string for each deficit.
 
-## Fix 1: Strict Subject Lock in `fetchSubjectQuota` (testGenerationService.ts)
+2. Refactor `src/services/testGenerationService.ts`
+- Extend `TestGenerationOptions` with `syllabusData: { topic: string; percentage: number }[]`.
+- Make `generateCustomTest` branch on `options.syllabusData?.length`.
+- In that branch:
+  - loop over raw syllabus items only
+  - compute quota from `item.percentage` against `questionCount`
+  - distribute any remainder to highest-percentage items so totals match exactly
+  - fetch each subject/topic in isolation
+  - do not use the old flat fallback path at all for job tests
+- In `fetchSubjectQuota`, after slicing to quota, overwrite each returned question with `subject: requestedTopic` and `topic: requestedTopic` so UI labels are never blank or “General”.
+- Keep `subjectDeficits` keyed by the same raw syllabus topic string.
 
-**Problem**: The fallback logic in `fetchSubjectQuota` (lines 93-120) queries by subject name when topic query falls short, then relaxes difficulty. This causes English (which has the most questions in the DB) to overflow into other subjects' slots because the `topic` and `subject` fields overlap across subjects.
+3. Fix `supabase/functions/generate-test/index.ts`
+- When AI-generated questions are inserted, save the incoming topic string into both `subject` and `topic`.
+- Remove the current mismatch where one field uses sanitized text and the other uses raw text.
+- Keep duplicate detection and existing validation logic unchanged.
 
-**Changes**:
-- Remove ALL fallback logic from `fetchSubjectQuota`. It should do ONE query (by topic, then by subject if 0 results), slice to quota, and return whatever it found -- even if 0.
-- No cross-filling. If Math quota is 2 and DB has 0 Math, return 0 Math questions. The deficit is tracked per-subject.
+4. Fix the hidden re-mixing problem in `src/pages/TestSession.tsx`
+- The current polling logic is still pulling generic follow-up questions using only one topic, which can reintroduce English-heavy mixed content.
+- Change polling so it does not request generic refill by the first topic for syllabus-driven job tests.
+- Prefer stopping generic poll-based refill for syllabus sessions, or gate it so only explicit per-subject background generation updates the session.
+- This is required, otherwise the earlier fixes will still get polluted after session start.
 
-**Also add to `GeneratedTest` interface**:
-- `subjectDeficits?: Record<string, number>` — maps subject name to how many questions were missing from the bank.
+5. Verify subject labeling in the session UI
+- Keep the existing subject badges.
+- Confirm the active question badge, review badge, and syllabus map all use the forced subject/topic names coming from saved questions.
+- Expected result: badges should show exact syllabus sections like English, Computer (MS Office), Math, GK instead of General.
 
-**In the syllabus weights path** (lines 172-178):
-- After fetching each subject, compute `deficit = quota - fetched.length` and store it in a `subjectDeficits` map.
-- Pass `subjectDeficits` into the returned `GeneratedTest`.
+Files to modify
+- `src/components/mock-tests/JobTestsTab.tsx`
+- `src/services/testGenerationService.ts`
+- `src/pages/TestSession.tsx`
+- `supabase/functions/generate-test/index.ts`
 
-## Fix 2: Per-Subject AI Trigger (JobTestsTab.tsx)
+Deployment
+- Deploy the `generate-test` edge function after the code changes.
 
-**Problem**: Lines 101-108 send `topic: test.title` (e.g., "Junior Clerk") to the AI, which generates generic/English questions.
-
-**Changes**:
-- After getting `generatedTest`, read `generatedTest.subjectDeficits`.
-- For each subject with deficit > 0, invoke `generate-test` edge function with `topic: subjectName` and `question_count: deficit` instead of the overall test title.
-- This ensures AI generates specifically "Mathematics" or "MS Office" questions.
-
-## Fix 3: Subject Badge on Question Cards (TestSession.tsx)
-
-**During test-taking** (line ~564, before QuestionCard):
-- Add a `Badge` showing `Section: {questions[currentQuestion]?.subject || questions[currentQuestion]?.topic || 'General'}` above the QuestionCard.
-
-**In Review Answers** (line ~704-706):
-- Add a `Badge` showing `Section: {question.subject || question.topic || 'General'}` above each question text.
-
-## Files to Modify
-
-| File | Change |
-|------|--------|
-| `src/services/testGenerationService.ts` | Strip fallbacks from `fetchSubjectQuota`, add `subjectDeficits` to `GeneratedTest` |
-| `src/components/mock-tests/JobTestsTab.tsx` | Per-subject AI deficit triggers |
-| `src/pages/TestSession.tsx` | Subject badges during test and in review |
-
+Technical notes
+- The main failure is not just quota math; it is that raw syllabus data is not the source of truth, and later background loading reintroduces generic questions.
+- The “Section: General” badge is only a symptom of missing `subject` values on fetched/generated questions.
+- If only the three requested edits are made without fixing session polling, the app can still look broken even after generation logic is corrected.
