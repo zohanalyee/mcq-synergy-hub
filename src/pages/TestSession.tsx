@@ -121,12 +121,23 @@ const TestSession = () => {
   }, []);
 
   // Background fetch for remaining questions
+  // DISABLED for syllabus-driven job tests to prevent generic re-mixing
   const pollForMoreQuestions = useCallback(async () => {
     if (!testData || remainingCount <= 0 || pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
+      setIsLoadingMore(false);
+      return;
+    }
+
+    // If session is a syllabus-driven job test, skip generic polling entirely
+    // The per-subject AI triggers in JobTestsTab handle deficit filling
+    const isJobTest = testData.session_name?.startsWith('Job Test:');
+    if (isJobTest) {
+      console.log('🚫 Skipping generic poll for syllabus job test — per-subject AI handles deficits');
+      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
       setIsLoadingMore(false);
       return;
     }
