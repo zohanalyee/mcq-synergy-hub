@@ -36,15 +36,12 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         duration: test.duration
       };
 
-      // Build syllabus weights from test.syllabus percentages
-      const syllabusWeights: Record<string, number> = {};
-      const syllabusTopics: string[] = [];
-      for (const item of test.syllabus) {
-        syllabusTopics.push(item.topic);
-        if (item.percentage && item.percentage > 0) {
-          syllabusWeights[item.topic] = item.percentage;
-        }
-      }
+      // Extract raw syllabus data from the test
+      const syllabusData = test.syllabus
+        .filter(item => item.topic && item.percentage && item.percentage > 0)
+        .map(item => ({ topic: item.topic, percentage: item.percentage || 0 }));
+
+      const syllabusTopics = syllabusData.map(s => s.topic);
 
       // Fetch user's previously answered question IDs for anti-repetition
       const { data: { user } } = await supabase.auth.getUser();
@@ -52,8 +49,6 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
       if (user) {
         excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
       }
-
-      const hasSyllabusWeights = Object.keys(syllabusWeights).length > 0;
 
       const options: TestGenerationOptions = {
         subjects: syllabusTopics,
@@ -64,7 +59,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         includeExplanations: true,
         shuffleQuestions: true,
         shuffleOptions: true,
-        syllabusWeights: hasSyllabusWeights ? syllabusWeights : undefined,
+        syllabusData: syllabusData.length > 0 ? syllabusData : undefined,
         excludeQuestionIds: excludeQuestionIds.length > 0 ? excludeQuestionIds : undefined,
       };
 
