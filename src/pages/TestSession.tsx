@@ -206,7 +206,7 @@ const TestSession = () => {
         }
       }
     } catch { /* silent */ }
-  }, [testData, remainingCount, expectedTotal]);
+  }, [testData, remainingCount, expectedTotal, id]);
 
   // Start polling when we have remaining questions
   useEffect(() => {
