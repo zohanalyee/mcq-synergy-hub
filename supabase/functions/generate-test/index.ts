@@ -869,6 +869,7 @@ serve(async (req) => {
       source, // 'auto_fill' for auto-fill feature
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
+      session_id, // Session ID to update with generated questions (Job Tests)
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
 
