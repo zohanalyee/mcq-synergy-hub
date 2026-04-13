@@ -12,7 +12,7 @@ function shuffleArray<T>(array: T[]): T[] {
 }
 
 // Convert DB options (object {A:"...",B:"..."} or array) to array, and resolve answer letter to text
-function normalizeDbQuestion(q: any): { question: string; options: string[]; answer: string; explanation?: string } {
+function normalizeDbQuestion(q: any): Question {
   let optionsArray: string[];
   let answerText: string = q.correct_option || '';
 
@@ -30,10 +30,14 @@ function normalizeDbQuestion(q: any): { question: string; options: string[]; ans
   }
 
   return {
+    id: q.id,
     question: q.title,
     options: optionsArray,
     answer: answerText,
-    explanation: q.explanation || undefined
+    explanation: q.explanation || undefined,
+    subject: q.subject || q.topic || 'General',
+    topic: q.topic || q.subject || 'General',
+    difficulty: q.difficulty || undefined
   };
 }
 
@@ -47,6 +51,10 @@ interface Question {
   options: string[];
   answer: string;
   explanation?: string;
+  id?: string;
+  subject?: string;
+  topic?: string;
+  difficulty?: string;
 }
 
 interface UsageLogEntry {
@@ -145,6 +153,71 @@ function normalizeQuestionText(text: string): string {
     .replace(/[^\w\s]/g, '')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+function enrichQuestionsForSession(
+  questions: Question[],
+  topic: string,
+  sanitizedTopic: string,
+  difficulty?: string,
+): Question[] {
+  const normalizedDifficulty = difficulty
+    ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase()
+    : undefined;
+
+  return questions.map((q) => ({
+    ...q,
+    subject: q.subject || sanitizedTopic || topic || 'General',
+    topic: q.topic || topic || sanitizedTopic || 'General',
+    difficulty: q.difficulty || normalizedDifficulty,
+  }));
+}
+
+async function syncQuestionsToSession(
+  supabase: any,
+  sessionId: string | undefined,
+  questions: Question[],
+): Promise<void> {
+  if (!sessionId || typeof sessionId !== 'string' || questions.length === 0) return;
+
+  try {
+    const { data: existingSession, error: fetchError } = await supabase
+      .from('custom_test_sessions')
+      .select('questions')
+      .eq('id', sessionId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const existingQuestions = Array.isArray(existingSession?.questions) ? existingSession.questions : [];
+    const existingTexts = new Set(
+      existingQuestions
+        .map((q: any) => normalizeQuestionText(q.question || q.title || ''))
+        .filter(Boolean)
+    );
+
+    const newForSession = questions.filter((q) => {
+      const normalizedText = normalizeQuestionText(q.question || '');
+      return normalizedText && !existingTexts.has(normalizedText);
+    });
+
+    if (newForSession.length === 0 && existingQuestions.length > 0) return;
+
+    const mergedQuestions = existingQuestions.length === 0
+      ? questions
+      : [...existingQuestions, ...newForSession];
+
+    const { error: updateError } = await supabase
+      .from('custom_test_sessions')
+      .update({ questions: mergedQuestions })
+      .eq('id', sessionId);
+
+    if (updateError) throw updateError;
+
+    console.log(`📝 Synced session ${sessionId}: added ${newForSession.length} questions (total: ${mergedQuestions.length})`);
+  } catch (sessionErr) {
+    console.error('Failed to sync questions to session:', sessionErr);
+  }
 }
 
 // Map job tests to their core syllabus subjects for cross-question reuse
@@ -1251,7 +1324,12 @@ serve(async (req) => {
     // IMMEDIATE RETURN: FULL CACHE
     if (!forceNew && dbQuestions.length >= qc) {
       console.log('⚡ INSTANT: Sufficient questions in cache, skipping AI call');
-      const selected = shuffleArray(dbQuestions).slice(0, qc);
+      const selected = enrichQuestionsForSession(
+        shuffleArray(dbQuestions).slice(0, qc),
+        topic,
+        sanitizedTopic,
+        difficulty,
+      );
 
       // Log cache hit
       await logAIUsage(supabase, {
@@ -1265,6 +1343,8 @@ serve(async (req) => {
         questions_saved: 0,
         metadata: { cache_hit: true, cached_available: dbQuestions.length }
       });
+
+      await syncQuestionsToSession(supabase, session_id, selected);
 
       return new Response(
         JSON.stringify({
@@ -1282,7 +1362,12 @@ serve(async (req) => {
 
     // IMMEDIATE RETURN: PARTIAL MODE
     if (autoPartial && dbQuestions.length > 0 && !forceNew) {
-      const returnedQuestions = shuffleArray(dbQuestions).slice(0, Math.min(dbQuestions.length, qc));
+      const returnedQuestions = enrichQuestionsForSession(
+        shuffleArray(dbQuestions).slice(0, Math.min(dbQuestions.length, qc)),
+        topic,
+        sanitizedTopic,
+        difficulty,
+      );
       const missingCount = qc - returnedQuestions.length;
       
       console.log(`⚡ PARTIAL MODE ACTIVE: Returning ${returnedQuestions.length} questions, Generating ${missingCount} in background`);
@@ -1305,6 +1390,8 @@ serve(async (req) => {
           );
         }
       }
+
+      await syncQuestionsToSession(supabase, session_id, returnedQuestions);
 
       return new Response(
         JSON.stringify({
@@ -1332,7 +1419,13 @@ serve(async (req) => {
       if (err instanceof QuotaExhaustedError) {
         // If we have cached questions, return those instead of failing
         if (dbQuestions.length > 0) {
-          const returnedQuestions = shuffleArray(dbQuestions).slice(0, qc);
+          const returnedQuestions = enrichQuestionsForSession(
+            shuffleArray(dbQuestions).slice(0, qc),
+            topic,
+            sanitizedTopic,
+            difficulty,
+          );
+          await syncQuestionsToSession(supabase, session_id, returnedQuestions);
           return new Response(
             JSON.stringify({
               session_name: `${topic} Quiz`,
@@ -1417,7 +1510,13 @@ serve(async (req) => {
           }
         }
 
-        const returnedQuestions = shuffleArray(dbQuestions).slice(0, qc);
+        const returnedQuestions = enrichQuestionsForSession(
+          shuffleArray(dbQuestions).slice(0, qc),
+          topic,
+          sanitizedTopic,
+          difficulty,
+        );
+        await syncQuestionsToSession(supabase, session_id, returnedQuestions);
         const errorNotice = aiError.status === 429 
           ? 'Google AI quota exceeded. Showing cached questions only.'
           : aiError.status === 403 
@@ -1443,14 +1542,21 @@ serve(async (req) => {
       
       if (dbQuestions.length > 0) {
         console.log('AI failed, returning available DB questions');
+        const returnedQuestions = enrichQuestionsForSession(
+          shuffleArray(dbQuestions),
+          topic,
+          sanitizedTopic,
+          difficulty,
+        );
+        await syncQuestionsToSession(supabase, session_id, returnedQuestions);
         return new Response(
           JSON.stringify({
             session_name: `${topic} Quiz`,
-            questions: shuffleArray(dbQuestions),
+            questions: returnedQuestions,
             source: 'cache_partial',
-            cached_count: dbQuestions.length,
+            cached_count: returnedQuestions.length,
             ai_count: 0,
-            remaining_count: qc - dbQuestions.length,
+            remaining_count: qc - returnedQuestions.length,
             total_requested: qc
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
@@ -1547,34 +1653,14 @@ serve(async (req) => {
       throw new Error('No questions could be generated');
     }
     
-    const finalQuestions = shuffleArray(allQuestions).slice(0, qc);
+    const finalQuestions = enrichQuestionsForSession(
+      shuffleArray(allQuestions).slice(0, qc),
+      topic,
+      sanitizedTopic,
+      difficulty,
+    );
 
-    // If session_id was provided (Job Test background fill), append questions to the session
-    if (session_id && typeof session_id === 'string' && finalQuestions.length > 0) {
-      try {
-        const { data: existingSession } = await supabase
-          .from('custom_test_sessions')
-          .select('questions')
-          .eq('id', session_id)
-          .single();
-        
-        if (existingSession) {
-          const existingQuestions = Array.isArray(existingSession.questions) ? existingSession.questions : [];
-          const existingTexts = new Set(existingQuestions.map((q: any) => q.question || q.title));
-          const newForSession = finalQuestions.filter((q: any) => !existingTexts.has(q.question || q.title));
-          if (newForSession.length > 0) {
-            const mergedQuestions = [...existingQuestions, ...newForSession];
-            await supabase
-              .from('custom_test_sessions')
-              .update({ questions: mergedQuestions })
-              .eq('id', session_id);
-            console.log(`📝 Updated session ${session_id}: added ${newForSession.length} questions (total: ${mergedQuestions.length})`);
-          }
-        }
-      } catch (sessionErr) {
-        console.error('Failed to update session with generated questions:', sessionErr);
-      }
-    }
+    await syncQuestionsToSession(supabase, session_id, finalQuestions);
 
     const sourceTypeResponse = dbQuestions.length === 0 ? 'ai' : 
                        newAIQuestions.length === 0 ? 'cache' : 'hybrid';
