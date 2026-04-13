@@ -869,6 +869,7 @@ serve(async (req) => {
       source, // 'auto_fill' for auto-fill feature
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
+      session_id, // Session ID to update with generated questions (Job Tests)
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
 
@@ -1547,6 +1548,33 @@ serve(async (req) => {
     }
     
     const finalQuestions = shuffleArray(allQuestions).slice(0, qc);
+
+    // If session_id was provided (Job Test background fill), append questions to the session
+    if (session_id && typeof session_id === 'string' && finalQuestions.length > 0) {
+      try {
+        const { data: existingSession } = await supabase
+          .from('custom_test_sessions')
+          .select('questions')
+          .eq('id', session_id)
+          .single();
+        
+        if (existingSession) {
+          const existingQuestions = Array.isArray(existingSession.questions) ? existingSession.questions : [];
+          const existingTexts = new Set(existingQuestions.map((q: any) => q.question || q.title));
+          const newForSession = finalQuestions.filter((q: any) => !existingTexts.has(q.question || q.title));
+          if (newForSession.length > 0) {
+            const mergedQuestions = [...existingQuestions, ...newForSession];
+            await supabase
+              .from('custom_test_sessions')
+              .update({ questions: mergedQuestions })
+              .eq('id', session_id);
+            console.log(`📝 Updated session ${session_id}: added ${newForSession.length} questions (total: ${mergedQuestions.length})`);
+          }
+        }
+      } catch (sessionErr) {
+        console.error('Failed to update session with generated questions:', sessionErr);
+      }
+    }
 
     const sourceTypeResponse = dbQuestions.length === 0 ? 'ai' : 
                        newAIQuestions.length === 0 ? 'cache' : 'hybrid';
