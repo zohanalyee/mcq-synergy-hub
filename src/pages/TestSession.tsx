@@ -132,13 +132,34 @@ const TestSession = () => {
       return;
     }
 
-    // If session is a syllabus-driven job test, skip generic polling entirely
-    // The per-subject AI triggers in JobTestsTab handle deficit filling
     const isJobTest = testData.session_name?.startsWith('Job Test:');
+
+    // For Job Tests: re-fetch the session from DB to pick up AI-generated questions
     if (isJobTest) {
-      console.log('🚫 Skipping generic poll for syllabus job test — per-subject AI handles deficits');
-      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-      setIsLoadingMore(false);
+      pollAttemptsRef.current += 1;
+      try {
+        const { data: refreshed, error } = await supabase
+          .from('custom_test_sessions')
+          .select('questions')
+          .eq('id', id)
+          .single();
+        if (error || !refreshed) return;
+        const refreshedQuestions = Array.isArray(refreshed.questions) ? refreshed.questions : [];
+        const currentCount = (testData.questions || []).length;
+        if (refreshedQuestions.length > currentCount) {
+          const normalized = refreshedQuestions.map(normalizeQuestion);
+          setTestData((prev: any) => ({ ...prev, questions: normalized }));
+          const newRemaining = Math.max(0, expectedTotal - refreshedQuestions.length);
+          setRemainingCount(newRemaining);
+          if (newRemaining <= 0) {
+            toast.success(`All ${expectedTotal} questions loaded!`, { duration: 3000 });
+            if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
+            setIsLoadingMore(false);
+          } else {
+            toast.info(`Loaded ${refreshedQuestions.length - currentCount} more questions`, { duration: 2000 });
+          }
+        }
+      } catch { /* silent */ }
       return;
     }
 
