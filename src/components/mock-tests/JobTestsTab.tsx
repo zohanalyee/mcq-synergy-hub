@@ -73,7 +73,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         topics: syllabusTopics as any,
         subtopics: [] as any,
         difficulty_levels: [options.difficulty] as any,
-        question_count: options.questionCount,
+        question_count: generatedTest.questions.length,
         time_limit: options.timeLimit,
         questions: generatedTest.questions as any,
         is_active: true,
@@ -104,7 +104,8 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
               topic: subjectName,
               difficulty: options.difficulty === 'mixed' ? 'Medium' : options.difficulty,
               question_count: subjectDeficit,
-              session_id: session.id
+              session_id: session.id,
+              force_new: true
             }
           }).catch(err => console.error(`Background AI generation error for ${subjectName}:`, err));
         }
@@ -115,7 +116,8 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
             topic: test.title,
             difficulty: options.difficulty === 'mixed' ? 'Medium' : options.difficulty,
             question_count: options.questionCount,
-            session_id: session.id
+            session_id: session.id,
+            force_new: true
           }
         }).catch(err => console.error('Background AI generation error:', err));
       } else {
