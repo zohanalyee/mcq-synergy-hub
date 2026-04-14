@@ -235,7 +235,7 @@ const TestSession = () => {
         if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
       };
     }
-  }, [remainingCount, isSubmitted, pollForMoreQuestions]);
+  }, [remainingCount, isSubmitted, pollForMoreQuestions, testData]);
 
   // Fetch test session
   useEffect(() => {
