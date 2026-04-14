@@ -73,7 +73,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         topics: syllabusTopics as any,
         subtopics: [] as any,
         difficulty_levels: [options.difficulty] as any,
-        question_count: generatedTest.questions.length,
+        question_count: settings.questionCount,
         time_limit: options.timeLimit,
         questions: generatedTest.questions as any,
         is_active: true,

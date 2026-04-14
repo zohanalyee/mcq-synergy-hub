@@ -123,11 +123,23 @@ const TestSession = () => {
   // Background fetch for remaining questions
   // DISABLED for syllabus-driven job tests to prevent generic re-mixing
   const pollForMoreQuestions = useCallback(async () => {
-    if (!testData || remainingCount <= 0 || pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
-      if (pollIntervalRef.current) {
-        clearInterval(pollIntervalRef.current);
-        pollIntervalRef.current = null;
+    if (!testData) return;
+    
+    // Safety valve: if max attempts reached, adjust expectedTotal to actual count so submit works
+    if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+      const actualCount = (testData.questions || []).length;
+      if (actualCount > 0 && actualCount < expectedTotal) {
+        setExpectedTotal(actualCount);
+        setRemainingCount(0);
+        toast.info(`Loaded ${actualCount} questions (target was ${expectedTotal})`, { duration: 3000 });
       }
+      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
+      setIsLoadingMore(false);
+      return;
+    }
+    
+    if (remainingCount <= 0) {
+      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
       setIsLoadingMore(false);
       return;
     }
@@ -210,7 +222,8 @@ const TestSession = () => {
 
   // Start polling when we have remaining questions
   useEffect(() => {
-    if (remainingCount > 0 && !isSubmitted && !pollIntervalRef.current) {
+    const isJobTestWithEmpty = testData?.session_name?.startsWith('Job Test:') && (testData?.questions || []).length === 0;
+    if ((remainingCount > 0 || isJobTestWithEmpty) && !isSubmitted && !pollIntervalRef.current) {
       setIsLoadingMore(true);
       pollAttemptsRef.current = 0;
       const initialTimeout = setTimeout(() => {
