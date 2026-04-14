@@ -15,4 +15,3 @@ Disallow: /reset-password
 Disallow: /forgot-password
 
 Sitemap: https://mcqsai.com/sitemap.xml
-Sitemap: https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=index

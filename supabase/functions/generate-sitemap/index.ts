@@ -53,7 +53,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  const edgeFnBase = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-sitemap`;
+  const edgeFnBase = `${BASE_URL}/sitemaps`;
 
   try {
     if (type === "static") {
@@ -165,17 +165,17 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString().split("T")[0];
 
     const sitemaps: string[] = [
-      `<sitemap><loc>${edgeFnBase}?type=static</loc><lastmod>${now}</lastmod></sitemap>`,
-      `<sitemap><loc>${edgeFnBase}?type=tools</loc><lastmod>${now}</lastmod></sitemap>`,
-      `<sitemap><loc>${edgeFnBase}?type=exams</loc><lastmod>${now}</lastmod></sitemap>`,
-      `<sitemap><loc>${edgeFnBase}?type=jobs</loc><lastmod>${now}</lastmod></sitemap>`,
-      `<sitemap><loc>${edgeFnBase}?type=scholarships</loc><lastmod>${now}</lastmod></sitemap>`,
-      `<sitemap><loc>${edgeFnBase}?type=blog</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}/static.xml</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}/tools.xml</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}/exams.xml</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}/jobs.xml</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}/scholarships.xml</loc><lastmod>${now}</lastmod></sitemap>`,
+      `<sitemap><loc>${edgeFnBase}/blog.xml</loc><lastmod>${now}</lastmod></sitemap>`,
     ];
 
     for (let i = 1; i <= totalPages; i++) {
       sitemaps.push(
-        `<sitemap><loc>${edgeFnBase}?type=boards&amp;page=${i}</loc><lastmod>${now}</lastmod></sitemap>`
+        `<sitemap><loc>${edgeFnBase}/boards-${i}.xml</loc><lastmod>${now}</lastmod></sitemap>`
       );
     }
 
