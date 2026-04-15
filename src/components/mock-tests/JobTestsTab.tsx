@@ -2,7 +2,6 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { JobTestCard } from "./JobTestCard";
-import { TestGenerationLoader } from "./TestGenerationLoader";
 import { CustomizeTestDialog } from "./CustomizeTestDialog";
 import { toast } from "sonner";
 import { JobTest } from "@/data/jobTestsData";
@@ -10,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
 import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
+import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -20,122 +20,183 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
   const [expandedJobTest, setExpandedJobTest] = useState<string | null>(null);
   const [customizeJobTest, setCustomizeJobTest] = useState<string | null>(null);
   const [generatingTestId, setGeneratingTestId] = useState<string | null>(null);
-  const [generatingTopicName, setGeneratingTopicName] = useState<string>("");
   const [dialogTest, setDialogTest] = useState<JobTest | null>(null);
-  
+
+  // Sequential generation progress
+  const [showProgress, setShowProgress] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress[]>([]);
+
   const filteredJobTests = jobTests;
-  
+
   const handleStartJobTest = async (test: JobTest, customSettings?: any) => {
     setGeneratingTestId(test.id);
-    setGeneratingTopicName(test.title);
 
     try {
       const settings = customSettings || {
         difficulty: "mixed",
         questionCount: test.questions,
-        duration: test.duration
+        duration: test.duration,
       };
 
-      // Extract raw syllabus data from the test
+      // Extract syllabus data
       const syllabusData = test.syllabus
-        .filter(item => item.topic && item.percentage && item.percentage > 0)
-        .map(item => ({ topic: item.topic, percentage: item.percentage || 0 }));
+        .filter((item) => item.topic && item.percentage && item.percentage > 0)
+        .map((item) => ({ topic: item.topic, percentage: item.percentage || 0 }));
 
-      const syllabusTopics = syllabusData.map(s => s.topic);
+      const totalPercentage = syllabusData.reduce((a, b) => a + b.percentage, 0);
+      const targetCount = settings.questionCount;
 
-      // Fetch user's previously answered question IDs for anti-repetition
-      const { data: { user } } = await supabase.auth.getUser();
+      // Calculate per-subject quotas using Largest Remainder Method
+      const entries = syllabusData.map((item) => {
+        const exact = (item.percentage / totalPercentage) * targetCount;
+        const floor = Math.floor(exact);
+        return { subject: item.topic, percentage: item.percentage, exact, floor, remainder: exact - floor };
+      });
+      let sumFloors = entries.reduce((s, e) => s + e.floor, 0);
+      let distributable = targetCount - sumFloors;
+      const sorted = [...entries].sort((a, b) => b.remainder - a.remainder);
+      const quotas = new Map<string, number>();
+      for (const entry of entries) quotas.set(entry.subject, entry.floor);
+      for (const entry of sorted) {
+        if (distributable <= 0) break;
+        quotas.set(entry.subject, (quotas.get(entry.subject) || 0) + 1);
+        distributable--;
+      }
+      for (const entry of entries) {
+        if ((quotas.get(entry.subject) || 0) === 0) quotas.set(entry.subject, 1);
+      }
+
+      // Initialize progress tracking
+      const progressItems: GenerationProgress[] = Array.from(quotas.entries()).map(([subject, needed]) => ({
+        subject,
+        requested: needed,
+        generated: 0,
+        status: "pending" as const,
+      }));
+      setGenerationProgress(progressItems);
+      setShowProgress(true);
+
+      // Fetch user's previously answered question IDs
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       let excludeQuestionIds: string[] = [];
       if (user) {
         excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
       }
 
-      const options: TestGenerationOptions = {
-        subjects: syllabusTopics,
-        topics: syllabusTopics,
-        difficulty: settings.difficulty.toLowerCase(),
-        questionCount: settings.questionCount,
-        timeLimit: settings.duration,
-        includeExplanations: true,
-        shuffleQuestions: true,
-        shuffleOptions: true,
-        syllabusData: syllabusData.length > 0 ? syllabusData : undefined,
-        excludeQuestionIds: excludeQuestionIds.length > 0 ? excludeQuestionIds : undefined,
-      };
+      // Sequential generation: call generate-test for each subject
+      const allQuestions: any[] = [];
+      let hasErrors = false;
 
-      const generatedTest = await generateCustomTest(options);
-      
-      // Save session to DB and navigate by ID
+      for (let i = 0; i < progressItems.length; i++) {
+        const item = progressItems[i];
+
+        // Update status: generating
+        setGenerationProgress((prev) =>
+          prev.map((p, idx) => (idx === i ? { ...p, status: "generating" as const } : p))
+        );
+
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+          const { data, error } = await supabase.functions.invoke("generate-test", {
+            body: {
+              topic: item.subject,
+              difficulty: settings.difficulty === "mixed" ? "Medium" : settings.difficulty,
+              question_count: item.requested,
+              force_new: false,
+            },
+          });
+
+          clearTimeout(timeoutId);
+
+          if (error) throw new Error(`Edge function error: ${error.message}`);
+
+          const questions = data?.questions || [];
+
+          // Force subject/topic labels
+          const labeledQuestions = questions.map((q: any) => ({
+            ...q,
+            subject: item.subject,
+            topic: q.topic || item.subject,
+          }));
+
+          allQuestions.push(...labeledQuestions);
+
+          // Update status: complete
+          setGenerationProgress((prev) =>
+            prev.map((p, idx) =>
+              idx === i ? { ...p, status: "complete" as const, generated: labeledQuestions.length } : p
+            )
+          );
+
+          console.log(`[JobTest] ✅ ${item.subject}: ${labeledQuestions.length}/${item.requested}`);
+        } catch (err: any) {
+          console.error(`[JobTest] Error for ${item.subject}:`, err);
+          hasErrors = true;
+
+          // Update status: error
+          setGenerationProgress((prev) =>
+            prev.map((p, idx) =>
+              idx === i ? { ...p, status: "error" as const, error: err.message || "Generation failed" } : p
+            )
+          );
+          continue;
+        }
+      }
+
+      // Check if we have ANY questions
+      if (allQuestions.length === 0) {
+        throw new Error("Failed to generate any questions. Please check your internet connection and try again.");
+      }
+
+      if (hasErrors && allQuestions.length < targetCount) {
+        toast.warning(`Generated ${allQuestions.length}/${targetCount} questions. Some subjects had issues.`, {
+          duration: 5000,
+        });
+      }
+
+      // Create session with ACTUAL question count
+      const syllabusTopics = syllabusData.map((s) => s.topic);
       const sessionPayload = {
         user_id: user?.id || null,
         session_name: `Job Test: ${test.title}`,
         subjects: syllabusTopics as any,
         topics: syllabusTopics as any,
         subtopics: [] as any,
-        difficulty_levels: [options.difficulty] as any,
-        question_count: settings.questionCount,
-        time_limit: options.timeLimit,
-        questions: generatedTest.questions as any,
+        difficulty_levels: [settings.difficulty] as any,
+        question_count: allQuestions.length, // ACTUAL count — no mismatch possible
+        time_limit: settings.duration,
+        questions: allQuestions as any,
         is_active: true,
-        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
       };
 
       const { data: session, error: sessionError } = await supabase
-        .from('custom_test_sessions')
+        .from("custom_test_sessions")
         .insert(sessionPayload)
-        .select('id')
+        .select("id")
         .single();
 
       if (sessionError) throw sessionError;
 
-      const bankCount = generatedTest.questions.length;
-      const deficit = generatedTest.deficit;
-      const subjectDeficits = generatedTest.subjectDeficits;
+      toast.success(`Test ready with ${allQuestions.length} questions!`, { duration: 3000 });
 
-      if (deficit > 0 && subjectDeficits && Object.keys(subjectDeficits).length > 0) {
-        const deficitEntries = Object.entries(subjectDeficits);
-        const deficitSummary = deficitEntries.map(([s, c]) => `${c} ${s}`).join(', ');
-        toast.info(`Starting with ${bankCount} questions — AI generating ${deficitSummary} in background`, { duration: 5000 });
-
-        // Trigger AI generation per missing subject
-        for (const [subjectName, subjectDeficit] of deficitEntries) {
-          supabase.functions.invoke('generate-test', {
-            body: {
-              topic: subjectName,
-              difficulty: options.difficulty === 'mixed' ? 'Medium' : options.difficulty,
-              question_count: subjectDeficit,
-              session_id: session.id,
-              force_new: true
-            }
-          }).catch(err => console.error(`Background AI generation error for ${subjectName}:`, err));
-        }
-      } else if (deficit > 0) {
-        toast.info(`Starting with ${bankCount} questions — AI generating ${deficit} more in background`, { duration: 4000 });
-        supabase.functions.invoke('generate-test', {
-          body: {
-            topic: test.title,
-            difficulty: options.difficulty === 'mixed' ? 'Medium' : options.difficulty,
-            question_count: options.questionCount,
-            session_id: session.id,
-            force_new: true
-          }
-        }).catch(err => console.error('Background AI generation error:', err));
-      } else {
-        toast.success(`${test.title} ready!`, { description: `${bankCount} questions loaded` });
-      }
-      
-      navigate(`/test-session/${session.id}`, { state: { returnPath: '/mock-tests' } });
+      setShowProgress(false);
+      navigate(`/test-session/${session.id}`, { state: { returnPath: "/mock-tests" } });
     } catch (error) {
-      console.error('Error generating job test:', error);
-      toast.error('Failed to generate test', {
-        description: error instanceof Error ? error.message : 'Questions may not be available for this job test syllabus'
+      console.error("Error generating job test:", error);
+      toast.error("Failed to generate test", {
+        description: error instanceof Error ? error.message : "Questions may not be available for this job test syllabus",
       });
+      setShowProgress(false);
     } finally {
       setGeneratingTestId(null);
-      setGeneratingTopicName("");
     }
   };
-  
+
   const toggleExpandJobTest = (testId: string) => {
     if (expandedJobTest === testId) {
       setExpandedJobTest(null);
@@ -144,31 +205,32 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
       setCustomizeJobTest(null);
     }
   };
-  
+
   const toggleCustomizeJobTest = (testId: string, event: React.MouseEvent) => {
     event.stopPropagation();
-    const test = jobTests.find(t => t.id === testId);
+    const test = jobTests.find((t) => t.id === testId);
     if (test) setDialogTest(test);
   };
 
   const handleDialogStart = (settings: { difficulty: "easy" | "medium" | "hard"; questionCount: number; duration: number }) => {
     if (dialogTest) handleStartJobTest(dialogTest, settings);
   };
-  
+
   const container = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    visible: { opacity: 1, transition: { staggerChildren: 0.1 } },
   };
   const item = {
     hidden: { y: 20, opacity: 0 },
-    visible: { y: 0, opacity: 1 }
+    visible: { y: 0, opacity: 1 },
   };
 
   return (
     <>
-      <TestGenerationLoader 
-        isVisible={generatingTestId !== null} 
-        topicName={generatingTopicName} 
+      <GenerationProgressDialog
+        isOpen={showProgress}
+        progress={generationProgress}
+        onClose={() => setShowProgress(false)}
       />
       <CustomizeTestDialog
         isOpen={dialogTest !== null}
@@ -181,13 +243,13 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         isGenerating={generatingTestId === dialogTest?.id}
       />
       {filteredJobTests.length > 0 ? (
-        <motion.div 
+        <motion.div
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 items-start"
-          variants={container} 
-          initial="hidden" 
+          variants={container}
+          initial="hidden"
           animate="visible"
         >
-          {filteredJobTests.map(test => (
+          {filteredJobTests.map((test) => (
             <motion.div key={test.id} variants={item}>
               <JobTestCard
                 test={test}
