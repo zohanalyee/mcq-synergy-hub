@@ -69,13 +69,6 @@ const TestSession = () => {
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [syllabusSheetOpen, setSyllabusSheetOpen] = useState(false);
 
-  // Smart Background Loading state
-  const [expectedTotal, setExpectedTotal] = useState(0);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [remainingCount, setRemainingCount] = useState(0);
-  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const pollAttemptsRef = useRef(0);
-  const MAX_POLL_ATTEMPTS = 15;
   const hasRestoredRef = useRef(false);
 
   const locationState = location.state as { returnPath?: string } | null;
@@ -93,7 +86,7 @@ const TestSession = () => {
   });
 
   const questions = testData?.questions || [];
-  const displayTotal = expectedTotal > 0 ? Math.max(expectedTotal, questions.length) : questions.length;
+  const displayTotal = questions.length;
 
   // Hooks
   const { onAnswer, markQuestionArrival, resetMotivation } = useExamMotivation({
@@ -113,131 +106,7 @@ const TestSession = () => {
     return [];
   };
 
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
-    };
-  }, []);
-
-  // Background fetch for remaining questions
-  // DISABLED for syllabus-driven job tests to prevent generic re-mixing
-  const pollForMoreQuestions = useCallback(async () => {
-    if (!testData) return;
-    
-    // Safety valve: if max attempts reached, adjust expectedTotal to actual count so submit works
-    if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
-      const actualCount = (testData.questions || []).length;
-      if (actualCount > 0 && actualCount < expectedTotal) {
-        setExpectedTotal(actualCount);
-        setRemainingCount(0);
-        toast.info(`Loaded ${actualCount} questions (target was ${expectedTotal})`, { duration: 3000 });
-      }
-      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-      setIsLoadingMore(false);
-      return;
-    }
-    
-    if (remainingCount <= 0) {
-      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-      setIsLoadingMore(false);
-      return;
-    }
-
-    const isJobTest = testData.session_name?.startsWith('Job Test:');
-
-    // For Job Tests: re-fetch the session from DB to pick up AI-generated questions
-    if (isJobTest) {
-      pollAttemptsRef.current += 1;
-      try {
-        const { data: refreshed, error } = await supabase
-          .from('custom_test_sessions')
-          .select('questions')
-          .eq('id', id)
-          .single();
-        if (error || !refreshed) return;
-        const refreshedQuestions = Array.isArray(refreshed.questions) ? refreshed.questions : [];
-        const currentCount = (testData.questions || []).length;
-        if (refreshedQuestions.length > currentCount) {
-          const normalized = refreshedQuestions.map(normalizeQuestion);
-          setTestData((prev: any) => ({ ...prev, questions: normalized }));
-          const newRemaining = Math.max(0, expectedTotal - refreshedQuestions.length);
-          setRemainingCount(newRemaining);
-          if (newRemaining <= 0) {
-            toast.success(`All ${expectedTotal} questions loaded!`, { duration: 3000 });
-            if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-            setIsLoadingMore(false);
-          } else {
-            toast.info(`Loaded ${refreshedQuestions.length - currentCount} more questions`, { duration: 2000 });
-          }
-        }
-      } catch { /* silent */ }
-      return;
-    }
-
-    pollAttemptsRef.current += 1;
-    const currentQuestionCount = testData.questions?.length || 0;
-    const topicForPolling = extractTopicString(testData.topics) ||
-      testData.subjects?.[0] ||
-      testData.session_name?.replace(/^(Job Test:|Test:)\s*/, '') ||
-      null;
-    const difficultyForPolling = testData.difficulty_levels?.[0] || "Medium";
-
-    if (!topicForPolling) {
-      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-      setIsLoadingMore(false);
-      return;
-    }
-
-    try {
-      const { data, error } = await supabase.functions.invoke("generate-test", {
-        body: { topic: topicForPolling, difficulty: difficultyForPolling, question_count: expectedTotal, fetch_only: true },
-      });
-      if (error) return;
-
-      if (data?.questions && data.questions.length > currentQuestionCount) {
-        const existingQuestions = testData.questions || [];
-        const existingQuestionTexts = new Set(existingQuestions.map((q: any) => q.question));
-        const newQuestions = data.questions
-          .filter((q: any) => !existingQuestionTexts.has(q.question))
-          .map(normalizeQuestion);
-
-        if (newQuestions.length > 0) {
-          setTestData((prev: any) => ({ ...prev, questions: [...(prev?.questions || []), ...newQuestions] }));
-          const newTotal = currentQuestionCount + newQuestions.length;
-          const newRemaining = Math.max(0, expectedTotal - newTotal);
-          setRemainingCount(newRemaining);
-
-          if (newRemaining > 0) {
-            toast.info(`Loaded ${newQuestions.length} more questions`, { duration: 2000 });
-          } else {
-            toast.success(`All ${expectedTotal} questions loaded!`, { duration: 3000 });
-            if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-            setIsLoadingMore(false);
-          }
-        }
-      }
-    } catch { /* silent */ }
-  }, [testData, remainingCount, expectedTotal, id]);
-
-  // Start polling when we have remaining questions
-  useEffect(() => {
-    const isJobTestWithEmpty = testData?.session_name?.startsWith('Job Test:') && (testData?.questions || []).length === 0;
-    if ((remainingCount > 0 || isJobTestWithEmpty) && !isSubmitted && !pollIntervalRef.current) {
-      setIsLoadingMore(true);
-      pollAttemptsRef.current = 0;
-      const initialTimeout = setTimeout(() => {
-        pollForMoreQuestions();
-        pollIntervalRef.current = setInterval(pollForMoreQuestions, 3000);
-      }, 3000);
-      return () => {
-        clearTimeout(initialTimeout);
-        if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-      };
-    }
-  }, [remainingCount, isSubmitted, pollForMoreQuestions, testData]);
-
-  // Fetch test session
+  // Fetch test session — single load, no polling
   useEffect(() => {
     const fetchTestSession = async () => {
       if (!id) { setError("No session ID provided"); setIsLoading(false); return; }
@@ -247,7 +116,6 @@ const TestSession = () => {
         if (fetchError) throw fetchError;
         if (!data) { setError("Test session not found"); setIsLoading(false); return; }
 
-        // Normalize all questions to canonical shape on load
         const normalizedData = {
           ...data,
           questions: Array.isArray(data.questions)
@@ -258,24 +126,13 @@ const TestSession = () => {
         const subjectsArr = normalizeStringArray(normalizedData.subjects);
         const topicsArr = normalizeStringArray(data.topics);
         const difficultyArr = normalizeStringArray(data.difficulty_levels);
-        const safeQuestionCount = typeof data.question_count === "number" ? data.question_count : Number(data.question_count) || 10;
         const safeTimeLimit = typeof data.time_limit === "number" ? data.time_limit : Number(data.time_limit) || 30;
-        const safeTotalQuestions = Array.isArray(data.questions) ? data.questions.length : 0;
-
-        setExpectedTotal(safeQuestionCount);
-        const initialDeficit = Math.max(0, safeQuestionCount - safeTotalQuestions);
-        setRemainingCount(initialDeficit);
-        
-        if (initialDeficit > 0 && safeTotalQuestions > 0) {
-          toast.info(`Starting with ${safeTotalQuestions} questions — AI generating ${initialDeficit} more in background`, { duration: 5000 });
-        } else if (initialDeficit > 0 && safeTotalQuestions === 0) {
-          toast.info(`AI is generating ${safeQuestionCount} questions...`, { duration: 5000 });
-        }
+        const safeTotalQuestions = normalizedData.questions.length;
 
         setLastUsedContext({
           subject: subjectsArr[0], topic: extractTopicString(data.topics) || topicsArr[0],
           subjects: subjectsArr, topics: topicsArr, difficultyLevels: difficultyArr,
-          questionCount: safeQuestionCount, timeLimit: safeTimeLimit,
+          questionCount: safeTotalQuestions, timeLimit: safeTimeLimit,
           totalQuestions: safeTotalQuestions, returnPath: locationState?.returnPath || "/custom-syllabus",
         });
 
@@ -332,7 +189,7 @@ const TestSession = () => {
     markQuestionArrival();
   }, [currentQuestion, markQuestionArrival]);
 
-  // Syllabus tracker data - must be before early returns to satisfy hooks rules
+  // Syllabus tracker data
   const syllabusMap = useMemo(() => {
     if (!questions.length) return [];
     const subjectMap = new Map<string, { name: string; total: number; attempted: number; isCurrent: boolean }>();
@@ -403,7 +260,6 @@ const TestSession = () => {
     });
   };
 
-  // Use shared evaluation utilities
   const resolveAnswer = (question: any): string => resolveCorrectAnswer(question);
   const checkAnswer = (question: any, userAnswer: string | undefined): boolean => checkUserAnswer(question, userAnswer);
 
@@ -432,13 +288,9 @@ const TestSession = () => {
     setIsSubmitted(true);
     clearState();
 
-    if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
-    setIsLoadingMore(false);
-
     const timeTaken = testData.time_limit * 60 - timeRemaining;
     const questionIds = questions.map((q: any) => q.id).filter(Boolean);
     
-    // Extract subjects: prefer session subjects, fallback to extracting from questions
     let subjects = testData.subjects || [];
     if (Array.isArray(subjects)) subjects = subjects.filter(Boolean);
     if (subjects.length === 0 && questions.length > 0) {
@@ -481,8 +333,7 @@ const TestSession = () => {
 
   const progress = ((currentQuestion + 1) / displayTotal) * 100;
   const answeredCount = Object.keys(answers).length;
-  const allQuestionsLoaded = remainingCount === 0;
-  const canSubmit = allQuestionsLoaded || questions.length >= expectedTotal;
+  const canSubmit = true; // Session is always complete when created
 
   const getSourceBadge = () => {
     const source = testData?.source;
@@ -495,17 +346,16 @@ const TestSession = () => {
 
   const sourceBadge = getSourceBadge();
 
-
   return (
     <Header>
       <div className="max-w-6xl mx-auto px-3 sm:px-4 pt-0 pb-2 test-container">
         {!isSubmitted ? (
           questions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20 text-center gap-4">
-              <Loader2 className="w-10 h-10 animate-spin text-primary" />
-              <h2 className="text-xl font-semibold">Generating Questions...</h2>
+              <AlertCircle className="w-10 h-10 text-destructive" />
+              <h2 className="text-xl font-semibold">No Questions Available</h2>
               <p className="text-muted-foreground max-w-md">
-                AI is generating your questions. This may take up to 30 seconds. The page will update automatically.
+                This test session has no questions. Please go back and try again.
               </p>
               <Button
                 variant="outline"
@@ -526,8 +376,8 @@ const TestSession = () => {
               answeredCount={answeredCount}
               timeRemaining={timeRemaining}
               progress={progress}
-              isLoadingMore={isLoadingMore}
-              remainingCount={remainingCount}
+              isLoadingMore={false}
+              remainingCount={0}
               sourceBadge={sourceBadge}
               isMusicOpen={isMusicOpen}
               onToggleMusic={() => setIsMusicOpen((prev) => !prev)}
@@ -632,7 +482,7 @@ const TestSession = () => {
                   currentQuestion={currentQuestion}
                   totalQuestions={questions.length}
                   canSubmit={canSubmit}
-                  remainingCount={remainingCount}
+                  remainingCount={0}
                   isFlagged={flaggedQuestions.has(currentQuestion)}
                   onPrevious={() => setCurrentQuestion((prev) => Math.max(0, prev - 1))}
                   onNext={() => setCurrentQuestion((prev) => Math.min(questions.length - 1, prev + 1))}
