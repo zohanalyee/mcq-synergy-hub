@@ -107,6 +107,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
               difficulty: settings.difficulty === "mixed" ? "Medium" : settings.difficulty,
               question_count: item.requested,
               force_new: false,
+              partial_mode: false,
             },
           });
 
