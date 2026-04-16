@@ -1,69 +1,43 @@
 
 
-# Fix: Sequential Generation with Progress Dialog
+# Fix: Ensure Edge Function is Fully Synchronous for Job Tests
 
 ## Problem
-The current architecture has a race condition: session is created BEFORE questions are ready, then relies on unreliable async polling to hydrate it. This causes infinite "Generating Questions..." states.
+The edge function at line 991 auto-enables `autoPartial` mode when `qc > 20`. In partial mode (line 1364), it returns only cached questions and generates the rest via `EdgeRuntime.waitUntil` — those background-generated questions are lost because `JobTestsTab` creates the session AFTER collecting all responses.
 
-## Solution: Deterministic Sequential Generation
+Even for smaller quotas, if the cache has some questions, the partial mode returns them immediately and generates the rest in the background — breaking syllabus weightage.
 
-### Part 1: Rewrite `src/components/mock-tests/JobTestsTab.tsx`
-- Replace fire-and-forget background generation with **sequential, awaited** calls to `generate-test` per syllabus subject
-- Add a **Progress Dialog** showing per-subject generation status (pending/generating/complete/error) with a progress bar
-- Create session ONLY after all questions are collected, with `question_count` set to actual yield
-- Add 60-second timeout per subject call via `AbortController`
-- On partial failure: continue with other subjects, warn user, proceed with available questions
-- On total failure (0 questions): show error toast, abort
+## Root Cause
+```
+const isLargeRequest = qc > 20;
+const autoPartial = usePartialMode || isLargeRequest;
+```
+This means any subject requesting >20 questions silently enters partial mode and returns incomplete results.
 
-Key changes:
-- New state: `generationProgress` array tracking per-subject status
-- New `GenerationProgressDialog` component (inline in same file) with per-subject rows showing progress bars
-- `handleStartJobTest` becomes a sequential `for...of` loop that awaits each edge function call
-- Remove `TestGenerationLoader` usage for job tests (replaced by progress dialog)
-- Session payload uses `allQuestions.length` for `question_count` (no mismatch possible)
+## Fix (2 changes)
 
-### Part 2: Simplify `src/pages/TestSession.tsx` (data layer only)
-**Critical instruction**: Only replace data fetching, state management, and polling logic. Keep ALL existing UI intact (Syllabus Map sidebar, Section badges, QuestionCard, ExamNavBar, results, etc.)
+### 1. `src/components/mock-tests/JobTestsTab.tsx` — Pass `partial_mode: false`
+In the `supabase.functions.invoke("generate-test")` call (line 104-111), add `partial_mode: false` to the body. This explicitly tells the edge function: "Do NOT use background generation — wait for all questions synchronously."
 
-Changes:
-- Remove all polling logic (`pollForMoreQuestions`, `pollIntervalRef`, `pollAttemptsRef`, `MAX_POLL_ATTEMPTS`, `isLoadingMore`, `remainingCount`)
-- Remove `expectedTotal` state — use `questions.length` directly as the source of truth
-- Simplify `fetchTestSession`: load once, no deficit calculation, no polling setup
-- `canSubmit` becomes simply `true` (session is always complete when created)
-- Remove "Generating Questions..." empty-state screen — if session has 0 questions, show error with back button
-- Keep: `displayTotal`, `syllabusMap`, `ExamHeader`, `QuestionCard`, `QuestionPalette`, `ExamNavBar`, results section, `SmartFeedbackCard`, `NeuralFocusPlayer`, all answer/flag/submit/retry handlers, persistence hooks, timer
-
-### Part 3: Update `supabase/functions/generate-test/index.ts`
-- No structural changes needed — the function already works correctly for individual subject calls
-- Ensure `syncQuestionsToSession` is NOT called during sequential generation flow (session doesn't exist yet at call time)
-- The edge function continues to support `session_id` for any legacy flows, but the new JobTestsTab won't pass it
+### 2. `supabase/functions/generate-test/index.ts` — Respect explicit `partial_mode: false`
+Change line 991 from:
+```
+const autoPartial = usePartialMode || isLargeRequest;
+```
+to:
+```
+const autoPartial = partial_mode === false ? false : (usePartialMode || isLargeRequest);
+```
+This ensures when `partial_mode` is explicitly set to `false`, the large-request auto-partial is disabled and the function waits for full AI generation before responding.
 
 ## Files to modify
-| File | Scope |
-|------|-------|
-| `src/components/mock-tests/JobTestsTab.tsx` | Full rewrite of `handleStartJobTest`, add progress dialog |
-| `src/pages/TestSession.tsx` | Remove polling, simplify data loading, keep UI |
+| File | Change |
+|------|--------|
+| `src/components/mock-tests/JobTestsTab.tsx` | Add `partial_mode: false` to generate-test invoke body |
+| `supabase/functions/generate-test/index.ts` | Respect explicit `partial_mode: false` override |
 
-## Flow diagram
-```text
-User clicks Start Test
-        ↓
-JobTestsTab calculates per-subject quotas from syllabus
-        ↓
-Progress Dialog opens
-        ↓
-FOR EACH SUBJECT (sequential, awaited):
-  → Call generate-test edge function (60s timeout)
-  → Success: collect questions, update progress
-  → Error: log, mark error, continue
-        ↓
-Any questions? NO → error toast, abort
-              YES → create session with actual count
-        ↓
-Navigate to /test-session/:id
-        ↓
-TestSession loads session (complete, ready)
-        ↓
-User takes test immediately
-```
+## Impact
+- Job Tests will always get the EXACT number of questions requested per subject
+- Other callers (Subject Tests, auto-fill) are unaffected — they don't pass `partial_mode: false`
+- No structural rewrite needed — the architecture is already correct, just needs this flag
 
