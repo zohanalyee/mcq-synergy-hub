@@ -34,7 +34,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
     try {
       const settings = customSettings || {
         difficulty: "mixed",
-        questionCount: test.questions,
+        questionCount: Math.min(test.questions || 20, 20),
         duration: test.duration,
       };
 
@@ -121,7 +121,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
           const labeledQuestions = questions.map((q: any) => ({
             ...q,
             subject: item.subject,
-            topic: q.topic || item.subject,
+            topic: item.subject,
           }));
 
           allQuestions.push(...labeledQuestions);
