@@ -348,10 +348,23 @@ function sanitizeMCQ(mcq: any): Question {
   let optionsArray: string[];
   let answerText: string;
 
+  // Accept correct_option alias
+  if (!mcq.correctOption && mcq.correct_option) {
+    mcq.correctOption = mcq.correct_option;
+  }
+  if (mcq.correctOption && typeof mcq.correctOption === 'string' && /^[a-d]$/.test(mcq.correctOption)) {
+    mcq.correctOption = mcq.correctOption.toUpperCase();
+  }
+
   // Convert options object {A,B,C,D} to array format
   if (mcq.options && typeof mcq.options === 'object' && !Array.isArray(mcq.options)) {
+    // Patch lowercase keys
+    for (const k of ['A', 'B', 'C', 'D']) {
+      if (!mcq.options[k] && mcq.options[k.toLowerCase()]) {
+        mcq.options[k] = mcq.options[k.toLowerCase()];
+      }
+    }
     optionsArray = ['A', 'B', 'C', 'D'].map(k => mcq.options[k]?.trim() || '');
-    // Resolve letter-based correctOption to full text
     if (mcq.correctOption && mcq.options[mcq.correctOption]) {
       answerText = mcq.options[mcq.correctOption].trim();
     } else {
@@ -360,7 +373,6 @@ function sanitizeMCQ(mcq: any): Question {
   } else {
     optionsArray = (mcq.options as string[]).map((o: string) => o.trim());
     answerText = mcq.answer?.trim() || '';
-    // If correctOption letter given, resolve it
     if (mcq.correctOption && ['A', 'B', 'C', 'D'].includes(mcq.correctOption)) {
       const idx = mcq.correctOption.charCodeAt(0) - 65;
       if (idx >= 0 && idx < optionsArray.length) {
@@ -384,6 +396,8 @@ function sanitizeMCQ(mcq: any): Question {
 }
 
 function parseAIResponse(text: string): Question[] {
+  console.log(`[parseAIResponse] Raw AI text (first 500 chars): ${text.substring(0, 500)}`);
+  
   let jsonText = text.trim();
   
   if (jsonText.startsWith('```json')) {
@@ -396,7 +410,10 @@ function parseAIResponse(text: string): Question[] {
   try {
     const parsed = JSON.parse(jsonText);
     const rawQuestions = parsed.questions || (Array.isArray(parsed) ? parsed : []);
-    return rawQuestions.filter(validateMCQ).map(sanitizeMCQ);
+    console.log(`[parseAIResponse] Parsed ${rawQuestions.length} raw questions, validating...`);
+    const valid = rawQuestions.filter(validateMCQ).map(sanitizeMCQ);
+    console.log(`[parseAIResponse] Validation result: ${valid.length}/${rawQuestions.length} passed`);
+    return valid;
   } catch (e) {
     console.log('Initial JSON parse failed, attempting repair...');
   }
