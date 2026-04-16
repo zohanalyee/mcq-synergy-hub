@@ -293,14 +293,30 @@ function buildSyllabusSearchConditions(topic: string, sanitizedTopic: string, sy
 // ============= STRICT MCQ VALIDATION (Pakistani Exam Standards) =============
 
 function validateMCQ(mcq: any): boolean {
-  if (!mcq.question || typeof mcq.question !== 'string' || mcq.question.trim().length < 10) {
+  if (!mcq.question || typeof mcq.question !== 'string' || mcq.question.trim().length < 5) {
     console.warn('[validate] Missing or too-short question');
     return false;
+  }
+
+  // Patch: accept correct_option as alias for correctOption
+  if (!mcq.correctOption && mcq.correct_option) {
+    mcq.correctOption = mcq.correct_option;
+  }
+
+  // Patch: uppercase lowercase correctOption (a->A, b->B, etc.)
+  if (mcq.correctOption && typeof mcq.correctOption === 'string' && /^[a-d]$/.test(mcq.correctOption)) {
+    mcq.correctOption = mcq.correctOption.toUpperCase();
   }
 
   // Check options - support both object {A,B,C,D} and array formats
   if (mcq.options && typeof mcq.options === 'object' && !Array.isArray(mcq.options)) {
     const keys = ['A', 'B', 'C', 'D'];
+    // Also accept lowercase keys and patch them
+    for (const k of keys) {
+      if (!mcq.options[k] && mcq.options[k.toLowerCase()]) {
+        mcq.options[k] = mcq.options[k.toLowerCase()];
+      }
+    }
     for (const k of keys) {
       if (!mcq.options[k] || typeof mcq.options[k] !== 'string' || mcq.options[k].trim().length < 1) {
         console.warn(`[validate] Missing or empty option ${k}`);
