@@ -1,43 +1,50 @@
 
 
-# Fix: Ensure Edge Function is Fully Synchronous for Job Tests
+# Fix: Default Count Override, Subject Force-Tagging & AI Yield Drops
 
-## Problem
-The edge function at line 991 auto-enables `autoPartial` mode when `qc > 20`. In partial mode (line 1364), it returns only cached questions and generates the rest via `EdgeRuntime.waitUntil` — those background-generated questions are lost because `JobTestsTab` creates the session AFTER collecting all responses.
+## Changes
 
-Even for smaller quotas, if the cache has some questions, the partial mode returns them immediately and generates the rest in the background — breaking syllabus weightage.
+### 1. `src/components/mock-tests/JobTestsTab.tsx` — Two fixes
 
-## Root Cause
+**Fix 1: Cap default at 20 questions (line 37)**
 ```
-const isLargeRequest = qc > 20;
-const autoPartial = usePartialMode || isLargeRequest;
+questionCount: test.questions  →  questionCount: Math.min(test.questions || 20, 20)
 ```
-This means any subject requesting >20 questions silently enters partial mode and returns incomplete results.
 
-## Fix (2 changes)
-
-### 1. `src/components/mock-tests/JobTestsTab.tsx` — Pass `partial_mode: false`
-In the `supabase.functions.invoke("generate-test")` call (line 104-111), add `partial_mode: false` to the body. This explicitly tells the edge function: "Do NOT use background generation — wait for all questions synchronously."
-
-### 2. `supabase/functions/generate-test/index.ts` — Respect explicit `partial_mode: false`
-Change line 991 from:
+**Fix 2: Force-tag both `subject` and `topic` to the syllabus subject (lines 121-125)**
+Replace the current labeling block with strict overrides that never fall back to AI values:
+```typescript
+const labeledQuestions = questions.map((q: any) => ({
+  ...q,
+  subject: item.subject,   // Force exact syllabus subject
+  topic: item.subject,      // Force topic too — no AI fallback
+}));
 ```
-const autoPartial = usePartialMode || isLargeRequest;
-```
-to:
-```
-const autoPartial = partial_mode === false ? false : (usePartialMode || isLargeRequest);
-```
-This ensures when `partial_mode` is explicitly set to `false`, the large-request auto-partial is disabled and the function waits for full AI generation before responding.
+This is a one-line change: remove `q.topic ||` from line 124.
 
-## Files to modify
-| File | Change |
-|------|--------|
-| `src/components/mock-tests/JobTestsTab.tsx` | Add `partial_mode: false` to generate-test invoke body |
-| `supabase/functions/generate-test/index.ts` | Respect explicit `partial_mode: false` override |
+### 2. `supabase/functions/generate-test/index.ts` — Debug logging & relaxed validation
 
-## Impact
-- Job Tests will always get the EXACT number of questions requested per subject
-- Other callers (Subject Tests, auto-fill) are unaffected — they don't pass `partial_mode: false`
-- No structural rewrite needed — the architecture is already correct, just needs this flag
+**In `parseAIResponse` (line 370):**
+- Add `console.log` of the raw text (first 500 chars) before parsing
+- After the `rawQuestions.filter(validateMCQ)` call, log how many passed vs failed
+
+**In `validateMCQ` (line 295):**
+- Relax the `question.trim().length < 10` check to `< 5` (some valid short questions exist)
+- Add a patching step: if `correctOption` uses lowercase (`a,b,c,d`), uppercase it before validation
+- Accept `correct_option` as an alias for `correctOption`
+
+**In `sanitizeMCQ` (line 331):**
+- Also check `mcq.correct_option` as a fallback for `mcq.correctOption`
+
+These are surgical changes — no structural rewrites to the edge function.
+
+### 3. Deploy edge function
+
+After editing, deploy `generate-test` and verify via logs.
+
+## Files Modified
+| File | Changes |
+|------|---------|
+| `src/components/mock-tests/JobTestsTab.tsx` | Cap questionCount at 20; force-tag topic without AI fallback |
+| `supabase/functions/generate-test/index.ts` | Debug logging in parseAIResponse; relax validateMCQ; accept correct_option alias |
 
