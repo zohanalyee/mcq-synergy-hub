@@ -34,7 +34,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
     try {
       const settings = customSettings || {
         difficulty: "mixed",
-        questionCount: test.questions,
+        questionCount: Math.min(test.questions || 20, 20),
         duration: test.duration,
       };
 
