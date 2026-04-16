@@ -988,7 +988,7 @@ serve(async (req) => {
     const isBankOnly = mode === 'bank_only';
     const isAutoFill = source === 'auto_fill';
     const isLargeRequest = qc > 20;
-    const autoPartial = usePartialMode || isLargeRequest;
+    const autoPartial = partial_mode === false ? false : (usePartialMode || isLargeRequest);
     const sourceType: 'user_test_session' | 'admin_bulk_generator' | 'auto_fill' = 
       isAutoFill ? 'auto_fill' : (isBankOnly ? 'admin_bulk_generator' : 'user_test_session');
     
