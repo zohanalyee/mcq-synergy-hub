@@ -1,50 +1,64 @@
 
 
-# Fix: Default Count Override, Subject Force-Tagging & AI Yield Drops
+## Context (what I found)
 
-## Changes
+The user's proposed "complete rewrite" assumes a different schema (`subjectId`, `content_items.subject_id`, `type='mcq'`, `status='published'`, `user_answers` table) that **does not match this project**. Our schema uses `topic`, `subject` (text), `category='mcq'`, `status='approved'`, and there is no `user_answers` table.
 
-### 1. `src/components/mock-tests/JobTestsTab.tsx` — Two fixes
+The actual edge function (`generate-test`) is already well-structured:
+- Takes `topic` (not subjectId), already supports `partial_mode: false`
+- Already has logging in `parseAIResponse` (raw text + validation pass count)
+- Already accepts `correct_option`/lowercase aliases in `validateMCQ`
+- The synchronous AI path goes through `generateQuestionsInBatches` → `parseAIResponse`
 
-**Fix 1: Cap default at 20 questions (line 37)**
+The frontend already passes `partial_mode: false` and `force_new: false`.
+
+## Real gaps (small surgical fixes only)
+
+1. **No visibility around the synchronous generation call** (line 1443+). When AI returns 0, we currently see batch logs but not a clear summary of cache vs. generated vs. final at the top-level for the deficit path.
+2. **No warning when `parseAIResponse` returns 0 valid questions** even though raw text was non-empty — useful for diagnosing "AI failed silently".
+3. **JobTestsTab** already correctly force-tags `subject` and `topic` (per previous fix) and caps at 20. No frontend changes needed.
+
+There is **no `user_answers` table**, so the "adaptive learning" filter from the user's prompt can't be implemented as written. We already have a Fresh-Question-Exclusion system (per memory `fresh-question-exclusion-system`) that uses `custom_test_sessions` history — that's the existing mechanism.
+
+## Plan (minimal, safe diagnostics)
+
+### File: `supabase/functions/generate-test/index.ts`
+
+**Change A — `parseAIResponse` (line 414):** add a loud warning when raw questions parsed but 0 passed validation:
+```ts
+if (rawQuestions.length > 0 && valid.length === 0) {
+  console.error('[parseAIResponse] ⚠️ ALL questions failed validation. Sample:',
+    JSON.stringify(rawQuestions[0]).substring(0, 400));
+}
 ```
-questionCount: test.questions  →  questionCount: Math.min(test.questions || 20, 20)
+
+**Change B — Around the synchronous AI generation block (line ~1443, "FULL AI GENERATION"):** add a clear summary block before and after the AI call so logs always show:
+```
+[generate-test] 🔄 SYNC GEN: topic=X, deficit=N, cached=M, partial=false
+...
+[generate-test] ✅ SYNC GEN RESULT: ai_returned=Y, final=Z/qc
 ```
 
-**Fix 2: Force-tag both `subject` and `topic` to the syllabus subject (lines 121-125)**
-Replace the current labeling block with strict overrides that never fall back to AI values:
-```typescript
-const labeledQuestions = questions.map((q: any) => ({
-  ...q,
-  subject: item.subject,   // Force exact syllabus subject
-  topic: item.subject,      // Force topic too — no AI fallback
-}));
-```
-This is a one-line change: remove `q.topic ||` from line 124.
+This pinpoints exactly whether the AI returns 0, validation drops everything, or save fails.
 
-### 2. `supabase/functions/generate-test/index.ts` — Debug logging & relaxed validation
+**No structural rewrite. No schema changes. No `subjectId` migration. No `user_answers` query.**
 
-**In `parseAIResponse` (line 370):**
-- Add `console.log` of the raw text (first 500 chars) before parsing
-- After the `rawQuestions.filter(validateMCQ)` call, log how many passed vs failed
+### File: `src/components/mock-tests/JobTestsTab.tsx`
+**No changes.** It already passes `partial_mode: false`, force-tags subject/topic, and caps at 20.
 
-**In `validateMCQ` (line 295):**
-- Relax the `question.trim().length < 10` check to `< 5` (some valid short questions exist)
-- Add a patching step: if `correctOption` uses lowercase (`a,b,c,d`), uppercase it before validation
-- Accept `correct_option` as an alias for `correctOption`
-
-**In `sanitizeMCQ` (line 331):**
-- Also check `mcq.correct_option` as a fallback for `mcq.correctOption`
-
-These are surgical changes — no structural rewrites to the edge function.
-
-### 3. Deploy edge function
-
-After editing, deploy `generate-test` and verify via logs.
+### Deploy
+Deploy `generate-test` and ask the user to start one Junior Clerk test, then we read the edge function logs to see exactly where the 0-question case occurs.
 
 ## Files Modified
-| File | Changes |
-|------|---------|
-| `src/components/mock-tests/JobTestsTab.tsx` | Cap questionCount at 20; force-tag topic without AI fallback |
-| `supabase/functions/generate-test/index.ts` | Debug logging in parseAIResponse; relax validateMCQ; accept correct_option alias |
+| File | Change |
+|------|--------|
+| `supabase/functions/generate-test/index.ts` | Add warning log when validation drops all parsed questions; add SYNC GEN summary logs around the synchronous AI block |
+
+## Why I'm NOT doing the user's proposed rewrite
+- It rewrites `serve()` to use `subjectId` — our function uses `topic` and there is no `subject_id` column on `content_items` in the call path
+- It queries `user_answers` table — doesn't exist
+- It inserts with `type='mcq'`/`status='published'` — our schema uses `category='mcq'`/`status='approved'`
+- Doing that rewrite would break Subject Tests, Syllabus Builder, auto-fill, and admin bulk generator
+
+After deploying these diagnostics, we'll know the real cause from one test run and can apply a precise fix.
 
