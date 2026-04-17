@@ -413,6 +413,10 @@ function parseAIResponse(text: string): Question[] {
     console.log(`[parseAIResponse] Parsed ${rawQuestions.length} raw questions, validating...`);
     const valid = rawQuestions.filter(validateMCQ).map(sanitizeMCQ);
     console.log(`[parseAIResponse] Validation result: ${valid.length}/${rawQuestions.length} passed`);
+    if (rawQuestions.length > 0 && valid.length === 0) {
+      console.error('[parseAIResponse] ⚠️ ALL questions failed validation. Sample:',
+        JSON.stringify(rawQuestions[0]).substring(0, 400));
+    }
     return valid;
   } catch (e) {
     console.log('Initial JSON parse failed, attempting repair...');
@@ -1496,6 +1500,8 @@ serve(async (req) => {
 
     let newAIQuestions: Question[] = [];
     
+    console.log(`[generate-test] 🔄 SYNC GEN: topic="${topic}", deficit=${missingCount}, cached=${dbQuestions.length}, requested=${qc}, partial=${partialMode}`);
+    
     try {
       newAIQuestions = await generateQuestionsInBatches(
         topic, 
@@ -1505,6 +1511,7 @@ serve(async (req) => {
         existingQuestionTexts
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
+      console.log(`[generate-test] ✅ SYNC GEN RESULT: topic="${topic}", ai_returned=${newAIQuestions.length}, cached=${dbQuestions.length}, total=${dbQuestions.length + newAIQuestions.length}/${qc}`);
     } catch (aiError: any) {
       console.error(`🚨 AI Generation Error:`, JSON.stringify(aiError));
       
