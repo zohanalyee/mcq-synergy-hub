@@ -1500,7 +1500,7 @@ serve(async (req) => {
 
     let newAIQuestions: Question[] = [];
     
-    console.log(`[generate-test] 🔄 SYNC GEN: topic="${topic}", deficit=${missingCount}, cached=${dbQuestions.length}, requested=${qc}, partial=${partialMode}`);
+    console.log(`[generate-test] 🔄 SYNC GEN: topic="${topic}", deficit=${missingCount}, cached=${dbQuestions.length}, requested=${qc}, partial=${usePartialMode}`);
     
     try {
       newAIQuestions = await generateQuestionsInBatches(
