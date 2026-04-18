@@ -9,6 +9,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
 import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
+import { AICoachService } from "@/services/aiCoachService";
 import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
 
 type JobTestsTabProps = {
@@ -101,6 +102,12 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 60000);
 
+          // AI Coach: global per-user exclusion of previously attempted questions
+          const coachExcludeIds = user
+            ? await AICoachService.getExcludedQuestionIds(user.id, item.subject)
+            : [];
+          const mergedExclude = Array.from(new Set([...excludeQuestionIds, ...coachExcludeIds]));
+
           const { data, error } = await supabase.functions.invoke("generate-test", {
             body: {
               topic: item.subject,
@@ -108,6 +115,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
               question_count: item.requested,
               force_new: false,
               partial_mode: false,
+              excludeQuestionIds: mergedExclude,
             },
           });
 

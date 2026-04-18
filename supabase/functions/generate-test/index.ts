@@ -980,8 +980,17 @@ serve(async (req) => {
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
       session_id, // Session ID to update with generated questions (Job Tests)
+      excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
+
+    // Sanitize excludeQuestionIds — strict UUID validation prevents injection via .in() string
+    const safeExcludeIds: string[] = Array.isArray(excludeQuestionIds)
+      ? excludeQuestionIds.filter((id: any) => typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))
+      : [];
+    if (safeExcludeIds.length > 0) {
+      console.log(`🎯 AI Coach: excluding ${safeExcludeIds.length} previously attempted question(s) from cache`);
+    }
 
     // Use verified user ID from JWT, not from request body
     const user_id = verified_user_id;
@@ -1082,13 +1091,16 @@ serve(async (req) => {
       try {
         const difficultyLower = String(difficulty || 'medium').toLowerCase();
         
-        const { data: existingQuestions, error: dbError } = await supabase
+        let cacheQuery = supabase
           .from('content_items')
-          .select('title, options, correct_option, explanation, topic, subject, difficulty')
+          .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
           .eq('category', 'mcq')
           .eq('status', 'approved')
-          .or(searchConditions)
-          .limit(qc * 3);
+          .or(searchConditions);
+        if (safeExcludeIds.length > 0) {
+          cacheQuery = cacheQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+        }
+        const { data: existingQuestions, error: dbError } = await cacheQuery.limit(qc * 3);
 
         if (dbError) {
           console.error('❌ Database query error:', dbError);
@@ -1524,13 +1536,16 @@ serve(async (req) => {
         // If forceNew=true, we may have skipped cache lookup earlier. Try a cache read now.
         if (dbQuestions.length === 0) {
           try {
-            const { data: existingQuestions, error: dbError } = await supabase
+            let fallbackQuery = supabase
               .from('content_items')
-              .select('title, options, correct_option, explanation, topic, subject, difficulty')
+              .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
               .eq('category', 'mcq')
               .eq('status', 'approved')
-              .or(searchConditions)
-              .limit(qc * 3);
+              .or(searchConditions);
+            if (safeExcludeIds.length > 0) {
+              fallbackQuery = fallbackQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            }
+            const { data: existingQuestions, error: dbError } = await fallbackQuery.limit(qc * 3);
 
             if (dbError) {
               console.error('❌ Cache fallback query error:', dbError);
