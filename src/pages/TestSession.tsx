@@ -14,6 +14,7 @@ import { cleanQuestionText } from "@/lib/questionUtils";
 import { resolveCorrectAnswer, checkUserAnswer, normalizeQuestion } from "@/lib/testEvaluation";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
 import { processTestCompletion } from "@/utils/gamification";
+import { AICoachService } from "@/services/aiCoachService";
 import ExamHeader from "@/components/exam/ExamHeader";
 import QuestionCard from "@/components/exam/QuestionCard";
 import QuestionPalette from "@/components/exam/QuestionPalette";
@@ -266,11 +267,12 @@ const TestSession = () => {
   const handleSubmit = async () => {
     console.log('=== TEST SUBMISSION DEBUG ===');
     let correctAnswers = 0;
+    const attemptRecords: { question: any; isCorrect: boolean }[] = [];
     questions.forEach((question: any, index: number) => {
       const userAns = answers[index];
       const resolvedAns = resolveAnswer(question);
       const isCorrect = checkAnswer(question, userAns);
-      
+
       console.log(`Q${index + 1}:`, {
         rawAnswer: question.answer,
         resolvedAnswer: resolvedAns,
@@ -279,14 +281,34 @@ const TestSession = () => {
         options: question.options,
         isCorrect
       });
-      
+
       if (isCorrect) correctAnswers++;
+      // Only track questions the user actually attempted
+      if (userAns !== undefined) attemptRecords.push({ question, isCorrect });
     });
     console.log(`=== RESULT: ${correctAnswers}/${questions.length} ===`);
 
     setScore(correctAnswers);
     setIsSubmitted(true);
     clearState();
+
+    // AI Coach: track each attempted question (non-blocking, errors swallowed)
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+        for (const { question, isCorrect } of attemptRecords) {
+          const text = question.question || question.title || "";
+          const subj = question.subject || "General";
+          const topic = question.topic || "";
+          const qid = typeof question.id === "string" ? question.id : null;
+          AICoachService.trackQuestionAttempt(user.id, text, qid, subj, topic, isCorrect)
+            .catch((e) => console.error("[AICoach] track failed:", e));
+        }
+      } catch (e) {
+        console.error("[AICoach] tracking batch failed:", e);
+      }
+    })();
 
     const timeTaken = testData.time_limit * 60 - timeRemaining;
     const questionIds = questions.map((q: any) => q.id).filter(Boolean);
