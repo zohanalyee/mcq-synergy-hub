@@ -2760,6 +2760,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_performance: {
+        Row: {
+          correct_attempts: number
+          created_at: string
+          id: string
+          last_attempted_at: string | null
+          question_fingerprints: string[]
+          question_ids: string[]
+          subject: string
+          topic: string
+          total_attempts: number
+          updated_at: string
+          user_id: string
+          weakness_score: number
+          wrong_attempts: number
+        }
+        Insert: {
+          correct_attempts?: number
+          created_at?: string
+          id?: string
+          last_attempted_at?: string | null
+          question_fingerprints?: string[]
+          question_ids?: string[]
+          subject: string
+          topic?: string
+          total_attempts?: number
+          updated_at?: string
+          user_id: string
+          weakness_score?: number
+          wrong_attempts?: number
+        }
+        Update: {
+          correct_attempts?: number
+          created_at?: string
+          id?: string
+          last_attempted_at?: string | null
+          question_fingerprints?: string[]
+          question_ids?: string[]
+          subject?: string
+          topic?: string
+          total_attempts?: number
+          updated_at?: string
+          user_id?: string
+          weakness_score?: number
+          wrong_attempts?: number
+        }
+        Relationships: []
+      }
       user_question_attempts: {
         Row: {
           attempted_at: string
