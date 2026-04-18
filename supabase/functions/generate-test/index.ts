@@ -1091,13 +1091,16 @@ serve(async (req) => {
       try {
         const difficultyLower = String(difficulty || 'medium').toLowerCase();
         
-        const { data: existingQuestions, error: dbError } = await supabase
+        let cacheQuery = supabase
           .from('content_items')
-          .select('title, options, correct_option, explanation, topic, subject, difficulty')
+          .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
           .eq('category', 'mcq')
           .eq('status', 'approved')
-          .or(searchConditions)
-          .limit(qc * 3);
+          .or(searchConditions);
+        if (safeExcludeIds.length > 0) {
+          cacheQuery = cacheQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+        }
+        const { data: existingQuestions, error: dbError } = await cacheQuery.limit(qc * 3);
 
         if (dbError) {
           console.error('❌ Database query error:', dbError);
@@ -1533,13 +1536,16 @@ serve(async (req) => {
         // If forceNew=true, we may have skipped cache lookup earlier. Try a cache read now.
         if (dbQuestions.length === 0) {
           try {
-            const { data: existingQuestions, error: dbError } = await supabase
+            let fallbackQuery = supabase
               .from('content_items')
-              .select('title, options, correct_option, explanation, topic, subject, difficulty')
+              .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
               .eq('category', 'mcq')
               .eq('status', 'approved')
-              .or(searchConditions)
-              .limit(qc * 3);
+              .or(searchConditions);
+            if (safeExcludeIds.length > 0) {
+              fallbackQuery = fallbackQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            }
+            const { data: existingQuestions, error: dbError } = await fallbackQuery.limit(qc * 3);
 
             if (dbError) {
               console.error('❌ Cache fallback query error:', dbError);
