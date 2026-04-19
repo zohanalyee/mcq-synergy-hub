@@ -21,6 +21,7 @@ import QuickTestGenerator from "@/components/analytics/QuickTestGenerator";
 import TestHistorySection from "@/components/analytics/TestHistorySection";
 import AchievementsSection from "@/components/analytics/AchievementsSection";
 import { TrendingUp, BookOpen, Target, Award } from "lucide-react";
+import ProgressIndicator from "@/components/ai-coach/ProgressIndicator";
 
 const Analytics = () => {
   const { user } = useAuth();
@@ -98,6 +99,13 @@ const Analytics = () => {
           onViewRecommendations={() => subjectRef.current?.scrollIntoView({ behavior: "smooth" })}
           onGenerateTest={() => setTestDialogOpen(true)}
         />
+
+        {/* AI Coach Phase 2 — weakness map + retry queue */}
+        {user?.id && (
+          <div className="mb-6">
+            <ProgressIndicator userId={user.id} />
+          </div>
+        )}
 
         {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
