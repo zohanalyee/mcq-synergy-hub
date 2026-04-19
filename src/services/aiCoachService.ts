@@ -31,6 +31,56 @@ export interface QuestionMixStrategy {
   distribution: { weak: number; medium: number; strong: number };
 }
 
+export interface WeakTopic {
+  topic: string;
+  weaknessScore: number;
+  lastAttemptedAt: string | null;
+}
+
+export interface RetryTopic {
+  subject: string;
+  topic: string;
+  daysAgo: number;
+  weaknessScore: number;
+}
+
+export interface ProgressMetrics {
+  totalAttempts: number;
+  accuracyRate: number;        // 0–100
+  weaknessImprovement: number; // negative = improving
+  streakDays: number;
+}
+
+export type AdaptiveDifficulty = "easy" | "medium" | "hard";
+
+const DIFF_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+const RETRY_INTERVALS_DAYS = [1, 3, 7, 14] as const;
+
+function diffCooldownKey(userId: string, subject: string) {
+  return `aicoach:diff:${userId}:${subject}`;
+}
+
+function readDiffCooldown(userId: string, subject: string): AdaptiveDifficulty | null {
+  try {
+    const raw = localStorage.getItem(diffCooldownKey(userId, subject));
+    if (!raw) return null;
+    const { level, ts } = JSON.parse(raw);
+    if (typeof ts !== "number" || Date.now() - ts > DIFF_COOLDOWN_MS) return null;
+    if (level === "easy" || level === "medium" || level === "hard") return level;
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function writeDiffCooldown(userId: string, subject: string, level: AdaptiveDifficulty) {
+  try {
+    localStorage.setItem(diffCooldownKey(userId, subject), JSON.stringify({ level, ts: Date.now() }));
+  } catch {
+    /* ignore */
+  }
+}
+
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Normalize question text for stable fingerprinting (lowercase, collapse whitespace, strip punctuation). */
