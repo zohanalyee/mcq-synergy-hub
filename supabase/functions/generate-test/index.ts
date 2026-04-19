@@ -987,6 +987,7 @@ serve(async (req) => {
       topic_ids, // Array of UUIDs from Syllabus Builder
       session_id, // Session ID to update with generated questions (Job Tests)
       excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
+      weakTopics, // AI Coach Phase 2: focus 70% of generated questions on these
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
 
@@ -996,6 +997,17 @@ serve(async (req) => {
       : [];
     if (safeExcludeIds.length > 0) {
       console.log(`🎯 AI Coach: excluding ${safeExcludeIds.length} previously attempted question(s) from cache`);
+    }
+
+    // Sanitize weakTopics — strings only, max 10 × 80 chars
+    const safeWeakTopics: string[] = Array.isArray(weakTopics)
+      ? weakTopics
+          .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
+          .slice(0, 10)
+          .map((t: string) => t.trim().slice(0, 80))
+      : [];
+    if (safeWeakTopics.length > 0) {
+      console.log(`🎯 AI Coach: focusing prompt on ${safeWeakTopics.length} weak topic(s)`);
     }
 
     // Use verified user ID from JWT, not from request body
