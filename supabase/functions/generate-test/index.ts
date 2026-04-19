@@ -605,7 +605,7 @@ OUTPUT FORMAT — Return ONLY this JSON, NO markdown, NO extra text:
     "explanation": "...",
     "difficulty": "${difficulty}"
   }
-]${avoidSection}`;
+]${weakSection}${avoidSection}`;
 
     const userPrompt = `Generate exactly ${batchSize} UNIQUE Pakistani exam-style MCQs about "${topic}" at ${difficulty} difficulty.
 
