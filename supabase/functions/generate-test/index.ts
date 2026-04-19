@@ -480,7 +480,8 @@ async function generateQuestionsInBatches(
   difficulty: string,
   totalCount: number,
   apiKey: string,
-  existingQuestions: string[] = []
+  existingQuestions: string[] = [],
+  weakTopics: string[] = []
 ): Promise<Question[]> {
   const MAX_BATCH_SIZE = 15;
   const batches = Math.ceil(totalCount / MAX_BATCH_SIZE);
@@ -512,6 +513,11 @@ async function generateQuestionsInBatches(
     // ============= ENHANCED PROMPT WITH DIVERSITY REQUIREMENTS =============
     const avoidSection = avoidList.length > 0 
       ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
+      : '';
+
+    // ============= AI COACH: WEAK-TOPIC FOCUS =============
+    const weakSection = weakTopics.length > 0
+      ? `\n\n🎯 CRITICAL — focus 70% of questions on these weak topics the user struggles with:\n${weakTopics.map((t) => `- ${t}`).join('\n')}\nMake questions progressively harder within these topics.`
       : '';
     
     const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
