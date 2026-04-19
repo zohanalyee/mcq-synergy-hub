@@ -305,6 +305,15 @@ const TestSession = () => {
           AICoachService.trackQuestionAttempt(user.id, text, qid, subj, topic, isCorrect)
             .catch((e) => console.error("[AICoach] track failed:", e));
         }
+        // Phase 2: suggest a single retry topic if any are due
+        AICoachService.getTopicsNeedingRetry(user.id, 1)
+          .then((rows) => {
+            const r = rows[0];
+            if (r) {
+              toast.info(`Tip: revisit ${r.topic} (last seen ${r.daysAgo}d ago)`, { duration: 6000 });
+            }
+          })
+          .catch(() => {});
       } catch (e) {
         console.error("[AICoach] tracking batch failed:", e);
       }

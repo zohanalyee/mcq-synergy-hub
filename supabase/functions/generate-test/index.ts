@@ -480,7 +480,8 @@ async function generateQuestionsInBatches(
   difficulty: string,
   totalCount: number,
   apiKey: string,
-  existingQuestions: string[] = []
+  existingQuestions: string[] = [],
+  weakTopics: string[] = []
 ): Promise<Question[]> {
   const MAX_BATCH_SIZE = 15;
   const batches = Math.ceil(totalCount / MAX_BATCH_SIZE);
@@ -512,6 +513,11 @@ async function generateQuestionsInBatches(
     // ============= ENHANCED PROMPT WITH DIVERSITY REQUIREMENTS =============
     const avoidSection = avoidList.length > 0 
       ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
+      : '';
+
+    // ============= AI COACH: WEAK-TOPIC FOCUS =============
+    const weakSection = weakTopics.length > 0
+      ? `\n\n🎯 CRITICAL — focus 70% of questions on these weak topics the user struggles with:\n${weakTopics.map((t) => `- ${t}`).join('\n')}\nMake questions progressively harder within these topics.`
       : '';
     
     const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
@@ -599,7 +605,7 @@ OUTPUT FORMAT — Return ONLY this JSON, NO markdown, NO extra text:
     "explanation": "...",
     "difficulty": "${difficulty}"
   }
-]${avoidSection}`;
+]${weakSection}${avoidSection}`;
 
     const userPrompt = `Generate exactly ${batchSize} UNIQUE Pakistani exam-style MCQs about "${topic}" at ${difficulty} difficulty.
 
@@ -981,6 +987,7 @@ serve(async (req) => {
       topic_ids, // Array of UUIDs from Syllabus Builder
       session_id, // Session ID to update with generated questions (Job Tests)
       excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
+      weakTopics, // AI Coach Phase 2: focus 70% of generated questions on these
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
 
@@ -990,6 +997,17 @@ serve(async (req) => {
       : [];
     if (safeExcludeIds.length > 0) {
       console.log(`🎯 AI Coach: excluding ${safeExcludeIds.length} previously attempted question(s) from cache`);
+    }
+
+    // Sanitize weakTopics — strings only, max 10 × 80 chars
+    const safeWeakTopics: string[] = Array.isArray(weakTopics)
+      ? weakTopics
+          .filter((t: any) => typeof t === 'string' && t.trim().length > 0)
+          .slice(0, 10)
+          .map((t: string) => t.trim().slice(0, 80))
+      : [];
+    if (safeWeakTopics.length > 0) {
+      console.log(`🎯 AI Coach: focusing prompt on ${safeWeakTopics.length} weak topic(s)`);
     }
 
     // Use verified user ID from JWT, not from request body
@@ -1520,7 +1538,8 @@ serve(async (req) => {
         difficulty, 
         missingCount, 
         GEMINI_API_KEY,
-        existingQuestionTexts
+        existingQuestionTexts,
+        safeWeakTopics
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
       console.log(`[generate-test] ✅ SYNC GEN RESULT: topic="${topic}", ai_returned=${newAIQuestions.length}, cached=${dbQuestions.length}, total=${dbQuestions.length + newAIQuestions.length}/${qc}`);

@@ -89,6 +89,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
       // Sequential generation: call generate-test for each subject
       const allQuestions: any[] = [];
       let hasErrors = false;
+      const focusTopicsAll: string[] = [];
 
       for (let i = 0; i < progressItems.length; i++) {
         const item = progressItems[i];
@@ -108,14 +109,29 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
             : [];
           const mergedExclude = Array.from(new Set([...excludeQuestionIds, ...coachExcludeIds]));
 
+          // AI Coach Phase 2: adaptive difficulty + weak topic focus
+          const [adaptive, weak] = user
+            ? await Promise.all([
+                AICoachService.getAdaptiveDifficulty(user.id, item.subject),
+                AICoachService.getWeaknessFocusedTopics(user.id, item.subject, 5),
+              ])
+            : ["medium" as const, [] as Awaited<ReturnType<typeof AICoachService.getWeaknessFocusedTopics>>];
+
+          const weakTopicNames = weak.map((w) => w.topic);
+          focusTopicsAll.push(...weakTopicNames);
+
+          const baseDifficulty = settings.difficulty === "mixed" ? "Medium" : settings.difficulty;
+          const finalDifficulty = settings.difficulty === "mixed" && user ? adaptive : baseDifficulty;
+
           const { data, error } = await supabase.functions.invoke("generate-test", {
             body: {
               topic: item.subject,
-              difficulty: settings.difficulty === "mixed" ? "Medium" : settings.difficulty,
+              difficulty: finalDifficulty,
               question_count: item.requested,
               force_new: false,
               partial_mode: false,
               excludeQuestionIds: mergedExclude,
+              weakTopics: weakTopicNames,
             },
           });
 
@@ -154,6 +170,12 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
           );
           continue;
         }
+      }
+
+      // Aggregated AI Coach focus toast
+      const uniqueFocus = Array.from(new Set(focusTopicsAll)).slice(0, 3);
+      if (uniqueFocus.length > 0) {
+        toast.info(`AI Coach is focusing this test on: ${uniqueFocus.join(", ")}`, { duration: 5000 });
       }
 
       // Check if we have ANY questions
