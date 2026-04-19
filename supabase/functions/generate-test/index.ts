@@ -1538,7 +1538,8 @@ serve(async (req) => {
         difficulty, 
         missingCount, 
         GEMINI_API_KEY,
-        existingQuestionTexts
+        existingQuestionTexts,
+        safeWeakTopics
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
       console.log(`[generate-test] ✅ SYNC GEN RESULT: topic="${topic}", ai_returned=${newAIQuestions.length}, cached=${dbQuestions.length}, total=${dbQuestions.length + newAIQuestions.length}/${qc}`);
