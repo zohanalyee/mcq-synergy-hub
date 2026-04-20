@@ -117,22 +117,43 @@ const CorruptedDataCleaner = () => {
   const { data: corrupted = [], isLoading, refetch } = useQuery({
     queryKey: ["corrupted-mcqs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_items")
-        .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
-        .eq("category", "mcq")
-        .order("created_at", { ascending: false })
-        .limit(500);
+      // Two-pronged scan:
+      // 1) Recent 500 MCQs (catches general corruption)
+      // 2) ALL Computer/GK rows (catches the topic-mismatch hotfix scope)
+      const [recentRes, targetedRes] = await Promise.all([
+        supabase
+          .from("content_items")
+          .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
+          .eq("category", "mcq")
+          .order("created_at", { ascending: false })
+          .limit(500),
+        supabase
+          .from("content_items")
+          .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
+          .eq("category", "mcq")
+          .or(
+            "subject.ilike.%computer%,subject.ilike.%ms office%,subject.ilike.%general knowledge%,topic.ilike.%computer%,topic.ilike.%ms office%,topic.ilike.%general knowledge%"
+          )
+          .limit(2000),
+      ]);
 
-      if (error) throw error;
+      if (recentRes.error) throw recentRes.error;
+      if (targetedRes.error) throw targetedRes.error;
+
+      const merged = new Map<string, any>();
+      for (const item of [...(recentRes.data || []), ...(targetedRes.data || [])]) {
+        merged.set(item.id, item);
+      }
 
       const results: CorruptedItem[] = [];
-      for (const item of data || []) {
+      for (const item of merged.values()) {
         const reasons = getCorruptionReasons(item);
         if (reasons.length > 0) {
           results.push({ ...item, reasons });
         }
       }
+      // Newest first
+      results.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
       return results;
     },
   });
