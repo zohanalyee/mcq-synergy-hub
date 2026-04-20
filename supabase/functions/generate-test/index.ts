@@ -1719,8 +1719,16 @@ serve(async (req) => {
                 .filter(q => q.title && q.options && q.correct_option)
                 .map(normalizeDbQuestion);
 
+              // Topic-mismatch guard on fallback cache too
+              const beforeCacheFilter = dbQuestions.length;
+              dbQuestions = dbQuestions.filter(q => validateQuestionTopic(q.question, topic));
+              const cacheDropped = beforeCacheFilter - dbQuestions.length;
+              if (cacheDropped > 0) {
+                console.warn(`[topic-guard] 🧹 Fallback cache: dropped ${cacheDropped}/${beforeCacheFilter} poisoned rows`);
+              }
+
               existingQuestionTexts = dbQuestions.map(q => q.question);
-              console.log(`✅ Cache fallback: found ${dbQuestions.length} questions`);
+              console.log(`✅ Cache fallback: found ${dbQuestions.length} questions (after topic guard)`);
             } else {
               console.log('🔎 Cache fallback: no questions found');
             }
