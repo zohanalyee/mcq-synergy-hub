@@ -1266,10 +1266,20 @@ serve(async (req) => {
           dbQuestions = shuffledDbResults
             .filter(q => q.title && q.options && q.correct_option)
             .map(normalizeDbQuestion);
-          
+
+          // ============= TOPIC-MISMATCH GUARD ON CACHE (Hotfix) =============
+          // Drop poisoned cache rows so they aren't served, forcing a fresh generation
+          // for subjects where the AI historically drifted off-topic.
+          const beforeCacheFilter = dbQuestions.length;
+          dbQuestions = dbQuestions.filter(q => validateQuestionTopic(q.question, topic));
+          const cacheDropped = beforeCacheFilter - dbQuestions.length;
+          if (cacheDropped > 0) {
+            console.warn(`[topic-guard] 🧹 Cache: dropped ${cacheDropped}/${beforeCacheFilter} poisoned rows for topic="${topic}"`);
+          }
+
           existingQuestionTexts = dbQuestions.map(q => q.question);
-          
-          console.log(`✅ Found ${dbQuestions.length} existing questions in database`);
+
+          console.log(`✅ Found ${dbQuestions.length} existing questions in database (after topic guard)`);
         } else {
           console.log(`🔎 CACHE MISS: 0 questions found for "${sanitizedTopic}"`);
         }
