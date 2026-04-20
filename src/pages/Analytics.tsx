@@ -22,6 +22,10 @@ import TestHistorySection from "@/components/analytics/TestHistorySection";
 import AchievementsSection from "@/components/analytics/AchievementsSection";
 import { TrendingUp, BookOpen, Target, Award } from "lucide-react";
 import ProgressIndicator from "@/components/ai-coach/ProgressIndicator";
+import WeeklyTrendChart from "@/components/ai-coach/WeeklyTrendChart";
+import SubjectBreakdown from "@/components/ai-coach/SubjectBreakdown";
+import AchievementsGrid from "@/components/ai-coach/AchievementsGrid";
+import StudyPlanCalendar from "@/components/ai-coach/StudyPlanCalendar";
 
 const Analytics = () => {
   const { user } = useAuth();
@@ -100,10 +104,26 @@ const Analytics = () => {
           onGenerateTest={() => setTestDialogOpen(true)}
         />
 
+        {/* Phase 3 — Weekly trend + subject breakdown */}
+        {user?.id && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <WeeklyTrendChart userId={user.id} />
+            <SubjectBreakdown userId={user.id} />
+          </div>
+        )}
+
         {/* AI Coach Phase 2 — weakness map + retry queue */}
         {user?.id && (
           <div className="mb-6">
             <ProgressIndicator userId={user.id} />
+          </div>
+        )}
+
+        {/* Phase 3 — 7-day study plan + achievements */}
+        {user?.id && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+            <StudyPlanCalendar userId={user.id} />
+            <AchievementsGrid userId={user.id} />
           </div>
         )}
 
