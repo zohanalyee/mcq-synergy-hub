@@ -2488,6 +2488,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_attempt_history: {
+        Row: {
+          attempted_at: string
+          created_at: string
+          difficulty: string
+          id: string
+          is_correct: boolean
+          question_fingerprint: string
+          question_id: string | null
+          session_id: string | null
+          subject: string
+          test_type: string
+          time_taken_seconds: number | null
+          topic: string
+          user_id: string
+        }
+        Insert: {
+          attempted_at?: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          is_correct: boolean
+          question_fingerprint: string
+          question_id?: string | null
+          session_id?: string | null
+          subject: string
+          test_type?: string
+          time_taken_seconds?: number | null
+          topic?: string
+          user_id: string
+        }
+        Update: {
+          attempted_at?: string
+          created_at?: string
+          difficulty?: string
+          id?: string
+          is_correct?: boolean
+          question_fingerprint?: string
+          question_id?: string | null
+          session_id?: string | null
+          subject?: string
+          test_type?: string
+          time_taken_seconds?: number | null
+          topic?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_badges: {
         Row: {
           awarded_at: string | null

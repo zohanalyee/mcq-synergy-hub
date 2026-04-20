@@ -536,4 +536,388 @@ export class AICoachService {
       return empty;
     }
   }
+
+  // ============================================================
+  // Phase 3 — Intelligence Dashboard
+  // ============================================================
+
+  /**
+   * Insert a granular per-question attempt row, then update the rolling aggregate
+   * (existing trackQuestionAttempt). Both calls are non-throwing.
+   */
+  static async trackAttemptDetailed(
+    userId: string,
+    sessionId: string | null,
+    questionText: string,
+    questionId: string | null,
+    subject: string,
+    topic: string,
+    difficulty: string,
+    isCorrect: boolean,
+    timeTakenSeconds: number,
+    testType: "job_test" | "subject_test" | "practice" | "syllabus"
+  ): Promise<void> {
+    if (!userId || !questionText) return;
+    const safeSubject = (subject || "General").trim() || "General";
+    const safeTopic = (topic || "").trim();
+    const safeDiff = (difficulty || "medium").toLowerCase();
+
+    // 1) Update aggregate first (Phase 1 invariant)
+    try {
+      await this.trackQuestionAttempt(userId, questionText, questionId, safeSubject, safeTopic, isCorrect);
+    } catch (e) {
+      console.error("[AICoach] trackAttemptDetailed aggregate failed:", e);
+    }
+
+    // 2) Insert raw history row
+    try {
+      const fp = await fingerprintQuestion(questionText);
+      if (!fp) return;
+      const { error } = await supabase.from("user_attempt_history").insert({
+        user_id: userId,
+        session_id: sessionId,
+        question_fingerprint: fp,
+        question_id: questionId,
+        subject: safeSubject,
+        topic: safeTopic,
+        difficulty: safeDiff,
+        is_correct: isCorrect,
+        time_taken_seconds: Math.max(0, Math.round(timeTakenSeconds || 0)),
+        test_type: testType,
+      });
+      if (error) console.error("[AICoach] history insert error:", error.message);
+    } catch (e) {
+      console.error("[AICoach] trackAttemptDetailed history failed:", e);
+    }
+  }
+
+  /**
+   * Last 8 weeks of accuracy + attempt counts, oldest → newest.
+   */
+  static async getWeeklyTrend(
+    userId: string,
+    subject?: string
+  ): Promise<{ week: string; accuracy: number; totalAttempts: number }[]> {
+    if (!userId) return [];
+    try {
+      const since = new Date(Date.now() - 8 * 7 * 24 * 60 * 60 * 1000).toISOString();
+      let q = supabase
+        .from("user_attempt_history")
+        .select("attempted_at, is_correct")
+        .eq("user_id", userId)
+        .gte("attempted_at", since)
+        .order("attempted_at", { ascending: true })
+        .limit(5000);
+      if (subject) q = q.eq("subject", subject);
+      const { data } = await q;
+      if (!data || data.length === 0) return [];
+
+      // Bucket into ISO week starts (Mon)
+      const buckets = new Map<string, { total: number; correct: number }>();
+      const weekKey = (d: Date) => {
+        const dt = new Date(d);
+        const day = (dt.getDay() + 6) % 7; // Mon=0
+        dt.setDate(dt.getDate() - day);
+        dt.setHours(0, 0, 0, 0);
+        return dt.toISOString().slice(0, 10);
+      };
+      for (const r of data as any[]) {
+        const k = weekKey(new Date(r.attempted_at));
+        const b = buckets.get(k) ?? { total: 0, correct: 0 };
+        b.total++;
+        if (r.is_correct) b.correct++;
+        buckets.set(k, b);
+      }
+
+      // Fill last 8 weeks (including empty)
+      const out: { week: string; accuracy: number; totalAttempts: number }[] = [];
+      const now = new Date();
+      const startMonday = new Date(now);
+      startMonday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+      startMonday.setHours(0, 0, 0, 0);
+      for (let i = 7; i >= 0; i--) {
+        const d = new Date(startMonday);
+        d.setDate(startMonday.getDate() - i * 7);
+        const k = d.toISOString().slice(0, 10);
+        const b = buckets.get(k);
+        const label = `${d.toLocaleDateString(undefined, { month: "short", day: "numeric" })}`;
+        out.push({
+          week: label,
+          accuracy: b && b.total > 0 ? Math.round((b.correct / b.total) * 100) : 0,
+          totalAttempts: b?.total ?? 0,
+        });
+      }
+      return out;
+    } catch (e) {
+      console.error("[AICoach] getWeeklyTrend error:", e);
+      return [];
+    }
+  }
+
+  /**
+   * Per-subject mastery breakdown (sorted by weakness DESC).
+   */
+  static async getSubjectBreakdown(userId: string): Promise<
+    { subject: string; totalAttempts: number; accuracy: number; weaknessScore: number; lastAttempted: Date | null }[]
+  > {
+    if (!userId) return [];
+    try {
+      const { data } = await supabase
+        .from("user_performance")
+        .select("subject, total_attempts, correct_attempts, weakness_score, last_attempted_at")
+        .eq("user_id", userId);
+      if (!data) return [];
+      const agg = new Map<
+        string,
+        { total: number; correct: number; weakSum: number; weakN: number; last: number | null }
+      >();
+      for (const r of data as any[]) {
+        const subj = r.subject || "General";
+        const a = agg.get(subj) ?? { total: 0, correct: 0, weakSum: 0, weakN: 0, last: null };
+        const t = r.total_attempts ?? 0;
+        a.total += t;
+        a.correct += r.correct_attempts ?? 0;
+        if (t > 0) {
+          a.weakSum += (r.weakness_score ?? 50) * t;
+          a.weakN += t;
+        }
+        if (r.last_attempted_at) {
+          const ts = new Date(r.last_attempted_at).getTime();
+          if (!a.last || ts > a.last) a.last = ts;
+        }
+        agg.set(subj, a);
+      }
+      const out = Array.from(agg.entries()).map(([subject, a]) => ({
+        subject,
+        totalAttempts: a.total,
+        accuracy: a.total > 0 ? Math.round((a.correct / a.total) * 100) : 0,
+        weaknessScore: a.weakN > 0 ? Math.round(a.weakSum / a.weakN) : 50,
+        lastAttempted: a.last ? new Date(a.last) : null,
+      }));
+      out.sort((x, y) => y.weaknessScore - x.weaknessScore);
+      return out;
+    } catch (e) {
+      console.error("[AICoach] getSubjectBreakdown error:", e);
+      return [];
+    }
+  }
+
+  /**
+   * Streak based on distinct attempt dates from user_attempt_history (preferred)
+   * with fallback to user_performance.last_attempted_at when history is empty.
+   */
+  static async getDailyStreak(userId: string): Promise<{
+    currentStreak: number;
+    longestStreak: number;
+    lastActiveDate: Date | null;
+  }> {
+    const empty = { currentStreak: 0, longestStreak: 0, lastActiveDate: null as Date | null };
+    if (!userId) return empty;
+    try {
+      const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString();
+      const { data } = await supabase
+        .from("user_attempt_history")
+        .select("attempted_at")
+        .eq("user_id", userId)
+        .gte("attempted_at", since)
+        .order("attempted_at", { ascending: false })
+        .limit(5000);
+
+      const days = new Set<string>();
+      let lastActive: Date | null = null;
+      for (const r of (data ?? []) as any[]) {
+        const d = new Date(r.attempted_at);
+        days.add(d.toISOString().slice(0, 10));
+        if (!lastActive || d > lastActive) lastActive = d;
+      }
+      // Fallback to aggregate last_attempted_at if no history yet
+      if (days.size === 0) {
+        const m = await this.getProgressMetrics(userId);
+        return { currentStreak: m.streakDays, longestStreak: m.streakDays, lastActiveDate: null };
+      }
+
+      // current streak (back from today)
+      let current = 0;
+      for (let i = 0; i < 365; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const k = d.toISOString().slice(0, 10);
+        if (days.has(k)) current++;
+        else if (i > 0) break;
+      }
+      // longest streak across history
+      const sortedKeys = Array.from(days).sort();
+      let longest = 0;
+      let run = 0;
+      let prev: number | null = null;
+      const ONE = 24 * 60 * 60 * 1000;
+      for (const k of sortedKeys) {
+        const t = new Date(k).getTime();
+        if (prev !== null && t - prev === ONE) run++;
+        else run = 1;
+        if (run > longest) longest = run;
+        prev = t;
+      }
+      return { currentStreak: current, longestStreak: longest, lastActiveDate: lastActive };
+    } catch (e) {
+      console.error("[AICoach] getDailyStreak error:", e);
+      return empty;
+    }
+  }
+
+  /**
+   * 7-day rolling study plan combining retry queue + weakness focus.
+   */
+  static async getStudyPlan(
+    userId: string,
+    daysAhead = 7
+  ): Promise<{ date: Date; subjects: string[]; reason: string }[]> {
+    if (!userId) return [];
+    try {
+      const [retry, weak] = await Promise.all([
+        this.getTopicsNeedingRetry(userId, 10),
+        this.analyzeUserWeakness(userId),
+      ]);
+
+      const subjects = new Map<string, string>(); // subject -> reason
+      for (const r of retry) {
+        if (!subjects.has(r.subject)) subjects.set(r.subject, "Spaced repetition");
+      }
+      for (const w of weak) {
+        if (w.weaknessScore >= 50 && !subjects.has(w.subject)) {
+          subjects.set(w.subject, "Retry weak topics");
+        }
+      }
+      // Maintenance fillers from any subject the user touches
+      for (const w of weak) {
+        if (!subjects.has(w.subject)) subjects.set(w.subject, "Maintenance");
+      }
+
+      const list = Array.from(subjects.entries());
+      if (list.length === 0) return [];
+
+      const out: { date: Date; subjects: string[]; reason: string }[] = [];
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      for (let i = 0; i < daysAhead; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const [subj, reason] = list[i % list.length];
+        out.push({ date: d, subjects: [subj], reason });
+      }
+      return out;
+    } catch (e) {
+      console.error("[AICoach] getStudyPlan error:", e);
+      return [];
+    }
+  }
+
+  /**
+   * Compute 6 achievements from existing data. No DB writes — pure read model.
+   */
+  static async getAchievements(userId: string): Promise<
+    {
+      id: string;
+      title: string;
+      description: string;
+      icon: string;
+      unlocked: boolean;
+      progress: number; // 0–100
+    }[]
+  > {
+    const defaults = [
+      { id: "first_steps", title: "First Steps", description: "Complete your first test", icon: "🎯" },
+      { id: "century_club", title: "Century Club", description: "Reach 100 question attempts", icon: "💯" },
+      { id: "dedicated_learner", title: "Dedicated Learner", description: "Maintain a 7-day streak", icon: "🔥" },
+      { id: "subject_master", title: "Subject Master", description: "90%+ accuracy in any subject (10+ Qs)", icon: "👑" },
+      { id: "weakness_warrior", title: "Weakness Warrior", description: "Improve any subject by 30 points", icon: "⚔️" },
+      { id: "perfect_score", title: "Perfect Score", description: "Get 100% on any test", icon: "⭐" },
+    ];
+    const make = (over: Partial<{ unlocked: boolean; progress: number }>, base: typeof defaults[number]) => ({
+      ...base,
+      unlocked: !!over.unlocked,
+      progress: Math.max(0, Math.min(100, Math.round(over.progress ?? 0))),
+    });
+
+    if (!userId) return defaults.map((d) => make({}, d));
+
+    try {
+      const [metrics, streak, breakdown] = await Promise.all([
+        this.getProgressMetrics(userId),
+        this.getDailyStreak(userId),
+        this.getSubjectBreakdown(userId),
+      ]);
+
+      // Subject Master: highest (accuracy with ≥10 attempts)
+      const masterCandidate = breakdown
+        .filter((b) => b.totalAttempts >= 10)
+        .reduce<{ acc: number } | null>((best, b) => (best && best.acc >= b.accuracy ? best : { acc: b.accuracy }), null);
+      const masterAcc = masterCandidate?.acc ?? 0;
+
+      // Weakness Warrior: best (most negative) improvement across subjects
+      // weaknessImprovement < 0 means improving. Convert to positive scale.
+      const improvement = -metrics.weaknessImprovement; // positive = better
+
+      // Perfect Score: scan recent custom_test_sessions for any 100%
+      let perfect = false;
+      try {
+        const { data: sessions } = await supabase
+          .from("custom_test_sessions")
+          .select("question_count, questions")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false })
+          .limit(20);
+        // Heuristic: we don't store score on the session. Use attempt history instead.
+        const { data: hist } = await supabase
+          .from("user_attempt_history")
+          .select("session_id, is_correct")
+          .eq("user_id", userId)
+          .order("attempted_at", { ascending: false })
+          .limit(2000);
+        if (hist && hist.length > 0) {
+          const bySession = new Map<string, { c: number; t: number }>();
+          for (const h of hist as any[]) {
+            if (!h.session_id) continue;
+            const b = bySession.get(h.session_id) ?? { c: 0, t: 0 };
+            b.t++;
+            if (h.is_correct) b.c++;
+            bySession.set(h.session_id, b);
+          }
+          for (const [, b] of bySession) {
+            if (b.t >= 5 && b.c === b.t) {
+              perfect = true;
+              break;
+            }
+          }
+        }
+        void sessions;
+      } catch {
+        /* ignore */
+      }
+
+      return [
+        make(
+          { unlocked: metrics.totalAttempts >= 1, progress: metrics.totalAttempts >= 1 ? 100 : 0 },
+          defaults[0]
+        ),
+        make(
+          {
+            unlocked: metrics.totalAttempts >= 100,
+            progress: (metrics.totalAttempts / 100) * 100,
+          },
+          defaults[1]
+        ),
+        make(
+          { unlocked: streak.currentStreak >= 7, progress: (streak.currentStreak / 7) * 100 },
+          defaults[2]
+        ),
+        make({ unlocked: masterAcc >= 90, progress: (masterAcc / 90) * 100 }, defaults[3]),
+        make({ unlocked: improvement >= 30, progress: (improvement / 30) * 100 }, defaults[4]),
+        make({ unlocked: perfect, progress: perfect ? 100 : 0 }, defaults[5]),
+      ];
+    } catch (e) {
+      console.error("[AICoach] getAchievements error:", e);
+      return defaults.map((d) => make({}, d));
+    }
+  }
 }
