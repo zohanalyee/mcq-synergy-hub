@@ -648,7 +648,7 @@ async function generateQuestionsInBatches(
       : '';
     
     const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
-
+${getSubjectGuidance(topic)}
 🇵🇰 MANDATORY RULES — PAKISTANI EXAM STYLE:
 
 1. Generate SHORT, DIRECT, FACTUAL questions. Maximum 2 lines per question.
@@ -770,12 +770,20 @@ RULES:
       const generatedText = result.text;
       
       if (generatedText) {
-        const batchQuestions = parseAIResponse(generatedText);
-        
+        let batchQuestions = parseAIResponse(generatedText);
+
+        // ============= TOPIC-MISMATCH GUARD (Hotfix) =============
+        const beforeTopicFilter = batchQuestions.length;
+        batchQuestions = batchQuestions.filter(q => validateQuestionTopic(q.question, topic));
+        const topicRejected = beforeTopicFilter - batchQuestions.length;
+        if (topicRejected > 0) {
+          console.warn(`[topic-guard] ⚠️ Batch ${batch + 1}: rejected ${topicRejected}/${beforeTopicFilter} questions for topic mismatch (topic="${topic}")`);
+        }
+
         // ============= POST-GENERATION DEDUPLICATION LAYER =============
         let acceptedCount = 0;
         let skippedCount = 0;
-        
+
         for (const q of batchQuestions) {
           const normalized = normalizeQuestionText(q.question);
           const fp = generateQuestionFingerprint(q.question);
