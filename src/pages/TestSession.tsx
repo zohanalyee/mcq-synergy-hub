@@ -71,6 +71,8 @@ const TestSession = () => {
   const [syllabusSheetOpen, setSyllabusSheetOpen] = useState(false);
 
   const hasRestoredRef = useRef(false);
+  const questionStartRef = useRef<number>(Date.now());
+  const preTestAchievementsRef = useRef<Set<string> | null>(null);
 
   const locationState = location.state as { returnPath?: string } | null;
 
@@ -185,10 +187,27 @@ const TestSession = () => {
     }
   }, [currentQuestion, answers, flaggedQuestions, testData, isSubmitted, persistNow, timeRemaining]);
 
-  // Mark question arrival for speed detection
+  // Mark question arrival for speed detection + reset per-question timer
   useEffect(() => {
     markQuestionArrival();
+    questionStartRef.current = Date.now();
   }, [currentQuestion, markQuestionArrival]);
+
+  // Snapshot pre-test achievements once user is known, so we can detect new unlocks
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user || !alive) return;
+        const list = await AICoachService.getAchievements(user.id);
+        if (alive) preTestAchievementsRef.current = new Set(list.filter((a) => a.unlocked).map((a) => a.id));
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => { alive = false; };
+  }, []);
 
   // Syllabus tracker data
   const syllabusMap = useMemo(() => {
@@ -293,6 +312,18 @@ const TestSession = () => {
     clearState();
 
     // AI Coach: track each attempted question (non-blocking, errors swallowed)
+    // Derive test_type from session_name pattern
+    const sessionName: string = testData?.session_name || "";
+    const testType: "job_test" | "subject_test" | "syllabus" | "practice" =
+      sessionName.startsWith("Job Test:") ? "job_test"
+      : sessionName.startsWith("Subject:") ? "subject_test"
+      : sessionName.toLowerCase().includes("syllabus") ? "syllabus"
+      : "practice";
+    const sessionId: string | null = testData?.id || id || null;
+    // Average time per attempted question (best-effort: total elapsed / attempted count)
+    const totalElapsed = (testData?.time_limit ?? 30) * 60 - timeRemaining;
+    const avgTimePerQ = attemptRecords.length > 0 ? Math.max(1, Math.round(totalElapsed / attemptRecords.length)) : 0;
+
     (async () => {
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -302,8 +333,11 @@ const TestSession = () => {
           const subj = question.subject || "General";
           const topic = question.topic || "";
           const qid = typeof question.id === "string" ? question.id : null;
-          AICoachService.trackQuestionAttempt(user.id, text, qid, subj, topic, isCorrect)
-            .catch((e) => console.error("[AICoach] track failed:", e));
+          const diff = (question.difficulty || "medium").toString();
+          // Phase 3: detailed tracking (also updates Phase 1 aggregate internally)
+          AICoachService.trackAttemptDetailed(
+            user.id, sessionId, text, qid, subj, topic, diff, isCorrect, avgTimePerQ, testType
+          ).catch((e) => console.error("[AICoach] trackDetailed failed:", e));
         }
         // Phase 2: suggest a single retry topic if any are due
         AICoachService.getTopicsNeedingRetry(user.id, 1)
@@ -314,6 +348,22 @@ const TestSession = () => {
             }
           })
           .catch(() => {});
+        // Phase 3: detect newly-unlocked achievements
+        setTimeout(() => {
+          AICoachService.getAchievements(user.id)
+            .then((list) => {
+              const before = preTestAchievementsRef.current ?? new Set<string>();
+              const justUnlocked = list.filter((a) => a.unlocked && !before.has(a.id));
+              if (justUnlocked.length > 0) {
+                const a = justUnlocked[0];
+                toast.success(`🏆 Achievement unlocked: ${a.title}`, {
+                  description: a.description,
+                  duration: 7000,
+                });
+              }
+            })
+            .catch(() => {});
+        }, 1500); // brief delay so aggregate writes settle
       } catch (e) {
         console.error("[AICoach] tracking batch failed:", e);
       }

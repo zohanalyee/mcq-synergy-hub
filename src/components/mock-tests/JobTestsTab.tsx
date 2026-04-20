@@ -213,7 +213,13 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
 
       if (sessionError) throw sessionError;
 
-      toast.success(`Test ready with ${allQuestions.length} questions!`, { duration: 3000 });
+      toast.success(`Test ready with ${allQuestions.length} questions!`, {
+        duration: 4000,
+        action: {
+          label: "View Insights",
+          onClick: () => navigate("/analytics"),
+        },
+      });
 
       setShowProgress(false);
       navigate(`/test-session/${session.id}`, { state: { returnPath: "/mock-tests" } });
