@@ -20,6 +20,55 @@ interface CorruptedItem {
   reasons: CorruptionReason[];
 }
 
+// ============= TOPIC MISMATCH KEYWORDS (mirrors edge-function guard) =============
+const SCIENCE_KEYWORDS = [
+  "gas", "liquid", "solid", "particles", "matter",
+  "molecular", "amorphous", "crystalline", "atom", "molecule",
+  "chemical", "element", "compound", "electron", "proton", "neutron",
+];
+const HARDWARE_KEYWORDS = [
+  "cpu", "ram", "rom", "processor", "motherboard",
+  "circuit", "transistor", "register", "alu", "gpu",
+];
+const MS_OFFICE_KEYWORDS = [
+  "word", "excel", "powerpoint", "outlook", "spreadsheet",
+  "formula", "slide", "cell reference", "mail merge", "pivot",
+  "vlookup", "sum(", "average(", "ribbon", "workbook", "worksheet",
+  "document", "paragraph", "shortcut", "ctrl+", "ctrl +",
+];
+const GK_MARKERS = [
+  "pakistan", "capital", "founded", "prime minister", "president",
+  "river", "mountain", "province", "year", "war", "treaty",
+  "constitution", "jinnah", "iqbal", "partition", "independence",
+  "organisation", "organization", "united nations", "islamic",
+];
+
+const hasAny = (text: string, words: string[]) => words.some((w) => text.includes(w));
+
+const getTopicMismatchReasons = (item: any): CorruptionReason[] => {
+  const reasons: CorruptionReason[] = [];
+  const q = String(item.title || "").toLowerCase();
+  const subject = String(item.subject || item.topic || "").toLowerCase();
+  if (!q || !subject) return reasons;
+
+  // Computer (MS Office) drift
+  if (subject.includes("ms office") || subject.includes("msoffice") || /\bcomputer\b/.test(subject)) {
+    if (hasAny(q, SCIENCE_KEYWORDS)) reasons.push("Science content in Computer");
+    else if (hasAny(q, HARDWARE_KEYWORDS) && !hasAny(q, MS_OFFICE_KEYWORDS)) {
+      reasons.push("Hardware content in Computer (MS Office)");
+    }
+  }
+
+  // General Knowledge drift
+  if (subject.includes("general knowledge") || subject === "gk" || subject.includes("(gk)")) {
+    if (hasAny(q, SCIENCE_KEYWORDS) && !hasAny(q, GK_MARKERS)) {
+      reasons.push("Science content in General Knowledge");
+    }
+  }
+
+  return reasons;
+};
+
 const getCorruptionReasons = (item: any): CorruptionReason[] => {
   const reasons: CorruptionReason[] = [];
   const opts = item.options as any;
@@ -56,6 +105,9 @@ const getCorruptionReasons = (item: any): CorruptionReason[] => {
     reasons.push("No correct answer");
   }
 
+  // Topic mismatch (Computer/GK serving Science questions)
+  reasons.push(...getTopicMismatchReasons(item));
+
   return reasons;
 };
 
@@ -65,22 +117,43 @@ const CorruptedDataCleaner = () => {
   const { data: corrupted = [], isLoading, refetch } = useQuery({
     queryKey: ["corrupted-mcqs"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("content_items")
-        .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
-        .eq("category", "mcq")
-        .order("created_at", { ascending: false })
-        .limit(500);
+      // Two-pronged scan:
+      // 1) Recent 500 MCQs (catches general corruption)
+      // 2) ALL Computer/GK rows (catches the topic-mismatch hotfix scope)
+      const [recentRes, targetedRes] = await Promise.all([
+        supabase
+          .from("content_items")
+          .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
+          .eq("category", "mcq")
+          .order("created_at", { ascending: false })
+          .limit(500),
+        supabase
+          .from("content_items")
+          .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
+          .eq("category", "mcq")
+          .or(
+            "subject.ilike.%computer%,subject.ilike.%ms office%,subject.ilike.%general knowledge%,topic.ilike.%computer%,topic.ilike.%ms office%,topic.ilike.%general knowledge%"
+          )
+          .limit(2000),
+      ]);
 
-      if (error) throw error;
+      if (recentRes.error) throw recentRes.error;
+      if (targetedRes.error) throw targetedRes.error;
+
+      const merged = new Map<string, any>();
+      for (const item of [...(recentRes.data || []), ...(targetedRes.data || [])]) {
+        merged.set(item.id, item);
+      }
 
       const results: CorruptedItem[] = [];
-      for (const item of data || []) {
+      for (const item of merged.values()) {
         const reasons = getCorruptionReasons(item);
         if (reasons.length > 0) {
           results.push({ ...item, reasons });
         }
       }
+      // Newest first
+      results.sort((a, b) => (a.created_at < b.created_at ? 1 : -1));
       return results;
     },
   });
