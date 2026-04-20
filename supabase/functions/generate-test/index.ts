@@ -290,6 +290,133 @@ function buildSyllabusSearchConditions(topic: string, sanitizedTopic: string, sy
 }
 
 // Robust JSON parser with repair logic for truncated responses
+// ============= TOPIC MISMATCH GUARD (Hotfix: Computer/GK getting Science) =============
+
+/**
+ * Returns subject-specific CRITICAL/FORBIDDEN guidance to prepend to the prompt.
+ * Targets the recurring failure modes seen in production:
+ *  - "Computer (MS Office)" → AI hallucinated states-of-matter / hardware questions
+ *  - "General Knowledge"    → AI returned pure science questions
+ */
+function getSubjectGuidance(topic: string): string {
+  const t = (topic || '').toLowerCase();
+
+  if (t.includes('ms office') || t.includes('msoffice') || /\bcomputer\b/.test(t)) {
+    return `
+🚨 CRITICAL — SUBJECT IS "Computer (MS Office Applications)":
+Generate ONLY questions about Microsoft Office software usage:
+- MS Word: shortcut keys, formatting, tables, mail merge, track changes, styles
+- MS Excel: formulas (SUM, AVERAGE, IF, VLOOKUP, COUNT), charts, pivot tables, cell references
+- MS PowerPoint: slides, animations, transitions, slide masters, presenter view
+- MS Outlook: email, calendar, tasks, rules
+- File operations and ribbon tabs
+
+❌ FORBIDDEN — DO NOT generate questions about:
+- Computer hardware (CPU, RAM, motherboard, processor, circuits, transistors)
+- Programming (Python, Java, C++, algorithms, data structures)
+- Operating systems internals (kernel, drivers, Linux/Windows installation)
+- Networking (IP addresses, OSI model, protocols)
+- States of matter, particles, gases, liquids, solids, atoms, molecules (THIS IS PHYSICS/CHEMISTRY — NOT COMPUTER)
+- Generic computer-science theory
+`;
+  }
+
+  if (t.includes('general knowledge') || t === 'gk' || t.includes('(gk)')) {
+    return `
+🚨 CRITICAL — SUBJECT IS "General Knowledge":
+Generate ONLY questions about:
+- Pakistan affairs: history, geography, government, constitution, leaders
+- Current affairs: recent national/international events, organisations (UN, OIC, SAARC)
+- World geography: capitals, rivers, mountains, countries
+- Famous personalities, important dates, treaties, wars
+- Islamic Studies basics, Pakistan Movement
+
+❌ FORBIDDEN — DO NOT generate questions about:
+- Pure science (states of matter, particles, atoms, molecules, amorphous/crystalline solids)
+- Chemistry formulas, physics equations
+- Advanced mathematics
+- MS Office / programming / IT specifics
+`;
+  }
+
+  if (t.includes('english')) {
+    return `
+SUBJECT IS "English": grammar, vocabulary, synonyms/antonyms, prepositions, sentence correction, idioms.
+DO NOT generate science, math, computer, or general-knowledge questions.
+`;
+  }
+
+  if (t.includes('math') || t.includes('quantitative')) {
+    return `
+SUBJECT IS "Mathematics": arithmetic, percentages, ratios, averages, profit/loss, HCF/LCM, basic algebra/geometry.
+DO NOT generate science, English, or general-knowledge questions.
+`;
+  }
+
+  return '';
+}
+
+const SCIENCE_KEYWORDS = [
+  'gas', 'liquid', 'solid', 'particles', 'matter',
+  'molecular', 'amorphous', 'crystalline', 'atom', 'molecule',
+  'chemical', 'element', 'compound', 'electron', 'proton', 'neutron'
+];
+const HARDWARE_KEYWORDS = [
+  'cpu', 'ram', 'rom', 'processor', 'motherboard',
+  'circuit', 'transistor', 'register', 'alu', 'gpu'
+];
+const MS_OFFICE_KEYWORDS = [
+  'word', 'excel', 'powerpoint', 'outlook', 'spreadsheet',
+  'formula', 'slide', 'cell reference', 'mail merge', 'pivot',
+  'vlookup', 'sum(', 'average(', 'ribbon', 'workbook', 'worksheet',
+  'document', 'paragraph', 'shortcut', 'ctrl+', 'ctrl +'
+];
+const GK_MARKERS = [
+  'pakistan', 'capital', 'founded', 'prime minister', 'president',
+  'river', 'mountain', 'province', 'year', 'war', 'treaty',
+  'constitution', 'jinnah', 'iqbal', 'partition', 'independence',
+  'organisation', 'organization', 'united nations', 'islamic'
+];
+
+function hasAny(text: string, words: string[]): boolean {
+  return words.some(w => text.includes(w));
+}
+
+/**
+ * Reject questions whose content drifts off the requested topic.
+ * Returns true = keep, false = reject.
+ */
+function validateQuestionTopic(question: string, topic: string): boolean {
+  if (!question || !topic) return true;
+  const q = question.toLowerCase();
+  const t = topic.toLowerCase();
+
+  // ----- Computer (MS Office) -----
+  if (t.includes('ms office') || t.includes('msoffice') || /\bcomputer\b/.test(t)) {
+    if (hasAny(q, SCIENCE_KEYWORDS)) {
+      console.warn(`[topic-guard] ❌ REJECT science for Computer: "${question.slice(0, 80)}"`);
+      return false;
+    }
+    if (hasAny(q, HARDWARE_KEYWORDS) && !hasAny(q, MS_OFFICE_KEYWORDS)) {
+      console.warn(`[topic-guard] ❌ REJECT hardware for Computer: "${question.slice(0, 80)}"`);
+      return false;
+    }
+    return true;
+  }
+
+  // ----- General Knowledge -----
+  if (t.includes('general knowledge') || t === 'gk' || t.includes('(gk)')) {
+    if (hasAny(q, SCIENCE_KEYWORDS) && !hasAny(q, GK_MARKERS)) {
+      console.warn(`[topic-guard] ❌ REJECT science for GK: "${question.slice(0, 80)}"`);
+      return false;
+    }
+    return true;
+  }
+
+  // English / Math / others — pass-through
+  return true;
+}
+
 // ============= STRICT MCQ VALIDATION (Pakistani Exam Standards) =============
 
 function validateMCQ(mcq: any): boolean {
