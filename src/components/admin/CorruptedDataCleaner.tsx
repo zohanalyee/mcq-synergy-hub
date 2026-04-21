@@ -73,7 +73,7 @@ const getTopicMismatchReasons = (item: any): CorruptionReason[] => {
       reasons.push("Science content in Computer");
     } else if (
       !isHardwareSubject &&
-      hasAny(q, HARDWARE_KEYWORDS) &&
+      (hasAny(q, HARDWARE_KEYWORDS) || hasAny(q, PROGRAMMING_KEYWORDS)) &&
       !hasAny(q, MS_OFFICE_KEYWORDS)
     ) {
       reasons.push("Hardware content in Computer");
