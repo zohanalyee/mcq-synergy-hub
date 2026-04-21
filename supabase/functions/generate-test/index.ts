@@ -407,8 +407,8 @@ function validateQuestionTopic(question: string, topic: string): boolean {
       console.warn(`[topic-guard] ❌ REJECT science for Computer: "${question.slice(0, 80)}"`);
       return false;
     }
-    if (hasAny(q, HARDWARE_KEYWORDS) && !hasAny(q, MS_OFFICE_KEYWORDS)) {
-      console.warn(`[topic-guard] ❌ REJECT hardware for Computer: "${question.slice(0, 80)}"`);
+    if ((hasAny(q, HARDWARE_KEYWORDS) || hasAny(q, PROGRAMMING_KEYWORDS)) && !hasAny(q, MS_OFFICE_KEYWORDS)) {
+      console.warn(`[topic-guard] ❌ REJECT hardware/programming for Computer: "${question.slice(0, 80)}"`);
       return false;
     }
     return true;
