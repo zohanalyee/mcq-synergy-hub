@@ -51,11 +51,22 @@ const getTopicMismatchReasons = (item: any): CorruptionReason[] => {
   const subject = String(item.subject || item.topic || "").toLowerCase();
   if (!q || !subject) return reasons;
 
-  // Computer (MS Office) drift
-  if (subject.includes("ms office") || subject.includes("msoffice") || /\bcomputer\b/.test(subject)) {
-    if (hasAny(q, SCIENCE_KEYWORDS)) reasons.push("Science content in Computer");
-    else if (hasAny(q, HARDWARE_KEYWORDS) && !hasAny(q, MS_OFFICE_KEYWORDS)) {
-      reasons.push("Hardware content in Computer (MS Office)");
+  // Computer drift (any subject containing "computer")
+  if (subject.includes("computer")) {
+    const isHardwareSubject =
+      subject.includes("hardware") ||
+      subject.includes("parts") ||
+      subject.includes("components") ||
+      subject.includes("architecture");
+
+    if (hasAny(q, SCIENCE_KEYWORDS)) {
+      reasons.push("Science content in Computer");
+    } else if (
+      !isHardwareSubject &&
+      hasAny(q, HARDWARE_KEYWORDS) &&
+      !hasAny(q, MS_OFFICE_KEYWORDS)
+    ) {
+      reasons.push("Hardware content in Computer");
     }
   }
 
@@ -132,7 +143,9 @@ const CorruptedDataCleaner = () => {
           .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
           .eq("category", "mcq")
           .or(
-            "subject.ilike.%computer%,subject.ilike.%ms office%,subject.ilike.%general knowledge%,topic.ilike.%computer%,topic.ilike.%ms office%,topic.ilike.%general knowledge%"
+            "subject.ilike.%computer%,topic.ilike.%computer%," +
+            "subject.ilike.%general knowledge%,topic.ilike.%general knowledge%," +
+            "subject.ilike.%gk%,topic.ilike.%gk%"
           )
           .limit(2000),
       ]);
