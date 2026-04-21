@@ -29,6 +29,16 @@ const SCIENCE_KEYWORDS = [
 const HARDWARE_KEYWORDS = [
   "cpu", "ram", "rom", "processor", "motherboard",
   "circuit", "transistor", "register", "alu", "gpu",
+  // Historical computing hardware
+  "vacuum tube", "valve", "integrated circuit", "microprocessor",
+  "eniac", "univac", "mainframe", "minicomputer",
+  "punched card", "punch card", "analytical engine", "difference engine",
+  "abacus", "antikythera", "semiconductor", "microchip",
+];
+const PROGRAMMING_KEYWORDS = [
+  "fortran", "cobol", "algol", "basic language", "compiler", "assembler",
+  "stored program", "von neumann", "grace hopper", "ada lovelace",
+  "babbage", "turing machine",
 ];
 const MS_OFFICE_KEYWORDS = [
   "word", "excel", "powerpoint", "outlook", "spreadsheet",
@@ -63,7 +73,7 @@ const getTopicMismatchReasons = (item: any): CorruptionReason[] => {
       reasons.push("Science content in Computer");
     } else if (
       !isHardwareSubject &&
-      hasAny(q, HARDWARE_KEYWORDS) &&
+      (hasAny(q, HARDWARE_KEYWORDS) || hasAny(q, PROGRAMMING_KEYWORDS)) &&
       !hasAny(q, MS_OFFICE_KEYWORDS)
     ) {
       reasons.push("Hardware content in Computer");
