@@ -363,7 +363,17 @@ const SCIENCE_KEYWORDS = [
 ];
 const HARDWARE_KEYWORDS = [
   'cpu', 'ram', 'rom', 'processor', 'motherboard',
-  'circuit', 'transistor', 'register', 'alu', 'gpu'
+  'circuit', 'transistor', 'register', 'alu', 'gpu',
+  // Historical computing hardware
+  'vacuum tube', 'valve', 'integrated circuit', 'microprocessor',
+  'eniac', 'univac', 'mainframe', 'minicomputer',
+  'punched card', 'punch card', 'analytical engine', 'difference engine',
+  'abacus', 'antikythera', 'semiconductor', 'microchip'
+];
+const PROGRAMMING_KEYWORDS = [
+  'fortran', 'cobol', 'algol', 'basic language', 'compiler', 'assembler',
+  'stored program', 'von neumann', 'grace hopper', 'ada lovelace',
+  'babbage', 'turing machine'
 ];
 const MS_OFFICE_KEYWORDS = [
   'word', 'excel', 'powerpoint', 'outlook', 'spreadsheet',
