@@ -143,7 +143,9 @@ const CorruptedDataCleaner = () => {
           .select("id, title, subject, topic, difficulty, options, correct_option, created_at")
           .eq("category", "mcq")
           .or(
-            "subject.ilike.%computer%,subject.ilike.%ms office%,subject.ilike.%general knowledge%,topic.ilike.%computer%,topic.ilike.%ms office%,topic.ilike.%general knowledge%"
+            "subject.ilike.%computer%,topic.ilike.%computer%," +
+            "subject.ilike.%general knowledge%,topic.ilike.%general knowledge%," +
+            "subject.ilike.%gk%,topic.ilike.%gk%"
           )
           .limit(2000),
       ]);
