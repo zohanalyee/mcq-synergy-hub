@@ -1666,6 +1666,8 @@ serve(async (req) => {
 
       await syncQuestionsToSession(supabase, session_id, selected);
 
+      logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, final_returned: selected.length, exit_branch: 'instant_cache' });
+
       return new Response(
         JSON.stringify({
           session_name: `${topic} Quiz`,
