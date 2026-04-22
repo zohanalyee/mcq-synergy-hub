@@ -395,6 +395,38 @@ function hasAny(text: string, words: string[]): boolean {
 }
 
 /**
+ * Diagnostic block printed at every response exit of the user_test_session flow.
+ * Helps pinpoint where the question pipeline zeroed out (cache / topic-guard / AI / quota).
+ */
+function logRequestSummary(info: {
+  topic: string;
+  sanitized?: string;
+  qc: number;
+  partial?: boolean;
+  forceNew?: boolean;
+  cache_found?: number;
+  dbQuestions?: number;
+  ai_attempted?: number;
+  ai_returned?: number;
+  ai_saved?: number;
+  final_returned: number;
+  exit_branch: string;
+  error_notice?: string;
+}): void {
+  const deficit = info.qc - info.final_returned;
+  console.log(`
+═══════════════════════════════════════
+[DEBUG] generate-test summary
+Topic: ${info.topic} | Sanitized: ${info.sanitized ?? '-'}
+qc: ${info.qc} | partial: ${info.partial ?? false} | forceNew: ${info.forceNew ?? false}
+cache_found: ${info.cache_found ?? 0} | dbQuestions: ${info.dbQuestions ?? 0}
+ai_attempted: ${info.ai_attempted ?? 0} | ai_returned: ${info.ai_returned ?? 0} | ai_saved: ${info.ai_saved ?? 0}
+deficit: ${deficit} | final_returned: ${info.final_returned}
+exit_branch: ${info.exit_branch}${info.error_notice ? ` | notice: ${info.error_notice}` : ''}
+═══════════════════════════════════════`);
+}
+
+/**
  * Reject questions whose content drifts off the requested topic.
  * Returns true = keep, false = reject.
  */
