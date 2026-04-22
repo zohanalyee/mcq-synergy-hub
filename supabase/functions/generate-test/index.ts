@@ -403,8 +403,20 @@ function validateQuestionTopic(question: string, topic: string): boolean {
   const q = question.toLowerCase();
   const t = topic.toLowerCase();
 
-  // ----- Computer (MS Office) -----
-  if (t.includes('ms office') || t.includes('msoffice') || /\bcomputer\b/.test(t)) {
+  // ----- Computer (MS Office) — relaxed: only science is rejected -----
+  // The hardware/programming rejector produces too many false positives on legitimate
+  // Office questions (e.g., "Which shortcut key bolds text?" has no MS_OFFICE_KEYWORDS).
+  // Prompt's getSubjectGuidance already forbids hardware to the AI; rely on that.
+  if (t.includes('ms office') || t.includes('msoffice')) {
+    if (hasAny(q, SCIENCE_KEYWORDS)) {
+      console.warn(`[topic-guard] ❌ REJECT science for MS Office: "${question.slice(0, 80)}"`);
+      return false;
+    }
+    return true;
+  }
+
+  // ----- Pure "Computer" subject (no MS Office qualifier) — strict mode -----
+  if (/\bcomputer\b/.test(t)) {
     if (hasAny(q, SCIENCE_KEYWORDS)) {
       console.warn(`[topic-guard] ❌ REJECT science for Computer: "${question.slice(0, 80)}"`);
       return false;
