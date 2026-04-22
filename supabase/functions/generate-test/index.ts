@@ -1864,6 +1864,7 @@ serve(async (req) => {
             ? 'API key invalid or quota exceeded. Showing cached questions only.'
             : 'AI credits exhausted. Showing cached questions only.';
 
+        logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, ai_attempted: missingCount, ai_returned: 0, final_returned: returnedQuestions.length, exit_branch: 'ai_error_fallback', error_notice: errorNotice });
         return new Response(
           JSON.stringify({
             session_name: `${topic} Quiz`,
@@ -1890,6 +1891,7 @@ serve(async (req) => {
           difficulty,
         );
         await syncQuestionsToSession(supabase, session_id, returnedQuestions);
+        logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, ai_attempted: missingCount, ai_returned: 0, final_returned: returnedQuestions.length, exit_branch: 'ai_error_fallback' });
         return new Response(
           JSON.stringify({
             session_name: `${topic} Quiz`,
@@ -2007,6 +2009,8 @@ serve(async (req) => {
                        newAIQuestions.length === 0 ? 'cache' : 'hybrid';
 
     console.log(`✅ Returning ${finalQuestions.length} questions (${dbQuestions.length} cached + ${newAIQuestions.length} new) - Source: ${sourceTypeResponse}`);
+
+    logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, ai_attempted: missingCount, ai_returned: newAIQuestions.length, ai_saved: savedCount, final_returned: finalQuestions.length, exit_branch: 'sync_gen' });
 
     return new Response(
       JSON.stringify({
