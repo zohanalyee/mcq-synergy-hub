@@ -141,6 +141,15 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
 
           const questions = data?.questions || [];
 
+          // Surface specific error from edge function when AI returned nothing
+          if (questions.length === 0) {
+            console.error(`[JobTest] Empty response from edge function for ${item.subject}:`, data);
+            const notice =
+              data?.error_notice ||
+              (data?.ai_unavailable ? "AI temporarily unavailable" : "AI returned no valid questions");
+            toast.error(`${item.subject}: ${notice}`, { duration: 6000 });
+          }
+
           // Force subject/topic labels
           const labeledQuestions = questions.map((q: any) => ({
             ...q,
