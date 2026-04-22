@@ -652,26 +652,32 @@ async function generateQuestionsInBatches(
   console.log(`🧠 Generating ${totalCount} questions in ${batches} batch(es) with HYBRID DEDUPLICATION...`);
   console.log(`   Pre-loaded ${existingQuestions.length} existing questions into memory`);
   
+  const MAX_RETRIES = 3;
+  let totalApiCalls = 0;
+  let totalBatchesAttempted = 0;
+
   for (let batch = 0; batch < batches; batch++) {
     const batchSize = Math.min(MAX_BATCH_SIZE, totalCount - allQuestions.length);
     if (batchSize <= 0) break;
-    
-    console.log(`📦 Batch ${batch + 1}/${batches}: Generating ${batchSize} questions...`);
-    
-    // Build avoid list: existing DB questions + already generated in this run (last 30)
-    const avoidList = [...existingQuestions.slice(-15), ...generatedInThisRun.slice(-15)];
-    
-    // ============= ENHANCED PROMPT WITH DIVERSITY REQUIREMENTS =============
-    const avoidSection = avoidList.length > 0 
-      ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
-      : '';
 
-    // ============= AI COACH: WEAK-TOPIC FOCUS =============
-    const weakSection = weakTopics.length > 0
-      ? `\n\n🎯 CRITICAL — focus 70% of questions on these weak topics the user struggles with:\n${weakTopics.map((t) => `- ${t}`).join('\n')}\nMake questions progressively harder within these topics.`
-      : '';
-    
-    const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
+    console.log(`📦 Batch ${batch + 1}/${batches}: Generating ${batchSize} questions...`);
+    totalBatchesAttempted++;
+
+    let batchAccepted = 0;
+
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      // Build avoid list: existing DB questions + already generated in this run (last 30)
+      const avoidList = [...existingQuestions.slice(-15), ...generatedInThisRun.slice(-15)];
+
+      const avoidSection = avoidList.length > 0
+        ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
+        : '';
+
+      const weakSection = weakTopics.length > 0
+        ? `\n\n🎯 CRITICAL — focus 70% of questions on these weak topics the user struggles with:\n${weakTopics.map((t) => `- ${t}`).join('\n')}\nMake questions progressively harder within these topics.`
+        : '';
+
+      const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
 ${getSubjectGuidance(topic)}
 🇵🇰 MANDATORY RULES — PAKISTANI EXAM STYLE:
 
@@ -758,7 +764,7 @@ OUTPUT FORMAT — Return ONLY this JSON, NO markdown, NO extra text:
   }
 ]${weakSection}${avoidSection}`;
 
-    const userPrompt = `Generate exactly ${batchSize} UNIQUE Pakistani exam-style MCQs about "${topic}" at ${difficulty} difficulty.
+      const userPrompt = `Generate exactly ${batchSize} UNIQUE Pakistani exam-style MCQs about "${topic}" at ${difficulty} difficulty.
 
 RULES:
 - Every question MUST end with "?" (no statements or definitions)
@@ -768,88 +774,134 @@ RULES:
 - Use Pakistani context where relevant
 - Return ONLY a valid JSON array, no wrapping object needed`;
 
-    try {
-      // Use the robust fallback mechanism
-      console.log(`📤 Calling Gemini API for batch ${batch + 1} with model fallback...`);
-      console.log(`🔑 API Key prefix: ${apiKey ? apiKey.substring(0, 8) + '...' : 'MISSING!'}`);
-      
-      const promptText = `${systemPrompt}\n\n${userPrompt}`;
+      try {
+        console.log(`📤 Batch ${batch + 1} attempt ${attempt}/${MAX_RETRIES}: Calling Gemini...`);
+        const promptText = `${systemPrompt}\n\n${userPrompt}`;
+        totalApiCalls++;
 
-      const result = await callGeminiForBatch(apiKey, promptText, {
-        maxOutputTokens: 8000,
-        temperature: 0.7
-      });
+        const result = await callGeminiForBatch(apiKey, promptText, {
+          maxOutputTokens: 8000,
+          temperature: 0.7
+        });
 
-      if (!result.success) {
-        if (result.error === 'AUTH_ERROR') {
-          throw { status: 403, message: 'Google API key invalid', source: 'google_gemini' };
+        if (!result.success) {
+          if (result.error === 'AUTH_ERROR') {
+            throw { status: 403, message: 'Google API key invalid', source: 'google_gemini' };
+          }
+          if (result.error === 'ALL_MODELS_FAILED') {
+            throw { status: 429, message: 'All Gemini models exhausted (rate limited)', source: 'google_gemini' };
+          }
+          continue;
         }
-        if (result.error === 'ALL_MODELS_FAILED') {
-          throw { status: 429, message: 'All Gemini models exhausted (rate limited)', source: 'google_gemini' };
-        }
-        continue;
-      }
 
-      console.log(`✅ Batch ${batch + 1} generated with model: ${result.modelUsed}`);
-      const generatedText = result.text;
-      
-      if (generatedText) {
+        const generatedText = result.text;
+        if (!generatedText) continue;
+
         let batchQuestions = parseAIResponse(generatedText);
 
-        // ============= TOPIC-MISMATCH GUARD (Hotfix) =============
+        // ============= TOPIC-MISMATCH GUARD =============
         const beforeTopicFilter = batchQuestions.length;
         batchQuestions = batchQuestions.filter(q => validateQuestionTopic(q.question, topic));
         const topicRejected = beforeTopicFilter - batchQuestions.length;
         if (topicRejected > 0) {
-          console.warn(`[topic-guard] ⚠️ Batch ${batch + 1}: rejected ${topicRejected}/${beforeTopicFilter} questions for topic mismatch (topic="${topic}")`);
+          console.warn(`[topic-guard] ⚠️ Batch ${batch + 1} attempt ${attempt}: rejected ${topicRejected}/${beforeTopicFilter} for topic mismatch`);
         }
 
-        // ============= POST-GENERATION DEDUPLICATION LAYER =============
-        let acceptedCount = 0;
-        let skippedCount = 0;
-
+        // ============= POST-GENERATION DEDUPLICATION =============
+        let acceptedThisAttempt = 0;
         for (const q of batchQuestions) {
           const normalized = normalizeQuestionText(q.question);
           const fp = generateQuestionFingerprint(q.question);
-          
-          // Check for exact-ish duplicate (normalized text match)
-          if (normalizedTexts.has(normalized)) {
-            console.log(`🔄 Skipping exact duplicate: "${q.question.slice(0, 50)}..."`);
-            skippedCount++;
-            continue;
-          }
-          
-          // Check for semantic duplicate (fingerprint match)
-          if (fp && fp.split('|').length >= 3 && fingerprints.has(fp)) {
-            console.log(`🔄 Skipping semantic duplicate: "${q.question.slice(0, 50)}..."`);
-            skippedCount++;
-            continue;
-          }
-          
-          // Accept this question
+          if (normalizedTexts.has(normalized)) continue;
+          if (fp && fp.split('|').length >= 3 && fingerprints.has(fp)) continue;
+
           allQuestions.push(q);
           generatedInThisRun.push(q.question);
           normalizedTexts.add(normalized);
           if (fp) fingerprints.add(fp);
-          acceptedCount++;
+          acceptedThisAttempt++;
+          batchAccepted++;
         }
-        
-        console.log(`✅ Batch ${batch + 1} completed: ${acceptedCount} accepted, ${skippedCount} duplicates skipped`);
+
+        console.log(`✅ Batch ${batch + 1} attempt ${attempt}: ${acceptedThisAttempt} accepted (batch total: ${batchAccepted}/${batchSize})`);
+
+        if (batchAccepted >= batchSize) break;       // got enough → next batch
+        if (acceptedThisAttempt > 0) break;          // partial keep → next batch
+        console.warn(`🔁 Batch ${batch + 1} retry ${attempt}/${MAX_RETRIES}: 0 accepted (all rejected by topic guard / dedup)`);
+      } catch (batchError: any) {
+        if (batchError.status === 429 || batchError.status === 403) {
+          console.error(`🚫 Batch ${batch + 1} quota/auth error - propagating to caller`);
+          throw batchError;
+        }
+        console.error(`Batch ${batch + 1} attempt ${attempt} error:`, JSON.stringify(batchError));
       }
-    } catch (batchError: any) {
-      // Propagate quota/auth errors to caller (no longer checking 402 - Lovable-specific)
-      if (batchError.status === 429 || batchError.status === 403) {
-        console.error(`🚫 Batch ${batch + 1} quota/auth error - propagating to caller`);
-        throw batchError;
-      }
-      console.error(`Batch ${batch + 1} error:`, JSON.stringify(batchError));
-    }
-    
+    } // end retry loop
+
     if (batch < batches - 1) {
       await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
-  
+
+  // ============= EMERGENCY FALLBACK =============
+  // If validator/dedup rejected EVERY batch, try once more with science-only validation
+  // to prevent total failure due to over-strict keyword rules.
+  if (allQuestions.length === 0 && totalBatchesAttempted >= 1) {
+    console.error(`❌ VALIDATOR TOO STRICT: 0 accepted after ${totalBatchesAttempted} batches, ${totalApiCalls} API calls`);
+    console.error(`   Topic: "${topic}" | Difficulty: ${difficulty}`);
+    console.error(`   🚨 EMERGENCY FALLBACK: Trying one batch with science-only validation`);
+
+    try {
+      totalApiCalls++;
+      const emergencyPrompt = `You are a STRICT examiner for Pakistani competitive exams.
+${getSubjectGuidance(topic)}
+
+Generate exactly ${Math.min(totalCount, 10)} UNIQUE short Pakistani-exam-style MCQs about "${topic}" at ${difficulty} difficulty.
+- Every question ends with "?"
+- 4 options labeled A, B, C, D
+- Include correctOption (A/B/C/D) and explanation
+- Return ONLY a JSON array.`;
+
+      const emerg = await callGeminiForBatch(apiKey, emergencyPrompt, { maxOutputTokens: 8000, temperature: 0.8 });
+      if (emerg.success && emerg.text) {
+        const parsed = parseAIResponse(emerg.text);
+        const accepted = parsed.filter((q: any) => {
+          const qLower = (q.question || '').toLowerCase();
+          if (hasAny(qLower, SCIENCE_KEYWORDS)) {
+            console.warn(`  Emergency rejected science: "${(q.question || '').slice(0, 60)}"`);
+            return false;
+          }
+          return true;
+        });
+        if (accepted.length > 0) {
+          console.warn(`✅ Emergency fallback accepted ${accepted.length} questions (science-only filter)`);
+          allQuestions.push(...accepted);
+        } else {
+          console.error(`❌ Emergency fallback: AI returned ${parsed.length} but ALL still rejected`);
+        }
+      }
+    } catch (emergErr: any) {
+      console.error(`❌ Emergency fallback threw:`, emergErr?.message || emergErr);
+    }
+  }
+
+  // ============= FINAL DEFICIT WARNING =============
+  if (allQuestions.length < totalCount) {
+    console.warn(`⚠️ AI deficit: got ${allQuestions.length}/${totalCount} after ${totalBatchesAttempted} batches, ${totalApiCalls} API calls`);
+  }
+
+  if (allQuestions.length === 0) {
+    console.error(`
+═══════════════════════════════════════
+🚨 CRITICAL: ZERO QUESTIONS RETURNED
+Topic: ${topic}
+Difficulty: ${difficulty}
+Batches attempted: ${totalBatchesAttempted}
+API calls made: ${totalApiCalls}
+Emergency fallback: also failed
+ACTION: Check validator keywords / prompt alignment / Gemini quota
+═══════════════════════════════════════`);
+  }
+
   console.log(`🧠 HYBRID DEDUP COMPLETE: ${allQuestions.length}/${totalCount} unique questions generated`);
   return allQuestions;
 }
