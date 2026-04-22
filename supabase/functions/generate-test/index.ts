@@ -313,7 +313,9 @@ Generate ONLY questions about Microsoft Office software usage:
 
 ❌ FORBIDDEN — DO NOT generate questions about:
 - Computer hardware (CPU, RAM, motherboard, processor, circuits, transistors)
-- Programming (Python, Java, C++, algorithms, data structures)
+- Historical computing hardware (vacuum tubes, valves, ENIAC, UNIVAC, mainframes, punched cards, analytical engine, abacus, semiconductors, microchips)
+- Programming languages (Python, Java, C++, FORTRAN, COBOL, ALGOL, BASIC, algorithms, data structures, compilers, assemblers)
+- History of computing pioneers (von Neumann, Grace Hopper, Ada Lovelace, Babbage, Turing)
 - Operating systems internals (kernel, drivers, Linux/Windows installation)
 - Networking (IP addresses, OSI model, protocols)
 - States of matter, particles, gases, liquids, solids, atoms, molecules (THIS IS PHYSICS/CHEMISTRY — NOT COMPUTER)
