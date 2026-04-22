@@ -1713,6 +1713,8 @@ serve(async (req) => {
 
       await syncQuestionsToSession(supabase, session_id, returnedQuestions);
 
+      logRequestSummary({ topic, sanitized: sanitizedTopic, qc, partial: true, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, final_returned: returnedQuestions.length, exit_branch: 'partial' });
+
       return new Response(
         JSON.stringify({
           session_name: `${topic} Quiz`,
@@ -1746,6 +1748,7 @@ serve(async (req) => {
             difficulty,
           );
           await syncQuestionsToSession(supabase, session_id, returnedQuestions);
+          logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, final_returned: returnedQuestions.length, exit_branch: 'quota_fallback', error_notice: 'quota_exhausted' });
           return new Response(
             JSON.stringify({
               session_name: `${topic} Quiz`,
@@ -1771,6 +1774,7 @@ serve(async (req) => {
     console.log(`🔑 GEMINI_API_KEY configured: ${GEMINI_API_KEY ? 'Yes' : 'NO - MISSING!'}`);
     
     if (!GEMINI_API_KEY) {
+      logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, final_returned: 0, exit_branch: 'no_gemini_key' });
       return new Response(
         JSON.stringify({
           error: 'GEMINI_API_KEY not configured',
