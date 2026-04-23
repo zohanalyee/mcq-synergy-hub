@@ -1330,6 +1330,175 @@ export type Database = {
         }
         Relationships: []
       }
+      job_test_definitions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          department: string | null
+          difficulty_distribution: Json
+          id: string
+          job_title: string
+          max_retries: number
+          min_questions_per_topic: number
+          sample_questions: Json | null
+          status: string
+          syllabus: Json
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          difficulty_distribution?: Json
+          id?: string
+          job_title: string
+          max_retries?: number
+          min_questions_per_topic?: number
+          sample_questions?: Json | null
+          status?: string
+          syllabus?: Json
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          department?: string | null
+          difficulty_distribution?: Json
+          id?: string
+          job_title?: string
+          max_retries?: number
+          min_questions_per_topic?: number
+          sample_questions?: Json | null
+          status?: string
+          syllabus?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      job_test_generation_logs: {
+        Row: {
+          accepted_count: number
+          api_calls_made: number
+          created_at: string
+          difficulty: string | null
+          error_message: string | null
+          generated_count: number
+          generation_time_seconds: number | null
+          id: string
+          job_test_id: string | null
+          rejected_count: number
+          rejection_reasons: Json | null
+          requested_count: number | null
+          status: string
+          subject: string
+          total_cost_credits: number | null
+        }
+        Insert: {
+          accepted_count?: number
+          api_calls_made?: number
+          created_at?: string
+          difficulty?: string | null
+          error_message?: string | null
+          generated_count?: number
+          generation_time_seconds?: number | null
+          id?: string
+          job_test_id?: string | null
+          rejected_count?: number
+          rejection_reasons?: Json | null
+          requested_count?: number | null
+          status?: string
+          subject: string
+          total_cost_credits?: number | null
+        }
+        Update: {
+          accepted_count?: number
+          api_calls_made?: number
+          created_at?: string
+          difficulty?: string | null
+          error_message?: string | null
+          generated_count?: number
+          generation_time_seconds?: number | null
+          id?: string
+          job_test_id?: string | null
+          rejected_count?: number
+          rejection_reasons?: Json | null
+          requested_count?: number | null
+          status?: string
+          subject?: string
+          total_cost_credits?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_test_generation_logs_job_test_id_fkey"
+            columns: ["job_test_id"]
+            isOneToOne: false
+            referencedRelation: "job_test_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_test_questions: {
+        Row: {
+          admin_approved: boolean
+          correct_answer: string
+          created_at: string
+          difficulty: string
+          explanation: string | null
+          generation_batch: number | null
+          id: string
+          job_test_id: string
+          options: Json
+          question: string
+          subject: string
+          times_correct: number
+          times_used: number
+          topic: string | null
+          validation_score: number | null
+        }
+        Insert: {
+          admin_approved?: boolean
+          correct_answer: string
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          generation_batch?: number | null
+          id?: string
+          job_test_id: string
+          options: Json
+          question: string
+          subject: string
+          times_correct?: number
+          times_used?: number
+          topic?: string | null
+          validation_score?: number | null
+        }
+        Update: {
+          admin_approved?: boolean
+          correct_answer?: string
+          created_at?: string
+          difficulty?: string
+          explanation?: string | null
+          generation_batch?: number | null
+          id?: string
+          job_test_id?: string
+          options?: Json
+          question?: string
+          subject?: string
+          times_correct?: number
+          times_used?: number
+          topic?: string | null
+          validation_score?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_test_questions_job_test_id_fkey"
+            columns: ["job_test_id"]
+            isOneToOne: false
+            referencedRelation: "job_test_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       job_tests: {
         Row: {
           created_at: string | null
