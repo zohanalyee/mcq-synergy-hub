@@ -1,358 +1,204 @@
-# Hotfix — AI Generation Returns Zero After Validator Over-Rejection
+# Plan — Isolated Job Test System (v2)
 
-## Root cause (verified in code)
+A dedicated, AI-only pipeline for pre-announced Job Tests (Junior Clerk, etc.), fully separated from the general `content_items` bank. Admin uploads syllabus + sample reference questions; AI generates fresh per-test questions; admin approves before students see them.
 
-After cache cleanup, the cache lookup correctly returns 0 rows, the request **does** reach `generateQuestionsInBatches`, and the AI **is** called. But:
+> Note on rate limiting: backend has no rate-limiting primitives yet. We'll implement it ad-hoc (per-batch sleep + daily-cap counted from `job_test_generation_logs`) inside the edge function only. Not a hardened solution — flagged per platform constraint.
 
-1. `validateQuestionTopic` runs unconditionally on every batch; if the AI produces a batch where every question fails the keyword test (common for "Computer (MS Office)" because `MS_OFFICE_KEYWORDS` is narrow — a perfectly valid question like *"Which shortcut key is used to bold selected text?"* contains no whitelisted token, and any incidental hardware word triggers rejection), the batch yields **0 accepted**.
-2. There is **no retry loop** in `generateQuestionsInBatches`. A failed batch is silently skipped (line 776 `continue`, plus loop exit when `batchSize <= 0`).
-3. Net result: `newAIQuestions = []`, `dbQuestions = []` → outer handler eventually returns an empty array → frontend shows "no questions".
-4. There is no end-of-request diagnostic block, so logs don't pinpoint which step zeroed out.
+## Phase 1 — Database (3 new tables)
 
-The **subject string passed by JobTestsTab** is `item.subject` = `"Computer (MS Office)"`. `t.includes('ms office')` matches → strict computer branch runs with the over-broad hardware rejector. For an MS-Office-specific test, hardware rejection is redundant (the AI prompt already forbids hardware); only science rejection adds real value.
+Migration creates:
 
-## Changes
+`**job_test_definitions**`
 
-### File 1: `supabase/functions/generate-test/index.ts`
+- `id`, `job_title`, `department`, `status` (draft/published/archived)
+- `syllabus jsonb` — `{ sections: [{ subject, percentage, question_count, topics[], style_guide, forbidden[] }] }`
+- `sample_questions jsonb` — admin-curated MCQs grouped by subject
+- `difficulty_distribution jsonb` (default 30/50/20)
+- `min_questions_per_topic`, `max_retries`
+- `created_by uuid` (no FK to `auth.users` per project rules), `created_at`, `updated_at`
 
-**A. Loosen `validateQuestionTopic` for "MS Office" subjects** (lines 404–415)
+`**job_test_questions**` (isolated from `content_items`)
 
-When topic explicitly contains `"ms office"`, only reject SCIENCE content. Skip the hardware/programming rejector entirely — the prompt's `getSubjectGuidance` already steers the AI, and the keyword rejector produces too many false positives on legitimate Office questions.
+- `job_test_id` FK CASCADE
+- `subject`, `topic`, `question`, `options jsonb`, `correct_answer`, `explanation`, `difficulty`
+- `generation_batch`, `validation_score numeric`, `admin_approved bool default false`
+- `times_used`, `times_correct`
+- Indexes on `job_test_id`, `subject`, `admin_approved`
+- Difficulty enforced via **validation trigger** (per project rules — not CHECK constraint)
 
-For pure `"computer"` topics (no "ms office" qualifier) keep the current strict hardware/programming rule.
+`**job_test_generation_logs**`
 
-```ts
-if (t.includes('ms office') || t.includes('msoffice')) {
-  if (hasAny(q, SCIENCE_KEYWORDS)) { /* reject */ return false; }
-  return true;                                     // accept everything else
-}
-if (/\bcomputer\b/.test(t)) {                      // "Computer" / "Fundamentals of Computer" etc.
-  if (hasAny(q, SCIENCE_KEYWORDS)) return false;
-  if ((hasAny(q, HARDWARE_KEYWORDS) || hasAny(q, PROGRAMMING_KEYWORDS)) && !hasAny(q, MS_OFFICE_KEYWORDS)) return false;
-  return true;
-}
-```
+- Per-subject telemetry: `requested_count`, `generated_count`, `accepted_count`, `rejected_count`, `rejection_reasons jsonb`, `api_calls_made`, `total_cost_credits`, `generation_time_seconds`, `status`, `error_message`
 
-**B. Add a retry loop inside `generateQuestionsInBatches**` (around line 757–823, per-batch try block)
+**RLS** (all three):
 
-```
-for each batch:
-  for attempt 1..MAX_RETRIES (=3):
-    call Gemini → parse → validate MCQ → validate topic → dedupe
-    if accepted >= batchSize → break
-    if accepted > 0 → break (partial keep)
-    log: "🔁 Batch N retry M: 0 accepted (all rejected by topic guard)"
-  end
-end
-```
+- Admins: full access via `is_admin()`
+- Authenticated users: `SELECT` on `job_test_definitions` where `status='published'`
+- Authenticated users: `SELECT` on `job_test_questions` where parent definition published AND `admin_approved=true`
+- Logs: admin-only
 
-If after 3 retries still 0 accepted, log error and proceed to next batch (don't throw — let caller decide).
+**Migration also**: copy existing `job_tests` rows into `job_test_definitions` (syllabus mapped 1:1, `status='published'`, `sample_questions=NULL`). Old `job_tests` table left intact for now.
 
-**C. Backfill partial deficit** at the end of `generateQuestionsInBatches`
+## Phase 2 — Edge Function `generate-job-test`
 
-If `allQuestions.length < totalCount` after all batches, log a clear `⚠️ AI deficit: got X/Y` warning so the outer log captures it.
+Brand-new function. Input: `{ job_test_id, subject?, regenerate? }`. Flow:
 
-**D. Diagnostic block at every response exit** (just before each `return new Response(...)` in the user_test_session path — lines ~1571, ~1618, ~1763, ~1789, and after sync gen success ~1950+)
+1. Load `job_test_definitions` row.
+2. For each section (or single subject if specified):
+  - Build prompt with topics[], `forbidden[]`, `style_guide`, and 2–3 inline sample questions ("match this style").
+  - Call Gemini in batches of 10, hard cap `MAX_BATCHES=3` per section.
+  - Validate MCQ structure (4 options A–D, correct in A–D, non-empty explanation).
+  - Per-section forbidden-keyword check (admin-defined, no global hardcoded lists).
+  - Insert accepted rows into `job_test_questions` with `admin_approved=false`.
+  - 2s delay between batches; daily cap per `job_test_id` (e.g. 200 generations) checked against `job_test_generation_logs`.
+  - Write one log row per section.
+3. Return `{ generated, accepted, rejected, log_ids }`.
 
-Single helper `logRequestSummary(...)` printing the block the user requested:
+No reads from `content_items`. No retries-on-zero hack — sample-anchored prompt should keep first-pass acceptance high.
 
-```
-═══════════════════════════════════════
-[DEBUG] generate-test summary
-Topic / Sanitized / hasSyllabus
-qc / partial / forceNew / fetch_only / mode
-cache_found / after_topic_guard / dbQuestions
-ai_attempted / ai_returned / ai_saved
-deficit / final_returned
-exit_branch (instant_cache | partial | sync_gen | quota_fallback | ai_error_fallback)
-═══════════════════════════════════════
-```
+## Phase 3 — Admin UI
 
-**E. Strengthen `getSubjectGuidance` for "Computer (MS Office)"** — add explicit forbidden list for vacuum tubes / ENIAC / FORTRAN / hardware so rejection rate at validator stays <10% on first attempt. (Most of this guidance was added in earlier turns; verify it covers history terms.)
+Replace `src/components/admin/JobTestManager.tsx` with a 5-tab editor scoped to a selected definition:
 
-### File 2: `src/components/mock-tests/JobTestsTab.tsx` (lines 126–151)
+- **Definition** — title, department, status, difficulty distribution.
+- **Syllabus Builder** — repeatable section blocks: subject, percentage, question_count, topics (chips), style_guide, forbidden keywords (chips).
+- **Sample Questions** — per-subject MCQ editor (≥2 required to publish). Bulk JSON upload supported.
+- **Generated Questions** — table of `job_test_questions` filtered by subject/approved; bulk approve/delete; "Generate more" button per subject calls `generate-job-test`.
+- **Generation Logs** — read-only table from `job_test_generation_logs`, latest first.
 
-After `data?.questions` returned, check `data.cached_count + data.ai_count` vs requested. Surface a clear toast if the edge function returned `ai_unavailable: true` or `final_returned === 0` so the user sees *why* (quota, validator, etc.) rather than the generic "Failed to generate any questions".
+Existing bulk JSON import keeps working with the expanded schema.
 
-```ts
-if (questions.length === 0) {
-  console.error('[JobTest] Empty response from edge function:', data);
-  toast.error(`${item.subject}: ${data?.error_notice || 'AI returned no valid questions'}`);
-}
-```
+## Phase 4 — Student Flow (`JobTestsTab.tsx`)
+
+Replace `supabase.functions.invoke("generate-test", …)` with a **DB-only** read:
+
+1. Fetch `job_test_questions` where `job_test_id = X AND admin_approved = true`, distributed by section quotas (Largest Remainder).
+2. If a section pool is short → show admin-friendly empty state ("Coming soon — questions under review"). Default: no auto-top-up.
+3. Build `custom_test_sessions` row exactly like today; navigate to `/test-session/:id`.
+4. After submission: increment `times_used` / `times_correct` (background, non-blocking).
+
+Cache pollution from `content_items` is structurally impossible on this surface.
+
+## Phase 5 — Migration of legacy `job_tests`
+
+One-time SQL block inside the same migration: copy each row → `job_test_definitions` (syllabus mapped, `sample_questions=NULL`, `status='published'`). UI stops reading `job_tests`; table dropped in a follow-up migration.
 
 ## Files
 
 
-| File                                        | Action                                                                                                                                                        |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `supabase/functions/generate-test/index.ts` | MODIFY — relax MS-Office validator, add retry loop in batch generator, add `logRequestSummary` and call it at every return path of the user_test_session flow |
-| `src/components/mock-tests/JobTestsTab.tsx` | MODIFY — surface specific error toast when `questions.length === 0`                                                                                           |
+| File                                                        | Action                                                                       |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| migration                                                   | NEW — 3 tables, RLS, validation trigger, copy from `job_tests`               |
+| `supabase/functions/generate-job-test/index.ts`             | NEW                                                                          |
+| `src/components/admin/JobTestManager.tsx`                   | REWRITE — 5-tab editor                                                       |
+| `src/components/admin/job-test/SampleQuestionsEditor.tsx`   | NEW                                                                          |
+| `src/components/admin/job-test/GeneratedQuestionsTable.tsx` | NEW                                                                          |
+| `src/components/admin/job-test/GenerationLogsTable.tsx`     | NEW                                                                          |
+| `src/components/admin/job-test/SyllabusItemForm.tsx`        | EXTEND — topics, style_guide, forbidden chips                                |
+| `src/services/jobTestService.ts`                            | EXTEND — CRUD for definitions/questions/logs, `generateForSubject()` wrapper |
+| `src/hooks/useJobTestManagement.tsx`                        | EXTEND — sample_questions state, generate trigger                            |
+| `src/components/mock-tests/JobTestsTab.tsx`                 | MODIFY — DB-only fetch, drop `generate-test` invocation                      |
 
-
-## Verification path (after deploy)
-
-1. Run Junior Clerk test for "Computer (MS Office)".
-2. Edge function logs should show the new diagnostic block:
-  - `cache_found: 0` (post-cleanup)
-  - `ai_attempted: 8`, `ai_returned: 6+` (retry loop kicks in)
-  - `exit_branch: sync_gen`
-3. Test session loads with ≥6 valid MS-Office questions (validator no longer kills hardware-adjacent legit Office Qs).
-4. Frontend shows toast on any subject that comes back empty, naming the cause.
 
 ## Risks
 
-- **Looser MS-Office validator** could readmit hardware questions if AI ignores prompt. Mitigated by prompt guidance + science guard. Worst case: cleaner can be re-run.
-- **Retry loop = up to 3× quota burn per failing batch.** Guarded by hard cap `MAX_RETRIES=3`; quota check still runs before sync gen.
-- **No schema or RLS changes.**
+- **Cold start**: a freshly published test has zero approved questions. Admin must pre-generate + approve. UI gates publish on ≥2 sample questions per subject.
+- **Sample quality drives output quality** — bad samples → bad questions.
+- **Rate limiting is ad-hoc** (sleep + log-based daily cap). No backend primitives exist; will be revisited when platform supports it.
+- **Storage growth** — each test owns its pool. Acceptable.
 
 ## Out of scope
 
-- Changing test architecture, AI Coach, syllabus weight engine
-- New admin pages
-- Phase 4 of AI Coach
-- Replacing keyword validator with semantic check (future) 
+- Touching `generate-test` or `content_items` (Subject Tests / Syllabus Builder unaffected).
+- Test session player (`/test-session/:id`) — unchanged.
+- AI Coach integration on Job Test answers (later, via shared `test_attempts`).
+- Dropping legacy `job_tests` table (deferred to cleanup migration).
 
-&nbsp;
+### **✅ MY ADDITIONS TO LOVABLE'S PLAN:**
 
-Please check out I share with you plan with Claude so he replied here is. **APPROVAL STATUS: ✅ APPROVED WITH ADDITION**
-
-```
-✅ Root cause identified correctly (validator too strict)
-✅ MS Office validator relaxed (only reject science)
-✅ Retry loop added (3 attempts per batch)
-✅ Diagnostic logging (clear visibility)
-✅ Error toasts (user feedback)
-✅ Prompt strengthened (forbidden list)
-
-⚠️ MISSING: Safety check for infinite retries
-```
-
----
-
-### **🚨 CRITICAL ADDITION NEEDED:**
-
-#### **Problem:**
+#### **1. Bulk Operations:**
 
 typescript
 
 ```typescript
-// Lovable's retry loop (simplified):
-for each batch:
-  for attempt 1..3:
-    call Gemini → validate → if accepted >= batchSize: break
-  end
-end
+// In admin review panel
+const approveAll = async (subjectFilter: string) => {
+  const { data } = await supabase
+    .from('job_test_questions')
+    .update({ admin_approved: true })
+    .eq('job_test_id', currentTestId)
+    .eq('subject', subjectFilter)
+    .eq('admin_approved', false);
+    
+  toast.success(`Approved all ${data.length} ${subjectFilter} questions`);
+};
 ```
 
-**What if ALL 3 retries fail?**
+#### **2. Question Preview Before Generation:**
 
-```
-Batch 1:
-  Attempt 1: AI returns 10, validator rejects 10 → 0 accepted
-  Attempt 2: AI returns 10, validator rejects 10 → 0 accepted
-  Attempt 3: AI returns 10, validator rejects 10 → 0 accepted
-  Result: 0 questions, wasted 30 API calls ❌
-
-Next batch:
-  Same problem → 0 questions, wasted 30 more API calls ❌
-
-Total: 0 questions, 90 API calls wasted! 💸
-```
-
----
-
-### **💡 REQUIRED SAFETY CHECK:**
-
-#### **Add to Lovable's Plan:**
-
-markdown
-
-```markdown
-## ADDITION: Safety Check for Repeated Failures
-
-After Lovable's retry loop, add this check:
-
-**File:** `supabase/functions/generate-test/index.ts`
-
-In `generateQuestionsInBatches`, after ALL batches complete:
+typescript
 
 ```typescript
-// After the for-loop that processes all batches
-if (allQuestions.length === 0 && totalBatchesAttempted >= 2) {
-  console.error(`
-    ❌ CRITICAL: AI validator rejecting ALL questions after ${totalBatchesAttempted} batches.
-    This indicates validator is too strict OR prompt is misaligned.
-    
-    Topic: ${topic}
-    Difficulty: ${difficulty}
-    Total attempted: ${totalBatchesAttempted}
-    Total API calls: ${totalApiCalls}
-    Accepted: 0
-    
-    EMERGENCY FALLBACK: Relaxing validator to science-only for this request.
-  `);
+// Show estimated cost before generating
+const estimateCost = (questionCount: number) => {
+  const batches = Math.ceil(questionCount / 10);
+  const apiCalls = batches * 1.5; // Average with retries
+  const cost = apiCalls * 0.05; // $0.05 per call
   
-  // Emergency fallback: Re-try ONE batch with science-only validation
-  // (This prevents total failure while we fix root cause)
-  
-  const emergencyBatch = await callGeminiForBatch(...);
-  const emergencyQuestions = emergencyBatch.filter(q => 
-    !hasAny(q.question.toLowerCase(), SCIENCE_KEYWORDS) // Only reject science
-  );
-  
-  if (emergencyQuestions.length > 0) {
-    console.warn(`✅ Emergency fallback accepted ${emergencyQuestions.length} questions`);
-    allQuestions.push(...emergencyQuestions);
-  } else {
-    console.error(`❌ Emergency fallback also failed. Returning empty.`);
+  return {
+    batches,
+    apiCalls: Math.ceil(apiCalls),
+    estimatedCost: cost.toFixed(2)
+  };
+};
+
+// Before generate
+toast.info(`
+  Generating 40 questions:
+  - Batches: 4
+  - Est. API calls: 6
+  - Est. cost: $0.30
+  Continue?
+`);
+```
+
+#### **3. Quality Metrics Dashboard:**
+
+typescript
+
+```typescript
+// Admin sees quality stats
+{
+  "English": {
+    "generated": 50,
+    "approved": 38,
+    "rejected": 12,
+    "approval_rate": "76%",
+    "avg_generation_time": "45s"
+  },
+  "Computer": {
+    "generated": 45,
+    "approved": 40,
+    "rejected": 5,
+    "approval_rate": "89%",
+    "avg_generation_time": "50s"
   }
 }
 ```
 
-**Why this is critical:**
-- Prevents infinite API waste
-- Provides fallback when validator is broken
-- Logs clear error for debugging
-- Emergency questions are better than zero questions
-```
+#### **4. Auto-Regenerate Low Quality:**
 
----
-
-### **📊 COMPLETE FLOW (WITH SAFETY):**
-
-```
-NORMAL CASE (Validator Working):
-Batch 1, Attempt 1: 10 generated, 8 accepted ✅
-Return 8 questions
-API calls: 1 ✅
-
-VALIDATOR TOO STRICT:
-Batch 1:
-  Attempt 1: 10 generated, 0 accepted → Retry
-  Attempt 2: 10 generated, 0 accepted → Retry
-  Attempt 3: 10 generated, 0 accepted → Next batch
-
-Batch 2:
-  Attempt 1: 10 generated, 0 accepted → Retry
-  Attempt 2: 10 generated, 0 accepted → Retry
-  Attempt 3: 10 generated, 0 accepted → Emergency check
-
-EMERGENCY FALLBACK TRIGGERED:
-All batches failed → 0 accepted
-Emergency batch: 10 generated, science-only validation
-Result: 7 accepted ✅
-API calls: 7 (instead of infinite) ✅
-
-USER GETS: 7 questions (imperfect but usable)
-LOGS SHOW: Clear error about validator being too strict
-ADMIN FIXES: Validator tuned based on logs
-```
-
----
-
-### **✅ FINAL APPROVAL:**
-
-**Send Lovable this updated plan:**
-
-markdown
-
-```markdown
-APPROVE with one addition:
-
-## Emergency Fallback After Total Rejection
-
-After the retry loop in `generateQuestionsInBatches`, add this safety check:
+typescript
 
 ```typescript
-// After all batches complete
-if (allQuestions.length === 0 && totalBatchesAttempted >= 2) {
-  console.error(`❌ VALIDATOR TOO STRICT: Rejected ALL questions after ${totalBatchesAttempted} batches`);
-  console.error(`   Topic: ${topic}, API calls wasted: ${totalApiCalls}`);
-  console.error(`   EMERGENCY FALLBACK: Trying science-only validation`);
-  
-  // One emergency batch with relaxed validation (science-only)
-  const emergencyBatch = await callGeminiForBatch(topic, difficulty, Math.min(totalCount, 10), apiKey, []);
-  const emergencyQuestions = emergencyBatch.filter(q => {
-    // Only reject pure science, accept everything else
-    const qLower = q.question.toLowerCase();
-    if (hasAny(qLower, SCIENCE_KEYWORDS)) {
-      console.warn(`  Emergency: Still rejecting science: ${q.question.substring(0, 60)}`);
-      return false;
-    }
-    return true;
-  });
-  
-  if (emergencyQuestions.length > 0) {
-    console.warn(`✅ Emergency fallback: Accepted ${emergencyQuestions.length} questions`);
-    allQuestions.push(...emergencyQuestions);
-  }
-}
-
-// If STILL zero after emergency fallback, log critical error
-if (allQuestions.length === 0) {
-  console.error(`
-    ═══════════════════════════════════════
-    🚨 CRITICAL FAILURE: ZERO QUESTIONS
-    ═══════════════════════════════════════
-    Topic: ${topic}
-    Difficulty: ${difficulty}
-    Batches attempted: ${totalBatchesAttempted}
-    API calls made: ${totalApiCalls}
-    Emergency fallback: Also failed
-    
-    ACTION REQUIRED:
-    1. Check validator keywords (too strict?)
-    2. Check AI prompt (misaligned?)
-    3. Check Gemini API quota
-    ═══════════════════════════════════════
+// If approval rate < 50%, auto-flag for regeneration
+if (approvalRate < 0.5) {
+  toast.warning(`
+    ${subject} approval rate is ${approvalRate * 100}%
+    Consider:
+    1. Improving sample questions
+    2. Adding more forbidden keywords
+    3. Updating style guide
   `);
 }
-```
-
-This prevents:
-- Infinite API waste
-- Total test failure
-- Silent errors
-
-Deploy with this addition.
-```
-
----
-
-### **🎯 WHY THIS ADDITION IS CRITICAL:**
-
-```
-WITHOUT SAFETY CHECK:
-Validator broken → 100 API calls → 0 questions → User angry ❌
-
-WITH SAFETY CHECK:
-Validator broken → 7 API calls → Emergency fallback → 7 questions → User OK ✅
-Admin sees error log → Fixes validator → Next test perfect ✅
-```
-
----
-
-### **📋 FINAL CHECKLIST:**
-
-```
-LOVABLE'S PLAN:
-✅ Relax MS Office validator (science-only)
-✅ Add retry loop (max 3 attempts)
-✅ Diagnostic logging (clear visibility)
-✅ Error toasts (user feedback)
-✅ Strengthen prompts
-
-MY ADDITION:
-✅ Emergency fallback (prevent total failure)
-✅ Critical error logging (debug visibility)
-✅ API call limit (prevent waste)
-
-DEPLOY:
-□ Send Lovable updated plan
-□ Wait for deployment
-□ Test Junior Clerk generation
-□ Verify questions generate
-□ Check logs for any emergency fallbacks
-□ Tune validator if needed 
 ```
