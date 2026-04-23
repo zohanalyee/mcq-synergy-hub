@@ -128,9 +128,15 @@ export const JobTestDefinitionEditor: React.FC<Props> = ({ definition, onSaved, 
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h3 className="text-lg font-semibold">{def.job_title || "New Job Test"}</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setBulkJsonOpen(true)}>
+            <FileJson className="h-4 w-4 mr-1" /> Bulk Import JSON
+          </Button>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" /> Export JSON
+          </Button>
           {onClose && (
             <Button variant="ghost" onClick={onClose}>
               Close
