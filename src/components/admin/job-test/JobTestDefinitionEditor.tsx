@@ -4,7 +4,15 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Trash2 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Plus, Trash2, FileJson, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   JobTestDefinition,
@@ -33,8 +41,50 @@ const emptySection = (): JobSyllabusSection => ({
 export const JobTestDefinitionEditor: React.FC<Props> = ({ definition, onSaved, onClose }) => {
   const [def, setDef] = useState<JobTestDefinition>(definition);
   const [saving, setSaving] = useState(false);
+  const [bulkJsonOpen, setBulkJsonOpen] = useState(false);
+  const [bulkJsonText, setBulkJsonText] = useState("");
 
   const sections = def.syllabus?.sections || [];
+
+  const handleBulkImport = () => {
+    try {
+      const parsed = JSON.parse(bulkJsonText);
+      if (!parsed.syllabus?.sections || !Array.isArray(parsed.syllabus.sections)) {
+        throw new Error("Missing syllabus.sections array");
+      }
+      setDef({
+        ...def,
+        syllabus: parsed.syllabus,
+        sample_questions: parsed.sample_questions || {},
+      });
+      toast.success(
+        `Imported ${parsed.syllabus.sections.length} sections, ${
+          Object.keys(parsed.sample_questions || {}).length
+        } sample subject(s)`,
+      );
+      setBulkJsonOpen(false);
+      setBulkJsonText("");
+    } catch (e: any) {
+      toast.error(`Invalid JSON: ${e.message}`);
+    }
+  };
+
+  const handleExport = () => {
+    const exportData = {
+      syllabus: def.syllabus,
+      sample_questions: def.sample_questions,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(def.job_title || "job_test").replace(/\s+/g, "_")}_template.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported JSON");
+  };
 
   const updateSection = (idx: number, patch: Partial<JobSyllabusSection>) => {
     const next = sections.map((s, i) => (i === idx ? { ...s, ...patch } : s));
@@ -78,9 +128,15 @@ export const JobTestDefinitionEditor: React.FC<Props> = ({ definition, onSaved, 
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h3 className="text-lg font-semibold">{def.job_title || "New Job Test"}</h3>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="outline" onClick={() => setBulkJsonOpen(true)}>
+            <FileJson className="h-4 w-4 mr-1" /> Bulk Import JSON
+          </Button>
+          <Button variant="outline" onClick={handleExport}>
+            <Download className="h-4 w-4 mr-1" /> Export JSON
+          </Button>
           {onClose && (
             <Button variant="ghost" onClick={onClose}>
               Close
@@ -207,6 +263,54 @@ export const JobTestDefinitionEditor: React.FC<Props> = ({ definition, onSaved, 
           <GenerationLogsTable jobTestId={def.id} />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={bulkJsonOpen} onOpenChange={setBulkJsonOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Bulk Import JSON</DialogTitle>
+            <DialogDescription>
+              Paste complete JSON with <code>syllabus.sections</code> and{" "}
+              <code>sample_questions</code>. This replaces current syllabus and samples.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={bulkJsonText}
+            onChange={(e) => setBulkJsonText(e.target.value)}
+            placeholder={`{
+  "syllabus": {
+    "sections": [
+      {
+        "subject": "English",
+        "percentage": 40,
+        "question_count": 40,
+        "topics": ["Grammar", "Vocab"],
+        "forbidden": ["No science"]
+      }
+    ]
+  },
+  "sample_questions": {
+    "English": [
+      {
+        "question": "...",
+        "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+        "correct_answer": "A",
+        "explanation": "..."
+      }
+    ]
+  }
+}`}
+            className="font-mono text-xs h-[400px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkJsonOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkImport} disabled={!bulkJsonText.trim()}>
+              Import
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
