@@ -41,8 +41,50 @@ const emptySection = (): JobSyllabusSection => ({
 export const JobTestDefinitionEditor: React.FC<Props> = ({ definition, onSaved, onClose }) => {
   const [def, setDef] = useState<JobTestDefinition>(definition);
   const [saving, setSaving] = useState(false);
+  const [bulkJsonOpen, setBulkJsonOpen] = useState(false);
+  const [bulkJsonText, setBulkJsonText] = useState("");
 
   const sections = def.syllabus?.sections || [];
+
+  const handleBulkImport = () => {
+    try {
+      const parsed = JSON.parse(bulkJsonText);
+      if (!parsed.syllabus?.sections || !Array.isArray(parsed.syllabus.sections)) {
+        throw new Error("Missing syllabus.sections array");
+      }
+      setDef({
+        ...def,
+        syllabus: parsed.syllabus,
+        sample_questions: parsed.sample_questions || {},
+      });
+      toast.success(
+        `Imported ${parsed.syllabus.sections.length} sections, ${
+          Object.keys(parsed.sample_questions || {}).length
+        } sample subject(s)`,
+      );
+      setBulkJsonOpen(false);
+      setBulkJsonText("");
+    } catch (e: any) {
+      toast.error(`Invalid JSON: ${e.message}`);
+    }
+  };
+
+  const handleExport = () => {
+    const exportData = {
+      syllabus: def.syllabus,
+      sample_questions: def.sample_questions,
+    };
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${(def.job_title || "job_test").replace(/\s+/g, "_")}_template.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported JSON");
+  };
 
   const updateSection = (idx: number, patch: Partial<JobSyllabusSection>) => {
     const next = sections.map((s, i) => (i === idx ? { ...s, ...patch } : s));
