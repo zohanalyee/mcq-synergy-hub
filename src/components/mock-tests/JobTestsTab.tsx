@@ -11,6 +11,10 @@ import { generateCustomTest, TestGenerationOptions } from "@/services/testGenera
 import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
 import { AICoachService } from "@/services/aiCoachService";
 import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
+import {
+  findDefinitionByTitle,
+  getApprovedQuestionsForDefinition,
+} from "@/services/jobTestService";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
