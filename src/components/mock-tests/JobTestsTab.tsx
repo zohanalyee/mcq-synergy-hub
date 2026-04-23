@@ -11,6 +11,10 @@ import { generateCustomTest, TestGenerationOptions } from "@/services/testGenera
 import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
 import { AICoachService } from "@/services/aiCoachService";
 import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
+import {
+  findDefinitionByTitle,
+  getApprovedQuestionsForDefinition,
+} from "@/services/jobTestService";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -38,6 +42,103 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         questionCount: Math.min(test.questions || 20, 20),
         duration: test.duration,
       };
+
+      // ============================================================
+      // ISOLATED PATH: try job_test_definitions first (DB-only).
+      // If a published definition exists with approved questions,
+      // build the session straight from job_test_questions and skip
+      // the legacy generate-test path entirely.
+      // ============================================================
+      const definition = await findDefinitionByTitle(test.title);
+      if (definition) {
+        const approved = await getApprovedQuestionsForDefinition(definition.id);
+        const targetCount = settings.questionCount;
+
+        if (approved.length === 0) {
+          toast.info(
+            `${test.title}: questions are being prepared. Please check back soon.`,
+            { duration: 6000 },
+          );
+          setGeneratingTestId(null);
+          return;
+        }
+
+        // Per-section quotas (Largest Remainder) using the definition's syllabus
+        const sections = definition.syllabus?.sections || [];
+        const totalPct = sections.reduce((s, x) => s + (x.percentage || 0), 0) || 100;
+        const entries = sections.map((sec) => {
+          const exact = ((sec.percentage || 0) / totalPct) * targetCount;
+          const floor = Math.floor(exact);
+          return { subject: sec.subject, exact, floor, remainder: exact - floor };
+        });
+        let sumFloors = entries.reduce((s, e) => s + e.floor, 0);
+        let distributable = targetCount - sumFloors;
+        const sortedRem = [...entries].sort((a, b) => b.remainder - a.remainder);
+        const quotas = new Map<string, number>();
+        for (const e of entries) quotas.set(e.subject, e.floor);
+        for (const e of sortedRem) {
+          if (distributable <= 0) break;
+          quotas.set(e.subject, (quotas.get(e.subject) || 0) + 1);
+          distributable--;
+        }
+
+        // Sample approved questions per subject
+        const picked: any[] = [];
+        const shuffle = <T,>(arr: T[]) => arr.map((v) => [Math.random(), v] as const).sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+        for (const [subj, count] of quotas.entries()) {
+          const pool = shuffle(approved.filter((q) => q.subject === subj));
+          picked.push(...pool.slice(0, count));
+        }
+        // Fill remaining from any approved if quotas under-delivered
+        if (picked.length < targetCount) {
+          const usedIds = new Set(picked.map((q) => q.id));
+          const fill = shuffle(approved.filter((q) => !usedIds.has(q.id)));
+          picked.push(...fill.slice(0, targetCount - picked.length));
+        }
+
+        const finalQuestions = picked.map((q) => ({
+          id: q.id,
+          subject: q.subject,
+          topic: q.topic || q.subject,
+          question: q.question,
+          options: q.options,
+          correct_answer: q.correct_answer,
+          explanation: q.explanation,
+          difficulty: q.difficulty,
+        }));
+
+        const { data: { user } } = await supabase.auth.getUser();
+        const subjects = sections.map((s) => s.subject);
+        const sessionPayload = {
+          user_id: user?.id || null,
+          session_name: `Job Test: ${test.title}`,
+          subjects: subjects as any,
+          topics: subjects as any,
+          subtopics: [] as any,
+          difficulty_levels: [settings.difficulty] as any,
+          question_count: finalQuestions.length,
+          time_limit: settings.duration,
+          questions: finalQuestions as any,
+          is_active: true,
+          expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        };
+
+        const { data: session, error: sessionError } = await supabase
+          .from("custom_test_sessions")
+          .insert(sessionPayload)
+          .select("id")
+          .single();
+        if (sessionError) throw sessionError;
+
+        toast.success(`Test ready with ${finalQuestions.length} questions!`, { duration: 4000 });
+        navigate(`/test-session/${session.id}`, { state: { returnPath: "/mock-tests" } });
+        setGeneratingTestId(null);
+        return;
+      }
+
+      // ============================================================
+      // LEGACY PATH (no isolated definition found): old generate-test
+      // ============================================================
 
       // Extract syllabus data
       const syllabusData = test.syllabus
