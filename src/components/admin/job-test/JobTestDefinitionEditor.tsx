@@ -263,6 +263,54 @@ export const JobTestDefinitionEditor: React.FC<Props> = ({ definition, onSaved, 
           <GenerationLogsTable jobTestId={def.id} />
         </TabsContent>
       </Tabs>
+
+      <Dialog open={bulkJsonOpen} onOpenChange={setBulkJsonOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Bulk Import JSON</DialogTitle>
+            <DialogDescription>
+              Paste complete JSON with <code>syllabus.sections</code> and{" "}
+              <code>sample_questions</code>. This replaces current syllabus and samples.
+            </DialogDescription>
+          </DialogHeader>
+          <Textarea
+            value={bulkJsonText}
+            onChange={(e) => setBulkJsonText(e.target.value)}
+            placeholder={`{
+  "syllabus": {
+    "sections": [
+      {
+        "subject": "English",
+        "percentage": 40,
+        "question_count": 40,
+        "topics": ["Grammar", "Vocab"],
+        "forbidden": ["No science"]
+      }
+    ]
+  },
+  "sample_questions": {
+    "English": [
+      {
+        "question": "...",
+        "options": {"A": "...", "B": "...", "C": "...", "D": "..."},
+        "correct_answer": "A",
+        "explanation": "..."
+      }
+    ]
+  }
+}`}
+            className="font-mono text-xs h-[400px]"
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBulkJsonOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleBulkImport} disabled={!bulkJsonText.trim()}>
+              Import
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
