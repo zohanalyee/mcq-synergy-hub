@@ -367,6 +367,12 @@ async function generateForSection(
       status === "failed" ? "No questions accepted after retries" : null,
   });
 
+  console.log(`\n[COMPLETE] ${section.subject}`);
+  console.log(`  status=${status} requested=${target} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
+  if (Object.keys(rejectionReasons).length > 0) {
+    console.log(`  rejections=${JSON.stringify(rejectionReasons)}`);
+  }
+
   return {
     subject: section.subject,
     requested: target,
