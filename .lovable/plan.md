@@ -1,63 +1,75 @@
 
 
-# Plan — Fix `generate-job-test` Returning Zero Questions
+# Plan — Convert Navigational `onClick` Handlers to Semantic `<Link>` Tags
 
-## Root cause
+Goal: make all navigation crawlable by Googlebot and respect browser conventions (middle-click, right-click → "Open in new tab"), without altering visual design.
 
-The edge function appears to fail silently (Generated: 0, API calls: 0). Two likely causes, both addressed below:
+## The pattern (applied everywhere)
 
-1. **No visibility** into what's failing — current code swallows errors into a generic `gemini_error` rejection counter with no console output.
-2. **Possible API key mismatch** — `generate-job-test` reads `GEMINI_API_KEY`, `EXTERNAL_JOBS_GEMINI_KEY`, `LOVABLE_API_KEY`. All three are confirmed present in secrets, so a missing key is unlikely — but we'll log to confirm.
+For every clickable element that navigates to an internal route:
 
-A third subtle cause that the user's debug plan does **not** catch: when `responseMimeType: "application/json"` is set and the model returns a JSON object (not array), `parseQuestions` returns `[]` because it only looks for `[ ... ]`. We'll harden the parser too.
+```tsx
+// BEFORE — invisible to SEO, no middle-click
+<div onClick={() => navigate(`/subject-content/${id}`)} className="...">…</div>
 
-## Changes — `supabase/functions/generate-job-test/index.ts`
+// AFTER — real <a href>, identical styling
+<Link to={`/subject-content/${id}`} state={{...}} className="block ...">…</Link>
+```
 
-### 1. `getGeminiKeys()` — add diagnostic logging
-Log which of the three env vars are present (length only, never the value), and emit a `CRITICAL` error if zero valid keys are found.
+Rules:
+- Use `react-router-dom`'s `<Link>` (renders `<a href>`). Use `<NavLink>` only where active state is needed.
+- Preserve all classes, motion wrappers, and hover styles. When wrapping a `motion.div`, render `<Link>` as the outer element with `className="block"` and keep the motion div inside, OR use `<Link asChild>`-style composition by passing the Link as the wrapper.
+- For `framer-motion` cards: switch `motion.div` → `motion(Link)` via `motion.create(Link)` so we keep animation AND get a real anchor. Set `to`, `state`, `className` on it.
+- Keep `state` payloads (used by `SubjectCard`, `Subjects`, `GlobalSearchDialog`) by passing them via `<Link state={...}>`.
+- Buttons that **trigger an action then navigate** (e.g. "Generate test" → `/test-session/:id` after async work) stay as `<Button onClick>`. Anchors are only for direct navigation to a known URL at render time.
+- External URLs (e.g. `JobCard` → `job.fileUrl`) become `<a href={url} target="_blank" rel="noopener noreferrer">`.
+- Back buttons (`navigate(-1)`) stay as buttons — they aren't link targets.
 
-### 2. `callGemini()` — log every attempt
-- Log how many keys are available.
-- For each key: log attempt index, HTTP status, error body (truncated 200 chars), success char count.
-- Surface `prompt feedback` blocks (e.g. safety-filter rejections) which currently get silently dropped as "Empty Gemini response".
-- Throw a clearly-typed `API key` error when no keys are configured so the batch loop can short-circuit.
+## Files to refactor (scope)
 
-### 3. `parseQuestions()` — harden
-Currently only extracts content between `[` and `]`. Update to also handle:
-- A top-level JSON object containing `{ "questions": [...] }` or `{ "data": [...] }`.
-- A bare object (single question) → wrap in array.
-- Log a warning + first 200 chars of raw text when parsing yields zero items, so we can see what the model actually returned.
+### High-impact navigation cards (Phase 1)
+1. **`src/components/SubjectCard.tsx`** — wrap card body in `motion(Link)` to `/subject-content/:slug` with `state`. Remove internal `handleClick` for the default case; keep `onClick` prop only as an optional override (when provided, render a button instead).
+2. **`src/components/jobs/JobCard.tsx`** — replace `GlassCard onClick` with an external `<a href={job.fileUrl} target="_blank">` wrapper (or internal `<Link to={"/opportunity/" + id}>` when no fileUrl).
+3. **`src/components/ui/GlassCard.tsx`** — add optional `to?: string` / `href?: string` props. When provided, render root as `<Link>` / `<a>` instead of `<div>`. Keeps every existing `GlassCard onClick` consumer working but enables semantic upgrades.
+4. **`src/components/mock-tests/JobTestCard.tsx`** and **`TestCard.tsx`** — split UI: the card title/body becomes a `<Link to="/mock-tests/job-test/:id">` (deep-link page exists conceptually; if not, link to `/mock-tests?test=:id`). The "Start" CTA stays a button (it triggers async generation).
+5. **`src/pages/BoardResults.tsx`** (line 124) — convert opportunity card `onClick` → `<Link to={"/opportunity/" + opp.id}>` wrapper.
 
-### 4. `generateForSection()` — verbose telemetry
-- Banner log at start (subject, target, sample count, forbidden-rule count).
-- Per-batch log: requested count, API success/failure, parsed count, accepted count, rejection breakdown.
-- On `API key` errors, break out of the batch loop immediately (no point retrying).
-- Final summary log: status, generated, accepted, api_calls, elapsed seconds, rejection reasons.
+### Navigation chrome (Phase 2)
+6. **`src/components/PageBreadcrumb.tsx`** — already uses `BreadcrumbLink` but calls `e.preventDefault()` + `navigate()`. Remove the preventDefault/navigate; let the `href` work natively (Breadcrumb component's `BreadcrumbLink` already renders `<a>`).
+7. **`src/components/board-topic/RelatedTopics.tsx`** — already uses `<Link>` ✓ (reference pattern).
+8. **`src/components/board-topic/PracticeModeButtons.tsx`** — already uses `<Link>` ✓.
+9. **Header/nav menus** — audit `src/components/Header.tsx` and any `navigation_items` consumers; convert `onClick={() => navigate(item.href)}` → `<Link to={item.href}>`.
 
-### 5. Top-level `Deno.serve` handler
-Log the incoming `job_test_id` + `subject`, the resolved definition's section count, and the final aggregate (`total_accepted`, per-section results) so a single log view tells the whole story.
+### Search & dashboard (Phase 3)
+10. **`src/components/global-search/GlobalSearchDialog.tsx`** — render result rows as `<Link to={...}>`. Keep `onSelect` callback for closing the dialog and analytics, fired from `onClick` on the Link (browser still navigates via href on middle-click).
+11. **`src/pages/Subjects.tsx`** `handleSmartSearchSelect` — same pattern: results render `<Link>`s; the imperative `navigate()` only runs as a fallback.
+12. **`src/components/dashboard/EmptyDashboard.tsx`**, **`src/components/analytics/AIInsightsPanel.tsx`**, **`src/components/analytics/TopicAnalysis.tsx`**, **`src/pages/exams/ExamLandingPage.tsx`**, **`src/pages/Index.tsx`** (hero + subject grid + "View All") — convert `<Button onClick={() => navigate(...)}>` to `<Button asChild><Link to="...">…</Link></Button>` (shadcn Button supports `asChild` via Radix Slot, preserving all variants/sizes).
+13. **`src/components/quizzes/SubjectQuizzesTab.tsx`**, **`TopicQuizzesTab.tsx`** — same `<Button asChild><Link>` pattern for "Start Quiz".
 
-## What this does NOT change
+### Action buttons that stay as buttons (no change)
+- Test generators in `JobTestsTab`, `SubjectTestsTab`, `SyllabusBuilder`, `RecommendedPractice`, `QuickManualEntry` — they perform async work first, then navigate. Leave as-is. (SEO doesn't need these crawled; they're authenticated user actions.)
+- Back buttons (`navigate(-1)`).
+- Tool internal actions.
 
-- No schema changes.
-- No change to validator/forbidden-keyword logic (already conservative).
-- No change to `MAX_BATCHES`, `BATCH_SIZE`, `DAILY_LOG_CAP`.
-- No change to the front-end or admin UI.
+## Key technical notes
 
-## Verification steps after deploy
+- **`Button asChild`** (shadcn) is the cleanest swap — no className duplication, no layout change:
+  ```tsx
+  <Button asChild className="..."><Link to="/boards">Browse Boards</Link></Button>
+  ```
+- **`motion(Link)`**: `const MotionLink = motion.create(Link);` then `<MotionLink to="..." whileHover={...} className="block ...">`. Preserves all framer animations on `SubjectCard`.
+- **`GlassCard` upgrade** is backward-compatible: existing `onClick` consumers keep working; new `to`/`href` props upgrade the root element to a real anchor. This unlocks `JobCard`, `TestCard`, `JobTestCard` with one prop addition each.
+- **State payloads**: `<Link to="/x" state={{...}}>` works identically to `navigate('/x', { state })`. No data loss.
+- **Breadcrumb fix**: removing `preventDefault` is the entire change — the `BreadcrumbLink` already produces `<a href>`; the explicit `navigate()` was suppressing native behavior and blocking middle-click.
+- **No visual regressions**: `<a>` and `<Link>` are inline by default; we apply `className="block"` (or `inline-flex` matching the original element) plus the original classes verbatim. No new wrapper divs are introduced.
+- **Accessibility bonus**: real anchors get keyboard focus, screen-reader "link" role, and `:visited` styling for free.
 
-1. Trigger generation from `JobTestDefinitionEditor` → "Generate" for one subject.
-2. Open Supabase → Edge Functions → `generate-job-test` → Logs.
-3. Expect to see, in order:
-   - `[DEBUG] Checking API keys` with at least one `Found (length: N)`.
-   - `[GENERATE] Starting generation for: <subject>`.
-   - `[BATCH 1/3] Requesting N questions...` → `Gemini response status: 200` → `✅ Gemini returned X characters`.
-   - Final `[COMPLETE]` block with `accepted > 0`.
-4. If status ≠ 200 or `accepted = 0`, the logs now show exactly why (HTTP error body, parse failure with raw sample, or forbidden-rule match).
+## Verification checklist (after implementation)
 
-## Technical notes
-
-- Logs use `console.log` / `console.error` — visible in Supabase Edge Function logs and via `supabase--edge_function_logs`.
-- No secret values are ever logged, only their presence and length.
-- Backward compatible: response shape and DB writes unchanged.
+1. Right-click on a subject card → "Open in new tab" works.
+2. Middle-click on a mock test card opens it in a background tab.
+3. View source / DOM inspector shows `<a href="/subject-content/...">` instead of `<div onClick>`.
+4. `curl -s <published-url> | grep -c 'href="/subject-content'` returns >0 in SSR-fetched HTML (or in client-rendered DOM via crawler-friendly hydration).
+5. Visual snapshot of `/subjects`, `/mock-tests`, `/`, `/board-results` is identical to before.
+6. No TypeScript errors; existing `onClick` callers of `GlassCard`/`SubjectCard` still compile.
 
