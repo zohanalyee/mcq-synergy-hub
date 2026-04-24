@@ -254,36 +254,50 @@ async function generateForSection(
   samples: SampleQ[],
   batchNumber: number,
 ) {
+  console.log(`\n${"=".repeat(60)}`);
+  console.log(`[GENERATE] Subject: ${section.subject}`);
+  console.log(`[GENERATE] Target: ${section.question_count || 10} | Samples: ${samples.length} | Forbidden rules: ${(section.forbidden || []).length}`);
+  console.log(`${"=".repeat(60)}`);
+
   const startedAt = Date.now();
   const target = section.question_count || 10;
   const accepted: any[] = [];
   const rejectionReasons: Record<string, number> = {};
   let apiCalls = 0;
   let generated = 0;
+  let stopEarly = false;
 
-  for (let batch = 0; batch < MAX_BATCHES && accepted.length < target; batch++) {
+  for (let batch = 0; batch < MAX_BATCHES && accepted.length < target && !stopEarly; batch++) {
     const remaining = target - accepted.length;
     const want = Math.min(BATCH_SIZE, remaining);
     const prompt = buildPrompt(section, samples, want);
+
+    console.log(`[BATCH ${batch + 1}/${MAX_BATCHES}] Requesting ${want} questions...`);
 
     let raw = "";
     try {
       raw = await callGemini(prompt);
       apiCalls++;
+      console.log(`[BATCH ${batch + 1}] ✅ API call OK (${raw.length} chars)`);
     } catch (e) {
-      rejectionReasons["gemini_error"] =
-        (rejectionReasons["gemini_error"] || 0) + 1;
+      const msg = (e as Error).message;
+      console.error(`[BATCH ${batch + 1}] ❌ Gemini error:`, msg);
+      rejectionReasons["gemini_error"] = (rejectionReasons["gemini_error"] || 0) + 1;
+      if (msg.includes("API key")) {
+        console.error("❌ STOPPING: API key issue detected");
+        stopEarly = true;
+      }
       continue;
     }
 
     const parsed = parseQuestions(raw);
     generated += parsed.length;
+    console.log(`[BATCH ${batch + 1}] Parsed ${parsed.length} questions from response`);
 
     for (const q of parsed) {
       if (accepted.length >= target) break;
       if (!isStructurallyValid(q)) {
-        rejectionReasons["invalid_structure"] =
-          (rejectionReasons["invalid_structure"] || 0) + 1;
+        rejectionReasons["invalid_structure"] = (rejectionReasons["invalid_structure"] || 0) + 1;
         continue;
       }
       const fb = passesForbiddenCheck(q, section.forbidden || []);
@@ -308,7 +322,9 @@ async function generateForSection(
       });
     }
 
-    if (batch < MAX_BATCHES - 1 && accepted.length < target) {
+    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${target}`);
+
+    if (batch < MAX_BATCHES - 1 && accepted.length < target && !stopEarly) {
       await new Promise((r) => setTimeout(r, DELAY_BETWEEN_BATCHES_MS));
     }
   }
@@ -319,7 +335,12 @@ async function generateForSection(
       .from("job_test_questions")
       .insert(accepted)
       .select("id");
-    if (!error && data) inserted = data;
+    if (error) {
+      console.error(`[INSERT] ❌ Failed to insert questions:`, error.message);
+    } else if (data) {
+      inserted = data;
+      console.log(`[INSERT] ✅ Inserted ${inserted.length} questions`);
+    }
   }
 
   const elapsed = Math.floor((Date.now() - startedAt) / 1000);
