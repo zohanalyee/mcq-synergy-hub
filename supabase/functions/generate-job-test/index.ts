@@ -400,7 +400,14 @@ Deno.serve(async (req) => {
       subject?: string;
     };
 
+    console.log(`\n[REQUEST] generate-job-test job_test_id=${job_test_id} subject=${subject || "(all)"}`);
+
     if (!job_test_id) {
+      return new Response(
+        JSON.stringify({ error: "job_test_id is required" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
       return new Response(
         JSON.stringify({ error: "job_test_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
