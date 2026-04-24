@@ -7,7 +7,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator
 } from "@/components/ui/breadcrumb";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 import { ChevronLeft, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
@@ -72,11 +72,8 @@ const PageBreadcrumb = ({
               {item.isCurrent ? (
                 <BreadcrumbPage>{item.title}</BreadcrumbPage>
               ) : (
-                <BreadcrumbLink href={item.href} onClick={(e) => {
-                  e.preventDefault();
-                  navigate(item.href);
-                }}>
-                  {item.title}
+                <BreadcrumbLink asChild>
+                  <Link to={item.href}>{item.title}</Link>
                 </BreadcrumbLink>
               )}
               {index < items.length - 1 && <BreadcrumbSeparator />}

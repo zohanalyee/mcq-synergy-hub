@@ -118,10 +118,14 @@ const BoardResults = () => {
 
               {/* Scraped board result opportunities */}
               {opportunities.map((opp: any) => (
-                <Card
+                <Link
                   key={`opp-${opp.id}`}
+                  to={`/opportunity/${opp.id}`}
+                  className="block"
+                  aria-label={opp.title}
+                >
+                <Card
                   className="border-border/30 hover:border-purple-500/30 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/opportunity/${opp.id}`)}
                 >
                   <CardContent className="p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
