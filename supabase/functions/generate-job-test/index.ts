@@ -477,6 +477,8 @@ Deno.serve(async (req) => {
     }
 
     const totalAccepted = results.reduce((s, r) => s + r.accepted, 0);
+    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} sections=${results.length}`);
+    console.log(`  per-section: ${JSON.stringify(results.map(r => ({ s: r.subject, a: r.accepted, st: r.status })))}`);
 
     return new Response(
       JSON.stringify({
