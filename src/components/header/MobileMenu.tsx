@@ -1,5 +1,5 @@
-
 import { X, BrainCircuit, Sparkles, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,26 +22,20 @@ interface MobileMenuProps {
   onSignOut: () => Promise<void>;
 }
 
-const MobileMenu = ({ 
-  isOpen, 
-  user, 
-  profile, 
-  isAdmin, 
-  navItems, 
-  secondaryNavItems, 
-  isActive, 
-  onClose, 
-  onNavigate, 
-  onSignOut 
+const MobileMenu = ({
+  isOpen,
+  user,
+  profile,
+  isAdmin,
+  navItems,
+  secondaryNavItems,
+  isActive,
+  onClose,
+  onSignOut,
 }: MobileMenuProps) => {
   const getInitials = (email?: string) => {
     if (!email) return 'U';
     return email.charAt(0).toUpperCase();
-  };
-
-  const handleNavigation = (path: string) => {
-    onClose();
-    onNavigate(path);
   };
 
   const handleSignOut = () => {
@@ -69,7 +63,7 @@ const MobileMenu = ({
             <X className="h-4 w-4" />
           </button>
         </div>
-        
+
         {/* Mobile Menu Content */}
         <div className="flex flex-col p-4 space-y-4">
           {/* User Profile (if logged in) */}
@@ -81,13 +75,13 @@ const MobileMenu = ({
               </Avatar>
               <div>
                 <p className="font-medium">{profile?.username || user.email}</p>
-                <Button 
-                  variant="link" 
-                  size="sm" 
+                <Button
+                  asChild
+                  variant="link"
+                  size="sm"
                   className="p-0 h-auto font-normal text-muted-foreground"
-                  onClick={() => handleNavigation('/profile')}
                 >
-                  View Profile
+                  <Link to="/profile" onClick={onClose}>View Profile</Link>
                 </Button>
               </div>
             </div>
@@ -95,53 +89,57 @@ const MobileMenu = ({
 
           {/* Navigation Items */}
           {navItems.map((item) => (
-            <button
+            <Link
               key={item.title}
-              onClick={() => handleNavigation(item.path)}
-              className={`text-left py-2 ${isActive(item.path) ? 'text-primary font-medium' : 'text-foreground/80 hover:text-foreground'} transition-colors`}
+              to={item.path}
+              onClick={onClose}
+              className={`block text-left py-2 ${isActive(item.path) ? 'text-primary font-medium' : 'text-foreground/80 hover:text-foreground'} transition-colors`}
             >
               {item.title}
-            </button>
+            </Link>
           ))}
-          
+
           <div className="border-t border-border/40 pt-4">
             <p className="text-xs font-medium text-muted-foreground mb-2">More Options</p>
             {secondaryNavItems.map((item) => (
-              <button
+              <Link
                 key={item.title}
-                onClick={() => handleNavigation(item.path)}
-                className={`text-left py-2 ${isActive(item.path) ? 'text-primary font-medium' : 'text-foreground/80 hover:text-foreground'} transition-colors block w-full`}
+                to={item.path}
+                onClick={onClose}
+                className={`block text-left py-2 w-full ${isActive(item.path) ? 'text-primary font-medium' : 'text-foreground/80 hover:text-foreground'} transition-colors`}
               >
                 {item.title}
-              </button>
+              </Link>
             ))}
           </div>
 
           {/* Admin panel button only visible to admin in mobile menu */}
           {user && isAdmin && (
             <Button
+              asChild
               variant="outline"
               size="sm"
               className="w-full flex items-center justify-center gap-2 border-primary/50"
-              onClick={() => handleNavigation('/admin')}
             >
-              <Shield className="h-4 w-4 text-primary" />
-              Admin Panel
+              <Link to="/admin" onClick={onClose}>
+                <Shield className="h-4 w-4 text-primary" />
+                Admin Panel
+              </Link>
             </Button>
           )}
-          
+
           <div className="pt-4 border-t border-border/40">
             {user ? (
               <div className="space-y-2">
-                <Button 
+                <Button
+                  asChild
                   variant="outline"
                   className="w-full flex items-center justify-center gap-2"
-                  onClick={() => handleNavigation('/analytics')}
                 >
-                  AI Personal Coach
+                  <Link to="/analytics" onClick={onClose}>AI Personal Coach</Link>
                 </Button>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   className="w-full"
                   onClick={handleSignOut}
                 >
@@ -149,11 +147,11 @@ const MobileMenu = ({
                 </Button>
               </div>
             ) : (
-              <Button 
-                className="w-full backdrop-blur-sm bg-primary/80 hover:bg-primary/90" 
-                onClick={() => handleNavigation('/sign-in')}
+              <Button
+                asChild
+                className="w-full backdrop-blur-sm bg-primary/80 hover:bg-primary/90"
               >
-                Sign In
+                <Link to="/sign-in" onClick={onClose}>Sign In</Link>
               </Button>
             )}
           </div>

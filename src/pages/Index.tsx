@@ -317,7 +317,7 @@ const Home = () => {
                     description={category.description}
                     icon={category.icon}
                     bgClass={category.bgClass}
-                    onClick={() => navigate(category.route)}
+                    to={category.route}
                   />
                 ))}
               </div>

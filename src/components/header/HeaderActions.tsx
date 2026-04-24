@@ -1,5 +1,6 @@
 // Language selector uses text badges instead of flag images
 import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star, Globe, Languages, Sparkles } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -161,33 +162,37 @@ const HeaderActions = ({
               const Icon = tool.icon;
               const isFeatured = FEATURED_IDS.has(tool.id);
               return (
-                <DropdownMenuItem 
-                  key={tool.id} 
-                  onClick={() => onNavigate(tool.href)}
+                <DropdownMenuItem
+                  key={tool.id}
+                  asChild
                   className="cursor-pointer px-3 py-2.5 mx-1 rounded-md gap-3"
                 >
-                  <div className={`flex h-8 w-8 items-center justify-center rounded-md shrink-0 transition-transform group-hover:scale-110 ${TOOL_COLORS[tool.id]?.bg ?? 'bg-primary/10'}`}>
-                    <Icon className={`h-4 w-4 ${TOOL_COLORS[tool.id]?.icon ?? 'text-primary'}`} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm font-medium truncate">{tool.name}</span>
-                      {isFeatured && <Star className="h-3 w-3 text-accent-foreground fill-accent shrink-0" />}
+                  <Link to={tool.href}>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-md shrink-0 transition-transform group-hover:scale-110 ${TOOL_COLORS[tool.id]?.bg ?? 'bg-primary/10'}`}>
+                      <Icon className={`h-4 w-4 ${TOOL_COLORS[tool.id]?.icon ?? 'text-primary'}`} />
                     </div>
-                    <p className="text-[11px] text-muted-foreground truncate">{tool.description}</p>
-                  </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-sm font-medium truncate">{tool.name}</span>
+                        {isFeatured && <Star className="h-3 w-3 text-accent-foreground fill-accent shrink-0" />}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground truncate">{tool.description}</p>
+                    </div>
+                  </Link>
                 </DropdownMenuItem>
               );
             })}
           </div>
           <DropdownMenuSeparator className="my-0" />
           <div className="px-2 py-1.5">
-            <DropdownMenuItem 
-              onClick={() => onNavigate('/tools')}
+            <DropdownMenuItem
+              asChild
               className="cursor-pointer px-3 py-2 rounded-md justify-between text-primary font-medium text-sm"
             >
-              <span>View All 50+ Tools</span>
-              <ArrowRight className="h-4 w-4" />
+              <Link to="/tools">
+                <span>View All 50+ Tools</span>
+                <ArrowRight className="h-4 w-4" />
+              </Link>
             </DropdownMenuItem>
           </div>
         </DropdownMenuContent>
@@ -222,23 +227,31 @@ const HeaderActions = ({
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => onNavigate('/analytics')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40 mb-0.5">
-                <LayoutDashboard className="mr-2.5 h-4 w-4 text-cyan-500" />
-                {t('nav.aiCoach')}
+              <DropdownMenuItem asChild className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40 mb-0.5">
+                <Link to="/analytics">
+                  <LayoutDashboard className="mr-2.5 h-4 w-4 text-cyan-500" />
+                  {t('nav.aiCoach')}
+                </Link>
               </DropdownMenuItem>
               {isAdmin && (
-                <DropdownMenuItem onClick={() => onNavigate('/admin')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 mb-0.5">
-                  <Shield className="mr-2.5 h-4 w-4 text-violet-500" />
-                  {t('nav.adminPanel')}
+                <DropdownMenuItem asChild className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-violet-50 to-purple-50 dark:from-violet-950/40 dark:to-purple-950/40 mb-0.5">
+                  <Link to="/admin">
+                    <Shield className="mr-2.5 h-4 w-4 text-violet-500" />
+                    {t('nav.adminPanel')}
+                  </Link>
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem onClick={() => onNavigate('/profile')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 mb-0.5">
-                <User className="mr-2.5 h-4 w-4 text-emerald-500" />
-                {t('nav.profile')}
+              <DropdownMenuItem asChild className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-950/40 dark:to-teal-950/40 mb-0.5">
+                <Link to="/profile">
+                  <User className="mr-2.5 h-4 w-4 text-emerald-500" />
+                  {t('nav.profile')}
+                </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onNavigate('/feedback')} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 mb-0.5">
-                <MessageSquare className="mr-2.5 h-4 w-4 text-amber-500" />
-                {t('nav.feedback')}
+              <DropdownMenuItem asChild className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/40 dark:to-orange-950/40 mb-0.5">
+                <Link to="/feedback">
+                  <MessageSquare className="mr-2.5 h-4 w-4 text-amber-500" />
+                  {t('nav.feedback')}
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setSettingsOpen(true)} className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/40 mb-0.5">
