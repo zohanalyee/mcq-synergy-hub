@@ -160,12 +160,14 @@ const ExamLandingPage = () => {
                 <p className="text-sm text-muted-foreground mb-4">
                   Practice {exam.name} MCQs with AI-powered tests and track your progress.
                 </p>
-                <Button className="w-full mb-2" onClick={() => navigate('/boards')}>
-                  <ArrowRight className="w-4 h-4 mr-2" />
-                  Browse MCQs
+                <Button asChild className="w-full mb-2">
+                  <Link to="/boards">
+                    <ArrowRight className="w-4 h-4 mr-2" />
+                    Browse MCQs
+                  </Link>
                 </Button>
-                <Button variant="outline" className="w-full" onClick={() => navigate('/mock-tests')}>
-                  Take Mock Test
+                <Button asChild variant="outline" className="w-full">
+                  <Link to="/mock-tests">Take Mock Test</Link>
                 </Button>
               </CardContent>
             </Card>

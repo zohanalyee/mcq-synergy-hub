@@ -13,7 +13,7 @@ import TestimonialsSection from '@/components/reviews/TestimonialsSection';
 import HeroStatsSection from '@/components/home/HeroStatsSection';
 import PlatformStatsSection from '@/components/home/PlatformStatsSection';
 import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -333,13 +333,13 @@ const Home = () => {
               className="hidden sm:flex flex-row gap-3 justify-center"
             >
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Button size="default" className="btn-shine" onClick={() => navigate('/boards')}>
-                  {t('hero.getStarted')}
+                <Button asChild size="default" className="btn-shine">
+                  <Link to="/boards">{t('hero.getStarted')}</Link>
                 </Button>
               </motion.div>
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-                <Button size="default" variant="outline" onClick={() => navigate('/subjects')}>
-                  {t('hero.exploreSubjects')}
+                <Button asChild size="default" variant="outline">
+                  <Link to="/subjects">{t('hero.exploreSubjects')}</Link>
                 </Button>
               </motion.div>
             </motion.div>
@@ -398,15 +398,14 @@ const Home = () => {
                   description={subject.description}
                   topicCount={subject.topicCount}
                   color={subject.color}
-                  onClick={() => navigate(`/subject/${subject.title.toLowerCase()}`)}
                 />
               </motion.div>
             ))}
           </motion.div>
           
           <div className="mt-4 text-center">
-            <Button variant="outline" size="sm" onClick={() => navigate('/subjects')}>
-              View All Subjects
+            <Button asChild variant="outline" size="sm">
+              <Link to="/subjects">View All Subjects</Link>
             </Button>
           </div>
         </div>
@@ -474,8 +473,8 @@ const Home = () => {
               Join thousands of students who have improved their test scores with MCQSAI.
             </p>
             <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-              <Button size="default" className="btn-shine" onClick={() => navigate('/boards')}>
-                Get Started Now
+              <Button asChild size="default" className="btn-shine">
+                <Link to="/boards">Get Started Now</Link>
               </Button>
             </motion.div>
           </div>
