@@ -1,15 +1,16 @@
-
 import { Brain } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 interface HeaderLogoProps {
-  onNavigate: (path: string) => void;
+  onNavigate?: (path: string) => void;
 }
 
-const HeaderLogo = ({ onNavigate }: HeaderLogoProps) => {
+const HeaderLogo = (_: HeaderLogoProps) => {
   return (
-    <div 
-      className="flex-shrink-0 cursor-pointer mr-2 sm:mr-6 hover:scale-105 transition-transform duration-300" 
-      onClick={() => onNavigate('/')}
+    <Link
+      to="/"
+      className="flex-shrink-0 mr-2 sm:mr-6 hover:scale-105 transition-transform duration-300"
+      aria-label="MCQSAI Home"
     >
       <div className="flex items-center gap-1.5 sm:gap-2">
         <div className="relative flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/25" aria-label="MCQSAI Logo">
@@ -20,7 +21,7 @@ const HeaderLogo = ({ onNavigate }: HeaderLogoProps) => {
           <span className="text-foreground">AI</span>
         </span>
       </div>
-    </div>
+    </Link>
   );
 };
 

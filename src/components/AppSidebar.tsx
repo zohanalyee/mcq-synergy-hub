@@ -1,4 +1,5 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
+import { Link } from 'react-router-dom';
 import { Brain, BrainCircuit, Sparkles, Home, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, ClipboardCheck, BotMessageSquare, BookOpen, FileSignature } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -107,9 +108,10 @@ export function AppSidebar({
         {/* When expanded: Show icon + name + toggle on the right */}
         {expanded && (
           <div className="flex items-center justify-between w-full">
-            <div 
+            <Link
+              to="/"
               className="flex items-center gap-2 cursor-pointer transition-all duration-300"
-              onClick={() => onNavigate('/')}
+              aria-label="MCQSAI Home"
             >
               <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/25">
                 <Brain className="h-5 w-5 text-white" />
@@ -118,7 +120,7 @@ export function AppSidebar({
                 <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-cyan-500">MCQS</span>
                 <span className="text-foreground">AI</span>
               </span>
-            </div>
+            </Link>
             <SidebarTrigger className="h-8 w-8 rounded-lg bg-muted/50 hover:bg-muted transition-all duration-300 flex-shrink-0" />
           </div>
         )}
@@ -135,9 +137,9 @@ export function AppSidebar({
                 const iconData = getIcon(item.path);
                 return (
                 <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      onClick={() => onNavigate(item.path)} 
-                      isActive={isActive(item.path)} 
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.path)}
                       tooltip={item.title}
                       className={cn(
                         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-9",
@@ -145,6 +147,7 @@ export function AppSidebar({
                         !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
+                      <Link to={item.path}>
                         {iconData.icon}
                       <span className={cn(
                         "font-medium ml-2 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
@@ -176,6 +179,7 @@ export function AppSidebar({
                         "ml-auto w-3 h-3 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
                         isActive(item.path) && expanded && !(item.title === 'Jobs' && newJobsCount > 0) && !(item.title === 'Scholarships' && newScholarshipsCount > 0) ? "opacity-100 translate-x-0" : "opacity-0 translate-x-2 absolute right-2"
                       )} />
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -194,9 +198,9 @@ export function AppSidebar({
                 const iconData = getIcon(item.path);
                 return (
                   <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton 
-                      onClick={() => handleNavigate(item.path, item.title)} 
-                      isActive={isActive(item.path)} 
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive(item.path)}
                       tooltip={item.title}
                       className={cn(
                         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-9",
@@ -204,6 +208,10 @@ export function AppSidebar({
                         !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
                     >
+                      <Link
+                        to={item.path}
+                        onClick={() => { if (item.title === 'Ask Docs') localStorage.setItem('visited_ask_docs', 'true'); }}
+                      >
                         {iconData.icon}
                       <span className={cn(
                         "font-medium ml-2 text-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
@@ -225,6 +233,7 @@ export function AppSidebar({
                           Admin
                         </Badge>
                       )}
+                      </Link>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
