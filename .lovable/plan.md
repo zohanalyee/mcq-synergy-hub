@@ -1,204 +1,63 @@
-# Plan — Isolated Job Test System (v2)
-
-A dedicated, AI-only pipeline for pre-announced Job Tests (Junior Clerk, etc.), fully separated from the general `content_items` bank. Admin uploads syllabus + sample reference questions; AI generates fresh per-test questions; admin approves before students see them.
-
-> Note on rate limiting: backend has no rate-limiting primitives yet. We'll implement it ad-hoc (per-batch sleep + daily-cap counted from `job_test_generation_logs`) inside the edge function only. Not a hardened solution — flagged per platform constraint.
-
-## Phase 1 — Database (3 new tables)
-
-Migration creates:
-
-`**job_test_definitions**`
-
-- `id`, `job_title`, `department`, `status` (draft/published/archived)
-- `syllabus jsonb` — `{ sections: [{ subject, percentage, question_count, topics[], style_guide, forbidden[] }] }`
-- `sample_questions jsonb` — admin-curated MCQs grouped by subject
-- `difficulty_distribution jsonb` (default 30/50/20)
-- `min_questions_per_topic`, `max_retries`
-- `created_by uuid` (no FK to `auth.users` per project rules), `created_at`, `updated_at`
-
-`**job_test_questions**` (isolated from `content_items`)
-
-- `job_test_id` FK CASCADE
-- `subject`, `topic`, `question`, `options jsonb`, `correct_answer`, `explanation`, `difficulty`
-- `generation_batch`, `validation_score numeric`, `admin_approved bool default false`
-- `times_used`, `times_correct`
-- Indexes on `job_test_id`, `subject`, `admin_approved`
-- Difficulty enforced via **validation trigger** (per project rules — not CHECK constraint)
-
-`**job_test_generation_logs**`
-
-- Per-subject telemetry: `requested_count`, `generated_count`, `accepted_count`, `rejected_count`, `rejection_reasons jsonb`, `api_calls_made`, `total_cost_credits`, `generation_time_seconds`, `status`, `error_message`
-
-**RLS** (all three):
-
-- Admins: full access via `is_admin()`
-- Authenticated users: `SELECT` on `job_test_definitions` where `status='published'`
-- Authenticated users: `SELECT` on `job_test_questions` where parent definition published AND `admin_approved=true`
-- Logs: admin-only
-
-**Migration also**: copy existing `job_tests` rows into `job_test_definitions` (syllabus mapped 1:1, `status='published'`, `sample_questions=NULL`). Old `job_tests` table left intact for now.
-
-## Phase 2 — Edge Function `generate-job-test`
-
-Brand-new function. Input: `{ job_test_id, subject?, regenerate? }`. Flow:
-
-1. Load `job_test_definitions` row.
-2. For each section (or single subject if specified):
-  - Build prompt with topics[], `forbidden[]`, `style_guide`, and 2–3 inline sample questions ("match this style").
-  - Call Gemini in batches of 10, hard cap `MAX_BATCHES=3` per section.
-  - Validate MCQ structure (4 options A–D, correct in A–D, non-empty explanation).
-  - Per-section forbidden-keyword check (admin-defined, no global hardcoded lists).
-  - Insert accepted rows into `job_test_questions` with `admin_approved=false`.
-  - 2s delay between batches; daily cap per `job_test_id` (e.g. 200 generations) checked against `job_test_generation_logs`.
-  - Write one log row per section.
-3. Return `{ generated, accepted, rejected, log_ids }`.
-
-No reads from `content_items`. No retries-on-zero hack — sample-anchored prompt should keep first-pass acceptance high.
-
-## Phase 3 — Admin UI
-
-Replace `src/components/admin/JobTestManager.tsx` with a 5-tab editor scoped to a selected definition:
-
-- **Definition** — title, department, status, difficulty distribution.
-- **Syllabus Builder** — repeatable section blocks: subject, percentage, question_count, topics (chips), style_guide, forbidden keywords (chips).
-- **Sample Questions** — per-subject MCQ editor (≥2 required to publish). Bulk JSON upload supported.
-- **Generated Questions** — table of `job_test_questions` filtered by subject/approved; bulk approve/delete; "Generate more" button per subject calls `generate-job-test`.
-- **Generation Logs** — read-only table from `job_test_generation_logs`, latest first.
-
-Existing bulk JSON import keeps working with the expanded schema.
-
-## Phase 4 — Student Flow (`JobTestsTab.tsx`)
-
-Replace `supabase.functions.invoke("generate-test", …)` with a **DB-only** read:
-
-1. Fetch `job_test_questions` where `job_test_id = X AND admin_approved = true`, distributed by section quotas (Largest Remainder).
-2. If a section pool is short → show admin-friendly empty state ("Coming soon — questions under review"). Default: no auto-top-up.
-3. Build `custom_test_sessions` row exactly like today; navigate to `/test-session/:id`.
-4. After submission: increment `times_used` / `times_correct` (background, non-blocking).
-
-Cache pollution from `content_items` is structurally impossible on this surface.
-
-## Phase 5 — Migration of legacy `job_tests`
-
-One-time SQL block inside the same migration: copy each row → `job_test_definitions` (syllabus mapped, `sample_questions=NULL`, `status='published'`). UI stops reading `job_tests`; table dropped in a follow-up migration.
-
-## Files
 
 
-| File                                                        | Action                                                                       |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| migration                                                   | NEW — 3 tables, RLS, validation trigger, copy from `job_tests`               |
-| `supabase/functions/generate-job-test/index.ts`             | NEW                                                                          |
-| `src/components/admin/JobTestManager.tsx`                   | REWRITE — 5-tab editor                                                       |
-| `src/components/admin/job-test/SampleQuestionsEditor.tsx`   | NEW                                                                          |
-| `src/components/admin/job-test/GeneratedQuestionsTable.tsx` | NEW                                                                          |
-| `src/components/admin/job-test/GenerationLogsTable.tsx`     | NEW                                                                          |
-| `src/components/admin/job-test/SyllabusItemForm.tsx`        | EXTEND — topics, style_guide, forbidden chips                                |
-| `src/services/jobTestService.ts`                            | EXTEND — CRUD for definitions/questions/logs, `generateForSubject()` wrapper |
-| `src/hooks/useJobTestManagement.tsx`                        | EXTEND — sample_questions state, generate trigger                            |
-| `src/components/mock-tests/JobTestsTab.tsx`                 | MODIFY — DB-only fetch, drop `generate-test` invocation                      |
+# Plan — Fix `generate-job-test` Returning Zero Questions
 
+## Root cause
 
-## Risks
+The edge function appears to fail silently (Generated: 0, API calls: 0). Two likely causes, both addressed below:
 
-- **Cold start**: a freshly published test has zero approved questions. Admin must pre-generate + approve. UI gates publish on ≥2 sample questions per subject.
-- **Sample quality drives output quality** — bad samples → bad questions.
-- **Rate limiting is ad-hoc** (sleep + log-based daily cap). No backend primitives exist; will be revisited when platform supports it.
-- **Storage growth** — each test owns its pool. Acceptable.
+1. **No visibility** into what's failing — current code swallows errors into a generic `gemini_error` rejection counter with no console output.
+2. **Possible API key mismatch** — `generate-job-test` reads `GEMINI_API_KEY`, `EXTERNAL_JOBS_GEMINI_KEY`, `LOVABLE_API_KEY`. All three are confirmed present in secrets, so a missing key is unlikely — but we'll log to confirm.
 
-## Out of scope
+A third subtle cause that the user's debug plan does **not** catch: when `responseMimeType: "application/json"` is set and the model returns a JSON object (not array), `parseQuestions` returns `[]` because it only looks for `[ ... ]`. We'll harden the parser too.
 
-- Touching `generate-test` or `content_items` (Subject Tests / Syllabus Builder unaffected).
-- Test session player (`/test-session/:id`) — unchanged.
-- AI Coach integration on Job Test answers (later, via shared `test_attempts`).
-- Dropping legacy `job_tests` table (deferred to cleanup migration).
+## Changes — `supabase/functions/generate-job-test/index.ts`
 
-### **✅ MY ADDITIONS TO LOVABLE'S PLAN:**
+### 1. `getGeminiKeys()` — add diagnostic logging
+Log which of the three env vars are present (length only, never the value), and emit a `CRITICAL` error if zero valid keys are found.
 
-#### **1. Bulk Operations:**
+### 2. `callGemini()` — log every attempt
+- Log how many keys are available.
+- For each key: log attempt index, HTTP status, error body (truncated 200 chars), success char count.
+- Surface `prompt feedback` blocks (e.g. safety-filter rejections) which currently get silently dropped as "Empty Gemini response".
+- Throw a clearly-typed `API key` error when no keys are configured so the batch loop can short-circuit.
 
-typescript
+### 3. `parseQuestions()` — harden
+Currently only extracts content between `[` and `]`. Update to also handle:
+- A top-level JSON object containing `{ "questions": [...] }` or `{ "data": [...] }`.
+- A bare object (single question) → wrap in array.
+- Log a warning + first 200 chars of raw text when parsing yields zero items, so we can see what the model actually returned.
 
-```typescript
-// In admin review panel
-const approveAll = async (subjectFilter: string) => {
-  const { data } = await supabase
-    .from('job_test_questions')
-    .update({ admin_approved: true })
-    .eq('job_test_id', currentTestId)
-    .eq('subject', subjectFilter)
-    .eq('admin_approved', false);
-    
-  toast.success(`Approved all ${data.length} ${subjectFilter} questions`);
-};
-```
+### 4. `generateForSection()` — verbose telemetry
+- Banner log at start (subject, target, sample count, forbidden-rule count).
+- Per-batch log: requested count, API success/failure, parsed count, accepted count, rejection breakdown.
+- On `API key` errors, break out of the batch loop immediately (no point retrying).
+- Final summary log: status, generated, accepted, api_calls, elapsed seconds, rejection reasons.
 
-#### **2. Question Preview Before Generation:**
+### 5. Top-level `Deno.serve` handler
+Log the incoming `job_test_id` + `subject`, the resolved definition's section count, and the final aggregate (`total_accepted`, per-section results) so a single log view tells the whole story.
 
-typescript
+## What this does NOT change
 
-```typescript
-// Show estimated cost before generating
-const estimateCost = (questionCount: number) => {
-  const batches = Math.ceil(questionCount / 10);
-  const apiCalls = batches * 1.5; // Average with retries
-  const cost = apiCalls * 0.05; // $0.05 per call
-  
-  return {
-    batches,
-    apiCalls: Math.ceil(apiCalls),
-    estimatedCost: cost.toFixed(2)
-  };
-};
+- No schema changes.
+- No change to validator/forbidden-keyword logic (already conservative).
+- No change to `MAX_BATCHES`, `BATCH_SIZE`, `DAILY_LOG_CAP`.
+- No change to the front-end or admin UI.
 
-// Before generate
-toast.info(`
-  Generating 40 questions:
-  - Batches: 4
-  - Est. API calls: 6
-  - Est. cost: $0.30
-  Continue?
-`);
-```
+## Verification steps after deploy
 
-#### **3. Quality Metrics Dashboard:**
+1. Trigger generation from `JobTestDefinitionEditor` → "Generate" for one subject.
+2. Open Supabase → Edge Functions → `generate-job-test` → Logs.
+3. Expect to see, in order:
+   - `[DEBUG] Checking API keys` with at least one `Found (length: N)`.
+   - `[GENERATE] Starting generation for: <subject>`.
+   - `[BATCH 1/3] Requesting N questions...` → `Gemini response status: 200` → `✅ Gemini returned X characters`.
+   - Final `[COMPLETE]` block with `accepted > 0`.
+4. If status ≠ 200 or `accepted = 0`, the logs now show exactly why (HTTP error body, parse failure with raw sample, or forbidden-rule match).
 
-typescript
+## Technical notes
 
-```typescript
-// Admin sees quality stats
-{
-  "English": {
-    "generated": 50,
-    "approved": 38,
-    "rejected": 12,
-    "approval_rate": "76%",
-    "avg_generation_time": "45s"
-  },
-  "Computer": {
-    "generated": 45,
-    "approved": 40,
-    "rejected": 5,
-    "approval_rate": "89%",
-    "avg_generation_time": "50s"
-  }
-}
-```
+- Logs use `console.log` / `console.error` — visible in Supabase Edge Function logs and via `supabase--edge_function_logs`.
+- No secret values are ever logged, only their presence and length.
+- Backward compatible: response shape and DB writes unchanged.
 
-#### **4. Auto-Regenerate Low Quality:**
-
-typescript
-
-```typescript
-// If approval rate < 50%, auto-flag for regeneration
-if (approvalRate < 0.5) {
-  toast.warning(`
-    ${subject} approval rate is ${approvalRate * 100}%
-    Consider:
-    1. Improving sample questions
-    2. Adding more forbidden keywords
-    3. Updating style guide
-  `);
-}
-```
