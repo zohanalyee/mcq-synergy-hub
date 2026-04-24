@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, TrendingUp, Loader2, CheckCircle, BookOpen, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const BoardResults = () => {
   const navigate = useNavigate();
@@ -160,6 +160,7 @@ const BoardResults = () => {
                     </div>
                   </CardContent>
                 </Card>
+                </Link>
               ))}
             </div>
           )}
