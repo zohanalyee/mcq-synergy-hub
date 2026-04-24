@@ -185,7 +185,7 @@ function parseQuestions(text: string): any[] {
     try {
       const arr = JSON.parse(cleaned.slice(start, end + 1));
       if (Array.isArray(arr) && arr.length > 0) return arr;
-    } catch {
+    } catch (_e) {
       // fall through
     }
   }
@@ -199,7 +199,7 @@ function parseQuestions(text: string): any[] {
       if (Array.isArray(obj.items)) return obj.items;
       if (obj.question && obj.options) return [obj];
     }
-  } catch {
+  } catch (_e) {
     // ignore
   }
 
