@@ -177,15 +177,36 @@ function parseQuestions(text: string): any[] {
   if (cleaned.startsWith("```")) {
     cleaned = cleaned.replace(/^```(?:json)?/i, "").replace(/```$/i, "").trim();
   }
+
+  // 1) Try array first
   const start = cleaned.indexOf("[");
   const end = cleaned.lastIndexOf("]");
-  if (start === -1 || end === -1) return [];
-  try {
-    const arr = JSON.parse(cleaned.slice(start, end + 1));
-    return Array.isArray(arr) ? arr : [];
-  } catch {
-    return [];
+  if (start !== -1 && end !== -1 && end > start) {
+    try {
+      const arr = JSON.parse(cleaned.slice(start, end + 1));
+      if (Array.isArray(arr) && arr.length > 0) return arr;
+    } catch {
+      // fall through
+    }
   }
+
+  // 2) Try object wrapper { questions: [...] } / { data: [...] } / single MCQ
+  try {
+    const obj = JSON.parse(cleaned);
+    if (obj && typeof obj === "object") {
+      if (Array.isArray(obj.questions)) return obj.questions;
+      if (Array.isArray(obj.data)) return obj.data;
+      if (Array.isArray(obj.items)) return obj.items;
+      if (obj.question && obj.options) return [obj];
+    }
+  } catch {
+    // ignore
+  }
+
+  console.warn(
+    `[parseQuestions] Could not extract questions. First 300 chars: ${cleaned.slice(0, 300)}`,
+  );
+  return [];
 }
 
 function isStructurallyValid(q: any): boolean {
