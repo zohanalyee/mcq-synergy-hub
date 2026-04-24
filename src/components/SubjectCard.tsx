@@ -1,8 +1,7 @@
-
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { BookOpen, ArrowRight, WifiOff } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import { ReactNode } from "react";
 import { getSyncStatus } from "@/services/offlineSyncService";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,7 @@ interface SubjectCardProps {
   topicCount: number;
   color: string;
   purpose?: "reading" | "mcqs";
+  /** Optional override; when supplied the card renders as a button-like div. */
   onClick?: () => void;
   id?: string;
   levelId?: string;
@@ -22,7 +22,6 @@ interface SubjectCardProps {
   systemName?: string;
 }
 
-// Dynamic color theme mapping based on subject title
 const getSubjectTheme = (title: string, fallbackColor: string): { main: string; pastel: string; pastelDark: string } => {
   const lowerTitle = title.toLowerCase();
   
@@ -57,7 +56,6 @@ const getSubjectTheme = (title: string, fallbackColor: string): { main: string; 
     return { main: '#22c55e', pastel: 'rgba(34, 197, 94, 0.08)', pastelDark: 'rgba(34, 197, 94, 0.15)' };
   }
   
-  // Default: use the color prop passed to the component
   const hexToRgba = (hex: string, alpha: number) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
@@ -71,6 +69,9 @@ const getSubjectTheme = (title: string, fallbackColor: string): { main: string; 
     pastelDark: hexToRgba(fallbackColor || '#3b82f6', 0.15)
   };
 };
+
+const MotionLink = motion.create(Link);
+const MotionDiv = motion.div;
 
 const SubjectCard = ({ 
   title, 
@@ -87,124 +88,123 @@ const SubjectCard = ({
   systemName
 }: SubjectCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
-  const navigate = useNavigate();
   
   const theme = getSubjectTheme(title, color);
   const syncStatus = id ? getSyncStatus(id) : { synced: false, count: 0, lastSync: null };
   
-  // Render icon with white color for the squircle container
   const renderIcon = () => {
     if (!icon) {
       return <BookOpen className="w-4 h-4 text-white" />;
     }
-    
     if (React.isValidElement(icon)) {
       return React.cloneElement(icon as React.ReactElement<any>, { 
         className: "w-4 h-4 text-white",
         style: { color: 'white' }
       });
     }
-    
     return <BookOpen className="w-4 h-4 text-white" />;
   };
   
-  const handleClick = () => {
-    if (onClick) {
-      onClick();
-      return;
-    }
-    
-    const urlSlug = id || encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"));
-    
-    navigate(`/subject-content/${urlSlug}`, { 
-      state: { 
-        title,
-        id: id || title,
-        subjectId: id,
-        mode: purpose === "reading" ? "read" : "practice",
-        purpose,
-        color: theme.main,
-        icon: null,
-        topicCount,
-        levelId,
-        levelName,
-        systemId,
-        systemName
-      } 
-    });
+  const urlSlug = id || encodeURIComponent(title.toLowerCase().replace(/\s+/g, "-"));
+  const linkTo = `/subject-content/${urlSlug}`;
+  const linkState = {
+    title,
+    id: id || title,
+    subjectId: id,
+    mode: purpose === "reading" ? "read" : "practice",
+    purpose,
+    color: theme.main,
+    icon: null,
+    topicCount,
+    levelId,
+    levelName,
+    systemId,
+    systemName
   };
-  
-  return (
-    <motion.div
-      whileHover={{ y: -3, boxShadow: `0 8px 25px -5px ${theme.main}30` }}
-      whileTap={{ scale: 0.97 }}
-      transition={{ type: "spring", stiffness: 400, damping: 17 }}
-      onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="cursor-pointer w-full group"
+
+  const motionProps = {
+    whileHover: { y: -3, boxShadow: `0 8px 25px -5px ${theme.main}30` },
+    whileTap: { scale: 0.97 },
+    transition: { type: "spring" as const, stiffness: 400, damping: 17 },
+    onMouseEnter: () => setIsHovered(true),
+    onMouseLeave: () => setIsHovered(false),
+    className: "cursor-pointer w-full group block",
+    "aria-label": title,
+  };
+
+  const inner = (
+    <div 
+      className="rounded-2xl p-3 min-h-[100px] flex flex-col
+        border border-border/40 dark:border-white/10
+        shadow-sm hover:shadow-lg
+        transition-all duration-300
+        backdrop-blur-sm bg-white/80 dark:bg-slate-900/95"
     >
-      <div 
-        className="rounded-2xl p-3 min-h-[100px] flex flex-col
-          border border-border/40 dark:border-white/10
-          shadow-sm hover:shadow-lg
-          transition-all duration-300
-          backdrop-blur-sm bg-white/80 dark:bg-slate-900/95"
-      >
-        
-        {/* Icon Squircle - Compact with offline badge */}
-        <div className="relative w-fit">
-          <div 
-            className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-105"
-            style={{ backgroundColor: theme.main }}
-          >
-            {renderIcon()}
-          </div>
-          {syncStatus.synced && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-background flex items-center justify-center">
-                    <WifiOff className="w-2 h-2 text-white" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="text-xs">
-                  {syncStatus.count} questions cached offline
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
+      <div className="relative w-fit">
+        <div 
+          className="w-9 h-9 rounded-xl shadow-md flex items-center justify-center mb-2 transition-transform duration-300 group-hover:scale-105"
+          style={{ backgroundColor: theme.main }}
+        >
+          {renderIcon()}
         </div>
-        
-        {/* Content */}
-        <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-0.5 line-clamp-1 leading-tight">
-          {title}
-        </h3>
-        <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 flex-1">
-          {description}
-        </p>
-        
-        {/* Action Row */}
-        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
-          <span 
-            className="text-[9px] font-bold uppercase tracking-wide"
-            style={{ color: theme.main }}
-          >
-            {topicCount} Chapters
-          </span>
-          <div 
-            className={`
-              w-6 h-6 rounded-full flex items-center justify-center
-              transition-transform duration-300
-              ${isHovered ? 'rotate-[-45deg]' : ''}
-            `}
-            style={{ backgroundColor: theme.main }}
-          >
-            <ArrowRight className="w-3 h-3 text-white" />
-          </div>
+        {syncStatus.synced && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-background flex items-center justify-center">
+                  <WifiOff className="w-2 h-2 text-white" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top" className="text-xs">
+                {syncStatus.count} questions cached offline
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
+      
+      <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 mb-0.5 line-clamp-1 leading-tight">
+        {title}
+      </h3>
+      <p className="text-[10px] text-slate-500 dark:text-slate-400 mb-2 line-clamp-1 flex-1">
+        {description}
+      </p>
+      
+      <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+        <span 
+          className="text-[9px] font-bold uppercase tracking-wide"
+          style={{ color: theme.main }}
+        >
+          {topicCount} Chapters
+        </span>
+        <div 
+          className={`
+            w-6 h-6 rounded-full flex items-center justify-center
+            transition-transform duration-300
+            ${isHovered ? 'rotate-[-45deg]' : ''}
+          `}
+          style={{ backgroundColor: theme.main }}
+        >
+          <ArrowRight className="w-3 h-3 text-white" />
         </div>
       </div>
-    </motion.div>
+    </div>
+  );
+
+  // If consumer supplied a custom onClick (action, not navigation), keep div behavior
+  if (onClick) {
+    return (
+      <MotionDiv onClick={onClick} {...motionProps}>
+        {inner}
+      </MotionDiv>
+    );
+  }
+
+  // Default: real <a href> for SEO + middle-click + right-click open-in-new-tab
+  return (
+    <MotionLink to={linkTo} state={linkState} {...motionProps}>
+      {inner}
+    </MotionLink>
   );
 };
 

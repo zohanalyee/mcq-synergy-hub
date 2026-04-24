@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ExternalLink, TrendingUp, Loader2, CheckCircle, BookOpen, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const BoardResults = () => {
   const navigate = useNavigate();
@@ -118,10 +118,14 @@ const BoardResults = () => {
 
               {/* Scraped board result opportunities */}
               {opportunities.map((opp: any) => (
-                <Card
+                <Link
                   key={`opp-${opp.id}`}
+                  to={`/opportunity/${opp.id}`}
+                  className="block"
+                  aria-label={opp.title}
+                >
+                <Card
                   className="border-border/30 hover:border-purple-500/30 transition-colors cursor-pointer"
-                  onClick={() => navigate(`/opportunity/${opp.id}`)}
                 >
                   <CardContent className="p-4 sm:p-5">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -156,6 +160,7 @@ const BoardResults = () => {
                     </div>
                   </CardContent>
                 </Card>
+                </Link>
               ))}
             </div>
           )}

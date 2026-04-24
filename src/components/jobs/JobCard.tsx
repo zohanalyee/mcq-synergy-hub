@@ -1,4 +1,4 @@
-import { Calendar, ExternalLink, Briefcase } from "lucide-react";
+import { Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { GlassCard, getCardTheme } from "@/components/ui/GlassCard";
@@ -8,7 +8,7 @@ interface JobCardProps {
   index: number;
 }
 
-const JobCard = ({ job, index }: JobCardProps) => {
+const JobCard = ({ job }: JobCardProps) => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "No deadline";
     const date = new Date(dateString);
@@ -19,16 +19,9 @@ const JobCard = ({ job, index }: JobCardProps) => {
     });
   };
 
-  // Get theme based on job type or department
   const theme = getCardTheme(
     job.governmentLevel || job.department || job.title
   );
-
-  const handleClick = () => {
-    if (job.fileUrl) {
-      window.open(job.fileUrl, "_blank", "noopener,noreferrer");
-    }
-  };
 
   return (
     <GlassCard
@@ -38,14 +31,14 @@ const JobCard = ({ job, index }: JobCardProps) => {
       actionText={job.fileUrl ? "APPLY NOW" : "VIEW DETAILS"}
       themeColor={theme.main}
       pastelColor={theme.pastel}
-      onClick={handleClick}
+      // Real anchors: external apply link OR internal opportunity page
+      href={job.fileUrl || undefined}
+      to={!job.fileUrl ? `/opportunity/${job.id}` : undefined}
     >
-      {/* Description */}
       <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
         {job.description}
       </p>
 
-      {/* Tags */}
       <div className="flex flex-wrap gap-1">
         {job.department && (
           <Badge
