@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,6 @@ interface TopicQuizzesTabProps {
 }
 
 export const TopicQuizzesTab = ({ quizzes, isLoaded, searchQuery }: TopicQuizzesTabProps) => {
-  const navigate = useNavigate();
   
   // Filter quizzes based on search query
   const filteredQuizzes = quizzes.filter(quiz => 
@@ -93,11 +92,8 @@ export const TopicQuizzesTab = ({ quizzes, isLoaded, searchQuery }: TopicQuizzes
             </CardContent>
             
             <CardFooter>
-              <Button 
-                className="w-full"
-                onClick={() => navigate(`/quiz/${quiz.id}`)}
-              >
-                Start Quiz
+              <Button asChild className="w-full">
+                <Link to={`/quiz/${quiz.id}`}>Start Quiz</Link>
               </Button>
             </CardFooter>
           </Card>
