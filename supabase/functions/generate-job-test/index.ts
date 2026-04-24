@@ -408,11 +408,6 @@ Deno.serve(async (req) => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
-      return new Response(
-        JSON.stringify({ error: "job_test_id is required" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
 
     // Daily cap check (ad-hoc, not a hardened rate limiter)
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
