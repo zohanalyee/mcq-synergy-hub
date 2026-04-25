@@ -105,7 +105,7 @@ function parseJobs(doc: any, url: string, sourceName: string, selectors: any): S
         });
       }
     } catch (e) {
-      console.warn(`[scrape-jobs] Custom selector failed for ${url}:`, e.message);
+      console.warn(`[scrape-jobs] Custom selector failed for ${url}:`, (e as Error).message);
     }
   }
 

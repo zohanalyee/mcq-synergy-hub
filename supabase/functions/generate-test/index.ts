@@ -1697,7 +1697,7 @@ serve(async (req) => {
       if (missingCount > 0) {
         const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
         if (GEMINI_KEY) {
-          EdgeRuntime.waitUntil(
+          (globalThis as any).EdgeRuntime?.waitUntil(
             backgroundGenerateAndSave(
               topic,
               sanitizedTopic,
@@ -1707,7 +1707,7 @@ serve(async (req) => {
               GEMINI_KEY,
               supabase,
               user_id,
-              sourceType
+              sourceType as any
             )
           );
         }
@@ -1969,7 +1969,7 @@ serve(async (req) => {
         console.log(`✅ Saved ${savedCount} questions, flagged ${flaggedCount} for review`);
       } else {
         console.log(`Large batch (${newAIQuestions.length}): Using background task to save`);
-        EdgeRuntime.waitUntil(
+        (globalThis as any).EdgeRuntime?.waitUntil(
           saveQuestionsInBackground(newAIQuestions, topic, sanitizedTopic, difficulty, supabase)
         );
         savedCount = newAIQuestions.length; // Estimate for logging

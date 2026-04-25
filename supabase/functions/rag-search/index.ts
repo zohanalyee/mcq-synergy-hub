@@ -171,7 +171,7 @@ serve(async (req) => {
      const supabaseAuth = createClient(supabaseUrl, supabaseAnonKey, {
        global: { headers: { Authorization: authHeader } },
      });
-     const { data: claimsData, error: claimsError } = await supabaseAuth.auth.getClaims(token);
+     const { data: claimsData, error: claimsError } = await (supabaseAuth.auth as any).getClaims(token);
      if (claimsError || !claimsData?.claims?.sub) {
        return new Response(
          JSON.stringify({ error: "Unauthorized: Invalid or expired token" }),

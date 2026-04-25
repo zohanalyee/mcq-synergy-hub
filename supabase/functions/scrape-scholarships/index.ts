@@ -72,7 +72,7 @@ function parseScholarships(doc: any, url: string, sourceName: string, selectors:
         });
       }
     } catch (e) {
-      console.warn(`[scrape-scholarships] Custom selector failed for ${url}:`, e.message);
+      console.warn(`[scrape-scholarships] Custom selector failed for ${url}:`, (e as Error).message);
     }
   }
 
