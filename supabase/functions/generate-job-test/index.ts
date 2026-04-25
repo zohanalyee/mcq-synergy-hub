@@ -4,6 +4,7 @@
 // (admin_approved=false), logs telemetry to job_test_generation_logs.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { callAIWithAutoSwitch } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -34,91 +35,20 @@ interface SampleQ {
   explanation?: string;
 }
 
-function getGeminiKeys(): string[] {
-  const key1 = Deno.env.get("GEMINI_API_KEY");
-  const key2 = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
-  const key3 = Deno.env.get("LOVABLE_API_KEY");
-
-  console.log(`[DEBUG] Checking API keys:`);
-  console.log(`  GEMINI_API_KEY: ${key1 ? `Found (length: ${key1.length})` : "NOT FOUND"}`);
-  console.log(`  EXTERNAL_JOBS_GEMINI_KEY: ${key2 ? `Found (length: ${key2.length})` : "NOT FOUND"}`);
-  console.log(`  LOVABLE_API_KEY: ${key3 ? `Found (length: ${key3.length})` : "NOT FOUND"}`);
-
-  const keys = [key1, key2, key3].filter((k): k is string => !!k && k.length > 10);
-  console.log(`[DEBUG] Valid keys found: ${keys.length}`);
-
-  if (keys.length === 0) {
-    console.error("❌ CRITICAL: No Gemini API keys configured!");
-    console.error("   Please set GEMINI_API_KEY in edge function secrets");
-  }
-  return keys;
-}
-
 async function callGemini(prompt: string): Promise<string> {
-  const keys = getGeminiKeys();
-  if (keys.length === 0) {
-    const error = new Error(
-      "No Gemini API key configured. Please add GEMINI_API_KEY to edge function secrets.",
-    );
-    console.error("❌", error.message);
-    throw error;
+  console.log(`[AI] Calling auto-switcher (Gemini → Lovable Gateway fallback)...`);
+  try {
+    const { text, provider, cost } = await callAIWithAutoSwitch('', prompt, {
+      temperature: 0.8,
+      maxOutputTokens: 8000,
+    });
+    console.log(`[AI] ✅ provider=${provider} cost=${cost} chars=${text.length}`);
+    return text;
+  } catch (e) {
+    const msg = (e as Error).message || 'unknown';
+    console.error(`[AI] ❌ auto-switch failed: ${msg.slice(0, 200)}`);
+    throw e;
   }
-
-  console.log(`[DEBUG] Attempting Gemini call with ${keys.length} key(s)`);
-  let lastErr: Error | null = null;
-
-  for (let i = 0; i < keys.length; i++) {
-    const key = keys[i];
-    try {
-      console.log(`[DEBUG] Trying key ${i + 1}/${keys.length}...`);
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.8,
-            topP: 0.95,
-            maxOutputTokens: 4096,
-            responseMimeType: "application/json",
-          },
-        }),
-      });
-
-      console.log(`[DEBUG] Gemini response status: ${res.status}`);
-
-      if (!res.ok) {
-        const txt = await res.text();
-        console.error(`[DEBUG] Gemini error ${res.status}:`, txt.slice(0, 300));
-        lastErr = new Error(`Gemini ${res.status}: ${txt.slice(0, 200)}`);
-        continue;
-      }
-
-      const json = await res.json();
-      const text = json?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
-
-      // Surface safety/prompt feedback when text is missing
-      if (!text) {
-        const finishReason = json?.candidates?.[0]?.finishReason;
-        const promptFeedback = json?.promptFeedback;
-        console.warn(
-          `[DEBUG] Empty response. finishReason=${finishReason}, promptFeedback=${JSON.stringify(promptFeedback || {}).slice(0, 200)}`,
-        );
-        lastErr = new Error(
-          `Empty Gemini response (finishReason=${finishReason || "unknown"})`,
-        );
-        continue;
-      }
-
-      console.log(`[DEBUG] ✅ Gemini returned ${text.length} characters`);
-      return text;
-    } catch (e) {
-      lastErr = e as Error;
-      console.error(`[DEBUG] Key ${i + 1} threw:`, (e as Error).message);
-    }
-  }
-  throw lastErr ?? new Error("Gemini failed");
 }
 
 function buildPrompt(
