@@ -88,7 +88,7 @@ const Scholarships = () => {
         description="Discover scholarships for Pakistani students. HEC, Fulbright, DAAD, and local scholarship opportunities with deadlines and application links."
         keywords="Pakistan scholarships, HEC scholarship, student funding, educational grants, scholarship opportunities"
       />
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-16">
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-16 overflow-x-hidden">
         <PageBreadcrumb items={[{ title: 'Scholarships', href: '/scholarships', isCurrent: true }]} showHomeButton={true} />
         <div className="mb-6 text-center">
           <motion.h1 
