@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Eye, Calendar, Building2, MapPin, Briefcase, GraduationCap, Globe, Building } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Eye, Calendar, Building2, MapPin, Briefcase, GraduationCap, Globe, Building, Clock, Sparkles } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalOpportunity, OpportunityType } from "@/types/externalOpportunities";
 import { generateSlugUrl } from "@/utils/slugify";
+import { cn } from "@/lib/utils";
 
 interface ExternalOpportunitiesSectionProps {
   opportunities: ExternalOpportunity[];
@@ -24,37 +25,56 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
     });
   };
 
+  // Urgency: deadline within 7 days = pulsing red; <=30 days = red; else muted
+  const getDeadlineUrgency = (dateString: string | null) => {
+    if (!dateString) return { color: "text-muted-foreground", pulse: false, hasDeadline: false };
+    const days = Math.ceil((new Date(dateString).getTime() - Date.now()) / 86400000);
+    if (days < 0) return { color: "text-muted-foreground line-through", pulse: false, hasDeadline: true };
+    if (days <= 7) return { color: "text-red-600 dark:text-red-400 font-bold", pulse: true, hasDeadline: true };
+    if (days <= 30) return { color: "text-red-600 dark:text-red-400 font-semibold", pulse: false, hasDeadline: true };
+    return { color: "text-foreground font-medium", pulse: false, hasDeadline: true };
+  };
+
   const TypeIcon = type === "job" ? Briefcase : GraduationCap;
   const title = type === "job" ? "External Jobs" : "External Scholarships";
-  const description = type === "job" 
+  const description = type === "job"
     ? "Curated job opportunities from LinkedIn, Indeed, and more"
     : "Curated scholarships from HEC, Fulbright, and more";
 
   const getSectorBadge = (sector: string | null) => {
     if (!sector) return null;
+    const isGovt = sector === "government";
     return (
-      <Badge 
-        variant={sector === 'government' ? 'default' : 'secondary'} 
-        className="text-xs gap-1"
+      <Badge
+        className={cn(
+          "text-[10px] gap-1 border-0 font-semibold",
+          isGovt
+            ? "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 hover:bg-green-200"
+            : "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300 hover:bg-indigo-200"
+        )}
       >
         <Building className="h-3 w-3" />
-        {sector === 'government' ? 'Govt' : 'Private'}
+        {isGovt ? "Govt" : "Private"}
       </Badge>
     );
   };
 
   const getRegionBadge = (region: string | null) => {
-    if (!region || region === 'other') return null;
+    if (!region || region === "other") return null;
     const regionLabels: Record<string, string> = {
-      sindh: 'Sindh',
-      punjab: 'Punjab',
-      kpk: 'KPK',
-      balochistan: 'Balochistan',
-      federal: 'Federal',
-      international: 'International'
+      sindh: "Sindh", punjab: "Punjab", kpk: "KPK",
+      balochistan: "Balochistan", federal: "Federal", international: "International"
     };
+    const isIntl = region === "international";
     return (
-      <Badge variant="outline" className="text-xs gap-1">
+      <Badge
+        className={cn(
+          "text-[10px] gap-1 border-0 font-semibold",
+          isIntl
+            ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300"
+            : "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
+        )}
+      >
         <MapPin className="h-3 w-3" />
         {regionLabels[region] || region}
       </Badge>
@@ -63,13 +83,18 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
 
   const getScopeBadge = (scope: string | null) => {
     if (!scope) return null;
+    const isIntl = scope === "international";
     return (
-      <Badge 
-        variant={scope === 'international' ? 'default' : 'secondary'} 
-        className="text-xs gap-1"
+      <Badge
+        className={cn(
+          "text-[10px] gap-1 border-0 font-semibold",
+          isIntl
+            ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-300"
+            : "bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300"
+        )}
       >
         <Globe className="h-3 w-3" />
-        {scope === 'international' ? 'International' : 'National'}
+        {isIntl ? "International" : "National"}
       </Badge>
     );
   };
@@ -121,82 +146,115 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
       </div>
       <p className="text-muted-foreground text-sm mb-4">{description}</p>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {opportunities.map((opp, index) => (
-          <motion.div
-            key={opp.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: index * 0.1 }}
-          >
-            <Card className="h-full hover:shadow-lg transition-shadow group">
-              <CardHeader className="pb-3">
-                <div className="flex items-start gap-3">
-                  <img
-                    src={opp.image_url || '/placeholder.svg'}
-                    alt={opp.title}
-                    className="w-12 h-12 rounded-lg object-cover flex-shrink-0 bg-muted"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src = '/placeholder.svg';
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                      <Badge variant="outline" className="text-xs">
-                        {opp.source_name}
-                      </Badge>
-                      {type === 'job' && getSectorBadge(opp.sector)}
-                      {type === 'scholarship' && getScopeBadge(opp.scholarship_scope)}
-                    </div>
-                    <CardTitle className="text-base line-clamp-2 group-hover:text-primary transition-colors">
-                      {opp.title}
-                    </CardTitle>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <CardDescription className="line-clamp-2 mb-3 text-xs">
-                  {opp.description || "No description available"}
-                </CardDescription>
-
-                <div className="space-y-1.5 text-xs text-muted-foreground mb-3">
-                  {opp.organization && (
-                    <div className="flex items-center gap-1.5">
-                      <Building2 className="h-3 w-3" />
-                      <span className="truncate">{opp.organization}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-1.5">
-                    <MapPin className="h-3 w-3" />
-                    <span>{opp.location || 'Location not specified'}</span>
-                    {getRegionBadge(opp.region)}
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-3 w-3" />
-                    <span>Deadline: {formatDate(opp.deadline_date)}</span>
-                  </div>
-                </div>
-
-                {(opp as any).status === 'pending' && (
-                  <Badge variant="outline" className="text-xs text-amber-500 border-amber-500/30 mb-2">
-                    Pending Review
-                  </Badge>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {opportunities.map((opp, index) => {
+          const urgency = getDeadlineUrgency(opp.deadline_date);
+          return (
+            <motion.div
+              key={opp.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+            >
+              <Card
+                className={cn(
+                  "h-full flex flex-col group relative overflow-hidden",
+                  "border border-border/60 bg-gradient-to-br from-background via-background to-primary/5",
+                  "transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40"
                 )}
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="w-full gap-1"
-                  asChild
-                >
-                  <Link to={`/opportunity/${generateSlugUrl(opp.title, opp.id)}`}>
-                    <Eye className="h-3 w-3" />
-                    View Details
-                  </Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
+              >
+                {/* Decorative gradient blob */}
+                <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+
+                <CardHeader className="pb-3 relative">
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={opp.image_url || "/placeholder.svg"}
+                      alt={opp.title}
+                      className="w-14 h-14 rounded-xl object-cover flex-shrink-0 bg-muted ring-1 ring-border/50 shadow-sm"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                      loading="lazy"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] gap-1 bg-muted/60 text-muted-foreground border-border/60 font-medium"
+                        >
+                          <Sparkles className="h-2.5 w-2.5" />
+                          {opp.source_name}
+                        </Badge>
+                        {type === "job" && getSectorBadge(opp.sector)}
+                        {type === "scholarship" && getScopeBadge(opp.scholarship_scope)}
+                      </div>
+                      <CardTitle className="text-base sm:text-lg font-bold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                        {opp.title}
+                      </CardTitle>
+                    </div>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="pt-0 flex-1 flex flex-col">
+                  <p className="line-clamp-2 mb-3 text-xs text-muted-foreground">
+                    {opp.description || "No description available"}
+                  </p>
+
+                  <div className="space-y-1.5 text-xs text-muted-foreground mb-3 flex-1">
+                    {opp.organization && (
+                      <div className="flex items-center gap-1.5">
+                        <Building2 className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{opp.organization}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{opp.location || "Location not specified"}</span>
+                      {getRegionBadge(opp.region)}
+                    </div>
+
+                    {/* URGENCY: Deadline */}
+                    <div
+                      className={cn(
+                        "flex items-center gap-1.5 mt-2 px-2 py-1.5 rounded-md",
+                        urgency.hasDeadline && urgency.pulse && "bg-red-50 dark:bg-red-950/30 ring-1 ring-red-200 dark:ring-red-900/50 animate-pulse",
+                        urgency.hasDeadline && !urgency.pulse && "bg-muted/40"
+                      )}
+                    >
+                      {urgency.pulse ? (
+                        <Clock className={cn("h-3.5 w-3.5 flex-shrink-0", urgency.color)} />
+                      ) : (
+                        <Calendar className={cn("h-3.5 w-3.5 flex-shrink-0", urgency.color)} />
+                      )}
+                      <span className={cn("text-xs", urgency.color)}>
+                        Deadline: {formatDate(opp.deadline_date)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {(opp as any).status === "pending" && (
+                    <Badge variant="outline" className="text-xs text-amber-600 border-amber-500/40 bg-amber-50 dark:bg-amber-950/30 mb-2 w-fit">
+                      Pending Review
+                    </Badge>
+                  )}
+
+                  {/* Full-width CTA — thumb-friendly on mobile */}
+                  <Button
+                    size="sm"
+                    className="w-full gap-1.5 mt-2 font-semibold shadow-sm group-hover:shadow-md transition-shadow"
+                    asChild
+                  >
+                    <Link to={`/opportunity/${generateSlugUrl(opp.title, opp.id)}`}>
+                      <Eye className="h-3.5 w-3.5" />
+                      View Details
+                    </Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          );
+        })}
       </div>
     </motion.div>
   );

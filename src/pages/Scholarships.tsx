@@ -197,7 +197,7 @@ const Scholarships = () => {
                 </Card>
               </motion.div>
             ))
-          ) : (
+          ) : filteredExternalScholarships.length === 0 ? (
             <div className="col-span-full text-center py-10">
               <AlertCircle className="h-12 w-12 mx-auto text-muted-foreground/40" />
               <h3 className="mt-3 text-sm font-medium">No scholarships found</h3>
@@ -216,7 +216,7 @@ const Scholarships = () => {
                 </Button>
               )}
             </div>
-          )}
+          ) : null}
         </div>
 
         {/* External Scholarships Section */}

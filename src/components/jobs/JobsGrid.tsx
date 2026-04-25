@@ -8,9 +8,10 @@ interface JobsGridProps {
   jobs: ContentItem[];
   isLoading: boolean;
   searchQuery: string;
+  hideEmptyState?: boolean;
 }
 
-const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
+const JobsGrid = ({ jobs, isLoading, searchQuery, hideEmptyState }: JobsGridProps) => {
   if (isLoading) {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3">
@@ -43,6 +44,8 @@ const JobsGrid = ({ jobs, isLoading, searchQuery }: JobsGridProps) => {
       </div>
     );
   }
+
+  if (hideEmptyState) return null;
 
   return (
     <div className="text-center py-8">
