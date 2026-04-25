@@ -146,7 +146,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
       </div>
       <p className="text-muted-foreground text-sm mb-4">{description}</p>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 w-full">
         {opportunities.map((opp, index) => {
           const urgency = getDeadlineUrgency(opp.deadline_date);
           return (
@@ -155,6 +155,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: Math.min(index * 0.05, 0.3) }}
+              className="min-w-0 w-full"
             >
               <Card
                 className={cn(
