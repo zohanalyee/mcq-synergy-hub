@@ -13,6 +13,20 @@ function toSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+// Mirrors src/utils/slugify.ts so sitemap URLs match in-app /opportunity links exactly.
+function generateSlugUrl(title: string, id: string): string {
+  const slug = (title || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60)
+    .replace(/-+$/g, "");
+  return slug ? `${slug}-${id}` : id;
+}
+
 function extractClassNumber(levelName: string): string | null {
   const match = levelName.match(/(\d+)/);
   return match ? match[1] : null;
