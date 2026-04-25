@@ -1,73 +1,104 @@
-# Plan — Fix `generate-job-test` by Aligning It With `generate-test`
+# Plan — Raise Job Test Batch Limit + SEO-Friendly Opportunity URLs
 
-## Side-by-side comparison (actual code)
+Two independent changes, both backward-compatible.
 
-| Feature | `generate-test` ✅ | `generate-job-test` ❌ |
-|---|---|---|
-| AI call path | `_shared/gemini.ts` → `callAIWithAutoSwitch` | Local `callGemini` (direct Gemini only) |
-| Keys used | `GEMINI_API_KEY` only, then **Lovable Gateway** (`LOVABLE_API_KEY`) as fallback | `GEMINI_API_KEY`, `EXTERNAL_JOBS_GEMINI_KEY`, **and `LOVABLE_API_KEY`** all sent as Google `?key=` params |
-| Rate limiter | Yes — 4s gap between Gemini calls (`waitForRateLimit`) | None (3 batches back-to-back, only 2s sleep) |
-| Daily quota reset | Yes (UTC) | None |
-| Quota-error detection | Yes → switches to Lovable Gateway | No fallback at all |
-| Model | `gemini-2.0-flash` (auto-switch can promote to `google/gemini-2.5-flash` via gateway) | `gemini-2.0-flash` only |
-| `responseMimeType` | not forced | `"application/json"` (stricter, more empty/`finishReason=OTHER` responses) |
-| `maxOutputTokens` | 8000 | 4096 |
-| Prompt size | small per topic | larger (syllabus + samples + forbidden + style) |
+---
 
-## Root cause
+## 1. Raise `MAX_BATCHES` from 3 → 5
 
-`getGeminiKeys()` includes `LOVABLE_API_KEY` and pushes it into a Google endpoint as `?key=<LOVABLE_API_KEY>`. Google rejects it (401/403). When `GEMINI_API_KEY` itself is briefly throttled, every "fallback" attempt is a guaranteed auth failure — so the loop burns its 3 batches, returns 0 accepted, and the log shows "No questions accepted after retries / API key exhausted." Meanwhile `generate-test` never has this problem because it uses the shared auto-switcher which sends `LOVABLE_API_KEY` to the **Lovable Gateway**, not to Google.
+**File:** `supabase/functions/generate-job-test/index.ts` (line 16)
 
-Secondary contributors:
-1. `responseMimeType: application/json` + larger prompt → occasional empty responses (finishReason=MAX_TOKENS / OTHER) counted as `gemini_error`.
-2. No rate-limit gap → the 2nd/3rd batch can hit a 429 that the function has no way to recover from.
-3. Lower `maxOutputTokens` (4096) truncates batches of 10 detailed MCQs.
+```ts
+const MAX_BATCHES = 5; // Allow up to ~50 questions (5 × 10)
+```
 
-## The fix (one file: `supabase/functions/generate-job-test/index.ts`)
+No other change. The existing 4 s rate-limit gap, Lovable Gateway fallback, and stop-early logic are preserved. Loop bound and progress logs (`[BATCH n/MAX_BATCHES]`) update automatically.
 
-1. **Replace local `callGemini` with the shared auto-switcher.**
-   - Import `callAIWithAutoSwitch` from `../_shared/gemini.ts`.
-   - Delete `getGeminiKeys()` and the manual `fetch` to `generativelanguage.googleapis.com`.
-   - New `callGemini(prompt)` becomes a thin wrapper:
-     ```ts
-     const { text, provider, cost } = await callAIWithAutoSwitch(
-       '', prompt, { temperature: 0.8, maxOutputTokens: 8000 }
-     );
-     console.log(`[AI] provider=${provider} cost=${cost} chars=${text.length}`);
-     return text;
-     ```
-   - This automatically gives job-test the same Gemini → Lovable Gateway fallback, the 4s rate gap, and the daily UTC reset that `generate-test` already enjoys.
+---
 
-2. **Drop `responseMimeType: "application/json"`.** The shared helper doesn't force it, and `parseQuestions()` already strips ```` ``` ```` fences and tolerates object/array wrappers. Removing the strict mime cuts most empty-response failures.
+## 2. SEO-friendly ( scholarship and job pages) "slug-uuid" URLs for opportunities
 
-3. **Bump `maxOutputTokens` to 8000** to match `generate-test` and prevent truncation when a batch of 10 detailed MCQs runs long.
+Pattern (Medium / StackOverflow style):
+`/opportunity/teachers-staff-army-public-school-eadc0e16-e642-4c61-8e2f-0ea5731f07ea`
 
-4. **Keep everything else** (`MAX_BATCHES=3`, `BATCH_SIZE=10`, forbidden filter, insert into `job_test_questions`, telemetry into `job_test_generation_logs`). No DB changes.
+Route stays `/opportunity/:id`. The UUID is always the last 36 chars, so old UUID-only links keep working.
 
-5. **Improve a couple of log lines** so future failures are obvious:
-   - On AI error inside `generateForSection`, log `provider` if the helper returned one and tag rejection as `ai_quota` vs `ai_error` so the dashboard shows the real cause instead of the generic `gemini_error`.
+### 2a. New utility — `src/utils/slugify.ts`
 
-## What this fixes
+```ts
+export function generateSlug(title: string): string {
+  return (title || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60)
+    .replace(/-+$/g, ''); // avoid trailing hyphen after slice
+}
 
-- ✅ No more bogus `LOVABLE_API_KEY` → Google calls (the actual cause of "API key exhausted / 401").
-- ✅ Real fallback to Lovable Gateway (paid backup) when Gemini is throttled — same behavior as Subject Tests today.
-- ✅ Proper rate spacing (4s) prevents self-inflicted 429s across the 3 batches.
-- ✅ Bigger token budget + relaxed mime → more parseable responses, fewer empty/`gemini_error` rejections.
-- ✅ Single source of truth: both functions now go through `_shared/gemini.ts`, so any future provider/model change applies uniformly.
+export function generateSlugUrl(title: string, id: string): string {
+  const slug = generateSlug(title);
+  return slug ? `${slug}-${id}` : id;
+}
 
-## Verification (after switch back to default mode)
+const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
-1. Deploy `generate-job-test`.
-2. Trigger generation for one job test, one subject (e.g. "English") with `question_count: 5` for a fast smoke test.
-3. Check Edge Function logs — expect:
-   - `[AI-Switch] Attempting Gemini (free tier)...` and `✅ Gemini success` (or `🔄 Using Lovable AI Gateway` if Gemini quota is dry).
-   - `[BATCH 1] ✅ API call OK (NNNN chars)` and `Parsed N questions`.
-   - `[INSERT] ✅ Inserted N questions`.
-   - `[COMPLETE] English status=success`.
-4. Confirm rows in `job_test_questions` (admin_approved=false) and a corresponding `success` row in `job_test_generation_logs`.
-5. Re-run for full syllabus; confirm `total_accepted > 0` for every section.
+export function extractIdFromSlug(slugId: string): string {
+  if (!slugId) return '';
+  const match = slugId.match(UUID_RE);
+  return match ? match[0] : slugId; // fallback: assume raw UUID
+}
+```
+
+### 2b. Update every internal link to `/opportunity/...`
+
+Replace `/opportunity/${X.id}` with `/opportunity/${generateSlugUrl(X.title, X.id)}` in:
+
+- `src/components/jobs/JobCard.tsx` (line 36, the `to` prop)
+- `src/components/external/ExternalOpportunitiesSection.tsx` (line 190)
+- `src/pages/BoardResults.tsx` (line 123, uses `opp.title`)
+- `src/pages/Scholarships.tsx` (line 189, uses `scholarship.title`)
+- `src/pages/Tenders.tsx` (line 99, uses `tender.title`)
+
+Each gets `import { generateSlugUrl } from '@/utils/slugify';`.
+
+### 2c. Update `src/pages/OpportunityDetail.tsx`
+
+```ts
+import { extractIdFromSlug } from '@/utils/slugify';
+
+const { id: slugId } = useParams();
+const id = extractIdFromSlug(slugId || '');
+```
+
+Then the existing `.eq("id", id)` query and `queryKey: ['opportunity', id]` work unchanged. Old bookmarks `/opportunity/<uuid>` still resolve because `extractIdFromSlug` returns the bare UUID when no slug prefix is present.
+
+### 2d. Router
+
+No change. `src/App.tsx` line 241 already uses `:id` which now carries the full `slug-uuid` string.
+
+### 2e. Breadcrumbs
+
+Skipped — `OpportunityDetail` builds breadcrumbs from the loaded `opportunity.title` (post-fetch), so they remain correct.
+
+---
+
+## Verification
+
+1. Edge Function logs show `[BATCH 4/5]` / `[BATCH 5/5]` when 40+ questions requested; 40-question generation reaches 40 accepted.
+2. Job/scholarship/tender/board-result cards render `<a href="/opportunity/<slug>-<uuid>">` (right-click → Open in new tab still works — preserves the prior semantic-Link refactor).
+3. Visiting both `/opportunity/<uuid>` (legacy) and `/opportunity/<slug>-<uuid>` (new) loads the same detail page.
+4. No DB migration, no schema change, no broken external inbound links.
 
 ## Files touched
 
-- `supabase/functions/generate-job-test/index.ts` — only file edited.
-- No DB migrations, no secret changes, no frontend changes.
+- `supabase/functions/generate-job-test/index.ts` (1 line)
+- `src/utils/slugify.ts` (new)
+- `src/components/jobs/JobCard.tsx`
+- `src/components/external/ExternalOpportunitiesSection.tsx`
+- `src/pages/BoardResults.tsx`
+- `src/pages/Scholarships.tsx`
+- `src/pages/Tenders.tsx`
+- `src/pages/OpportunityDetail.tsx`
