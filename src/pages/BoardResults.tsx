@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ExternalLink, TrendingUp, Loader2, CheckCircle, BookOpen, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate, Link } from "react-router-dom";
+import { generateSlugUrl } from "@/utils/slugify";
 
 const BoardResults = () => {
   const navigate = useNavigate();
@@ -120,7 +121,7 @@ const BoardResults = () => {
               {opportunities.map((opp: any) => (
                 <Link
                   key={`opp-${opp.id}`}
-                  to={`/opportunity/${opp.id}`}
+                  to={`/opportunity/${generateSlugUrl(opp.title, opp.id)}`}
                   className="block"
                   aria-label={opp.title}
                 >

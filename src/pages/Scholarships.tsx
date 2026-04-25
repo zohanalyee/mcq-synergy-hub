@@ -16,6 +16,7 @@ import { ExternalOpportunity, ExternalOpportunityFilters } from "@/types/externa
 import { useAuth } from "@/contexts/AuthContext";
 import ExternalOpportunitiesSection from "@/components/external/ExternalOpportunitiesSection";
 import GlassScholarshipsFilters from "@/components/scholarships/GlassScholarshipsFilters";
+import { generateSlugUrl } from "@/utils/slugify";
 
 const Scholarships = () => {
   const navigate = useNavigate();
@@ -186,7 +187,7 @@ const Scholarships = () => {
                     
                     <div className="flex justify-end mt-auto pt-2 border-t border-border/50">
                       <Button size="sm" variant="outline" className="h-7 text-xs" asChild>
-                        <Link to={`/opportunity/${scholarship.id}`} className="flex items-center gap-1">
+                        <Link to={`/opportunity/${generateSlugUrl(scholarship.title, scholarship.id)}`} className="flex items-center gap-1">
                           <Eye className="h-3 w-3" />
                           View Details
                         </Link>
