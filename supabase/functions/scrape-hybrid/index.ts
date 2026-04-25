@@ -290,15 +290,16 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
     if (selectors?.container) {
       try {
         const containers = doc.querySelectorAll(selectors.container);
-        for (const container of containers) {
+        for (const container of containers as any) {
+          const c = container as any;
           const title = selectors.title
-            ? container.querySelector(selectors.title)?.textContent?.trim()
-            : container.querySelector('h1, h2, h3, h4, a')?.textContent?.trim();
+            ? c.querySelector(selectors.title)?.textContent?.trim()
+            : c.querySelector('h1, h2, h3, h4, a')?.textContent?.trim();
           if (!title || title.length < 5) continue;
-          const linkEl = container.querySelector('a[href]');
+          const linkEl = c.querySelector('a[href]');
           const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
-          const text = container.textContent || '';
-          const imgEl = container.querySelector('img[src]');
+          const text = c.textContent || '';
+          const imgEl = c.querySelector('img[src]');
           const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
           const item: any = {
             title, description: text.substring(0, 500).trim(),
@@ -309,23 +310,24 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
           items.push(item);
         }
       } catch (e) {
-        console.warn(`[cheerio] Custom selector failed:`, e.message);
+        console.warn(`[cheerio] Custom selector failed:`, (e as Error).message);
       }
     }
 
     // Fallback: keyword-based heading scan
     if (items.length === 0) {
       const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6, .title, .heading, .notice-title, .notification-title');
-      for (const heading of headings) {
-        const text = heading.textContent?.trim() || '';
+      for (const heading of headings as any) {
+        const h = heading as any;
+        const text = h.textContent?.trim() || '';
         const lower = text.toLowerCase();
         if (text.length < 5 || !kws.some(kw => lower.includes(kw))) continue;
 
-        const parent = heading.parentElement;
+        const parent = h.parentElement as any;
         const fullText = parent?.textContent || text;
-        const linkEl = (parent || heading).querySelector?.('a[href]') || heading.closest?.('a');
+        const linkEl = (parent || h).querySelector?.('a[href]') || h.closest?.('a');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute?.('href') || '', url) : url;
-        const imgEl = (parent || heading).querySelector?.('img[src]');
+        const imgEl = (parent || h).querySelector?.('img[src]');
         const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute?.('src') || '', url) : null;
 
         const item: any = {
@@ -342,22 +344,23 @@ async function scrapeWithCheerio(url: string, sourceType: string, sourceName: st
     // Fallback: table rows, list items, notices
     if (items.length === 0) {
       const rows = doc.querySelectorAll('table tr, .list-item, .card, article, li, dd, .notice, .notification, .news-item, .latest-news li');
-      for (const row of rows) {
-        const text = row.textContent?.trim() || '';
+      for (const row of rows as any) {
+        const r = row as any;
+        const text = r.textContent?.trim() || '';
         if (text.length < 10 || !kws.some(kw => text.toLowerCase().includes(kw))) continue;
-        const linkEl = row.querySelector('a[href]');
+        const linkEl = r.querySelector('a[href]');
         const applyUrl = linkEl ? resolveUrl(linkEl.getAttribute('href') || '', url) : url;
         const title = linkEl?.textContent?.trim() || text.substring(0, 200);
         let pdfUrl: string | null = null;
-        const allLinks = row.querySelectorAll('a[href]');
-        for (const l of allLinks) {
-          const href = l.getAttribute('href') || '';
+        const allLinks = r.querySelectorAll('a[href]');
+        for (const l of allLinks as any) {
+          const href = (l as any).getAttribute('href') || '';
           if (href.endsWith('.pdf') || href.includes('download')) {
             pdfUrl = resolveUrl(href, url);
             break;
           }
         }
-        const imgEl = row.querySelector('img[src]');
+        const imgEl = r.querySelector('img[src]');
         const imageUrl = imgEl ? resolveUrl(imgEl.getAttribute('src') || '', url) : null;
         const item: any = {
           title, description: text.substring(0, 500).trim(),

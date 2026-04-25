@@ -86,10 +86,10 @@ serve(async (req) => {
         // Find result URL
         let resultUrl = source.url;
         const links = doc.querySelectorAll("a");
-        for (const link of links) {
-          const linkText = (link.textContent?.toLowerCase() || "") + " " + (link.getAttribute("href") || "").toLowerCase();
+        for (const link of links as any) {
+          const linkText = (link.textContent?.toLowerCase() || "") + " " + ((link as any).getAttribute?.("href") || "").toLowerCase();
           if (linkText.includes("result") || linkText.includes("check") || linkText.includes("gazette")) {
-            const href = link.getAttribute("href") || "";
+            const href = (link as any).getAttribute?.("href") || "";
             resultUrl = href.startsWith("http") ? href : href ? new URL(href, source.url).href : source.url;
             break;
           }
