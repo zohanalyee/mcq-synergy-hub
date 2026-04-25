@@ -45,6 +45,8 @@ const JobsGrid = ({ jobs, isLoading, searchQuery, hideEmptyState }: JobsGridProp
     );
   }
 
+  if (hideEmptyState) return null;
+
   return (
     <div className="text-center py-8">
       <AlertCircle className="h-10 w-10 mx-auto text-muted-foreground/40" />
