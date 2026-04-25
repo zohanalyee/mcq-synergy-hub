@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://mcqsai.com/sitemaps/static.xml</loc>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=static</loc>
   </sitemap>
   <sitemap>
-    <loc>https://mcqsai.com/sitemaps/tools.xml</loc>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=tools</loc>
   </sitemap>
   <sitemap>
-    <loc>https://mcqsai.com/sitemaps/exams.xml</loc>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=exams</loc>
   </sitemap>
   <sitemap>
-    <loc>https://mcqsai.com/sitemaps/jobs.xml</loc>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=jobs</loc>
   </sitemap>
   <sitemap>
-    <loc>https://mcqsai.com/sitemaps/scholarships.xml</loc>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=scholarships</loc>
   </sitemap>
   <sitemap>
-    <loc>https://mcqsai.com/sitemaps/blog.xml</loc>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=blog</loc>
   </sitemap>
   <sitemap>
-    <loc>https://mcqsai.com/sitemaps/boards-1.xml</loc>
+    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=boards&amp;page=1</loc>
   </sitemap>
 </sitemapindex>

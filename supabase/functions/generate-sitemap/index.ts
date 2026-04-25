@@ -13,6 +13,20 @@ function toSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
 
+// Mirrors src/utils/slugify.ts so sitemap URLs match in-app /opportunity links exactly.
+function generateSlugUrl(title: string, id: string): string {
+  const slug = (title || "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60)
+    .replace(/-+$/g, "");
+  return slug ? `${slug}-${id}` : id;
+}
+
 function extractClassNumber(levelName: string): string | null {
   const match = levelName.match(/(\d+)/);
   return match ? match[1] : null;
@@ -71,41 +85,41 @@ Deno.serve(async (req) => {
     if (type === "jobs") {
       const { data: ciJobs } = await supabase
         .from("content_items")
-        .select("title, updated_at")
+        .select("id, title, updated_at")
         .eq("category", "job")
         .eq("status", "approved");
 
       const { data: eoJobs } = await supabase
         .from("external_opportunities")
-        .select("title, updated_at")
+        .select("id, title, updated_at")
         .eq("type", "job")
         .eq("status", "approved");
 
       const allJobs = [
-        ...(ciJobs || []).map(j => ({ slug: toSlug(j.title), lastmod: j.updated_at.split("T")[0] })),
-        ...(eoJobs || []).map(j => ({ slug: toSlug(j.title), lastmod: j.updated_at.split("T")[0] })),
+        ...(ciJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
+        ...(eoJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
       ];
-      return new Response(generateUrlSetFromSlugs(allJobs, "/jobs/"), { headers: corsHeaders });
+      return new Response(generateUrlSetFromSlugs(allJobs, "/opportunity/"), { headers: corsHeaders });
     }
 
     if (type === "scholarships") {
       const { data: ciSchol } = await supabase
         .from("content_items")
-        .select("title, updated_at")
+        .select("id, title, updated_at")
         .eq("category", "scholarship")
         .eq("status", "approved");
 
       const { data: eoSchol } = await supabase
         .from("external_opportunities")
-        .select("title, updated_at")
+        .select("id, title, updated_at")
         .eq("type", "scholarship")
         .eq("status", "approved");
 
       const allSchol = [
-        ...(ciSchol || []).map(s => ({ slug: toSlug(s.title), lastmod: s.updated_at.split("T")[0] })),
-        ...(eoSchol || []).map(s => ({ slug: toSlug(s.title), lastmod: s.updated_at.split("T")[0] })),
+        ...(ciSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
+        ...(eoSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
       ];
-      return new Response(generateUrlSetFromSlugs(allSchol, "/scholarships/"), { headers: corsHeaders });
+      return new Response(generateUrlSetFromSlugs(allSchol, "/opportunity/"), { headers: corsHeaders });
     }
 
     if (type === "blog") {
