@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, MapPin, Building2, Loader2, Eye } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { generateSlugUrl } from "@/utils/slugify";
 
 const categories = ["All", "Construction", "IT", "Consultancy", "Supply", "Services", "Equipment", "General"];
 
@@ -96,7 +97,7 @@ const Tenders = () => {
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {tenders.map((tender: any) => (
-                <Link key={tender.id} to={`/opportunity/${tender.id}`} className="block group">
+                <Link key={tender.id} to={`/opportunity/${generateSlugUrl(tender.title, tender.id)}`} className="block group">
                   <Card className="border-border/30 hover:border-primary/30 transition-colors overflow-hidden h-full">
                     {/* Image */}
                     <div className="relative h-36 bg-muted">

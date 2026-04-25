@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalOpportunity, OpportunityType } from "@/types/externalOpportunities";
+import { generateSlugUrl } from "@/utils/slugify";
 
 interface ExternalOpportunitiesSectionProps {
   opportunities: ExternalOpportunity[];
@@ -187,7 +188,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                   className="w-full gap-1"
                   asChild
                 >
-                  <Link to={`/opportunity/${opp.id}`}>
+                  <Link to={`/opportunity/${generateSlugUrl(opp.title, opp.id)}`}>
                     <Eye className="h-3 w-3" />
                     View Details
                   </Link>

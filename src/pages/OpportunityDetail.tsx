@@ -11,6 +11,7 @@ import {
   ArrowLeft, Briefcase, GraduationCap, Award, Loader2, Download,
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { extractIdFromSlug } from "@/utils/slugify";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
@@ -36,8 +37,9 @@ const placeholderImages: Record<string, string> = {
 const isPdfUrl = (url: string) => url.toLowerCase().endsWith('.pdf');
 
 const OpportunityDetail = () => {
-  const { id } = useParams();
+  const { id: slugId } = useParams();
   const navigate = useNavigate();
+  const id = extractIdFromSlug(slugId || "");
 
   const { data: opportunity, isLoading } = useQuery({
     queryKey: ["opportunity", id],

@@ -13,7 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MAX_BATCHES = 3;
+const MAX_BATCHES = 5; // Allow up to ~50 questions (5 × 10)
 const BATCH_SIZE = 10;
 const DELAY_BETWEEN_BATCHES_MS = 2000;
 const DAILY_LOG_CAP = 200; // per job_test_id

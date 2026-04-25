@@ -2,6 +2,7 @@ import { Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { GlassCard, getCardTheme } from "@/components/ui/GlassCard";
+import { generateSlugUrl } from "@/utils/slugify";
 
 interface JobCardProps {
   job: ContentItem;
@@ -33,7 +34,7 @@ const JobCard = ({ job }: JobCardProps) => {
       pastelColor={theme.pastel}
       // Real anchors: external apply link OR internal opportunity page
       href={job.fileUrl || undefined}
-      to={!job.fileUrl ? `/opportunity/${job.id}` : undefined}
+      to={!job.fileUrl ? `/opportunity/${generateSlugUrl(job.title, job.id)}` : undefined}
     >
       <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mb-2">
         {job.description}
