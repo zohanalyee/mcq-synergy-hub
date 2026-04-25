@@ -159,7 +159,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
             >
               <Card
                 className={cn(
-                  "h-full flex flex-col group relative overflow-hidden",
+                  "h-full w-full max-w-full min-w-0 flex flex-col group relative overflow-hidden",
                   "border border-border/60 bg-gradient-to-br from-background via-background to-primary/5",
                   "transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-primary/40"
                 )}
@@ -167,8 +167,8 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                 {/* Decorative gradient blob */}
                 <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-                <CardHeader className="pb-3 relative">
-                  <div className="flex items-start gap-3">
+                <CardHeader className="pb-3 relative min-w-0">
+                  <div className="flex items-start gap-3 min-w-0">
                     <img
                       src={opp.image_url || "/placeholder.svg"}
                       alt={opp.title}
@@ -190,28 +190,28 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                         {type === "job" && getSectorBadge(opp.sector)}
                         {type === "scholarship" && getScopeBadge(opp.scholarship_scope)}
                       </div>
-                      <CardTitle className="text-base sm:text-lg font-bold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors">
+                      <CardTitle className="text-base sm:text-lg font-bold text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors break-words">
                         {opp.title}
                       </CardTitle>
                     </div>
                   </div>
                 </CardHeader>
 
-                <CardContent className="pt-0 flex-1 flex flex-col">
-                  <p className="line-clamp-2 mb-3 text-xs text-muted-foreground">
+                <CardContent className="pt-0 flex-1 flex flex-col min-w-0">
+                  <p className="line-clamp-2 mb-3 text-xs text-muted-foreground break-words">
                     {opp.description || "No description available"}
                   </p>
 
-                  <div className="space-y-1.5 text-xs text-muted-foreground mb-3 flex-1">
+                  <div className="space-y-1.5 text-xs text-muted-foreground mb-3 flex-1 min-w-0">
                     {opp.organization && (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <Building2 className="h-3 w-3 flex-shrink-0" />
-                        <span className="truncate">{opp.organization}</span>
+                        <span className="truncate min-w-0">{opp.organization}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-1.5 flex-wrap">
+                    <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                       <MapPin className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">{opp.location || "Location not specified"}</span>
+                      <span className="truncate min-w-0">{opp.location || "Location not specified"}</span>
                       {getRegionBadge(opp.region)}
                     </div>
 
