@@ -86,6 +86,7 @@ const Jobs = () => {
             jobs={filteredJobs}
             isLoading={isLoading}
             searchQuery={searchQuery}
+            hideEmptyState={filteredExternalJobs.length > 0}
           />
         </motion.div>
 
