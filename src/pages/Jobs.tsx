@@ -61,7 +61,7 @@ const Jobs = () => {
         description="Find latest government and private job opportunities in Pakistan. PPSC, FPSC, NTS job listings and application details."
         keywords="Pakistan jobs, government jobs, PPSC jobs, FPSC jobs, NTS jobs, career opportunities"
       />
-      <div className="max-w-7xl mx-auto px-4 pt-4 pb-10">
+      <div className="max-w-7xl mx-auto px-4 pt-4 pb-10 overflow-x-hidden">
         <PageBreadcrumb items={[{ title: 'Jobs', href: '/jobs', isCurrent: true }]} showHomeButton={true} />
         <JobsHeader />
         
