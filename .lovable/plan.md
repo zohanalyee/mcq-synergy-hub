@@ -1,54 +1,64 @@
-## Investigation result: edge function is NOT crashing
+## Sitemap regression fix plan
 
-I tested all 7 sub-sitemap endpoints directly against the Supabase Edge Function. **Every one returned HTTP 200 with valid XML.**
+### Current finding
+I checked the live URL from the server side and `https://www.mcqsai.com/sitemap.xml` is currently returning:
 
-| Endpoint | Status | Result |
-|---|---|---|
-| `?type=static` | 200 | 20 URLs |
-| `?type=jobs` | 200 | Hundreds of `/opportunity/<slug>-<uuid>` URLs |
-| `?type=scholarships` | 200 | 11+ URLs |
-| `?type=blog` | 200 | 5 published posts |
-| `?type=exams` | 200 | 6 exam landing pages |
-| `?type=tools` | 200 | 60+ tool pages |
-| `?type=boards&page=1` | 200 | 1000 board/topic URLs |
+- HTTP `200`
+- `content-type: text/xml; charset=utf-8`
+- the expected 7 Supabase Edge Function sitemap URLs
 
-Sample working response from `?type=jobs`:
-```xml
-<url><loc>https://mcqsai.com/opportunity/assistant-director-fia-88b53ed6-...</loc>
-     <lastmod>2025-12-24</lastmod>...</url>
-```
+So the repository file exists and the latest published URL appears healthy right now. The mobile screenshot showing the React 404 is still explainable by one of these cases:
 
-Recent edge function logs show no errors. The function code already matches what the user's diagnosis recommends: it uses correct table names (`content_items`, `external_opportunities`, `blog_posts`), defines `generateSlugUrl`, and returns proper `Content-Type: application/xml` headers.
+1. The browser was viewing a stale/cached deployment during or before publishing completed.
+2. The screenshot URL may have been truncated visually and could have been a nearby path like `/sitema...` rather than exactly `/sitemap.xml`.
+3. A previous deployment served SPA fallback for `.xml`, but the current deployment now serves the static file correctly.
+4. Legacy `/sitemaps/*.xml` paths still return 404 on Lovable hosting because `public/_redirects` is Netlify-specific and Lovable does not process it.
 
-## Most likely explanation for the user's error
+### What I will do after approval
 
-The `SUPABASE_EDGE_RUNTIME_ERROR / Service is temporarily unavailable` response is a **transient Supabase platform error** (cold start, regional blip, or rate limit), not a code bug. It is gone now — direct calls work cleanly.
+1. **Re-assert the physical sitemap file**
+   - Keep/rewrite `public/sitemap.xml` with the exact 7 cross-domain Supabase Edge Function URLs:
+     - `type=static`
+     - `type=jobs`
+     - `type=scholarships`
+     - `type=blog`
+     - `type=exams`
+     - `type=boards&page=1`
+     - `type=tools`
+   - Ensure the XML declaration and sitemap namespace remain valid.
 
-It's also possible the user tested while a deploy was in flight after the previous changes.
+2. **Add a build-time verification script**
+   - Add a small script that verifies:
+     - `public/sitemap.xml` exists before build.
+     - the built `dist/sitemap.xml` exists after build.
+     - it contains `<sitemapindex>` and all 7 required Edge Function URLs.
+   - Update the build script so future builds fail if Vite does not copy the sitemap.
 
-## Recommended action: NO code changes needed
+3. **Fix legacy `/sitemaps/*.xml` 404 risk inside the app**
+   - Since Lovable hosting does not honor `public/_redirects`, the current `/sitemaps/jobs.xml` etc. paths cannot rely on that file.
+   - Add a tiny pre-React browser redirect in `index.html` for legacy sitemap paths only:
+     - `/sitemaps/jobs.xml` -> Supabase Edge Function `?type=jobs`
+     - `/sitemaps/scholarships.xml` -> `?type=scholarships`
+     - `/sitemaps/blog.xml` -> `?type=blog`
+     - `/sitemaps/exams.xml` -> `?type=exams`
+     - `/sitemaps/tools.xml` -> `?type=tools`
+     - `/sitemaps/static.xml` -> `?type=static`
+     - `/sitemaps/boards-1.xml` -> `?type=boards&page=1`
+   - This prevents users/bots hitting those legacy paths from seeing the React 404 component. The canonical `sitemap.xml` will still use direct Supabase URLs, so Google does not depend on this fallback.
 
-Instead, do these verification steps:
+4. **Clean up misleading hosting config**
+   - Remove or simplify sitemap rules in `public/_redirects`, because Lovable does not use them and they create false confidence.
+   - Keep only harmless documentation comments or remove the file if it is not needed.
 
-1. **Re-test the failing URLs from a browser right now** — they should all return XML.
-   - https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=jobs
-   - https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=scholarships
-   - https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=blog
+5. **Verify after implementation**
+   - Run a production build locally and confirm `dist/sitemap.xml` exists.
+   - Check `dist/sitemap.xml` content for the 7 required URLs.
+   - Re-check live/published URL headers after publish instructions:
+     - `https://www.mcqsai.com/sitemap.xml` should return XML, not React HTML.
 
-2. **Re-submit `https://mcqsai.com/sitemap.xml` in Google Search Console.** Google retries automatically; the original transient error won't permanently block indexing.
+### Technical details
 
-3. **Optional resilience improvements** (only if you want belt-and-suspenders against future cold-start blips). I can add:
-   - A 5-minute in-memory cache on each sitemap response (`Cache-Control: public, max-age=300, s-maxage=3600`) — currently no `Cache-Control` header is set, which means Google re-hits the function cold every time.
-   - An explicit try/catch around each per-type branch so one failing query degrades to an empty `<urlset>` instead of a 500.
-   - A health-check log line at the top of the handler so future "is it crashing?" questions are answerable from logs in one click.
-
-## What I will do on approval
-
-Only the **optional resilience improvements** above (single file edit: `supabase/functions/generate-sitemap/index.ts`):
-- Add `Cache-Control: public, max-age=300, s-maxage=3600` to the response headers.
-- Wrap each `type` branch in its own try/catch so a single bad query returns an empty valid sitemap instead of 500.
-- Add a `console.log` at handler entry with the requested type for easier log filtering.
-
-No DB changes. No new tables. No table-name swaps (the user's prompt suggested `opportunities` table — that table does **not exist**; the correct tables `content_items` + `external_opportunities` are already used).
-
-If you'd rather I do nothing and just re-confirm the function is healthy, say so — the function is genuinely fine right now.
+- Vite automatically copies everything in `public/` to `dist/`; the verification script will make that behavior explicit and fail loudly if it regresses.
+- Lovable hosting has built-in SPA fallback for app routes, but static files with real extensions should be served as assets when present.
+- `public/_redirects` is not processed by Lovable hosting, so it cannot be used as the real fix for `.xml` redirects.
+- Edge Function code does not need database or schema changes for this fix.
