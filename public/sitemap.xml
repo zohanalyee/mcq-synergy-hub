@@ -1,24 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <sitemap>
-    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=static</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=tools</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=exams</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=jobs</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=scholarships</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=blog</loc>
-  </sitemap>
-  <sitemap>
-    <loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=boards&amp;page=1</loc>
-  </sitemap>
+  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=static</loc></sitemap>
+  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=jobs</loc></sitemap>
+  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=scholarships</loc></sitemap>
+  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=blog</loc></sitemap>
+  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=exams</loc></sitemap>
+  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=boards&amp;page=1</loc></sitemap>
+  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=tools</loc></sitemap>
 </sitemapindex>
