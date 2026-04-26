@@ -22,63 +22,67 @@ import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
 import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
+// Eager (above-the-fold / auth landing) — must load fast
 import Index from "./pages/Index";
-import Subjects from "./pages/Subjects";
-import MockTests from "./pages/MockTests";
-import Analytics from "./pages/Analytics";
-import Leaderboard from "./pages/Leaderboard";
-import GetStarted from "./pages/GetStarted";
 import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Auth from "./pages/Auth";
-import PastPapers from "./pages/PastPapers";
-import Jobs from "./pages/Jobs";
-import Scholarships from "./pages/Scholarships";
-import CustomSyllabus from "./pages/CustomSyllabus";
-import SubjectContent from "./pages/SubjectContent";
-import CustomQuizzes from "./pages/CustomQuizzes";
-import AdminPanel from "./pages/AdminPanel";
-import ExternalCuration from "./pages/admin/ExternalCuration";
+import GetStarted from "./pages/GetStarted";
 import NotFound from "./pages/NotFound";
+
+// Lazy: large feature pages (code-split for mobile performance)
+const Subjects = lazy(() => import("./pages/Subjects"));
+const MockTests = lazy(() => import("./pages/MockTests"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const PastPapers = lazy(() => import("./pages/PastPapers"));
+const Jobs = lazy(() => import("./pages/Jobs"));
+const Scholarships = lazy(() => import("./pages/Scholarships"));
+const CustomSyllabus = lazy(() => import("./pages/CustomSyllabus"));
+const SubjectContent = lazy(() => import("./pages/SubjectContent"));
+const CustomQuizzes = lazy(() => import("./pages/CustomQuizzes"));
+const AdminPanel = lazy(() => import("./pages/AdminPanel"));
+const ExternalCuration = lazy(() => import("./pages/admin/ExternalCuration"));
 const ReviewsManagement = lazy(() => import("./pages/admin/ReviewsManagement"));
 
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
-import Profile from "./pages/Profile";
-import Feedback from "./pages/Feedback";
-import Achievements from "./pages/Achievements";
-import ForgotPassword from "./pages/ForgotPassword";
-import Reviews from "./pages/Reviews";
-import ResetPassword from "./pages/ResetPassword";
-import VerifyEmailSent from "./pages/VerifyEmailSent";
-import VerifyEmail from "./pages/VerifyEmail";
-import CompleteProfile from "./pages/CompleteProfile";
 
-import Quizzes from "./pages/Quizzes";
-import SubmitContent from "./pages/SubmitContent";
+const Profile = lazy(() => import("./pages/Profile"));
+const Feedback = lazy(() => import("./pages/Feedback"));
+const Achievements = lazy(() => import("./pages/Achievements"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const Reviews = lazy(() => import("./pages/Reviews"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const VerifyEmailSent = lazy(() => import("./pages/VerifyEmailSent"));
+const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
+const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
+
+const Quizzes = lazy(() => import("./pages/Quizzes"));
+const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
 const About = lazy(() => import("./pages/About"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
-import QuestionBank from "./pages/QuestionBank";
-import AskDocument from "./pages/AskDocument";
-import TestSession from "./pages/TestSession";
-import Notifications from "./pages/Notifications";
+const QuestionBank = lazy(() => import("./pages/QuestionBank"));
+const AskDocument = lazy(() => import("./pages/AskDocument"));
+const TestSession = lazy(() => import("./pages/TestSession"));
+const Notifications = lazy(() => import("./pages/Notifications"));
 
-// Existing Tool Pages
-import CalendarTool from "./pages/tools/CalendarTool";
+// Tool Pages — all lazy (rarely on initial load)
+const CalendarTool = lazy(() => import("./pages/tools/CalendarTool"));
 const IslamicCalendar = lazy(() => import("./pages/tools/IslamicCalendar"));
 const InternationalCalendar = lazy(() => import("./pages/tools/InternationalCalendar"));
-import MathTool from "./pages/tools/MathTool";
-import AgeCalculator from "./pages/tools/AgeCalculator";
-import TimerTool from "./pages/tools/TimerTool";
-import GPACalculator from "./pages/tools/GPACalculator";
-import UnitConverter from "./pages/tools/UnitConverter";
-import NotesTool from "./pages/tools/NotesTool";
+const MathTool = lazy(() => import("./pages/tools/MathTool"));
+const AgeCalculator = lazy(() => import("./pages/tools/AgeCalculator"));
+const TimerTool = lazy(() => import("./pages/tools/TimerTool"));
+const GPACalculator = lazy(() => import("./pages/tools/GPACalculator"));
+const UnitConverter = lazy(() => import("./pages/tools/UnitConverter"));
+const NotesTool = lazy(() => import("./pages/tools/NotesTool"));
 
 // Tools listing page
-import Tools from "./pages/Tools";
+const Tools = lazy(() => import("./pages/Tools"));
 
 // Lazy-loaded new tool pages
 const BMICalculator = lazy(() => import("./pages/tools/BMICalculator"));

@@ -1,4 +1,4 @@
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import Header from "@/components/Header";
@@ -28,13 +28,59 @@ const typeColors: Record<string, string> = {
 };
 
 const placeholderImages: Record<string, string> = {
-  scholarship: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800",
-  job: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800",
-  tender: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800",
-  board_result: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800",
+  scholarship: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&fm=webp&q=70",
+  job: "https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=800&fm=webp&q=70",
+  tender: "https://images.unsplash.com/photo-1450101499163-c8848c66ca85?w=800&fm=webp&q=70",
+  board_result: "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=800&fm=webp&q=70",
 };
 
 const isPdfUrl = (url: string) => url.toLowerCase().endsWith('.pdf');
+
+const breadcrumbForType = (type: string) => {
+  switch (type) {
+    case "job": return { label: "Jobs", href: "/jobs" };
+    case "scholarship": return { label: "Scholarships", href: "/scholarships" };
+    case "tender": return { label: "Tenders", href: "/tenders" };
+    case "board_result": return { label: "Board Results", href: "/board-results" };
+    default: return { label: "Opportunities", href: "/jobs" };
+  }
+};
+
+const buildJsonLd = (op: any) => {
+  const base: any = {
+    "@context": "https://schema.org",
+    name: op.title,
+    description: op.description || `${op.type} opportunity from ${op.organization || op.source_name || "MCQsAI"}`,
+    url: typeof window !== "undefined" ? window.location.href : `https://mcqsai.com/opportunity/${op.id}`,
+    datePosted: op.created_at,
+    ...(op.deadline_date && { validThrough: op.deadline_date }),
+  };
+  if (op.type === "job") {
+    return {
+      ...base,
+      "@type": "JobPosting",
+      title: op.title,
+      employmentType: op.employment_type || "FULL_TIME",
+      hiringOrganization: { "@type": "Organization", name: op.organization || op.source_name || "MCQsAI" },
+      jobLocation: {
+        "@type": "Place",
+        address: { "@type": "PostalAddress", addressLocality: op.location || "Pakistan", addressCountry: "PK" },
+      },
+      ...(op.salary && { baseSalary: { "@type": "MonetaryAmount", currency: "PKR", value: { "@type": "QuantitativeValue", value: op.salary, unitText: "MONTH" } } }),
+      ...(op.qualification && { qualifications: op.qualification }),
+      ...(op.experience && { experienceRequirements: op.experience }),
+    };
+  }
+  if (op.type === "scholarship") {
+    return {
+      ...base,
+      "@type": "Scholarship",
+      provider: { "@type": "Organization", name: op.organization || op.source_name || "MCQsAI" },
+      areaServed: { "@type": "Country", name: "Pakistan" },
+    };
+  }
+  return null;
+};
 
 const OpportunityDetail = () => {
   const { id: slugId } = useParams();
@@ -85,6 +131,18 @@ const OpportunityDetail = () => {
   const hasDocument = !!opportunity.document_url && !hasPdf;
   const keywords = (opportunity.metadata as any)?.keywords as string[] | undefined;
 
+  const crumb = breadcrumbForType(opportunity.type);
+  const jsonLd = buildJsonLd(opportunity);
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://mcqsai.com/" },
+      { "@type": "ListItem", position: 2, name: crumb.label, item: `https://mcqsai.com${crumb.href}` },
+      { "@type": "ListItem", position: 3, name: opportunity.title },
+    ],
+  };
+
   return (
     <>
       <SEOHead
@@ -93,8 +151,19 @@ const OpportunityDetail = () => {
         keywords={keywords?.join(', ') || undefined}
         image={opportunity.image_url || undefined}
       />
+      {jsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      )}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
       <Header>
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-8">
+          <nav className="text-sm text-muted-foreground mb-3" aria-label="Breadcrumb">
+            <Link to="/" className="hover:text-primary">Home</Link>
+            <span className="mx-2">/</span>
+            <Link to={crumb.href} className="hover:text-primary">{crumb.label}</Link>
+            <span className="mx-2">/</span>
+            <span className="text-foreground line-clamp-1 inline-block max-w-[60%] align-bottom">{opportunity.title}</span>
+          </nav>
           <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4">
             <ArrowLeft className="h-4 w-4 mr-1" /> Back
           </Button>
@@ -104,8 +173,10 @@ const OpportunityDetail = () => {
             <div className="relative h-48 sm:h-64 bg-muted">
               <img
                 src={heroImage}
-                alt={opportunity.title}
+                alt={`${opportunity.type?.replace('_', ' ')} opportunity: ${opportunity.title}`}
                 className="w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = placeholderImages[opportunity.type] || placeholderImages.job;
                 }}
