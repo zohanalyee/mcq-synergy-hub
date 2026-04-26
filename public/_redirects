@@ -1,6 +1,10 @@
-https://www.mcqsai.com/*  https://mcqsai.com/:splat  301!
-http://www.mcqsai.com/*   https://mcqsai.com/:splat  301!
-http://mcqsai.com/*       https://mcqsai.com/:splat  301!
+# NOTE: Lovable hosting does NOT process this file (it's a Netlify convention).
+# It is kept only for portability if this project is ever self-hosted on Netlify.
+# Real sitemap routing on Lovable is handled by:
+#   - public/sitemap.xml (served as a static asset)
+#   - index.html inline redirect for legacy /sitemaps/*.xml paths
+#   - Supabase Edge Function `generate-sitemap`
+
 /sitemaps/static.xml       https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=static  200
 /sitemaps/tools.xml        https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=tools  200
 /sitemaps/exams.xml        https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=exams  200
@@ -8,9 +12,6 @@ http://mcqsai.com/*       https://mcqsai.com/:splat  301!
 /sitemaps/scholarships.xml https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=scholarships  200
 /sitemaps/blog.xml         https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=blog  200
 /sitemaps/boards-1.xml     https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=boards&page=1  200
-/sitemaps/boards-2.xml     https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=boards&page=2  200
 /sitemap.xml               /sitemap.xml    200
 /robots.txt                /robots.txt     200
-/tools/hr/*                /tools/school-attendance-system/:splat  301
-/tools/hr                  /tools/school-attendance-system         301
 /*    /index.html   200
