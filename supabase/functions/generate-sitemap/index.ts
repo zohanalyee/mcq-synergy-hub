@@ -4,7 +4,20 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Content-Type": "application/xml; charset=utf-8",
+  "Cache-Control": "public, max-age=300, s-maxage=3600",
 };
+
+const EMPTY_URLSET = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`;
+
+async function safeBranch(label: string, fn: () => Promise<Response>): Promise<Response> {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error(`[generate-sitemap] branch "${label}" failed:`, err);
+    return new Response(EMPTY_URLSET, { headers: corsHeaders });
+  }
+}
 
 const BASE_URL = "https://mcqsai.com";
 const ITEMS_PER_SITEMAP = 1000;
