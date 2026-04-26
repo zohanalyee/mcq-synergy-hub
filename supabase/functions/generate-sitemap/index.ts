@@ -4,7 +4,20 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Content-Type": "application/xml; charset=utf-8",
+  "Cache-Control": "public, max-age=300, s-maxage=3600",
 };
+
+const EMPTY_URLSET = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>`;
+
+async function safeBranch(label: string, fn: () => Promise<Response>): Promise<Response> {
+  try {
+    return await fn();
+  } catch (err) {
+    console.error(`[generate-sitemap] branch "${label}" failed:`, err);
+    return new Response(EMPTY_URLSET, { headers: corsHeaders });
+  }
+}
 
 const BASE_URL = "https://mcqsai.com";
 const ITEMS_PER_SITEMAP = 1000;
@@ -61,6 +74,7 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const type = url.searchParams.get("type") || "index";
   const page = parseInt(url.searchParams.get("page") || "1", 10);
+  console.log(`[generate-sitemap] type=${type} page=${page}`);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
@@ -71,103 +85,114 @@ Deno.serve(async (req) => {
 
   try {
     if (type === "static") {
-      return new Response(generateStaticSitemap(), { headers: corsHeaders });
+      return await safeBranch("static", async () =>
+        new Response(generateStaticSitemap(), { headers: corsHeaders }));
     }
 
     if (type === "tools") {
-      return new Response(generateToolsSitemap(), { headers: corsHeaders });
+      return await safeBranch("tools", async () =>
+        new Response(generateToolsSitemap(), { headers: corsHeaders }));
     }
 
     if (type === "exams") {
-      return new Response(generateExamsSitemap(), { headers: corsHeaders });
+      return await safeBranch("exams", async () =>
+        new Response(generateExamsSitemap(), { headers: corsHeaders }));
     }
 
     if (type === "jobs") {
-      const { data: ciJobs } = await supabase
-        .from("content_items")
-        .select("id, title, updated_at")
-        .eq("category", "job")
-        .eq("status", "approved");
+      return await safeBranch("jobs", async () => {
+        const { data: ciJobs } = await supabase
+          .from("content_items")
+          .select("id, title, updated_at")
+          .eq("category", "job")
+          .eq("status", "approved");
 
-      const { data: eoJobs } = await supabase
-        .from("external_opportunities")
-        .select("id, title, updated_at")
-        .eq("type", "job")
-        .eq("status", "approved");
+        const { data: eoJobs } = await supabase
+          .from("external_opportunities")
+          .select("id, title, updated_at")
+          .eq("type", "job")
+          .eq("status", "approved");
 
-      const allJobs = [
-        ...(ciJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
-        ...(eoJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
-      ];
-      return new Response(generateUrlSetFromSlugs(allJobs, "/opportunity/"), { headers: corsHeaders });
+        const allJobs = [
+          ...(ciJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
+          ...(eoJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
+        ];
+        return new Response(generateUrlSetFromSlugs(allJobs, "/opportunity/"), { headers: corsHeaders });
+      });
     }
 
     if (type === "scholarships") {
-      const { data: ciSchol } = await supabase
-        .from("content_items")
-        .select("id, title, updated_at")
-        .eq("category", "scholarship")
-        .eq("status", "approved");
+      return await safeBranch("scholarships", async () => {
+        const { data: ciSchol } = await supabase
+          .from("content_items")
+          .select("id, title, updated_at")
+          .eq("category", "scholarship")
+          .eq("status", "approved");
 
-      const { data: eoSchol } = await supabase
-        .from("external_opportunities")
-        .select("id, title, updated_at")
-        .eq("type", "scholarship")
-        .eq("status", "approved");
+        const { data: eoSchol } = await supabase
+          .from("external_opportunities")
+          .select("id, title, updated_at")
+          .eq("type", "scholarship")
+          .eq("status", "approved");
 
-      const allSchol = [
-        ...(ciSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
-        ...(eoSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
-      ];
-      return new Response(generateUrlSetFromSlugs(allSchol, "/opportunity/"), { headers: corsHeaders });
+        const allSchol = [
+          ...(ciSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
+          ...(eoSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
+        ];
+        return new Response(generateUrlSetFromSlugs(allSchol, "/opportunity/"), { headers: corsHeaders });
+      });
     }
 
     if (type === "blog") {
-      const { data: posts } = await supabase
-        .from("blog_posts")
-        .select("slug, updated_at")
-        .eq("status", "published");
+      return await safeBranch("blog", async () => {
+        const { data: posts } = await supabase
+          .from("blog_posts")
+          .select("slug, updated_at")
+          .eq("status", "published");
 
-      return new Response(generateBlogSitemap(posts || []), { headers: corsHeaders });
+        return new Response(generateBlogSitemap(posts || []), { headers: corsHeaders });
+      });
     }
 
     if (type === "boards") {
-      const { data: topics, error } = await supabase
-        .from("topics")
-        .select(`
-          id, name,
-          subjects!inner(id, name,
-            levels!inner(id, name,
-              educational_systems!inner(id, name, is_active)
+      return await safeBranch("boards", async () => {
+        const { data: topics, error } = await supabase
+          .from("topics")
+          .select(`
+            id, name,
+            subjects!inner(id, name,
+              levels!inner(id, name,
+                educational_systems!inner(id, name, is_active)
+              )
             )
-          )
-        `)
-        .eq("subjects.levels.educational_systems.is_active", true);
+          `)
+          .eq("subjects.levels.educational_systems.is_active", true);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      const allUrls: { loc: string; lastmod: string }[] = [];
-      const now = new Date().toISOString().split("T")[0];
+        const allUrls: { loc: string; lastmod: string }[] = [];
+        const now = new Date().toISOString().split("T")[0];
 
-      for (const topic of topics || []) {
-        const subj = (topic as any).subjects;
-        const level = subj?.levels;
-        const sys = level?.educational_systems;
-        if (!sys || !level || !subj) continue;
+        for (const topic of topics || []) {
+          const subj = (topic as any).subjects;
+          const level = subj?.levels;
+          const sys = level?.educational_systems;
+          if (!sys || !level || !subj) continue;
 
-        const classNum = extractClassNumber(level.name);
-        if (!classNum) continue;
+          const classNum = extractClassNumber(level.name);
+          if (!classNum) continue;
 
-        allUrls.push({
-          loc: `${BASE_URL}/boards/${toSlug(sys.name)}/class-${classNum}/${toSlug(subj.name)}/${toSlug(topic.name)}`,
-          lastmod: now,
-        });
-      }
+          allUrls.push({
+            loc: `${BASE_URL}/boards/${toSlug(sys.name)}/class-${classNum}/${toSlug(subj.name)}/${toSlug(topic.name)}`,
+            lastmod: now,
+          });
+        }
 
-      const start = (page - 1) * ITEMS_PER_SITEMAP;
-      const slice = allUrls.slice(start, start + ITEMS_PER_SITEMAP);
+        const start = (page - 1) * ITEMS_PER_SITEMAP;
+        const slice = allUrls.slice(start, start + ITEMS_PER_SITEMAP);
 
-      return new Response(generateUrlSet(slice), { headers: corsHeaders });
+        return new Response(generateUrlSet(slice), { headers: corsHeaders });
+      });
     }
 
     // Default: sitemap index
