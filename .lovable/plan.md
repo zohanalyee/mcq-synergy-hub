@@ -1,55 +1,51 @@
-## Goal
-Stop Google from receiving 404 HTML pages at `/sitemap.xml` and `/sitemaps/*.xml`. Reuse the already-deployed `generate-sitemap` edge function (which returns valid XML, verified working) and switch the opportunity URLs in the sitemap to the slug-uuid format the app actually uses.
+## The bug
 
-## Root cause (confirmed)
-- The edge function `generate-sitemap` is deployed and returns valid XML (verified: `content-type: application/xml`, real job/scholarship data).
-- But the public sitemap URLs (`https://mcqsai.com/sitemaps/jobs.xml` etc.) point to paths that don't exist as files. Lovable's SPA fallback serves `index.html`, React Router shows 404, Google sees HTML.
-- A static `public/sitemap.xml` exists but only references the broken `/sitemaps/*.xml` paths.
+Job Test results show **0% / every answer wrong / "Correct:" blank** (visible in your screenshots) even when the user picked the right option.
 
-## Fix
+## Root cause (one line)
 
-### 1. Replace `public/sitemap.xml` with a redirect-style stub
-Lovable hosting can't do server-side rewrites via `_redirects`. Instead, replace the static `public/sitemap.xml` with one that lists the **edge function URLs directly** as `<loc>` entries — Google follows them as sub-sitemaps wherever they live.
+`src/lib/testEvaluation.ts → resolveCorrectAnswer()` reads the answer key from these fields only:
 
-```xml
-<sitemapindex>
-  <sitemap><loc>https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=static</loc></sitemap>
-  <sitemap><loc>.../generate-sitemap?type=tools</loc></sitemap>
-  <sitemap><loc>.../generate-sitemap?type=jobs</loc></sitemap>
-  <sitemap><loc>.../generate-sitemap?type=scholarships</loc></sitemap>
-  <sitemap><loc>.../generate-sitemap?type=blog</loc></sitemap>
-  <sitemap><loc>.../generate-sitemap?type=exams</loc></sitemap>
-  <sitemap><loc>.../generate-sitemap?type=boards&page=1</loc></sitemap>
-</sitemapindex>
 ```
-Google fully accepts cross-host sub-sitemaps when they're listed in a sitemap index referenced from `robots.txt`. No SPA interception, no 404s, always-fresh data.
+question.answer  ||  question.correct_option  ||  question.correctOption
+```
 
-Delete the unreachable `/sitemaps/*.xml` references entirely.
+But the `job_test_questions` table — and the payload `JobTestsTab` writes into `custom_test_sessions.questions` — uses **`correct_answer`** (snake_case). That field is never checked, so:
 
-### 2. Update `generate-sitemap` edge function to emit `/opportunity/<slug>-<uuid>` URLs
-Currently emits `https://mcqsai.com/jobs/<slug>` and `/scholarships/<slug>`, but those routes resolve via title-lookup and don't match the canonical card links. Change the `jobs` and `scholarships` branches to:
-- Select `id, title, updated_at` from `external_opportunities` and `content_items`.
-- Build URL with the same helper used in the app: `/opportunity/<slug>-<uuid>` (mirroring `src/utils/slugify.ts`).
-- Keep deduplication on the final URL.
+- `resolveCorrectAnswer(q)` returns `''`
+- Grading: `userAnswer === ''` → always **false** → score 0%
+- Review UI: `<span>Correct:</span> {correctText}` renders blank
 
-This guarantees Google indexes the exact URLs `JobCard` / `ExternalOpportunitiesSection` link to, matching `OpportunityDetail.tsx`'s `extractIdFromSlug` lookup.
+This same helper is used by `TestSession.tsx` for both grading (line 293) and the review display (line 702), so fixing it fixes both symptoms at once. Subject Tests / Syllabus Builder / Question Bank already use `correctOption` and are unaffected.
 
-### 3. Keep `robots.txt` as-is
-Already points to `https://mcqsai.com/sitemap.xml` — no change needed.
+## The fix
 
-### 4. Optional follow-up (not in this change)
-After deploy, in Google Search Console → Sitemaps, resubmit `https://mcqsai.com/sitemap.xml`. The "Couldn't fetch" errors should clear within 1–7 days.
+**One file change** — `src/lib/testEvaluation.ts`:
 
-## Files to change
-- `public/sitemap.xml` — replace `/sitemaps/*.xml` entries with full edge-function URLs.
-- `supabase/functions/generate-sitemap/index.ts` — rewrite the `jobs` and `scholarships` branches to query `id + title + updated_at` and emit `/opportunity/<slug>-<uuid>` URLs using a `generateSlug()` helper inlined into the function.
+```ts
+const raw = (
+  question.answer ||
+  question.correct_option ||
+  question.correctOption ||
+  question.correct_answer ||   // ← ADD: job_test_questions / DB snake_case
+  question.correctAnswer ||    // ← ADD: defensive camelCase variant
+  ''
+).toString().trim();
+```
 
-## Why not the prebuild script
-- The proposed `scripts/generate-sitemaps.js` references tables that don't exist in your schema (`opportunities`, `education_systems`, `published` flag) — it would fail on first run.
-- Sitemaps would be stale until the next deploy; new jobs/scholarships scraped daily wouldn't appear until you rebuild.
-- Edge function already works and is faster to fix.
+That's it. No type changes, no new normalizer file, no edits to `JobTestsTab`, `TestSession`, or any UI component needed — they all flow through `resolveCorrectAnswer` / `checkUserAnswer` already.
+
+## Why I'm not doing the bigger refactor from your prompt
+
+Your prompt suggested creating `src/utils/questionNormalizer.ts` and editing `JobTestsTab`, `TestSession`, `TestResults`, `TestReview`, and the `Question` type. That's unnecessary in this codebase because:
+
+1. There is no `TestResults.tsx` / `TestReview.tsx` — review rendering lives inside `TestSession.tsx` and already calls `resolveAnswer(question)`.
+2. A single shared evaluator (`testEvaluation.ts`) already exists exactly to centralize this. Adding a second normalizer would create two sources of truth.
+3. `JobTestsTab` already passes `correct_answer` through into the session payload (line 105) — it just needs the evaluator to recognize it.
 
 ## Verification after deploy
-1. `curl -I https://mcqsai.com/sitemap.xml` → 200, `content-type: application/xml`, lists 7 sub-sitemap URLs.
-2. Open one sub-sitemap URL in a browser → valid XML with `/opportunity/<slug>-<uuid>` links.
-3. GSC → Sitemaps → Resubmit. Status should flip from "Couldn't fetch" to "Success".
+
+1. Start any Job Test, answer some correct + some wrong, submit.
+2. Score % matches actual correct answers.
+3. Review cards show `Correct: <option text>` (not blank), green border for right, red for wrong.
+4. Subject Tests, Syllabus Builder, Custom Quizzes still grade correctly (regression check).

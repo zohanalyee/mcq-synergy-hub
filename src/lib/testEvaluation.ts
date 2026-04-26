@@ -26,6 +26,8 @@ export function resolveCorrectAnswer(question: any): string {
     question.answer ||
     question.correct_option ||
     question.correctOption ||
+    question.correct_answer ||   // job_test_questions / DB snake_case
+    question.correctAnswer ||    // defensive camelCase variant
     ''
   ).toString().trim();
 
