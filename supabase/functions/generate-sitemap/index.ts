@@ -74,6 +74,7 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const type = url.searchParams.get("type") || "index";
   const page = parseInt(url.searchParams.get("page") || "1", 10);
+  console.log(`[generate-sitemap] type=${type} page=${page}`);
 
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
