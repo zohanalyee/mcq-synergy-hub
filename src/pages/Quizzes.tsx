@@ -237,14 +237,15 @@ const Quizzes = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="max-w-lg mx-auto">
-                <CardHeader className="text-center pb-0 pt-3">
-                  <div className="mx-auto w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                    <Shuffle className="h-4 w-4 text-primary" />
+              <Card className="max-w-lg mx-auto overflow-hidden border-2 shadow-xl">
+                <div className="h-1.5 bg-gradient-to-r from-primary via-violet-500 to-cyan-500" />
+                <CardHeader className="text-center pb-2 pt-5">
+                  <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center mb-2 ring-1 ring-primary/20">
+                    <Shuffle className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-base">Subject-Wise Quiz</CardTitle>
-                  <CardDescription className="text-[11px]">
-                    Random questions from any topic under your selected subject
+                  <CardTitle className="text-xl">Subject-Wise Quiz</CardTitle>
+                  <CardDescription className="text-sm">
+                    Random questions across all topics in your selected subject
                   </CardDescription>
                 </CardHeader>
                 
