@@ -15,6 +15,7 @@ import {
   normalizeOptions,
 } from "@/lib/testEvaluation";
 import { processTestCompletion, triggerConfetti } from "@/utils/gamification";
+import { extractIdFromSlug } from "@/utils/slugify";
 import QuizHUD from "@/components/quiz/QuizHUD";
 import QuizOption, { QuizOptionState } from "@/components/quiz/QuizOption";
 import QuizTimerRing from "@/components/quiz/QuizTimerRing";
@@ -70,11 +71,12 @@ const QuizPlayer = () => {
         setIsLoading(false);
         return;
       }
+      const sessionId = extractIdFromSlug(id);
       try {
         const { data, error: e } = await supabase
           .from("custom_test_sessions")
           .select("*")
-          .eq("id", id)
+          .eq("id", sessionId)
           .maybeSingle();
         if (e) throw e;
         if (!data) {
@@ -281,7 +283,7 @@ const QuizPlayer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-28">
       <QuizHUD
         title={testData.session_name || "Quiz"}
         current={currentIdx + 1}
@@ -291,10 +293,10 @@ const QuizPlayer = () => {
         onExit={handleExit}
       />
 
-      <div className="max-w-2xl mx-auto px-4 pt-6">
+      <div className="max-w-2xl mx-auto px-4 pt-4">
         {/* Timer */}
-        <div className="flex justify-center mb-5">
-          <QuizTimerRing remaining={remaining} total={perQTime} size={68} />
+        <div className="flex justify-center mb-3">
+          <QuizTimerRing remaining={remaining} total={perQTime} size={52} />
         </div>
 
         <AnimatePresence mode="wait">
@@ -306,16 +308,16 @@ const QuizPlayer = () => {
             transition={{ duration: 0.25 }}
           >
             {subjectName && (
-              <p className="text-xs uppercase tracking-wider text-muted-foreground text-center mb-2">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground text-center mb-1.5">
                 {subjectName}
               </p>
             )}
 
-            <h2 className="text-lg sm:text-xl font-semibold text-center leading-snug mb-6 px-2">
+            <h2 className="text-base sm:text-lg font-semibold text-center leading-snug mb-4 px-2">
               {cleanQuestionText(currentQ.question || currentQ.title || "")}
             </h2>
 
-            <div className="space-y-2.5 sm:space-y-3">
+            <div className="space-y-2">
               {optionsArr.map((opt, i) => (
                 <QuizOption
                   key={`${currentIdx}-${i}`}
@@ -335,14 +337,14 @@ const QuizPlayer = () => {
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="mt-4"
+                  className="mt-3"
                 >
                   <Card className="border-primary/30 bg-primary/5">
-                    <CardContent className="pt-4 pb-4">
+                    <CardContent className="pt-3 pb-3">
                       <div className="flex items-start gap-2">
                         <Lightbulb className="h-4 w-4 text-primary mt-0.5 shrink-0" />
                         <div>
-                          <p className="text-xs font-semibold text-primary mb-1">
+                          <p className="text-xs font-semibold text-primary mb-0.5">
                             Explanation
                           </p>
                           <p className="text-sm text-foreground/90 leading-relaxed">
@@ -355,34 +357,38 @@ const QuizPlayer = () => {
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Next button */}
-            <AnimatePresence>
-              {revealed && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="mt-5 flex justify-center"
-                >
-                  <Button size="lg" onClick={goNext} className="min-w-[200px]">
-                    {isLastQuestion ? (
-                      <>
-                        <Zap className="mr-2 h-4 w-4" />
-                        Finish Quiz
-                      </>
-                    ) : (
-                      <>
-                        Next Question
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </>
-                    )}
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
           </motion.div>
         </AnimatePresence>
       </div>
+
+      {/* Sticky Next button — always reachable, no scrolling required */}
+      <AnimatePresence>
+        {revealed && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 80, opacity: 0 }}
+            transition={{ duration: 0.25 }}
+            className="fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border py-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+          >
+            <div className="max-w-2xl mx-auto">
+              <Button size="lg" onClick={goNext} className="w-full">
+                {isLastQuestion ? (
+                  <>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Finish Quiz
+                  </>
+                ) : (
+                  <>
+                    Next Question
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
