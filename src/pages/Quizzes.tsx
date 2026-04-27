@@ -13,7 +13,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2 } from "lucide-react";
+import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from "lucide-react";
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 
