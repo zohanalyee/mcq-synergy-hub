@@ -197,7 +197,7 @@ const App = () => {
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
                     <ProfileCompletionGuard>
-                    <Suspense fallback={<BrandingLoader message="Loading..." size="md" />}>
+                    <Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
 
