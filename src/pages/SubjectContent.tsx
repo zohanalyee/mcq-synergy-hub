@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import SEOHead from '@/components/SEOHead';
 import { motion } from "framer-motion";
 import { Book, Sparkles, AlertCircle } from "lucide-react";
@@ -67,37 +67,77 @@ const SubjectContent = () => {
   // Get topic ID from URL query parameter (for deep linking from search)
   const topicIdFromUrl = searchParams.get('topic');
   
-  // Extract all LMS context from location state
-  const { 
-    title, 
-    purpose, 
-    color, 
-    topicCount,
-    subjectId,    // Database UUID for LMS subjects
-    levelId,
-    levelName,
-    systemId,
-    systemName
-  } = location.state || {};
-  
+  // URL param (route is /subject/:id and /subject-content/:id)
+  const { id: routeId } = useParams<{ id: string }>();
+
+  // LMS context — start from router state, hydrate from DB if missing
+  const [ctx, setCtx] = useState<{
+    title?: string;
+    purpose?: string;
+    color?: string;
+    topicCount?: number;
+    subjectId?: string;
+    levelId?: string;
+    levelName?: string;
+    systemId?: string;
+    systemName?: string;
+  }>(() => location.state || {});
+
+  const { title, purpose, color, topicCount, subjectId, levelId, levelName, systemId, systemName } = ctx;
+  const [isHydrating, setIsHydrating] = useState<boolean>(!ctx.title && !!routeId);
+
   // Normalize the title for lookup in our mock data
   const normalizedTitle = title ? title.toLowerCase() : "";
-  
+
   // Get topics for this subject (prefer DB topics, fallback to mock)
-  // Map to the Topic interface expected by TopicsList
-  const topics = dbTopics.length > 0 
+  const topics = dbTopics.length > 0
     ? dbTopics.map(t => ({ title: t.name, content: t.description || '' }))
     : mockTopics[normalizedTitle] || [];
-  
-  // Create a default icon or generic icon for the subject
+
   const defaultIcon = <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
-  
+
+  // Hydrate context from URL :id when state is missing (refresh / deep-link)
   useEffect(() => {
-    // If no title was passed in state, redirect to subjects page
-    if (!title) {
-      navigate("/subjects");
-      return;
-    }
+    if (ctx.title || !routeId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from('subjects')
+          .select('id, name, description, levels(id, name, system_id, educational_systems(id, name))')
+          .eq('id', routeId)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error || !data) {
+          navigate('/subjects');
+          return;
+        }
+        const lvl: any = (data as any).levels;
+        const sys: any = lvl?.educational_systems;
+        setCtx({
+          title: data.name,
+          purpose: (data as any).description || undefined,
+          color: '#3b82f6',
+          subjectId: data.id,
+          levelId: lvl?.id,
+          levelName: lvl?.name,
+          systemId: sys?.id,
+          systemName: sys?.name,
+        });
+      } catch (e) {
+        console.error('Subject hydration failed:', e);
+        if (!cancelled) navigate('/subjects');
+      } finally {
+        if (!cancelled) setIsHydrating(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [routeId, ctx.title, navigate]);
+
+  useEffect(() => {
+    // Wait for hydration before initializing
+    if (!title) return;
+
     
     setIsLoaded(true);
     loadTopicsFromDB();
