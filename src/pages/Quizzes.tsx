@@ -199,26 +199,32 @@ const Quizzes = () => {
         description="Take free online quizzes for MDCAT, ECAT, CSS, PPSC preparation. AI-powered quizzes with instant results and explanations."
         keywords="online quiz, practice test, MCQ quiz, MDCAT quiz, ECAT quiz, free practice"
       />
-      <div className="container mx-auto px-4 pt-2 pb-4">
+      <div className="container mx-auto px-4 pt-6 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-3 text-center"
+          className="mb-6 text-center"
         >
-          <h1 className="text-xl font-bold text-foreground">Quizzes</h1>
-          <p className="text-xs text-muted-foreground">
-            Practice with AI-powered quizzes from our Question Bank
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
+            <Sparkles className="h-3.5 w-3.5" />
+            Powered by our Question Bank
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-violet-500 to-cyan-500 bg-clip-text text-transparent">
+            Quizzes
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
+            Take a focused quiz from a subject or a specific topic — same premium player as Mock Tests, with instant scoring & explanations.
           </p>
         </motion.div>
 
         <Tabs defaultValue="subject" className="mb-2">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-3 h-9">
-            <TabsTrigger value="subject" className="flex items-center gap-2">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 h-11">
+            <TabsTrigger value="subject" className="flex items-center gap-2 text-sm">
               <Shuffle className="h-4 w-4" />
               Subject Quiz
             </TabsTrigger>
-            <TabsTrigger value="topic" className="flex items-center gap-2">
+            <TabsTrigger value="topic" className="flex items-center gap-2 text-sm">
               <Target className="h-4 w-4" />
               Topic Quiz
             </TabsTrigger>
