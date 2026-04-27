@@ -145,7 +145,7 @@ const Quizzes = () => {
       return;
     }
 
-    navigate(`/test-session/${session.id}`, {
+    navigate(`/quiz-session/${session.id}`, {
       state: { returnPath: '/quizzes' },
     });
   };
