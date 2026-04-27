@@ -1013,7 +1013,8 @@ async function saveQuestionsInBackground(
   sanitizedTopic: string,
   difficulty: string,
   supabase: any,
-  sourceTag: string = 'ai'
+  sourceTag: string = 'ai',
+  lmsLinkageFields: Record<string, any> = {}
 ): Promise<{ saved: number; flagged: number }> {
   console.log(`📦 Background task: Saving ${questions.length} questions with ZERO LOSS...`);
   
@@ -1053,6 +1054,7 @@ async function saveQuestionsInBackground(
           subject: topic,
           topic: topic,
           canonical_topic_name: canonicalTopicName,
+          ...lmsLinkageFields, // overrides topic_id / canonical_topic_name when caller provided LMS UUIDs
           difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
           options: q.options,
           correct_option: q.answer,
@@ -1120,7 +1122,8 @@ async function backgroundGenerateAndSave(
   apiKey: string,
   supabase: any,
   userId?: string,
-  sourceType: 'user_test_session' | 'admin_bulk_generator' = 'user_test_session'
+  sourceType: 'user_test_session' | 'admin_bulk_generator' = 'user_test_session',
+  lmsLinkageFields: Record<string, any> = {}
 ): Promise<void> {
   console.log(`🚀 BACKGROUND: Starting generation of ${missingCount} questions for "${topic}"`);
   
@@ -1144,7 +1147,8 @@ async function backgroundGenerateAndSave(
         sanitizedTopic, 
         difficulty, 
         supabase,
-        sourceType === 'admin_bulk_generator' ? 'admin_bulk' : 'ai'
+        sourceType === 'admin_bulk_generator' ? 'admin_bulk' : 'ai',
+        lmsLinkageFields
       );
       savedCount = result.saved;
       flaggedCount = result.flagged;
@@ -1228,6 +1232,8 @@ serve(async (req) => {
       source, // 'auto_fill' for auto-fill feature
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
+      subject_id, // UUID for FK link to subjects table (Subject Pages)
+      canonical_topic_name: client_canonical_topic_name, // Optional: provided by Subject Pages
       session_id, // Session ID to update with generated questions (Job Tests)
       excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
       weakTopics, // AI Coach Phase 2: focus 70% of generated questions on these
@@ -1298,6 +1304,20 @@ serve(async (req) => {
     const autoPartial = partial_mode === false ? false : (usePartialMode || isLargeRequest);
     const sourceType: 'user_test_session' | 'admin_bulk_generator' | 'auto_fill' = 
       isAutoFill ? 'auto_fill' : (isBankOnly ? 'admin_bulk_generator' : 'user_test_session');
+
+    // Centralized LMS linkage fields — applied to every content_items insert below
+    // so AI-generated MCQs from Subject Pages / Syllabus Builder show up under the
+    // correct topic in the LMS / Question Bank inventory.
+    const resolvedTopicIdForLink: string | null =
+      topic_id || (Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null);
+    const resolvedCanonicalTopicName: string | null = (
+      client_canonical_topic_name ||
+      (topic ? topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : null)
+    ) || null;
+    const lmsLinkageFields: Record<string, any> = {
+      ...(resolvedTopicIdForLink ? { topic_id: resolvedTopicIdForLink } : {}),
+      ...(resolvedCanonicalTopicName ? { canonical_topic_name: resolvedCanonicalTopicName } : {}),
+    };
     
     console.log('📥 Request received:', { 
       topic, 
@@ -1525,7 +1545,8 @@ serve(async (req) => {
           category: 'mcq',
           subject: sanitizedTopic,
           topic: topic,
-      topic_id: topic_id || (topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null), // FK link to topics table
+          ...lmsLinkageFields, // topic_id + canonical_topic_name (overrides legacy topic_id below)
+          topic_id: topic_id || (topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null),
           difficulty: ((difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase()),
           options: q.options,
           correct_option: q.answer,
@@ -1707,7 +1728,8 @@ serve(async (req) => {
               GEMINI_KEY,
               supabase,
               user_id,
-              sourceType as any
+              sourceType as any,
+              lmsLinkageFields
             )
           );
         }
@@ -1933,6 +1955,7 @@ serve(async (req) => {
                 category: 'mcq',
                 subject: sanitizedTopic,
                 topic: topic,
+                ...lmsLinkageFields,
                 difficulty: difficulty.toLowerCase(),
                 options: q.options,
                 correct_option: q.answer,
@@ -1970,7 +1993,7 @@ serve(async (req) => {
       } else {
         console.log(`Large batch (${newAIQuestions.length}): Using background task to save`);
         (globalThis as any).EdgeRuntime?.waitUntil(
-          saveQuestionsInBackground(newAIQuestions, topic, sanitizedTopic, difficulty, supabase)
+          saveQuestionsInBackground(newAIQuestions, topic, sanitizedTopic, difficulty, supabase, 'ai', lmsLinkageFields)
         );
         savedCount = newAIQuestions.length; // Estimate for logging
       }

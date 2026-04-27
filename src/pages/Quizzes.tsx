@@ -13,7 +13,7 @@ import Header from "@/components/Header";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2 } from "lucide-react";
+import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from "lucide-react";
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 
@@ -199,26 +199,32 @@ const Quizzes = () => {
         description="Take free online quizzes for MDCAT, ECAT, CSS, PPSC preparation. AI-powered quizzes with instant results and explanations."
         keywords="online quiz, practice test, MCQ quiz, MDCAT quiz, ECAT quiz, free practice"
       />
-      <div className="container mx-auto px-4 pt-2 pb-4">
+      <div className="container mx-auto px-4 pt-6 pb-10">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-3 text-center"
+          className="mb-6 text-center"
         >
-          <h1 className="text-xl font-bold text-foreground">Quizzes</h1>
-          <p className="text-xs text-muted-foreground">
-            Practice with AI-powered quizzes from our Question Bank
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
+            <Sparkles className="h-3.5 w-3.5" />
+            Powered by our Question Bank
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-violet-500 to-cyan-500 bg-clip-text text-transparent">
+            Quizzes
+          </h1>
+          <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
+            Take a focused quiz from a subject or a specific topic — same premium player as Mock Tests, with instant scoring & explanations.
           </p>
         </motion.div>
 
         <Tabs defaultValue="subject" className="mb-2">
-          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-3 h-9">
-            <TabsTrigger value="subject" className="flex items-center gap-2">
+          <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 h-11">
+            <TabsTrigger value="subject" className="flex items-center gap-2 text-sm">
               <Shuffle className="h-4 w-4" />
               Subject Quiz
             </TabsTrigger>
-            <TabsTrigger value="topic" className="flex items-center gap-2">
+            <TabsTrigger value="topic" className="flex items-center gap-2 text-sm">
               <Target className="h-4 w-4" />
               Topic Quiz
             </TabsTrigger>
@@ -231,14 +237,15 @@ const Quizzes = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="max-w-lg mx-auto">
-                <CardHeader className="text-center pb-0 pt-3">
-                  <div className="mx-auto w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center mb-1">
-                    <Shuffle className="h-4 w-4 text-primary" />
+              <Card className="max-w-lg mx-auto overflow-hidden border-2 shadow-xl">
+                <div className="h-1.5 bg-gradient-to-r from-primary via-violet-500 to-cyan-500" />
+                <CardHeader className="text-center pb-2 pt-5">
+                  <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-primary/20 to-violet-500/20 flex items-center justify-center mb-2 ring-1 ring-primary/20">
+                    <Shuffle className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-base">Subject-Wise Quiz</CardTitle>
-                  <CardDescription className="text-[11px]">
-                    Random questions from any topic under your selected subject
+                  <CardTitle className="text-xl">Subject-Wise Quiz</CardTitle>
+                  <CardDescription className="text-sm">
+                    Random questions across all topics in your selected subject
                   </CardDescription>
                 </CardHeader>
                 
@@ -331,14 +338,15 @@ const Quizzes = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <Card className="max-w-lg mx-auto">
-                <CardHeader className="text-center pb-0 pt-3">
-                  <div className="mx-auto w-8 h-8 rounded-full bg-accent/10 flex items-center justify-center mb-1">
-                    <Target className="h-4 w-4 text-accent-foreground" />
+              <Card className="max-w-lg mx-auto overflow-hidden border-2 shadow-xl">
+                <div className="h-1.5 bg-gradient-to-r from-cyan-500 via-violet-500 to-primary" />
+                <CardHeader className="text-center pb-2 pt-5">
+                  <div className="mx-auto w-12 h-12 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-primary/20 flex items-center justify-center mb-2 ring-1 ring-cyan-500/20">
+                    <Target className="h-6 w-6 text-primary" />
                   </div>
-                  <CardTitle className="text-base">Topic-Wise Quiz</CardTitle>
-                  <CardDescription className="text-[11px]">
-                    Focused questions from a specific topic you want to master
+                  <CardTitle className="text-xl">Topic-Wise Quiz</CardTitle>
+                  <CardDescription className="text-sm">
+                    Master one specific topic — questions stay strictly on-topic
                   </CardDescription>
                 </CardHeader>
                 
