@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from "lucide-react";
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
+import { generateSlugUrl } from "@/utils/slugify";
 
 interface TopicItem {
   id: string;
