@@ -158,6 +158,7 @@ export function AppSidebar({
                       tooltip={item.title}
                       className={cn(
                         "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] hover:scale-[1.02] group relative overflow-hidden my-0.5 h-9",
+                        iconData.hoverClass,
                         isActive(item.path) && "shadow-sm bg-primary/10",
                         !expanded && "justify-center px-0 w-9 h-9 mx-auto"
                       )}
