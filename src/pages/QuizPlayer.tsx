@@ -71,11 +71,12 @@ const QuizPlayer = () => {
         setIsLoading(false);
         return;
       }
+      const sessionId = extractIdFromSlug(id);
       try {
         const { data, error: e } = await supabase
           .from("custom_test_sessions")
           .select("*")
-          .eq("id", id)
+          .eq("id", sessionId)
           .maybeSingle();
         if (e) throw e;
         if (!data) {
