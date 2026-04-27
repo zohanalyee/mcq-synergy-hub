@@ -1727,7 +1727,8 @@ serve(async (req) => {
               GEMINI_KEY,
               supabase,
               user_id,
-              sourceType as any
+              sourceType as any,
+              lmsLinkageFields
             )
           );
         }
