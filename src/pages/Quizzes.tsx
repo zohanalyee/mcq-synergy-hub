@@ -195,6 +195,7 @@ const Quizzes = () => {
     try {
       await startQuiz({
         subjectId: selectedSubjectB,
+        topicId: topicObj.id,
         topicName: topicObj.name,
         questionCount: questionCountB,
         timeLimit: timeLimitB,
