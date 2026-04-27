@@ -15,6 +15,7 @@ import {
   normalizeOptions,
 } from "@/lib/testEvaluation";
 import { processTestCompletion, triggerConfetti } from "@/utils/gamification";
+import { extractIdFromSlug } from "@/utils/slugify";
 import QuizHUD from "@/components/quiz/QuizHUD";
 import QuizOption, { QuizOptionState } from "@/components/quiz/QuizOption";
 import QuizTimerRing from "@/components/quiz/QuizTimerRing";
