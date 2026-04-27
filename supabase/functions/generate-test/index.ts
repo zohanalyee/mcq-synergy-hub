@@ -1300,6 +1300,20 @@ serve(async (req) => {
     const autoPartial = partial_mode === false ? false : (usePartialMode || isLargeRequest);
     const sourceType: 'user_test_session' | 'admin_bulk_generator' | 'auto_fill' = 
       isAutoFill ? 'auto_fill' : (isBankOnly ? 'admin_bulk_generator' : 'user_test_session');
+
+    // Centralized LMS linkage fields — applied to every content_items insert below
+    // so AI-generated MCQs from Subject Pages / Syllabus Builder show up under the
+    // correct topic in the LMS / Question Bank inventory.
+    const resolvedTopicIdForLink: string | null =
+      topic_id || (Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null);
+    const resolvedCanonicalTopicName: string | null = (
+      client_canonical_topic_name ||
+      (topic ? topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : null)
+    ) || null;
+    const lmsLinkageFields: Record<string, any> = {
+      ...(resolvedTopicIdForLink ? { topic_id: resolvedTopicIdForLink } : {}),
+      ...(resolvedCanonicalTopicName ? { canonical_topic_name: resolvedCanonicalTopicName } : {}),
+    };
     
     console.log('📥 Request received:', { 
       topic, 
