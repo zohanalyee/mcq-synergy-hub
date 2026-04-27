@@ -1228,6 +1228,8 @@ serve(async (req) => {
       source, // 'auto_fill' for auto-fill feature
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
+      subject_id, // UUID for FK link to subjects table (Subject Pages)
+      canonical_topic_name: client_canonical_topic_name, // Optional: provided by Subject Pages
       session_id, // Session ID to update with generated questions (Job Tests)
       excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
       weakTopics, // AI Coach Phase 2: focus 70% of generated questions on these
