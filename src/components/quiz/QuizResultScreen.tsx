@@ -38,6 +38,7 @@ const QuizResultScreen = ({
   onTryAnother,
 }: QuizResultScreenProps) => {
   const [showReview, setShowReview] = useState(false);
+  const navigate = useNavigate();
   const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const passed = accuracy >= 60;
 
