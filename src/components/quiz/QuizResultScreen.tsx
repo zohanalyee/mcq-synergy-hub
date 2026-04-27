@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Award, Flame, Target, Clock, RotateCcw, Sparkles, ChevronDown, Check, X } from "lucide-react";
+import { Award, Flame, Target, Clock, RotateCcw, Sparkles, ChevronDown, Check, X, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cleanQuestionText } from "@/lib/questionUtils";
@@ -37,6 +38,7 @@ const QuizResultScreen = ({
   onTryAnother,
 }: QuizResultScreenProps) => {
   const [showReview, setShowReview] = useState(false);
+  const navigate = useNavigate();
   const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const passed = accuracy >= 60;
 
@@ -47,7 +49,15 @@ const QuizResultScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="overflow-hidden border-2 shadow-xl">
+        <Card className="overflow-hidden border-2 shadow-xl relative">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Exit to home"
+            className="absolute top-3 right-3 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
+          >
+            <X className="h-4 w-4" />
+          </button>
           <div className={`h-2 ${passed ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" : "bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500"}`} />
           <CardContent className="pt-8 pb-6 text-center">
             <motion.div
@@ -104,6 +114,15 @@ const QuizResultScreen = ({
                 Try Another Quiz
               </Button>
             </div>
+
+            <Button
+              onClick={() => navigate("/")}
+              variant="ghost"
+              className="mt-3 w-full text-muted-foreground hover:text-foreground"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Exit to Home
+            </Button>
 
             <button
               type="button"
