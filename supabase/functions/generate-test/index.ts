@@ -1013,7 +1013,8 @@ async function saveQuestionsInBackground(
   sanitizedTopic: string,
   difficulty: string,
   supabase: any,
-  sourceTag: string = 'ai'
+  sourceTag: string = 'ai',
+  lmsLinkageFields: Record<string, any> = {}
 ): Promise<{ saved: number; flagged: number }> {
   console.log(`📦 Background task: Saving ${questions.length} questions with ZERO LOSS...`);
   
