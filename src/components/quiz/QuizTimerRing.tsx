@@ -6,9 +6,9 @@ interface QuizTimerRingProps {
   size?: number;
 }
 
-const QuizTimerRing = ({ remaining, total, size = 64 }: QuizTimerRingProps) => {
+const QuizTimerRing = ({ remaining, total, size = 52 }: QuizTimerRingProps) => {
   const pct = Math.max(0, Math.min(1, remaining / total));
-  const radius = (size - 8) / 2;
+  const radius = (size - 6) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference * (1 - pct);
 
@@ -24,7 +24,7 @@ const QuizTimerRing = ({ remaining, total, size = 64 }: QuizTimerRingProps) => {
           cy={size / 2}
           r={radius}
           stroke="currentColor"
-          strokeWidth={4}
+          strokeWidth={3}
           fill="none"
           className="text-muted/40"
         />
@@ -33,7 +33,7 @@ const QuizTimerRing = ({ remaining, total, size = 64 }: QuizTimerRingProps) => {
           cy={size / 2}
           r={radius}
           stroke="currentColor"
-          strokeWidth={4}
+          strokeWidth={3}
           fill="none"
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -43,7 +43,7 @@ const QuizTimerRing = ({ remaining, total, size = 64 }: QuizTimerRingProps) => {
           transition={{ duration: 0.4, ease: "linear" }}
         />
       </svg>
-      <div className={`absolute inset-0 flex items-center justify-center text-sm font-bold tabular-nums ${colorClass}`}>
+      <div className={`absolute inset-0 flex items-center justify-center text-xs font-bold tabular-nums ${colorClass}`}>
         {Math.max(0, Math.ceil(remaining))}
       </div>
     </div>
