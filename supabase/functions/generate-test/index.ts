@@ -1955,6 +1955,7 @@ serve(async (req) => {
                 category: 'mcq',
                 subject: sanitizedTopic,
                 topic: topic,
+                ...lmsLinkageFields,
                 difficulty: difficulty.toLowerCase(),
                 options: q.options,
                 correct_option: q.answer,
