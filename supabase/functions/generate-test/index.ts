@@ -1122,7 +1122,8 @@ async function backgroundGenerateAndSave(
   apiKey: string,
   supabase: any,
   userId?: string,
-  sourceType: 'user_test_session' | 'admin_bulk_generator' = 'user_test_session'
+  sourceType: 'user_test_session' | 'admin_bulk_generator' = 'user_test_session',
+  lmsLinkageFields: Record<string, any> = {}
 ): Promise<void> {
   console.log(`🚀 BACKGROUND: Starting generation of ${missingCount} questions for "${topic}"`);
   
