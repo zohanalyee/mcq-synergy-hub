@@ -59,6 +59,7 @@ const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 
 const Quizzes = lazy(() => import("./pages/Quizzes"));
+const QuizPlayer = lazy(() => import("./pages/QuizPlayer"));
 const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
 const About = lazy(() => import("./pages/About"));
@@ -250,6 +251,7 @@ const App = () => {
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
                       <Route path="/test-session/:id" element={<InstantAuthGuard title="Test Session" description="Sign in to take this test and save your results" actionName="Test Session"><TestSession /></InstantAuthGuard>} />
+                      <Route path="/quiz-session/:id" element={<InstantAuthGuard title="Quiz" description="Sign in to take this quiz" actionName="Quiz"><QuizPlayer /></InstantAuthGuard>} />
                       <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
                       <Route path="/reviews" element={<Reviews />} />
                       
