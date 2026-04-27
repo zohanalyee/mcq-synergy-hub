@@ -115,6 +115,15 @@ const QuizResultScreen = ({
               </Button>
             </div>
 
+            <Button
+              onClick={() => navigate("/")}
+              variant="ghost"
+              className="mt-3 w-full text-muted-foreground hover:text-foreground"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Exit to Home
+            </Button>
+
             <button
               type="button"
               onClick={() => setShowReview((v) => !v)}
