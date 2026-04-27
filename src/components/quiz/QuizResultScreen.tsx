@@ -49,7 +49,15 @@ const QuizResultScreen = ({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <Card className="overflow-hidden border-2 shadow-xl">
+        <Card className="overflow-hidden border-2 shadow-xl relative">
+          <button
+            type="button"
+            onClick={() => navigate("/")}
+            aria-label="Exit to home"
+            className="absolute top-3 right-3 z-10 inline-flex items-center justify-center h-8 w-8 rounded-full bg-background/80 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm"
+          >
+            <X className="h-4 w-4" />
+          </button>
           <div className={`h-2 ${passed ? "bg-gradient-to-r from-green-500 via-emerald-500 to-teal-500" : "bg-gradient-to-r from-orange-500 via-amber-500 to-yellow-500"}`} />
           <CardContent className="pt-8 pb-6 text-center">
             <motion.div
