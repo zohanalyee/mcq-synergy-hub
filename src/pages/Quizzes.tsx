@@ -67,26 +67,129 @@ const Quizzes = () => {
     fetchTopics();
   }, [selectedSubjectB]);
 
-  // DISABLED: AI features paused
+  // Shared starter: pull MCQs from the bank (DB-only) and create a test session
+  const startQuiz = async (opts: {
+    subjectId: string;
+    topicName?: string;
+    questionCount: number;
+    timeLimit: number;
+    sessionLabel: string;
+  }) => {
+    if (!user) {
+      toast.error("Please sign in to start a quiz");
+      return;
+    }
+
+    // Resolve subject name (selector returns id only)
+    const { data: subjectRow, error: subjErr } = await supabase
+      .from('subjects')
+      .select('name')
+      .eq('id', opts.subjectId)
+      .maybeSingle();
+
+    if (subjErr || !subjectRow?.name) {
+      toast.error("Could not load subject details. Please try again.");
+      return;
+    }
+
+    const topicForFetch = opts.topicName || subjectRow.name;
+
+    // 1) Pull questions from the bank (no AI cost)
+    const { data: genData, error: genErr } = await supabase.functions.invoke('generate-test', {
+      body: {
+        topic: topicForFetch,
+        difficulty: 'Medium',
+        question_count: opts.questionCount,
+        fetch_only: true,
+        forceNew: false,
+        partial_mode: true,
+      },
+    });
+
+    if (genErr) {
+      console.error('generate-test error:', genErr);
+      toast.error("Couldn't load questions", {
+        description: "Please try a different subject/topic or visit the Question Bank.",
+      });
+      return;
+    }
+
+    const questions = Array.isArray(genData?.questions) ? genData.questions : [];
+    if (questions.length === 0) {
+      toast.error("No questions available yet", {
+        description: `We don't have MCQs for "${topicForFetch}" in the bank. Try another topic or check the Question Bank.`,
+      });
+      return;
+    }
+
+    // 2) Persist a session row so /test-session/:id can render it
+    const { data: session, error: sessionErr } = await supabase
+      .from('custom_test_sessions')
+      .insert({
+        user_id: user.id,
+        session_name: opts.sessionLabel,
+        subjects: [subjectRow.name],
+        topics: opts.topicName ? [opts.topicName] : [],
+        difficulty_levels: ['Easy', 'Medium', 'Hard'],
+        question_count: questions.length,
+        time_limit: opts.timeLimit,
+        questions,
+        is_active: true,
+      })
+      .select('id')
+      .single();
+
+    if (sessionErr || !session?.id) {
+      console.error('Session insert error:', sessionErr);
+      toast.error("Couldn't start quiz session. Please try again.");
+      return;
+    }
+
+    navigate(`/test-session/${session.id}`, {
+      state: { returnPath: '/quizzes' },
+    });
+  };
+
   const handleStartSubjectQuiz = async () => {
     if (!selectedSubjectA) {
       toast.error("Please select a subject");
       return;
     }
-    toast.error("AI Quiz Generation Temporarily Unavailable", {
-      description: "Quiz generation is paused. Please use the Question Bank or Custom Syllabus page to practice with existing questions.",
-    });
+    setIsGeneratingA(true);
+    try {
+      await startQuiz({
+        subjectId: selectedSubjectA,
+        questionCount: questionCountA,
+        timeLimit: timeLimitA,
+        sessionLabel: 'Subject Quiz',
+      });
+    } finally {
+      setIsGeneratingA(false);
+    }
   };
 
-  // DISABLED: AI features paused  
   const handleStartTopicQuiz = async () => {
     if (!selectedSubjectB || !selectedTopicB) {
       toast.error("Please select both subject and topic");
       return;
     }
-    toast.error("AI Quiz Generation Temporarily Unavailable", {
-      description: "Quiz generation is paused. Please use the Question Bank or Custom Syllabus page to practice with existing questions.",
-    });
+    const topicObj = topicsForSubjectB.find(t => t.id === selectedTopicB);
+    if (!topicObj) {
+      toast.error("Selected topic could not be loaded. Please re-select.");
+      return;
+    }
+    setIsGeneratingB(true);
+    try {
+      await startQuiz({
+        subjectId: selectedSubjectB,
+        topicName: topicObj.name,
+        questionCount: questionCountB,
+        timeLimit: timeLimitB,
+        sessionLabel: `Topic Quiz · ${topicObj.name}`,
+      });
+    } finally {
+      setIsGeneratingB(false);
+    }
   };
 
   return (

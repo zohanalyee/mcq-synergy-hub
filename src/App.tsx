@@ -245,7 +245,7 @@ const App = () => {
                       <Route path="/opportunity/:id" element={<Suspense fallback={null}><OpportunityDetail /></Suspense>} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
-                      <Route path="/quizzes" element={<Quizzes />} />
+                      <Route path="/quizzes" element={<InstantAuthGuard title="Quizzes" description="Sign in to take quizzes and track your progress" actionName="Quizzes"><Quizzes /></InstantAuthGuard>} />
                       <Route path="/question-bank" element={<QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
