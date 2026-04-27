@@ -1371,17 +1371,91 @@ serve(async (req) => {
     if (!forceNew) {
       try {
         const difficultyLower = String(difficulty || 'medium').toLowerCase();
-        
-        let cacheQuery = supabase
-          .from('content_items')
-          .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
-          .eq('category', 'mcq')
-          .eq('status', 'approved')
-          .or(searchConditions);
-        if (safeExcludeIds.length > 0) {
-          cacheQuery = cacheQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+
+        // ============= STRICT ID-BASED SCOPING (Hotfix for topic mismatch) =============
+        // When the caller (e.g. Quizzes / Subject Pages) provides a topic_id or subject_id,
+        // bypass the loose ilike keyword search and query strictly by FK columns.
+        // This prevents cross-subject leakage like Physics MCQs showing up in a
+        // Geography quiz just because both contain the word "Pakistan".
+        const hasStrictTopicScope = !!resolvedTopicIdForLink;
+        const hasStrictSubjectScope = !!subject_id;
+        const hasStrictCanonicalScope = !!resolvedCanonicalTopicName;
+
+        let existingQuestions: any[] | null = null;
+        let dbError: any = null;
+
+        if (hasStrictTopicScope) {
+          // Tier 1: strict topic_id match
+          let q = supabase
+            .from('content_items')
+            .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
+            .eq('category', 'mcq')
+            .eq('status', 'approved')
+            .eq('topic_id', resolvedTopicIdForLink as string);
+          if (safeExcludeIds.length > 0) q = q.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+          const r = await q.limit(qc * 3);
+          existingQuestions = r.data;
+          dbError = r.error;
+          console.log(`🔒 STRICT topic_id="${resolvedTopicIdForLink}" → ${existingQuestions?.length ?? 0} rows`);
+
+          // Tier 2: canonical_topic_name fallback when topic_id has no rows
+          if (!dbError && (!existingQuestions || existingQuestions.length === 0) && hasStrictCanonicalScope) {
+            let q2 = supabase
+              .from('content_items')
+              .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
+              .eq('category', 'mcq')
+              .eq('status', 'approved')
+              .eq('canonical_topic_name', resolvedCanonicalTopicName as string);
+            if (safeExcludeIds.length > 0) q2 = q2.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            const r2 = await q2.limit(qc * 3);
+            existingQuestions = r2.data;
+            dbError = r2.error;
+            console.log(`🔒 STRICT canonical="${resolvedCanonicalTopicName}" → ${existingQuestions?.length ?? 0} rows`);
+          }
+
+          // Tier 3: keyword search BUT scoped to subject_id (still safer than global)
+          if (!dbError && (!existingQuestions || existingQuestions.length === 0) && hasStrictSubjectScope) {
+            let q3 = supabase
+              .from('content_items')
+              .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
+              .eq('category', 'mcq')
+              .eq('status', 'approved')
+              .eq('subject_id', subject_id as string)
+              .or(searchConditions);
+            if (safeExcludeIds.length > 0) q3 = q3.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            const r3 = await q3.limit(qc * 3);
+            existingQuestions = r3.data;
+            dbError = r3.error;
+            console.log(`🔒 SCOPED subject_id keyword search → ${existingQuestions?.length ?? 0} rows`);
+          }
+        } else if (hasStrictSubjectScope) {
+          // Subject Quiz: scope keyword search to selected subject only
+          let q = supabase
+            .from('content_items')
+            .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
+            .eq('category', 'mcq')
+            .eq('status', 'approved')
+            .eq('subject_id', subject_id as string);
+          if (safeExcludeIds.length > 0) q = q.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+          const r = await q.limit(qc * 3);
+          existingQuestions = r.data;
+          dbError = r.error;
+          console.log(`🔒 STRICT subject_id="${subject_id}" → ${existingQuestions?.length ?? 0} rows`);
+        } else {
+          // Legacy callers: original behavior
+          let cacheQuery = supabase
+            .from('content_items')
+            .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
+            .eq('category', 'mcq')
+            .eq('status', 'approved')
+            .or(searchConditions);
+          if (safeExcludeIds.length > 0) {
+            cacheQuery = cacheQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+          }
+          const r = await cacheQuery.limit(qc * 3);
+          existingQuestions = r.data;
+          dbError = r.error;
         }
-        const { data: existingQuestions, error: dbError } = await cacheQuery.limit(qc * 3);
 
         if (dbError) {
           console.error('❌ Database query error:', dbError);
