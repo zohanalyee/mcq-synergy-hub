@@ -1991,7 +1991,7 @@ serve(async (req) => {
       } else {
         console.log(`Large batch (${newAIQuestions.length}): Using background task to save`);
         (globalThis as any).EdgeRuntime?.waitUntil(
-          saveQuestionsInBackground(newAIQuestions, topic, sanitizedTopic, difficulty, supabase)
+          saveQuestionsInBackground(newAIQuestions, topic, sanitizedTopic, difficulty, supabase, 'ai', lmsLinkageFields)
         );
         savedCount = newAIQuestions.length; // Estimate for logging
       }
