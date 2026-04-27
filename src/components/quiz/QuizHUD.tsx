@@ -40,7 +40,7 @@ const QuizHUD = ({ title, current, total, streak, score, onExit }: QuizHUDProps)
           </div>
         </div>
 
-        <div className="flex items-center gap-2 mt-2 ml-11">
+        <div className="flex items-center gap-2 mt-1.5 ml-11">
           <AnimatePresence>
             {streak > 0 && (
               <motion.div
