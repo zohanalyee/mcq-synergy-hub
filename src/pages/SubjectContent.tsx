@@ -292,6 +292,15 @@ const SubjectContent = () => {
         fetchOnly
       });
       
+      // Resolve selected topic_id (when a specific topic is chosen) for proper LMS linkage
+      const selectedTopicObj = selectedTopicId !== "all"
+        ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
+        : undefined;
+      const canonicalTopicName = (selectedTopicObj?.name || topicToFetch)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
       const { data, error } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: topicToFetch,
@@ -300,6 +309,10 @@ const SubjectContent = () => {
           forceNew: forceNew && !fetchOnly,
           fetch_only: fetchOnly,
           partial_mode: false,
+          // LMS linkage so AI-generated MCQs persist into Question Bank correctly
+          subject_id: subjectId,
+          topic_id: selectedTopicObj?.id,
+          canonical_topic_name: canonicalTopicName,
         }
       });
 
