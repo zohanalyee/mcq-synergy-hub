@@ -1,6 +1,7 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Award, Flame, Target, Clock, RotateCcw, Sparkles, ChevronDown, Check, X } from "lucide-react";
+import { Award, Flame, Target, Clock, RotateCcw, Sparkles, ChevronDown, Check, X, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cleanQuestionText } from "@/lib/questionUtils";
