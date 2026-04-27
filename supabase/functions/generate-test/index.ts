@@ -1147,7 +1147,8 @@ async function backgroundGenerateAndSave(
         sanitizedTopic, 
         difficulty, 
         supabase,
-        sourceType === 'admin_bulk_generator' ? 'admin_bulk' : 'ai'
+        sourceType === 'admin_bulk_generator' ? 'admin_bulk' : 'ai',
+        lmsLinkageFields
       );
       savedCount = result.saved;
       flaggedCount = result.flagged;
