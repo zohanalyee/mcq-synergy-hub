@@ -71,6 +71,7 @@ const Quizzes = () => {
   // Shared starter: pull MCQs from the bank (DB-only) and create a test session
   const startQuiz = async (opts: {
     subjectId: string;
+    topicId?: string;
     topicName?: string;
     questionCount: number;
     timeLimit: number;
@@ -94,8 +95,11 @@ const Quizzes = () => {
     }
 
     const topicForFetch = opts.topicName || subjectRow.name;
+    const canonicalTopicName = opts.topicName
+      ? opts.topicName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+      : undefined;
 
-    // 1) Pull questions from the bank (no AI cost)
+    // 1) Pull questions from the bank (no AI cost) — STRICT scoping by IDs
     const { data: genData, error: genErr } = await supabase.functions.invoke('generate-test', {
       body: {
         topic: topicForFetch,
@@ -104,6 +108,10 @@ const Quizzes = () => {
         fetch_only: true,
         forceNew: false,
         partial_mode: true,
+        // STRICT FILTERS — prevent cross-subject/topic leakage
+        subject_id: opts.subjectId,
+        ...(opts.topicId ? { topic_id: opts.topicId } : {}),
+        ...(canonicalTopicName ? { canonical_topic_name: canonicalTopicName } : {}),
       },
     });
 
@@ -123,7 +131,7 @@ const Quizzes = () => {
       return;
     }
 
-    // 2) Persist a session row so /test-session/:id can render it
+    // 2) Persist a session row so /quiz-session/:id can render it
     const { data: session, error: sessionErr } = await supabase
       .from('custom_test_sessions')
       .insert({
@@ -146,7 +154,11 @@ const Quizzes = () => {
       return;
     }
 
-    navigate(`/quiz-session/${session.id}`, {
+    // SEO-friendly slug URL: /quiz-session/<topic-or-subject-slug>-<uuid>
+    const slugSource = opts.topicName || subjectRow.name;
+    const slugUrl = generateSlugUrl(slugSource, session.id);
+
+    navigate(`/quiz-session/${slugUrl}`, {
       state: { returnPath: '/quizzes' },
     });
   };
