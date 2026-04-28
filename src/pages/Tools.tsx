@@ -24,9 +24,9 @@ const Tools = () => {
   return (
     <Header>
       <SEOHead
-        title="Free Online Student Tools & Calculators"
-        description="50+ free online tools for students — GPA calculator, age calculator, unit converter, periodic table, and more."
-        keywords="free tools, GPA calculator, age calculator, unit converter, student tools, online calculators"
+        title="Free AI Tools & Calculators for Students"
+        description="Access 50+ premium, free AI tools and calculators for students and professionals. Generate content, solve problems, and study smarter with our AI-powered utilities."
+        keywords="AI tools, free AI tools, AI calculators, AI student tools, GPA calculator, age calculator, unit converter, student tools, online calculators"
       />
         <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-5">
         <PageBreadcrumb items={[{ title: 'Tools', href: '/tools', isCurrent: true }]} showHomeButton={true} />

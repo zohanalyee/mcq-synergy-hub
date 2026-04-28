@@ -21,10 +21,10 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
   const relatedTools = getRelatedTools(toolId, 4);
   const navigate = useNavigate();
   const toolData = ALL_TOOLS.find(t => t.id === toolId);
-  const seoDescription = toolData?.seoDescription || description;
   const howToUse = toolData?.howToUse || [];
 
-  const seoTitle = `${title} - Free Online Tool`;
+  const seoTitle = `Free AI ${title}`;
+  const seoDescription = `Use our free AI ${title} for instant results. ${toolData?.seoDescription || 'MCQsAI offers premium AI-powered tools for students and professionals.'}`;
   const toolUrl = toolData?.href ? `https://mcqsai.com${toolData.href}` : undefined;
 
   const jsonLd = {
