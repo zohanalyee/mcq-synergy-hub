@@ -310,8 +310,9 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
   const cardInner = (
     <div
       className={cn(
-        "h-full rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300",
-        "backdrop-blur-sm",
+        "h-full border shadow-sm hover:shadow-lg transition-all duration-300",
+        "backdrop-blur-sm rounded-t-2xl",
+        isSelectVariant && isExpanded ? "rounded-b-none" : "rounded-b-2xl",
         (selection?.isSelected || selection?.isIndeterminate) &&
           "ring-2 ring-primary/40"
       )}
