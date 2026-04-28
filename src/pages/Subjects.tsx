@@ -188,6 +188,7 @@ const Subjects = () => {
           <SubjectGrid 
             subjects={mappedSubjects} 
             isLoaded={!loading} 
+            subjectMcqCounts={subjectMcqCounts}
           />
         )}
       </div>
