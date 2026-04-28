@@ -259,11 +259,19 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
     </div>
   );
 
-  // The select variant renders the topics expandable section
+  // The select variant renders the topics expandable section as a floating overlay
   const TopicsList = isSelectVariant && (
-    <CollapsibleContent>
-      <div className="px-2.5 pb-2.5 pt-0 border-t border-border/50">
-        <div className="pt-2 space-y-0.5 max-h-44 overflow-y-auto scrollbar-thin">
+    <CollapsibleContent
+      forceMount
+      className={cn(
+        "absolute left-0 top-full z-50 w-full",
+        "bg-popover text-popover-foreground border border-t-0 rounded-b-2xl shadow-xl",
+        "data-[state=closed]:hidden"
+      )}
+      style={{ borderColor: theme.border }}
+    >
+      <div className="px-2.5 pb-2.5 pt-0">
+        <div className="pt-2 space-y-0.5 max-h-[260px] overflow-y-auto scrollbar-thin">
           {subject.topics && subject.topics.length > 0 ? (
             subject.topics.map((topic) => (
               <label
@@ -302,8 +310,9 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
   const cardInner = (
     <div
       className={cn(
-        "h-full rounded-2xl border shadow-sm hover:shadow-lg transition-all duration-300",
-        "backdrop-blur-sm",
+        "h-full border shadow-sm hover:shadow-lg transition-all duration-300",
+        "backdrop-blur-sm rounded-t-2xl",
+        isSelectVariant && isExpanded ? "rounded-b-none" : "rounded-b-2xl",
         (selection?.isSelected || selection?.isIndeterminate) &&
           "ring-2 ring-primary/40"
       )}
@@ -338,7 +347,11 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
     whileHover: { y: -3 },
     whileTap: { scale: 0.98 },
     transition: { type: "spring" as const, stiffness: 400, damping: 22 },
-    className: cn("cursor-pointer w-full group block", className),
+    className: cn(
+      "cursor-pointer w-full group block relative",
+      isSelectVariant && isExpanded && "z-40",
+      className
+    ),
     "aria-label": subject.name,
   };
 
