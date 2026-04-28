@@ -200,11 +200,12 @@ export const useSubjectsPageData = () => {
       // Aggregate MCQ counts per subject (lightweight: just pull topic_id refs)
       const mcqCountMap: Record<string, number> = {};
       try {
-        const { data: qRows } = await supabase
+        const { data: qRows } = await (supabase as any)
           .from('questions')
           .select('topic_id')
           .not('topic_id', 'is', null);
-        (qRows || []).forEach((q: any) => {
+        ((qRows as Array<{ topic_id: string | null }>) || []).forEach((q) => {
+          if (!q.topic_id) return;
           const subjId = topicToSubject[q.topic_id];
           if (subjId) mcqCountMap[subjId] = (mcqCountMap[subjId] || 0) + 1;
         });
