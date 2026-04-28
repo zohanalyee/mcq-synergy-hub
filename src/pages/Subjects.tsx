@@ -23,6 +23,7 @@ const Subjects = () => {
     systems,
     availableLevels,
     subjects,
+    subjectMcqCounts,
     loading,
     error,
     filterState,
@@ -91,7 +92,9 @@ const Subjects = () => {
     purpose: s.purpose,
     id: s.id,
     levelId: s.levelId,
-    systemId: s.systemId
+    levelName: s.levelName,
+    systemId: s.systemId,
+    systemName: s.systemName,
   }));
 
   return (
@@ -185,6 +188,7 @@ const Subjects = () => {
           <SubjectGrid 
             subjects={mappedSubjects} 
             isLoaded={!loading} 
+            subjectMcqCounts={subjectMcqCounts}
           />
         )}
       </div>

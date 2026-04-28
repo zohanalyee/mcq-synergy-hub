@@ -108,6 +108,7 @@ const getSubjectIcon = (name: string): ReactNode => {
 export const useSubjectsPageData = () => {
   const [systems, setSystems] = useState<SystemWithLevels[]>([]);
   const [rawSubjects, setRawSubjects] = useState<SubjectDisplay[]>([]);
+  const [subjectMcqCounts, setSubjectMcqCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -180,18 +181,39 @@ export const useSubjectsPageData = () => {
 
       if (subjectsError) throw subjectsError;
 
-      // Get topic counts for each subject
-      const { data: topicCounts, error: topicError } = await supabase
+      // Get topic counts + topic->subject map for each subject
+      const { data: topicRows, error: topicError } = await supabase
         .from('topics')
-        .select('subject_id');
+        .select('id, subject_id');
 
       if (topicError) throw topicError;
 
-      // Count topics per subject
+      // Count topics per subject + build topic->subject map for MCQ aggregation
       const topicCountMap: Record<string, number> = {};
-      (topicCounts || []).forEach((t: any) => {
+      const topicToSubject: Record<string, string> = {};
+      (topicRows || []).forEach((t: any) => {
+        if (!t.subject_id) return;
         topicCountMap[t.subject_id] = (topicCountMap[t.subject_id] || 0) + 1;
+        topicToSubject[t.id] = t.subject_id;
       });
+
+      // Aggregate MCQ counts per subject (lightweight: just pull topic_id refs)
+      const mcqCountMap: Record<string, number> = {};
+      try {
+        const { data: qRows } = await (supabase as any)
+          .from('questions')
+          .select('topic_id')
+          .not('topic_id', 'is', null);
+        ((qRows as Array<{ topic_id: string | null }>) || []).forEach((q) => {
+          if (!q.topic_id) return;
+          const subjId = topicToSubject[q.topic_id];
+          if (subjId) mcqCountMap[subjId] = (mcqCountMap[subjId] || 0) + 1;
+        });
+      } catch (e) {
+        // MCQ counts are non-critical — fail silently
+        console.warn('Could not aggregate subject MCQ counts:', e);
+      }
+      setSubjectMcqCounts(mcqCountMap);
 
       // Map to SubjectDisplay format
       const subjects: SubjectDisplay[] = (subjectsData || []).map((subject: any) => {
@@ -328,6 +350,7 @@ export const useSubjectsPageData = () => {
     availableLevels,
     subjects: filteredSubjects,
     rawSubjects,
+    subjectMcqCounts,
     loading,
     error,
     filterState,
