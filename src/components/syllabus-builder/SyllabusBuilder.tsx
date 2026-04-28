@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo, useEffect } from 'react';
 import { resolveCorrectAnswer } from '@/lib/testEvaluation';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/use-toast';
@@ -596,19 +597,57 @@ export const SyllabusBuilder = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-2xl md:text-3xl font-bold mb-1 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-          Syllabus Builder
+        <h1 className="text-2xl md:text-3xl font-bold mb-1 inline-flex items-center justify-center gap-2">
+          <motion.span
+            initial={{ rotate: -15, scale: 0.8, opacity: 0 }}
+            animate={{ rotate: 0, scale: 1, opacity: 1 }}
+            transition={{ type: 'spring', stiffness: 200, damping: 12, delay: 0.1 }}
+            className="inline-flex"
+          >
+            <Sparkles
+              className="h-6 w-6 md:h-7 md:w-7 text-primary drop-shadow-[0_0_8px_hsl(var(--primary)/0.5)]"
+              aria-hidden="true"
+            />
+          </motion.span>
+          <span className="bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
+            Syllabus Builder
+          </span>
         </h1>
         <p className="text-sm text-muted-foreground max-w-xl mx-auto mb-2">
-          Select subjects and topics from your syllabus to create a personalized test
+          Select subjects and topics from your syllabus to create a{' '}
+          <span className="text-primary font-semibold">personalized test</span>
         </p>
         <div className="flex items-center justify-center gap-2 flex-wrap">
           <Badge variant="secondary" className="px-2 py-1 text-xs">
-            <span className="text-primary font-bold mr-1">{selectedSubjectsCount}</span> Subjects
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={selectedSubjectsCount}
+                initial={{ scale: 0.5, opacity: 0, y: -4 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.5, opacity: 0, y: 4 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                className="text-primary font-bold mr-1 inline-block"
+              >
+                {selectedSubjectsCount}
+              </motion.span>
+            </AnimatePresence>
+            Subjects Selected
             {selectedSubjectsCount >= MAX_SUBJECTS && <span className="text-destructive ml-1">(max)</span>}
           </Badge>
           <Badge variant="secondary" className="px-2 py-1 text-xs">
-            <span className="text-primary font-bold mr-1">{selectedTopicsCount}</span> Topics
+            <AnimatePresence mode="popLayout" initial={false}>
+              <motion.span
+                key={selectedTopicsCount}
+                initial={{ scale: 0.5, opacity: 0, y: -4 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.5, opacity: 0, y: 4 }}
+                transition={{ type: 'spring', stiffness: 500, damping: 20 }}
+                className="text-primary font-bold mr-1 inline-block"
+              >
+                {selectedTopicsCount}
+              </motion.span>
+            </AnimatePresence>
+            Topics Selected
           </Badge>
         </div>
       </motion.div>
