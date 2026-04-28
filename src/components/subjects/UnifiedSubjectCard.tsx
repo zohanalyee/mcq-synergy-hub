@@ -347,7 +347,11 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
     whileHover: { y: -3 },
     whileTap: { scale: 0.98 },
     transition: { type: "spring" as const, stiffness: 400, damping: 22 },
-    className: cn("cursor-pointer w-full group block", className),
+    className: cn(
+      "cursor-pointer w-full group block relative",
+      isSelectVariant && isExpanded && "z-40",
+      className
+    ),
     "aria-label": subject.name,
   };
 
