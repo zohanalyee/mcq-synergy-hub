@@ -350,6 +350,7 @@ export const useSubjectsPageData = () => {
     availableLevels,
     subjects: filteredSubjects,
     rawSubjects,
+    subjectMcqCounts,
     loading,
     error,
     filterState,
