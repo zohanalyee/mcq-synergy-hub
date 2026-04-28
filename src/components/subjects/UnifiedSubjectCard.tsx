@@ -155,9 +155,9 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
 
       {/* Title + system sub-line */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start gap-1.5">
+        <div className="flex items-start gap-1 flex-wrap">
           <h3
-            className="font-semibold text-[13px] leading-tight text-foreground line-clamp-2 flex-1"
+            className="font-semibold text-[13px] leading-tight text-foreground truncate min-w-0 flex-1"
             title={subject.name}
           >
             {subject.name}
@@ -165,7 +165,8 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
           {subject.level && (
             <Badge
               variant="secondary"
-              className="text-[9px] h-4 px-1.5 shrink-0 font-semibold border-0"
+              title={subject.level}
+              className="text-[9px] h-4 px-1.5 shrink-0 font-semibold border-0 truncate max-w-[140px] block"
               style={{
                 backgroundColor: theme.light,
                 color: theme.main,
@@ -176,7 +177,10 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
           )}
         </div>
         {subject.system && (
-          <p className="text-[10px] text-muted-foreground mt-0.5 line-clamp-1">
+          <p
+            className="text-[10px] text-muted-foreground mt-0.5 truncate"
+            title={subject.system}
+          >
             {subject.system}
           </p>
         )}
