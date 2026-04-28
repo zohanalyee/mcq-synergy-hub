@@ -283,7 +283,7 @@ const QuizPlayer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-28">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-32 sm:pb-28">
       <QuizHUD
         title={testData.session_name || "Quiz"}
         current={currentIdx + 1}
@@ -369,7 +369,7 @@ const QuizPlayer = () => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="fixed bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border py-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]"
+            className="fixed bottom-16 sm:bottom-0 inset-x-0 z-40 bg-background/95 backdrop-blur-md border-t border-border py-3 px-4 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] pb-[calc(0.75rem+env(safe-area-inset-bottom))]"
           >
             <div className="max-w-2xl mx-auto">
               <Button size="lg" onClick={goNext} className="w-full">

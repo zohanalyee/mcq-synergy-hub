@@ -51,7 +51,15 @@ const MobileBottomNav = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  if (!isMobile) return null;
+  // Immersive routes — hide bottom nav for full-focus test/quiz sessions
+  const IMMERSIVE_PATTERNS = [
+    /^\/quiz-session(\/|$)/,
+    /^\/test-session(\/|$)/,
+    /^\/exam-session(\/|$)/,
+  ];
+  const isImmersive = IMMERSIVE_PATTERNS.some((r) => r.test(location.pathname));
+
+  if (!isMobile || isImmersive) return null;
 
   const getInitials = (email?: string) => email?.charAt(0).toUpperCase() || 'U';
   const getDisplayName = () => profile?.username || user?.email?.split('@')[0] || 'User';

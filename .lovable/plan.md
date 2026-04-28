@@ -1,54 +1,64 @@
-## Sidebar Navigation UI/UX Polish
+# Mobile Bottom Nav Overlap — Global Fix
 
-Refine `src/components/AppSidebar.tsx` with three targeted improvements: distinct icons, colored hover states, and a dynamic copyright year.
+## Audit Results
 
----
+Scanned all `fixed`/`sticky` bottom elements in the codebase:
 
-### 1. Fix Duplicate Icons & Colors
+| File | Element | Status |
+|------|---------|--------|
+| `MobileBottomNav.tsx` | `fixed bottom-0` (h-14 + safe area, ~56–80px) | The overlapping nav itself |
+| `QuizPlayer.tsx` (line 372) | `fixed bottom-0 inset-x-0` Next/Finish bar | **Broken — overlapped on mobile** |
+| `exam/ExamNavBar.tsx` | `sticky bottom-0` inside scroll container (used in TestSession) | In-flow, but renders on top of mobile nav too — needs verification fix |
+| `syllabus-builder/FloatingActionBar.tsx` | `fixed bottom-20 lg:bottom-8` | Already correct ✅ |
+| `FloatingFeedbackButton.tsx` | `fixed bottom-20 sm:bottom-6` | Already correct ✅ |
+| `ui/drawer.tsx` | Radix drawer | Modal — not affected ✅ |
 
-Update the `getIcon` map in `AppSidebar.tsx`:
+Job Details, Opportunity Detail, Profile, etc. have no fixed/sticky bottom action bars — they're fine.
 
-- **`/recruitment-tests`** (currently `FileSignature`, orange): change icon to `BriefcaseBusiness` and keep a deep-orange tone (`text-orange-600`) — distinct from Jobs (teal) and Past Papers (amber).
-- **`/ask-docs`** (currently `BotMessageSquare`, emerald — duplicates Recruitment's old `FileSignature` shape concern): change icon to `Bot` with `text-amber-500` for a vibrant yellow/amber.
+## Solution: Two-Part Global Standard
 
-Add the new imports (`BriefcaseBusiness`, `Bot`) to the existing `lucide-react` import line and remove `FileSignature` / `BotMessageSquare` if no longer used elsewhere in the file.
+### Part 1 — Immersive Mode (hide MobileBottomNav)
 
----
+In `src/components/MobileBottomNav.tsx`, add a route check using `useLocation()`. Hide the nav (return `null`) when the pathname matches any immersive route:
 
-### 2. Premium Colored Hover Effects
+- `/quiz-session/...`
+- `/test-session/...`
+- `/exam-session/...` (if used)
 
-Each route already has an associated color in the `getIcon` map. Extend that map so each entry returns both an `icon` and a `hoverClass` (e.g., `hover:bg-blue-500/10 hover:text-blue-600`). Apply on the `SidebarMenuButton` per item.
+This gives test-takers full screen real estate with zero distractions.
 
-Mapping (matches existing icon colors):
+```ts
+const IMMERSIVE_PATTERNS = [/^\/quiz-session(\/|$)/, /^\/test-session(\/|$)/, /^\/exam-session(\/|$)/];
+const isImmersive = IMMERSIVE_PATTERNS.some(r => r.test(location.pathname));
+if (!isMobile || isImmersive) return null;
+```
 
-| Route | Hover tint |
-|---|---|
-| `/` | `hover:bg-blue-500/10` |
-| `/subjects` | `hover:bg-purple-500/10` |
-| `/quizzes` | `hover:bg-red-500/10` |
-| `/recruitment-tests` | `hover:bg-orange-500/10` |
-| `/custom-syllabus` | `hover:bg-indigo-500/10` |
-| `/scholarships` | `hover:bg-pink-500/10` |
-| `/jobs` | `hover:bg-teal-500/10` |
-| `/past-papers` | `hover:bg-amber-500/10` |
-| `/tools` | `hover:bg-indigo-400/10` |
-| `/analytics`, `/ai-coach` | `hover:bg-cyan-500/10` |
-| `/feedback` | `hover:bg-lime-500/10` |
-| `/question-bank` | `hover:bg-violet-500/10` |
-| `/ask-docs` | `hover:bg-amber-500/10` |
+### Part 2 — Defensive padding for QuizPlayer sticky bar
 
-The active state styling (`bg-primary/10`) is preserved and takes precedence visually when a route is active. The existing `hover:scale-[1.02]` and transition timing remain untouched so motion feel is consistent.
+Even though we hide the nav on immersive routes, harden the QuizPlayer sticky Next bar so it never overlaps if a future immersive route is added without updating the list:
 
----
+In `src/pages/QuizPlayer.tsx` (line 372), change the sticky container so it sits **above** the nav on mobile and at the very bottom on desktop:
 
-### 3. Dynamic Copyright Year
+```tsx
+className="fixed bottom-16 sm:bottom-0 inset-x-0 z-40 ..."
+```
 
-In the `SidebarFooter`, replace the hardcoded `© 2025 MCQSAI` with `© {new Date().getFullYear()} MCQSAI` so it auto-updates each year.
+And bump the page bottom padding from `pb-28` → `pb-32 sm:pb-28` so the explanation card never hides under the bar.
 
----
+(Since Part 1 already hides the nav, this is belt-and-suspenders, but matches the project's established `bottom-20` / `bottom-16` mobile-safe pattern used by FloatingActionBar and FloatingFeedbackButton.)
 
-### Files Touched
+## Files to Edit
 
-- `src/components/AppSidebar.tsx` (only file)
+1. **`src/components/MobileBottomNav.tsx`** — add `isImmersive` route check, return `null` on `/quiz-session/*` and `/test-session/*`.
+2. **`src/pages/QuizPlayer.tsx`** — sticky bar `bottom-16 sm:bottom-0`, page padding `pb-32 sm:pb-28`.
 
-No changes to routing, sidebar collapse behavior, badges, or the `Sidebar` shell — strictly visual polish on the items themselves.
+## What stays the same
+
+- `FloatingActionBar`, `FloatingFeedbackButton` — already use the correct `bottom-20`/`sm:bottom-6` pattern.
+- `ExamNavBar` — used inside TestSession, which will be an immersive route, so the nav won't overlap.
+- All other pages — no fixed/sticky bottom action bars detected.
+
+## Result
+
+- Quiz and Test sessions: full-screen immersive, no bottom nav, Next button always reachable.
+- Other pages: bottom nav remains; any future sticky elements should follow the `bottom-16`/`bottom-20` mobile-safe pattern documented here.
