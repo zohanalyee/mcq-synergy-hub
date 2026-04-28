@@ -23,6 +23,7 @@ const Subjects = () => {
     systems,
     availableLevels,
     subjects,
+    subjectMcqCounts,
     loading,
     error,
     filterState,
