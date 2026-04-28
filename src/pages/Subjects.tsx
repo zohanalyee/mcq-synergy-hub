@@ -92,7 +92,9 @@ const Subjects = () => {
     purpose: s.purpose,
     id: s.id,
     levelId: s.levelId,
-    systemId: s.systemId
+    levelName: s.levelName,
+    systemId: s.systemId,
+    systemName: s.systemName,
   }));
 
   return (
