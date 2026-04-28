@@ -1,33 +1,25 @@
-
 import { motion } from "framer-motion";
 import { Subject } from "@/types/subject.types";
-import SubjectCard from "@/components/SubjectCard";
+import {
+  UnifiedSubjectCard,
+  UnifiedSubjectModel,
+} from "@/components/subjects/UnifiedSubjectCard";
+import { GroupedSubjectGrid } from "@/components/subjects/GroupedSubjectGrid";
 
 interface SubjectGridProps {
   subjects: Subject[];
   isLoaded: boolean;
+  /** Optional subject-level MCQ counts keyed by subject id. */
+  subjectMcqCounts?: Record<string, number>;
 }
 
-const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.03,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0 },
-    show: { opacity: 1 },
-  };
-
+const SubjectGrid = ({ subjects, isLoaded, subjectMcqCounts = {} }: SubjectGridProps) => {
   if (subjects.length === 0) {
     return (
       <div className="text-center py-10">
-        <p className="text-sm text-muted-foreground mb-3">No subjects match your search criteria.</p>
+        <p className="text-sm text-muted-foreground mb-3">
+          No subjects match your search criteria.
+        </p>
         <motion.button
           onClick={() => window.location.reload()}
           className="px-3 py-1.5 rounded-full text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90"
@@ -40,30 +32,49 @@ const SubjectGrid = ({ subjects, isLoaded }: SubjectGridProps) => {
     );
   }
 
+  // Map to the unified model
+  const mapped: (UnifiedSubjectModel & { system?: string; level?: string })[] =
+    subjects.map((s, i) => ({
+      id: s.id || `${s.title}-${i}`,
+      name: s.title,
+      level: s.levelName,
+      levelId: s.levelId,
+      system: s.systemName,
+      systemId: s.systemId,
+      topicCount: s.topicCount || 0,
+      mcqCount: s.id ? subjectMcqCounts[s.id] : undefined,
+      icon: s.icon,
+      description: s.description,
+    }));
+
   return (
-    <motion.div 
-      className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-2 w-full"
-      variants={container}
-      initial="hidden"
-      animate={isLoaded ? "show" : "hidden"}
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={isLoaded ? { opacity: 1 } : { opacity: 0 }}
+      transition={{ duration: 0.25 }}
     >
-      {subjects.map((subject, index) => (
-        <motion.div key={subject.id || `${subject.title}-${index}`} variants={item}>
-          <SubjectCard
-            title={subject.title}
-            icon={subject.icon}
-            description={subject.description}
-            topicCount={subject.topicCount || 0}
-            color={subject.color}
-            purpose={subject.purpose}
-            id={subject.id}
-            levelId={subject.levelId}
-            levelName={subject.levelName}
-            systemId={subject.systemId}
-            systemName={subject.systemName}
+      <GroupedSubjectGrid
+        subjects={mapped}
+        groupBy="system"
+        renderCard={(subject) => (
+          <UnifiedSubjectCard
+            variant="navigate"
+            subject={subject}
+            linkState={{
+              title: subject.name,
+              id: subject.id,
+              subjectId: subject.id,
+              levelId: subject.levelId,
+              levelName: subject.level,
+              systemId: subject.systemId,
+              systemName: subject.system,
+              topicCount: subject.topicCount,
+              mode: "practice",
+              purpose: "mcqs",
+            }}
           />
-        </motion.div>
-      ))}
+        )}
+      />
     </motion.div>
   );
 };

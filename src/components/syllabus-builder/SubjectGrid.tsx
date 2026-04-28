@@ -1,8 +1,8 @@
-import { motion } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { SyllabusSubject } from './interfaces';
-import { SyllabusSubjectCard } from './SyllabusSubjectCard';
+import { UnifiedSubjectCard } from '@/components/subjects/UnifiedSubjectCard';
+import { GroupedSubjectGrid } from '@/components/subjects/GroupedSubjectGrid';
 
 interface SubjectGridProps {
   subjects: SyllabusSubject[];
@@ -13,19 +13,6 @@ interface SubjectGridProps {
   onToggleExpand: (subjectId: string) => void;
   onClearFilters: () => void;
 }
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.05 }
-  }
-};
-
-const item = {
-  hidden: { y: 10, opacity: 0 },
-  show: { y: 0, opacity: 1 }
-};
 
 export const SubjectGrid = ({
   subjects,
@@ -55,24 +42,61 @@ export const SubjectGrid = ({
     );
   }
 
+  // Map syllabus subjects to the unified model shape
+  const mapped = subjects.map((s) => {
+    const totalMcqs = s.topics.reduce(
+      (sum, t) => sum + (topicQuestionCounts[t.id] || 0),
+      0
+    );
+    const selectedTopicsCount = s.topics.filter((t) => t.isSelected).length;
+    const allSelected =
+      s.topics.length > 0 && selectedTopicsCount === s.topics.length;
+    const someSelected =
+      selectedTopicsCount > 0 && selectedTopicsCount < s.topics.length;
+
+    return {
+      raw: s,
+      model: {
+        id: s.id,
+        name: s.name,
+        level: s.levelName,
+        system: s.systemName,
+        topicCount: s.topics.length,
+        mcqCount: totalMcqs,
+        topics: s.topics.map((t) => ({
+          id: t.id,
+          name: t.name,
+          isSelected: t.isSelected,
+        })),
+        description: s.description,
+      },
+      selection: {
+        isSelected: allSelected,
+        isIndeterminate: someSelected,
+        isExpanded: s.isExpanded,
+        onToggleSubject,
+        onToggleTopic,
+        onToggleExpand,
+        topicQuestionCounts,
+      },
+    };
+  });
+
   return (
-    <motion.div
-      variants={container}
-      initial="hidden"
-      animate="show"
-      className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 gap-2 items-start"
-    >
-      {subjects.map(subject => (
-        <motion.div key={subject.id} variants={item}>
-          <SyllabusSubjectCard
-            subject={subject}
-            topicQuestionCounts={topicQuestionCounts}
-            onToggleSubject={onToggleSubject}
-            onToggleTopic={onToggleTopic}
-            onToggleExpand={onToggleExpand}
+    <GroupedSubjectGrid
+      subjects={mapped.map((m) => m.model)}
+      groupBy="system"
+      gridClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-2 items-start"
+      renderCard={(subject) => {
+        const entry = mapped.find((m) => m.model.id === subject.id)!;
+        return (
+          <UnifiedSubjectCard
+            variant="select"
+            subject={entry.model}
+            selection={entry.selection}
           />
-        </motion.div>
-      ))}
-    </motion.div>
+        );
+      }}
+    />
   );
 };
