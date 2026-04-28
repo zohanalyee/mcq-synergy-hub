@@ -108,6 +108,7 @@ const getSubjectIcon = (name: string): ReactNode => {
 export const useSubjectsPageData = () => {
   const [systems, setSystems] = useState<SystemWithLevels[]>([]);
   const [rawSubjects, setRawSubjects] = useState<SubjectDisplay[]>([]);
+  const [subjectMcqCounts, setSubjectMcqCounts] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
