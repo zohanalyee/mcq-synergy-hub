@@ -346,22 +346,37 @@ export const UnifiedSubjectCard: React.FC<UnifiedSubjectCardProps> = (
     return <MotionDiv {...sharedMotion}>{cardInner}</MotionDiv>;
   }
 
-  // Navigate variant — onClick override or default Link to subject content
+  // Navigate variant — always render as <a> Link for right-click / new-tab / SEO.
   const navProps = props as NavigateProps;
-  if (navProps.onClick) {
-    return (
-      <MotionDiv {...sharedMotion} onClick={navProps.onClick}>
-        {cardInner}
-      </MotionDiv>
-    );
-  }
+  const linkTo =
+    `/subject-content/${
+      subject.id ||
+      encodeURIComponent(subject.name.toLowerCase().replace(/\s+/g, "-"))
+    }`;
 
-  const linkTo = `/subject-content/${
-    subject.id ||
-    encodeURIComponent(subject.name.toLowerCase().replace(/\s+/g, "-"))
-  }`;
   return (
-    <MotionLink to={linkTo} state={navProps.linkState} {...sharedMotion}>
+    <MotionLink
+      to={linkTo}
+      state={navProps.linkState}
+      onClick={(e) => {
+        if (navProps.onClick) {
+          // Allow modifier-clicks / middle-click to behave as native link
+          if (
+            e.defaultPrevented ||
+            e.button !== 0 ||
+            e.metaKey ||
+            e.ctrlKey ||
+            e.shiftKey ||
+            e.altKey
+          ) {
+            return;
+          }
+          e.preventDefault();
+          navProps.onClick();
+        }
+      }}
+      {...sharedMotion}
+    >
       {cardInner}
     </MotionLink>
   );
