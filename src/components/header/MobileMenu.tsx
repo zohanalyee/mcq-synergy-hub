@@ -136,7 +136,7 @@ const MobileMenu = ({
                   variant="outline"
                   className="w-full flex items-center justify-center gap-2"
                 >
-                  <Link to="/analytics" onClick={onClose}>AI Personal Coach</Link>
+                  <Link to="/analytics" onClick={onClose} title="View your progress and get AI-powered recommendations">Analytics & Insights</Link>
                 </Button>
                 <Button
                   variant="destructive"
