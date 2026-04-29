@@ -91,24 +91,13 @@ const Scholarships = () => {
       />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-16 overflow-x-hidden">
         <PageBreadcrumb items={[{ title: 'Scholarships', href: '/scholarships', isCurrent: true }]} showHomeButton={true} />
-        <div className="mb-6 text-center">
-          <motion.h1 
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-2xl md:text-3xl font-bold flex items-center justify-center text-foreground"
-          >
-            <Award className="mr-2 h-7 w-7 text-primary" /> Scholarships
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.1 }}
-            className="text-muted-foreground mt-1 text-sm"
-          >
-            Discover scholarship opportunities to fund your education
-          </motion.p>
-        </div>
+        <PageHeader
+          title="Scholarships"
+          icon={Award}
+          colorTheme="rose"
+          tagline="Fund your education"
+          description="Discover scholarship opportunities — local and international — with deadlines and application links."
+        />
 
         {/* Glass Search & Filter Bar */}
         <div className="max-w-2xl mx-auto mb-6">
