@@ -203,7 +203,7 @@ const Home = () => {
         variants={sectionReveal}
         initial="hidden"
         animate="visible"
-        className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden"
+        className="pt-0 pb-4 md:pt-1 md:pb-8 relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         
@@ -234,23 +234,6 @@ const Home = () => {
               transition={{ duration: 0.5 }}
               className="flex flex-col items-center"
             >
-              {/* AI Brand Icon - Large */}
-              <div className="relative mb-3 flex flex-col items-center justify-center">
-                <motion.div
-                  className="absolute w-12 h-12 md:w-14 md:h-14 rounded-xl bg-violet-500/20 blur-2xl"
-                  animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
-                  transition={{ duration: 2.5, repeat: Infinity }}
-                />
-                <div className="relative flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/30">
-                  <Brain className="h-5 w-5 md:h-6 md:w-6 text-white" />
-                  <Sparkles className="absolute -top-1.5 -right-1.5 h-3.5 w-3.5 text-yellow-300 animate-pulse" />
-                </div>
-                <span className="mt-2 text-lg md:text-xl font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                  <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-cyan-500">MCQS</span>
-                  <span className="text-foreground">AI</span>
-                </span>
-              </div>
-              
               <motion.span
                 className="hidden md:inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold bg-gradient-to-r from-violet-500/15 to-blue-500/15 text-primary border border-violet-500/20 rounded-full"
                 initial={{ opacity: 0, scale: 0.9 }}
