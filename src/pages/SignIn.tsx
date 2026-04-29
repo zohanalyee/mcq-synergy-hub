@@ -223,7 +223,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       <JoinSection />
 
       {/* Right Panel - Form (only this scrolls if needed) */}
-      <div className="flex-1 min-h-0 overflow-y-auto auth-scroll flex items-start sm:items-center justify-center px-6 py-5 sm:px-8 sm:py-6 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(210,40%,96%)]">
+      <div className="flex-1 min-h-0 h-full max-h-[100dvh] overflow-y-auto auth-scroll flex items-start sm:items-center justify-center px-6 pt-5 pb-28 sm:px-8 sm:py-6 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(210,40%,96%)]">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
