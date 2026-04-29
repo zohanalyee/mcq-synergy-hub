@@ -161,6 +161,11 @@ export default {
 						backgroundPosition: '500px 0' 
 					}
 				},
+				'top-progress': {
+					'0%':   { transform: 'translateX(-100%) scaleX(0.6)' },
+					'50%':  { transform: 'translateX(50%) scaleX(1)' },
+					'100%': { transform: 'translateX(250%) scaleX(0.6)' },
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -172,6 +177,7 @@ export default {
 				'slide-right': 'slide-right 0.6s ease-out forwards',
 				'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
 				'shimmer': 'shimmer 2s linear infinite',
+				'top-progress': 'top-progress 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite',
 			},
 			boxShadow: {
 				'neo': '5px 5px 15px #d1d9e6, -5px -5px 15px #ffffff',
