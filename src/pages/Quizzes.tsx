@@ -17,6 +17,7 @@ import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from 
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface TopicItem {
   id: string;
@@ -214,23 +215,13 @@ const Quizzes = () => {
         keywords="online quiz, practice test, MCQ quiz, MDCAT quiz, ECAT quiz, free practice"
       />
       <div className="container mx-auto px-4 pt-6 pb-10">
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-6 text-center"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-3">
-            <Sparkles className="h-3.5 w-3.5" />
-            Powered by our Question Bank
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-violet-500 to-cyan-500 bg-clip-text text-transparent">
-            Quizzes
-          </h1>
-          <p className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
-            Take a focused quiz from a subject or a specific topic — same premium player as Mock Tests, with instant scoring & explanations.
-          </p>
-        </motion.div>
+        <PageHeader
+          title="Quizzes"
+          icon={HelpCircle}
+          colorTheme="violet"
+          tagline="Powered by our Question Bank"
+          description="Take a focused quiz from a subject or a specific topic — same premium player as Mock Tests, with instant scoring & explanations."
+        />
 
         <Tabs defaultValue="subject" className="mb-2">
           <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-6 h-11">

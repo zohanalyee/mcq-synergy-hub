@@ -11,6 +11,7 @@ import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
 import { TOOL_ICON_COLORS } from '@/data/toolColors';
 import { motion } from 'framer-motion';
 import TypewriterText from '@/components/TypewriterText';
+import PageHeader from '@/components/ui/PageHeader';
 
 const Tools = () => {
   const [search, setSearch] = useState('');
@@ -31,25 +32,25 @@ const Tools = () => {
       />
         <div className="max-w-7xl mx-auto px-4 py-4 sm:py-6 space-y-5">
         <PageBreadcrumb items={[{ title: 'Tools', href: '/tools', isCurrent: true }]} showHomeButton={true} />
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-lg">
-            <Wrench className="h-4 w-4" />
-            {ALL_TOOLS.length}+ Free Tools
-          </div>
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">Free Online AI Tools</h1>
-          <TypewriterText
-            prefix="Access 50+ Premium AI Tools to "
-            phrases={[
-              'Build a Professional Resume',
-              'Solve Complex Math',
-              'Manage School Attendance',
-              'Generate Study Notes Instantly',
-              'Boost Productivity — Free Forever',
-            ]}
-            className="text-muted-foreground max-w-xl mx-auto text-sm sm:text-base"
-            minHeightClass="min-h-[3rem]"
-          />
-        </motion.div>
+        <PageHeader
+          title="Free Online AI Tools"
+          icon={Wrench}
+          colorTheme="violet"
+          tagline={`${ALL_TOOLS.length}+ Free Tools — Premium quality, no signup`}
+          description={
+            <TypewriterText
+              prefix="Access 50+ Premium AI Tools to "
+              phrases={[
+                'Build a Professional Resume',
+                'Solve Complex Math',
+                'Manage School Attendance',
+                'Generate Study Notes Instantly',
+                'Boost Productivity — Free Forever',
+              ]}
+              minHeightClass="min-h-[1.5rem]"
+            />
+          }
+        />
 
         {/* Search + Filters */}
         <div className="space-y-4">
