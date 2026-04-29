@@ -308,7 +308,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleSignIn}
-                className="space-y-4"
+                className="space-y-3"
               >
                 {/* Email */}
                 <div className="space-y-1.5">
@@ -371,7 +371,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleSignUp}
-                className="space-y-4"
+                className="space-y-3"
               >
                 {/* Full Name */}
                 <div className="space-y-1.5">
@@ -469,7 +469,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           </AnimatePresence>
 
           {/* Back to Home */}
-          <div className="text-center mt-8">
+          <div className="text-center mt-4">
             <button
               onClick={() => navigate("/")}
               className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors inline-flex items-center gap-1.5"
