@@ -125,6 +125,23 @@ button,
   background-color: hsl(var(--muted-foreground) / 0.5);
 }
 
+/* === Brand gradient utilities — driven by --brand-from / --brand-via / --brand-to === */
+.bg-brand-gradient {
+  background-image: var(--gradient-brand);
+}
+.bg-brand-gradient-soft {
+  background-image: var(--gradient-brand-soft);
+}
+.text-brand-gradient {
+  background-image: var(--gradient-brand);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.shadow-brand {
+  box-shadow: var(--shadow-brand);
+}
+
 @layer base {
   :root {
     --background: 220 20% 97%;
