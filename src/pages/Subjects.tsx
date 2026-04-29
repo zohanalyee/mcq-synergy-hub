@@ -107,23 +107,13 @@ const Subjects = () => {
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-24">
         <PageBreadcrumb items={[{ title: 'Subjects', href: '/subjects', isCurrent: true }]} showHomeButton={true} />
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="mb-4 text-center"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium mb-4">
-            <Sparkles className="w-4 h-4" />
-            <span>Explore & Learn</span>
-          </div>
-          <h1 className="text-3xl md:text-4xl font-bold mb-2">
-            <span className="text-gradient">Subjects</span>
-          </h1>
-          <p className="text-muted-foreground max-w-2xl mx-auto">
-            Browse subjects from your curriculum, read content, and practice with MCQs. Choose Read Mode for memorization or Practice Mode for self-testing.
-          </p>
-        </motion.div>
+        <PageHeader
+          title="Subjects"
+          icon={BookOpen}
+          colorTheme="indigo"
+          tagline="Explore & Learn"
+          description="Browse subjects from your curriculum, read content, and practice with MCQs. Choose Read Mode for memorization or Practice Mode for self-testing."
+        />
         
         {/* Glass Search + Filter Row */}
         <motion.div
