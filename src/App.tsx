@@ -7,7 +7,7 @@ import { useState, lazy, Suspense } from "react";
 
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
-import BrandingLoader from "./components/BrandingLoader";
+import TopProgressBar from "./components/TopProgressBar";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LearningProvider } from "./contexts/LearningContext";
@@ -198,16 +198,16 @@ const App = () => {
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
                     <ProfileCompletionGuard>
-                    <Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}>
+                    <Suspense fallback={<TopProgressBar />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
 
                       {/* Programmatic SEO - Board Routes (most specific first) */}
-                      <Route path="/boards/:boardSlug/:classNumber/:subjectSlug/:topicSlug" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BoardTopicPage /></Suspense>} />
-                      <Route path="/boards/:boardSlug/:classNumber/:subjectSlug" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BoardSubjectPage /></Suspense>} />
-                      <Route path="/boards/:boardSlug/:classNumber" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BoardClassPage /></Suspense>} />
-                      <Route path="/boards/:boardSlug" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BoardLandingPage /></Suspense>} />
-                      <Route path="/boards" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><Boards /></Suspense>} />
+                      <Route path="/boards/:boardSlug/:classNumber/:subjectSlug/:topicSlug" element={<Suspense fallback={<TopProgressBar />}><BoardTopicPage /></Suspense>} />
+                      <Route path="/boards/:boardSlug/:classNumber/:subjectSlug" element={<Suspense fallback={<TopProgressBar />}><BoardSubjectPage /></Suspense>} />
+                      <Route path="/boards/:boardSlug/:classNumber" element={<Suspense fallback={<TopProgressBar />}><BoardClassPage /></Suspense>} />
+                      <Route path="/boards/:boardSlug" element={<Suspense fallback={<TopProgressBar />}><BoardLandingPage /></Suspense>} />
+                      <Route path="/boards" element={<Suspense fallback={<TopProgressBar />}><Boards /></Suspense>} />
 
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/signin" element={<SignIn />} />
@@ -223,7 +223,7 @@ const App = () => {
                       
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
-                      <Route path="/admin/reviews" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ReviewsManagement /></Suspense>} />
+                      <Route path="/admin/reviews" element={<Suspense fallback={<TopProgressBar />}><ReviewsManagement /></Suspense>} />
                       <Route path="/subjects" element={<Subjects />} />
                       <Route path="/dashboard" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
                       <Route path="/profile" element={<InstantAuthGuard title="Your Profile" description="Sign in to access your profile" actionName="Profile"><Profile /></InstantAuthGuard>} />
@@ -237,13 +237,13 @@ const App = () => {
                       <Route path="/achievements" element={<InstantAuthGuard title="Achievements" description="Sign in to view your achievements" actionName="Achievements"><Achievements /></InstantAuthGuard>} />
                       <Route path="/subject/:id" element={<SubjectContent />} />
                       <Route path="/subject-content/:id" element={<SubjectContent />} />
-                      <Route path="/jobs/:jobSlug" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><JobDetailPage /></Suspense>} />
+                      <Route path="/jobs/:jobSlug" element={<Suspense fallback={<TopProgressBar />}><JobDetailPage /></Suspense>} />
                       <Route path="/jobs" element={<Jobs />} />
-                      <Route path="/scholarships/:scholarshipSlug" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ScholarshipDetailPage /></Suspense>} />
+                      <Route path="/scholarships/:scholarshipSlug" element={<Suspense fallback={<TopProgressBar />}><ScholarshipDetailPage /></Suspense>} />
                       <Route path="/scholarships" element={<Scholarships />} />
-                      <Route path="/tenders" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><Tenders /></Suspense>} />
-                      <Route path="/board-results" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BoardResults /></Suspense>} />
-                      <Route path="/opportunity/:id" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><OpportunityDetail /></Suspense>} />
+                      <Route path="/tenders" element={<Suspense fallback={<TopProgressBar />}><Tenders /></Suspense>} />
+                      <Route path="/board-results" element={<Suspense fallback={<TopProgressBar />}><BoardResults /></Suspense>} />
+                      <Route path="/opportunity/:id" element={<Suspense fallback={<TopProgressBar />}><OpportunityDetail /></Suspense>} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
                       <Route path="/quizzes" element={<InstantAuthGuard title="Quizzes" description="Sign in to take quizzes and track your progress" actionName="Quizzes"><Quizzes /></InstantAuthGuard>} />
@@ -256,17 +256,17 @@ const App = () => {
                       <Route path="/reviews" element={<Reviews />} />
                       
                       {/* Content & SEO Pages */}
-                      <Route path="/exams/:examSlug" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ExamLandingPage /></Suspense>} />
-                      <Route path="/blog" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><Blog /></Suspense>} />
-                      <Route path="/blog/:slug" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BlogPost /></Suspense>} />
-                      <Route path="/faq" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><FAQ /></Suspense>} />
-                      <Route path="/study-guides" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><StudyGuides /></Suspense>} />
+                      <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
+                      <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><Blog /></Suspense>} />
+                      <Route path="/blog/:slug" element={<Suspense fallback={<TopProgressBar />}><BlogPost /></Suspense>} />
+                      <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><FAQ /></Suspense>} />
+                      <Route path="/study-guides" element={<Suspense fallback={<TopProgressBar />}><StudyGuides /></Suspense>} />
                       
                     {/* Tool Routes */}
                       <Route path="/tools" element={<Tools />} />
                       <Route path="/tools/calendar" element={<CalendarTool />} />
-                      <Route path="/tools/islamic-calendar" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><IslamicCalendar /></Suspense>} />
-                      <Route path="/tools/international-calendar" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><InternationalCalendar /></Suspense>} />
+                      <Route path="/tools/islamic-calendar" element={<Suspense fallback={<TopProgressBar />}><IslamicCalendar /></Suspense>} />
+                      <Route path="/tools/international-calendar" element={<Suspense fallback={<TopProgressBar />}><InternationalCalendar /></Suspense>} />
                       <Route path="/tools/math" element={<MathTool />} />
                       <Route path="/tools/age-calculator" element={<AgeCalculator />} />
                       <Route path="/tools/timer" element={<TimerTool />} />
@@ -275,70 +275,70 @@ const App = () => {
                       <Route path="/tools/notes" element={<NotesTool />} />
                       
                       {/* Lazy-loaded tools */}
-                      <Route path="/tools/bmi-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BMICalculator /></Suspense>} />
-                      <Route path="/tools/percentage-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PercentageCalculator /></Suspense>} />
-                      <Route path="/tools/salary-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><SalaryCalculator /></Suspense>} />
-                      <Route path="/tools/emi-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><EMICalculator /></Suspense>} />
-                      <Route path="/tools/tip-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><TipCalculator /></Suspense>} />
-                      <Route path="/tools/loan-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><LoanCalculator /></Suspense>} />
-                      <Route path="/tools/discount-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><DiscountCalculator /></Suspense>} />
-                      <Route path="/tools/bmr-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BMRCalculator /></Suspense>} />
-                      <Route path="/tools/duration-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><DurationCalculator /></Suspense>} />
-                      <Route path="/tools/ratio-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><RatioCalculator /></Suspense>} />
-                      <Route path="/tools/speed-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><SpeedCalculator /></Suspense>} />
-                      <Route path="/tools/area-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><AreaCalculator /></Suspense>} />
-                      <Route path="/tools/fraction-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><FractionCalculator /></Suspense>} />
-                      <Route path="/tools/date-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><DateCalculator /></Suspense>} />
-                      <Route path="/tools/fuel-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><FuelCalculator /></Suspense>} />
-                      <Route path="/tools/cgpa-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><CGPACalculator /></Suspense>} />
-                      <Route path="/tools/gpa-to-percentage" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><GPAToPercentage /></Suspense>} />
-                      <Route path="/tools/percentage-to-gpa" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PercentageToGPA /></Suspense>} />
-                      <Route path="/tools/grade-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><GradeCalculator /></Suspense>} />
-                      <Route path="/tools/marks-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><MarksCalculator /></Suspense>} />
-                      <Route path="/tools/attendance-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><AttendanceCalculator /></Suspense>} />
-                      <Route path="/tools/result-calculator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ResultCalculator /></Suspense>} />
-                      <Route path="/tools/formula-sheet" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><FormulaSheet /></Suspense>} />
-                      <Route path="/tools/periodic-table" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PeriodicTable /></Suspense>} />
-                      <Route path="/tools/multiplication-table" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><MultiplicationTable /></Suspense>} />
-                      <Route path="/tools/currency-converter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><CurrencyConverter /></Suspense>} />
-                      <Route path="/tools/temperature-converter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><TemperatureConverter /></Suspense>} />
-                      <Route path="/tools/roman-converter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><RomanConverter /></Suspense>} />
-                      <Route path="/tools/binary-converter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><BinaryConverter /></Suspense>} />
-                      <Route path="/tools/case-converter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><CaseConverter /></Suspense>} />
-                      <Route path="/tools/image-resizer" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ImageResizer /></Suspense>} />
-                      <Route path="/tools/image-compressor" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ImageCompressor /></Suspense>} />
-                      <Route path="/tools/pdf-compressor" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PDFCompressor /></Suspense>} />
-                      <Route path="/tools/pdf-merger" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PDFMerger /></Suspense>} />
-                      <Route path="/tools/image-converter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ImageConverter /></Suspense>} />
-                      <Route path="/tools/pdf-to-text" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PDFToText /></Suspense>} />
-                      <Route path="/tools/pdf-splitter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PDFSplitter /></Suspense>} />
-                      <Route path="/tools/stopwatch" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><Stopwatch /></Suspense>} />
-                      <Route path="/tools/world-clock" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><WorldClock /></Suspense>} />
-                      <Route path="/tools/word-counter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><WordCounter /></Suspense>} />
-                      <Route path="/tools/character-counter" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><CharacterCounter /></Suspense>} />
-                      <Route path="/tools/qr-generator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><QRGenerator /></Suspense>} />
-                      <Route path="/tools/password-generator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PasswordGenerator /></Suspense>} />
-                      <Route path="/tools/name-generator" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><NameGenerator /></Suspense>} />
-                      <Route path="/tools/color-picker" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><ColorPicker /></Suspense>} />
-                      <Route path="/tools/random-number" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><RandomNumber /></Suspense>} />
-                      <Route path="/tools/equation-solver" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><EquationSolver /></Suspense>} />
+                      <Route path="/tools/bmi-calculator" element={<Suspense fallback={<TopProgressBar />}><BMICalculator /></Suspense>} />
+                      <Route path="/tools/percentage-calculator" element={<Suspense fallback={<TopProgressBar />}><PercentageCalculator /></Suspense>} />
+                      <Route path="/tools/salary-calculator" element={<Suspense fallback={<TopProgressBar />}><SalaryCalculator /></Suspense>} />
+                      <Route path="/tools/emi-calculator" element={<Suspense fallback={<TopProgressBar />}><EMICalculator /></Suspense>} />
+                      <Route path="/tools/tip-calculator" element={<Suspense fallback={<TopProgressBar />}><TipCalculator /></Suspense>} />
+                      <Route path="/tools/loan-calculator" element={<Suspense fallback={<TopProgressBar />}><LoanCalculator /></Suspense>} />
+                      <Route path="/tools/discount-calculator" element={<Suspense fallback={<TopProgressBar />}><DiscountCalculator /></Suspense>} />
+                      <Route path="/tools/bmr-calculator" element={<Suspense fallback={<TopProgressBar />}><BMRCalculator /></Suspense>} />
+                      <Route path="/tools/duration-calculator" element={<Suspense fallback={<TopProgressBar />}><DurationCalculator /></Suspense>} />
+                      <Route path="/tools/ratio-calculator" element={<Suspense fallback={<TopProgressBar />}><RatioCalculator /></Suspense>} />
+                      <Route path="/tools/speed-calculator" element={<Suspense fallback={<TopProgressBar />}><SpeedCalculator /></Suspense>} />
+                      <Route path="/tools/area-calculator" element={<Suspense fallback={<TopProgressBar />}><AreaCalculator /></Suspense>} />
+                      <Route path="/tools/fraction-calculator" element={<Suspense fallback={<TopProgressBar />}><FractionCalculator /></Suspense>} />
+                      <Route path="/tools/date-calculator" element={<Suspense fallback={<TopProgressBar />}><DateCalculator /></Suspense>} />
+                      <Route path="/tools/fuel-calculator" element={<Suspense fallback={<TopProgressBar />}><FuelCalculator /></Suspense>} />
+                      <Route path="/tools/cgpa-calculator" element={<Suspense fallback={<TopProgressBar />}><CGPACalculator /></Suspense>} />
+                      <Route path="/tools/gpa-to-percentage" element={<Suspense fallback={<TopProgressBar />}><GPAToPercentage /></Suspense>} />
+                      <Route path="/tools/percentage-to-gpa" element={<Suspense fallback={<TopProgressBar />}><PercentageToGPA /></Suspense>} />
+                      <Route path="/tools/grade-calculator" element={<Suspense fallback={<TopProgressBar />}><GradeCalculator /></Suspense>} />
+                      <Route path="/tools/marks-calculator" element={<Suspense fallback={<TopProgressBar />}><MarksCalculator /></Suspense>} />
+                      <Route path="/tools/attendance-calculator" element={<Suspense fallback={<TopProgressBar />}><AttendanceCalculator /></Suspense>} />
+                      <Route path="/tools/result-calculator" element={<Suspense fallback={<TopProgressBar />}><ResultCalculator /></Suspense>} />
+                      <Route path="/tools/formula-sheet" element={<Suspense fallback={<TopProgressBar />}><FormulaSheet /></Suspense>} />
+                      <Route path="/tools/periodic-table" element={<Suspense fallback={<TopProgressBar />}><PeriodicTable /></Suspense>} />
+                      <Route path="/tools/multiplication-table" element={<Suspense fallback={<TopProgressBar />}><MultiplicationTable /></Suspense>} />
+                      <Route path="/tools/currency-converter" element={<Suspense fallback={<TopProgressBar />}><CurrencyConverter /></Suspense>} />
+                      <Route path="/tools/temperature-converter" element={<Suspense fallback={<TopProgressBar />}><TemperatureConverter /></Suspense>} />
+                      <Route path="/tools/roman-converter" element={<Suspense fallback={<TopProgressBar />}><RomanConverter /></Suspense>} />
+                      <Route path="/tools/binary-converter" element={<Suspense fallback={<TopProgressBar />}><BinaryConverter /></Suspense>} />
+                      <Route path="/tools/case-converter" element={<Suspense fallback={<TopProgressBar />}><CaseConverter /></Suspense>} />
+                      <Route path="/tools/image-resizer" element={<Suspense fallback={<TopProgressBar />}><ImageResizer /></Suspense>} />
+                      <Route path="/tools/image-compressor" element={<Suspense fallback={<TopProgressBar />}><ImageCompressor /></Suspense>} />
+                      <Route path="/tools/pdf-compressor" element={<Suspense fallback={<TopProgressBar />}><PDFCompressor /></Suspense>} />
+                      <Route path="/tools/pdf-merger" element={<Suspense fallback={<TopProgressBar />}><PDFMerger /></Suspense>} />
+                      <Route path="/tools/image-converter" element={<Suspense fallback={<TopProgressBar />}><ImageConverter /></Suspense>} />
+                      <Route path="/tools/pdf-to-text" element={<Suspense fallback={<TopProgressBar />}><PDFToText /></Suspense>} />
+                      <Route path="/tools/pdf-splitter" element={<Suspense fallback={<TopProgressBar />}><PDFSplitter /></Suspense>} />
+                      <Route path="/tools/stopwatch" element={<Suspense fallback={<TopProgressBar />}><Stopwatch /></Suspense>} />
+                      <Route path="/tools/world-clock" element={<Suspense fallback={<TopProgressBar />}><WorldClock /></Suspense>} />
+                      <Route path="/tools/word-counter" element={<Suspense fallback={<TopProgressBar />}><WordCounter /></Suspense>} />
+                      <Route path="/tools/character-counter" element={<Suspense fallback={<TopProgressBar />}><CharacterCounter /></Suspense>} />
+                      <Route path="/tools/qr-generator" element={<Suspense fallback={<TopProgressBar />}><QRGenerator /></Suspense>} />
+                      <Route path="/tools/password-generator" element={<Suspense fallback={<TopProgressBar />}><PasswordGenerator /></Suspense>} />
+                      <Route path="/tools/name-generator" element={<Suspense fallback={<TopProgressBar />}><NameGenerator /></Suspense>} />
+                      <Route path="/tools/color-picker" element={<Suspense fallback={<TopProgressBar />}><ColorPicker /></Suspense>} />
+                      <Route path="/tools/random-number" element={<Suspense fallback={<TopProgressBar />}><RandomNumber /></Suspense>} />
+                      <Route path="/tools/equation-solver" element={<Suspense fallback={<TopProgressBar />}><EquationSolver /></Suspense>} />
                       
                       {/* School Attendance System */}
-                      <Route path="/tools/school-attendance-system" element={<InstantAuthGuard title="School Attendance  System" description="Complete attendance tracking  management" actionName="HR Dashboard"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><AttendanceDashboard /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/student-attendance" element={<InstantAuthGuard title="Student Attendance" description="Sign in to mark student attendance" actionName="Student Attendance"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><StudentAttendancePage /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/staff-attendance" element={<InstantAuthGuard title="Staff Attendance" description="Sign in to mark staff attendance" actionName="Staff Attendance"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><StaffAttendancePage /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/setup" element={<InstantAuthGuard title="HR Setup" description="Sign in to configure HR settings" actionName="HR Setup"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><HRSetupPage /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/leaves" element={<InstantAuthGuard title="Leave Management" description="Sign in to manage leaves" actionName="Leaves"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><LeavesPage /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/holidays" element={<InstantAuthGuard title="Holiday Calendar" description="Sign in to manage holidays" actionName="Holidays"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><HolidaysPage /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/reports" element={<InstantAuthGuard title="Attendance Reports" description="Sign in to view reports" actionName="Reports"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><AttendanceReportsPage /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/quick-entry" element={<InstantAuthGuard title="Quick Manual Entry" description="Sign in to enter attendance" actionName="Quick Entry"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><QuickManualEntry /></Suspense></InstantAuthGuard>} />
-                      <Route path="/tools/school-attendance-system/analytics" element={<InstantAuthGuard title="Attendance Analytics" description="Sign in to view attendance analytics" actionName="Analytics"><Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><AttendanceAnalytics /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system" element={<InstantAuthGuard title="School Attendance  System" description="Complete attendance tracking  management" actionName="HR Dashboard"><Suspense fallback={<TopProgressBar />}><AttendanceDashboard /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/student-attendance" element={<InstantAuthGuard title="Student Attendance" description="Sign in to mark student attendance" actionName="Student Attendance"><Suspense fallback={<TopProgressBar />}><StudentAttendancePage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/staff-attendance" element={<InstantAuthGuard title="Staff Attendance" description="Sign in to mark staff attendance" actionName="Staff Attendance"><Suspense fallback={<TopProgressBar />}><StaffAttendancePage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/setup" element={<InstantAuthGuard title="HR Setup" description="Sign in to configure HR settings" actionName="HR Setup"><Suspense fallback={<TopProgressBar />}><HRSetupPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/leaves" element={<InstantAuthGuard title="Leave Management" description="Sign in to manage leaves" actionName="Leaves"><Suspense fallback={<TopProgressBar />}><LeavesPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/holidays" element={<InstantAuthGuard title="Holiday Calendar" description="Sign in to manage holidays" actionName="Holidays"><Suspense fallback={<TopProgressBar />}><HolidaysPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/reports" element={<InstantAuthGuard title="Attendance Reports" description="Sign in to view reports" actionName="Reports"><Suspense fallback={<TopProgressBar />}><AttendanceReportsPage /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/quick-entry" element={<InstantAuthGuard title="Quick Manual Entry" description="Sign in to enter attendance" actionName="Quick Entry"><Suspense fallback={<TopProgressBar />}><QuickManualEntry /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system/analytics" element={<InstantAuthGuard title="Attendance Analytics" description="Sign in to view attendance analytics" actionName="Analytics"><Suspense fallback={<TopProgressBar />}><AttendanceAnalytics /></Suspense></InstantAuthGuard>} />
                       
                       {/* Legal & Info Pages */}
-                      <Route path="/about" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><About /></Suspense>} />
-                      <Route path="/contact" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><Contact /></Suspense>} />
-                      <Route path="/privacy-policy" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><PrivacyPolicy /></Suspense>} />
-                      <Route path="/terms-of-service" element={<Suspense fallback={<BrandingLoader fullScreen size="lg" message="AI-Powered Exam Prep" />}><TermsOfService /></Suspense>} />
+                      <Route path="/about" element={<Suspense fallback={<TopProgressBar />}><About /></Suspense>} />
+                      <Route path="/contact" element={<Suspense fallback={<TopProgressBar />}><Contact /></Suspense>} />
+                      <Route path="/privacy-policy" element={<Suspense fallback={<TopProgressBar />}><PrivacyPolicy /></Suspense>} />
+                      <Route path="/terms-of-service" element={<Suspense fallback={<TopProgressBar />}><TermsOfService /></Suspense>} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
