@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import ExternalOpportunitiesSection from "@/components/external/ExternalOpportunitiesSection";
 import GlassScholarshipsFilters from "@/components/scholarships/GlassScholarshipsFilters";
 import { generateSlugUrl } from "@/utils/slugify";
+import PageHeader from "@/components/ui/PageHeader";
 
 const Scholarships = () => {
   const navigate = useNavigate();
