@@ -203,7 +203,7 @@ const Home = () => {
         variants={sectionReveal}
         initial="hidden"
         animate="visible"
-        className="pt-2 pb-4 md:pt-4 md:pb-8 relative overflow-hidden"
+        className="pt-0 pb-4 md:pt-1 md:pb-8 relative overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-accent/5 pointer-events-none" />
         
