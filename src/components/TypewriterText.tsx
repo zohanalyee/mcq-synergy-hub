@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, memo } from 'react';
 import { cn } from '@/lib/utils';
+import { useDeviceCapability } from '@/contexts/DeviceCapabilityContext';
 
 interface TypewriterTextProps {
   phrases: string[];
@@ -13,10 +14,6 @@ interface TypewriterTextProps {
   as?: keyof JSX.IntrinsicElements;
 }
 
-const prefersReducedMotion = () =>
-  typeof window !== 'undefined' &&
-  window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-
 const TypewriterText = ({
   phrases,
   prefix = '',
@@ -28,21 +25,36 @@ const TypewriterText = ({
   minHeightClass = 'min-h-[2.5em]',
   as: Tag = 'div',
 }: TypewriterTextProps) => {
-  const [text, setText] = useState('');
+  // Pull from global DeviceCapabilityContext so the same low-end / reduced-motion
+  // policy that disables LiquidBackground also short-circuits the typewriter loop.
+  // Falls back gracefully if the provider is absent (e.g. during isolated tests).
+  let isLowEnd = false;
+  let prefersReducedMotion = false;
+  try {
+    const cap = useDeviceCapability();
+    isLowEnd = cap.isLowEnd;
+    prefersReducedMotion = cap.prefersReducedMotion;
+  } catch {
+    // No provider — fall back to a simple media query check
+    prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  }
+  const skipAnimation = prefersReducedMotion || isLowEnd;
+
+  const [text, setText] = useState(skipAnimation && phrases.length > 0 ? phrases[0] : '');
   const [phraseIndex, setPhraseIndex] = useState(0);
   const [deleting, setDeleting] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const reducedRef = useRef(false);
 
   useEffect(() => {
-    reducedRef.current = prefersReducedMotion();
-    if (reducedRef.current && phrases.length > 0) {
+    if (skipAnimation && phrases.length > 0) {
       setText(phrases[0]);
     }
-  }, [phrases]);
+  }, [phrases, skipAnimation]);
 
   useEffect(() => {
-    if (reducedRef.current || phrases.length === 0) return;
+    if (skipAnimation || phrases.length === 0) return;
 
     const current = phrases[phraseIndex % phrases.length] ?? '';
 
@@ -73,7 +85,7 @@ const TypewriterText = ({
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
     };
-  }, [text, deleting, phraseIndex, phrases, typeSpeed, deleteSpeed, pauseMs]);
+  }, [text, deleting, phraseIndex, phrases, typeSpeed, deleteSpeed, pauseMs, skipAnimation]);
 
   return (
     <Tag
@@ -86,7 +98,7 @@ const TypewriterText = ({
     >
       {prefix}
       <span>{text}</span>
-      {!reducedRef.current && (
+      {!skipAnimation && (
         <span
           className={cn(
             'inline-block w-[1px] ml-0.5 align-middle bg-current animate-pulse',
