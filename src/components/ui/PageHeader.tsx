@@ -143,7 +143,9 @@ const PageHeader = ({
       <div className="relative flex items-center gap-3 md:gap-4">
         <div
           className={cn(
-            "flex h-11 w-11 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-primary-foreground shadow-lg shadow-primary/20 ring-1",
+            "flex h-11 w-11 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl text-primary-foreground shadow-lg shadow-primary/20 ring-1",
+            // brand theme uses a complete utility (bg-brand-gradient); other themes use Tailwind from-/to- classes
+            colorTheme === "primary" ? "" : "bg-gradient-to-br",
             t.iconBg,
             t.iconRing
           )}
@@ -153,7 +155,10 @@ const PageHeader = ({
         <div className="min-w-0 flex-1">
           <h1
             className={cn(
-              "text-2xl md:text-3xl font-bold leading-tight bg-gradient-to-r bg-clip-text text-transparent",
+              "text-2xl md:text-3xl font-bold leading-tight",
+              colorTheme === "primary"
+                ? ""
+                : "bg-gradient-to-r bg-clip-text text-transparent",
               t.titleGradient
             )}
           >
