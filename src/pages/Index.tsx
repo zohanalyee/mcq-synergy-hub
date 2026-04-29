@@ -206,6 +206,19 @@ const Home = () => {
         
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
+            {greeting && (
+              <motion.h2
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4 }}
+                className={cn(
+                  "text-base md:text-xl font-medium text-muted-foreground mb-3 md:mb-4",
+                  isRTL && "font-nastaliq-heading"
+                )}
+              >
+                {greeting}
+              </motion.h2>
+            )}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
