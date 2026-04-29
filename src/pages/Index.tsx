@@ -18,6 +18,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { getLocalizedGreeting } from '@/lib/greetings';
+import TypewriterText from '@/components/TypewriterText';
 import { 
   BookOpen, 
   Brain,
@@ -65,6 +66,17 @@ const Home = () => {
   const fontClass = isRTL ? 'font-nastaliq' : '';
   const displayName = profile?.username || user?.email?.split('@')[0] || null;
   const greeting = user ? getLocalizedGreeting(language, displayName) : null;
+
+  // Time-of-day greeting for typewriter
+  const hour = new Date().getHours();
+  const timeGreeting =
+    hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const heroPhrases = [
+    ...(displayName ? [`${timeGreeting}, ${displayName}! 👋`] : []),
+    'Ace your Board Exams 📚',
+    'Crack Govt Job Tests 🏢',
+    'Generate Custom AI Tests 🤖',
+  ];
 
   useEffect(() => {
     setIsLoaded(true);
@@ -206,19 +218,15 @@ const Home = () => {
         
         <div className="container px-4 mx-auto relative z-10">
           <div className="max-w-4xl mx-auto text-center">
-            {greeting && (
-              <motion.h2
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-                className={cn(
-                  "text-base md:text-xl font-medium text-muted-foreground mb-3 md:mb-4",
-                  isRTL && "font-nastaliq-heading"
-                )}
-              >
-                {greeting}
-              </motion.h2>
-            )}
+            <TypewriterText
+              phrases={heroPhrases}
+              className={cn(
+                "text-base md:text-xl font-medium text-muted-foreground mb-3 md:mb-4 text-center",
+                isRTL && "font-nastaliq-heading"
+              )}
+              minHeightClass="min-h-[2.25rem] md:min-h-[2.75rem]"
+              as="h2"
+            />
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

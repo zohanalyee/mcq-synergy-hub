@@ -26,6 +26,7 @@ import WeeklyTrendChart from "@/components/ai-coach/WeeklyTrendChart";
 import SubjectBreakdown from "@/components/ai-coach/SubjectBreakdown";
 import AchievementsGrid from "@/components/ai-coach/AchievementsGrid";
 import StudyPlanCalendar from "@/components/ai-coach/StudyPlanCalendar";
+import TypewriterText from "@/components/TypewriterText";
 
 const Analytics = () => {
   const { user } = useAuth();
@@ -99,6 +100,17 @@ const Analytics = () => {
                 <Sparkles className="h-3.5 w-3.5 text-cyan-500" />
                 Personalized insights to boost your performance
               </p>
+              <TypewriterText
+                prefix="Your AI Coach is "
+                phrases={[
+                  'Analyzing your weak points...',
+                  'Building your study plan...',
+                  'Tracking your daily streak...',
+                ]}
+                className="text-xs md:text-sm text-primary/80 font-medium mt-1"
+                minHeightClass="min-h-[1.5rem]"
+              />
+
             </div>
           </div>
         </motion.div>
