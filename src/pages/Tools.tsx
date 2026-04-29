@@ -10,6 +10,7 @@ import { Search, Wrench } from 'lucide-react';
 import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
 import { TOOL_ICON_COLORS } from '@/data/toolColors';
 import { motion } from 'framer-motion';
+import TypewriterText from '@/components/TypewriterText';
 
 const Tools = () => {
   const [search, setSearch] = useState('');
@@ -36,9 +37,18 @@ const Tools = () => {
             {ALL_TOOLS.length}+ Free Tools
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-foreground">Free Online AI Tools</h1>
-          <p className="text-muted-foreground max-w-lg mx-auto">
-            Premium tools for students, professionals, and everyone — fast, smooth & free forever.
-          </p>
+          <TypewriterText
+            prefix="Access 50+ Premium AI Tools to "
+            phrases={[
+              'Build a Professional Resume',
+              'Solve Complex Math',
+              'Manage School Attendance',
+              'Generate Study Notes Instantly',
+              'Boost Productivity — Free Forever',
+            ]}
+            className="text-muted-foreground max-w-xl mx-auto text-sm sm:text-base"
+            minHeightClass="min-h-[3rem]"
+          />
         </motion.div>
 
         {/* Search + Filters */}
