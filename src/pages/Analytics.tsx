@@ -110,7 +110,7 @@ const Analytics = () => {
                 className="text-xs md:text-sm text-primary/80 font-medium mt-1"
                 minHeightClass="min-h-[1.5rem]"
               />
-              </p>
+
             </div>
           </div>
         </motion.div>
