@@ -58,11 +58,11 @@ const getIcon = (path: string) => {
       hoverClass: "hover:bg-indigo-400/10 hover:text-indigo-500 dark:hover:text-indigo-300"
     },
     '/analytics': { 
-      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />,
+      icon: <Brain size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />,
       hoverClass: "hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400"
     },
     '/ai-coach': { 
-      icon: <BrainCircuit size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />,
+      icon: <Brain size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-cyan-500" />,
       hoverClass: "hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400"
     },
     '/feedback': { 

@@ -1,5 +1,5 @@
 // Language selector uses text badges instead of flag images
-import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star, Globe, Languages, Sparkles } from 'lucide-react';
+import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star, Globe, Languages, Sparkles, Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -229,7 +229,7 @@ const HeaderActions = ({
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild className="text-sm py-2 px-2.5 rounded-lg bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/40 dark:to-blue-950/40 mb-0.5">
                 <Link to="/analytics" title="View your progress and get AI-powered recommendations">
-                  <LayoutDashboard className="mr-2.5 h-4 w-4 text-cyan-500" />
+                  <Brain className="mr-2.5 h-4 w-4 text-cyan-500" />
                   {t('nav.aiCoach')}
                 </Link>
               </DropdownMenuItem>

@@ -8,7 +8,7 @@
     "customSyllabus": "Custom Syllabus",
     "scholarships": "Scholarships",
     "tools": "AI Tools",
-    "analytics": "Analytics",
+    "analytics": "Dashboard & AI Coach",
     "feedback": "Feedback",
     "askDocs": "Ask Docs",
     "signIn": "Sign In",
@@ -16,7 +16,7 @@
     "profile": "Profile",
     "settings": "Settings",
     "adminPanel": "Admin Panel",
-    "aiCoach": "Analytics & Insights"
+    "aiCoach": "Dashboard & AI Coach"
   },
   "hero": {
     "badge": "Prepare Smarter, Score Higher",
