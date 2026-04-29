@@ -1,4 +1,4 @@
-import { X, BrainCircuit, Sparkles, Shield } from 'lucide-react';
+import { X, BrainCircuit, Sparkles, Shield, Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -136,7 +136,10 @@ const MobileMenu = ({
                   variant="outline"
                   className="w-full flex items-center justify-center gap-2"
                 >
-                  <Link to="/analytics" onClick={onClose} title="View your progress and get AI-powered recommendations">Analytics & Insights</Link>
+                  <Link to="/analytics" onClick={onClose} title="View your progress and get AI-powered recommendations">
+                    <Brain className="h-4 w-4 text-cyan-500" />
+                    Dashboard & AI Coach
+                  </Link>
                 </Button>
                 <Button
                   variant="destructive"
