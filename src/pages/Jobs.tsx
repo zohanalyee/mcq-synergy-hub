@@ -64,7 +64,13 @@ const Jobs = () => {
       />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10 overflow-x-hidden">
         <PageBreadcrumb items={[{ title: 'Jobs', href: '/jobs', isCurrent: true }]} showHomeButton={true} />
-        <JobsHeader />
+        <PageHeader
+          title="Jobs"
+          icon={Briefcase}
+          colorTheme="emerald"
+          tagline="Government & private sector openings"
+          description="Discover the latest job opportunities across Pakistan — updated daily from official portals."
+        />
         
         {/* Glass Search & Filter Bar */}
         <div className="mt-4">
