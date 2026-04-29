@@ -98,7 +98,7 @@ const QuotaMonitor = () => {
   const getProgressGradient = () => {
     if (usagePercentage >= 90) return "bg-gradient-to-r from-red-500 to-rose-500";
     if (usagePercentage >= 70) return "bg-gradient-to-r from-amber-500 to-orange-500";
-    return "bg-gradient-to-r from-violet-500 to-cyan-500";
+    return "bg-brand-gradient";
   };
 
   const formatSourceType = (source: string) => {

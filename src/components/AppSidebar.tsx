@@ -128,11 +128,11 @@ export function AppSidebar({
               className="flex items-center gap-2 cursor-pointer transition-all duration-300"
               aria-label="MCQSAI Home"
             >
-              <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/25">
+              <div className="relative flex items-center justify-center w-9 h-9 rounded-xl bg-brand-gradient shadow-brand">
                 <Brain className="h-5 w-5 text-white" />
               </div>
               <span className="text-base font-bold tracking-tight" style={{ fontFamily: 'Orbitron, sans-serif' }}>
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-cyan-500">MCQS</span>
+                <span className="text-brand-gradient">MCQS</span>
                 <span className="text-foreground">AI</span>
               </span>
             </Link>
