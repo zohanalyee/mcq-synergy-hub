@@ -11,6 +11,7 @@ import { ALL_TOOLS, TOOL_CATEGORIES, CATEGORY_COLORS } from '@/data/toolsData';
 import { TOOL_ICON_COLORS } from '@/data/toolColors';
 import { motion } from 'framer-motion';
 import TypewriterText from '@/components/TypewriterText';
+import PageHeader from '@/components/ui/PageHeader';
 
 const Tools = () => {
   const [search, setSearch] = useState('');
