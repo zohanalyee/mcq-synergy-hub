@@ -217,13 +217,13 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   );
 
   return (
-    <div className="h-screen w-full flex flex-col lg:grid lg:grid-cols-2 overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2">
       <SEOHead title="Sign In" noindex />
       {/* Left Panel - Desktop Only */}
       <JoinSection />
 
-      {/* Right Panel - Form (only this scrolls if needed) */}
-      <div className="flex-1 min-h-0 h-full max-h-[100dvh] overflow-y-auto auth-scroll flex items-start sm:items-center justify-center px-6 pt-5 pb-28 sm:px-8 sm:py-6 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(210,40%,96%)]">
+      {/* Right Panel - Form */}
+      <div className="flex-1 flex items-center justify-center p-6 sm:p-8 bg-gradient-to-b from-[hsl(var(--background))] to-[hsl(210,40%,96%)]">
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -231,15 +231,15 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           className="w-full max-w-[420px]"
         >
           {/* Header */}
-          <div className="text-center mb-4">
+          <div className="text-center mb-8">
             <div
-              className="inline-flex items-center justify-center w-11 h-11 rounded-xl mb-2 shadow-md"
+              className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 shadow-md"
               style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 50%))" }}
             >
-              <BrainCircuit className="w-5 h-5 text-white" />
+              <BrainCircuit className="w-6 h-6 text-white" />
             </div>
-            <h1 className="text-xl font-bold text-[hsl(var(--foreground))]">Welcome to MCQSAI</h1>
-            <p className="text-xs text-[hsl(var(--muted-foreground))] mt-0.5">
+            <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Welcome to MCQSAI</h1>
+            <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
               {activeTab === "signin" ? "Sign in to continue your learning journey" : "Create an account to get started"}
             </p>
           </div>
@@ -248,7 +248,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           <button
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading || isLoading}
-            className="w-full h-10 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] transition-all duration-200 disabled:opacity-50"
+            className="w-full h-11 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] transition-all duration-200 disabled:opacity-50"
           >
             {isGoogleLoading ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
@@ -258,14 +258,14 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           </button>
 
           {/* Divider */}
-          <div className="flex items-center gap-3 my-3">
+          <div className="flex items-center gap-3 my-6">
             <Separator className="flex-1" />
             <span className="text-xs text-[hsl(var(--muted-foreground))] font-medium uppercase tracking-wider">or</span>
             <Separator className="flex-1" />
           </div>
 
           {/* Segmented Tab Toggle */}
-          <div className="bg-[hsl(var(--muted))] rounded-full p-1 flex mb-3 relative">
+          <div className="bg-[hsl(var(--muted))] rounded-full p-1 flex mb-6 relative">
             <button
               type="button"
               onClick={() => handleTabChange("signin")}
@@ -308,7 +308,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleSignIn}
-                className="space-y-3"
+                className="space-y-4"
               >
                 {/* Email */}
                 <div className="space-y-1.5">
@@ -371,7 +371,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.2 }}
                 onSubmit={handleSignUp}
-                className="space-y-3"
+                className="space-y-4"
               >
                 {/* Full Name */}
                 <div className="space-y-1.5">
@@ -469,7 +469,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           </AnimatePresence>
 
           {/* Back to Home */}
-          <div className="text-center mt-4">
+          <div className="text-center mt-8">
             <button
               onClick={() => navigate("/")}
               className="text-sm text-[hsl(var(--muted-foreground))] hover:text-[hsl(var(--foreground))] transition-colors inline-flex items-center gap-1.5"
