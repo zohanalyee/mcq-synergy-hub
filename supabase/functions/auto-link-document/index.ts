@@ -39,6 +39,35 @@ serve(async (req) => {
       throw new Error('document_id and metadata are required');
     }
 
+    // Authorization: only the document owner OR an admin may reclassify a document
+    const { data: docRow, error: docFetchError } = await supabase
+      .from('documents')
+      .select('user_id')
+      .eq('id', document_id)
+      .maybeSingle();
+
+    if (docFetchError || !docRow) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Document not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const { data: adminRow } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .eq('role', 'admin')
+      .maybeSingle();
+    const isAdmin = !!adminRow;
+
+    if (docRow.user_id !== user.id && !isAdmin) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Forbidden: you do not own this document' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const confidence = metadata.confidence || 0.5;
     const createdEntities: string[] = [];
 
