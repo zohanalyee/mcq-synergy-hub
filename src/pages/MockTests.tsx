@@ -57,16 +57,14 @@ const CompetitiveExams = () => {
             { title: "Competitive Exams", href: "/mock-tests", isCurrent: true }
           ]}
         />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-          transition={{ duration: 0.5 }}
-          className="mt-6"
-        >
-          <h1 className="text-3xl font-bold mb-2">Competitive Exam Practice</h1>
-          <p className="text-muted-foreground mb-6">
-            Prepare for Pakistan's top competitive exams with AI-powered practice tests
-          </p>
+        <div className="mt-6">
+          <PageHeader
+            title="Competitive Exam Practice"
+            icon={GraduationCap}
+            colorTheme="cyan"
+            tagline="AI-powered mock tests"
+            description="Prepare for Pakistan's top competitive exams — FPSC, PPSC, NTS and more — with realistic timed practice."
+          />
 
           <ExamFiltersBar
             searchQuery={searchQuery}
@@ -79,7 +77,7 @@ const CompetitiveExams = () => {
           <div className="mt-6">
             <JobTestsTab jobTests={filteredTests} />
           </div>
-        </motion.div>
+        </div>
       </div>
     </Header>
   );
