@@ -49,7 +49,7 @@ const AdminHeader = ({
                 animate={{ scale: [1, 1.3, 1], opacity: [0.4, 0.7, 0.4] }}
                 transition={{ duration: 2, repeat: Infinity }}
               />
-              <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/25">
+              <div className="relative flex items-center justify-center w-11 h-11 rounded-xl bg-brand-gradient shadow-brand">
                 <Brain className="h-6 w-6 text-white" />
               </div>
             </div>

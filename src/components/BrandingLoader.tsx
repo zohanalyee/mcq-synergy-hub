@@ -35,7 +35,7 @@ const BrandingLoader = ({
     >
       {/* Logo + Sparkle */}
       <div className="flex items-center gap-2">
-        <div className={`relative flex items-center justify-center ${s.logo} rounded-xl bg-gradient-to-br from-violet-500 to-cyan-500 shadow-lg shadow-violet-500/25`}>
+        <div className={`relative flex items-center justify-center ${s.logo} rounded-xl bg-brand-gradient shadow-brand`}>
           <Brain className={`${s.icon} text-white`} />
         </div>
 
@@ -44,15 +44,11 @@ const BrandingLoader = ({
           animate={{
             opacity: [0.4, 1, 0.4],
             scale: [0.9, 1.2, 0.9],
-            filter: [
-              'drop-shadow(0 0 2px rgba(124,58,237,0.3))',
-              'drop-shadow(0 0 8px rgba(124,58,237,0.8))',
-              'drop-shadow(0 0 2px rgba(124,58,237,0.3))',
-            ],
           }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          style={{ color: 'hsl(var(--brand-from))' }}
         >
-          <Sparkles className={`${s.sparkle} text-violet-400`} />
+          <Sparkles className={`${s.sparkle}`} />
         </motion.div>
       </div>
 
@@ -62,7 +58,7 @@ const BrandingLoader = ({
           className={`${s.text} font-bold tracking-tight`}
           style={{ fontFamily: 'Orbitron, sans-serif' }}
         >
-          <span className="bg-clip-text text-transparent bg-gradient-to-r from-violet-500 to-cyan-500">MCQS</span>
+          <span className="text-brand-gradient">MCQS</span>
           <span className="text-foreground">AI</span>
         </span>
       </div>
@@ -73,7 +69,7 @@ const BrandingLoader = ({
       {/* Animated Gradient Progress Bar */}
       <div className={`${s.bar} rounded-full bg-muted/50 overflow-hidden`}>
         <motion.div
-          className="h-full rounded-full bg-gradient-to-r from-violet-500 via-cyan-500 to-violet-500"
+          className="h-full rounded-full bg-brand-gradient"
           style={{ backgroundSize: '200% 100%' }}
           animate={{
             width: ['0%', '60%', '100%', '60%', '0%'],

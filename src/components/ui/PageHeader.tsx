@@ -23,15 +23,17 @@ interface ThemeTokens {
 }
 
 const THEMES: Record<PageHeaderTheme, ThemeTokens> = {
+  // The "primary" theme is now the canonical brand surface — driven by global
+  // --brand-from / --brand-via / --brand-to tokens so it tracks user theming.
   primary: {
     surface:
-      "from-cyan-50/60 via-background to-blue-50/60 dark:from-cyan-950/30 dark:via-background dark:to-blue-950/30",
-    iconBg: "from-primary to-blue-600",
+      "from-[hsl(var(--brand-from)/0.08)] via-background to-[hsl(var(--brand-to)/0.08)]",
+    iconBg: "bg-brand-gradient",
     iconRing: "ring-white/30",
-    titleGradient: "from-primary via-blue-600 to-cyan-500",
-    glowA: "bg-primary/10",
-    glowB: "bg-blue-500/10",
-    accent: "text-cyan-500",
+    titleGradient: "text-brand-gradient",
+    glowA: "bg-[hsl(var(--brand-from)/0.18)]",
+    glowB: "bg-[hsl(var(--brand-to)/0.18)]",
+    accent: "text-[hsl(var(--brand-from))]",
   },
   violet: {
     surface:
@@ -141,7 +143,9 @@ const PageHeader = ({
       <div className="relative flex items-center gap-3 md:gap-4">
         <div
           className={cn(
-            "flex h-11 w-11 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-primary-foreground shadow-lg shadow-primary/20 ring-1",
+            "flex h-11 w-11 md:h-12 md:w-12 shrink-0 items-center justify-center rounded-xl text-primary-foreground shadow-lg shadow-primary/20 ring-1",
+            // brand theme uses a complete utility (bg-brand-gradient); other themes use Tailwind from-/to- classes
+            colorTheme === "primary" ? "" : "bg-gradient-to-br",
             t.iconBg,
             t.iconRing
           )}
@@ -151,7 +155,10 @@ const PageHeader = ({
         <div className="min-w-0 flex-1">
           <h1
             className={cn(
-              "text-2xl md:text-3xl font-bold leading-tight bg-gradient-to-r bg-clip-text text-transparent",
+              "text-2xl md:text-3xl font-bold leading-tight",
+              colorTheme === "primary"
+                ? ""
+                : "bg-gradient-to-r bg-clip-text text-transparent",
               t.titleGradient
             )}
           >
