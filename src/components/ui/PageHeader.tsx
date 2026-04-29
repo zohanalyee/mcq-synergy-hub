@@ -23,15 +23,17 @@ interface ThemeTokens {
 }
 
 const THEMES: Record<PageHeaderTheme, ThemeTokens> = {
+  // The "primary" theme is now the canonical brand surface — driven by global
+  // --brand-from / --brand-via / --brand-to tokens so it tracks user theming.
   primary: {
     surface:
-      "from-cyan-50/60 via-background to-blue-50/60 dark:from-cyan-950/30 dark:via-background dark:to-blue-950/30",
-    iconBg: "from-primary to-blue-600",
+      "from-[hsl(var(--brand-from)/0.08)] via-background to-[hsl(var(--brand-to)/0.08)]",
+    iconBg: "bg-brand-gradient",
     iconRing: "ring-white/30",
-    titleGradient: "from-primary via-blue-600 to-cyan-500",
-    glowA: "bg-primary/10",
-    glowB: "bg-blue-500/10",
-    accent: "text-cyan-500",
+    titleGradient: "text-brand-gradient",
+    glowA: "bg-[hsl(var(--brand-from)/0.18)]",
+    glowB: "bg-[hsl(var(--brand-to)/0.18)]",
+    accent: "text-[hsl(var(--brand-from))]",
   },
   violet: {
     surface:
