@@ -17,6 +17,7 @@ import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from 
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
+import PageHeader from "@/components/ui/PageHeader";
 
 interface TopicItem {
   id: string;
