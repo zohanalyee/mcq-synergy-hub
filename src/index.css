@@ -158,10 +158,14 @@ button,
 .aurora-blob {
   position: absolute;
   border-radius: 9999px;
-  filter: blur(80px);
-  opacity: 0.18;
+  filter: blur(100px);
+  opacity: 0.55;
   will-change: transform;
   pointer-events: none;
+}
+.dark .aurora-blob {
+  opacity: 0.38;
+  filter: blur(110px);
 }
 @media (prefers-reduced-motion: reduce) {
   .aurora-blob { animation: none !important; }

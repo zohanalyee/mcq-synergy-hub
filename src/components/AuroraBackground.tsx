@@ -2,10 +2,9 @@ import { useDeviceCapability } from '@/hooks/useDeviceCapability';
 
 /**
  * AuroraBackground — slow-moving mesh gradient using brand CSS tokens.
- * - Pure CSS animation (no JS rAF), so it's cheap.
- * - Heavily blurred + low opacity for subtlety.
- * - Falls back to a static gradient on low-end devices or when the OS
- *   prefers-reduced-motion is set (handled in CSS via .aurora-blob rule).
+ * Pure CSS animation. Heavily blurred + tuned opacity (see .aurora-blob in
+ * index.css, with dark-mode override) for a premium SaaS feel.
+ * Falls back to a static gradient on low-end devices or when prefers-reduced-motion.
  */
 export const AuroraBackground = () => {
   const { isLowEnd, prefersReducedMotion } = useDeviceCapability();
@@ -17,39 +16,39 @@ export const AuroraBackground = () => {
       className="fixed inset-0 -z-20 overflow-hidden pointer-events-none"
       style={{
         background:
-          'radial-gradient(ellipse at top, hsl(var(--brand-from) / 0.05), transparent 60%), hsl(var(--background))',
+          'radial-gradient(ellipse at top, hsl(var(--brand-from) / 0.12), transparent 60%), hsl(var(--background))',
       }}
     >
       <div
         className="aurora-blob"
         style={{
-          top: '-10%',
+          top: '-15%',
           left: '-10%',
-          width: '60vw',
-          height: '60vw',
-          background: 'hsl(var(--brand-from) / 0.55)',
+          width: '75vw',
+          height: '75vw',
+          background: 'hsl(var(--brand-from) / 0.95)',
           animation: animate ? 'aurora-drift-1 22s ease-in-out infinite' : 'none',
         }}
       />
       <div
         className="aurora-blob"
         style={{
-          top: '20%',
-          right: '-15%',
-          width: '55vw',
-          height: '55vw',
-          background: 'hsl(var(--brand-to) / 0.5)',
+          top: '15%',
+          right: '-20%',
+          width: '70vw',
+          height: '70vw',
+          background: 'hsl(var(--brand-to) / 0.85)',
           animation: animate ? 'aurora-drift-2 28s ease-in-out infinite' : 'none',
         }}
       />
       <div
         className="aurora-blob"
         style={{
-          bottom: '-15%',
-          left: '15%',
-          width: '50vw',
-          height: '50vw',
-          background: 'hsl(var(--brand-via, var(--brand-from)) / 0.45)',
+          bottom: '-10%',
+          left: '25%',
+          width: '65vw',
+          height: '65vw',
+          background: 'hsl(var(--brand-via, var(--brand-from)) / 0.8)',
           animation: animate ? 'aurora-drift-3 32s ease-in-out infinite' : 'none',
         }}
       />

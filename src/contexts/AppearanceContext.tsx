@@ -39,10 +39,10 @@ interface AppearanceContextType {
 }
 
 export const defaultSettings: AppearanceSettings = {
-  accentColor: 'blue',
-  interfaceOpacity: 85,
+  accentColor: 'purple',
+  interfaceOpacity: 80,
   sidebarOpacity: 90,
-  cardsOpacity: 95,
+  cardsOpacity: 90,
   atmosphereMode: 'flow',
   colorMix: 'default',
   customMixColors: ['#8b5cf6', '#f472b6', '#38bdf8'],

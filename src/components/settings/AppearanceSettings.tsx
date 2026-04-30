@@ -1,8 +1,14 @@
-import { Palette, Monitor, Layout, CreditCard, Sparkles, RotateCcw, Droplets, Globe, Cloud, CloudOff } from 'lucide-react';
+import { Palette, Monitor, Layout, CreditCard, Sparkles, RotateCcw, Droplets, Globe, Cloud, CloudOff, Check, Settings2 } from 'lucide-react';
 import { useAppearance, AccentColor, AtmosphereMode, ColorMix, mixLibrary } from '@/contexts/AppearanceContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import LivePreviewCard from './LivePreviewCard';
@@ -22,11 +28,17 @@ const atmosphereModes: { id: AtmosphereMode; icon: React.ReactNode; label: strin
   { id: 'aero', icon: <span className="text-sm">◇</span>, label: 'Aero', description: 'Full effects' },
 ];
 
-const colorMixPresets: { id: ColorMix; label: string }[] = [
-  { id: 'default', label: 'Default' },
-  { id: 'sunset', label: 'Sunset' },
-  { id: 'ocean', label: 'Ocean' },
-  { id: 'forest', label: 'Forest' },
+// One-click ready-made themes — each bundles a color mix + matching accent.
+const readyThemes: {
+  id: Exclude<ColorMix, 'custom'>;
+  label: string;
+  tagline: string;
+  accent: AccentColor;
+}[] = [
+  { id: 'default', label: 'Signature', tagline: 'Violet • Pink • Cyan', accent: 'purple' },
+  { id: 'sunset',  label: 'Sunset',    tagline: 'Orange • Pink • Violet', accent: 'orange' },
+  { id: 'ocean',   label: 'Ocean',     tagline: 'Cyan • Blue • Violet',   accent: 'blue' },
+  { id: 'forest',  label: 'Forest',    tagline: 'Green • Teal • Cyan',    accent: 'green' },
 ];
 
 const AppearanceSettings = () => {
@@ -55,9 +67,16 @@ const AppearanceSettings = () => {
     }
   };
 
-  const handleColorMixChange = (mix: ColorMix) => {
-    updateColorMix(mix);
-    toast.success(`Color mix changed to ${mix}`);
+  // One-click theme — applies the full premium combo so the user
+  // never has to touch sliders or atmosphere settings.
+  const applyTheme = (theme: typeof readyThemes[number]) => {
+    updateColorMix(theme.id);
+    updateAccentColor(theme.accent);
+    updateAtmosphereMode('flow');
+    updateInterfaceOpacity(80);
+    updateSidebarOpacity(90);
+    updateCardsOpacity(90);
+    toast.success(`${theme.label} theme applied`);
   };
 
   const handleCustomColorChange = (index: 0 | 1 | 2, color: string) => {
@@ -84,14 +103,62 @@ const AppearanceSettings = () => {
         </div>
       </div>
 
+      {/* Ready-made Themes — promoted to top */}
+      <div className="space-y-2">
+        <div className="flex items-center gap-1.5 text-xs font-medium">
+          <Sparkles className="h-3.5 w-3.5 text-primary" />
+          <span>Ready-made Themes</span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {readyThemes.map((theme) => {
+            const colors = mixLibrary[theme.id];
+            const selected = settings.colorMix === theme.id;
+            return (
+              <button
+                key={theme.id}
+                onClick={() => applyTheme(theme)}
+                className={cn(
+                  "relative h-[72px] rounded-lg overflow-hidden border transition-all group text-left",
+                  selected
+                    ? "ring-2 ring-primary border-primary scale-[1.02] shadow-md"
+                    : "border-border hover:border-primary/60 hover:scale-[1.01]"
+                )}
+                title={theme.tagline}
+              >
+                {/* Full gradient fill */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})`,
+                  }}
+                />
+                {/* Readability overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+                {/* Selected check */}
+                {selected && (
+                  <div className="absolute top-1.5 right-1.5 bg-white/90 text-primary rounded-full p-0.5">
+                    <Check className="h-3 w-3" strokeWidth={3} />
+                  </div>
+                )}
+                {/* Label */}
+                <div className="absolute bottom-1.5 left-2 right-2 text-white">
+                  <div className="text-xs font-semibold leading-tight drop-shadow">{theme.label}</div>
+                  <div className="text-[9px] opacity-90 leading-tight drop-shadow">{theme.tagline}</div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Live Preview */}
       <LivePreviewCard />
 
-      {/* Global Accent */}
+      {/* Accent color (kept visible — quick & visual) */}
       <div className="space-y-2">
         <div className="flex items-center gap-2 text-xs font-medium">
           <Palette className="h-3.5 w-3.5 text-primary" />
-          <span>Global Accent</span>
+          <span>Accent Color</span>
         </div>
         <div className="flex gap-1.5 flex-wrap">
           {accentColors.map((color) => (
@@ -114,120 +181,117 @@ const AppearanceSettings = () => {
         </div>
       </div>
 
-      {/* Opacity Sliders */}
-      <div className="space-y-2.5">
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
+      {/* Advanced UI Controls — collapsed by default */}
+      <Accordion type="single" collapsible className="border border-border/60 rounded-md">
+        <AccordionItem value="advanced" className="border-0">
+          <AccordionTrigger className="px-2.5 py-2 text-xs font-medium hover:no-underline">
             <div className="flex items-center gap-1.5">
-              <Monitor className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Interface</span>
+              <Settings2 className="h-3.5 w-3.5 text-muted-foreground" />
+              <span>Advanced UI Controls</span>
             </div>
-            <span className="text-muted-foreground font-mono text-[10px]">{settings.interfaceOpacity}%</span>
-          </div>
-          <Slider value={[settings.interfaceOpacity]} onValueChange={([value]) => handleOpacityChange('interface', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
-        </div>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5">
-              <Layout className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Sidebar</span>
+          </AccordionTrigger>
+          <AccordionContent className="px-2.5 pb-3 space-y-3">
+            {/* Atmosphere Mode */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-medium">
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+                <span>Atmosphere</span>
+              </div>
+              <div className="flex gap-0.5 p-0.5 bg-muted/50 rounded">
+                {atmosphereModes.map((mode) => (
+                  <button
+                    key={mode.id}
+                    onClick={() => {
+                      updateAtmosphereMode(mode.id);
+                      toast.success(`Atmosphere set to ${mode.label}`);
+                    }}
+                    className={cn(
+                      "flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[10px] font-medium transition-all",
+                      settings.atmosphereMode === mode.id
+                        ? "bg-background shadow-sm text-foreground"
+                        : "text-muted-foreground hover:text-foreground"
+                    )}
+                    title={mode.description}
+                  >
+                    {mode.icon}
+                    <span>{mode.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
-            <span className="text-muted-foreground font-mono text-[10px]">{settings.sidebarOpacity}%</span>
-          </div>
-          <Slider value={[settings.sidebarOpacity]} onValueChange={([value]) => handleOpacityChange('sidebar', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
-        </div>
-        <div className="space-y-1">
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-1.5">
-              <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
-              <span>Cards</span>
-            </div>
-            <span className="text-muted-foreground font-mono text-[10px]">{settings.cardsOpacity}%</span>
-          </div>
-          <Slider value={[settings.cardsOpacity]} onValueChange={([value]) => handleOpacityChange('cards', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
-        </div>
-      </div>
 
-      {/* Atmosphere Mode */}
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-1.5 text-xs font-medium">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          <span>Atmosphere</span>
-        </div>
-        <div className="flex gap-0.5 p-0.5 bg-muted/50 rounded">
-          {atmosphereModes.map((mode) => (
-            <button
-              key={mode.id}
-              onClick={() => {
-                updateAtmosphereMode(mode.id);
-                toast.success(`Atmosphere set to ${mode.label}`);
-              }}
-              className={cn(
-                "flex-1 flex items-center justify-center gap-1 py-1 px-1.5 rounded text-[10px] font-medium transition-all",
-                settings.atmosphereMode === mode.id
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              )}
-              title={mode.description}
-            >
-              {mode.icon}
-              <span>{mode.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Color Mix Library */}
-      <div className="space-y-1.5">
-        <div className="flex items-center gap-1.5 text-xs font-medium">
-          <Droplets className="h-3.5 w-3.5 text-primary" />
-          <span>Mix Library</span>
-        </div>
-        <div className="grid grid-cols-4 gap-1">
-          {colorMixPresets.map((preset) => {
-            const colors = mixLibrary[preset.id];
-            return (
-              <button
-                key={preset.id}
-                onClick={() => handleColorMixChange(preset.id)}
-                className={cn(
-                  "relative p-1.5 rounded border transition-all overflow-hidden",
-                  settings.colorMix === preset.id
-                    ? "ring-1 ring-primary border-primary"
-                    : "border-border hover:border-primary/50"
-                )}
-              >
-                <div className="absolute inset-0 opacity-30" style={{ background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]}, ${colors[2]})` }} />
-                <div className="relative flex flex-col items-center gap-0.5">
-                  <div className="flex -space-x-0.5">
-                    {colors.map((color, i) => (
-                      <div key={i} className="w-2.5 h-2.5 rounded-full border border-background" style={{ backgroundColor: color }} />
-                    ))}
+            {/* Opacity Sliders */}
+            <div className="space-y-2.5">
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Monitor className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>Interface</span>
                   </div>
-                  <span className="text-[8px] font-medium">{preset.label}</span>
+                  <span className="text-muted-foreground font-mono text-[10px]">{settings.interfaceOpacity}%</span>
                 </div>
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex items-center gap-2 pt-1">
-          <span className="text-[10px] text-muted-foreground whitespace-nowrap">Custom:</span>
-          <div className="flex gap-1 flex-1">
-            {settings.customMixColors.map((color, index) => (
-              <input key={index} type="color" value={color} onChange={(e) => handleCustomColorChange(index as 0 | 1 | 2, e.target.value)} className="flex-1 h-5 rounded cursor-pointer border border-border" title={`Color ${index + 1}`} />
-            ))}
-          </div>
-          <button
-            onClick={() => handleColorMixChange('custom')}
-            className={cn(
-              "text-[9px] px-1.5 py-0.5 rounded whitespace-nowrap",
-              settings.colorMix === 'custom' ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
-            )}
-          >
-            Apply
-          </button>
-        </div>
-      </div>
+                <Slider value={[settings.interfaceOpacity]} onValueChange={([value]) => handleOpacityChange('interface', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Layout className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>Sidebar</span>
+                  </div>
+                  <span className="text-muted-foreground font-mono text-[10px]">{settings.sidebarOpacity}%</span>
+                </div>
+                <Slider value={[settings.sidebarOpacity]} onValueChange={([value]) => handleOpacityChange('sidebar', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                    <span>Cards</span>
+                  </div>
+                  <span className="text-muted-foreground font-mono text-[10px]">{settings.cardsOpacity}%</span>
+                </div>
+                <Slider value={[settings.cardsOpacity]} onValueChange={([value]) => handleOpacityChange('cards', value)} min={0} max={100} step={1} className="cursor-pointer h-1.5" />
+              </div>
+            </div>
+
+            {/* Custom Mix Colors */}
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-1.5 text-xs font-medium">
+                <Droplets className="h-3.5 w-3.5 text-primary" />
+                <span>Custom Mix</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1 flex-1">
+                  {settings.customMixColors.map((color, index) => (
+                    <input
+                      key={index}
+                      type="color"
+                      value={color}
+                      onChange={(e) => handleCustomColorChange(index as 0 | 1 | 2, e.target.value)}
+                      className="flex-1 h-6 rounded cursor-pointer border border-border"
+                      title={`Color ${index + 1}`}
+                    />
+                  ))}
+                </div>
+                <button
+                  onClick={() => {
+                    updateColorMix('custom');
+                    toast.success('Custom mix applied');
+                  }}
+                  className={cn(
+                    "text-[10px] px-2 py-1 rounded whitespace-nowrap font-medium",
+                    settings.colorMix === 'custom'
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted hover:bg-muted/80"
+                  )}
+                >
+                  Apply
+                </button>
+              </div>
+            </div>
+          </AccordionContent>
+        </AccordionItem>
+      </Accordion>
 
       {/* Admin: Set as Global Default */}
       {isAdmin && (
