@@ -73,7 +73,7 @@ const Boards = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
               >
-                <Card className="h-full hover:shadow-lg transition-shadow">
+                <Card className="h-full border border-border/50 hover:-translate-y-1 hover:shadow-lg hover:border-primary/30 transition-all duration-300">
                   <CardHeader>
                     <div className="flex items-center gap-2">
                       {sys.type === 'academic' ? (
@@ -86,7 +86,7 @@ const Boards = () => {
                     {sys.description && (
                       <p className="text-sm text-muted-foreground">{sys.description}</p>
                     )}
-                    <Badge variant="secondary" className="w-fit text-xs">
+                    <Badge variant="secondary" className="w-fit text-xs bg-secondary/60">
                       {sys.type === 'academic' ? 'Academic' : 'Job Preparation'}
                     </Badge>
                   </CardHeader>
@@ -100,7 +100,7 @@ const Boards = () => {
                             <Link
                               key={level.id}
                                to={`/boards/${toSlug(sys.name)}/${classNum}`}
-                              className="text-sm px-3 py-1.5 rounded-md bg-muted hover:bg-primary/10 hover:text-primary transition-colors"
+                              className="text-sm px-3 py-1.5 rounded-md bg-secondary/50 border border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
                             >
                               {level.name}
                             </Link>
