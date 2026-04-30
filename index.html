@@ -38,31 +38,6 @@
   </head>
 
   <body>
-    <!-- Legacy sitemap path redirects (Lovable hosting does not honor public/_redirects). -->
-    <script>
-      (function () {
-        try {
-          var p = window.location.pathname;
-          if (p.indexOf("/sitemaps/") !== 0) return;
-          var map = {
-            "/sitemaps/static.xml":       "?type=static",
-            "/sitemaps/jobs.xml":         "?type=jobs",
-            "/sitemaps/scholarships.xml": "?type=scholarships",
-            "/sitemaps/blog.xml":         "?type=blog",
-            "/sitemaps/exams.xml":        "?type=exams",
-            "/sitemaps/tools.xml":        "?type=tools",
-            "/sitemaps/boards-1.xml":     "?type=boards&page=1",
-            "/sitemaps/boards-2.xml":     "?type=boards&page=2"
-          };
-          var qs = map[p];
-          if (qs) {
-            window.location.replace(
-              "https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap" + qs
-            );
-          }
-        } catch (e) { /* no-op */ }
-      })();
-    </script>
     <div id="root"></div>
     <!-- IMPORTANT: DO NOT REMOVE THIS SCRIPT TAG OR THIS VERY COMMENT! -->
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
