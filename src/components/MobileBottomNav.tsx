@@ -52,11 +52,19 @@ const MobileBottomNav = () => {
     localStorage.setItem('theme', theme);
   }, [theme]);
 
-  // Immersive routes — hide bottom nav for full-focus test/quiz sessions
+  // Immersive routes — hide bottom nav for full-focus test/quiz/auth sessions
   const IMMERSIVE_PATTERNS = [
     /^\/quiz-session(\/|$)/,
     /^\/test-session(\/|$)/,
     /^\/exam-session(\/|$)/,
+    /^\/auth(\/|$)/,
+    /^\/sign-in(\/|$)/,
+    /^\/sign-up(\/|$)/,
+    /^\/forgot-password(\/|$)/,
+    /^\/reset-password(\/|$)/,
+    /^\/verify-email(\/|$)/,
+    /^\/verify-email-sent(\/|$)/,
+    /^\/complete-profile(\/|$)/,
   ];
   const isImmersive = IMMERSIVE_PATTERNS.some((r) => r.test(location.pathname));
 
