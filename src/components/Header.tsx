@@ -15,7 +15,7 @@ import { StaticBackground } from './StaticBackground';
 import { useDeviceCapability } from '@/hooks/useDeviceCapability';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { useIsMobile } from '@/hooks/use-mobile';
+
 
 
 const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (theme: string) => void; children?: ReactNode }) => {
