@@ -16,6 +16,7 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
+import { useScrollDirection } from '@/hooks/useScrollDirection';
 
 const TAB_COLORS = {
   home: { active: 'text-blue-500', inactive: 'text-blue-400/50', dot: 'bg-blue-500' },
@@ -78,9 +79,17 @@ const MobileBottomNav = () => {
 
   const isProfileActive = location.pathname === '/profile' || location.pathname === '/analytics';
 
+  const scrollDirection = useScrollDirection({ threshold: 8, topOffset: 80 });
+  const hidden = scrollDirection === 'down';
+
   return (
     <>
-      <nav className="fixed bottom-0 left-0 right-0 z-50 safe-area-pb">
+      <nav
+        className={cn(
+          "fixed bottom-0 left-0 right-0 z-50 safe-area-pb transition-transform duration-300 ease-out",
+          hidden ? "translate-y-full" : "translate-y-0",
+        )}
+      >
         {/* Glassmorphism bar */}
         <div className="bg-white/70 dark:bg-black/70 backdrop-blur-2xl border-t border-white/20 dark:border-white/10 shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
           <div className="flex items-center justify-around h-14 px-2">
