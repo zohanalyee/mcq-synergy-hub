@@ -18,9 +18,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, UserCircle2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import Header from '@/components/Header';
+import PageHeader from '@/components/ui/PageHeader';
 
 const profileFormSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -119,12 +120,14 @@ const Profile = () => {
   return (
     <Header>
       <div className="max-w-3xl mx-auto px-4 pt-6 pb-12">
+        <PageHeader
+          icon={UserCircle2}
+          title="Your Profile"
+          tagline="Account & preferences"
+          description="Manage your profile information, avatar and password."
+        />
         <Card>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xl">Your Profile</CardTitle>
-            <CardDescription className="text-sm">Manage your account settings</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
+          <CardContent className="space-y-6 pt-6">
             <div className="flex flex-col items-center sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6">
             <div className="flex flex-col items-center space-y-2">
               <Avatar className="h-20 w-20">

@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Mail, Phone, MapPin, Send, CheckCircle, Loader2 } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, CheckCircle, Loader2, MessageSquare } from 'lucide-react';
+import PageHeader from '@/components/ui/PageHeader';
 import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
@@ -105,7 +106,12 @@ const Contact = () => {
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(contactJsonLd) }} />
       <div className="max-w-5xl mx-auto px-4 py-10">
-        <h1 className="text-3xl font-bold text-foreground mb-8">Contact Us</h1>
+        <PageHeader
+          icon={MessageSquare}
+          title="Contact Us"
+          tagline="We'd love to hear from you"
+          description="Questions, feedback or partnerships — drop us a message and we'll respond within 24 hours."
+        />
 
         <div className="grid md:grid-cols-5 gap-8">
           {/* Form */}

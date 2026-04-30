@@ -8,9 +8,10 @@ import Footer from "@/components/Footer";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Search, Calendar, User, ArrowRight } from "lucide-react";
+import { Search, Calendar, User, ArrowRight, Newspaper } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
+import PageHeader from "@/components/ui/PageHeader";
 
 const CATEGORIES = ["all", "preparation", "colleges", "tips"];
 
@@ -46,10 +47,12 @@ const Blog = () => {
             ]}
           />
 
-          <h1 className="text-3xl font-bold text-foreground mb-2">Blog</h1>
-          <p className="text-muted-foreground mb-6">
-            Expert articles on exam preparation, study tips, and career guidance.
-          </p>
+          <PageHeader
+            icon={Newspaper}
+            title="Blog"
+            tagline="Insights & guides"
+            description="Expert articles on exam preparation, study tips, and career guidance."
+          />
 
           {/* Filters */}
           <div className="flex flex-col sm:flex-row gap-3 mb-8">
