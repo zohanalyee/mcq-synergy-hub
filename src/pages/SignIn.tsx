@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import {
-  Loader2, Mail, Lock, User, BrainCircuit, Eye, EyeOff, ArrowLeft
+  Loader2, Mail, Lock, User, Brain, Eye, EyeOff, ArrowLeft
 } from "lucide-react";
 import { JoinSection } from "@/components/landing/JoinSection";
 
@@ -232,11 +232,12 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
         >
           {/* Header */}
           <div className="text-center mb-8">
-            <div
-              className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 shadow-md"
-              style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 50%))" }}
-            >
-              <BrainCircuit className="w-6 h-6 text-white" />
+            <div className="relative inline-flex items-center justify-center mb-4">
+              {/* Soft brand glow */}
+              <div className="absolute inset-0 rounded-2xl bg-brand-gradient blur-xl opacity-50 scale-125" aria-hidden="true" />
+              <div className="relative w-14 h-14 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-brand">
+                <Brain className="w-7 h-7 text-white" />
+              </div>
             </div>
             <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Welcome to MCQSAI</h1>
             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
