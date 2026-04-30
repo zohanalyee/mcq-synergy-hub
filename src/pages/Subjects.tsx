@@ -14,11 +14,9 @@ import { GlobalSearchResult } from "@/services/globalSearchService";
 import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { syncAllSubjects } from "@/services/offlineSyncService";
-import { useToast } from "@/hooks/use-toast";
 
 const Subjects = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [syncProgress, setSyncProgress] = useState<{ synced: number; total: number } | null>(null);
   const {
     systems,
