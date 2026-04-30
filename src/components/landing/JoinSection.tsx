@@ -151,7 +151,7 @@ const StatItem = ({
 );
 
 export const JoinSection = () => {
-  const seq = useSequentialTyper(features.length);
+  const seq = useSequentialTyper();
   const reducedMotionRef = useRef(false);
   const cycleRef = useRef(0);
 
@@ -168,13 +168,7 @@ export const JoinSection = () => {
 
     let timer: ReturnType<typeof setTimeout>;
 
-    if (seq.phase === 'title') {
-      if (seq.titleLen < f.title.length) {
-        timer = setTimeout(() => seq.setTitleLen(seq.titleLen + 1), TYPE_SPEED);
-      } else {
-        timer = setTimeout(() => seq.setPhase('desc'), 200);
-      }
-    } else if (seq.phase === 'desc') {
+    if (seq.phase === 'desc') {
       if (seq.descLen < f.description.length) {
         timer = setTimeout(() => seq.setDescLen(seq.descLen + 1), TYPE_SPEED);
       } else {
@@ -189,8 +183,7 @@ export const JoinSection = () => {
           seq.reset(0, cycleRef.current);
         } else {
           seq.setActiveIndex(next);
-          seq.setPhase('title');
-          seq.setTitleLen(0);
+          seq.setPhase('desc');
           seq.setDescLen(0);
         }
       }, HOLD_MS);
@@ -198,7 +191,7 @@ export const JoinSection = () => {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seq.activeIndex, seq.phase, seq.titleLen, seq.descLen]);
+  }, [seq.activeIndex, seq.phase, seq.descLen]);
 
   return (
     <div className="hidden lg:flex relative overflow-hidden flex-col justify-center items-center p-12 text-white">
@@ -312,11 +305,8 @@ export const JoinSection = () => {
             <div className="space-y-1 mb-6">
               {features.map((f, i) => {
                 const isActive = i === seq.activeIndex;
-                // Revealed = already-typed in this cycle (index < activeIndex), OR fully done active block
+                // Revealed = already-typed in this cycle (index < activeIndex)
                 const isRevealed = reducedMotionRef.current || i < seq.activeIndex;
-                const displayedTitle = isActive
-                  ? f.title.slice(0, seq.titleLen)
-                  : '';
                 const displayedDescription = isActive
                   ? f.description.slice(0, seq.descLen)
                   : '';
@@ -329,10 +319,8 @@ export const JoinSection = () => {
                     gradient={f.gradient}
                     isActive={isActive}
                     isRevealed={isRevealed}
-                    displayedTitle={displayedTitle}
                     displayedDescription={displayedDescription}
-                    showTitleCursor={isActive && seq.phase === 'title'}
-                    showDescCursor={isActive && (seq.phase === 'desc' || seq.phase === 'hold')}
+                    showDescCursor={isActive && seq.phase === 'desc'}
                   />
                 );
               })}
