@@ -91,12 +91,9 @@ const FeatureItem = ({
   gradient,
   isActive,
   isRevealed,
-  displayedTitle,
   displayedDescription,
-  showTitleCursor,
   showDescCursor,
-}: FeatureItemProps) => {
-  const titleText = isRevealed ? title : displayedTitle;
+}: Omit<FeatureItemProps, 'displayedTitle' | 'showTitleCursor'>) => {
   const descText = isRevealed ? description : displayedDescription;
 
   return (
@@ -112,15 +109,9 @@ const FeatureItem = ({
         </div>
       </div>
       <div className="min-w-0 flex-1">
+        {/* Heading is ALWAYS static — never animated */}
         <h3 className="font-semibold text-white text-sm mb-0.5 min-h-[1.25rem] whitespace-pre-wrap break-words">
-          {titleText}
-          {isActive && showTitleCursor && (
-            <span
-              className="inline-block w-[1px] ml-0.5 align-middle bg-white animate-pulse"
-              style={{ height: '0.9em' }}
-              aria-hidden="true"
-            />
-          )}
+          {title}
         </h3>
         <p className="text-xs text-blue-200/80 leading-relaxed min-h-[2.25rem] whitespace-pre-wrap break-words">
           {descText}
