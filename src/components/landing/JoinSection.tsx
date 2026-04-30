@@ -39,19 +39,17 @@ const stats = [
 const TYPE_SPEED = 35;
 const HOLD_MS = 1400;
 
-/** Sequentially types title then description for one block, then advances. */
-const useSequentialTyper = (count: number) => {
+/** Sequentially types description for one block, then advances to next. */
+const useSequentialTyper = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [phase, setPhase] = useState<'title' | 'desc' | 'hold'>('title');
-  const [titleLen, setTitleLen] = useState(0);
+  const [phase, setPhase] = useState<'desc' | 'hold'>('desc');
   const [descLen, setDescLen] = useState(0);
   // Track which blocks have been "revealed" in the current cycle
   const [revealedCycle, setRevealedCycle] = useState(0);
 
   const reset = (toIndex: number, cycle: number) => {
     setActiveIndex(toIndex);
-    setPhase('title');
-    setTitleLen(0);
+    setPhase('desc');
     setDescLen(0);
     setRevealedCycle(cycle);
   };
@@ -59,12 +57,10 @@ const useSequentialTyper = (count: number) => {
   return {
     activeIndex,
     phase,
-    titleLen,
     descLen,
     revealedCycle,
     setActiveIndex,
     setPhase,
-    setTitleLen,
     setDescLen,
     setRevealedCycle,
     reset,
@@ -78,9 +74,7 @@ interface FeatureItemProps {
   gradient: string;
   isActive: boolean;
   isRevealed: boolean;
-  displayedTitle: string;
   displayedDescription: string;
-  showTitleCursor: boolean;
   showDescCursor: boolean;
 }
 
@@ -91,12 +85,9 @@ const FeatureItem = ({
   gradient,
   isActive,
   isRevealed,
-  displayedTitle,
   displayedDescription,
-  showTitleCursor,
   showDescCursor,
 }: FeatureItemProps) => {
-  const titleText = isRevealed ? title : displayedTitle;
   const descText = isRevealed ? description : displayedDescription;
 
   return (
@@ -112,15 +103,9 @@ const FeatureItem = ({
         </div>
       </div>
       <div className="min-w-0 flex-1">
+        {/* Heading is ALWAYS static — never animated */}
         <h3 className="font-semibold text-white text-sm mb-0.5 min-h-[1.25rem] whitespace-pre-wrap break-words">
-          {titleText}
-          {isActive && showTitleCursor && (
-            <span
-              className="inline-block w-[1px] ml-0.5 align-middle bg-white animate-pulse"
-              style={{ height: '0.9em' }}
-              aria-hidden="true"
-            />
-          )}
+          {title}
         </h3>
         <p className="text-xs text-blue-200/80 leading-relaxed min-h-[2.25rem] whitespace-pre-wrap break-words">
           {descText}
@@ -164,7 +149,7 @@ const StatItem = ({
 );
 
 export const JoinSection = () => {
-  const seq = useSequentialTyper(features.length);
+  const seq = useSequentialTyper();
   const reducedMotionRef = useRef(false);
   const cycleRef = useRef(0);
 
@@ -181,13 +166,7 @@ export const JoinSection = () => {
 
     let timer: ReturnType<typeof setTimeout>;
 
-    if (seq.phase === 'title') {
-      if (seq.titleLen < f.title.length) {
-        timer = setTimeout(() => seq.setTitleLen(seq.titleLen + 1), TYPE_SPEED);
-      } else {
-        timer = setTimeout(() => seq.setPhase('desc'), 200);
-      }
-    } else if (seq.phase === 'desc') {
+    if (seq.phase === 'desc') {
       if (seq.descLen < f.description.length) {
         timer = setTimeout(() => seq.setDescLen(seq.descLen + 1), TYPE_SPEED);
       } else {
@@ -202,8 +181,7 @@ export const JoinSection = () => {
           seq.reset(0, cycleRef.current);
         } else {
           seq.setActiveIndex(next);
-          seq.setPhase('title');
-          seq.setTitleLen(0);
+          seq.setPhase('desc');
           seq.setDescLen(0);
         }
       }, HOLD_MS);
@@ -211,7 +189,7 @@ export const JoinSection = () => {
 
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seq.activeIndex, seq.phase, seq.titleLen, seq.descLen]);
+  }, [seq.activeIndex, seq.phase, seq.descLen]);
 
   return (
     <div className="hidden lg:flex relative overflow-hidden flex-col justify-center items-center p-12 text-white">
@@ -325,11 +303,8 @@ export const JoinSection = () => {
             <div className="space-y-1 mb-6">
               {features.map((f, i) => {
                 const isActive = i === seq.activeIndex;
-                // Revealed = already-typed in this cycle (index < activeIndex), OR fully done active block
+                // Revealed = already-typed in this cycle (index < activeIndex)
                 const isRevealed = reducedMotionRef.current || i < seq.activeIndex;
-                const displayedTitle = isActive
-                  ? f.title.slice(0, seq.titleLen)
-                  : '';
                 const displayedDescription = isActive
                   ? f.description.slice(0, seq.descLen)
                   : '';
@@ -342,10 +317,8 @@ export const JoinSection = () => {
                     gradient={f.gradient}
                     isActive={isActive}
                     isRevealed={isRevealed}
-                    displayedTitle={displayedTitle}
                     displayedDescription={displayedDescription}
-                    showTitleCursor={isActive && seq.phase === 'title'}
-                    showDescCursor={isActive && (seq.phase === 'desc' || seq.phase === 'hold')}
+                    showDescCursor={isActive && seq.phase === 'desc'}
                   />
                 );
               })}

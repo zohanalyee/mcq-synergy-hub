@@ -12,7 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import {
-  Loader2, Mail, Lock, User, BrainCircuit, Eye, EyeOff, ArrowLeft
+  Loader2, Mail, Lock, User, Brain, Eye, EyeOff, ArrowLeft
 } from "lucide-react";
 import { JoinSection } from "@/components/landing/JoinSection";
 
@@ -176,7 +176,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   };
 
   const inputBaseClass =
-    "w-full h-11 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 pl-10 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all duration-200 outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed";
+    "w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 pl-10 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all duration-200 outline-none focus:ring-2 focus:ring-[hsl(var(--brand-from)/0.25)] focus:border-[hsl(var(--brand-from))] disabled:opacity-50 disabled:cursor-not-allowed";
 
   const isLoading = loading;
   const isBusy = isLoading || isGoogleLoading || isSubmitting !== null;
@@ -232,11 +232,12 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
         >
           {/* Header */}
           <div className="text-center mb-8">
-            <div
-              className="inline-flex items-center justify-center w-12 h-12 rounded-xl mb-4 shadow-md"
-              style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 50%))" }}
-            >
-              <BrainCircuit className="w-6 h-6 text-white" />
+            <div className="relative inline-flex items-center justify-center mb-4">
+              {/* Soft brand glow */}
+              <div className="absolute inset-0 rounded-2xl bg-brand-gradient blur-xl opacity-50 scale-125" aria-hidden="true" />
+              <div className="relative w-14 h-14 rounded-2xl bg-brand-gradient flex items-center justify-center shadow-brand">
+                <Brain className="w-7 h-7 text-white" />
+              </div>
             </div>
             <h1 className="text-2xl font-bold text-[hsl(var(--foreground))]">Welcome to MCQSAI</h1>
             <p className="text-sm text-[hsl(var(--muted-foreground))] mt-1">
@@ -248,7 +249,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           <button
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading || isLoading}
-            className="w-full h-11 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] transition-all duration-200 disabled:opacity-50"
+            className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
           >
             {isGoogleLoading ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
@@ -357,8 +358,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 {/* Submit */}
                 <button
                     type="submit" disabled={isBusy || !signInCaptchaToken}
-                  className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
-                  style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
+                  className="w-full h-11 rounded-xl bg-brand-gradient text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-brand transition-all duration-200 hover:brightness-110 hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                 >
                     {isSubmitting === "signin" ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing In...</> : "Sign In"}
                 </button>
@@ -459,8 +459,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 {/* Submit */}
                 <button
                   type="submit" disabled={isBusy || !agreedToTerms || !signUpCaptchaToken}
-                  className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
-                  style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
+                  className="w-full h-11 rounded-xl bg-brand-gradient text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-brand transition-all duration-200 hover:brightness-110 hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isSubmitting === "signup" ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating Account...</> : "Create Account"}
                 </button>
