@@ -74,9 +74,7 @@ interface FeatureItemProps {
   gradient: string;
   isActive: boolean;
   isRevealed: boolean;
-  displayedTitle: string;
   displayedDescription: string;
-  showTitleCursor: boolean;
   showDescCursor: boolean;
 }
 
@@ -89,7 +87,7 @@ const FeatureItem = ({
   isRevealed,
   displayedDescription,
   showDescCursor,
-}: Omit<FeatureItemProps, 'displayedTitle' | 'showTitleCursor'>) => {
+}: FeatureItemProps) => {
   const descText = isRevealed ? description : displayedDescription;
 
   return (
