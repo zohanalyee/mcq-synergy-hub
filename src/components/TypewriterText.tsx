@@ -25,22 +25,24 @@ const TypewriterText = ({
   minHeightClass = 'min-h-[2.5em]',
   as: Tag = 'div',
 }: TypewriterTextProps) => {
-  // Pull from global DeviceCapabilityContext so the same low-end / reduced-motion
-  // policy that disables LiquidBackground also short-circuits the typewriter loop.
-  // Falls back gracefully if the provider is absent (e.g. during isolated tests).
-  let isLowEnd = false;
+  // Typewriter is a lightweight CSS/text effect — NOT GPU intensive.
+  // Only bypass when the OS-level prefers-reduced-motion is set (or the user
+  // explicitly toggled "Performance" mode in settings, which is a manual choice).
+  // Crucially, we no longer disable on `isLowEnd` because that flag aggressively
+  // marks every touch device (including high-end phones) as low-end and was
+  // killing the typewriter on capable mobile hardware.
   let prefersReducedMotion = false;
+  let performanceMode: string = 'auto';
   try {
     const cap = useDeviceCapability();
-    isLowEnd = cap.isLowEnd;
     prefersReducedMotion = cap.prefersReducedMotion;
+    performanceMode = cap.performanceMode;
   } catch {
-    // No provider — fall back to a simple media query check
     prefersReducedMotion =
       typeof window !== 'undefined' &&
       window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   }
-  const skipAnimation = prefersReducedMotion || isLowEnd;
+  const skipAnimation = prefersReducedMotion || performanceMode === 'performance';
 
   const [text, setText] = useState(skipAnimation && phrases.length > 0 ? phrases[0] : '');
   const [phraseIndex, setPhraseIndex] = useState(0);

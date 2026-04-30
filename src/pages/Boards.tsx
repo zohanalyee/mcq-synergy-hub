@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { BookOpen, GraduationCap, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import PageHeader from '@/components/ui/PageHeader';
 
 const Boards = () => {
   const { data: systems, isLoading } = useQuery({
@@ -52,8 +53,12 @@ const Boards = () => {
             { title: 'Boards', href: '/boards', isCurrent: true },
           ]}
         />
-        <h1 className="text-3xl font-bold text-foreground mb-2">Educational Boards</h1>
-        <p className="text-muted-foreground mb-8">Browse MCQs organized by board and class level.</p>
+        <PageHeader
+          icon={GraduationCap}
+          title="Educational Boards"
+          tagline="Practice by board & class"
+          description="Browse MCQs organized by board and class level."
+        />
 
         {isLoading ? (
           <div className="flex justify-center py-20">
