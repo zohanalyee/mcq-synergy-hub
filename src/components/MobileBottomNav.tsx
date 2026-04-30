@@ -60,6 +60,10 @@ const MobileBottomNav = () => {
   ];
   const isImmersive = IMMERSIVE_PATTERNS.some((r) => r.test(location.pathname));
 
+  // Hooks must run on every render — call BEFORE any early return.
+  const scrollDirection = useScrollDirection({ threshold: 8, topOffset: 80 });
+  const hidden = scrollDirection === 'down';
+
   if (!isMobile || isImmersive) return null;
 
   const getInitials = (email?: string) => email?.charAt(0).toUpperCase() || 'U';
@@ -78,9 +82,6 @@ const MobileBottomNav = () => {
   };
 
   const isProfileActive = location.pathname === '/profile' || location.pathname === '/analytics';
-
-  const scrollDirection = useScrollDirection({ threshold: 8, topOffset: 80 });
-  const hidden = scrollDirection === 'down';
 
   return (
     <>
