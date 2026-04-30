@@ -1,85 +1,92 @@
-## Problem
+## Performance Optimization Plan
 
-Our `public/sitemap.xml` index points `<loc>` directly at `https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=...`. Google requires sitemap URLs to live on the **same verified domain** as the sitemap itself, otherwise it silently rejects them — exactly what GSC is showing ("0 discovered pages", redirect-error validation failures).
+Goal: reduce initial JS payload on `/`, eliminate the WebSocket noise, and improve FCP/LCP without touching any visual UI, animation, or color.
 
-## Constraint
+### Diagnosis (from Lighthouse + repo audit)
 
-Lovable hosting is purely static — there is **no Vite middleware, no `_redirects`, no Next.js, no edge-rewrite layer** we can use to transparently proxy `mcqsai.com/sitemaps/*.xml` → Supabase Edge Function. The previous attempt to redirect via inline JS in `index.html` is exactly what Google flagged as "Page with redirect".
+1. `pdf-DUAaMo8u.js` (617 KB) and `charts-YyLb9fyN.js` (152 KB) are reaching the landing page even though their pages (Analytics, PDFSplitter, AttendanceAnalytics, EnhancedCSVUploader, QuestionBank export) are lazy routes. Cause: those pages use **static** `import jsPDF from 'jspdf'` / `import { PDFDocument } from 'pdf-lib'` / `import * as recharts` / `import ExcelJS from 'exceljs'`. Vite's manualChunks groups them into shared `pdf` / `charts` chunks, and rollup adds them to the route's preload graph — so they download via `<link rel="modulepreload">` even when the user is on `/`.
+2. `AppearanceContext` opens a Supabase **realtime channel** unconditionally on every page (including `/` for logged-out visitors). This is the source of the `ERR_NAME_NOT_RESOLVED` WebSocket errors and adds setup cost.
+3. Google Fonts are loaded without `&display=swap`, so they render-block (Lighthouse: "Render blocking requests, Est savings of 150 ms / 750 ms mobile").
+4. Static asset cache TTL is "None" (Lighthouse: "Use efficient cache lifetimes — Est savings 1,065 KiB"). Lovable hosting controls headers; a `_headers` file is the supported override.
+5. Minification, gzip/brotli, and tree-shaking are already enabled by Vite + Lovable's CDN — confirmed via build output names. Nothing to change there beyond removing dead imports.
 
-The only way to ship same-origin sitemap XML on Lovable hosting is to **generate the files at build time** and serve them as real static files from `public/`.
+### Changes
 
-## Solution: Build-time static sitemap generation
+1. **Dynamic-import heavy libs at call-sites** (no UI change, only `import` becomes `await import`):
+  - `src/services/exportService.ts` — already does runtime work; lazy-load `jspdf`, `pdf-lib`, `html2canvas`, `exceljs` inside the export functions.
+  - `src/pages/tools/PDFSplitter.tsx` — `const { PDFDocument } = await import('pdf-lib')` inside the split handler.
+  - `src/pages/tools/PDFCompressor.tsx`, `src/pages/tools/PDFMerger.tsx` — same pattern for `pdf-lib`.
+  - `src/pages/tools/AttendanceAnalytics.tsx` — lazy-load `jspdf` + `html2canvas` inside the export-PDF handler; keep `recharts` import (it is the page's main UI), but the page is already a lazy route, so the `charts` chunk will only ship when this route is visited.
+  - `src/components/admin/EnhancedCSVUploader.tsx` — lazy-load `exceljs` inside the upload/parse handler.
+  - `src/pages/tools/AttendanceReportsPage.tsx`, `src/components/ai-coach/WeeklyTrendChart.tsx`, `src/components/admin/analytics/RealtimePulse.tsx`, `src/components/dashboard/*Chart.tsx` — these are already only reached from lazy routes, so no change is needed once the static-import chain to `pdf` chunk is broken. They will continue to ship `charts` only on Analytics/admin/tool routes.
+  - Delete the unused `src/components/ui/chart.tsx` (verified: zero imports anywhere) so it cannot accidentally pull `recharts` into a future bundle.
+  - Result: `pdf` chunk is created on demand (true async), and is no longer part of the initial route's preload graph. `charts` ships only with Analytics and the two attendance/admin tool routes.
+2. **Defer Supabase realtime on the landing page** in `src/contexts/AppearanceContext.tsx`:
+  - Skip the `global-appearance` channel subscription when `!user` (logged-out). Logged-out visitors don't need live theme overrides — they already get the latest snapshot from the initial REST fetch. This removes the WebSocket attempt on `/` entirely, fixing `ERR_NAME_NOT_RESOLVED`.
+  - For logged-in users, gate subscription behind `requestIdleCallback` (fallback `setTimeout 2000`) so it never competes with FCP.
+3. **Font-display: swap** in `index.html`:
+  - Append `&display=swap` to the Google Fonts preload+stylesheet URL (currently the URL has `display=swap` already in the request — re-verify and add it explicitly to both the `<link rel="preload">` and `<noscript>` fallback if missing). Keep the existing preconnect hints.
+4. **Cache headers** via `public/_headers` (Lovable's static host honours this Netlify-style file for header overrides; the existing `_redirects` comment is just about redirects, not headers):
+  ```
+   /assets/*
+     Cache-Control: public, max-age=31536000, immutable
+   /sitemaps/*
+     Cache-Control: public, max-age=3600
+   /*.js
+     Cache-Control: public, max-age=31536000, immutable
+   /*.css
+     Cache-Control: public, max-age=31536000, immutable
+   /*.woff2
+     Cache-Control: public, max-age=31536000, immutable
+  ```
+   Vite emits hashed filenames in `/assets/*`, so 1-year immutable is safe.
+5. **Vite config tweak** (`vite.config.ts`) — keep manualChunks but make sure `pdf` chunk only contains true leaf libs by removing `exceljs` from the `pdf` group (it's an Excel lib, unrelated to PDF) and giving it its own `excel` chunk. This prevents users opening a PDF tool from also downloading exceljs and vice-versa:
+  ```ts
+   if (id.includes('pdf-lib') || id.includes('jspdf') || id.includes('html2canvas')) return 'pdf';
+   if (id.includes('exceljs')) return 'excel';
+  ```
 
-Replace the runtime Supabase-served sitemaps with a Node script that runs during `npm run build`, hits the database via the Supabase JS client (anon key), and writes finished XML files into `public/sitemaps/` and `public/sitemap.xml`. After build, every sitemap URL Google sees is `https://mcqsai.com/...`.
+### Out of scope / not changed
 
-### Files to add / change
+- No UI, copy, animation, color, or layout edits.
+- Minification / brotli are already handled by Vite + Lovable CDN; nothing to toggle.
+- Source maps for production are intentionally off (size).
+- GA4 script remains async-loaded as today.
 
-1. **`scripts/generate-sitemaps.mjs`** (new)
-   - Connects to Supabase using `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` (already in `.env`).
-   - Mirrors the logic currently in `supabase/functions/generate-sitemap/index.ts`:
-     - Static pages list → `public/sitemaps/static.xml`
-     - Tools list → `public/sitemaps/tools.xml`
-     - Exam slugs → `public/sitemaps/exams.xml`
-     - `content_items` + `external_opportunities` (jobs) → `public/sitemaps/jobs.xml`
-     - Same for scholarships → `public/sitemaps/scholarships.xml`
-     - `blog_posts` → `public/sitemaps/blog.xml`
-     - `topics` joined to subjects/levels/systems → paginated `public/sitemaps/boards-{n}.xml` (1000 URLs each)
-   - Writes a master `public/sitemap.xml` index whose `<loc>` entries are all `https://mcqsai.com/sitemaps/*.xml`.
-   - Fails gracefully (warns, keeps existing files) if DB is unreachable so builds don't break.
+### Files to edit
 
-2. **`package.json`**
-   - Add `"prebuild": "node scripts/generate-sitemaps.mjs && node scripts/verify-sitemap.mjs pre"`.
-   - Keeps the existing post-build verifier.
+- `src/services/exportService.ts`
+- `src/pages/tools/PDFSplitter.tsx`
+- `src/pages/tools/PDFCompressor.tsx`
+- `src/pages/tools/PDFMerger.tsx`
+- `src/pages/tools/AttendanceAnalytics.tsx`
+- `src/components/admin/EnhancedCSVUploader.tsx`
+- `src/contexts/AppearanceContext.tsx`
+- `index.html` (font-display)
+- `vite.config.ts` (split exceljs)
+- `public/_headers` (new)
+- `src/components/ui/chart.tsx` (delete; unused)
 
-3. **`scripts/verify-sitemap.mjs`** (update)
-   - Update `REQUIRED` array to expect same-origin URLs (`/sitemaps/static.xml`, `/sitemaps/jobs.xml`, etc.) instead of the Supabase function URL substrings.
-   - Also assert at least one `boards-*.xml` entry exists.
+### Expected impact
 
-4. **`public/sitemap.xml`** (overwrite)
-   - Becomes a same-origin sitemap index:
-     ```xml
-     <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-       <sitemap><loc>https://mcqsai.com/sitemaps/static.xml</loc></sitemap>
-       <sitemap><loc>https://mcqsai.com/sitemaps/tools.xml</loc></sitemap>
-       <sitemap><loc>https://mcqsai.com/sitemaps/exams.xml</loc></sitemap>
-       <sitemap><loc>https://mcqsai.com/sitemaps/jobs.xml</loc></sitemap>
-       <sitemap><loc>https://mcqsai.com/sitemaps/scholarships.xml</loc></sitemap>
-       <sitemap><loc>https://mcqsai.com/sitemaps/blog.xml</loc></sitemap>
-       <sitemap><loc>https://mcqsai.com/sitemaps/boards-1.xml</loc></sitemap>
-     </sitemapindex>
-     ```
-   - The build script will overwrite this with the live, lastmod-stamped version each deploy.
+- Landing route initial JS drops by ~770 KB transferred (the `pdf` + `charts` chunks no longer in the preload graph).
+- Mobile FCP/LCP should improve by 1–3 s on slow 4G (no more 617 KB `pdf` chunk on critical path).
+- `ERR_NAME_NOT_RESOLVED` realtime errors disappear for logged-out users.
+- Repeat visits cached for a year on hashed assets (Lighthouse "Use efficient cache lifetimes" passes).
 
-5. **`public/_redirects`** (update)
-   - Remove the cross-domain `/sitemaps/*.xml → supabase.co` rules (they were Netlify-only and not honored anyway, but they're misleading).
-   - Keep the SPA fallback line for portability comment.
+&nbsp;
 
-6. **`index.html`** (update)
-   - Remove the inline `<script>` that redirects `/sitemaps/*` to the Supabase function. This is the "Page with redirect" GSC error source. Static files at those paths will now serve directly, no JS needed.
+&nbsp;
 
-7. **`supabase/functions/generate-sitemap/index.ts`** (keep, optional)
-   - Leave the edge function in place as a fallback / on-demand generator, but it will no longer be referenced by `sitemap.xml`. No code change required, or we can delete it later.
+**Please execute the Performance Optimization Plan now.**
 
-8. **`public/robots.txt`**
-   - Already correct (`Sitemap: https://mcqsai.com/sitemap.xml`). No change.
+Follow the checklist strictly:
 
-### Flow after change
+1. Use **Dynamic Imports** (static → dynamic) for all heavy libraries (`jspdf`, `pdf-lib`, `html2canvas`, `exceljs`).
+2. Implement the **AppearanceContext Realtime deferral** for logged-out users.
+3. Update `index.html` for **font-display: swap** using the preload method.
+4. Create the `public/_headers` file for the 1-year immutable cache.
+5. Configure **Vite chunks** to separate `excel` from the `pdf` bundle.
+6. Delete the unused `chart.tsx`.
 
-```text
-Googlebot → https://mcqsai.com/sitemap.xml          (static file, same origin)
-         → https://mcqsai.com/sitemaps/static.xml   (static file, same origin)
-         → https://mcqsai.com/sitemaps/jobs.xml     (static file, same origin)
-         → ...all listed URLs are mcqsai.com pages, no redirects, no cross-domain
-```
-
-### Trade-offs (acknowledged)
-
-- Sitemaps refresh **only on each deploy**, not in real time. For an exam-prep site where new jobs/scholarships appear daily, this is acceptable — Lovable rebuilds on each Lovable edit/publish, and we can also manually trigger a rebuild. If true hourly freshness is later needed, a cron-driven GitHub Action or scheduled Supabase function pushing into the repo could be added.
-- Build time grows by a few seconds for the DB queries.
-
-### Validation after deploy
-
-1. `curl -I https://mcqsai.com/sitemap.xml` → 200, `content-type: application/xml`, no redirect.
-2. `curl https://mcqsai.com/sitemaps/jobs.xml` → valid XML, every `<loc>` starts with `https://mcqsai.com/`.
-3. In GSC: resubmit `https://mcqsai.com/sitemap.xml`, confirm "Discovered URLs > 0" within 1–2 days.
-4. The "Page with redirect" failures (`http://mcqsai.com/`, `http://www.mcqsai.com/`, `https://mcqsai.com/tools?lang=ur`) are a **separate issue** from sitemaps — they're caused by canonicalization (HTTP→HTTPS, `?lang=` query). I'll flag them but not bundle them into this fix unless you want me to address those next.
+## **Reminder:** *Do NOT change any UI, animations, or colors. We want the exact same look but with 'Bullet-Fast' performance. Go ahead and deploy!*
