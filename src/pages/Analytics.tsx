@@ -21,6 +21,7 @@ import QuickTestGenerator from "@/components/analytics/QuickTestGenerator";
 import TestHistorySection from "@/components/analytics/TestHistorySection";
 import AchievementsSection from "@/components/analytics/AchievementsSection";
 import { TrendingUp, BookOpen, Target, Award, Brain, Sparkles } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
 import ProgressIndicator from "@/components/ai-coach/ProgressIndicator";
 import WeeklyTrendChart from "@/components/ai-coach/WeeklyTrendChart";
 import SubjectBreakdown from "@/components/ai-coach/SubjectBreakdown";
@@ -80,40 +81,23 @@ const Analytics = () => {
         noindex
       />
       <div className="max-w-7xl mx-auto px-4 pt-6 pb-20">
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="relative mb-6 overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-cyan-50/60 via-background to-blue-50/60 dark:from-cyan-950/30 dark:via-background dark:to-blue-950/30 px-5 py-5 md:px-7 md:py-6 shadow-sm"
-        >
-          <div className="pointer-events-none absolute -top-12 -right-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-blue-500/10 blur-3xl" />
-          <div className="relative flex items-center gap-3 md:gap-4">
-            <div className="flex h-11 w-11 md:h-12 md:w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-blue-600 text-primary-foreground shadow-lg shadow-primary/20 ring-1 ring-white/30">
-              <Brain className="h-5 w-5 md:h-6 md:w-6" strokeWidth={2.4} />
-            </div>
-            <div className="min-w-0">
-              <h1 className="text-2xl md:text-3xl font-bold leading-tight bg-gradient-to-r from-primary via-blue-600 to-cyan-500 bg-clip-text text-transparent">
-                Dashboard & AI Coach
-              </h1>
-              <p className="text-muted-foreground text-xs md:text-sm flex items-center gap-1.5 mt-0.5">
-                <Sparkles className="h-3.5 w-3.5 text-cyan-500" />
-                Personalized insights to boost your performance
-              </p>
-              <TypewriterText
-                prefix="Your AI Coach is "
-                phrases={[
-                  'Analyzing your weak points...',
-                  'Building your study plan...',
-                  'Tracking your daily streak...',
-                ]}
-                className="text-xs md:text-sm text-primary/80 font-medium mt-1"
-                minHeightClass="min-h-[1.5rem]"
-              />
-
-            </div>
-          </div>
-        </motion.div>
+        <PageHeader
+          icon={Brain}
+          title="Dashboard & AI Coach"
+          tagline="Personalized insights to boost your performance"
+          description={
+            <TypewriterText
+              prefix="Your AI Coach is "
+              phrases={[
+                'Analyzing your weak points...',
+                'Building your study plan...',
+                'Tracking your daily streak...',
+              ]}
+              className="text-xs md:text-sm text-primary/80 font-medium"
+              minHeightClass="min-h-[1.5rem]"
+            />
+          }
+        />
 
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
