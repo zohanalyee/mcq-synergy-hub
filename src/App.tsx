@@ -3,7 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
+import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
