@@ -39,19 +39,17 @@ const stats = [
 const TYPE_SPEED = 35;
 const HOLD_MS = 1400;
 
-/** Sequentially types title then description for one block, then advances. */
-const useSequentialTyper = (count: number) => {
+/** Sequentially types description for one block, then advances to next. */
+const useSequentialTyper = () => {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [phase, setPhase] = useState<'title' | 'desc' | 'hold'>('title');
-  const [titleLen, setTitleLen] = useState(0);
+  const [phase, setPhase] = useState<'desc' | 'hold'>('desc');
   const [descLen, setDescLen] = useState(0);
   // Track which blocks have been "revealed" in the current cycle
   const [revealedCycle, setRevealedCycle] = useState(0);
 
   const reset = (toIndex: number, cycle: number) => {
     setActiveIndex(toIndex);
-    setPhase('title');
-    setTitleLen(0);
+    setPhase('desc');
     setDescLen(0);
     setRevealedCycle(cycle);
   };
@@ -59,12 +57,10 @@ const useSequentialTyper = (count: number) => {
   return {
     activeIndex,
     phase,
-    titleLen,
     descLen,
     revealedCycle,
     setActiveIndex,
     setPhase,
-    setTitleLen,
     setDescLen,
     setRevealedCycle,
     reset,
