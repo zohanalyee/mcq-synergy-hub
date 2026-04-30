@@ -14,11 +14,9 @@ import { GlobalSearchResult } from "@/services/globalSearchService";
 import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { syncAllSubjects } from "@/services/offlineSyncService";
-import { useToast } from "@/hooks/use-toast";
 
 const Subjects = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [syncProgress, setSyncProgress] = useState<{ synced: number; total: number } | null>(null);
   const {
     systems,
@@ -36,29 +34,53 @@ const Subjects = () => {
     totalCount
   } = useSubjectsPageData();
 
-  // Background sync for offline access
+  // Background sync for offline access — only run when stale
+  // Tracks a fingerprint (count + ids hash) so we don't re-sync on every
+  // visit. Re-syncs only when subjects list changes OR cache is >24h old.
   useEffect(() => {
     if (loading || subjects.length === 0) return;
 
     const subjectsToSync = subjects
       .filter(s => s.id)
-      .map(s => ({ id: s.id, title: s.title }));
+      .map(s => ({ id: s.id as string, title: s.title }));
 
     if (subjectsToSync.length === 0) return;
 
-    toast({
-      title: "📥 Syncing for offline",
-      description: `Caching questions for ${subjectsToSync.length} subjects...`,
-    });
+    const SYNC_META_KEY = 'subjects_sync_meta_v1';
+    const SYNC_TTL_MS = 24 * 60 * 60 * 1000; // 24h
+    const fingerprint = `${subjectsToSync.length}:${subjectsToSync
+      .map(s => s.id)
+      .sort()
+      .join(',')
+      .slice(0, 200)}`;
 
+    try {
+      const raw = localStorage.getItem(SYNC_META_KEY);
+      if (raw) {
+        const meta = JSON.parse(raw) as { fingerprint: string; ts: number };
+        const fresh = Date.now() - meta.ts < SYNC_TTL_MS;
+        if (fresh && meta.fingerprint === fingerprint) {
+          // Already synced, skip silently
+          return;
+        }
+      }
+    } catch {
+      // ignore parse errors, proceed with sync
+    }
+
+    // Silent background sync — no intrusive toast on entry.
     syncAllSubjects(subjectsToSync, (synced, total) => {
       setSyncProgress({ synced, total });
     }).then(() => {
       setSyncProgress(null);
-      toast({
-        title: "✅ Offline sync complete",
-        description: "Questions are now available offline",
-      });
+      try {
+        localStorage.setItem(
+          SYNC_META_KEY,
+          JSON.stringify({ fingerprint, ts: Date.now() }),
+        );
+      } catch {
+        // localStorage full — ignore
+      }
     });
   }, [loading, subjects.length]);
 
