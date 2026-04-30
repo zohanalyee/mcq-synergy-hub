@@ -1778,6 +1778,7 @@ export type Database = {
           id: string
           occupation: string | null
           profile_completed: boolean | null
+          target_exam: string | null
           updated_at: string | null
           user_type: string | null
           username: string | null
@@ -1791,6 +1792,7 @@ export type Database = {
           id: string
           occupation?: string | null
           profile_completed?: boolean | null
+          target_exam?: string | null
           updated_at?: string | null
           user_type?: string | null
           username?: string | null
@@ -1804,6 +1806,7 @@ export type Database = {
           id?: string
           occupation?: string | null
           profile_completed?: boolean | null
+          target_exam?: string | null
           updated_at?: string | null
           user_type?: string | null
           username?: string | null
