@@ -1,80 +1,76 @@
-# Performance Optimization & Brand-Matched Top Progress Loader
+## Goal
 
-## Findings from current code
-
-- **Routes are already lazy** in `src/App.tsx` — good. But every route uses the heavy `BrandingLoader` (full-screen, framer-motion, gradient bar, multiple animated layers) as the Suspense fallback, which itself adds main-thread work on every navigation.
-- **`SplashScreen.tsx`** holds the app for a hardcoded **2200ms** before mounting `App` (in `src/main.tsx`). This is the biggest single cause of slow FCP/LCP on mobile.
-- **`index.html`** loads Google Fonts as a **render-blocking stylesheet** with three families (Inter, Orbitron, Noto Nastaliq Urdu) including 9+ weights. GA4 is loaded eagerly in `<head>`.
-- **`vite.config.ts`** has no `manualChunks` — everything (React, framer-motion, recharts, radix, lucide, pdf-lib, jspdf, html2canvas, exceljs) ships in one or two big chunks.
-- Brand loading gradient consistently used across the app: **`from-violet-500 via-cyan-500 to-violet-500`** (see `BrandingLoader.tsx`, `SplashScreen.tsx`). The new top progress bar will reuse this exact gradient.
-- `lucide-react` is already imported per-icon (tree-shakable) — no change needed there.
+Make the app look stunning by default (visible Aurora, premium presets) and dramatically simplify the Settings dialog so a non-technical user only sees one-click themes — sliders/atmosphere are hidden behind an "Advanced" accordion.
 
 ---
 
-## Changes
+## 1. Boost Aurora Background Visibility
 
-### 1. New `TopProgressBar` Suspense fallback (brand-matched)
+**File:** `src/index.css` (lines ~158–168)
 
-Create `src/components/TopProgressBar.tsx`:
-- Centered MCQSAI logo + wordmark on `bg-background` (reuses Brain icon, Orbitron, the violet→cyan gradient).
-- **No** circular spinner.
-- Top bar: `fixed top-0 left-0 w-full h-[3px] z-[9999] overflow-hidden bg-gray-100 dark:bg-gray-800`.
-- Inner bar uses **`bg-gradient-to-r from-violet-500 via-cyan-500 to-violet-500`** with an indeterminate CSS keyframe animation (slides + scales infinitely). Pure CSS — no framer-motion — so the fallback itself is cheap.
-- Add the `@keyframes indeterminate-progress` rule to `src/index.css` (or use a Tailwind arbitrary keyframe in the component) so the bar slides left→right continuously.
+- Increase base `.aurora-blob` opacity from `0.18` → `0.55` (light mode default).
+- Add a dark-mode override (`.dark .aurora-blob { opacity: 0.38; filter: blur(100px); }`) so blobs glow but don't wash out the dark UI.
+- Slightly stronger blur (`blur(100px)`) for smoother bleed.
 
-Replace **every** `<BrandingLoader fullScreen ... />` Suspense fallback in `src/App.tsx` with `<TopProgressBar />`. `BrandingLoader` itself stays for the full-screen `PageLoader` overlay.
+**File:** `src/components/AuroraBackground.tsx`
 
-### 2. Remove the 2.2s splash delay
+- Bump per-blob inline `background` alpha values: `--brand-from / 0.55` → `0.95`, `--brand-to / 0.5` → `0.85`, third blob → `0.8`. (CSS opacity multiplier still keeps things tasteful.)
+- Increase blob size: `60vw → 75vw`, `55vw → 70vw`, `50vw → 65vw` so they bleed into the center of the viewport.
+- Reposition third blob slightly more central (`bottom: -10%; left: 25%`) to fill the middle.
+- Strengthen the radial wash on the container background (alpha `0.05` → `0.12`).
 
-Edit `src/main.tsx`:
-- Remove the `SplashScreen` gate entirely. Render `<App />` immediately.
-- Keep `SplashScreen.tsx` file in place (unused) so other refs don't break — or delete if no other importer (will verify and delete if safe).
+## 2. Premium Defaults
 
-This alone should reclaim ~2 seconds of FCP/LCP on mobile.
+**File:** `src/contexts/AppearanceContext.tsx`
 
-### 3. Vite manual vendor chunking
+Update `defaultSettings`:
+- `atmosphereMode`: keep `'flow'` (already premium), confirmed.
+- `colorMix`: `'default'` (signature violet/pink/cyan) — already correct.
+- `cardsOpacity`: 95 → 90 (slightly more glassy out of the box).
+- `interfaceOpacity`: 85 → 80.
 
-Update `vite.config.ts` `build.rollupOptions.output.manualChunks`:
-- `react-vendor`: `react`, `react-dom`, `react-router-dom`
-- `framer`: `framer-motion`
-- `charts`: `recharts`
-- `radix`: any `@radix-ui/*`
-- `pdf`: `pdf-lib`, `jspdf`, `html2canvas`, `exceljs`
-- `supabase`: `@supabase/supabase-js`, `@tanstack/react-query`
-- `icons`: `lucide-react`
+These defaults apply to any new visitor (no localStorage / no global override row).
 
-This lets browsers cache big libs separately and parallelizes parsing.
+## 3. Simplify the Settings Menu
 
-### 4. `index.html` render-blocking fixes
+**File:** `src/components/settings/AppearanceSettings.tsx` — full restructure.
 
-- Keep `preconnect` to fonts.googleapis.com / fonts.gstatic.com (already present).
-- Make the Google Fonts stylesheet **non-blocking** using the standard pattern:
-  ```html
-  <link rel="preload" as="style" href="...fonts..." onload="this.onload=null;this.rel='stylesheet'">
-  <noscript><link rel="stylesheet" href="...fonts..."></noscript>
-  ```
-- Trim font weights to what's actually used (Inter 400/500/600/700, Orbitron 600/700, Noto Nastaliq Urdu 400/600) — saves ~60% of font payload.
-- Move the GA4 `<script>` block to just before `</body>` and keep `async`. Defer the inline `gtag('config', ...)` so it runs after load.
-- Add `rel="preconnect"` for `https://www.googletagmanager.com` and `https://pzhvipkcssxrsxxljbbz.supabase.co`.
+New top-to-bottom order in the Appearance tab:
 
-### 5. Lucide icons
+1. **Tiny sync status pill** (kept, unchanged).
+2. **Ready-made Themes** (promoted to top, large cards):
+   - 2×2 grid of big buttons for `Default`, `Sunset`, `Ocean`, `Forest`.
+   - Each card ~72px tall, full gradient fill preview using `mixLibrary[id]`, label overlay.
+   - Selected theme shows a ring + check icon.
+   - One click calls a new helper `applyTheme(presetId)` that sets:
+     - `colorMix = presetId`
+     - `atmosphereMode = 'flow'` (guaranteed visible Aurora)
+     - `cardsOpacity = 90`, `interfaceOpacity = 80`, `sidebarOpacity = 90`
+     - Picks a sensible matching `accentColor` per theme (default→purple, sunset→orange, ocean→blue, forest→green).
+   - Implemented inline in the component using existing `update*` setters (no context API change required).
+3. **Live Preview** card (kept, moved just under themes).
+4. **Accent color swatches** (kept — small row, still useful and visual, not technical).
+5. **Advanced UI Controls** — wrapped in shadcn `<Accordion type="single" collapsible>` (collapsed by default). Inside:
+   - Atmosphere mode toggle (Solid / Flow / Aero).
+   - Interface / Sidebar / Cards opacity sliders.
+   - Custom mix color pickers + Apply button.
+6. **Admin "Set as Global Default"** button (kept, admin-only).
+7. **Reset to Global Defaults** button (kept).
 
-Spot-check the heaviest pages (`Index.tsx`, `Tools.tsx`, `Analytics.tsx`) for any `import * as Icons from 'lucide-react'` usage. Current usage looks per-icon, so no changes expected unless a barrel import is found during implementation.
+All removed pieces are preserved — they just live inside the Advanced accordion so the default view shows only themes + accent + reset.
 
 ---
 
-## Expected impact
+## Technical Notes
 
-- FCP/LCP: −2s (splash removal) + −300–800ms (non-blocking fonts) + faster parse from chunk parallelism.
-- Suspense navigations feel instant (top bar appears immediately, no full-screen takeover).
-- Repeat visits cache vendor chunks separately → much better Speed Index.
+- No DB changes, no context API additions. The "one-click theme" simply batches existing setters; the debounced cloud-save in `AppearanceContext` already coalesces them into a single upsert.
+- Accordion uses the existing `@/components/ui/accordion` (shadcn). No new deps.
+- `StaticBackground.tsx` (low-end fallback) already reads from `mixLibrary` so it benefits from premium presets automatically; no change needed there.
+- Existing users with stored `appearance-settings` in localStorage keep their settings — only fresh users get the new defaults.
 
-## Files touched
+## Files Touched
 
-- `src/main.tsx` (remove SplashScreen gate)
-- `src/App.tsx` (swap fallbacks)
-- `src/components/TopProgressBar.tsx` (new)
-- `src/index.css` (add keyframe)
-- `vite.config.ts` (manualChunks)
-- `index.html` (non-blocking fonts, GA4 placement, preconnects)
-- `src/components/SplashScreen.tsx` (delete if unreferenced)
+- `src/index.css` — Aurora opacity/blur + dark-mode rule.
+- `src/components/AuroraBackground.tsx` — bigger, brighter, more central blobs.
+- `src/contexts/AppearanceContext.tsx` — bump default opacities.
+- `src/components/settings/AppearanceSettings.tsx` — restructure (themes on top, advanced accordion at bottom).
