@@ -6,7 +6,7 @@ import { useSocialLinks } from '@/hooks/useSocialLinks';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
-  const { t, tr, language, isRTL } = useLanguage();
+  const { t, tr, isRTL } = useLanguage();
   const fontClass = isRTL ? 'font-nastaliq' : '';
   const { data: socialLinks } = useSocialLinks();
 
@@ -19,16 +19,16 @@ const Footer = () => {
   ].filter(s => s.url);
 
   return (
-    <footer className={cn("bg-card border-t border-border text-card-foreground layout-ltr", fontClass)}>
+    <footer className={cn("bg-brand-gradient text-white layout-ltr", fontClass)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
           {/* About */}
           <div className="space-y-3 col-span-2 sm:col-span-1">
-            <h3 className="text-lg font-bold text-foreground" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
+            <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</h3>
+            <p className="text-sm text-white/80 leading-relaxed">
               {tr('footer.description')}
             </p>
-            <p className="text-sm font-medium mt-2" style={{ color: '#4ade80' }}>
+            <p className="text-sm font-medium mt-2 text-white">
               🇵🇰 {t('footer.madeInPakistan')}
             </p>
             {activeSocials.length > 0 && (
@@ -40,7 +40,7 @@ const Footer = () => {
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}
-                    className="text-muted-foreground hover:text-primary transition-colors"
+                    className="text-white/80 hover:text-white transition-colors"
                   >
                     {Icon ? (
                       <Icon className="h-5 w-5" />
@@ -57,7 +57,7 @@ const Footer = () => {
 
           {/* Popular Subjects */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Popular Subjects</h4>
+            <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Popular Subjects</h4>
             <ul className="space-y-2 text-sm">
               {[
                 { label: 'Biology MCQs', path: '/subjects' },
@@ -68,7 +68,7 @@ const Footer = () => {
                 { label: 'Computer Science', path: '/subjects' },
               ].map(link => (
                 <li key={link.label}>
-                  <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors">
+                  <Link to={link.path} className="text-white/80 hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -78,7 +78,7 @@ const Footer = () => {
 
           {/* Practice & Tests */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Practice & Tests</h4>
+            <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Practice & Tests</h4>
             <ul className="space-y-2 text-sm">
               {[
                 { label: t('nav.subjects'), path: '/subjects' },
@@ -89,7 +89,7 @@ const Footer = () => {
                 { label: t('footer.reviews'), path: '/reviews' },
               ].map(link => (
                 <li key={link.path}>
-                  <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors">
+                  <Link to={link.path} className="text-white/80 hover:text-white transition-colors">
                     {link.label}
                   </Link>
                 </li>
@@ -99,7 +99,7 @@ const Footer = () => {
 
           {/* Resources */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">Resources</h4>
+            <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Resources</h4>
             <ul className="space-y-2 text-sm">
               {[
                 { label: 'Blog', path: '/blog' },
@@ -112,10 +112,10 @@ const Footer = () => {
                 { label: t('footer.contactUs'), path: '/contact' },
               ].map(link => (
                 <li key={link.path}>
-                  <Link to={link.path} className="text-muted-foreground hover:text-primary transition-colors inline-flex items-center gap-1.5">
+                  <Link to={link.path} className="text-white/80 hover:text-white transition-colors inline-flex items-center gap-1.5">
                     {link.label}
                     {link.badge && (
-                      <span className="text-[10px] font-bold bg-destructive/15 text-destructive px-1.5 py-0.5 rounded-full leading-none">
+                      <span className="text-[10px] font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full leading-none">
                         {link.badge}
                       </span>
                     )}
@@ -127,38 +127,38 @@ const Footer = () => {
 
           {/* Contact */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-foreground uppercase tracking-wide">{t('footer.contactUs')}</h4>
+            <h4 className="text-sm font-semibold text-white uppercase tracking-wide">{t('footer.contactUs')}</h4>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-2">
-                <Mail className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <Mail className="w-4 h-4 text-white/80 mt-0.5 shrink-0" />
                 <div>
-                  <a href="mailto:hello@mcqsai.com" className="text-muted-foreground hover:text-primary transition-colors">
+                  <a href="mailto:hello@mcqsai.com" className="text-white/80 hover:text-white transition-colors">
                     hello@mcqsai.com
                   </a>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <Phone className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                <Phone className="w-4 h-4 text-white/80 mt-0.5 shrink-0" />
                 <div>
-                  <span className="text-muted-foreground">+92 300 1234567</span>
-                  <p className="text-xs text-muted-foreground/70">Mon-Fri, 9 AM - 6 PM (PKT)</p>
+                  <span className="text-white/80">+92 300 1234567</span>
+                  <p className="text-xs text-white/60">Mon-Fri, 9 AM - 6 PM (PKT)</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <MapPin className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                <span className="text-muted-foreground">Karachi, Sindh, Pakistan</span>
+                <MapPin className="w-4 h-4 text-white/80 mt-0.5 shrink-0" />
+                <span className="text-white/80">Karachi, Sindh, Pakistan</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Bottom bar */}
-        <div className="mt-10 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground">
+        <div className="mt-10 pt-6 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/70">
           <p>© {currentYear} MCQSAI. {t('footer.allRightsReserved')}.</p>
           <div className="flex gap-4">
-            <Link to="/privacy-policy" className="hover:text-primary transition-colors">{t('footer.privacy')}</Link>
-            <Link to="/terms-of-service" className="hover:text-primary transition-colors">{t('footer.terms')}</Link>
-            <Link to="/contact" className="hover:text-primary transition-colors">{t('footer.contact')}</Link>
+            <Link to="/privacy-policy" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
+            <Link to="/terms-of-service" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
+            <Link to="/contact" className="hover:text-white transition-colors">{t('footer.contact')}</Link>
           </div>
         </div>
       </div>
