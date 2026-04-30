@@ -12,6 +12,7 @@ import { SidebarProvider, SidebarTrigger, useSidebar } from '@/components/ui/sid
 import { AppSidebar } from './AppSidebar';
 import { LiquidBackground } from './LiquidBackground';
 import { StaticBackground } from './StaticBackground';
+import { AuroraBackground } from './AuroraBackground';
 import { useDeviceCapability } from '@/hooks/useDeviceCapability';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -114,7 +115,10 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
 
   return (
     <>
-      {/* Adaptive background:
+      {/* Aurora layer (-z-20): slow brand-tinted mesh, behind everything.
+          Falls back to static gradient internally on low-end / reduced-motion. */}
+      <AuroraBackground />
+      {/* Adaptive background (-z-10):
           - Low-end devices: static gradient
           - Solid atmosphere: static gradient (no blobs) so Mix Library still applies
           - Flow/Aero on capable devices: animated blobs
