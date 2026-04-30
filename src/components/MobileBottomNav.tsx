@@ -17,6 +17,7 @@ import { Separator } from '@/components/ui/separator';
 import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import { useScrollDirection } from '@/hooks/useScrollDirection';
+import { prefetchRoute } from '@/lib/prefetchRoutes';
 
 const TAB_COLORS = {
   home: { active: 'text-blue-500', inactive: 'text-blue-400/50', dot: 'bg-blue-500' },
@@ -110,6 +111,8 @@ const MobileBottomNav = () => {
                 <motion.button
                   key={item.path}
                   onClick={() => navigate(item.path)}
+                  onMouseEnter={() => prefetchRoute(item.path)}
+                  onTouchStart={() => prefetchRoute(item.path)}
                   whileTap={{ scale: 0.85 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   className="relative flex flex-col items-center justify-center gap-0.5 w-14 h-full"
@@ -153,6 +156,8 @@ const MobileBottomNav = () => {
             <Sheet open={profileSheetOpen} onOpenChange={setProfileSheetOpen}>
               <SheetTrigger asChild>
                 <motion.button
+                  onMouseEnter={() => { prefetchRoute('/profile'); prefetchRoute('/analytics'); }}
+                  onTouchStart={() => { prefetchRoute('/profile'); prefetchRoute('/analytics'); }}
                   whileTap={{ scale: 0.85 }}
                   transition={{ type: 'spring', stiffness: 400, damping: 17 }}
                   className="relative flex flex-col items-center justify-center gap-0.5 w-14 h-full"
