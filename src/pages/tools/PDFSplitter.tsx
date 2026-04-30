@@ -6,7 +6,6 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Scissors, Upload, Download, FileText, X, Info, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { PDFDocument } from 'pdf-lib';
 import { toast } from 'sonner';
 
 interface SplitRange {
@@ -25,6 +24,7 @@ const PDFSplitter = () => {
 
   const loadPDF = useCallback(async (f: File) => {
     try {
+      const { PDFDocument } = await import('pdf-lib');
       const arrayBuffer = await f.arrayBuffer();
       const pdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
       const count = pdf.getPageCount();
@@ -66,6 +66,7 @@ const PDFSplitter = () => {
     if (!file) return;
     setProcessing(true);
     try {
+      const { PDFDocument } = await import('pdf-lib');
       const arrayBuffer = await file.arrayBuffer();
       const sourcePdf = await PDFDocument.load(arrayBuffer, { ignoreEncryption: true });
       const newResults: { name: string; blob: Blob; pages: number }[] = [];

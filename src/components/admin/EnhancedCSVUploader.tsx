@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ContentCategory } from '@/interfaces/content';
 import { parseCSV, generateCSVTemplate, CSVProcessingResult, CSV_TEMPLATES } from '@/services/csvProcessorService';
 import { toast } from 'sonner';
-import ExcelJS from 'exceljs';
 import { parseAiken } from '@/services/aikenParser';
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,6 +48,7 @@ const EnhancedCSVUploader = ({
   };
 
   const getFirstSheetCSV = async (file: File): Promise<string> => {
+    const { default: ExcelJS } = await import('exceljs');
     const data = await file.arrayBuffer();
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(data);
