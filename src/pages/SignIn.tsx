@@ -176,7 +176,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   };
 
   const inputBaseClass =
-    "w-full h-11 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 pl-10 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all duration-200 outline-none focus:ring-2 focus:ring-[hsl(var(--primary)/0.2)] focus:border-[hsl(var(--primary))] disabled:opacity-50 disabled:cursor-not-allowed";
+    "w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 pl-10 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all duration-200 outline-none focus:ring-2 focus:ring-[hsl(var(--brand-from)/0.25)] focus:border-[hsl(var(--brand-from))] disabled:opacity-50 disabled:cursor-not-allowed";
 
   const isLoading = loading;
   const isBusy = isLoading || isGoogleLoading || isSubmitting !== null;
@@ -249,7 +249,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
           <button
             onClick={handleGoogleLogin}
             disabled={isGoogleLoading || isLoading}
-            className="w-full h-11 rounded-lg border-2 border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] transition-all duration-200 disabled:opacity-50"
+            className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
           >
             {isGoogleLoading ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
@@ -358,8 +358,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 {/* Submit */}
                 <button
                     type="submit" disabled={isBusy || !signInCaptchaToken}
-                  className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
-                  style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
+                  className="w-full h-11 rounded-xl bg-brand-gradient text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-brand transition-all duration-200 hover:brightness-110 hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                 >
                     {isSubmitting === "signin" ? <><Loader2 className="h-4 w-4 animate-spin" /> Signing In...</> : "Sign In"}
                 </button>
@@ -460,8 +459,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                 {/* Submit */}
                 <button
                   type="submit" disabled={isBusy || !agreedToTerms || !signUpCaptchaToken}
-                  className="w-full h-11 rounded-lg text-white text-sm font-medium flex items-center justify-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
-                  style={{ background: "linear-gradient(135deg, hsl(220, 90%, 50%), hsl(240, 70%, 45%))" }}
+                  className="w-full h-11 rounded-xl bg-brand-gradient text-white text-sm font-semibold flex items-center justify-center gap-2 shadow-brand transition-all duration-200 hover:brightness-110 hover:scale-[1.01] disabled:opacity-50 disabled:hover:scale-100"
                 >
                   {isSubmitting === "signup" ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating Account...</> : "Create Account"}
                 </button>
