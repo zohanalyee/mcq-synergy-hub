@@ -21,7 +21,8 @@ export default defineConfig(({ mode }) => ({
           if (!id.includes('node_modules')) return;
           if (id.includes('framer-motion')) return 'framer';
           if (id.includes('recharts') || id.includes('d3-')) return 'charts';
-          if (id.includes('pdf-lib') || id.includes('jspdf') || id.includes('html2canvas') || id.includes('exceljs')) return 'pdf';
+          if (id.includes('pdf-lib') || id.includes('jspdf') || id.includes('html2canvas')) return 'pdf';
+          if (id.includes('exceljs')) return 'excel';
           if (id.includes('react-markdown') || id.includes('remark') || id.includes('rehype') || id.includes('micromark') || id.includes('mdast') || id.includes('hast')) return 'markdown';
         },
       },
