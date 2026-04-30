@@ -148,34 +148,54 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
     loadCloudSettings();
   }, [user?.id]);
 
-  // Subscribe to global settings realtime changes
+  // Subscribe to global settings realtime changes — only for authenticated users.
+  // Logged-out visitors (most landing-page traffic) get the latest snapshot from the
+  // initial REST fetch above, so we skip opening a WebSocket on `/`. This avoids
+  // ERR_NAME_NOT_RESOLVED noise and keeps FCP unaffected.
   useEffect(() => {
-    const channel = supabase
-      .channel('global-appearance')
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'global_appearance_settings',
-        filter: 'key=eq.default',
-      }, (payload) => {
-        const newGlobal = payload.new as { settings?: Record<string, unknown> };
-        if (newGlobal?.settings) {
-          const gs = { ...defaultSettings, ...newGlobal.settings } as AppearanceSettings;
-          setGlobalSettings(gs);
-          // If user has no custom override, apply new global
-          setIsUsingCustom(prev => {
-            if (!prev) {
-              setSettings(gs);
-              localStorage.setItem('appearance-settings', JSON.stringify(gs));
-            }
-            return prev;
-          });
-        }
-      })
-      .subscribe();
+    if (!user?.id) return;
 
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    // Defer subscription until the browser is idle so it never competes with FCP/LCP.
+    const idle = (cb: () => void) => {
+      const w = window as unknown as {
+        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
+      };
+      if (typeof w.requestIdleCallback === 'function') {
+        w.requestIdleCallback(cb, { timeout: 3000 });
+      } else {
+        setTimeout(cb, 2000);
+      }
+    };
+
+    idle(() => {
+      channel = supabase
+        .channel('global-appearance')
+        .on('postgres_changes', {
+          event: '*',
+          schema: 'public',
+          table: 'global_appearance_settings',
+          filter: 'key=eq.default',
+        }, (payload) => {
+          const newGlobal = payload.new as { settings?: Record<string, unknown> };
+          if (newGlobal?.settings) {
+            const gs = { ...defaultSettings, ...newGlobal.settings } as AppearanceSettings;
+            setGlobalSettings(gs);
+            setIsUsingCustom(prev => {
+              if (!prev) {
+                setSettings(gs);
+                localStorage.setItem('appearance-settings', JSON.stringify(gs));
+              }
+              return prev;
+            });
+          }
+        })
+        .subscribe();
+    });
+
+    return () => { if (channel) supabase.removeChannel(channel); };
+  }, [user?.id]);
 
   // Apply settings to DOM whenever they change
   useEffect(() => {

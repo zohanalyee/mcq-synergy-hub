@@ -14,8 +14,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 const COLORS = ['#22c55e', '#ef4444', '#f59e0b', '#3b82f6', '#8b5cf6', '#ec4899', '#06b6d4', '#f97316', '#14b8a6', '#a855f7', '#6366f1', '#e11d48', '#84cc16', '#0ea5e9', '#d946ef'];
 
@@ -110,6 +108,10 @@ const AttendanceAnalytics = () => {
       const currentDomain = window.location.hostname;
       const websiteURL = `https://${currentDomain}`;
 
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf'),
+      ]);
       const canvas = await html2canvas(element, { scale: 2, logging: false, useCORS: true, backgroundColor: '#ffffff' });
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'mm', 'a4');
