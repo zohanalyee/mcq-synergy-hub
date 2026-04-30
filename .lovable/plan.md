@@ -1,76 +1,85 @@
-## Goal
+## Problem
 
-Make the app look stunning by default (visible Aurora, premium presets) and dramatically simplify the Settings dialog so a non-technical user only sees one-click themes — sliders/atmosphere are hidden behind an "Advanced" accordion.
+Our `public/sitemap.xml` index points `<loc>` directly at `https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/generate-sitemap?type=...`. Google requires sitemap URLs to live on the **same verified domain** as the sitemap itself, otherwise it silently rejects them — exactly what GSC is showing ("0 discovered pages", redirect-error validation failures).
 
----
+## Constraint
 
-## 1. Boost Aurora Background Visibility
+Lovable hosting is purely static — there is **no Vite middleware, no `_redirects`, no Next.js, no edge-rewrite layer** we can use to transparently proxy `mcqsai.com/sitemaps/*.xml` → Supabase Edge Function. The previous attempt to redirect via inline JS in `index.html` is exactly what Google flagged as "Page with redirect".
 
-**File:** `src/index.css` (lines ~158–168)
+The only way to ship same-origin sitemap XML on Lovable hosting is to **generate the files at build time** and serve them as real static files from `public/`.
 
-- Increase base `.aurora-blob` opacity from `0.18` → `0.55` (light mode default).
-- Add a dark-mode override (`.dark .aurora-blob { opacity: 0.38; filter: blur(100px); }`) so blobs glow but don't wash out the dark UI.
-- Slightly stronger blur (`blur(100px)`) for smoother bleed.
+## Solution: Build-time static sitemap generation
 
-**File:** `src/components/AuroraBackground.tsx`
+Replace the runtime Supabase-served sitemaps with a Node script that runs during `npm run build`, hits the database via the Supabase JS client (anon key), and writes finished XML files into `public/sitemaps/` and `public/sitemap.xml`. After build, every sitemap URL Google sees is `https://mcqsai.com/...`.
 
-- Bump per-blob inline `background` alpha values: `--brand-from / 0.55` → `0.95`, `--brand-to / 0.5` → `0.85`, third blob → `0.8`. (CSS opacity multiplier still keeps things tasteful.)
-- Increase blob size: `60vw → 75vw`, `55vw → 70vw`, `50vw → 65vw` so they bleed into the center of the viewport.
-- Reposition third blob slightly more central (`bottom: -10%; left: 25%`) to fill the middle.
-- Strengthen the radial wash on the container background (alpha `0.05` → `0.12`).
+### Files to add / change
 
-## 2. Premium Defaults
+1. **`scripts/generate-sitemaps.mjs`** (new)
+   - Connects to Supabase using `VITE_SUPABASE_URL` + `VITE_SUPABASE_PUBLISHABLE_KEY` (already in `.env`).
+   - Mirrors the logic currently in `supabase/functions/generate-sitemap/index.ts`:
+     - Static pages list → `public/sitemaps/static.xml`
+     - Tools list → `public/sitemaps/tools.xml`
+     - Exam slugs → `public/sitemaps/exams.xml`
+     - `content_items` + `external_opportunities` (jobs) → `public/sitemaps/jobs.xml`
+     - Same for scholarships → `public/sitemaps/scholarships.xml`
+     - `blog_posts` → `public/sitemaps/blog.xml`
+     - `topics` joined to subjects/levels/systems → paginated `public/sitemaps/boards-{n}.xml` (1000 URLs each)
+   - Writes a master `public/sitemap.xml` index whose `<loc>` entries are all `https://mcqsai.com/sitemaps/*.xml`.
+   - Fails gracefully (warns, keeps existing files) if DB is unreachable so builds don't break.
 
-**File:** `src/contexts/AppearanceContext.tsx`
+2. **`package.json`**
+   - Add `"prebuild": "node scripts/generate-sitemaps.mjs && node scripts/verify-sitemap.mjs pre"`.
+   - Keeps the existing post-build verifier.
 
-Update `defaultSettings`:
-- `atmosphereMode`: keep `'flow'` (already premium), confirmed.
-- `colorMix`: `'default'` (signature violet/pink/cyan) — already correct.
-- `cardsOpacity`: 95 → 90 (slightly more glassy out of the box).
-- `interfaceOpacity`: 85 → 80.
+3. **`scripts/verify-sitemap.mjs`** (update)
+   - Update `REQUIRED` array to expect same-origin URLs (`/sitemaps/static.xml`, `/sitemaps/jobs.xml`, etc.) instead of the Supabase function URL substrings.
+   - Also assert at least one `boards-*.xml` entry exists.
 
-These defaults apply to any new visitor (no localStorage / no global override row).
+4. **`public/sitemap.xml`** (overwrite)
+   - Becomes a same-origin sitemap index:
+     ```xml
+     <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+       <sitemap><loc>https://mcqsai.com/sitemaps/static.xml</loc></sitemap>
+       <sitemap><loc>https://mcqsai.com/sitemaps/tools.xml</loc></sitemap>
+       <sitemap><loc>https://mcqsai.com/sitemaps/exams.xml</loc></sitemap>
+       <sitemap><loc>https://mcqsai.com/sitemaps/jobs.xml</loc></sitemap>
+       <sitemap><loc>https://mcqsai.com/sitemaps/scholarships.xml</loc></sitemap>
+       <sitemap><loc>https://mcqsai.com/sitemaps/blog.xml</loc></sitemap>
+       <sitemap><loc>https://mcqsai.com/sitemaps/boards-1.xml</loc></sitemap>
+     </sitemapindex>
+     ```
+   - The build script will overwrite this with the live, lastmod-stamped version each deploy.
 
-## 3. Simplify the Settings Menu
+5. **`public/_redirects`** (update)
+   - Remove the cross-domain `/sitemaps/*.xml → supabase.co` rules (they were Netlify-only and not honored anyway, but they're misleading).
+   - Keep the SPA fallback line for portability comment.
 
-**File:** `src/components/settings/AppearanceSettings.tsx` — full restructure.
+6. **`index.html`** (update)
+   - Remove the inline `<script>` that redirects `/sitemaps/*` to the Supabase function. This is the "Page with redirect" GSC error source. Static files at those paths will now serve directly, no JS needed.
 
-New top-to-bottom order in the Appearance tab:
+7. **`supabase/functions/generate-sitemap/index.ts`** (keep, optional)
+   - Leave the edge function in place as a fallback / on-demand generator, but it will no longer be referenced by `sitemap.xml`. No code change required, or we can delete it later.
 
-1. **Tiny sync status pill** (kept, unchanged).
-2. **Ready-made Themes** (promoted to top, large cards):
-   - 2×2 grid of big buttons for `Default`, `Sunset`, `Ocean`, `Forest`.
-   - Each card ~72px tall, full gradient fill preview using `mixLibrary[id]`, label overlay.
-   - Selected theme shows a ring + check icon.
-   - One click calls a new helper `applyTheme(presetId)` that sets:
-     - `colorMix = presetId`
-     - `atmosphereMode = 'flow'` (guaranteed visible Aurora)
-     - `cardsOpacity = 90`, `interfaceOpacity = 80`, `sidebarOpacity = 90`
-     - Picks a sensible matching `accentColor` per theme (default→purple, sunset→orange, ocean→blue, forest→green).
-   - Implemented inline in the component using existing `update*` setters (no context API change required).
-3. **Live Preview** card (kept, moved just under themes).
-4. **Accent color swatches** (kept — small row, still useful and visual, not technical).
-5. **Advanced UI Controls** — wrapped in shadcn `<Accordion type="single" collapsible>` (collapsed by default). Inside:
-   - Atmosphere mode toggle (Solid / Flow / Aero).
-   - Interface / Sidebar / Cards opacity sliders.
-   - Custom mix color pickers + Apply button.
-6. **Admin "Set as Global Default"** button (kept, admin-only).
-7. **Reset to Global Defaults** button (kept).
+8. **`public/robots.txt`**
+   - Already correct (`Sitemap: https://mcqsai.com/sitemap.xml`). No change.
 
-All removed pieces are preserved — they just live inside the Advanced accordion so the default view shows only themes + accent + reset.
+### Flow after change
 
----
+```text
+Googlebot → https://mcqsai.com/sitemap.xml          (static file, same origin)
+         → https://mcqsai.com/sitemaps/static.xml   (static file, same origin)
+         → https://mcqsai.com/sitemaps/jobs.xml     (static file, same origin)
+         → ...all listed URLs are mcqsai.com pages, no redirects, no cross-domain
+```
 
-## Technical Notes
+### Trade-offs (acknowledged)
 
-- No DB changes, no context API additions. The "one-click theme" simply batches existing setters; the debounced cloud-save in `AppearanceContext` already coalesces them into a single upsert.
-- Accordion uses the existing `@/components/ui/accordion` (shadcn). No new deps.
-- `StaticBackground.tsx` (low-end fallback) already reads from `mixLibrary` so it benefits from premium presets automatically; no change needed there.
-- Existing users with stored `appearance-settings` in localStorage keep their settings — only fresh users get the new defaults.
+- Sitemaps refresh **only on each deploy**, not in real time. For an exam-prep site where new jobs/scholarships appear daily, this is acceptable — Lovable rebuilds on each Lovable edit/publish, and we can also manually trigger a rebuild. If true hourly freshness is later needed, a cron-driven GitHub Action or scheduled Supabase function pushing into the repo could be added.
+- Build time grows by a few seconds for the DB queries.
 
-## Files Touched
+### Validation after deploy
 
-- `src/index.css` — Aurora opacity/blur + dark-mode rule.
-- `src/components/AuroraBackground.tsx` — bigger, brighter, more central blobs.
-- `src/contexts/AppearanceContext.tsx` — bump default opacities.
-- `src/components/settings/AppearanceSettings.tsx` — restructure (themes on top, advanced accordion at bottom).
+1. `curl -I https://mcqsai.com/sitemap.xml` → 200, `content-type: application/xml`, no redirect.
+2. `curl https://mcqsai.com/sitemaps/jobs.xml` → valid XML, every `<loc>` starts with `https://mcqsai.com/`.
+3. In GSC: resubmit `https://mcqsai.com/sitemap.xml`, confirm "Discovered URLs > 0" within 1–2 days.
+4. The "Page with redirect" failures (`http://mcqsai.com/`, `http://www.mcqsai.com/`, `https://mcqsai.com/tools?lang=ur`) are a **separate issue** from sitemaps — they're caused by canonicalization (HTTP→HTTPS, `?lang=` query). I'll flag them but not bundle them into this fix unless you want me to address those next.
