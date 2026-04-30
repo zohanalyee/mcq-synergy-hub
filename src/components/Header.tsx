@@ -176,6 +176,8 @@ const HeaderContent = ({
 }) => {
   const { state, isMobile } = useSidebar();
   const isExpanded = state === 'expanded';
+  const scrollDirection = useScrollDirection({ threshold: 8, topOffset: 80 });
+  const hideOnMobile = isMobile && scrollDirection === 'down';
   
   // Calculate left offset based on sidebar state - only on desktop
   const sidebarExpandedWidth = 'var(--sidebar-width)';
@@ -196,7 +198,7 @@ const HeaderContent = ({
       <div className="flex-1 flex flex-col w-full">
         {/* Top Header Bar */}
         <header 
-          className={`fixed top-0 right-0 z-40 h-14 flex items-center transition-all duration-300 themed-interface ${headerBlurClass}`}
+          className={`fixed top-0 right-0 z-40 h-14 flex items-center transition-all duration-300 themed-interface ${headerBlurClass} ${hideOnMobile ? '-translate-y-full' : 'translate-y-0'}`}
           style={{ 
             left: headerLeft,
             backgroundColor: `rgba(var(--interface-rgb), ${interfaceOpacity})`,
