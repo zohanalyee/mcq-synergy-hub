@@ -106,8 +106,8 @@ const FeatureItem = ({
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        {/* Heading is ALWAYS static — never animated */}
-        <h3 className="font-semibold text-white text-sm mb-0.5 min-h-[1.25rem] whitespace-pre-wrap break-words">
+        {/* Heading uses the brand-logo gradient (violet-600 → blue-500) for a 100% color match */}
+        <h3 className="font-semibold text-sm mb-0.5 min-h-[1.25rem] whitespace-pre-wrap break-words bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-indigo-300 to-blue-300">
           {title}
         </h3>
         <p className="text-xs text-blue-200/80 leading-relaxed min-h-[2.25rem] whitespace-pre-wrap break-words">
