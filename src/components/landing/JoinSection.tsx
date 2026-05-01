@@ -8,25 +8,25 @@ const features = [
     icon: Sparkles,
     title: 'AI-Powered Tests',
     description: 'Generate unlimited MCQs with artificial intelligence',
-    gradient: 'from-violet-600 to-blue-500',
+    gradient: 'from-violet-400 to-purple-500',
   },
   {
     icon: BarChart3,
     title: 'Detailed Analytics',
     description: 'Track your progress with comprehensive insights',
-    gradient: 'from-violet-600 to-blue-500',
+    gradient: 'from-cyan-400 to-blue-500',
   },
   {
     icon: GraduationCap,
     title: 'Personalized Learning',
     description: 'Adaptive paths tailored to your strengths',
-    gradient: 'from-violet-600 to-blue-500',
+    gradient: 'from-emerald-400 to-teal-500',
   },
   {
     icon: Target,
     title: 'Instant Results',
     description: 'Get detailed feedback on every question',
-    gradient: 'from-violet-600 to-blue-500',
+    gradient: 'from-amber-400 to-orange-500',
   },
 ];
 
@@ -141,7 +141,7 @@ const StatItem = ({
     transition={{ delay: 0.9 + index * 0.1 }}
     className="text-center"
   >
-    <div className="text-xl font-bold tabular-nums text-brand-gradient">
+    <div className="text-xl font-bold text-white tabular-nums">
       <AnimatedNumber value={value} suffix={suffix} format={format} duration={2400} />
     </div>
     <div className="text-xs text-blue-200/70">{label}</div>
@@ -283,7 +283,7 @@ export const JoinSection = () => {
               </div>
 
               <h2 className="text-3xl font-bold mb-2 leading-tight tracking-tight">
-                Join <span className="text-brand-gradient">MCQSAI</span>
+                Join MCQSAI
               </h2>
 
               <motion.div
