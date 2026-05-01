@@ -221,7 +221,7 @@ const Home = () => {
             <TypewriterText
               phrases={heroPhrases}
               className={cn(
-                "text-base md:text-xl font-medium text-muted-foreground mb-3 md:mb-4 text-center",
+                "text-base md:text-xl font-semibold text-brand-gradient mb-3 md:mb-4 text-center",
                 isRTL && "font-nastaliq-heading"
               )}
               minHeightClass="min-h-[2.25rem] md:min-h-[2.75rem]"
