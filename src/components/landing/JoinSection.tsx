@@ -3,33 +3,30 @@ import { motion } from 'framer-motion';
 import { Brain, Sparkles, BarChart3, Target, GraduationCap } from 'lucide-react';
 import AnimatedNumber from '@/components/AnimatedNumber';
 
-// All feature icons share the brand logo gradient (violet-600 → blue-500)
-const BRAND_GRADIENT = 'from-violet-600 via-indigo-500 to-blue-500';
-
 const features = [
   {
     icon: Sparkles,
     title: 'AI-Powered Tests',
     description: 'Generate unlimited MCQs with artificial intelligence',
-    gradient: BRAND_GRADIENT,
+    gradient: 'from-violet-400 to-purple-500',
   },
   {
     icon: BarChart3,
     title: 'Detailed Analytics',
     description: 'Track your progress with comprehensive insights',
-    gradient: BRAND_GRADIENT,
+    gradient: 'from-cyan-400 to-blue-500',
   },
   {
     icon: GraduationCap,
     title: 'Personalized Learning',
     description: 'Adaptive paths tailored to your strengths',
-    gradient: BRAND_GRADIENT,
+    gradient: 'from-emerald-400 to-teal-500',
   },
   {
     icon: Target,
     title: 'Instant Results',
     description: 'Get detailed feedback on every question',
-    gradient: BRAND_GRADIENT,
+    gradient: 'from-amber-400 to-orange-500',
   },
 ];
 
@@ -106,8 +103,8 @@ const FeatureItem = ({
         </div>
       </div>
       <div className="min-w-0 flex-1">
-        {/* Heading uses the brand-logo gradient (violet-600 → blue-500) for a 100% color match */}
-        <h3 className="font-semibold text-sm mb-0.5 min-h-[1.25rem] whitespace-pre-wrap break-words bg-clip-text text-transparent bg-gradient-to-r from-violet-400 via-indigo-300 to-blue-300">
+        {/* Heading is ALWAYS static — never animated */}
+        <h3 className="font-semibold text-white text-sm mb-0.5 min-h-[1.25rem] whitespace-pre-wrap break-words">
           {title}
         </h3>
         <p className="text-xs text-blue-200/80 leading-relaxed min-h-[2.25rem] whitespace-pre-wrap break-words">
