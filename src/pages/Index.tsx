@@ -221,9 +221,10 @@ const Home = () => {
             <TypewriterText
               phrases={heroPhrases}
               className={cn(
-                "text-base md:text-xl font-medium text-muted-foreground mb-3 md:mb-4 text-center",
+                "text-base md:text-xl font-semibold mb-3 md:mb-4 text-center bg-clip-text text-transparent bg-gradient-to-r from-violet-600 via-indigo-500 to-blue-500",
                 isRTL && "font-nastaliq-heading"
               )}
+              cursorClassName="!bg-violet-600"
               minHeightClass="min-h-[2.25rem] md:min-h-[2.75rem]"
               as="h2"
             />
