@@ -176,7 +176,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   };
 
   const inputBaseClass =
-    "w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 pl-10 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--muted-foreground))] transition-all duration-200 outline-none focus:ring-2 focus:ring-[hsl(var(--brand-from)/0.25)] focus:border-[hsl(var(--brand-from))] disabled:opacity-50 disabled:cursor-not-allowed";
+    "w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] px-3 pl-10 text-sm text-[hsl(var(--foreground))] placeholder:text-[hsl(var(--brand-from))] placeholder:font-medium transition-all duration-200 outline-none focus:ring-2 focus:ring-[hsl(var(--brand-from)/0.25)] focus:border-[hsl(var(--brand-from))] disabled:opacity-50 disabled:cursor-not-allowed";
 
   const isLoading = loading;
   const isBusy = isLoading || isGoogleLoading || isSubmitting !== null;
