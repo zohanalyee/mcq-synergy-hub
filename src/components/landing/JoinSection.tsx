@@ -3,30 +3,33 @@ import { motion } from 'framer-motion';
 import { Brain, Sparkles, BarChart3, Target, GraduationCap } from 'lucide-react';
 import AnimatedNumber from '@/components/AnimatedNumber';
 
+// All feature icons share the brand logo gradient (violet-600 → blue-500)
+const BRAND_GRADIENT = 'from-violet-600 via-indigo-500 to-blue-500';
+
 const features = [
   {
     icon: Sparkles,
     title: 'AI-Powered Tests',
     description: 'Generate unlimited MCQs with artificial intelligence',
-    gradient: 'from-violet-400 to-purple-500',
+    gradient: BRAND_GRADIENT,
   },
   {
     icon: BarChart3,
     title: 'Detailed Analytics',
     description: 'Track your progress with comprehensive insights',
-    gradient: 'from-cyan-400 to-blue-500',
+    gradient: BRAND_GRADIENT,
   },
   {
     icon: GraduationCap,
     title: 'Personalized Learning',
     description: 'Adaptive paths tailored to your strengths',
-    gradient: 'from-emerald-400 to-teal-500',
+    gradient: BRAND_GRADIENT,
   },
   {
     icon: Target,
     title: 'Instant Results',
     description: 'Get detailed feedback on every question',
-    gradient: 'from-amber-400 to-orange-500',
+    gradient: BRAND_GRADIENT,
   },
 ];
 
