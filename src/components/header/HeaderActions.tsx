@@ -267,9 +267,9 @@ const HeaderActions = ({
           </DropdownMenu>
         )
       ) : (
-        <Button 
+        <Button
           size="sm"
-          className="h-8 text-xs backdrop-blur-sm bg-primary hover:bg-primary/90" 
+          className="h-9 px-4 text-xs font-semibold rounded-xl bg-brand-gradient text-primary-foreground shadow-brand hover:brightness-110 hover:shadow-glow"
           onClick={() => onNavigate('/sign-in')}
         >
           {t('nav.signIn')}
