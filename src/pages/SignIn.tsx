@@ -270,16 +270,14 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
             <button
               type="button"
               onClick={() => handleTabChange("signin")}
-              className="flex-1 relative z-10 text-sm font-medium py-2 rounded-full transition-colors duration-200"
-              style={{ color: activeTab === "signin" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
+              className={`flex-1 relative z-10 text-sm font-semibold py-2 rounded-full transition-colors duration-200 ${activeTab === "signin" ? "text-brand-gradient" : "text-muted-foreground"}`}
             >
               Sign In
             </button>
             <button
               type="button"
               onClick={() => handleTabChange("signup")}
-              className="flex-1 relative z-10 text-sm font-medium py-2 rounded-full transition-colors duration-200"
-              style={{ color: activeTab === "signup" ? "hsl(var(--foreground))" : "hsl(var(--muted-foreground))" }}
+              className={`flex-1 relative z-10 text-sm font-semibold py-2 rounded-full transition-colors duration-200 ${activeTab === "signup" ? "text-brand-gradient" : "text-muted-foreground"}`}
             >
               Sign Up
             </button>
