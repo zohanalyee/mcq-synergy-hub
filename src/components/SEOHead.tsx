@@ -31,8 +31,28 @@ const SEOHead = ({
   const finalTitle = title ? `${title} | MCQsAI` : defaultTitle;
   const finalDescription = description || defaultDescription;
   const finalKeywords = keywords || defaultKeywords;
-  const pathname = typeof window !== 'undefined' ? window.location.pathname : '/';
-  const canonicalUrl = url || `https://mcqsai.com${pathname}`;
+  const rawPath = typeof window !== 'undefined' ? window.location.pathname : '/';
+  // Strip trailing slash (except root) so /tools and /tools/ don't both index.
+  const pathname = rawPath.length > 1 && rawPath.endsWith('/') ? rawPath.slice(0, -1) : rawPath;
+
+  // Canonical hardening: always force apex (non-www), https, drop ?lang= query.
+  // Prevents GSC "Alternative page with proper canonical tag" + "Page with redirect"
+  // errors caused by www. duplicates and ?lang=ur hreflang variants.
+  const normalizeCanonical = (raw: string): string => {
+    try {
+      const u = new URL(raw, 'https://mcqsai.com');
+      u.protocol = 'https:';
+      u.hostname = u.hostname.replace(/^www\./i, '') || 'mcqsai.com';
+      u.searchParams.delete('lang');
+      // Strip trailing slash for non-root.
+      let p = u.pathname;
+      if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+      return `https://${u.hostname}${p}${u.search}`;
+    } catch {
+      return `https://mcqsai.com${pathname}`;
+    }
+  };
+  const canonicalUrl = normalizeCanonical(url || `https://mcqsai.com${pathname}`);
   const finalLocale = language === 'ur' ? 'ur_PK' : language === 'sd' ? 'sd_PK' : 'en_US';
 
   return (
@@ -59,10 +79,12 @@ const SEOHead = ({
       <meta name="twitter:description" content={finalDescription} />
       <meta name="twitter:image" content={image} />
 
-      {/* Hreflang */}
-      <link rel="alternate" hrefLang="en" href={`https://mcqsai.com${pathname}`} />
-      <link rel="alternate" hrefLang="ur" href={`https://mcqsai.com${pathname}?lang=ur`} />
-      <link rel="alternate" hrefLang="sd" href={`https://mcqsai.com${pathname}?lang=sd`} />
+      {/* Hreflang — single x-default self-canonical until per-language URLs
+          are actually distinct rendered pages. Emitting ?lang=ur variants
+          previously caused GSC "Page with redirect" errors because the
+          app strips the param on render. */}
+      <link rel="alternate" hrefLang="x-default" href={canonicalUrl} />
+      <link rel="alternate" hrefLang="en" href={canonicalUrl} />
 
       <meta name="author" content="MCQsAI" />
     </Helmet>
