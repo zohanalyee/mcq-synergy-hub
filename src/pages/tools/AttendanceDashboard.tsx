@@ -95,13 +95,71 @@ const AttendanceDashboard = () => {
     </Header>
   );
 
+  // Public landing view (indexable) — shown to logged-out visitors and search bots.
   if (!user) return (
     <Header>
-      <div className="max-w-xl mx-auto px-4 py-16 text-center space-y-4">
-        <Building2 className="h-16 w-16 text-muted-foreground mx-auto" />
-        <h2 className="text-xl font-bold">Sign in Required</h2>
-        <p className="text-muted-foreground">Please sign in to access the School Attendance  System.</p>
-        <Button asChild><Link to="/signin">Sign In</Link></Button>
+      <div className="max-w-6xl mx-auto px-4 py-6 space-y-6">
+        <header className="text-center space-y-3">
+          <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-primary/10 mx-auto">
+            <Building2 className="h-9 w-9 text-primary" />
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">School Attendance Management System</h1>
+          <p className="text-muted-foreground max-w-2xl mx-auto">
+            A complete free attendance & HR management system for schools, colleges and institutes in Pakistan.
+            Mark student & staff attendance, manage leaves, holidays, shifts and generate analytics reports — all in one place.
+          </p>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <Button asChild>
+              <Link to="/signin">Sign In to Get Started</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link to="/tools">Explore More Tools</Link>
+            </Button>
+          </div>
+        </header>
+
+        <section>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Included Modules</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {modules.map((mod) => (
+              <div key={mod.href} className={`flex items-center gap-4 p-4 rounded-xl border ${mod.border} bg-card`}>
+                <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${mod.color} shrink-0`}>
+                  <mod.icon className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-semibold text-sm text-foreground">{mod.label}</p>
+                  <p className="text-xs text-muted-foreground">{mod.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4">
+              <h2 className="text-sm font-semibold text-foreground mb-2">Why use it?</h2>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Free attendance tracking for unlimited students & staff</li>
+                <li>Class & section-wise daily attendance marking</li>
+                <li>Leave management with approval workflow</li>
+                <li>Built-in holiday calendar and shift configuration</li>
+                <li>Analytics dashboard with PDF reports</li>
+              </ul>
+            </CardContent>
+          </Card>
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4">
+              <h2 className="text-sm font-semibold text-foreground mb-2">Who is it for?</h2>
+              <ul className="text-xs text-muted-foreground space-y-1 list-disc list-inside">
+                <li>Schools, colleges and academies</li>
+                <li>Coaching centers and tuition academies</li>
+                <li>HR teams managing teaching staff</li>
+                <li>Principals tracking class-wise attendance</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </section>
       </div>
     </Header>
   );
