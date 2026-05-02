@@ -342,7 +342,7 @@ const App = () => {
                       <Route path="/tools/equation-solver" element={<Suspense fallback={<TopProgressBar />}><EquationSolver /></Suspense>} />
                       
                       {/* School Attendance System */}
-                      <Route path="/tools/school-attendance-system" element={<InstantAuthGuard title="School Attendance  System" description="Complete attendance tracking  management" actionName="HR Dashboard"><Suspense fallback={<TopProgressBar />}><AttendanceDashboard /></Suspense></InstantAuthGuard>} />
+                      <Route path="/tools/school-attendance-system" element={<Suspense fallback={<TopProgressBar />}><AttendanceDashboard /></Suspense>} />
                       <Route path="/tools/school-attendance-system/student-attendance" element={<InstantAuthGuard title="Student Attendance" description="Sign in to mark student attendance" actionName="Student Attendance"><Suspense fallback={<TopProgressBar />}><StudentAttendancePage /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/school-attendance-system/staff-attendance" element={<InstantAuthGuard title="Staff Attendance" description="Sign in to mark staff attendance" actionName="Staff Attendance"><Suspense fallback={<TopProgressBar />}><StaffAttendancePage /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/school-attendance-system/setup" element={<InstantAuthGuard title="HR Setup" description="Sign in to configure HR settings" actionName="HR Setup"><Suspense fallback={<TopProgressBar />}><HRSetupPage /></Suspense></InstantAuthGuard>} />
