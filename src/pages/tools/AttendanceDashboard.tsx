@@ -24,7 +24,7 @@ const AttendanceDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [institute, setInstitute] = useState<InstituteSettings | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [showSetup, setShowSetup] = useState(false);
   const [setupName, setSetupName] = useState('');
   const [setupAddress, setSetupAddress] = useState('');
@@ -37,9 +37,10 @@ const AttendanceDashboard = () => {
   }, [user]);
 
   const loadData = async () => {
+    if (!user) return;
     try {
       setLoading(true);
-      const inst = await getInstituteSettings(user!.id);
+      const inst = await getInstituteSettings(user.id);
       setInstitute(inst);
       if (inst) {
         const [students, staff, sLeaves, staffLeaves] = await Promise.all([
