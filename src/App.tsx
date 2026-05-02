@@ -9,6 +9,7 @@ import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
 import TopProgressBar from "./components/TopProgressBar";
+import ToolRouteSEO from "./components/seo/ToolRouteSEO";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LearningProvider } from "./contexts/LearningContext";
@@ -211,6 +212,7 @@ const App = () => {
                     
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
+                    <ToolRouteSEO />
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
                     <Routes>
@@ -260,7 +262,9 @@ const App = () => {
                       <Route path="/opportunity/:id" element={<Suspense fallback={<TopProgressBar />}><OpportunityDetail /></Suspense>} />
                       <Route path="/past-papers" element={<PastPapers />} />
                       
-                      <Route path="/quizzes" element={<InstantAuthGuard title="Quizzes" description="Sign in to take quizzes and track your progress" actionName="Quizzes"><Quizzes /></InstantAuthGuard>} />
+                      {/* /quizzes is publicly indexable for SEO; the page itself
+                          gates the "Start Quiz" action behind sign-in. */}
+                      <Route path="/quizzes" element={<Quizzes />} />
                       <Route path="/question-bank" element={<QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
