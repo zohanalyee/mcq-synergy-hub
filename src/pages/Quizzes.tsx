@@ -17,6 +17,7 @@ import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from 
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
+import { saveIntentRaw } from "@/hooks/useAuthIntent";
 import PageHeader from "@/components/ui/PageHeader";
 
 interface TopicItem {
@@ -79,7 +80,10 @@ const Quizzes = () => {
     sessionLabel: string;
   }) => {
     if (!user) {
-      toast.error("Please sign in to start a quiz");
+      // Save intent so the user lands back on /quizzes after sign-in.
+      saveIntentRaw({ action: 'Start a quiz', path: '/quizzes' });
+      toast.info('Please sign in to start a quiz');
+      navigate('/auth');
       return;
     }
 
