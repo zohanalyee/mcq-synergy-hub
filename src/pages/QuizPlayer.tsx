@@ -73,12 +73,21 @@ const QuizPlayer = () => {
       }
       const sessionId = extractIdFromSlug(id);
       try {
-        const { data, error: e } = await supabase
-          .from("custom_test_sessions")
-          .select("*")
-          .eq("id", sessionId)
-          .maybeSingle();
-        if (e) throw e;
+        let data: any = null;
+        if (sessionId.startsWith('guest-')) {
+          try {
+            const raw = sessionStorage.getItem(`mcqsai_guest_quiz_${sessionId}`);
+            if (raw) data = JSON.parse(raw);
+          } catch {}
+        } else {
+          const { data: row, error: e } = await supabase
+            .from("custom_test_sessions")
+            .select("*")
+            .eq("id", sessionId)
+            .maybeSingle();
+          if (e) throw e;
+          data = row;
+        }
         if (!data) {
           setError("Quiz session not found");
           setIsLoading(false);
