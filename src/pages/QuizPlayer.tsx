@@ -20,6 +20,8 @@ import QuizHUD from "@/components/quiz/QuizHUD";
 import QuizOption, { QuizOptionState } from "@/components/quiz/QuizOption";
 import QuizTimerRing from "@/components/quiz/QuizTimerRing";
 import QuizResultScreen from "@/components/quiz/QuizResultScreen";
+import QuizSignInGate from "@/components/quiz/QuizSignInGate";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const AUTO_ADVANCE_MS = 4000;
@@ -32,6 +34,7 @@ const QuizPlayer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const locationState = location.state as { returnPath?: string } | null;
   const returnPath = locationState?.returnPath || "/quizzes";
 
@@ -262,6 +265,18 @@ const QuizPlayer = () => {
 
   if (isFinished) {
     const timeTaken = Math.round((Date.now() - startedAtRef.current) / 1000);
+    if (!user) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+          <QuizSignInGate
+            open={true}
+            onClose={() => navigate('/quizzes')}
+            score={correctCount}
+            total={total}
+          />
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
         <QuizResultScreen
