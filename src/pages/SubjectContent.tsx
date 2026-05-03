@@ -345,7 +345,7 @@ const SubjectContent = () => {
         if (status === 402) {
           throw new Error(
             serverMessage ||
-              'AI credits are depleted. Add credits in Settings → Workspace → Usage, or use cached questions.'
+              "You've used all your free AI questions for today. Come back tomorrow for more, or keep practicing with our question bank!"
           );
         }
 
@@ -496,8 +496,8 @@ const SubjectContent = () => {
             setLoadError(null);
 
             toast({
-              title: 'AI credits depleted',
-              description: 'Showing cached questions only.',
+              title: 'Daily AI limit reached',
+              description: 'Showing practice questions from our question bank.',
             });
 
             return;

@@ -10,8 +10,8 @@ type TestGenerationLoaderProps = {
 
 const loadingSteps = [
   { icon: Database, text: "Checking Question Bank...", progress: 25 },
-  { icon: Zap, text: "Loading cached questions...", progress: 50 },
-  { icon: Brain, text: "Generating new questions...", progress: 75 },
+  { icon: Zap, text: "Loading practice questions...", progress: 50 },
+  { icon: Brain, text: "Adding fresh questions...", progress: 75 },
   { icon: Sparkles, text: "Building your test...", progress: 90 },
 ];
 
