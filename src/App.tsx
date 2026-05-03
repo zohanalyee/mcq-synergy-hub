@@ -23,6 +23,7 @@ import AIWelcome from "./components/AIWelcome";
 import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
+import GlobalCreditExhaustedListener from "./components/credits/GlobalCreditExhaustedListener";
 import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
 // Eager (above-the-fold / auth landing) — must load fast
 import Index from "./pages/Index";
@@ -213,6 +214,7 @@ const App = () => {
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
                     <ToolRouteSEO />
+                    <GlobalCreditExhaustedListener />
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
                     <Routes>
