@@ -248,7 +248,7 @@ const App = () => {
                       <Route path="/analytics" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
                       <Route path="/ai-coach" element={<InstantAuthGuard title="AI Coach Dashboard" description="Sign in to view your personalized AI coach insights" actionName="AI Coach"><Analytics /></InstantAuthGuard>} />
                       <Route path="/mock-tests" element={<InstantAuthGuard title="Mock Tests" description="Sign in to take tests and track progress" actionName="Mock Tests"><MockTests /></InstantAuthGuard>} />
-                      <Route path="/custom-quizzes" element={<InstantAuthGuard title="Custom Quizzes" description="Sign in to create and take custom quizzes" actionName="Custom Quizzes"><CustomQuizzes /></InstantAuthGuard>} />
+                      <Route path="/custom-quizzes" element={<CustomQuizzes />} />
                       <Route path="/custom-syllabus" element={<CustomSyllabus />} />
                       <Route path="/leaderboard" element={<Leaderboard />} />
                       <Route path="/feedback" element={<InstantAuthGuard title="Feedback" description="Sign in to submit feedback" actionName="Feedback"><Feedback /></InstantAuthGuard>} />
