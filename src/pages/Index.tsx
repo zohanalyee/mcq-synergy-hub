@@ -19,6 +19,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { getLocalizedGreeting } from '@/lib/greetings';
 import TypewriterText from '@/components/TypewriterText';
+import UpcomingFreeBanner from '@/components/home/UpcomingFreeBanner';
 import { 
   BookOpen, 
   Brain,
