@@ -79,13 +79,8 @@ const Quizzes = () => {
     timeLimit: number;
     sessionLabel: string;
   }) => {
-    if (!user) {
-      // Save intent so the user lands back on /quizzes after sign-in.
-      saveIntentRaw({ action: 'Start a quiz', path: '/quizzes' });
-      toast.info('Please sign in to start a quiz');
-      navigate('/auth');
-      return;
-    }
+    // Guests are allowed to take a quiz; we'll gate the *results* on submit.
+    // (No early redirect to /auth here.)
 
     // Resolve subject name (selector returns id only)
     const { data: subjectRow, error: subjErr } = await supabase
@@ -136,7 +131,33 @@ const Quizzes = () => {
       return;
     }
 
-    // 2) Persist a session row so /quiz-session/:id can render it
+    // 2) Persist a session row so /quiz-session/:id can render it.
+    // Guests can't write to custom_test_sessions (RLS) — store in sessionStorage instead.
+    const slugSource = opts.topicName || subjectRow.name;
+
+    if (!user) {
+      const guestId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2);
+      const guestSession = {
+        id: `guest-${guestId}`,
+        session_name: opts.sessionLabel,
+        subjects: [subjectRow.name],
+        topics: opts.topicName ? [opts.topicName] : [],
+        difficulty_levels: ['Easy', 'Medium', 'Hard'],
+        question_count: questions.length,
+        time_limit: opts.timeLimit,
+        questions,
+        is_active: true,
+      };
+      try {
+        sessionStorage.setItem(`mcqsai_guest_quiz_${guestSession.id}`, JSON.stringify(guestSession));
+      } catch {}
+      const slugUrl = generateSlugUrl(slugSource, guestSession.id);
+      navigate(`/quiz-session/${slugUrl}`, { state: { returnPath: '/quizzes' } });
+      return;
+    }
+
     const { data: session, error: sessionErr } = await supabase
       .from('custom_test_sessions')
       .insert({
@@ -160,7 +181,6 @@ const Quizzes = () => {
     }
 
     // SEO-friendly slug URL: /quiz-session/<topic-or-subject-slug>-<uuid>
-    const slugSource = opts.topicName || subjectRow.name;
     const slugUrl = generateSlugUrl(slugSource, session.id);
 
     navigate(`/quiz-session/${slugUrl}`, {

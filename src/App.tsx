@@ -270,8 +270,8 @@ const App = () => {
                       <Route path="/question-bank" element={<QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
-                      <Route path="/test-session/:id" element={<InstantAuthGuard title="Test Session" description="Sign in to take this test and save your results" actionName="Test Session"><TestSession /></InstantAuthGuard>} />
-                      <Route path="/quiz-session/:id" element={<InstantAuthGuard title="Quiz" description="Sign in to take this quiz" actionName="Quiz"><QuizPlayer /></InstantAuthGuard>} />
+                      <Route path="/test-session/:id" element={<Suspense fallback={<TopProgressBar />}><TestSession /></Suspense>} />
+                      <Route path="/quiz-session/:id" element={<Suspense fallback={<TopProgressBar />}><QuizPlayer /></Suspense>} />
                       <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
                       <Route path="/reviews" element={<Reviews />} />
                       
