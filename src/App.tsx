@@ -23,6 +23,7 @@ import AIWelcome from "./components/AIWelcome";
 import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
+import GlobalCreditExhaustedListener from "./components/credits/GlobalCreditExhaustedListener";
 import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
 // Eager (above-the-fold / auth landing) — must load fast
 import Index from "./pages/Index";
@@ -213,6 +214,7 @@ const App = () => {
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
                     <ToolRouteSEO />
+                    <GlobalCreditExhaustedListener />
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
                     <Routes>
@@ -268,8 +270,8 @@ const App = () => {
                       <Route path="/question-bank" element={<QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
-                      <Route path="/test-session/:id" element={<InstantAuthGuard title="Test Session" description="Sign in to take this test and save your results" actionName="Test Session"><TestSession /></InstantAuthGuard>} />
-                      <Route path="/quiz-session/:id" element={<InstantAuthGuard title="Quiz" description="Sign in to take this quiz" actionName="Quiz"><QuizPlayer /></InstantAuthGuard>} />
+                      <Route path="/test-session/:id" element={<Suspense fallback={<TopProgressBar />}><TestSession /></Suspense>} />
+                      <Route path="/quiz-session/:id" element={<Suspense fallback={<TopProgressBar />}><QuizPlayer /></Suspense>} />
                       <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
                       <Route path="/reviews" element={<Reviews />} />
                       

@@ -20,6 +20,8 @@ import QuizHUD from "@/components/quiz/QuizHUD";
 import QuizOption, { QuizOptionState } from "@/components/quiz/QuizOption";
 import QuizTimerRing from "@/components/quiz/QuizTimerRing";
 import QuizResultScreen from "@/components/quiz/QuizResultScreen";
+import QuizSignInGate from "@/components/quiz/QuizSignInGate";
+import { useAuth } from "@/contexts/AuthContext";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const AUTO_ADVANCE_MS = 4000;
@@ -32,6 +34,7 @@ const QuizPlayer = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
   const locationState = location.state as { returnPath?: string } | null;
   const returnPath = locationState?.returnPath || "/quizzes";
 
@@ -73,12 +76,21 @@ const QuizPlayer = () => {
       }
       const sessionId = extractIdFromSlug(id);
       try {
-        const { data, error: e } = await supabase
-          .from("custom_test_sessions")
-          .select("*")
-          .eq("id", sessionId)
-          .maybeSingle();
-        if (e) throw e;
+        let data: any = null;
+        if (sessionId.startsWith('guest-')) {
+          try {
+            const raw = sessionStorage.getItem(`mcqsai_guest_quiz_${sessionId}`);
+            if (raw) data = JSON.parse(raw);
+          } catch {}
+        } else {
+          const { data: row, error: e } = await supabase
+            .from("custom_test_sessions")
+            .select("*")
+            .eq("id", sessionId)
+            .maybeSingle();
+          if (e) throw e;
+          data = row;
+        }
         if (!data) {
           setError("Quiz session not found");
           setIsLoading(false);
@@ -253,6 +265,18 @@ const QuizPlayer = () => {
 
   if (isFinished) {
     const timeTaken = Math.round((Date.now() - startedAtRef.current) / 1000);
+    if (!user) {
+      return (
+        <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+          <QuizSignInGate
+            open={true}
+            onClose={() => navigate('/quizzes')}
+            score={correctCount}
+            total={total}
+          />
+        </div>
+      );
+    }
     return (
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
         <QuizResultScreen

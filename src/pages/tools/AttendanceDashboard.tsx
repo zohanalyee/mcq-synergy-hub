@@ -19,6 +19,7 @@ import { getInstituteSettings, upsertInstituteSettings, getStudents, getStaff, g
 import type { InstituteSettings } from '@/types/attendance.types';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import AttendanceAuthDialog from '@/components/tools/AttendanceAuthDialog';
 
 const AttendanceDashboard = () => {
   const { user } = useAuth();
@@ -31,6 +32,7 @@ const AttendanceDashboard = () => {
   const [setupPhone, setSetupPhone] = useState('');
   const [saving, setSaving] = useState(false);
   const [stats, setStats] = useState({ students: 0, staff: 0, pendingLeaves: 0 });
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   useEffect(() => {
     if (user) loadData();
@@ -109,9 +111,7 @@ const AttendanceDashboard = () => {
             Mark student & staff attendance, manage leaves, holidays, shifts and generate analytics reports — all in one place.
           </p>
           <div className="flex items-center justify-center gap-2 pt-1">
-            <Button asChild>
-              <Link to="/signin">Sign In to Get Started</Link>
-            </Button>
+            <Button onClick={() => setAuthDialogOpen(true)}>Sign In to Get Started</Button>
             <Button variant="outline" asChild>
               <Link to="/tools">Explore More Tools</Link>
             </Button>
@@ -122,7 +122,12 @@ const AttendanceDashboard = () => {
           <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Included Modules</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {modules.map((mod) => (
-              <div key={mod.href} className={`flex items-center gap-4 p-4 rounded-xl border ${mod.border} bg-card`}>
+              <button
+                key={mod.href}
+                type="button"
+                onClick={() => setAuthDialogOpen(true)}
+                className={`flex items-center gap-4 p-4 rounded-xl border ${mod.border} bg-card hover:shadow-md transition-all text-left`}
+              >
                 <div className={`h-11 w-11 rounded-xl flex items-center justify-center ${mod.color} shrink-0`}>
                   <mod.icon className="h-6 w-6" />
                 </div>
@@ -130,7 +135,7 @@ const AttendanceDashboard = () => {
                   <p className="font-semibold text-sm text-foreground">{mod.label}</p>
                   <p className="text-xs text-muted-foreground">{mod.desc}</p>
                 </div>
-              </div>
+              </button>
             ))}
           </div>
         </section>
@@ -161,6 +166,7 @@ const AttendanceDashboard = () => {
           </Card>
         </section>
       </div>
+      <AttendanceAuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
     </Header>
   );
 

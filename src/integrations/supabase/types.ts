@@ -2737,6 +2737,39 @@ export type Database = {
           },
         ]
       }
+      user_credits: {
+        Row: {
+          created_at: string
+          credits_remaining: number
+          credits_used_today: number
+          id: string
+          last_reset_date: string
+          total_credits_used: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_remaining?: number
+          credits_used_today?: number
+          id?: string
+          last_reset_date?: string
+          total_credits_used?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_remaining?: number
+          credits_used_today?: number
+          id?: string
+          last_reset_date?: string
+          total_credits_used?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_custom_syllabus: {
         Row: {
           added_at: string | null
@@ -3144,6 +3177,10 @@ export type Database = {
           updated_count: number
         }[]
       }
+      deduct_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: Json
+      }
       get_ai_usage_today: {
         Args: never
         Returns: {
@@ -3217,6 +3254,15 @@ export type Database = {
           system_name: string
           topic_id: string
           topic_name: string
+        }[]
+      }
+      get_my_credits: {
+        Args: never
+        Returns: {
+          credits_remaining: number
+          credits_used_today: number
+          last_reset_date: string
+          total_credits_used: number
         }[]
       }
       get_platform_stats: {

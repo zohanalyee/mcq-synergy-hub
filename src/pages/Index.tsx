@@ -19,6 +19,7 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { getLocalizedGreeting } from '@/lib/greetings';
 import TypewriterText from '@/components/TypewriterText';
+import UpcomingFreeBanner from '@/components/home/UpcomingFreeBanner';
 import { 
   BookOpen, 
   Brain,
@@ -187,7 +188,9 @@ const Home = () => {
         description="Master MDCAT, ECAT, CSS, PPSC, NTS exams with 6000+ MCQs, AI personal coach, and Urdu support. Best free exam preparation in Pakistan."
         keywords="MDCAT MCQs, ECAT preparation, CSS exam, PPSC test, NTS practice, Pakistan exams, اردو MCQs, AI learning, MCQSAI"
       />
-      
+
+      <UpcomingFreeBanner />
+
       {/* Hero Section */}
       <motion.section
         variants={sectionReveal}

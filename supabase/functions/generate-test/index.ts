@@ -1884,19 +1884,75 @@ serve(async (req) => {
     }
 
     let newAIQuestions: Question[] = [];
-    
-    console.log(`[generate-test] 🔄 SYNC GEN: topic="${topic}", deficit=${missingCount}, cached=${dbQuestions.length}, requested=${qc}, partial=${usePartialMode}`);
-    
+
+    // ============= PER-USER CREDIT GATE =============
+    let userCreditsRemaining: number | null = null;
+    let userCreditsExhausted = false;
+    if (user_id) {
+      try {
+        const { data: ucRow } = await supabase
+          .from('user_credits')
+          .select('credits_remaining, last_reset_date')
+          .eq('user_id', user_id)
+          .maybeSingle();
+        const today = new Date().toISOString().slice(0, 10);
+        const effectiveRemaining = (ucRow?.last_reset_date && ucRow.last_reset_date < today)
+          ? 100
+          : (ucRow?.credits_remaining ?? 100);
+        userCreditsRemaining = effectiveRemaining;
+        if (effectiveRemaining <= 0) {
+          userCreditsExhausted = true;
+          console.log(`[generate-test] 🛑 User ${user_id} has 0 AI credits today. Returning cache-only.`);
+        } else if (effectiveRemaining < missingCount) {
+          console.log(`[generate-test] ⚠️ User credits (${effectiveRemaining}) < missing (${missingCount}). Capping AI gen.`);
+        }
+      } catch (e) {
+        console.warn('[generate-test] credit check failed (continuing):', (e as any)?.message);
+      }
+    }
+
+    if (userCreditsExhausted) {
+      const returned = enrichQuestionsForSession(
+        shuffleArray(dbQuestions).slice(0, qc),
+        topic, sanitizedTopic, difficulty,
+      );
+      await syncQuestionsToSession(supabase, session_id, returned);
+      return new Response(JSON.stringify({
+        session_name: `${topic} Quiz`,
+        questions: returned,
+        source: returned.length ? 'cache' : 'empty',
+        cached_count: returned.length,
+        ai_count: 0,
+        remaining_count: Math.max(0, qc - returned.length),
+        total_requested: qc,
+        ai_unavailable: true,
+        credits_exhausted: true,
+        error_type: 'user_credits_exhausted',
+      }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 });
+    }
+
+    const aiTarget = userCreditsRemaining !== null
+      ? Math.min(missingCount, userCreditsRemaining)
+      : missingCount;
+
+    console.log(`[generate-test] 🔄 SYNC GEN: topic="${topic}", deficit=${missingCount}, aiTarget=${aiTarget}, cached=${dbQuestions.length}, requested=${qc}, partial=${usePartialMode}`);
+
     try {
       newAIQuestions = await generateQuestionsInBatches(
-        topic, 
-        difficulty, 
-        missingCount, 
+        topic,
+        difficulty,
+        aiTarget,
         GEMINI_API_KEY,
         existingQuestionTexts,
         safeWeakTopics
       );
       console.log(`🤖 AI generated ${newAIQuestions.length} new questions total`);
+      // Deduct user credits based on what was actually generated
+      if (user_id && newAIQuestions.length > 0) {
+        try {
+          await supabase.rpc('deduct_credits', { p_user_id: user_id, p_amount: newAIQuestions.length });
+        } catch (e) { console.warn('deduct_credits failed:', (e as any)?.message); }
+      }
       console.log(`[generate-test] ✅ SYNC GEN RESULT: topic="${topic}", ai_returned=${newAIQuestions.length}, cached=${dbQuestions.length}, total=${dbQuestions.length + newAIQuestions.length}/${qc}`);
     } catch (aiError: any) {
       console.error(`🚨 AI Generation Error:`, JSON.stringify(aiError));

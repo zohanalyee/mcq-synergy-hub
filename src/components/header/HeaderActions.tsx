@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import CreditMeter from '@/components/credits/CreditMeter';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useLanguage, type Language } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
@@ -197,6 +198,9 @@ const HeaderActions = ({
           </div>
         </DropdownMenuContent>
       </DropdownMenu>
+
+      {/* Daily AI credits meter */}
+      {user && <CreditMeter className="hidden sm:inline-flex" />}
 
       {/* Notification Bell */}
       {user && <NotificationBell />}
