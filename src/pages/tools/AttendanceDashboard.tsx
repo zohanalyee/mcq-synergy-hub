@@ -166,6 +166,7 @@ const AttendanceDashboard = () => {
           </Card>
         </section>
       </div>
+      <AttendanceAuthDialog open={authDialogOpen} onClose={() => setAuthDialogOpen(false)} />
     </Header>
   );
 
