@@ -1950,7 +1950,16 @@ serve(async (req) => {
       // Deduct user credits based on what was actually generated
       if (user_id && newAIQuestions.length > 0) {
         try {
-          await supabase.rpc('deduct_credits', { p_user_id: user_id, p_amount: newAIQuestions.length });
+          const detailParts: string[] = [];
+          if (typeof topic === 'string' && topic) detailParts.push(`Topic: ${topic}`);
+          if (typeof difficulty === 'string' && difficulty) detailParts.push(`Difficulty: ${difficulty}`);
+          detailParts.push(`Questions: ${newAIQuestions.length}`);
+          await supabase.rpc('deduct_credits', {
+            p_user_id: user_id,
+            p_amount: newAIQuestions.length,
+            p_action_type: 'Generated Questions',
+            p_details: detailParts.join(' • '),
+          });
         } catch (e) { console.warn('deduct_credits failed:', (e as any)?.message); }
       }
       console.log(`[generate-test] ✅ SYNC GEN RESULT: topic="${topic}", ai_returned=${newAIQuestions.length}, cached=${dbQuestions.length}, total=${dbQuestions.length + newAIQuestions.length}/${qc}`);
