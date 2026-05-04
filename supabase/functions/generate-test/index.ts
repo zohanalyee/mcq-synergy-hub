@@ -1297,7 +1297,7 @@ serve(async (req) => {
 
     const qc = Number(question_count) || 10;
     const usePartialMode = partial_mode === true;
-    const isFetchOnly = fetch_only === true;
+    const isFetchOnly = fetch_only === true || isGuest; // Guests can only read from DB
     const isBankOnly = mode === 'bank_only';
     const isAutoFill = source === 'auto_fill';
     const isLargeRequest = qc > 20;
