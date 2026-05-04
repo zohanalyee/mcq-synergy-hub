@@ -71,6 +71,89 @@ const Quizzes = () => {
     fetchTopics();
   }, [selectedSubjectB]);
 
+  // Direct DB fetch for guests — NO edge function calls.
+  // Reads `content_items` via PostgREST under RLS policy
+  // "Anyone can view approved content" (status = 'approved').
+  const fetchGuestQuestionsFromDB = async (params: {
+    subjectId: string;
+    subjectName: string;
+    topicId?: string;
+    topicName?: string;
+    questionCount: number;
+  }): Promise<any[]> => {
+    const fetchLimit = Math.max(params.questionCount * 3, 60);
+
+    let rows: any[] = [];
+
+    if (params.topicId) {
+      // TOPIC quiz — strict topic_id scope
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('id, question, options, correct_option, explanation, subject, topic, difficulty')
+        .eq('status', 'approved')
+        .eq('topic_id', params.topicId)
+        .not('question', 'is', null)
+        .not('correct_option', 'is', null)
+        .limit(fetchLimit);
+      if (error) {
+        console.error('[Guest Topic Quiz] DB error:', error);
+        return [];
+      }
+      rows = data || [];
+    } else {
+      // SUBJECT quiz — resolve all topics under this subject, then OR-filter
+      const { data: topicRows, error: topicErr } = await supabase
+        .from('topics')
+        .select('id, canonical_name')
+        .eq('subject_id', params.subjectId);
+
+      if (topicErr) {
+        console.error('[Guest Subject Quiz] topic lookup error:', topicErr);
+      }
+
+      const topicIds = (topicRows || []).map((t: any) => t.id).filter(Boolean);
+      const canonicalNames = (topicRows || [])
+        .map((t: any) => t.canonical_name)
+        .filter((v: any) => typeof v === 'string' && v.length > 0);
+
+      // Build OR clause across topic_id, canonical_topic_name, and subject text match
+      const orParts: string[] = [];
+      if (topicIds.length > 0) orParts.push(`topic_id.in.(${topicIds.join(',')})`);
+      if (canonicalNames.length > 0) {
+        // Quote each value for PostgREST 'in' operator
+        const quoted = canonicalNames.map((n) => `"${String(n).replace(/"/g, '\\"')}"`).join(',');
+        orParts.push(`canonical_topic_name.in.(${quoted})`);
+      }
+      // Always include a subject-name text fallback for legacy rows without topic_id
+      orParts.push(`subject.ilike.${params.subjectName}`);
+
+      const { data, error } = await supabase
+        .from('content_items')
+        .select('id, question, options, correct_option, explanation, subject, topic, difficulty')
+        .eq('status', 'approved')
+        .or(orParts.join(','))
+        .not('question', 'is', null)
+        .not('correct_option', 'is', null)
+        .limit(fetchLimit);
+
+      if (error) {
+        console.error('[Guest Subject Quiz] DB error:', error);
+        return [];
+      }
+      rows = data || [];
+    }
+
+    if (rows.length === 0) return [];
+
+    // Fisher–Yates shuffle then slice
+    const shuffled = [...rows];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled.slice(0, params.questionCount);
+  };
+
   // Shared starter: pull MCQs from the bank (DB-only) and create a test session
   const startQuiz = async (opts: {
     subjectId: string;
@@ -80,9 +163,6 @@ const Quizzes = () => {
     timeLimit: number;
     sessionLabel: string;
   }) => {
-    // Guests are allowed to take a quiz; we'll gate the *results* on submit.
-    // (No early redirect to /auth here.)
-
     // Resolve subject name (selector returns id only)
     const { data: subjectRow, error: subjErr } = await supabase
       .from('subjects')
@@ -100,34 +180,20 @@ const Quizzes = () => {
       ? opts.topicName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
       : undefined;
 
-    // 1) Pull questions from the bank (no AI cost) — STRICT scoping by IDs
-    const { data: genData, error: genErr } = await supabase.functions.invoke('generate-test', {
-      body: {
-        topic: topicForFetch,
-        difficulty: 'Medium',
-        question_count: opts.questionCount,
-        fetch_only: !user, // Guests: DB-only. Logged-in: allow AI generation.
-        forceNew: false,
-        partial_mode: true,
-        // STRICT FILTERS — prevent cross-subject/topic leakage
-        subject_id: opts.subjectId,
-        ...(opts.topicId ? { topic_id: opts.topicId } : {}),
-        ...(canonicalTopicName ? { canonical_topic_name: canonicalTopicName } : {}),
-      },
-    });
+    let questions: any[] = [];
 
-    if (genErr) {
-      console.error('generate-test error:', genErr);
-      toast.error("Couldn't load questions", {
-        description: "Please try a different subject/topic or visit the Question Bank.",
+    if (!user) {
+      // GUEST PATH — direct DB query, no edge function, no AI cost.
+      questions = await fetchGuestQuestionsFromDB({
+        subjectId: opts.subjectId,
+        subjectName: subjectRow.name,
+        topicId: opts.topicId,
+        topicName: opts.topicName,
+        questionCount: opts.questionCount,
       });
-      return;
-    }
 
-    const questions = Array.isArray(genData?.questions) ? genData.questions : [];
-    if (questions.length === 0) {
-      if (!user) {
-        toast.info("This topic needs AI generation. Sign in free to unlock!", {
+      if (questions.length === 0) {
+        toast.info("No cached questions yet for this selection. Sign in free to generate with AI!", {
           action: {
             label: "Sign In",
             onClick: () => {
@@ -142,10 +208,37 @@ const Quizzes = () => {
         });
         return;
       }
-      toast.error("Couldn't load questions", {
-        description: "Please try another topic or visit the Question Bank.",
+    } else {
+      // LOGGED-IN PATH — hybrid (DB + AI) via edge function (unchanged behavior).
+      const { data: genData, error: genErr } = await supabase.functions.invoke('generate-test', {
+        body: {
+          topic: topicForFetch,
+          difficulty: 'Medium',
+          question_count: opts.questionCount,
+          fetch_only: false,
+          forceNew: false,
+          partial_mode: true,
+          subject_id: opts.subjectId,
+          ...(opts.topicId ? { topic_id: opts.topicId } : {}),
+          ...(canonicalTopicName ? { canonical_topic_name: canonicalTopicName } : {}),
+        },
       });
-      return;
+
+      if (genErr) {
+        console.error('generate-test error:', genErr);
+        toast.error("Couldn't load questions", {
+          description: "Please try a different subject/topic or visit the Question Bank.",
+        });
+        return;
+      }
+
+      questions = Array.isArray(genData?.questions) ? genData.questions : [];
+      if (questions.length === 0) {
+        toast.error("Couldn't load questions", {
+          description: "Please try another topic or visit the Question Bank.",
+        });
+        return;
+      }
     }
 
     // 2) Persist a session row so /quiz-session/:id can render it.
