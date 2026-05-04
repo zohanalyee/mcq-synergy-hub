@@ -78,8 +78,8 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
       let allQuestions: any[] = [...generatedTest.questions];
       const deficit = settings.questionCount - allQuestions.length;
 
-      // 2. If deficit, SYNCHRONOUSLY await AI generation (no fire-and-forget)
-      if (deficit > 0) {
+      // 2. If deficit, only call AI for logged-in users. Guests stay DB-only.
+      if (deficit > 0 && user) {
         toast.info(`Generating ${deficit} fresh questions...`, { duration: 3000 });
         try {
           const { data, error } = await supabase.functions.invoke('generate-test', {
@@ -105,6 +105,10 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
       }
 
       if (allQuestions.length === 0) {
+        if (!user) {
+          toast.info('No cached questions yet for this topic. Sign in free to generate with AI!', { duration: 6000 });
+          return;
+        }
         throw new Error('No questions available for this topic. Please try another.');
       }
 
@@ -122,6 +126,20 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         is_active: true,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       };
+
+      // GUEST PATH — store in sessionStorage (RLS forbids anonymous inserts).
+      if (!user) {
+        const guestId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+          ? crypto.randomUUID()
+          : Math.random().toString(36).slice(2);
+        const sessionId = `guest-${guestId}`;
+        try {
+          sessionStorage.setItem(`mcqsai_guest_test_${sessionId}`, JSON.stringify({ id: sessionId, ...sessionPayload }));
+        } catch {}
+        toast.success(`Test ready with ${allQuestions.length} questions!`);
+        navigate(`/test-session/${sessionId}`, { state: { returnPath: '/mock-tests' } });
+        return;
+      }
 
       const { data: session, error: sessionError } = await supabase
         .from('custom_test_sessions')
