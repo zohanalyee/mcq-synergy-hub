@@ -28,6 +28,7 @@ interface TopicItem {
 
 const Quizzes = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user } = useAuth();
   
   // Subject Quiz State (Category A - Random Mix)
