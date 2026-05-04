@@ -41,10 +41,22 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
     setGeneratingTestId(test.id);
 
     try {
-      const settings = customSettings || {
-        difficulty: "mixed",
-        questionCount: Math.min(test.questions || 20, 20),
-        duration: test.duration,
+      // Phase 3: fetch progress so we cap question count at unlocked level
+      // and feed weak topics into the AI generator
+      const progressKey = jobTestIdFromTitle(test.title);
+      const progress = await fetchJobTestProgress(progressKey);
+      const unlockedCap = progress?.unlocked ?? 100;
+      const persistedWeak = Array.isArray(progress?.weak_topics) ? progress!.weak_topics : [];
+
+      const requestedCount = customSettings?.questionCount || Math.min(test.questions || 20, 20);
+      const cappedCount = Math.min(requestedCount, unlockedCap);
+      if (cappedCount < requestedCount) {
+        toast.info(`You currently have ${unlockedCap} questions unlocked. Score 80%+ to unlock more.`, { duration: 5000 });
+      }
+      const settings = {
+        difficulty: customSettings?.difficulty || "mixed",
+        questionCount: cappedCount,
+        duration: customSettings?.duration || test.duration,
       };
 
       // ============================================================
