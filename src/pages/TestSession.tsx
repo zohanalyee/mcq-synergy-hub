@@ -23,6 +23,9 @@ import NeuralFocusPlayer from "@/components/exam/NeuralFocusPlayer";
 import { useExamMotivation } from "@/components/exam/useExamMotivation";
 import { useExamPersistence } from "@/components/exam/useExamPersistence";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { JobTestRewardDialog } from "@/components/jobs/JobTestRewardDialog";
+import { JobTestKeepGoingDialog } from "@/components/jobs/JobTestKeepGoingDialog";
+import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestProgressService";
 
 type LastUsedTestContext = {
   subject?: string;
@@ -69,6 +72,8 @@ const TestSession = () => {
   const [isImproving, setIsImproving] = useState(false);
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [syllabusSheetOpen, setSyllabusSheetOpen] = useState(false);
+  const [jobReward, setJobReward] = useState<{ open: boolean; score: number; unlocked: number; delta: number } | null>(null);
+  const [jobKeepGoing, setJobKeepGoing] = useState<{ open: boolean; score: number; weakTopics: string[] } | null>(null);
 
   const hasRestoredRef = useRef(false);
   const questionStartRef = useRef<number>(Date.now());
@@ -388,6 +393,35 @@ const TestSession = () => {
       toast.success(`🏆 New Badge: ${result.newBadges[0].name}!`, { description: result.newBadges[0].description });
     } else {
       toast.success("Test submitted successfully!", { description: `You scored ${correctAnswers}/${questions.length}` });
+    }
+
+    // Phase 3: record job test progress (uses sessionName "Job Test: {title}" convention)
+    if (sessionName.startsWith("Job Test:")) {
+      const jobTitle = sessionName.replace(/^Job Test:\s*/, "").trim();
+      const jobTestId = jobTestIdFromTitle(jobTitle);
+      const scorePct = questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0;
+
+      // Compute weak topics: subjects with <70% in this attempt
+      const subjectStats = new Map<string, { correct: number; total: number }>();
+      questions.forEach((q: any, i: number) => {
+        const subj = q.subject || q.topic || "General";
+        const s = subjectStats.get(subj) || { correct: 0, total: 0 };
+        s.total += 1;
+        if (checkAnswer(q, answers[i])) s.correct += 1;
+        subjectStats.set(subj, s);
+      });
+      const weakTopics = Array.from(subjectStats.entries())
+        .filter(([, s]) => s.total > 0 && s.correct / s.total < 0.7)
+        .map(([k]) => k);
+
+      const prog = await recordJobTestProgress(jobTestId, scorePct, weakTopics);
+      if (prog) {
+        if (prog.qualified) {
+          setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
+        } else {
+          setJobKeepGoing({ open: true, score: scorePct, weakTopics });
+        }
+      }
     }
   };
 
@@ -726,6 +760,26 @@ const TestSession = () => {
           })()
         )}
       </div>
+      {jobReward && (
+        <JobTestRewardDialog
+          open={jobReward.open}
+          score={jobReward.score}
+          unlocked={jobReward.unlocked}
+          unlockedDelta={jobReward.delta}
+          onClose={() => setJobReward(null)}
+          onContinue={() => { setJobReward(null); navigate("/mock-tests"); }}
+        />
+      )}
+      {jobKeepGoing && (
+        <JobTestKeepGoingDialog
+          open={jobKeepGoing.open}
+          score={jobKeepGoing.score}
+          weakTopics={jobKeepGoing.weakTopics}
+          onClose={() => setJobKeepGoing(null)}
+          onPracticeWeak={() => { setJobKeepGoing(null); navigate("/mock-tests"); }}
+          onRetry={() => { setJobKeepGoing(null); handleRetry(); }}
+        />
+      )}
     </Header>
   );
 };

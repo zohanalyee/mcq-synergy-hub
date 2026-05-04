@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.enhance-content]
 verify_jwt = false
+
+[functions.job-test-progress]
+verify_jwt = false

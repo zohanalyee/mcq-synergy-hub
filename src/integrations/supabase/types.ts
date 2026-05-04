@@ -1437,6 +1437,48 @@ export type Database = {
           },
         ]
       }
+      job_test_progress: {
+        Row: {
+          best_score: number
+          created_at: string
+          id: string
+          ip_address: unknown
+          job_test_id: string
+          last_attempt_at: string | null
+          questions_unlocked: number
+          total_attempts: number
+          updated_at: string
+          user_id: string | null
+          weak_topics: Json
+        }
+        Insert: {
+          best_score?: number
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          job_test_id: string
+          last_attempt_at?: string | null
+          questions_unlocked?: number
+          total_attempts?: number
+          updated_at?: string
+          user_id?: string | null
+          weak_topics?: Json
+        }
+        Update: {
+          best_score?: number
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          job_test_id?: string
+          last_attempt_at?: string | null
+          questions_unlocked?: number
+          total_attempts?: number
+          updated_at?: string
+          user_id?: string | null
+          weak_topics?: Json
+        }
+        Relationships: []
+      }
       job_test_questions: {
         Row: {
           admin_approved: boolean
@@ -3371,6 +3413,16 @@ export type Database = {
           page_number: number
           similarity: number
         }[]
+      }
+      update_job_test_progress: {
+        Args: {
+          p_ip_address: unknown
+          p_job_test_id: string
+          p_score: number
+          p_user_id: string
+          p_weak_topics?: Json
+        }
+        Returns: Json
       }
     }
     Enums: {
