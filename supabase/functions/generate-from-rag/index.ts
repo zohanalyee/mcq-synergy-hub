@@ -25,11 +25,6 @@ interface MCQQuestion {
      return { authorized: true, userId: "service_role" };
    }
  
-   // Allow admin trigger header (from scheduled-autofill)
-   if (req.headers.get("x-admin-trigger") === "true" && authHeader?.startsWith("Bearer ")) {
-     return { authorized: true, userId: "admin_trigger" };
-   }
- 
    // Verify JWT for regular calls
    if (!authHeader?.startsWith("Bearer ")) {
      return { authorized: false, error: "Missing or invalid authorization header" };
