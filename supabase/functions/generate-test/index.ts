@@ -1384,6 +1384,22 @@ serve(async (req) => {
         let existingQuestions: any[] | null = null;
         let dbError: any = null;
 
+        // Resolve subject name from subject_id (content_items has TEXT `subject`,
+        // not a `subject_id` FK column — filtering by subject_id directly returns 0 rows).
+        let resolvedSubjectName: string | null = null;
+        if (hasStrictSubjectScope) {
+          try {
+            const { data: subjRow } = await supabase
+              .from('subjects')
+              .select('name')
+              .eq('id', subject_id as string)
+              .maybeSingle();
+            if (subjRow?.name) resolvedSubjectName = subjRow.name;
+          } catch (e) {
+            console.warn('Could not resolve subject name for subject_id:', subject_id, e);
+          }
+        }
+
         if (hasStrictTopicScope) {
           // Tier 1: strict topic_id match
           let q = supabase
@@ -1413,34 +1429,34 @@ serve(async (req) => {
             console.log(`🔒 STRICT canonical="${resolvedCanonicalTopicName}" → ${existingQuestions?.length ?? 0} rows`);
           }
 
-          // Tier 3: keyword search BUT scoped to subject_id (still safer than global)
-          if (!dbError && (!existingQuestions || existingQuestions.length === 0) && hasStrictSubjectScope) {
+          // Tier 3: keyword search BUT scoped to subject (text column)
+          if (!dbError && (!existingQuestions || existingQuestions.length === 0) && hasStrictSubjectScope && resolvedSubjectName) {
             let q3 = supabase
               .from('content_items')
               .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
               .eq('category', 'mcq')
               .eq('status', 'approved')
-              .eq('subject_id', subject_id as string)
+              .eq('subject', resolvedSubjectName)
               .or(searchConditions);
             if (safeExcludeIds.length > 0) q3 = q3.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const r3 = await q3.limit(qc * 3);
             existingQuestions = r3.data;
             dbError = r3.error;
-            console.log(`🔒 SCOPED subject_id keyword search → ${existingQuestions?.length ?? 0} rows`);
+            console.log(`🔒 SCOPED subject="${resolvedSubjectName}" keyword search → ${existingQuestions?.length ?? 0} rows`);
           }
-        } else if (hasStrictSubjectScope) {
-          // Subject Quiz: scope keyword search to selected subject only
+        } else if (hasStrictSubjectScope && resolvedSubjectName) {
+          // Subject Quiz: random mix from all topics within the selected subject
           let q = supabase
             .from('content_items')
             .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
             .eq('category', 'mcq')
             .eq('status', 'approved')
-            .eq('subject_id', subject_id as string);
+            .eq('subject', resolvedSubjectName);
           if (safeExcludeIds.length > 0) q = q.not('id', 'in', `(${safeExcludeIds.join(',')})`);
           const r = await q.limit(qc * 3);
           existingQuestions = r.data;
           dbError = r.error;
-          console.log(`🔒 STRICT subject_id="${subject_id}" → ${existingQuestions?.length ?? 0} rows`);
+          console.log(`🔒 STRICT subject="${resolvedSubjectName}" → ${existingQuestions?.length ?? 0} rows`);
         } else {
           // Legacy callers: original behavior
           let cacheQuery = supabase
