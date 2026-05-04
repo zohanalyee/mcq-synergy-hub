@@ -1384,6 +1384,22 @@ serve(async (req) => {
         let existingQuestions: any[] | null = null;
         let dbError: any = null;
 
+        // Resolve subject name from subject_id (content_items has TEXT `subject`,
+        // not a `subject_id` FK column — filtering by subject_id directly returns 0 rows).
+        let resolvedSubjectName: string | null = null;
+        if (hasStrictSubjectScope) {
+          try {
+            const { data: subjRow } = await supabase
+              .from('subjects')
+              .select('name')
+              .eq('id', subject_id as string)
+              .maybeSingle();
+            if (subjRow?.name) resolvedSubjectName = subjRow.name;
+          } catch (e) {
+            console.warn('Could not resolve subject name for subject_id:', subject_id, e);
+          }
+        }
+
         if (hasStrictTopicScope) {
           // Tier 1: strict topic_id match
           let q = supabase
