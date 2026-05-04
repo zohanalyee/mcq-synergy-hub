@@ -1573,7 +1573,9 @@ serve(async (req) => {
           // Drop poisoned cache rows so they aren't served, forcing a fresh generation
           // for subjects where the AI historically drifted off-topic.
           const beforeCacheFilter = dbQuestions.length;
-          dbQuestions = dbQuestions.filter(q => validateQuestionTopic(q.question, topic));
+          if (hasStrictTopicScope || !hasStrictSubjectScope) {
+            dbQuestions = dbQuestions.filter(q => validateQuestionTopic(q.question, topic));
+          }
           const cacheDropped = beforeCacheFilter - dbQuestions.length;
           if (cacheDropped > 0) {
             console.warn(`[topic-guard] 🧹 Cache: dropped ${cacheDropped}/${beforeCacheFilter} poisoned rows for topic="${topic}"`);
