@@ -139,6 +139,26 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         };
 
+        // GUEST PATH — RLS forbids inserting into custom_test_sessions for
+        // anonymous users. Store the session in sessionStorage and route
+        // TestSession with a guest-* id (TestSession knows how to load it).
+        if (!user) {
+          const guestId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
+            ? crypto.randomUUID()
+            : Math.random().toString(36).slice(2);
+          const sessionId = `guest-${guestId}`;
+          try {
+            sessionStorage.setItem(
+              `mcqsai_guest_test_${sessionId}`,
+              JSON.stringify({ id: sessionId, ...sessionPayload }),
+            );
+          } catch {}
+          toast.success(`Test ready with ${finalQuestions.length} questions!`, { duration: 3500 });
+          navigate(`/test-session/${sessionId}`, { state: { returnPath: "/mock-tests" } });
+          setGeneratingTestId(null);
+          return;
+        }
+
         const { data: session, error: sessionError } = await supabase
           .from("custom_test_sessions")
           .insert(sessionPayload)
