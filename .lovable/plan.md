@@ -1,160 +1,416 @@
-# Authentication & Gamification System — Phased Plan
+## Goal
 
-The spec is large. To keep each step shippable and testable, I propose splitting it into 4 phases. Phase 1 + 2 deliver the highest-value UX (credit limits + conversion modals). Phase 3 + 4 add the job-test progression loop.
+Guest users (not signed in) on `/quizzes` Subject and Topic tabs must load questions **directly from the `content_items` table via the Supabase client** — no `generate-test` edge function invocation, no AI generation, no credit deduction. Logged-in users keep current hybrid (DB + AI) behavior unchanged.
 
----
+## Why
 
-## Phase 1 — Daily AI Credit System (foundation)
+Edge function calls for guests are unnecessary and currently route through `generate-test`, which (even with `fetch_only: true`) wastes function quota and is more failure-prone than a direct PostgREST query. Guests already have read access via the `Anyone can view approved content` RLS policy on `content_items`.
 
-**Database migration** (new):
+## Scope
 
-- `user_credits` table: `user_id` (UNIQUE FK to auth.users), `credits_remaining INT DEFAULT 100`, `credits_used_today INT`, `last_reset_date DATE`, `total_credits_used INT`. RLS: user can `SELECT` own row; only edge functions (service role) can `UPDATE`.
-- Trigger on `auth.users` insert → seed a `user_credits` row.
-- RPC `deduct_credits(user_id, amount)` — auto-resets if `last_reset_date < today`, then deducts and returns `{ remaining, used_today }`. SECURITY DEFINER.
-- RPC `get_my_credits()` — returns caller's row (with auto-reset side effect).
+Only `src/pages/Quizzes.tsx` (the `startQuiz` function). No DB changes, no edge function changes, no UI changes.
 
-**Frontend**:
+## Plan
 
-- New `src/hooks/useUserCredits.ts` — reads credits via RPC, exposes `{ remaining, used, loading, refresh }`. Auto-refresh after every test/quiz finish event.
-- New `src/components/credits/CreditMeter.tsx` — small chip in Header (visible only to logged-in users): "AI: 75/100".
-- New `src/components/credits/CreditExhaustedDialog.tsx` — modal shown when `remaining === 0` AND user attempts an AI-gen action; copy from spec ("Daily AI Limit Reached", "Thousands of curated questions available", "Resets at midnight").
-- Toast notifications in `useUserCredits` when crossing 25-used / 75-used thresholds (sonner, throttled by localStorage so only fires once per day).
+### 1. Add a client-side guest fetcher in `src/pages/Quizzes.tsx`
 
-**Edge function** `generate-test`:
+New helper `fetchGuestQuestionsFromDB(opts)` that queries `content_items` directly with strict scoping:
 
-- Before invoking Gemini for "fill-the-gap" AI generation, if `triggered_by_user_id` present, call `deduct_credits(user_id, missingCount)`. If response `remaining < missingCount` (insufficient), skip AI and return DB-only questions plus `meta.credits_exhausted = true`. Frontend reads that flag to show the dialog.
-- DB-only fetch path stays untouched (no credit cost).
+- **Topic Quiz** (when `topic_id` present): filter by `topic_id = opts.topicId`.
+- **Subject Quiz** (no `topic_id`): resolve all `topic_id`s for the subject from the `topics` table, then filter `content_items` with `.in('topic_id', topicIds)`. Also OR-match `canonical_topic_name` in the resolved canonical list, mirroring the edge function's subject-wide search.
+- Always add: `.eq('status', 'approved')`, `.eq('question_type', 'mcq')` (if applicable), and select only the fields the player needs (`id, question, options, correct_option, explanation, subject, topic, difficulty`).
+- Fetch up to `Math.max(opts.questionCount * 3, 60)` rows, then **shuffle client-side** and slice to `opts.questionCount` for randomness (PostgREST has no native random ordering).
+- Map rows into the same question shape the player expects (`{ id, question, options: [...], correct_option, explanation, subject, topic, difficulty }`).
 
-**Homepage banner** (`src/pages/Index.tsx`):
+### 2. Branch in `startQuiz` based on auth state
 
-- Add a dismissible "Exciting Update Coming Soon" banner above hero. Stored dismiss state in `localStorage`.
+```text
+if (!user) {
+  questions = await fetchGuestQuestionsFromDB(...)   // DB only, no edge fn
+  if (questions.length === 0) {
+    toast: "This topic has no cached questions yet. Sign in free to generate with AI."
+    return
+  }
+} else {
+  // existing path: supabase.functions.invoke('generate-test', ...)
+}
+```
 
----
+The existing guest sessionStorage write + slug navigation stays exactly the same.
 
-## Phase 2 — Page-by-page auth gating with positive modals
+### 3. Keep logged-in flow untouched
 
-**A. School Attendance landing dialog** (`src/pages/tools/AttendanceDashboard.tsx`)  
-The route is already public. Right now it renders a marketing view for guests. Add: when guest clicks any "Setup Institute" / "Manage Students" / "Open Module" CTA, open `AttendanceAuthDialog` (new component) using exact copy from spec ("Login Required" + 4 benefits). Buttons → save intent → `/auth`. Browse stays public for SEO.
+The `supabase.functions.invoke('generate-test', ...)` call and `custom_test_sessions` insert remain only inside the `user` branch.
 
-**B. Quiz result auth gate** (`src/pages/QuizPlayer.tsx` + new `QuizSignInGate.tsx`)
+## Technical Details
 
-- Allow guests to actually take the quiz (today the page is wrapped in `InstantAuthGuard` in `App.tsx` — remove that guard for `/quiz-session/:id` so guests can play).
-- Persist guest session in `sessionStorage` instead of `custom_test_sessions` (which requires `user_id`). Update `Quizzes.tsx` `startQuiz` to branch: logged-in → DB session as today; guest → sessionStorage session, navigate to `/quiz-session/guest-<uuid>`.
-- On submit while `!user`: instead of `QuizResultScreen`, render `QuizSignInGate` modal with the spec's copy ("Great Job!", 6 benefits, "Basic Score Only" reveals `Score: X/N`, "Sign In Free" saves intent and navigates).
+- **No DB migration needed.** RLS already allows anon SELECT on `content_items WHERE status = 'approved'`.
+- **No edge function changes.** The `fetch_only` guest branch in `generate-test` becomes unused for the Quizzes page (still used by other surfaces if any).
+- **Randomization**: Fisher–Yates shuffle in JS over the oversampled result set.
+- **Subject resolution for Subject Quiz**: one extra query to `topics` (`select id, canonical_name where subject_id = ...`) before the `content_items` query, matching the strict scoping the edge function does today.
+- **Empty-state UX**: same toast pattern that prompts guests to sign in for AI generation when DB has no rows.
 
-**C. Subject pages and Custom Syllabus**  
-Apply same gating pattern. Subject browse already public. The "Generate Test" / "Start Test" buttons in `SubjectContent.tsx` and `CustomSyllabus.tsx` get the same `QuizSignInGate` modal when `!user`. Logged-in benefit text on Custom Syllabus mentions "Save up to 10 syllabi" (cosmetic only this phase — actual save-cap enforcement deferred).
+## Out of Scope
 
-**D. Header copy sweep**  
-Search & replace user-facing strings that violate the language rules ("Database", exact question counts like "6,439", "credits exhausted") in `src/pages/Index.tsx`, `Subjects.tsx`, marketing components → use approved phrases ("thousands of practice questions", "AI questions", "Daily AI limit reached").
+- Mock Tests page (Subject/Topic tabs there already work for guests via the edge function — separate from this request).
+- Any change to credits, gamification, sign-in gate at result screen, or the player itself.
 
----
+# Guest Quiz Optimization - Direct DB Access
 
-## Phase 3 — Job Test Progressive Unlock
+## Goal
 
-**Database migration** (new):
+Guest users on `/quizzes` should fetch questions directly from the database without calling the edge function. This is faster, simpler, and doesn't waste server quota.
 
-- `job_test_progress` table per spec: `user_id` nullable, `ip_address INET` nullable, `job_test_id`, `questions_unlocked INT DEFAULT 100`, `total_attempts`, `best_score`, `weak_topics JSONB`. Two partial UNIQUE indexes: `(user_id, job_test_id)` where user_id IS NOT NULL; `(ip_address, job_test_id)` where user_id IS NULL.
-- RPC `update_job_test_progress(...)` per spec, returning `{ unlocked, unlocked_delta, qualified }`.
-- RLS: anon can `SELECT/INSERT` rows where `user_id IS NULL` (matched on ip — actually IP comes from edge function header, so all writes go through RPC/edge function with service role). Authenticated users can read own rows.
+## Changes Needed
 
-**Frontend** `src/pages/MockTests.tsx` **(and JobTest player)**:
+### 1. Add Direct DB Fetcher
 
-- Before starting: fetch progress via new edge function `job-test-progress` (returns IP-bound or user-bound row). Show "Preview Mode" alert for guests, or "Today's Practice — Available: N" card for logged-in users.
-- After completion: call edge function which executes RPC. Show `JobTestRewardDialog` (≥80%) or `JobTestKeepGoingDialog` (<80%) per spec, including weak-area list.
+**File: src/pages/Quizzes.tsx**
 
-**Edge function** `job-test-progress` (new):
+Add this new function:
 
-- GET → returns the calling user's/IP's progress row, creating with defaults if missing.
-- POST → validates payload, calls `update_job_test_progress` with `req.headers.get('x-forwarded-for')` for guests.
+```typescript
 
----
+interface FetchGuestQuestionsOptions {
 
-## Phase 4 — Weak-area targeting (deferred / lighter)
+  subjectId: string;
 
-- Extend `generate-test` to accept `weak_topics: string[]` and `mix_ratio: 0.5`. When provided, fetch 50% of questions filtered by these topic strings (canonical_topic_name match), 50% from rest of subject. Falls back gracefully if not enough weak-area questions exist.
-- `MockTests` next-day fetch passes `weak_topics` from `job_test_progress.weak_topics`.
+  topicId?: string;
 
-This phase is small but depends on Phase 3 data, so it ships last.
+  questionCount: number;
 
----
+}
 
-## Technical notes
+async function fetchGuestQuestionsFromDB(
 
-- **Credits coverage**: only Mock Tests, Custom Syllabus AI fill-the-gap, and Job Test AI generation deduct credits. Pure DB-cached fetches remain free.
-- **IP detection in edge functions**: use `req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()`. Stored as `INET`.
-- **Intent preservation**: continue using existing `useAuthIntent` (`saveIntentRaw`) so post-login users land back on the quiz/tool they were using.
-- **No backend stores secrets in DB**. All RPCs are SECURITY DEFINER with `SET search_path = public`.
-- **No new types.ts edits** — Supabase regenerates after migration.
+  opts: FetchGuestQuestionsOptions
 
----
+): Promise<any[]> {
 
-## Files touched (summary)
+  
 
-New:
+  let query = supabase
 
-- `supabase/migrations/*_user_credits.sql`, `*_job_test_progress.sql`
-- `supabase/functions/job-test-progress/index.ts`
-- `src/hooks/useUserCredits.ts`
-- `src/components/credits/CreditMeter.tsx`, `CreditExhaustedDialog.tsx`
-- `src/components/quiz/QuizSignInGate.tsx`
-- `src/components/tools/AttendanceAuthDialog.tsx`
-- `src/components/jobs/JobTestRewardDialog.tsx`, `JobTestKeepGoingDialog.tsx`
-- `src/components/home/UpcomingFreeBanner.tsx`
+    .from('content_items')
 
-Edited:
+    .select('id, question, options, correct_option, explanation, subject, topic, difficulty')
 
-- `src/App.tsx` (remove `InstantAuthGuard` from `/quiz-session/:id`; keep `/test-session/:id` as is or apply same — to confirm)
-- `src/pages/Quizzes.tsx`, `QuizPlayer.tsx`, `MockTests.tsx`, `CustomSyllabus.tsx`, `SubjectContent.tsx`, `Index.tsx`, `tools/AttendanceDashboard.tsx`
-- `supabase/functions/generate-test/index.ts` (credit deduction + `credits_exhausted` flag)
-- `src/components/Header.tsx` (mount `CreditMeter`)
+    .eq('status', 'approved')
 
----
+    .eq('question_type', 'mcq');
 
-## Confirm before I implement
+  // Topic Quiz - filter by specific topic
 
-1. Ship all 4 phases in this single approval, or only Phase 1+2 first and review before Phase 3+4?
-2. For `/test-session/:id` (Mock Test player) — should guests also be allowed to play and hit the sign-in wall on submit (parity with quizzes), or keep it logged-in-only as today?
-3. Daily limit confirmed at **100** AI questions/user/day (spec says 100; existing system uses a global 1400/day server cap — these stack: per-user soft cap + global hard cap). 
+  if (opts.topicId) {
 
-APPROVE PHASE 1+2 FIRST
+    query = query.eq('topic_id', opts.topicId);
 
-&nbsp;
+  } 
 
-Answer to Lovable's questions:
+  // Subject Quiz - filter by all topics in subject
 
-&nbsp;
+  else {
 
-Q1: Ship all 4 phases or Phase 1+2 first?
+    const { data: topics } = await supabase
 
-A: Phase 1+2 first. Test in production, then Phase 3+4.
+      .from('topics')
 
-&nbsp;
+      .select('id, canonical_name')
 
-Q2: Allow guests on /test-session like /quiz-session?
+      .eq('subject_id', opts.subjectId);
 
-A: Yes, make it consistent. Same auth gate pattern everywhere.
+    
 
-&nbsp;
+    if (!topics || topics.length === 0) return [];
 
-Q3: 100 per-user + 1400 global cap?
+    
 
-A: Yes, both limits stack. Per-user soft, server hard cap.
+    const topicIds = [topics.map](http://topics.map)(t => [t.id](http://t.id));
 
-&nbsp;
+    const canonicalNames = [topics.map](http://topics.map)(t => t.canonical_name).filter(Boolean);
 
-Additional notes:
+    
 
-- SEO fix already working, monitoring Google indexing
+    query = query.or(
 
-- Phase 1+2 covers highest-value UX (conversion modals)
+      `topic_id.in.(${topicIds.join(',')}),` +
 
-- Phase 3+4 can wait 1-2 weeks for user feedback
+      `canonical_topic_name.in.(${canonicalNames.join(',')})`
 
-- All user-facing language must follow positive terminology rules
+    );
 
-- No "DB", no exact counts, no technical jargon
+  }
 
-&nbsp;
+  // Fetch 3x more for randomization
 
-Proceed with Phase 1+2 implementation.
+  const fetchCount = Math.max(opts.questionCount * 3, 60);
+
+  const { data } = await query.limit(fetchCount);
+
+  if (!data || data.length === 0) return [];
+
+  // Fisher-Yates shuffle
+
+  const shuffled = [...data];
+
+  for (let i = shuffled.length - 1; i > 0; i--) {
+
+    const j = Math.floor(Math.random() * (i + 1));
+
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+
+  }
+
+  return shuffled.slice(0, opts.questionCount);
+
+}
+
+```
+
+### 2. Update startQuiz Function
+
+Replace the current logic with:
+
+```typescript
+
+const startQuiz = async (opts) => {
+
+  setGeneratingA(true); // or B based on which button
+
+  
+
+  let questions = [];
+
+  
+
+  // GUEST: Direct DB query (no edge function)
+
+  if (!user) {
+
+    questions = await fetchGuestQuestionsFromDB({
+
+      subjectId: opts.subjectId,
+
+      topicId: opts.topicId,
+
+      questionCount: opts.questionCount,
+
+    });
+
+    
+
+    if (questions.length === 0) {
+
+      [toast.info](http://toast.info)(
+
+        "This topic has no questions yet. Sign in free to generate with AI!",
+
+        {
+
+          action: {
+
+            label: "Sign In",
+
+            onClick: () => {
+
+              saveIntentRaw({ action: 'Generate quiz', path: location.pathname });
+
+              navigate('/auth');
+
+            }
+
+          },
+
+          duration: 6000,
+
+        }
+
+      );
+
+      setGeneratingA(false);
+
+      return;
+
+    }
+
+  } 
+
+  // LOGGED-IN: Edge function (DB + AI hybrid)
+
+  else {
+
+    const { data: genData } = await supabase.functions.invoke('generate-test', {
+
+      body: {
+
+        topic: topicForFetch,
+
+        difficulty: 'Medium',
+
+        question_count: opts.questionCount,
+
+        fetch_only: false, // Allow AI
+
+        forceNew: false,
+
+        partial_mode: true,
+
+      }
+
+    });
+
+    
+
+    if (!genData?.questions || genData.questions.length === 0) {
+
+      toast.error("Couldn't generate questions. Please try again.");
+
+      setGeneratingA(false);
+
+      return;
+
+    }
+
+    
+
+    questions = genData.questions;
+
+  }
+
+  
+
+  // Common: Create session (works for guest + logged-in)
+
+  const { data: subjectRow } = await supabase
+
+    .from('subjects')
+
+    .select('name')
+
+    .eq('id', opts.subjectId)
+
+    .single();
+
+  
+
+  const { data: session } = await supabase
+
+    .from('custom_test_sessions')
+
+    .insert({
+
+      user_id: user?.id || null,
+
+      session_name: opts.sessionLabel,
+
+      subjects: [[subjectRow.name](http://subjectRow.name)],
+
+      topics: opts.topicName ? [opts.topicName] : [],
+
+      question_count: questions.length,
+
+      time_limit: opts.timeLimit,
+
+      questions,
+
+      is_active: true,
+
+    })
+
+    .select('id')
+
+    .single();
+
+  
+
+  const slugUrl = generateSlugUrl(opts.topicName || [subjectRow.name](http://subjectRow.name), [session.id](http://session.id));
+
+  navigate`/quiz-session/${slugUrl}`);
+
+  setGeneratingA(false);
+
+};
+
+```
+
+### 3. Hide AI Features for Guests
+
+Update UI sections to hide AI-related options:
+
+```typescript
+
+{/* Fetch Only Toggle - HIDE for guests */}
+
+{user && (
+
+  <div className="flex items-center gap-2">
+
+    <Switch checked={fetchOnly} onCheckedChange={setFetchOnly} />
+
+    <Label>Use database questions only</Label>
+
+  </div>
+
+)}
+
+{/* Different help text for guest vs logged-in */}
+
+{!user ? (
+
+  <p className="text-sm text-muted-foreground">
+
+    📚 Practicing with curated questions
+
+  </p>
+
+) : (
+
+  <p className="text-sm text-muted-foreground">
+
+    {fetchOnly 
+
+      ? "Using questions from database only"
+
+      : `Will generate with AI if needed (${creditsRemaining} credits)`
+
+    }
+
+  </p>
+
+)}
+
+```
+
+## Benefits
+
+✅ Faster for guests (no edge function call)
+
+✅ No server quota waste
+
+✅ Simpler code path
+
+✅ Fewer failure points
+
+✅ Clean UI for guests (no confusing AI options)
+
+✅ Logged-in users unchanged (still get AI generation)
+
+## Testing
+
+1. **Test as guest:**
+
+   - Start quiz → Should use direct DB query ✅
+
+   - Empty topic → Should show sign-in prompt ✅
+
+   - No AI options visible ✅
+
+2. **Test as logged-in:**
+
+   - Start quiz → Should use edge function ✅
+
+   - Empty topic → Should generate with AI ✅
+
+   - AI options visible ✅
+
+Deploy this to optimize guest experience.
