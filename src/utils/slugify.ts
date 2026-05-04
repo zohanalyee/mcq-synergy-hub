@@ -21,10 +21,13 @@ export function generateSlugUrl(title: string, id: string): string {
   return slug ? `${slug}-${id}` : id;
 }
 
+const GUEST_SESSION_RE = /guest-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const UUID_RE = /[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export function extractIdFromSlug(slugId: string): string {
   if (!slugId) return '';
+  const guestMatch = slugId.match(GUEST_SESSION_RE);
+  if (guestMatch) return guestMatch[0];
   const match = slugId.match(UUID_RE);
   return match ? match[0] : slugId;
 }
