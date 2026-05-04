@@ -15,6 +15,10 @@ import {
   findDefinitionByTitle,
   getApprovedQuestionsForDefinition,
 } from "@/services/jobTestService";
+import {
+  fetchJobTestProgress,
+  jobTestIdFromTitle,
+} from "@/services/jobTestProgressService";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
