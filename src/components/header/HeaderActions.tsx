@@ -199,8 +199,8 @@ const HeaderActions = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* Daily AI credits meter */}
-      {user && <CreditMeter className="hidden sm:inline-flex" />}
+      {/* Daily AI credits meter — clickable, opens credit history */}
+      {user && <CreditMeter />}
 
       {/* Notification Bell */}
       {user && <NotificationBell />}
