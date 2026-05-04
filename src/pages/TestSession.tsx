@@ -23,6 +23,9 @@ import NeuralFocusPlayer from "@/components/exam/NeuralFocusPlayer";
 import { useExamMotivation } from "@/components/exam/useExamMotivation";
 import { useExamPersistence } from "@/components/exam/useExamPersistence";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { JobTestRewardDialog } from "@/components/jobs/JobTestRewardDialog";
+import { JobTestKeepGoingDialog } from "@/components/jobs/JobTestKeepGoingDialog";
+import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestProgressService";
 
 type LastUsedTestContext = {
   subject?: string;
