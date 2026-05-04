@@ -72,6 +72,8 @@ const TestSession = () => {
   const [isImproving, setIsImproving] = useState(false);
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [syllabusSheetOpen, setSyllabusSheetOpen] = useState(false);
+  const [jobReward, setJobReward] = useState<{ open: boolean; score: number; unlocked: number; delta: number } | null>(null);
+  const [jobKeepGoing, setJobKeepGoing] = useState<{ open: boolean; score: number; weakTopics: string[] } | null>(null);
 
   const hasRestoredRef = useRef(false);
   const questionStartRef = useRef<number>(Date.now());
