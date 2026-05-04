@@ -106,7 +106,7 @@ const Quizzes = () => {
         topic: topicForFetch,
         difficulty: 'Medium',
         question_count: opts.questionCount,
-        fetch_only: true,
+        fetch_only: !user, // Guests: DB-only. Logged-in: allow AI generation.
         forceNew: false,
         partial_mode: true,
         // STRICT FILTERS — prevent cross-subject/topic leakage
@@ -126,8 +126,24 @@ const Quizzes = () => {
 
     const questions = Array.isArray(genData?.questions) ? genData.questions : [];
     if (questions.length === 0) {
-      toast.error("No questions available yet", {
-        description: `We don't have MCQs for "${topicForFetch}" in the bank. Try another topic or check the Question Bank.`,
+      if (!user) {
+        toast.info("This topic needs AI generation. Sign in free to unlock!", {
+          action: {
+            label: "Sign In",
+            onClick: () => {
+              saveIntentRaw({
+                action: 'Generate quiz',
+                path: location.pathname,
+              });
+              navigate('/auth');
+            },
+          },
+          duration: 6000,
+        });
+        return;
+      }
+      toast.error("Couldn't load questions", {
+        description: "Please try another topic or visit the Question Bank.",
       });
       return;
     }
