@@ -235,7 +235,9 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
             : ["medium" as const, [] as Awaited<ReturnType<typeof AICoachService.getWeaknessFocusedTopics>>];
 
           const weakTopicNames = weak.map((w) => w.topic);
-          focusTopicsAll.push(...weakTopicNames);
+          // Phase 4: fold in this job-test's persisted weak topics
+          const mergedWeak = Array.from(new Set([...weakTopicNames, ...persistedWeak]));
+          focusTopicsAll.push(...mergedWeak);
 
           const baseDifficulty = settings.difficulty === "mixed" ? "Medium" : settings.difficulty;
           const finalDifficulty = settings.difficulty === "mixed" && user ? adaptive : baseDifficulty;
@@ -248,7 +250,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
               force_new: false,
               partial_mode: false,
               excludeQuestionIds: mergedExclude,
-              weakTopics: weakTopicNames,
+              weakTopics: mergedWeak,
             },
           });
 
