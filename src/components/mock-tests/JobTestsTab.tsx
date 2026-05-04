@@ -139,6 +139,26 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
           expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
         };
 
+        // GUEST PATH — RLS forbids inserting into custom_test_sessions for
+        // anonymous users. Store the session in sessionStorage and route
+        // TestSession with a guest-* id (TestSession knows how to load it).
+        if (!user) {
+          const guestId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
+            ? crypto.randomUUID()
+            : Math.random().toString(36).slice(2);
+          const sessionId = `guest-${guestId}`;
+          try {
+            sessionStorage.setItem(
+              `mcqsai_guest_test_${sessionId}`,
+              JSON.stringify({ id: sessionId, ...sessionPayload }),
+            );
+          } catch {}
+          toast.success(`Test ready with ${finalQuestions.length} questions!`, { duration: 3500 });
+          navigate(`/test-session/${sessionId}`, { state: { returnPath: "/mock-tests" } });
+          setGeneratingTestId(null);
+          return;
+        }
+
         const { data: session, error: sessionError } = await supabase
           .from("custom_test_sessions")
           .insert(sessionPayload)
@@ -155,6 +175,20 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
       // ============================================================
       // LEGACY PATH (no isolated definition found): old generate-test
       // ============================================================
+
+      // Guests must NEVER hit the AI edge function. Fail safely with a
+      // clear sign-in CTA so we don't burn credits or block them silently.
+      {
+        const { data: { user: legacyUser } } = await supabase.auth.getUser();
+        if (!legacyUser) {
+          toast.info(
+            `${test.title}: questions are being prepared. Please check back soon, or sign in free to generate with AI.`,
+            { duration: 6000 },
+          );
+          setGeneratingTestId(null);
+          return;
+        }
+      }
 
       // Extract syllabus data
       const syllabusData = test.syllabus

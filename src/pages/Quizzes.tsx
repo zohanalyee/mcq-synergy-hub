@@ -101,10 +101,12 @@ const Quizzes = () => {
       }
       rows = data || [];
     } else {
-      // SUBJECT quiz — resolve all topics under this subject, then OR-filter
+      // SUBJECT quiz — resolve all topics under this subject, then run
+      // SEPARATE PostgREST queries (avoids brittle .or() escaping) and
+      // merge + dedupe client-side. Pure DB, no edge fn, no AI.
       const { data: topicRows, error: topicErr } = await supabase
         .from('topics')
-        .select('id, canonical_name')
+        .select('id, name, canonical_name')
         .eq('subject_id', params.subjectId);
 
       if (topicErr) {
@@ -112,35 +114,86 @@ const Quizzes = () => {
       }
 
       const topicIds = (topicRows || []).map((t: any) => t.id).filter(Boolean);
-      const canonicalNames = (topicRows || [])
-        .map((t: any) => t.canonical_name)
-        .filter((v: any) => typeof v === 'string' && v.length > 0);
+      const canonicalNames = Array.from(new Set(
+        (topicRows || [])
+          .map((t: any) => t.canonical_name)
+          .filter((v: any) => typeof v === 'string' && v.length > 0)
+      ));
+      const topicNames = Array.from(new Set(
+        (topicRows || [])
+          .map((t: any) => t.name)
+          .filter((v: any) => typeof v === 'string' && v.length > 0)
+      ));
 
-      // Build OR clause across topic_id, canonical_topic_name, and subject text match
-      const orParts: string[] = [];
-      if (topicIds.length > 0) orParts.push(`topic_id.in.(${topicIds.join(',')})`);
-      if (canonicalNames.length > 0) {
-        // Quote each value for PostgREST 'in' operator
-        const quoted = canonicalNames.map((n) => `"${String(n).replace(/"/g, '\\"')}"`).join(',');
-        orParts.push(`canonical_topic_name.in.(${quoted})`);
+      const baseSelect = 'id, question, options, correct_option, explanation, subject, topic, difficulty';
+      const seen = new Set<string>();
+      const merged: any[] = [];
+      const pushRows = (rs: any[] | null | undefined) => {
+        if (!rs) return;
+        for (const r of rs) {
+          if (!r?.id || seen.has(r.id)) continue;
+          seen.add(r.id);
+          merged.push(r);
+        }
+      };
+
+      // 1) Match by topic_id (most reliable)
+      if (topicIds.length > 0) {
+        const { data, error } = await supabase
+          .from('content_items')
+          .select(baseSelect)
+          .eq('status', 'approved')
+          .in('topic_id', topicIds)
+          .not('question', 'is', null)
+          .not('correct_option', 'is', null)
+          .limit(fetchLimit);
+        if (error) console.error('[Guest Subject Quiz] topic_id query error:', error);
+        pushRows(data);
       }
-      // Always include a subject-name text fallback for legacy rows without topic_id
-      orParts.push(`subject.ilike.${params.subjectName}`);
 
-      const { data, error } = await supabase
-        .from('content_items')
-        .select('id, question, options, correct_option, explanation, subject, topic, difficulty')
-        .eq('status', 'approved')
-        .or(orParts.join(','))
-        .not('question', 'is', null)
-        .not('correct_option', 'is', null)
-        .limit(fetchLimit);
-
-      if (error) {
-        console.error('[Guest Subject Quiz] DB error:', error);
-        return [];
+      // 2) Match by canonical_topic_name (for legacy rows without topic_id)
+      if (merged.length < fetchLimit && canonicalNames.length > 0) {
+        const { data, error } = await supabase
+          .from('content_items')
+          .select(baseSelect)
+          .eq('status', 'approved')
+          .in('canonical_topic_name', canonicalNames as string[])
+          .not('question', 'is', null)
+          .not('correct_option', 'is', null)
+          .limit(fetchLimit);
+        if (error) console.error('[Guest Subject Quiz] canonical query error:', error);
+        pushRows(data);
       }
-      rows = data || [];
+
+      // 3) Match by subject name (final fallback for very legacy rows)
+      if (merged.length < fetchLimit) {
+        const { data, error } = await supabase
+          .from('content_items')
+          .select(baseSelect)
+          .eq('status', 'approved')
+          .ilike('subject', params.subjectName)
+          .not('question', 'is', null)
+          .not('correct_option', 'is', null)
+          .limit(fetchLimit);
+        if (error) console.error('[Guest Subject Quiz] subject query error:', error);
+        pushRows(data);
+      }
+
+      // 4) Last-resort: match by topic name (some rows store only topic text)
+      if (merged.length < fetchLimit && topicNames.length > 0) {
+        const { data, error } = await supabase
+          .from('content_items')
+          .select(baseSelect)
+          .eq('status', 'approved')
+          .in('topic', topicNames as string[])
+          .not('question', 'is', null)
+          .not('correct_option', 'is', null)
+          .limit(fetchLimit);
+        if (error) console.error('[Guest Subject Quiz] topic-name query error:', error);
+        pushRows(data);
+      }
+
+      rows = merged;
     }
 
     if (rows.length === 0) return [];

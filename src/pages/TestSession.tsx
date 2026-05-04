@@ -119,9 +119,22 @@ const TestSession = () => {
     const fetchTestSession = async () => {
       if (!id) { setError("No session ID provided"); setIsLoading(false); return; }
       try {
-        const { data, error: fetchError } = await supabase
-          .from("custom_test_sessions").select("*").eq("id", id).maybeSingle();
-        if (fetchError) throw fetchError;
+        let data: any = null;
+
+        // GUEST PATH — sessions live only in sessionStorage (RLS forbids
+        // anonymous inserts into custom_test_sessions).
+        if (id.startsWith("guest-")) {
+          try {
+            const raw = sessionStorage.getItem(`mcqsai_guest_test_${id}`);
+            if (raw) data = JSON.parse(raw);
+          } catch {}
+        } else {
+          const { data: row, error: fetchError } = await supabase
+            .from("custom_test_sessions").select("*").eq("id", id).maybeSingle();
+          if (fetchError) throw fetchError;
+          data = row;
+        }
+
         if (!data) { setError("Test session not found"); setIsLoading(false); return; }
 
         const normalizedData = {
@@ -414,12 +427,16 @@ const TestSession = () => {
         .filter(([, s]) => s.total > 0 && s.correct / s.total < 0.7)
         .map(([k]) => k);
 
-      const prog = await recordJobTestProgress(jobTestId, scorePct, weakTopics);
-      if (prog) {
-        if (prog.qualified) {
-          setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
-        } else {
-          setJobKeepGoing({ open: true, score: scorePct, weakTopics });
+      // Skip progress recording for guests (RLS forbids insert; would error).
+      const { data: { user: progUser } } = await supabase.auth.getUser();
+      if (progUser) {
+        const prog = await recordJobTestProgress(jobTestId, scorePct, weakTopics);
+        if (prog) {
+          if (prog.qualified) {
+            setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
+          } else {
+            setJobKeepGoing({ open: true, score: scorePct, weakTopics });
+          }
         }
       }
     }
