@@ -1387,6 +1387,9 @@ serve(async (req) => {
         // Resolve subject name from subject_id (content_items has TEXT `subject`,
         // not a `subject_id` FK column — filtering by subject_id directly returns 0 rows).
         let resolvedSubjectName: string | null = null;
+        let resolvedSubjectTopicIds: string[] = [];
+        let resolvedSubjectTopicNames: string[] = [];
+        let resolvedSubjectCanonicalNames: string[] = [];
         if (hasStrictSubjectScope) {
           try {
             const { data: subjRow } = await supabase
@@ -1395,6 +1398,18 @@ serve(async (req) => {
               .eq('id', subject_id as string)
               .maybeSingle();
             if (subjRow?.name) resolvedSubjectName = subjRow.name;
+
+            const { data: subjectTopics } = await supabase
+              .from('topics')
+              .select('id, name')
+              .eq('subject_id', subject_id as string)
+              .or('approved.is.null,approved.eq.true');
+
+            resolvedSubjectTopicIds = (subjectTopics || []).map((t: any) => t.id).filter(Boolean);
+            resolvedSubjectTopicNames = (subjectTopics || []).map((t: any) => t.name).filter(Boolean);
+            resolvedSubjectCanonicalNames = resolvedSubjectTopicNames
+              .map((name: string) => name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''))
+              .filter(Boolean);
           } catch (e) {
             console.warn('Could not resolve subject name for subject_id:', subject_id, e);
           }
@@ -1445,18 +1460,87 @@ serve(async (req) => {
             console.log(`🔒 SCOPED subject="${resolvedSubjectName}" keyword search → ${existingQuestions?.length ?? 0} rows`);
           }
         } else if (hasStrictSubjectScope && resolvedSubjectName) {
-          // Subject Quiz: random mix from all topics within the selected subject
-          let q = supabase
-            .from('content_items')
-            .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
-            .eq('category', 'mcq')
-            .eq('status', 'approved')
-            .eq('subject', resolvedSubjectName);
-          if (safeExcludeIds.length > 0) q = q.not('id', 'in', `(${safeExcludeIds.join(',')})`);
-          const r = await q.limit(qc * 3);
-          existingQuestions = r.data;
-          dbError = r.error;
-          console.log(`🔒 STRICT subject="${resolvedSubjectName}" → ${existingQuestions?.length ?? 0} rows`);
+          // Subject Quiz: random mix from all topics within the selected subject.
+          // Legacy cached rows often store the *topic name* in content_items.subject,
+          // so querying subject='Pakistan Studies' alone returns 0. Merge strict LMS
+          // topic_id rows with legacy topic/subject text rows from this subject's topics.
+          const mergedById = new Map<string, any>();
+          const subjectLimit = Math.max(qc * 3, 30);
+          const mergeRows = (rows: any[] | null | undefined) => {
+            for (const row of rows || []) {
+              if (row?.id && !mergedById.has(row.id)) mergedById.set(row.id, row);
+            }
+          };
+          const baseSelect = 'id, title, options, correct_option, explanation, topic, subject, difficulty';
+
+          if (resolvedSubjectTopicIds.length > 0) {
+            let qByTopicId = supabase
+              .from('content_items')
+              .select(baseSelect)
+              .eq('category', 'mcq')
+              .eq('status', 'approved')
+              .in('topic_id', resolvedSubjectTopicIds);
+            if (safeExcludeIds.length > 0) qByTopicId = qByTopicId.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            const rByTopicId = await qByTopicId.limit(subjectLimit);
+            if (rByTopicId.error) dbError = rByTopicId.error;
+            mergeRows(rByTopicId.data);
+          }
+
+          if (!dbError && resolvedSubjectCanonicalNames.length > 0) {
+            let qByCanonical = supabase
+              .from('content_items')
+              .select(baseSelect)
+              .eq('category', 'mcq')
+              .eq('status', 'approved')
+              .in('canonical_topic_name', resolvedSubjectCanonicalNames);
+            if (safeExcludeIds.length > 0) qByCanonical = qByCanonical.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            const rByCanonical = await qByCanonical.limit(subjectLimit);
+            if (rByCanonical.error) dbError = rByCanonical.error;
+            mergeRows(rByCanonical.data);
+          }
+
+          if (!dbError) {
+            const textScopes = [...new Set([resolvedSubjectName, ...resolvedSubjectTopicNames].filter(Boolean))];
+            if (textScopes.length > 0) {
+              let qByTopicText = supabase
+                .from('content_items')
+                .select(baseSelect)
+                .eq('category', 'mcq')
+                .eq('status', 'approved')
+                .in('topic', textScopes);
+              if (safeExcludeIds.length > 0) qByTopicText = qByTopicText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+              const rByTopicText = await qByTopicText.limit(subjectLimit);
+              if (rByTopicText.error) dbError = rByTopicText.error;
+              mergeRows(rByTopicText.data);
+
+              let qBySubjectText = supabase
+                .from('content_items')
+                .select(baseSelect)
+                .eq('category', 'mcq')
+                .eq('status', 'approved')
+                .in('subject', textScopes);
+              if (safeExcludeIds.length > 0) qBySubjectText = qBySubjectText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+              const rBySubjectText = await qBySubjectText.limit(subjectLimit);
+              if (rBySubjectText.error) dbError = rBySubjectText.error;
+              mergeRows(rBySubjectText.data);
+            }
+          }
+
+          if (!dbError) {
+            let qBySubjectLabel = supabase
+              .from('content_items')
+              .select(baseSelect)
+              .eq('category', 'mcq')
+              .eq('status', 'approved')
+              .ilike('topic', `%${resolvedSubjectName}%`);
+            if (safeExcludeIds.length > 0) qBySubjectLabel = qBySubjectLabel.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            const rBySubjectLabel = await qBySubjectLabel.limit(subjectLimit);
+            if (rBySubjectLabel.error) dbError = rBySubjectLabel.error;
+            mergeRows(rBySubjectLabel.data);
+          }
+
+          existingQuestions = Array.from(mergedById.values());
+          console.log(`🔒 STRICT subject="${resolvedSubjectName}" topics=${resolvedSubjectTopicIds.length} → ${existingQuestions?.length ?? 0} rows`);
         } else {
           // Legacy callers: original behavior
           let cacheQuery = supabase
@@ -1489,7 +1573,9 @@ serve(async (req) => {
           // Drop poisoned cache rows so they aren't served, forcing a fresh generation
           // for subjects where the AI historically drifted off-topic.
           const beforeCacheFilter = dbQuestions.length;
-          dbQuestions = dbQuestions.filter(q => validateQuestionTopic(q.question, topic));
+          if (hasStrictTopicScope || !hasStrictSubjectScope) {
+            dbQuestions = dbQuestions.filter(q => validateQuestionTopic(q.question, topic));
+          }
           const cacheDropped = beforeCacheFilter - dbQuestions.length;
           if (cacheDropped > 0) {
             console.warn(`[topic-guard] 🧹 Cache: dropped ${cacheDropped}/${beforeCacheFilter} poisoned rows for topic="${topic}"`);
