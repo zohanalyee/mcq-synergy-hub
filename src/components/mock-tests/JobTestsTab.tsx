@@ -176,6 +176,20 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
       // LEGACY PATH (no isolated definition found): old generate-test
       // ============================================================
 
+      // Guests must NEVER hit the AI edge function. Fail safely with a
+      // clear sign-in CTA so we don't burn credits or block them silently.
+      {
+        const { data: { user: legacyUser } } = await supabase.auth.getUser();
+        if (!legacyUser) {
+          toast.info(
+            `${test.title}: questions are being prepared. Please check back soon, or sign in free to generate with AI.`,
+            { duration: 6000 },
+          );
+          setGeneratingTestId(null);
+          return;
+        }
+      }
+
       // Extract syllabus data
       const syllabusData = test.syllabus
         .filter((item) => item.topic && item.percentage && item.percentage > 0)
