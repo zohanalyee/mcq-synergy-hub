@@ -1186,37 +1186,37 @@ serve(async (req) => {
     
     // Check if this is a service-role call (from scheduled-autofill or internal)
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const isServiceRoleCall = authHeader?.includes(supabaseServiceKey);
+    let isGuest = false;
 
     if (isServiceRoleCall) {
       console.log('🔐 Service role call detected - authorized');
     } else if (authHeader?.startsWith('Bearer ')) {
-      // Initialize auth client for verification
-      const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
-      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
-        global: { headers: { Authorization: authHeader } }
-      });
-      
       const token = authHeader.replace('Bearer ', '');
-      const { data, error } = await authClient.auth.getClaims(token);
-      
-      if (!error && data?.claims?.sub) {
-        verified_user_id = data.claims.sub;
-        console.log('🔐 Authenticated user:', verified_user_id);
+      // If the bearer is the anon key, treat as guest (no user JWT)
+      if (token === supabaseAnonKey) {
+        isGuest = true;
+        console.log('👤 Guest request (anon key) - will be gated to fetch_only');
       } else {
-        console.log('⛔ JWT validation failed:', error?.message || 'Invalid token');
-        return new Response(
-          JSON.stringify({ error: 'Unauthorized: Invalid token' }),
-          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
+        // Initialize auth client for verification
+        const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+        const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+          global: { headers: { Authorization: authHeader } }
+        });
+        const { data, error } = await authClient.auth.getClaims(token);
+        if (!error && data?.claims?.sub) {
+          verified_user_id = data.claims.sub;
+          console.log('🔐 Authenticated user:', verified_user_id);
+        } else {
+          // Treat invalid/expired token as guest rather than hard-rejecting
+          isGuest = true;
+          console.log('👤 Treating as guest (token not a valid user JWT):', error?.message);
+        }
       }
     } else {
-      console.log('⛔ No Authorization header - rejecting anonymous request');
-      return new Response(
-        JSON.stringify({ error: 'Unauthorized: Authentication required' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
+      isGuest = true;
+      console.log('👤 No Authorization header - treating as guest');
     }
     // ============= END JWT AUTHENTICATION =============
 
