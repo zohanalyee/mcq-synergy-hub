@@ -427,16 +427,14 @@ const TestSession = () => {
         .filter(([, s]) => s.total > 0 && s.correct / s.total < 0.7)
         .map(([k]) => k);
 
-      // Skip progress recording for guests (RLS forbids insert; would error).
-      const { data: { user: progUser } } = await supabase.auth.getUser();
-      if (progUser) {
-        const prog = await recordJobTestProgress(jobTestId, scorePct, weakTopics);
-        if (prog) {
-          if (prog.qualified) {
-            setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
-          } else {
-            setJobKeepGoing({ open: true, score: scorePct, weakTopics });
-          }
+      // Record job-test progress for both guests (by IP) and logged-in users.
+      // The edge function uses service-role internally, so guests don't hit RLS.
+      const prog = await recordJobTestProgress(jobTestId, scorePct, weakTopics);
+      if (prog) {
+        if (prog.qualified) {
+          setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
+        } else {
+          setJobKeepGoing({ open: true, score: scorePct, weakTopics });
         }
       }
     }

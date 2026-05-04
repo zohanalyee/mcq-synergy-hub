@@ -13,27 +13,19 @@ export interface JobTestProgress {
 export const jobTestIdFromTitle = (title: string): string =>
   title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
-export async function fetchJobTestProgress(jobTestId: string): Promise<JobTestProgress | null> {
-  try {
-    const { data, error } = await supabase.functions.invoke("job-test-progress", {
-      method: "GET" as any,
-      body: undefined,
-      headers: {} as any,
-      // supabase-js doesn't support GET with query string directly via invoke,
-      // so fall back to fetch
-    } as any);
-    if (!error && data) return data as JobTestProgress;
-  } catch {}
+const PROJECT_ID = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID;
+const ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+export async function fetchJobTestProgress(jobTestId: string): Promise<JobTestProgress | null> {
+  if (!jobTestId || !PROJECT_ID) return null;
   try {
-    const projectId = (import.meta as any).env?.VITE_SUPABASE_PROJECT_ID;
-    const url = `https://${projectId}.supabase.co/functions/v1/job-test-progress?job_test_id=${encodeURIComponent(jobTestId)}`;
+    const url = `https://${PROJECT_ID}.supabase.co/functions/v1/job-test-progress?job_test_id=${encodeURIComponent(jobTestId)}`;
     const { data: { session } } = await supabase.auth.getSession();
     const res = await fetch(url, {
       headers: {
         "Content-Type": "application/json",
-        apikey: (import.meta as any).env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        apikey: ANON_KEY,
+        ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : { Authorization: `Bearer ${ANON_KEY}` }),
       },
     });
     if (!res.ok) return null;
