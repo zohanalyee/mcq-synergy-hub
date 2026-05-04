@@ -7,7 +7,6 @@ export type UserRole = 'admin' | 'user';
 
 interface UserRoleContextType {
   userRole: UserRole;
-  setUserRole: (role: UserRole) => void;
   isAdmin: boolean;
   checkIsAdmin: () => boolean;
 }
@@ -19,6 +18,9 @@ interface UserRoleProviderProps {
 }
 
 export const UserRoleProvider: React.FC<UserRoleProviderProps> = ({ children }) => {
+  // setUserRole is intentionally kept private to this provider — exposing it through
+  // the context would allow any consumer to call setUserRole('admin') and reveal
+  // admin-only UI surfaces (DB access stays RLS-protected, but UI guards would leak).
   const [userRole, setUserRole] = useState<UserRole>('user');
   const { user } = useAuth();
 
@@ -66,7 +68,7 @@ export const UserRoleProvider: React.FC<UserRoleProviderProps> = ({ children }) 
   };
 
   return (
-    <UserRoleContext.Provider value={{ userRole, setUserRole, isAdmin, checkIsAdmin }}>
+    <UserRoleContext.Provider value={{ userRole, isAdmin, checkIsAdmin }}>
       {children}
     </UserRoleContext.Provider>
   );

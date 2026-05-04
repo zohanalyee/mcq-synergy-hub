@@ -1617,6 +1617,30 @@ serve(async (req) => {
     // Generate questions and insert directly to content_items - ZERO DATA LOSS
     // All questions are saved: approved or flagged_duplicate with modified title
     if (isBankOnly) {
+      // ============= ADMIN GUARD =============
+      // bank_only mode writes status='approved' content via service role and bypasses
+      // the per-user credit system. Restrict to admins or service-role (auto-fill) callers.
+      if (!isServiceRoleCall) {
+        if (!verified_user_id) {
+          return new Response(
+            JSON.stringify({ error: 'Authentication required for bank_only mode' }),
+            { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        const { data: roleRow } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', verified_user_id)
+          .eq('role', 'admin')
+          .maybeSingle();
+        if (!roleRow) {
+          console.log(`[generate-test] ⛔ bank_only blocked for non-admin user: ${verified_user_id}`);
+          return new Response(
+            JSON.stringify({ error: 'Admin privileges required for bank_only mode' }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+      }
       console.log(`🏭 BANK_ONLY MODE: Generating ${qc} questions for question bank with HYBRID DEDUP`);
       
       // ============= QUOTA CHECK (only for AI-generating modes) =============
