@@ -798,6 +798,36 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_transactions: {
+        Row: {
+          action_type: string
+          amount: number
+          balance_after: number | null
+          created_at: string
+          details: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          action_type: string
+          amount: number
+          balance_after?: number | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          action_type?: string
+          amount?: number
+          balance_after?: number | null
+          created_at?: string
+          details?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       custom_test_sessions: {
         Row: {
           created_at: string
@@ -3219,10 +3249,17 @@ export type Database = {
           updated_count: number
         }[]
       }
-      deduct_credits: {
-        Args: { p_amount: number; p_user_id: string }
-        Returns: Json
-      }
+      deduct_credits:
+        | { Args: { p_amount: number; p_user_id: string }; Returns: Json }
+        | {
+            Args: {
+              p_action_type?: string
+              p_amount: number
+              p_details?: string
+              p_user_id: string
+            }
+            Returns: Json
+          }
       get_ai_usage_today: {
         Args: never
         Returns: {
@@ -3296,6 +3333,17 @@ export type Database = {
           system_name: string
           topic_id: string
           topic_name: string
+        }[]
+      }
+      get_my_credit_history: {
+        Args: { p_limit?: number }
+        Returns: {
+          action_type: string
+          amount: number
+          balance_after: number
+          created_at: string
+          details: string
+          id: string
         }[]
       }
       get_my_credits: {
@@ -3399,6 +3447,16 @@ export type Database = {
         Returns: undefined
       }
       is_admin: { Args: { user_id?: string }; Returns: boolean }
+      log_credit_transaction: {
+        Args: {
+          p_action_type: string
+          p_amount: number
+          p_balance_after?: number
+          p_details?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       match_document_sections: {
         Args: {
           filter_document_id?: string
