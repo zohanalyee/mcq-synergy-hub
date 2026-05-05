@@ -27,6 +27,7 @@ type JobTestsTabProps = {
 
 export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [expandedJobTest, setExpandedJobTest] = useState<string | null>(null);
   const [customizeJobTest, setCustomizeJobTest] = useState<string | null>(null);
   const [generatingTestId, setGeneratingTestId] = useState<string | null>(null);
