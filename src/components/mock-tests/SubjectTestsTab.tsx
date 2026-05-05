@@ -20,6 +20,7 @@ type SubjectTestsTabProps = {
 
 export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: SubjectTestsTabProps) => {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [filter, setFilter] = useState("all");
   const [expandedTest, setExpandedTest] = useState<number | null>(null);
   const [customizeTest, setCustomizeTest] = useState<number | null>(null);
