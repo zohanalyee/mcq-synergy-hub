@@ -79,10 +79,7 @@ const QuizPlayer = () => {
       try {
         let data: any = null;
         if (sessionId.startsWith('guest-')) {
-          try {
-            const raw = sessionStorage.getItem(`mcqsai_guest_quiz_${sessionId}`);
-            if (raw) data = JSON.parse(raw);
-          } catch {}
+          data = loadGuestSession(sessionId);
         } else {
           const { data: row, error: e } = await supabase
             .from("custom_test_sessions")
