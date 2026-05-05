@@ -742,32 +742,42 @@ const SubjectContent = () => {
             aiCount={aiCount}
           />
           
-          {/* Loading State */}
-          {isLoadingMCQs && !isGenerating ? (
+          {/* Guest: minimal Start Practice card only — no MCQ preview, no AI controls */}
+          {!user ? (
+            <div className="text-center py-12">
+              <Book className="w-16 h-16 mx-auto text-primary/40 mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                {selectedTopic !== "all" ? selectedTopic : title} Practice
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
+                Choose how many questions you want, then start a quick practice session.
+              </p>
+              <Button onClick={startGuestSubjectQuiz} size="lg" className="gap-2" disabled={isLoadingMCQs}>
+                <Sparkles className="w-5 h-5" />
+                {isLoadingMCQs ? 'Loading...' : 'Start Practice'}
+              </Button>
+            </div>
+          ) : isLoadingMCQs && !isGenerating ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               <span className="ml-3 text-muted-foreground">Loading questions...</span>
             </div>
           ) : loadError ? (
-            /* Error State */
             <div className="text-center py-12">
               <AlertCircle className="w-16 h-16 mx-auto text-destructive/60 mb-4" />
               <h3 className="text-lg font-medium mb-2">Failed to Load Questions</h3>
               <p className="text-muted-foreground mb-6">{loadError}</p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={user ? handleRefresh : startGuestSubjectQuiz}>
+                <Button variant="outline" onClick={handleRefresh}>
                   Try Again
                 </Button>
-                {user && (
-                  <Button onClick={handleGenerateNew} className="gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    Generate with AI
-                  </Button>
-                )}
+                <Button onClick={handleGenerateNew} className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Generate with AI
+                </Button>
               </div>
             </div>
           ) : filteredMCQs.length > 0 ? (
-            /* MCQ List */
             <div className="space-y-4">
               {filteredMCQs.map((mcq, index) => (
                 <PracticeMCQCard
@@ -785,21 +795,19 @@ const SubjectContent = () => {
               ))}
             </div>
           ) : (
-            /* Empty State with Generate Button */
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
               <h3 className="text-lg font-medium mb-2">No MCQs Available Yet</h3>
               <p className="text-muted-foreground mb-6">
-                {user
-                  ? `Generate practice questions using AI for "${selectedTopic !== "all" ? selectedTopic : title}"`
-                  : `Start a short practice quiz from available questions for "${selectedTopic !== "all" ? selectedTopic : title}"`}
+                Generate practice questions using AI for "{selectedTopic !== "all" ? selectedTopic : title}"
               </p>
-              <Button onClick={user ? handleGenerateNew : startGuestSubjectQuiz} size="lg" className="gap-2">
+              <Button onClick={handleGenerateNew} size="lg" className="gap-2">
                 <Sparkles className="w-5 h-5" />
-                {user ? `Generate ${questionCount} Questions` : 'Start Practice'}
+                Generate {questionCount} Questions
               </Button>
             </div>
           )}
+
 
           {/* Related Practice Section */}
           <div className="mt-12 pt-8 border-t border-border">
