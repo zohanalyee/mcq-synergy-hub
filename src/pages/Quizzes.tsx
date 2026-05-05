@@ -81,7 +81,7 @@ const Quizzes = () => {
     topicId?: string;
     topicName?: string;
     questionCount: number;
-  }): Promise<any[]> => {
+  }): Promise<{ questions: any[]; rowCount: number }> => {
     const fetchLimit = Math.max(params.questionCount * 3, 60);
 
     let rows: any[] = [];
@@ -97,7 +97,7 @@ const Quizzes = () => {
         .limit(fetchLimit);
       if (error) {
         console.error('[Guest Topic Quiz] DB error:', error);
-        return [];
+        return { questions: [], rowCount: 0 };
       }
       rows = data || [];
     } else {
@@ -206,7 +206,7 @@ const Quizzes = () => {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
-    return shuffled.slice(0, params.questionCount);
+    return { questions: shuffled.slice(0, params.questionCount), rowCount: rows.length };
   };
 
   // Shared starter: pull MCQs from the bank (DB-only) and create a test session
@@ -239,15 +239,16 @@ const Quizzes = () => {
 
     if (!user) {
       // GUEST PATH — direct DB query, no edge function, no AI cost.
-      questions = await fetchGuestQuestionsFromDB({
+      const guestResult = await fetchGuestQuestionsFromDB({
         subjectId: opts.subjectId,
         subjectName: subjectRow.name,
         topicId: opts.topicId,
         topicName: opts.topicName,
         questionCount: opts.questionCount,
       });
+      questions = guestResult.questions;
 
-      if (questions.length === 0) {
+      if (guestResult.rowCount === 0) {
         toast.info("Iss topic ke liye sign in karein! / Sign in to access this topic!", {
           action: {
             label: "Sign In Free",
@@ -264,8 +265,9 @@ const Quizzes = () => {
         return;
       }
 
-      if (questions.length > 0) {
-        // Guest quiz must start whenever DB returned usable rows; no login block.
+      if (questions.length === 0) {
+        toast.error("Questions exist but could not be loaded. Please try another subject/topic.");
+        return;
       }
     } else {
       // LOGGED-IN PATH — hybrid (DB + AI) via edge function (unchanged behavior).
