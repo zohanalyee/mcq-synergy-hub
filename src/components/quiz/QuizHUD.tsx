@@ -31,12 +31,12 @@ const QuizHUD = ({ title, current, total, streak, score, onExit }: QuizHUDProps)
 
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold truncate">{title}</p>
+              <p className="text-sm font-bold truncate text-brand-gradient">{title}</p>
               <span className="text-xs text-muted-foreground tabular-nums shrink-0">
                 Q {current} / {total}
               </span>
             </div>
-            <Progress value={pct} className="h-1.5 mt-1.5" />
+            <Progress value={pct} className="h-1.5 mt-1.5" indicatorClassName="bg-brand-gradient" />
           </div>
         </div>
 
