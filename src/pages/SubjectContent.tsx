@@ -235,7 +235,9 @@ const SubjectContent = () => {
     setIsLoaded(true);
     loadTopicsFromDB();
 
-    // Cache-first: try offline cache before network
+    if (!user) return;
+
+    // Cache-first: try offline cache before network for logged-in users only
     if (subjectId) {
       const cached = getCachedQuestions(subjectId);
       if (cached && cached.questions.length > 0) {
@@ -278,8 +280,6 @@ const SubjectContent = () => {
         return;
       }
     }
-
-    if (!user) return;
 
     // No cache hit — fetch from DB for logged-in practice mode only
     loadMCQs(false, true);
