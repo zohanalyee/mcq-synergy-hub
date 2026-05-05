@@ -1,41 +1,61 @@
-I understand the frustration: the codebase still contains a route-level login gate on `/mock-tests`, so guests can be redirected to sign-in before the DB-only job-test path ever runs. There are also a couple of places where guest/legacy paths can still behave inconsistently. I will fix the actual regression points instead of redoing the same phase work.
+# Fix Guest Experience: Quiz Fetch + Unified Result Gate + Minimal UI
 
-Plan:
+## Goal
+Guests should: (1) be able to start any quiz/test from cached DB content without errors, (2) see a single, friendly bilingual sign-in gate after completion (never the full premium result screen), (3) see a minimal options UI with no AI/credit/save controls.
 
-1. Remove the login gate from the job test page
-  - Change `/mock-tests` in `src/App.tsx` from `InstantAuthGuard` to direct `<MockTests />`.
-  - Keep analytics/profile/AI coach protected, but make recruitment/job tests browseable and playable for guests.
-  - Update the route comment to reflect the intended rule: job tests are public; only progress persistence and AI-only fallback features may require sign-in.
-2. Make guest job tests strictly DB-only
-  - Keep the existing isolated path in `JobTestsTab`: published `job_test_definitions` + approved `job_test_questions` are used directly from the database.
-  - Ensure guests never reach the legacy `generate-test` edge function from job tests.
-  - If no approved DB questions exist, show the “questions are being prepared” message, not a forced login page and not an AI call.
-3. Fix progress/unlock behavior for guests without breaking RLS
-  - The `job-test-progress` edge function already supports guest lookup by IP using service role internally.
-  - `TestSession` currently skips recording job progress for guests; I will change it to call `recordJobTestProgress` for job-test sessions for both guests and logged-in users.
-  - This allows guest unlock/weak-topic progress through the edge function without client-side DB writes.
-4. Fix the progress fetch bug
-  - `fetchJobTestProgress()` first calls `supabase.functions.invoke("job-test-progress", { method: "GET" })` without passing `job_test_id`, which can produce a bad request before falling back.
-  - I will remove that broken invoke attempt and use the explicit fetch URL with `?job_test_id=...` directly.
-  - This avoids noisy failures and makes unlock caps reliable.
-5. Stop subject mock tests from charging guests unexpectedly
-  - In `SubjectTestsTab`, guests can currently hit the old flow and may end up calling `generate-test` if the local bank has a deficit.
-  - I will make guest subject-test behavior match your rule: use available DB/bank questions only; do not call AI edge functions as guest.
-  - If no bank questions exist, show a friendly “questions not available yet / sign in to generate” message without burning credits.
-  - If some bank questions exist, start with those questions rather than failing or generating.
-6. Improve the sign-in messaging on this path
-  - Remove the route-level “Sign in to take tests” blocker for job tests.
-  - Only show sign-in prompts when the user requests an authenticated-only benefit, such as AI generation, analytics, or saved coach tracking.
-7. Sanity checks after implementation
-  - Verify `/mock-tests` route is public.
-  - Verify guest job test start creates a `guest-*` session in `sessionStorage` and navigates to `/test-session/...`.
-  - Verify the DB-only path does not call `generate-test` for guests.
-  - Verify logged-in users can still use progress/unlock and AI fallback where intended.
+## Files to change
 
-No new AI generation or credit-consuming behavior will be added for guests. The key fix is removing the remaining auth guard and tightening the fallback paths so the earlier DB-only work is actually reachable.
+### 1. `src/pages/Quizzes.tsx` — fix guest fetch + minimal UI
+- **Bug fix in `fetchGuestQuestionsFromDB`**: the current implementation chains `.not('correct_option', 'is', null)` on `content_items`. In the actual schema correct answers may live in `correct_option` OR inside the `options` JSON (`isCorrect` / `correctIndex`) — so valid rows get filtered out and the function returns `[]`, producing the false "No cached questions" toast.
+  - Remove the strict `.not('correct_option', 'is', null)` filter. Keep only `status='approved'`, `question is not null`, and (for topic quiz) `topic_id`.
+  - For subject quiz keep the 4-tier fallback (topic_id → canonical_topic_name → subject ilike → topic name) but with the same relaxed filter.
+  - After fetch, run rows through `normalizeQuestion` from `@/lib/testEvaluation` and drop any whose `resolveCorrectAnswer` returns empty. This filters in code where the resolver actually understands every storage shape.
+- **Toast wording**: when truly empty, show bilingual message with Sign-In action (preserve `saveIntentRaw`).
+- **Hide for guests** (wrap in `{user && ...}`):
+  - "Generate with AI" / `fetchOnly` toggle and credits text.
+  - Time limit slider (default to 15 min silently).
+  - Question-count slider — replace with a simple `Select` of `[10, 20]` for guests; keep slider 10–50 for users.
+- Add a small bilingual hint under guest forms: "📚 موجودہ سوالات سے مشق کریں / Practice with available questions".
 
-&nbsp;
+### 2. `src/components/quiz/GuestResultGate.tsx` — NEW unified gate
+Replace the existing `QuizSignInGate` with a richer component used everywhere:
+- Props: `open, onClose, score, total, correctCount, returnPath`.
+- Bilingual (Urdu + English) headline, big percentage, 5 benefits list (explanations, progress tracking, weak-area AI analysis, 100 AI Q/day, AI Coach dashboard).
+- Two buttons: "دوبارہ کوشش / Try Again" (calls `onClose` → navigates to `returnPath`) and "مفت سائن ان / Sign In Free" (calls `saveIntentRaw({ action, path, data:{score,total,correctCount} })` then `navigate('/auth')`).
+- Trust badge line: "🔒 آپ کا ڈیٹا محفوظ ہے / Your data is safe & secure".
+- Pure Tailwind/shadcn Dialog — no inline styles.
 
-(very important):
+### 3. `src/pages/QuizPlayer.tsx` — use GuestResultGate
+- Replace `QuizSignInGate` import with `GuestResultGate` and pass `correctCount`, `total`, `score`, `returnPath`. Remove the old basic-score branch.
 
-Ensure guest job tests always use only approved DB questions and never trigger any AI generation under any condition.”
+### 4. `src/pages/TestSession.tsx` — gate guest results
+- After test submission/finish, if `!user` render `GuestResultGate` (with computed `correctCount`/`total`) instead of the full `TestResults`/analytics view. Keep guest progress recording (already wired via `recordJobTestProgress` with `is_guest:true`).
+- Keep existing guest sessionStorage loader (`mcqsai_guest_*`) — already implemented; verify it runs before any DB fetch and shows a clean "Session expired" toast with redirect when the key is missing.
+
+### 5. `src/components/mock-tests/JobTestsTab.tsx` — minimal guest dialog
+- In the test-settings dialog, when `!user`: show only a native `<select>` of `[10, 20]` and a single Start button (bilingual). Hide difficulty, time limit, unlocked-progress info, reward dialogs preview, and any AI-cost text.
+- Logged-in branch unchanged.
+
+### 6. `src/components/mock-tests/SubjectTestsTab.tsx` — minimal guest dialog
+- Same minimal pattern as JobTestsTab for guests: only question-count `[10,20]`, single Start button, bilingual hint.
+- Confirm guest path stays sessionStorage-only (no `generate-test` invoke) — already implemented; do not regress.
+
+### 7. `src/pages/CustomSyllabus.tsx` / `src/components/syllabus-builder/SyllabusBuilder.tsx`
+- Hide for guests: "Save Syllabus" button, AI/fetch-only toggle, difficulty advanced controls, per-subject sliders above 20.
+- Cap question count selector at `[10, 20]` for guests.
+- After completion (TestSession handles render), gate is automatically applied via fix #4.
+
+### 8. Remove dead code
+- Delete `src/components/quiz/QuizSignInGate.tsx` (superseded by `GuestResultGate`). Update any other imports if grep finds them.
+
+## Out of scope
+- No DB migrations. No edge function changes. No new RLS. No changes to logged-in flows beyond removing the duplicate sign-in modal.
+- No changes to credit accounting — guests never call edge functions in any of these paths.
+
+## Acceptance (test as guest in incognito)
+1. `/quizzes`: pick subject → Start → questions load (no false "No cached" toast). Finish → `GuestResultGate` appears (bilingual). Sign In Free preserves intent.
+2. `/quizzes` UI: no AI toggle, no credits text, no time slider, only 10/20 count.
+3. `/mock-tests` Job Tests: minimal start dialog → Start → finish → `GuestResultGate`.
+4. `/mock-tests` Subject Tests: same minimal flow, no edge function call (verify Network tab — no `generate-test` request).
+5. `/custom-syllabus`: no Save button, no AI toggle, only 10/20 count, finish → `GuestResultGate`.
+6. Logged-in users: zero regressions — full controls, full result screens, AI generation, analytics intact.
