@@ -84,7 +84,7 @@ export const loadGuestQuestions = async (
       .select(BASE_SELECT)
       .eq('status', 'approved')
       .eq('topic_id', params.topicId)
-      .not('question', 'is', null)
+      .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] topic_id error:', error);
     dedupePush(out, seen, data);
@@ -101,7 +101,7 @@ export const loadGuestQuestions = async (
       .select(BASE_SELECT)
       .eq('status', 'approved')
       .in('topic_id', params.topicIds)
-      .not('question', 'is', null)
+      .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] topic_ids error:', error);
     dedupePush(out, seen, data);
@@ -137,7 +137,7 @@ export const loadGuestQuestions = async (
         .select(BASE_SELECT)
         .eq('status', 'approved')
         .in('topic_id', ids)
-        .not('question', 'is', null)
+        .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] subj.topic_id error:', error);
       dedupePush(out, seen, data);
@@ -149,7 +149,7 @@ export const loadGuestQuestions = async (
         .select(BASE_SELECT)
         .eq('status', 'approved')
         .in('canonical_topic_name', canonicalNames as string[])
-        .not('question', 'is', null)
+        .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] canonical error:', error);
       dedupePush(out, seen, data);
@@ -161,7 +161,7 @@ export const loadGuestQuestions = async (
         .select(BASE_SELECT)
         .eq('status', 'approved')
         .in('topic', topicNames as string[])
-        .not('question', 'is', null)
+        .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] topic-name error:', error);
       dedupePush(out, seen, data);
@@ -175,7 +175,7 @@ export const loadGuestQuestions = async (
       .select(BASE_SELECT)
       .eq('status', 'approved')
       .ilike('subject', params.subjectName)
-      .not('question', 'is', null)
+      .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] subject ilike error:', error);
     dedupePush(out, seen, data);
