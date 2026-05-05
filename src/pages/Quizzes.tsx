@@ -19,7 +19,7 @@ import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
 import { saveIntentRaw } from "@/hooks/useAuthIntent";
 import PageHeader from "@/components/ui/PageHeader";
-import { resolveCorrectAnswer, normalizeQuestion } from "@/lib/testEvaluation";
+import { normalizeQuestion } from "@/lib/testEvaluation";
 
 interface TopicItem {
   id: string;
@@ -192,23 +192,13 @@ const Quizzes = () => {
       rows = merged;
     }
 
-    if (rows.length === 0) return [];
+    console.log('ROWS:', rows.length);
 
-    // Normalize + drop rows where the resolver can't find a correct answer.
-    // The resolver understands every storage shape (correct_option letter,
-    // options[].isCorrect, correctIndex, etc.), so this is the most reliable
-    // post-fetch validity check.
     const valid = rows
       .map((r: any) => normalizeQuestion(r))
-      .filter((q: any) => {
-        try {
-          return Boolean(resolveCorrectAnswer(q));
-        } catch {
-          return false;
-        }
-      });
+      .filter((q: any) => q && q.question && q.options);
 
-    if (valid.length === 0) return [];
+    console.log('AFTER FILTER:', valid.length);
 
     // Fisher–Yates shuffle then slice
     const shuffled = [...valid];
