@@ -20,6 +20,7 @@ import {
   jobTestIdFromTitle,
 } from "@/services/jobTestProgressService";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -142,21 +143,20 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         };
 
         // GUEST PATH — RLS forbids inserting into custom_test_sessions for
-        // anonymous users. Store the session in sessionStorage and route
-        // TestSession with a guest-* id (TestSession knows how to load it).
+        // anonymous users. Store the session in canonical guest session and
+        // route TestSession with a guest-* id.
         if (!user) {
-          const guestId = (typeof crypto !== "undefined" && "randomUUID" in crypto)
-            ? crypto.randomUUID()
-            : Math.random().toString(36).slice(2);
-          const sessionId = `guest-${guestId}`;
-          try {
-            sessionStorage.setItem(
-              `mcqsai_guest_test_${sessionId}`,
-              JSON.stringify({ id: sessionId, ...sessionPayload }),
-            );
-          } catch {}
+          const session = buildGuestSession({
+            session_name: `Job Test: ${test.title}`,
+            questions: finalQuestions,
+            time_limit: settings.duration,
+            subjects: subjects as string[],
+            topics: subjects as string[],
+            difficulty_levels: [settings.difficulty],
+          });
+          saveGuestSession(session);
           toast.success(`Test ready with ${finalQuestions.length} questions!`, { duration: 3500 });
-          navigate(`/test-session/${sessionId}`, { state: { returnPath: "/mock-tests" } });
+          navigate(`/test-session/${session.id}`, { state: { returnPath: "/mock-tests" } });
           setGeneratingTestId(null);
           return;
         }
