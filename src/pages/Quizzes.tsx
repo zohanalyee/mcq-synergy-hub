@@ -258,12 +258,12 @@ const Quizzes = () => {
       });
 
       if (questions.length === 0) {
-        toast.info("No cached questions yet for this selection. Sign in free to generate with AI!", {
+        toast.info("Iss topic ke liye sign in karein! / Sign in to access this topic!", {
           action: {
-            label: "Sign In",
+            label: "Sign In Free",
             onClick: () => {
               saveIntentRaw({
-                action: 'Generate quiz',
+                action: 'Start quiz',
                 path: location.pathname,
               });
               navigate('/auth');
