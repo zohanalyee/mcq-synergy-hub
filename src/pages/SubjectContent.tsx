@@ -721,24 +721,25 @@ const SubjectContent = () => {
             topicCount={topicCount || topics.length}
           />
           
-          {/* Mode Toggle Section */}
-          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <ModeToggle mode={studyMode} onModeChange={setStudyMode} />
-            
-            <div className="text-sm text-muted-foreground">
-              {studyMode === "read" ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                  Correct answers are highlighted for memorization
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-primary"></span>
-                  Click options to reveal Right/Wrong feedback
-                </span>
-              )}
+          {user && (
+            <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <ModeToggle mode={studyMode} onModeChange={setStudyMode} />
+              
+              <div className="text-sm text-muted-foreground">
+                {studyMode === "read" ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    Correct answers are highlighted for memorization
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-primary"></span>
+                    Click options to reveal Right/Wrong feedback
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
           
           {/* MCQ Controls Panel */}
           <MCQControls
@@ -752,6 +753,7 @@ const SubjectContent = () => {
             onRefresh={handleRefresh}
             onGenerate={handleGenerateNew}
             isLoading={isLoadingMCQs}
+            isGuest={!user}
             questionSource={questionSource}
             totalQuestions={mcqs.length}
             cachedCount={cachedCount}
