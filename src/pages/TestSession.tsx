@@ -61,6 +61,7 @@ const TestSession = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const [testData, setTestData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
