@@ -21,6 +21,8 @@ import { getCachedQuestions, setCachedQuestions } from "@/services/offlineSyncSe
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { generateSlugUrl } from "@/utils/slugify";
 
 interface MCQItem {
   id: string;
@@ -44,6 +46,7 @@ const SubjectContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
@@ -186,9 +189,11 @@ const SubjectContent = () => {
       }
     }
 
-    // No cache hit — fetch from DB
+    if (!user) return;
+
+    // No cache hit — fetch from DB for logged-in practice mode only
     loadMCQs(false, true);
-  }, [title, navigate, subjectId]);
+  }, [title, navigate, subjectId, user]);
 
   // Auto-select topic from URL query parameter after topics are loaded
   useEffect(() => {
