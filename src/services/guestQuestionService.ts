@@ -175,14 +175,19 @@ export const loadGuestQuestions = async (
     dedupePush(out, seen, data);
   }
 
-  const valid = out.filter(validate);
+  const valid = out
+    .map((q) => ({
+      ...q,
+      question: q.question || q.title,
+      options: normalizeOptions(q.options),
+    }))
+    .filter(validate);
   const questions = shuffle(valid).slice(0, params.questionCount);
 
-  // Single, well-known debug log for guest flow visibility.
-  console.log('GUEST FLOW:', {
-    user: null,
-    rows: out.length,
-    questions: questions.length,
+  console.log('GUEST FLOW DEBUG:', {
+    totalRows: out.length,
+    afterValidation: valid.length,
+    sample: out[0],
   });
 
   return { rows: out, questions };
