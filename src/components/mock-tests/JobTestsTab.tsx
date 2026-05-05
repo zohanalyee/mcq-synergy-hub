@@ -440,6 +440,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         defaultQuestions={dialogTest?.questions || 20}
         defaultDuration={dialogTest?.duration || 90}
         defaultDifficulty="medium"
+        isGuest={!user}
         onStart={handleDialogStart}
         isGenerating={generatingTestId === dialogTest?.id}
       />
