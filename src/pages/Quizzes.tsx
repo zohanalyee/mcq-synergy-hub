@@ -263,6 +263,10 @@ const Quizzes = () => {
         });
         return;
       }
+
+      if (questions.length > 0) {
+        // Guest quiz must start whenever DB returned usable rows; no login block.
+      }
     } else {
       // LOGGED-IN PATH — hybrid (DB + AI) via edge function (unchanged behavior).
       const { data: genData, error: genErr } = await supabase.functions.invoke('generate-test', {
