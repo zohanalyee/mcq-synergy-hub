@@ -127,14 +127,16 @@ const SubjectContent = () => {
     };
   };
 
-  const startGuestSubjectQuiz = async () => {
+  const startGuestSubjectQuiz = async (overrideTopic?: { id?: string; name: string }) => {
     const requestedCount = Math.min(parseInt(questionCount) || 10, 20);
     setIsLoadingMCQs(true);
     setLoadError(null);
     try {
-      const selectedTopicObj = selectedTopicId !== "all"
-        ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
-        : undefined;
+      const selectedTopicObj = overrideTopic
+        ? dbTopics.find(t => t.id === overrideTopic.id || t.name === overrideTopic.name) || { id: overrideTopic.id, name: overrideTopic.name } as TopicFromDB
+        : selectedTopicId !== "all"
+          ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
+          : undefined;
 
       const { rows, questions } = await loadGuestQuestions({
         subjectId,
