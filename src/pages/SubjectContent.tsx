@@ -649,6 +649,7 @@ const SubjectContent = () => {
 
   // SMART TOPIC SWITCHING: Check local cache first before API call
   useEffect(() => {
+    if (!user) return;
     if (title && isLoaded && selectedTopicId !== "all") {
       // First check if we already have questions for this topic in memory
       const existingForTopic = mcqs.filter(m => m.topic === selectedTopic);
@@ -664,7 +665,7 @@ const SubjectContent = () => {
       // When switching back to "all", just use client-side filtering
       console.log('📋 Showing all topics from local cache');
     }
-  }, [selectedTopicId]);
+  }, [selectedTopicId, user]);
 
   // Filter MCQs by selected topic (client-side filtering for already loaded MCQs)
   const filteredMCQs = selectedTopic === "all" 
