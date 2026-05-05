@@ -111,7 +111,7 @@ export const loadGuestQuestions = async (
   if (out.length < fetchLimit && params.subjectId) {
     const { data: topicRows, error: topicErr } = await supabase
       .from('topics')
-      .select('id, name, canonical_name')
+      .select('id, name')
       .eq('subject_id', params.subjectId);
     if (topicErr) console.error('[guestQuestions] topics lookup error:', topicErr);
 
