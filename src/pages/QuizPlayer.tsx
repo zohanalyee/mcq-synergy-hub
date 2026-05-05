@@ -21,6 +21,7 @@ import QuizOption, { QuizOptionState } from "@/components/quiz/QuizOption";
 import QuizTimerRing from "@/components/quiz/QuizTimerRing";
 import QuizResultScreen from "@/components/quiz/QuizResultScreen";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
+import { loadGuestSession } from "@/lib/guestSession";
 import { useAuth } from "@/contexts/AuthContext";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
@@ -78,10 +79,7 @@ const QuizPlayer = () => {
       try {
         let data: any = null;
         if (sessionId.startsWith('guest-')) {
-          try {
-            const raw = sessionStorage.getItem(`mcqsai_guest_quiz_${sessionId}`);
-            if (raw) data = JSON.parse(raw);
-          } catch {}
+          data = loadGuestSession(sessionId);
         } else {
           const { data: row, error: e } = await supabase
             .from("custom_test_sessions")

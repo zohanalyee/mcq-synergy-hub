@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
 import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
 import { useAuth } from "@/contexts/AuthContext";
+import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
 type SubjectTestsTabProps = {
   allMockTests: any[];
@@ -108,13 +109,28 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
       if (allQuestions.length === 0) {
         if (!user) {
-          toast.info('No cached questions yet for this topic. Sign in free to generate with AI!', { duration: 6000 });
+          toast.info('No questions available yet for this topic.', { duration: 5000 });
           return;
         }
         throw new Error('No questions available for this topic. Please try another.');
       }
 
-      // 3. Create session AFTER AI completes — with actual question count
+      // GUEST PATH — store in canonical guest session and route.
+      if (!user) {
+        const session = buildGuestSession({
+          session_name: `Test: ${test.title}`,
+          questions: allQuestions,
+          time_limit: options.timeLimit,
+          subjects: options.subjects as string[],
+          topics: (options.topics || []) as string[],
+          difficulty_levels: [options.difficulty],
+        });
+        saveGuestSession(session);
+        toast.success(`Test ready with ${allQuestions.length} questions!`);
+        navigate(`/test-session/${session.id}`, { state: { returnPath: '/mock-tests' } });
+        return;
+      }
+
       const sessionPayload = {
         user_id: user?.id || null,
         session_name: `Test: ${test.title}`,
@@ -128,20 +144,6 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         is_active: true,
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       };
-
-      // GUEST PATH — store in sessionStorage (RLS forbids anonymous inserts).
-      if (!user) {
-        const guestId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
-          ? crypto.randomUUID()
-          : Math.random().toString(36).slice(2);
-        const sessionId = `guest-${guestId}`;
-        try {
-          sessionStorage.setItem(`mcqsai_guest_test_${sessionId}`, JSON.stringify({ id: sessionId, ...sessionPayload }));
-        } catch {}
-        toast.success(`Test ready with ${allQuestions.length} questions!`);
-        navigate(`/test-session/${sessionId}`, { state: { returnPath: '/mock-tests' } });
-        return;
-      }
 
       const { data: session, error: sessionError } = await supabase
         .from('custom_test_sessions')

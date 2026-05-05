@@ -18,6 +18,8 @@ import { mockTopics } from "@/data/topicsData";
 import { supabase } from "@/integrations/supabase/client";
 import { getTopicsBySubject } from "@/services/supabaseTopicService";
 import { getCachedQuestions, setCachedQuestions } from "@/services/offlineSyncService";
+import { loadGuestQuestions } from "@/services/guestQuestionService";
+import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -132,53 +134,32 @@ const SubjectContent = () => {
       const selectedTopicObj = selectedTopicId !== "all"
         ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
         : undefined;
-      let query = supabase
-        .from('content_items')
-        .select('id, title, question, options, correct_option, explanation, difficulty, subject, topic, topic_id')
-        .eq('status', 'approved')
-        .not('question', 'is', null)
-        .limit(Math.max(requestedCount * 3, 40));
 
-      if (selectedTopicObj?.id) {
-        query = query.eq('topic_id', selectedTopicObj.id);
-      } else if (subjectId) {
-        const topicIds = dbTopics.map(t => t.id).filter(Boolean);
-        if (topicIds.length > 0) query = query.in('topic_id', topicIds);
-        else query = query.ilike('subject', title || '');
-      } else {
-        query = query.ilike('subject', title || '');
-      }
+      const { rows, questions } = await loadGuestQuestions({
+        subjectId,
+        subjectName: title,
+        topicId: selectedTopicObj?.id,
+        topicIds: !selectedTopicObj ? dbTopics.map(t => t.id).filter(Boolean) : undefined,
+        questionCount: requestedCount,
+      });
 
-      const { data, error } = await query;
-      if (error) throw error;
-      const rows = data || [];
-      const questions = rows
-        .map(transformBankQuestion)
-        .filter(q => q && q.question && q.options.length > 0)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, requestedCount);
+      console.log('GUEST FLOW:', { user, rows: rows.length, questions: questions.length });
 
-      if (rows.length === 0 || questions.length === 0) {
+      if (questions.length === 0) {
         toast({ title: "No questions available", description: "Please choose another topic or subject." });
         return;
       }
 
-      const guestId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2);
-      const guestSession = {
-        id: `guest-${guestId}`,
+      const session = buildGuestSession({
         session_name: `${title || 'Subject'} Practice`,
+        questions,
+        time_limit: 15,
         subjects: title ? [title] : [],
         topics: selectedTopicObj?.name ? [selectedTopicObj.name] : [],
-        difficulty_levels: ['Easy', 'Medium', 'Hard'],
-        question_count: questions.length,
-        time_limit: 15,
-        questions,
-        is_active: true,
-      };
-      sessionStorage.setItem(`mcqsai_guest_quiz_${guestSession.id}`, JSON.stringify(guestSession));
-      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', guestSession.id)}`, {
+      });
+      saveGuestSession(session);
+
+      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', session.id)}`, {
         state: { returnPath: location.pathname },
       });
     } catch (error: any) {
@@ -742,51 +723,85 @@ const SubjectContent = () => {
             </div>
           )}
           
-          {/* MCQ Controls Panel */}
-          <MCQControls
-            questionCount={questionCount}
-            difficulty={difficulty}
-            selectedTopicId={selectedTopicId}
-            topics={dbTopics.map(t => ({ id: t.id, name: t.name }))}
-            onQuestionCountChange={handleQuestionCountChange}
-            onDifficultyChange={handleDifficultyChange}
-            onTopicChange={handleTopicChange}
-            onRefresh={user ? handleRefresh : startGuestSubjectQuiz}
-            onGenerate={handleGenerateNew}
-            isLoading={isLoadingMCQs}
-            isGuest={!user}
-            questionSource={questionSource}
-            totalQuestions={mcqs.length}
-            cachedCount={cachedCount}
-            aiCount={aiCount}
-          />
+          {/* MCQ Controls Panel — hidden for guests (minimal start UI below) */}
+          {user ? (
+            <MCQControls
+              questionCount={questionCount}
+              difficulty={difficulty}
+              selectedTopicId={selectedTopicId}
+              topics={dbTopics.map(t => ({ id: t.id, name: t.name }))}
+              onQuestionCountChange={handleQuestionCountChange}
+              onDifficultyChange={handleDifficultyChange}
+              onTopicChange={handleTopicChange}
+              onRefresh={handleRefresh}
+              onGenerate={handleGenerateNew}
+              isLoading={isLoadingMCQs}
+              isGuest={false}
+              questionSource={questionSource}
+              totalQuestions={mcqs.length}
+              cachedCount={cachedCount}
+              aiCount={aiCount}
+            />
+          ) : (
+            <div className="mb-6 flex flex-wrap items-center gap-3 p-4 rounded-xl bg-secondary/30 border border-border/50">
+              <select
+                value={selectedTopicId}
+                onChange={(e) => handleTopicChange(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="all">All Topics</option>
+                {dbTopics.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              <select
+                value={questionCount}
+                onChange={(e) => handleQuestionCountChange(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="10">10 Questions</option>
+                <option value="20">20 Questions</option>
+              </select>
+            </div>
+          )}
+
           
-          {/* Loading State */}
-          {isLoadingMCQs && !isGenerating ? (
+          {/* Guest: minimal Start Practice card only — no MCQ preview, no AI controls */}
+          {!user ? (
+            <div className="text-center py-12">
+              <Book className="w-16 h-16 mx-auto text-primary/40 mb-4" />
+              <h3 className="text-lg font-medium mb-2">
+                {selectedTopic !== "all" ? selectedTopic : title} Practice
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
+                Choose how many questions you want, then start a quick practice session.
+              </p>
+              <Button onClick={startGuestSubjectQuiz} size="lg" className="gap-2" disabled={isLoadingMCQs}>
+                <Sparkles className="w-5 h-5" />
+                {isLoadingMCQs ? 'Loading...' : 'Start Practice'}
+              </Button>
+            </div>
+          ) : isLoadingMCQs && !isGenerating ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
               <span className="ml-3 text-muted-foreground">Loading questions...</span>
             </div>
           ) : loadError ? (
-            /* Error State */
             <div className="text-center py-12">
               <AlertCircle className="w-16 h-16 mx-auto text-destructive/60 mb-4" />
               <h3 className="text-lg font-medium mb-2">Failed to Load Questions</h3>
               <p className="text-muted-foreground mb-6">{loadError}</p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={user ? handleRefresh : startGuestSubjectQuiz}>
+                <Button variant="outline" onClick={handleRefresh}>
                   Try Again
                 </Button>
-                {user && (
-                  <Button onClick={handleGenerateNew} className="gap-2">
-                    <Sparkles className="w-4 h-4" />
-                    Generate with AI
-                  </Button>
-                )}
+                <Button onClick={handleGenerateNew} className="gap-2">
+                  <Sparkles className="w-4 h-4" />
+                  Generate with AI
+                </Button>
               </div>
             </div>
           ) : filteredMCQs.length > 0 ? (
-            /* MCQ List */
             <div className="space-y-4">
               {filteredMCQs.map((mcq, index) => (
                 <PracticeMCQCard
@@ -804,21 +819,19 @@ const SubjectContent = () => {
               ))}
             </div>
           ) : (
-            /* Empty State with Generate Button */
             <div className="text-center py-12">
               <Book className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
               <h3 className="text-lg font-medium mb-2">No MCQs Available Yet</h3>
               <p className="text-muted-foreground mb-6">
-                {user
-                  ? `Generate practice questions using AI for "${selectedTopic !== "all" ? selectedTopic : title}"`
-                  : `Start a short practice quiz from available questions for "${selectedTopic !== "all" ? selectedTopic : title}"`}
+                Generate practice questions using AI for "{selectedTopic !== "all" ? selectedTopic : title}"
               </p>
-              <Button onClick={user ? handleGenerateNew : startGuestSubjectQuiz} size="lg" className="gap-2">
+              <Button onClick={handleGenerateNew} size="lg" className="gap-2">
                 <Sparkles className="w-5 h-5" />
-                {user ? `Generate ${questionCount} Questions` : 'Start Practice'}
+                Generate {questionCount} Questions
               </Button>
             </div>
           )}
+
 
           {/* Related Practice Section */}
           <div className="mt-12 pt-8 border-t border-border">

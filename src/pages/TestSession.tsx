@@ -28,6 +28,7 @@ import { JobTestKeepGoingDialog } from "@/components/jobs/JobTestKeepGoingDialog
 import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestProgressService";
 import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
+import { loadGuestSession } from "@/lib/guestSession";
 
 type LastUsedTestContext = {
   subject?: string;
@@ -127,10 +128,7 @@ const TestSession = () => {
         // GUEST PATH — sessions live only in sessionStorage (RLS forbids
         // anonymous inserts into custom_test_sessions).
         if (id.startsWith("guest-")) {
-          try {
-            const raw = sessionStorage.getItem(`mcqsai_guest_test_${id}`);
-            if (raw) data = JSON.parse(raw);
-          } catch {}
+          data = loadGuestSession(id);
         } else {
           const { data: row, error: fetchError } = await supabase
             .from("custom_test_sessions").select("*").eq("id", id).maybeSingle();
