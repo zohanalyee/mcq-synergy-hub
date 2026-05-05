@@ -55,7 +55,10 @@ const dedupePush = (
   }
 };
 
-const validate = (q: any) => q && (q.question || q.title) && q.options;
+const validate = (q: any) => {
+  const opts = normalizeOptions(q?.options);
+  return q && (q.question || q.title) && opts.length >= 2;
+};
 
 const shuffle = <T,>(arr: T[]): T[] => {
   const out = [...arr];
