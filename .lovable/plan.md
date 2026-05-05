@@ -1,61 +1,440 @@
-# Fix Guest Experience: Quiz Fetch + Unified Result Gate + Minimal UI
+I will stop patching individual symptoms and refactor guest testing into one consistent flow.
 
-## Goal
-Guests should: (1) be able to start any quiz/test from cached DB content without errors, (2) see a single, friendly bilingual sign-in gate after completion (never the full premium result screen), (3) see a minimal options UI with no AI/credit/save controls.
+## What I will change
 
-## Files to change
+1. Create one guest session source of truth
 
-### 1. `src/pages/Quizzes.tsx` — fix guest fetch + minimal UI
-- **Bug fix in `fetchGuestQuestionsFromDB`**: the current implementation chains `.not('correct_option', 'is', null)` on `content_items`. In the actual schema correct answers may live in `correct_option` OR inside the `options` JSON (`isCorrect` / `correctIndex`) — so valid rows get filtered out and the function returns `[]`, producing the false "No cached questions" toast.
-  - Remove the strict `.not('correct_option', 'is', null)` filter. Keep only `status='approved'`, `question is not null`, and (for topic quiz) `topic_id`.
-  - For subject quiz keep the 4-tier fallback (topic_id → canonical_topic_name → subject ilike → topic name) but with the same relaxed filter.
-  - After fetch, run rows through `normalizeQuestion` from `@/lib/testEvaluation` and drop any whose `resolveCorrectAnswer` returns empty. This filters in code where the resolver actually understands every storage shape.
-- **Toast wording**: when truly empty, show bilingual message with Sign-In action (preserve `saveIntentRaw`).
-- **Hide for guests** (wrap in `{user && ...}`):
-  - "Generate with AI" / `fetchOnly` toggle and credits text.
-  - Time limit slider (default to 15 min silently).
-  - Question-count slider — replace with a simple `Select` of `[10, 20]` for guests; keep slider 10–50 for users.
-- Add a small bilingual hint under guest forms: "📚 موجودہ سوالات سے مشق کریں / Practice with available questions".
+New shared helper:
 
-### 2. `src/components/quiz/GuestResultGate.tsx` — NEW unified gate
-Replace the existing `QuizSignInGate` with a richer component used everywhere:
-- Props: `open, onClose, score, total, correctCount, returnPath`.
-- Bilingual (Urdu + English) headline, big percentage, 5 benefits list (explanations, progress tracking, weak-area AI analysis, 100 AI Q/day, AI Coach dashboard).
-- Two buttons: "دوبارہ کوشش / Try Again" (calls `onClose` → navigates to `returnPath`) and "مفت سائن ان / Sign In Free" (calls `saveIntentRaw({ action, path, data:{score,total,correctCount} })` then `navigate('/auth')`).
-- Trust badge line: "🔒 آپ کا ڈیٹا محفوظ ہے / Your data is safe & secure".
-- Pure Tailwind/shadcn Dialog — no inline styles.
+```text
+src/lib/guestSession.ts
+```
 
-### 3. `src/pages/QuizPlayer.tsx` — use GuestResultGate
-- Replace `QuizSignInGate` import with `GuestResultGate` and pass `correctCount`, `total`, `score`, `returnPath`. Remove the old basic-score branch.
+It will define:
 
-### 4. `src/pages/TestSession.tsx` — gate guest results
-- After test submission/finish, if `!user` render `GuestResultGate` (with computed `correctCount`/`total`) instead of the full `TestResults`/analytics view. Keep guest progress recording (already wired via `recordJobTestProgress` with `is_guest:true`).
-- Keep existing guest sessionStorage loader (`mcqsai_guest_*`) — already implemented; verify it runs before any DB fetch and shows a clean "Session expired" toast with redirect when the key is missing.
+```ts
+const GUEST_SESSION_PREFIX = 'mcqsai_guest_session_'
 
-### 5. `src/components/mock-tests/JobTestsTab.tsx` — minimal guest dialog
-- In the test-settings dialog, when `!user`: show only a native `<select>` of `[10, 20]` and a single Start button (bilingual). Hide difficulty, time limit, unlocked-progress info, reward dialogs preview, and any AI-cost text.
-- Logged-in branch unchanged.
+saveGuestSession(session)
+loadGuestSession(id)
+createGuestSessionId()
+buildGuestSession({ questions, time_limit, subjects, topics })
+```
 
-### 6. `src/components/mock-tests/SubjectTestsTab.tsx` — minimal guest dialog
-- Same minimal pattern as JobTestsTab for guests: only question-count `[10,20]`, single Start button, bilingual hint.
-- Confirm guest path stays sessionStorage-only (no `generate-test` invoke) — already implemented; do not regress.
+Every guest flow will store exactly:
 
-### 7. `src/pages/CustomSyllabus.tsx` / `src/components/syllabus-builder/SyllabusBuilder.tsx`
-- Hide for guests: "Save Syllabus" button, AI/fetch-only toggle, difficulty advanced controls, per-subject sliders above 20.
-- Cap question count selector at `[10, 20]` for guests.
-- After completion (TestSession handles render), gate is automatically applied via fix #4.
+```ts
+{
+  id,
+  questions,
+  time_limit,
+  subjects,
+  topics,
+  is_active: true
+}
+```
 
-### 8. Remove dead code
-- Delete `src/components/quiz/QuizSignInGate.tsx` (superseded by `GuestResultGate`). Update any other imports if grep finds them.
+I will delete/replace every old key usage:
 
-## Out of scope
-- No DB migrations. No edge function changes. No new RLS. No changes to logged-in flows beyond removing the duplicate sign-in modal.
-- No changes to credit accounting — guests never call edge functions in any of these paths.
+```text
+mcqsai_guest_quiz_
+mcqsai_guest_test_
+```
 
-## Acceptance (test as guest in incognito)
-1. `/quizzes`: pick subject → Start → questions load (no false "No cached" toast). Finish → `GuestResultGate` appears (bilingual). Sign In Free preserves intent.
-2. `/quizzes` UI: no AI toggle, no credits text, no time slider, only 10/20 count.
-3. `/mock-tests` Job Tests: minimal start dialog → Start → finish → `GuestResultGate`.
-4. `/mock-tests` Subject Tests: same minimal flow, no edge function call (verify Network tab — no `generate-test` request).
-5. `/custom-syllabus`: no Save button, no AI toggle, only 10/20 count, finish → `GuestResultGate`.
-6. Logged-in users: zero regressions — full controls, full result screens, AI generation, analytics intact.
+with:
+
+```text
+mcqsai_guest_session_{id}
+```
+
+2. Create one DB-only guest question loader
+
+New shared helper:
+
+```text
+src/services/guestQuestionService.ts
+```
+
+It will load approved bank questions only, never AI. It will validate only:
+
+```ts
+q && (q.question || q.title) && q.options
+```
+
+It will not block based on answer parsing.
+
+It will return:
+
+```ts
+{
+  rows,
+  questions
+}
+```
+
+And add the single temporary debug log:
+
+```ts
+console.log('GUEST FLOW:', {
+  user,
+  rows: rows.length,
+  questions: questions.length
+});
+```
+
+3. Fix Quizzes.tsx
+
+I will change the quiz starter so the guest branch is first priority:
+
+```ts
+if (!user) {
+  return startGuestFlow();
+}
+```
+
+Guest behavior:
+
+- use the shared DB-only loader
+- if `questions.length > 0`, always create guest session and navigate to quiz
+- if `questions.length === 0`, show only “No questions available”
+- remove the “Sign in to access this topic” toast completely
+- store with `mcqsai_guest_session_{id}` only
+
+4. Fix SubjectContent.tsx
+
+Guest page will be locked to only:
+
+- topic selector
+- 10 / 20 question selector
+- Start Practice button
+
+Guest page will not:
+
+- preload full MCQ list
+- show all question cards/options
+- show cached count
+- show refresh
+- show generate
+- call `generate-test`
+
+Start Practice will use the shared guest loader and shared guest session helper.
+
+5. Fix SyllabusBuilder
+
+I will remove all auth redirects from syllabus generation.
+
+Guest behavior:
+
+```ts
+if (!user) {
+  return startGuestFlow();
+}
+```
+
+Guest can:
+
+- select syllabus topics
+- load from question bank only
+- create a guest session
+- navigate to `/test-session/{id}`
+
+Guest cannot:
+
+- save template
+- use AI generation
+
+The save control will remain disabled with:
+
+```text
+Sign in to save your syllabus
+```
+
+6. Fix Mock Test guest session formats
+
+Files:
+
+```text
+src/components/mock-tests/SubjectTestsTab.tsx
+src/components/mock-tests/JobTestsTab.tsx
+```
+
+I will replace the old guest keys with the shared session helper.
+
+I will also remove guest login/AI-generation toasts from fetch/start logic. Guests either get a DB-backed test or a simple “No questions available” message.
+
+7. Fix QuizPlayer.tsx and TestSession.tsx loaders
+
+Both players will load guest sessions only from:
+
+```text
+mcqsai_guest_session_{id}
+```
+
+No fallback to old keys.
+
+8. Hard-block premium results for guests
+
+In both result render paths:
+
+```text
+src/pages/QuizPlayer.tsx
+src/pages/TestSession.tsx
+```
+
+Guest result will immediately return:
+
+```tsx
+<GuestResultGate ... />
+```
+
+before analytics/charts/weak areas/progress/reviews are computed or rendered.
+
+9. Remove guest AI calls
+
+I will verify with search that no guest branch contains:
+
+```ts
+supabase.functions.invoke('generate-test')
+```
+
+Logged-in AI behavior remains unchanged.
+
+## Files to update
+
+```text
+src/lib/guestSession.ts
+src/services/guestQuestionService.ts
+src/pages/Quizzes.tsx
+src/pages/SubjectContent.tsx
+src/components/syllabus-builder/SyllabusBuilder.tsx
+src/components/subject-content/MCQControls.tsx
+src/components/mock-tests/SubjectTestsTab.tsx
+src/components/mock-tests/JobTestsTab.tsx
+src/pages/QuizPlayer.tsx
+src/pages/TestSession.tsx
+```
+
+## Verification I will run after implementation
+
+I will search the codebase to confirm:
+
+```text
+mcqsai_guest_quiz_        -> zero results
+mcqsai_guest_test_        -> zero results
+Sign in to access this topic -> zero results
+navigate('/auth') inside guest test starts -> zero results
+supabase.functions.invoke('generate-test') inside guest branches -> zero results
+mcqsai_guest_session_ used by all guest session flows
+```
+
+This will make guest behavior consistent across quizzes, subject pages, syllabus builder, mock tests, and result pages.     ⚠️ **Ab IMPORTANT — 4 cheezein jo missing hain (ye add nahi ki to phir bug aayega)**
+
+---
+
+## 🔴 1. ❗ Session loader fallback missing (CRITICAL)
+
+Abhi tum sirf new key use kar rahe ho:
+
+```
+
+```
+
+```
+mcqsai_guest_session_{id}
+```
+
+👉 Problem:  
+  
+Old sessions (existing users ya tab open flows) break ho jayenge
+
+### ✅ FIX:
+
+`loadGuestSession()` me fallback add karo:
+
+```
+
+```
+
+```
+const session =
+  sessionStorage.getItem(`mcqsai_guest_session_${id}`) ||
+  sessionStorage.getItem(`mcqsai_guest_quiz_${id}`) ||
+  sessionStorage.getItem(`mcqsai_guest_test_${id}`);
+```
+
+✔️ Phir silently migrate:
+
+```
+
+```
+
+```
+if (oldKeyUsed) {
+  sessionStorage.setItem(newKey, oldData);
+}
+```
+
+---
+
+## 🔴 2. ❗ Question normalization missing (hidden bug)
+
+Tumne yeh condition lagayi:
+
+```
+
+```
+
+```
+q && (q.question || q.title) && q.options
+```
+
+👉 Yeh enough nahi hai.
+
+Problem:
+
+-   
+options object ho sakta hai  
+
+-   
+array ho sakta hai  
+
+-   
+inconsistent formats break UI later  
+
+
+---
+
+### ✅ FIX (must add):
+
+```
+
+```
+
+```
+function normalize(q) {
+  let options = [];
+
+  if (Array.isArray(q.options)) {
+    options = q.options.map((opt, i) => ({
+      key: String.fromCharCode(65 + i),
+      text: typeof opt === 'string' ? opt : opt?.text
+    }));
+  } else if (typeof q.options === 'object') {
+    options = Object.entries(q.options).map(([k, v]) => ({
+      key: k,
+      text: v
+    }));
+  }
+
+  return {
+    id: q.id,
+    question: q.question || q.title,
+    options,
+    correctOption: q.correct_option || 'A'
+  };
+}
+```
+
+👉 Warna:  
+  
+“questions load ho gaye but UI break” wala bug phir aayega
+
+---
+
+## 🔴 3. ❗ Navigation returnPath not enforced everywhere
+
+Tumne mention kiya but enforce nahi kiya.
+
+### ✅ Fix:
+
+Har navigate me:
+
+```
+
+```
+
+```
+navigate(`/quiz-session/${id}`, {
+  state: { returnPath: location.pathname }
+});
+```
+
+Aur ResultGate me:
+
+```
+
+```
+
+```
+navigate(returnPath || '/quizzes');
+```
+
+👉 Warna UX toot jata hai (back flow broken)
+
+---
+
+## 🔴 4. ❗ Double guest flow risk (VERY IMPORTANT)
+
+Abhi tum:
+
+-   
+Quizzes.tsx me guest flow bana rahe ho  
+
+-   
+SubjectContent.tsx me bhi  
+
+-   
+SyllabusBuilder me bhi  
+
+
+👉 Risk: duplicate logic phir aa jayega
+
+---
+
+### ✅ FINAL FIX:
+
+Create ONE function:
+
+```
+
+```
+
+```
+startGuestQuiz({ subjectId, topicId, count })
+```
+
+Aur har jagah use karo:
+
+```
+
+```
+
+```
+if (!user) return startGuestQuiz(...);
+```
+
+---
+
+# 🟡 **Optional but HIGH IMPACT (add kar lo to product level upgrade)**
+
+## ⭐ Progression system (tumne pehle mention kiya tha)
+
+```
+
+```
+
+```
+if (score >= 80) unlockNextLevel();
+```
+
+Aur:
+
+```
+
+```
+
+```
+store wrongQuestions → repeat later
+```
+
+&nbsp;
