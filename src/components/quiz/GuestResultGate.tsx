@@ -73,7 +73,6 @@ export const GuestResultGate = ({
     saveIntentRaw({
       action: 'View detailed quiz results',
       path: location.pathname,
-      data: { score, total, correctCount } as any,
     });
     navigate('/auth');
   };
