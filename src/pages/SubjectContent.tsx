@@ -8,6 +8,7 @@ import { useEffect, useState, ReactNode, useRef } from "react";
 import Header from "@/components/Header";
 import SubjectHeader from "@/components/subject-content/SubjectHeader";
 import TopicsList from "@/components/subject-content/TopicsList";
+import GuestTopicsGate from "@/components/subject-content/GuestTopicsGate";
 
 import ModeToggle, { StudyMode } from "@/components/subject-content/ModeToggle";
 import PracticeMCQCard from "@/components/subject-content/PracticeMCQCard";
@@ -126,14 +127,16 @@ const SubjectContent = () => {
     };
   };
 
-  const startGuestSubjectQuiz = async () => {
+  const startGuestSubjectQuiz = async (overrideTopic?: { id?: string; name: string }) => {
     const requestedCount = Math.min(parseInt(questionCount) || 10, 20);
     setIsLoadingMCQs(true);
     setLoadError(null);
     try {
-      const selectedTopicObj = selectedTopicId !== "all"
-        ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
-        : undefined;
+      const selectedTopicObj = overrideTopic
+        ? dbTopics.find(t => t.id === overrideTopic.id || t.name === overrideTopic.name) || { id: overrideTopic.id, name: overrideTopic.name } as TopicFromDB
+        : selectedTopicId !== "all"
+          ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
+          : undefined;
 
       const { rows, questions } = await loadGuestQuestions({
         subjectId,
@@ -743,44 +746,18 @@ const SubjectContent = () => {
               aiCount={aiCount}
             />
           ) : (
-            <div className="mb-6 flex flex-wrap items-center gap-3 p-4 rounded-xl bg-secondary/30 border border-border/50">
-              <select
-                value={selectedTopicId}
-                onChange={(e) => handleTopicChange(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="all">All Topics</option>
-                {dbTopics.map(t => (
-                  <option key={t.id} value={t.id}>{t.name}</option>
-                ))}
-              </select>
-              <select
-                value={questionCount}
-                onChange={(e) => handleQuestionCountChange(e.target.value)}
-                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
-              >
-                <option value="10">10 Questions</option>
-                <option value="20">20 Questions</option>
-              </select>
-            </div>
+            <div className="mb-2" />
           )}
 
           
-          {/* Guest: minimal Start Practice card only — no MCQ preview, no AI controls */}
+          {/* Guest: Freemium Tease & Gate — first topic free, others locked */}
           {!user ? (
-            <div className="text-center py-12">
-              <Book className="w-16 h-16 mx-auto text-primary/40 mb-4" />
-              <h3 className="text-lg font-medium mb-2">
-                {selectedTopic !== "all" ? selectedTopic : title} Practice
-              </h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto text-sm">
-                Choose how many questions you want, then start a quick practice session.
-              </p>
-              <Button onClick={startGuestSubjectQuiz} size="lg" className="gap-2" disabled={isLoadingMCQs}>
-                <Sparkles className="w-5 h-5" />
-                {isLoadingMCQs ? 'Loading...' : 'Start Practice'}
-              </Button>
-            </div>
+            <GuestTopicsGate
+              subjectTitle={title || 'Subject'}
+              topics={dbTopics.length > 0 ? dbTopics : topics.map(t => ({ name: t.title, description: t.content }))}
+              onStartFirstTopic={(t) => startGuestSubjectQuiz({ id: t.id, name: t.name })}
+              isLoading={isLoadingMCQs}
+            />
           ) : isLoadingMCQs && !isGenerating ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
