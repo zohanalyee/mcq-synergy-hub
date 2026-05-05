@@ -339,15 +339,6 @@ export const SyllabusBuilder = () => {
 
   // Generate test with smart hybrid logic: bank-first + AI generation for shortages
   const handleGenerateQuiz = async () => {
-    if (!user) {
-      toast({
-        title: "Sign in to Continue",
-        description: "Please sign in to generate personalized tests.",
-      });
-      navigate('/auth');
-      return;
-    }
-
     if (selectedTopicsCount === 0) {
       toast({
         title: "Selection Required",
@@ -361,6 +352,22 @@ export const SyllabusBuilder = () => {
 
     try {
       const requestedCount = quizSettings.questionsCount;
+
+      if (!user) {
+        const bankResult = await getQuestionsWithFallbackInfo({
+          topicIds: selectedTopicIds,
+          requestedCount,
+          difficulty: undefined,
+        });
+        if (bankResult.questions.length === 0) {
+          toast({ title: "No bank questions available", description: "Please select different topics." });
+          return;
+        }
+        const session = createGuestTestSession(bankResult.questions.slice(0, requestedCount));
+        toast({ title: "✅ Test Ready!", description: `${bankResult.questions.length} questions loaded from Question Bank.` });
+        navigate(`/test-session/${session}`);
+        return;
+      }
 
       // Step 1: Check question bank
       console.log('=== HYBRID GENERATION START ===');
@@ -545,6 +552,34 @@ export const SyllabusBuilder = () => {
     }
   };
 
+  const createGuestTestSession = (questions: any[]): string => {
+    const guestId = `guest-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
+    const uniqueSubjects = [...new Set(questions.map(q => q.subject).filter(Boolean))];
+    sessionStorage.setItem(`mcqsai_guest_test_${guestId}`, JSON.stringify({
+      id: guestId,
+      session_name: syllabusName,
+      question_count: questions.length,
+      time_limit: quizSettings.timeLimit,
+      topics: selectedTopicIds,
+      subjects: uniqueSubjects,
+      difficulty_levels: ['mixed'],
+      questions: questions.map(q => ({
+        id: q.id,
+        question: q.title || q.question,
+        title: q.title || q.question,
+        options: q.options,
+        correctOption: q.correctOption,
+        answer: resolveCorrectAnswer(q),
+        explanation: q.explanation,
+        difficulty: q.difficulty,
+        subject: q.subject,
+        topic: q.topic
+      })),
+      is_active: true
+    }));
+    return guestId;
+  };
+
   // Helper to create a test session and return session ID
   const createTestSession = async (questions: any[]): Promise<string | null> => {
     // Extract unique subject names from questions for analytics tracking
@@ -693,8 +728,9 @@ export const SyllabusBuilder = () => {
         updateQuizSettings={updateQuizSettings}
         onGenerateQuiz={handleGenerateQuiz}
         isGenerating={isGenerating}
-        onSaveTemplate={handleSaveTemplate}
+        onSaveTemplate={user ? handleSaveTemplate : undefined}
         isSavingTemplate={isSavingTemplate}
+        saveDisabledMessage={!user ? "Sign in to save your syllabus" : undefined}
         topicQuestionCounts={topicQuestionCounts}
         selectedTopicIds={selectedTopicIds}
         subjects={rawSubjects}

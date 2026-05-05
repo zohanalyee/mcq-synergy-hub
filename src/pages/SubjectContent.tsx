@@ -21,6 +21,8 @@ import { getCachedQuestions, setCachedQuestions } from "@/services/offlineSyncSe
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { generateSlugUrl } from "@/utils/slugify";
 
 interface MCQItem {
   id: string;
@@ -44,6 +46,7 @@ const SubjectContent = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
@@ -96,6 +99,96 @@ const SubjectContent = () => {
 
   const defaultIcon = <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
 
+  const transformBankQuestion = (q: any, index: number): MCQItem => {
+    let options: { key: string; text: string }[] = [];
+    if (Array.isArray(q.options)) {
+      options = q.options.map((opt: any, i: number) => ({
+        key: ['A', 'B', 'C', 'D'][i] || String.fromCharCode(65 + i),
+        text: typeof opt === 'string' ? opt : opt?.text || String(opt || '')
+      })).filter(opt => opt.text);
+    } else if (typeof q.options === 'object' && q.options !== null) {
+      options = ['A', 'B', 'C', 'D']
+        .filter(key => q.options[key])
+        .map(key => ({ key, text: q.options[key] }));
+    }
+
+    return {
+      id: q.id || `mcq-${index}-${Date.now()}`,
+      title: q.question || q.title || '',
+      question: q.question || q.title || '',
+      options,
+      correctOption: q.correct_option || q.correctOption || 'A',
+      explanation: q.explanation || undefined,
+      difficulty: (q.difficulty as "Easy" | "Medium" | "Hard") || 'Medium',
+      topic: q.topic || title,
+    };
+  };
+
+  const startGuestSubjectQuiz = async () => {
+    const requestedCount = Math.min(parseInt(questionCount) || 10, 20);
+    setIsLoadingMCQs(true);
+    setLoadError(null);
+    try {
+      const selectedTopicObj = selectedTopicId !== "all"
+        ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
+        : undefined;
+      let query = supabase
+        .from('content_items')
+        .select('id, title, question, options, correct_option, explanation, difficulty, subject, topic, topic_id')
+        .eq('status', 'approved')
+        .not('question', 'is', null)
+        .limit(Math.max(requestedCount * 3, 40));
+
+      if (selectedTopicObj?.id) {
+        query = query.eq('topic_id', selectedTopicObj.id);
+      } else if (subjectId) {
+        const topicIds = dbTopics.map(t => t.id).filter(Boolean);
+        if (topicIds.length > 0) query = query.in('topic_id', topicIds);
+        else query = query.ilike('subject', title || '');
+      } else {
+        query = query.ilike('subject', title || '');
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      const rows = data || [];
+      const questions = rows
+        .map(transformBankQuestion)
+        .filter(q => q && q.question && q.options.length > 0)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, requestedCount);
+
+      if (rows.length === 0 || questions.length === 0) {
+        toast({ title: "No questions available", description: "Please choose another topic or subject." });
+        return;
+      }
+
+      const guestId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2);
+      const guestSession = {
+        id: `guest-${guestId}`,
+        session_name: `${title || 'Subject'} Practice`,
+        subjects: title ? [title] : [],
+        topics: selectedTopicObj?.name ? [selectedTopicObj.name] : [],
+        difficulty_levels: ['Easy', 'Medium', 'Hard'],
+        question_count: questions.length,
+        time_limit: 15,
+        questions,
+        is_active: true,
+      };
+      sessionStorage.setItem(`mcqsai_guest_quiz_${guestSession.id}`, JSON.stringify(guestSession));
+      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', guestSession.id)}`, {
+        state: { returnPath: location.pathname },
+      });
+    } catch (error: any) {
+      console.error('Guest subject quiz error:', error);
+      toast({ variant: "destructive", title: "Failed to load questions", description: error?.message || "Please try again." });
+    } finally {
+      setIsLoadingMCQs(false);
+    }
+  };
+
   // Hydrate context from URL :id when state is missing (refresh / deep-link)
   useEffect(() => {
     if (ctx.title || !routeId) return;
@@ -142,7 +235,9 @@ const SubjectContent = () => {
     setIsLoaded(true);
     loadTopicsFromDB();
 
-    // Cache-first: try offline cache before network
+    if (!user) return;
+
+    // Cache-first: try offline cache before network for logged-in users only
     if (subjectId) {
       const cached = getCachedQuestions(subjectId);
       if (cached && cached.questions.length > 0) {
@@ -186,9 +281,9 @@ const SubjectContent = () => {
       }
     }
 
-    // No cache hit — fetch from DB
+    // No cache hit — fetch from DB for logged-in practice mode only
     loadMCQs(false, true);
-  }, [title, navigate, subjectId]);
+  }, [title, navigate, subjectId, user]);
 
   // Auto-select topic from URL query parameter after topics are loaded
   useEffect(() => {
@@ -554,6 +649,7 @@ const SubjectContent = () => {
 
   // SMART TOPIC SWITCHING: Check local cache first before API call
   useEffect(() => {
+    if (!user) return;
     if (title && isLoaded && selectedTopicId !== "all") {
       // First check if we already have questions for this topic in memory
       const existingForTopic = mcqs.filter(m => m.topic === selectedTopic);
@@ -569,7 +665,7 @@ const SubjectContent = () => {
       // When switching back to "all", just use client-side filtering
       console.log('📋 Showing all topics from local cache');
     }
-  }, [selectedTopicId]);
+  }, [selectedTopicId, user]);
 
   // Filter MCQs by selected topic (client-side filtering for already loaded MCQs)
   const filteredMCQs = selectedTopic === "all" 
@@ -626,24 +722,25 @@ const SubjectContent = () => {
             topicCount={topicCount || topics.length}
           />
           
-          {/* Mode Toggle Section */}
-          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <ModeToggle mode={studyMode} onModeChange={setStudyMode} />
-            
-            <div className="text-sm text-muted-foreground">
-              {studyMode === "read" ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
-                  Correct answers are highlighted for memorization
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full bg-primary"></span>
-                  Click options to reveal Right/Wrong feedback
-                </span>
-              )}
+          {user && (
+            <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <ModeToggle mode={studyMode} onModeChange={setStudyMode} />
+              
+              <div className="text-sm text-muted-foreground">
+                {studyMode === "read" ? (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    Correct answers are highlighted for memorization
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <span className="w-3 h-3 rounded-full bg-primary"></span>
+                    Click options to reveal Right/Wrong feedback
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
+          )}
           
           {/* MCQ Controls Panel */}
           <MCQControls
@@ -654,9 +751,10 @@ const SubjectContent = () => {
             onQuestionCountChange={handleQuestionCountChange}
             onDifficultyChange={handleDifficultyChange}
             onTopicChange={handleTopicChange}
-            onRefresh={handleRefresh}
+            onRefresh={user ? handleRefresh : startGuestSubjectQuiz}
             onGenerate={handleGenerateNew}
             isLoading={isLoadingMCQs}
+            isGuest={!user}
             questionSource={questionSource}
             totalQuestions={mcqs.length}
             cachedCount={cachedCount}
@@ -676,13 +774,15 @@ const SubjectContent = () => {
               <h3 className="text-lg font-medium mb-2">Failed to Load Questions</h3>
               <p className="text-muted-foreground mb-6">{loadError}</p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={handleRefresh}>
+                <Button variant="outline" onClick={user ? handleRefresh : startGuestSubjectQuiz}>
                   Try Again
                 </Button>
-                <Button onClick={handleGenerateNew} className="gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Generate with AI
-                </Button>
+                {user && (
+                  <Button onClick={handleGenerateNew} className="gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Generate with AI
+                  </Button>
+                )}
               </div>
             </div>
           ) : filteredMCQs.length > 0 ? (
@@ -709,11 +809,13 @@ const SubjectContent = () => {
               <Book className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
               <h3 className="text-lg font-medium mb-2">No MCQs Available Yet</h3>
               <p className="text-muted-foreground mb-6">
-                Generate practice questions using AI for "{selectedTopic !== "all" ? selectedTopic : title}"
+                {user
+                  ? `Generate practice questions using AI for "${selectedTopic !== "all" ? selectedTopic : title}"`
+                  : `Start a short practice quiz from available questions for "${selectedTopic !== "all" ? selectedTopic : title}"`}
               </p>
-              <Button onClick={handleGenerateNew} size="lg" className="gap-2">
+              <Button onClick={user ? handleGenerateNew : startGuestSubjectQuiz} size="lg" className="gap-2">
                 <Sparkles className="w-5 h-5" />
-                Generate {questionCount} Questions
+                {user ? `Generate ${questionCount} Questions` : 'Start Practice'}
               </Button>
             </div>
           )}
