@@ -728,8 +728,9 @@ export const SyllabusBuilder = () => {
         updateQuizSettings={updateQuizSettings}
         onGenerateQuiz={handleGenerateQuiz}
         isGenerating={isGenerating}
-        onSaveTemplate={handleSaveTemplate}
+        onSaveTemplate={user ? handleSaveTemplate : undefined}
         isSavingTemplate={isSavingTemplate}
+        saveDisabledMessage={!user ? "Sign in to save your syllabus" : undefined}
         topicQuestionCounts={topicQuestionCounts}
         selectedTopicIds={selectedTopicIds}
         subjects={rawSubjects}
