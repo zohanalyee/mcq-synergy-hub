@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
 import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
+import { useAuth } from "@/contexts/AuthContext";
 
 type SubjectTestsTabProps = {
   allMockTests: any[];
@@ -19,6 +20,7 @@ type SubjectTestsTabProps = {
 
 export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: SubjectTestsTabProps) => {
   const navigate = useNavigate();
+  const { user: authUser } = useAuth();
   const [filter, setFilter] = useState("all");
   const [expandedTest, setExpandedTest] = useState<number | null>(null);
   const [customizeTest, setCustomizeTest] = useState<number | null>(null);
@@ -222,6 +224,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         defaultQuestions={dialogTest?.questions || 20}
         defaultDuration={dialogTest?.duration || 30}
         defaultDifficulty={dialogTest?.difficulty || "medium"}
+        isGuest={!authUser}
         onStart={handleDialogStart}
         isGenerating={generatingTestId === dialogTest?.id}
       />

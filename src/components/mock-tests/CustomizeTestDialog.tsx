@@ -18,6 +18,8 @@ type CustomizeTestDialogProps = {
   defaultQuestions: number;
   defaultDuration: number;
   defaultDifficulty?: string;
+  /** When true, render a minimal guest-friendly form (10/20 questions only). */
+  isGuest?: boolean;
   onStart: (settings: {
     difficulty: "easy" | "medium" | "hard";
     questionCount: number;
@@ -33,18 +35,83 @@ export const CustomizeTestDialog = ({
   defaultQuestions,
   defaultDuration,
   defaultDifficulty = "medium",
+  isGuest = false,
   onStart,
   isGenerating = false,
 }: CustomizeTestDialogProps) => {
   const [settings, setSettings] = useState({
     difficulty: defaultDifficulty.toLowerCase() as "easy" | "medium" | "hard",
-    questionCount: defaultQuestions,
+    questionCount: isGuest ? Math.min(defaultQuestions, 20) : defaultQuestions,
     duration: defaultDuration,
   });
 
   const handleSubmit = () => {
     onStart(settings);
   };
+
+  // Minimal guest dialog — no difficulty, no time slider, no AI/credit text.
+  if (isGuest) {
+    return (
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Start Test / ٹیسٹ شروع کریں
+            </DialogTitle>
+            <DialogDescription>
+              <span className="font-medium text-foreground">{testTitle}</span>
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                Questions / سوالات
+              </Label>
+              <select
+                value={settings.questionCount}
+                onChange={(e) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    questionCount: Number(e.target.value),
+                  }))
+                }
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value={10}>10 Questions / 10 سوالات</option>
+                <option value={20}>20 Questions / 20 سوالات</option>
+              </select>
+            </div>
+
+            <p className="text-xs text-muted-foreground text-center">
+              📚 Practice with available questions · موجودہ سوالات سے مشق کریں
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            <Button variant="outline" onClick={onClose} className="flex-1">
+              Cancel
+            </Button>
+            <Button onClick={handleSubmit} disabled={isGenerating} className="flex-1">
+              {isGenerating ? (
+                <>
+                  <div className="h-4 w-4 mr-2 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Play className="h-4 w-4 mr-2" />
+                  Start / شروع کریں
+                </>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>

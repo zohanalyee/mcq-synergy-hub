@@ -19,6 +19,7 @@ import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
 import { saveIntentRaw } from "@/hooks/useAuthIntent";
 import PageHeader from "@/components/ui/PageHeader";
+import { resolveCorrectAnswer, normalizeQuestion } from "@/lib/testEvaluation";
 
 interface TopicItem {
   id: string;
@@ -93,7 +94,6 @@ const Quizzes = () => {
         .eq('status', 'approved')
         .eq('topic_id', params.topicId)
         .not('question', 'is', null)
-        .not('correct_option', 'is', null)
         .limit(fetchLimit);
       if (error) {
         console.error('[Guest Topic Quiz] DB error:', error);
@@ -145,7 +145,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .in('topic_id', topicIds)
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] topic_id query error:', error);
         pushRows(data);
@@ -159,7 +158,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .in('canonical_topic_name', canonicalNames as string[])
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] canonical query error:', error);
         pushRows(data);
@@ -173,7 +171,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .ilike('subject', params.subjectName)
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] subject query error:', error);
         pushRows(data);
@@ -187,7 +184,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .in('topic', topicNames as string[])
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] topic-name query error:', error);
         pushRows(data);
@@ -198,8 +194,24 @@ const Quizzes = () => {
 
     if (rows.length === 0) return [];
 
+    // Normalize + drop rows where the resolver can't find a correct answer.
+    // The resolver understands every storage shape (correct_option letter,
+    // options[].isCorrect, correctIndex, etc.), so this is the most reliable
+    // post-fetch validity check.
+    const valid = rows
+      .map((r: any) => normalizeQuestion(r))
+      .filter((q: any) => {
+        try {
+          return Boolean(resolveCorrectAnswer(q));
+        } catch {
+          return false;
+        }
+      });
+
+    if (valid.length === 0) return [];
+
     // Fisher–Yates shuffle then slice
-    const shuffled = [...rows];
+    const shuffled = [...valid];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -246,12 +258,12 @@ const Quizzes = () => {
       });
 
       if (questions.length === 0) {
-        toast.info("No cached questions yet for this selection. Sign in free to generate with AI!", {
+        toast.info("Iss topic ke liye sign in karein! / Sign in to access this topic!", {
           action: {
-            label: "Sign In",
+            label: "Sign In Free",
             onClick: () => {
               saveIntentRaw({
-                action: 'Generate quiz',
+                action: 'Start quiz',
                 path: location.pathname,
               });
               navigate('/auth');
@@ -453,51 +465,72 @@ const Quizzes = () => {
                     />
                   </div>
                   
-                  {/* Question Count */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                  {/* Question Count + Time Limit — minimal for guests */}
+                  {!user ? (
+                    <div className="space-y-2">
                       <Label className="flex items-center gap-1.5 text-sm">
                         <HelpCircle className="h-3.5 w-3.5" />
-                        Questions
+                        Questions / سوالات
                       </Label>
-                      <Badge variant="secondary" className="text-xs">{questionCountA}</Badge>
+                      <select
+                        value={questionCountA}
+                        onChange={(e) => setQuestionCountA(Number(e.target.value))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value={10}>10 Questions / 10 سوالات</option>
+                        <option value={20}>20 Questions / 20 سوالات</option>
+                      </select>
+                      <p className="text-xs text-muted-foreground text-center pt-1">
+                        📚 Practice with available questions · موجودہ سوالات سے مشق کریں
+                      </p>
                     </div>
-                    <Slider
-                      value={[questionCountA]}
-                      onValueChange={(v) => setQuestionCountA(v[0])}
-                      min={5}
-                      max={50}
-                      step={5}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>5</span>
-                      <span>50</span>
-                    </div>
-                  </div>
-                  
-                  {/* Time Limit */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-1.5 text-sm">
-                        <Clock className="h-3.5 w-3.5" />
-                        Time Limit
-                      </Label>
-                      <Badge variant="secondary" className="text-xs">{timeLimitA} min</Badge>
-                    </div>
-                    <Slider
-                      value={[timeLimitA]}
-                      onValueChange={(v) => setTimeLimitA(v[0])}
-                      min={5}
-                      max={60}
-                      step={5}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>5 min</span>
-                      <span>60 min</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="flex items-center gap-1.5 text-sm">
+                            <HelpCircle className="h-3.5 w-3.5" />
+                            Questions
+                          </Label>
+                          <Badge variant="secondary" className="text-xs">{questionCountA}</Badge>
+                        </div>
+                        <Slider
+                          value={[questionCountA]}
+                          onValueChange={(v) => setQuestionCountA(v[0])}
+                          min={5}
+                          max={50}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>5</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label className="flex items-center gap-1.5 text-sm">
+                            <Clock className="h-3.5 w-3.5" />
+                            Time Limit
+                          </Label>
+                          <Badge variant="secondary" className="text-xs">{timeLimitA} min</Badge>
+                        </div>
+                        <Slider
+                          value={[timeLimitA]}
+                          onValueChange={(v) => setTimeLimitA(v[0])}
+                          min={5}
+                          max={60}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>5 min</span>
+                          <span>60 min</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                   
                   {/* Start Button */}
                   <Button 
@@ -573,51 +606,71 @@ const Quizzes = () => {
                     )}
                   </div>
                   
-                  {/* Question Count */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                        <HelpCircle className="h-4 w-4" />
-                        Questions
+                  {!user ? (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1.5 text-sm">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                        Questions / سوالات
                       </Label>
-                      <Badge variant="secondary">{questionCountB}</Badge>
+                      <select
+                        value={questionCountB}
+                        onChange={(e) => setQuestionCountB(Number(e.target.value))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value={10}>10 Questions / 10 سوالات</option>
+                        <option value={20}>20 Questions / 20 سوالات</option>
+                      </select>
+                      <p className="text-xs text-muted-foreground text-center pt-1">
+                        📚 Practice with available questions · موجودہ سوالات سے مشق کریں
+                      </p>
                     </div>
-                    <Slider
-                      value={[questionCountB]}
-                      onValueChange={(v) => setQuestionCountB(v[0])}
-                      min={5}
-                      max={50}
-                      step={5}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>5</span>
-                      <span>50</span>
-                    </div>
-                  </div>
-                  
-                  {/* Time Limit */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Time Limit
-                      </Label>
-                      <Badge variant="secondary">{timeLimitB} min</Badge>
-                    </div>
-                    <Slider
-                      value={[timeLimitB]}
-                      onValueChange={(v) => setTimeLimitB(v[0])}
-                      min={5}
-                      max={60}
-                      step={5}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>5 min</span>
-                      <span>60 min</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="flex items-center gap-2">
+                            <HelpCircle className="h-4 w-4" />
+                            Questions
+                          </Label>
+                          <Badge variant="secondary">{questionCountB}</Badge>
+                        </div>
+                        <Slider
+                          value={[questionCountB]}
+                          onValueChange={(v) => setQuestionCountB(v[0])}
+                          min={5}
+                          max={50}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>5</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Time Limit
+                          </Label>
+                          <Badge variant="secondary">{timeLimitB} min</Badge>
+                        </div>
+                        <Slider
+                          value={[timeLimitB]}
+                          onValueChange={(v) => setTimeLimitB(v[0])}
+                          min={5}
+                          max={60}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>5 min</span>
+                          <span>60 min</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                   
                   {/* Start Button */}
                   <Button 

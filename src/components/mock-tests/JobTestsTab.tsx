@@ -19,6 +19,7 @@ import {
   fetchJobTestProgress,
   jobTestIdFromTitle,
 } from "@/services/jobTestProgressService";
+import { useAuth } from "@/contexts/AuthContext";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -26,6 +27,7 @@ type JobTestsTabProps = {
 
 export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [expandedJobTest, setExpandedJobTest] = useState<string | null>(null);
   const [customizeJobTest, setCustomizeJobTest] = useState<string | null>(null);
   const [generatingTestId, setGeneratingTestId] = useState<string | null>(null);
@@ -438,6 +440,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         defaultQuestions={dialogTest?.questions || 20}
         defaultDuration={dialogTest?.duration || 90}
         defaultDifficulty="medium"
+        isGuest={!user}
         onStart={handleDialogStart}
         isGenerating={generatingTestId === dialogTest?.id}
       />

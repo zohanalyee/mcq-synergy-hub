@@ -26,6 +26,8 @@ import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { JobTestRewardDialog } from "@/components/jobs/JobTestRewardDialog";
 import { JobTestKeepGoingDialog } from "@/components/jobs/JobTestKeepGoingDialog";
 import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestProgressService";
+import { useAuth } from "@/contexts/AuthContext";
+import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 
 type LastUsedTestContext = {
   subject?: string;
@@ -59,6 +61,7 @@ const TestSession = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user } = useAuth();
 
   const [testData, setTestData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -657,6 +660,21 @@ const TestSession = () => {
             const timeTaken = testData.time_limit * 60 - timeRemaining;
             const minutes = Math.floor(timeTaken / 60);
             const seconds = timeTaken % 60;
+
+            // Guests get a single bilingual sign-in gate instead of the full
+            // premium results screen / analytics / answer review.
+            if (!user) {
+              return (
+                <GuestResultGate
+                  open={true}
+                  onClose={() => navigate(lastUsedContext.returnPath || "/mock-tests")}
+                  score={correctCount}
+                  total={totalQ}
+                  correctCount={correctCount}
+                  returnPath={lastUsedContext.returnPath || "/mock-tests"}
+                />
+              );
+            }
 
             return (
               <div className="space-y-4">
