@@ -268,11 +268,13 @@ const QuizPlayer = () => {
     if (!user) {
       return (
         <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
-          <QuizSignInGate
+          <GuestResultGate
             open={true}
-            onClose={() => navigate('/quizzes')}
-            score={correctCount}
+            onClose={() => navigate(returnPath)}
+            score={score}
             total={total}
+            correctCount={correctCount}
+            returnPath={returnPath}
           />
         </div>
       );
