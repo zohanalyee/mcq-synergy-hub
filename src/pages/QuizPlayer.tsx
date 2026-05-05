@@ -332,7 +332,7 @@ const QuizPlayer = () => {
             transition={{ duration: 0.25 }}
           >
             {subjectName && (
-              <p className="text-xs uppercase tracking-wider text-muted-foreground text-center mb-1.5">
+              <p className="text-xs uppercase tracking-wider text-brand-gradient font-bold text-center mb-1.5">
                 {subjectName}
               </p>
             )}
