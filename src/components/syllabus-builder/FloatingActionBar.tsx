@@ -24,6 +24,7 @@ interface FloatingActionBarProps {
   isGenerating: boolean;
   onSaveTemplate?: (name: string) => Promise<boolean>;
   isSavingTemplate?: boolean;
+  saveDisabledMessage?: string;
   topicQuestionCounts?: Record<string, number>;
   selectedTopicIds?: string[];
   // Per-topic question counts
@@ -43,6 +44,7 @@ export const FloatingActionBar = ({
   isGenerating,
   onSaveTemplate,
   isSavingTemplate = false,
+  saveDisabledMessage,
   topicQuestionCounts = {},
   selectedTopicIds = [],
   subjects = [],
@@ -182,17 +184,22 @@ export const FloatingActionBar = ({
               </Popover>
 
               {/* Save (desktop only) */}
-              {onSaveTemplate && (
+              {(onSaveTemplate || saveDisabledMessage) && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={openSaveDialog}
-                  disabled={isSavingTemplate}
+                  disabled={isSavingTemplate || Boolean(saveDisabledMessage)}
                   className="h-7 hidden sm:flex text-[10px] border-blue-500/30 text-blue-200 hover:bg-blue-800/40 hover:text-blue-100 px-2"
                 >
                   <Bookmark className="h-3 w-3 mr-1" />
                   Save
                 </Button>
+              )}
+              {saveDisabledMessage && (
+                <span className="hidden sm:inline text-[10px] text-blue-200/80 whitespace-nowrap">
+                  {saveDisabledMessage}
+                </span>
               )}
 
               {/* Generate button */}
