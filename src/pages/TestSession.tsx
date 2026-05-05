@@ -661,6 +661,21 @@ const TestSession = () => {
             const minutes = Math.floor(timeTaken / 60);
             const seconds = timeTaken % 60;
 
+            // Guests get a single bilingual sign-in gate instead of the full
+            // premium results screen / analytics / answer review.
+            if (!user) {
+              return (
+                <GuestResultGate
+                  open={true}
+                  onClose={() => navigate(lastUsedContext.returnPath || "/mock-tests")}
+                  score={correctCount}
+                  total={totalQ}
+                  correctCount={correctCount}
+                  returnPath={lastUsedContext.returnPath || "/mock-tests"}
+                />
+              );
+            }
+
             return (
               <div className="space-y-4">
                 {/* Pass/Fail Banner */}
