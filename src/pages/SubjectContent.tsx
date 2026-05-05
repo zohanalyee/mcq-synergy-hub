@@ -750,7 +750,7 @@ const SubjectContent = () => {
             onQuestionCountChange={handleQuestionCountChange}
             onDifficultyChange={handleDifficultyChange}
             onTopicChange={handleTopicChange}
-            onRefresh={handleRefresh}
+            onRefresh={user ? handleRefresh : startGuestSubjectQuiz}
             onGenerate={handleGenerateNew}
             isLoading={isLoadingMCQs}
             isGuest={!user}
@@ -773,13 +773,15 @@ const SubjectContent = () => {
               <h3 className="text-lg font-medium mb-2">Failed to Load Questions</h3>
               <p className="text-muted-foreground mb-6">{loadError}</p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" onClick={handleRefresh}>
+                <Button variant="outline" onClick={user ? handleRefresh : startGuestSubjectQuiz}>
                   Try Again
                 </Button>
-                <Button onClick={handleGenerateNew} className="gap-2">
-                  <Sparkles className="w-4 h-4" />
-                  Generate with AI
-                </Button>
+                {user && (
+                  <Button onClick={handleGenerateNew} className="gap-2">
+                    <Sparkles className="w-4 h-4" />
+                    Generate with AI
+                  </Button>
+                )}
               </div>
             </div>
           ) : filteredMCQs.length > 0 ? (
@@ -806,11 +808,13 @@ const SubjectContent = () => {
               <Book className="w-16 h-16 mx-auto text-muted-foreground/40 mb-4" />
               <h3 className="text-lg font-medium mb-2">No MCQs Available Yet</h3>
               <p className="text-muted-foreground mb-6">
-                Generate practice questions using AI for "{selectedTopic !== "all" ? selectedTopic : title}"
+                {user
+                  ? `Generate practice questions using AI for "${selectedTopic !== "all" ? selectedTopic : title}"`
+                  : `Start a short practice quiz from available questions for "${selectedTopic !== "all" ? selectedTopic : title}"`}
               </p>
-              <Button onClick={handleGenerateNew} size="lg" className="gap-2">
+              <Button onClick={user ? handleGenerateNew : startGuestSubjectQuiz} size="lg" className="gap-2">
                 <Sparkles className="w-5 h-5" />
-                Generate {questionCount} Questions
+                {user ? `Generate ${questionCount} Questions` : 'Start Practice'}
               </Button>
             </div>
           )}
