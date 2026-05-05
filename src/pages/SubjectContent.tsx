@@ -723,24 +723,48 @@ const SubjectContent = () => {
             </div>
           )}
           
-          {/* MCQ Controls Panel */}
-          <MCQControls
-            questionCount={questionCount}
-            difficulty={difficulty}
-            selectedTopicId={selectedTopicId}
-            topics={dbTopics.map(t => ({ id: t.id, name: t.name }))}
-            onQuestionCountChange={handleQuestionCountChange}
-            onDifficultyChange={handleDifficultyChange}
-            onTopicChange={handleTopicChange}
-            onRefresh={user ? handleRefresh : startGuestSubjectQuiz}
-            onGenerate={handleGenerateNew}
-            isLoading={isLoadingMCQs}
-            isGuest={!user}
-            questionSource={questionSource}
-            totalQuestions={mcqs.length}
-            cachedCount={cachedCount}
-            aiCount={aiCount}
-          />
+          {/* MCQ Controls Panel — hidden for guests (minimal start UI below) */}
+          {user ? (
+            <MCQControls
+              questionCount={questionCount}
+              difficulty={difficulty}
+              selectedTopicId={selectedTopicId}
+              topics={dbTopics.map(t => ({ id: t.id, name: t.name }))}
+              onQuestionCountChange={handleQuestionCountChange}
+              onDifficultyChange={handleDifficultyChange}
+              onTopicChange={handleTopicChange}
+              onRefresh={handleRefresh}
+              onGenerate={handleGenerateNew}
+              isLoading={isLoadingMCQs}
+              isGuest={false}
+              questionSource={questionSource}
+              totalQuestions={mcqs.length}
+              cachedCount={cachedCount}
+              aiCount={aiCount}
+            />
+          ) : (
+            <div className="mb-6 flex flex-wrap items-center gap-3 p-4 rounded-xl bg-secondary/30 border border-border/50">
+              <select
+                value={selectedTopicId}
+                onChange={(e) => handleTopicChange(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="all">All Topics</option>
+                {dbTopics.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+              <select
+                value={questionCount}
+                onChange={(e) => handleQuestionCountChange(e.target.value)}
+                className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+              >
+                <option value="10">10 Questions</option>
+                <option value="20">20 Questions</option>
+              </select>
+            </div>
+          )}
+
           
           {/* Guest: minimal Start Practice card only — no MCQ preview, no AI controls */}
           {!user ? (
