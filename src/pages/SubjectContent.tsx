@@ -134,53 +134,32 @@ const SubjectContent = () => {
       const selectedTopicObj = selectedTopicId !== "all"
         ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
         : undefined;
-      let query = supabase
-        .from('content_items')
-        .select('id, title, question, options, correct_option, explanation, difficulty, subject, topic, topic_id')
-        .eq('status', 'approved')
-        .not('question', 'is', null)
-        .limit(Math.max(requestedCount * 3, 40));
 
-      if (selectedTopicObj?.id) {
-        query = query.eq('topic_id', selectedTopicObj.id);
-      } else if (subjectId) {
-        const topicIds = dbTopics.map(t => t.id).filter(Boolean);
-        if (topicIds.length > 0) query = query.in('topic_id', topicIds);
-        else query = query.ilike('subject', title || '');
-      } else {
-        query = query.ilike('subject', title || '');
-      }
+      const { rows, questions } = await loadGuestQuestions({
+        subjectId,
+        subjectName: title,
+        topicId: selectedTopicObj?.id,
+        topicIds: !selectedTopicObj ? dbTopics.map(t => t.id).filter(Boolean) : undefined,
+        questionCount: requestedCount,
+      });
 
-      const { data, error } = await query;
-      if (error) throw error;
-      const rows = data || [];
-      const questions = rows
-        .map(transformBankQuestion)
-        .filter(q => q && q.question && q.options.length > 0)
-        .sort(() => Math.random() - 0.5)
-        .slice(0, requestedCount);
+      console.log('GUEST FLOW:', { user, rows: rows.length, questions: questions.length });
 
-      if (rows.length === 0 || questions.length === 0) {
+      if (questions.length === 0) {
         toast({ title: "No questions available", description: "Please choose another topic or subject." });
         return;
       }
 
-      const guestId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
-        ? crypto.randomUUID()
-        : Math.random().toString(36).slice(2);
-      const guestSession = {
-        id: `guest-${guestId}`,
+      const session = buildGuestSession({
         session_name: `${title || 'Subject'} Practice`,
+        questions,
+        time_limit: 15,
         subjects: title ? [title] : [],
         topics: selectedTopicObj?.name ? [selectedTopicObj.name] : [],
-        difficulty_levels: ['Easy', 'Medium', 'Hard'],
-        question_count: questions.length,
-        time_limit: 15,
-        questions,
-        is_active: true,
-      };
-      sessionStorage.setItem(`mcqsai_guest_quiz_${guestSession.id}`, JSON.stringify(guestSession));
-      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', guestSession.id)}`, {
+      });
+      saveGuestSession(session);
+
+      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', session.id)}`, {
         state: { returnPath: location.pathname },
       });
     } catch (error: any) {
