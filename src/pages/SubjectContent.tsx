@@ -18,6 +18,8 @@ import { mockTopics } from "@/data/topicsData";
 import { supabase } from "@/integrations/supabase/client";
 import { getTopicsBySubject } from "@/services/supabaseTopicService";
 import { getCachedQuestions, setCachedQuestions } from "@/services/offlineSyncService";
+import { loadGuestQuestions } from "@/services/guestQuestionService";
+import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
