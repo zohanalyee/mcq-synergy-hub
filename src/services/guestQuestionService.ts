@@ -24,7 +24,23 @@ interface LoadResult {
 }
 
 const BASE_SELECT =
-  'id, question, title, options, correct_option, explanation, subject, topic, topic_id, difficulty';
+  'id, title, options, correct_option, explanation, subject, topic, topic_id, difficulty';
+
+const normalizeOptions = (options: any): any[] => {
+  if (!options) return [];
+  if (typeof options === 'string') {
+    try {
+      const parsed = JSON.parse(options);
+      return Array.isArray(parsed) ? parsed : Object.values(parsed || {});
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(options) && typeof options === 'object') {
+    return Object.values(options);
+  }
+  return Array.isArray(options) ? options : [];
+};
 
 const dedupePush = (
   out: any[],
