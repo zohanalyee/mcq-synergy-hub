@@ -8,6 +8,7 @@ import { useEffect, useState, ReactNode, useRef } from "react";
 import Header from "@/components/Header";
 import SubjectHeader from "@/components/subject-content/SubjectHeader";
 import TopicsList from "@/components/subject-content/TopicsList";
+import GuestTopicsGate from "@/components/subject-content/GuestTopicsGate";
 
 import ModeToggle, { StudyMode } from "@/components/subject-content/ModeToggle";
 import PracticeMCQCard from "@/components/subject-content/PracticeMCQCard";
