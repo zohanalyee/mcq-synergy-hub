@@ -35,7 +35,8 @@ const QuizOption = ({ letter, text, state, disabled, onClick }: QuizOptionProps)
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary",
         state === "idle" &&
           "border-border bg-card hover:bg-accent hover:border-primary/40 cursor-pointer",
-        state === "selected" && "border-primary bg-primary/5",
+        state === "selected" &&
+          "border-transparent bg-brand-gradient-soft shadow-brand [background-image:var(--gradient-brand-soft),var(--gradient-brand)] [background-origin:border-box] [background-clip:padding-box,border-box]",
         isCorrect && "border-green-500 bg-green-500/10",
         isWrong && "border-destructive bg-destructive/10",
         disabled && state === "idle" && "opacity-60 cursor-not-allowed",
@@ -45,7 +46,7 @@ const QuizOption = ({ letter, text, state, disabled, onClick }: QuizOptionProps)
         className={cn(
           "shrink-0 inline-flex items-center justify-center h-8 w-8 rounded-md font-bold text-sm",
           state === "idle" && "bg-muted text-foreground",
-          state === "selected" && "bg-primary text-primary-foreground",
+          state === "selected" && "bg-brand-gradient text-white shadow-brand",
           isCorrect && "bg-green-500 text-white",
           isWrong && "bg-destructive text-destructive-foreground",
         )}
