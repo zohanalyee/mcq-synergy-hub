@@ -99,6 +99,96 @@ const SubjectContent = () => {
 
   const defaultIcon = <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
 
+  const transformBankQuestion = (q: any, index: number): MCQItem => {
+    let options: { key: string; text: string }[] = [];
+    if (Array.isArray(q.options)) {
+      options = q.options.map((opt: any, i: number) => ({
+        key: ['A', 'B', 'C', 'D'][i] || String.fromCharCode(65 + i),
+        text: typeof opt === 'string' ? opt : opt?.text || String(opt || '')
+      })).filter(opt => opt.text);
+    } else if (typeof q.options === 'object' && q.options !== null) {
+      options = ['A', 'B', 'C', 'D']
+        .filter(key => q.options[key])
+        .map(key => ({ key, text: q.options[key] }));
+    }
+
+    return {
+      id: q.id || `mcq-${index}-${Date.now()}`,
+      title: q.question || q.title || '',
+      question: q.question || q.title || '',
+      options,
+      correctOption: q.correct_option || q.correctOption || 'A',
+      explanation: q.explanation || undefined,
+      difficulty: (q.difficulty as "Easy" | "Medium" | "Hard") || 'Medium',
+      topic: q.topic || title,
+    };
+  };
+
+  const startGuestSubjectQuiz = async () => {
+    const requestedCount = Math.min(parseInt(questionCount) || 10, 20);
+    setIsLoadingMCQs(true);
+    setLoadError(null);
+    try {
+      const selectedTopicObj = selectedTopicId !== "all"
+        ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
+        : undefined;
+      let query = supabase
+        .from('content_items')
+        .select('id, title, question, options, correct_option, explanation, difficulty, subject, topic, topic_id')
+        .eq('status', 'approved')
+        .not('question', 'is', null)
+        .limit(Math.max(requestedCount * 3, 40));
+
+      if (selectedTopicObj?.id) {
+        query = query.eq('topic_id', selectedTopicObj.id);
+      } else if (subjectId) {
+        const topicIds = dbTopics.map(t => t.id).filter(Boolean);
+        if (topicIds.length > 0) query = query.in('topic_id', topicIds);
+        else query = query.ilike('subject', title || '');
+      } else {
+        query = query.ilike('subject', title || '');
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      const rows = data || [];
+      const questions = rows
+        .map(transformBankQuestion)
+        .filter(q => q && q.question && q.options.length > 0)
+        .sort(() => Math.random() - 0.5)
+        .slice(0, requestedCount);
+
+      if (rows.length === 0 || questions.length === 0) {
+        toast({ title: "No questions available", description: "Please choose another topic or subject." });
+        return;
+      }
+
+      const guestId = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+        ? crypto.randomUUID()
+        : Math.random().toString(36).slice(2);
+      const guestSession = {
+        id: `guest-${guestId}`,
+        session_name: `${title || 'Subject'} Practice`,
+        subjects: title ? [title] : [],
+        topics: selectedTopicObj?.name ? [selectedTopicObj.name] : [],
+        difficulty_levels: ['Easy', 'Medium', 'Hard'],
+        question_count: questions.length,
+        time_limit: 15,
+        questions,
+        is_active: true,
+      };
+      sessionStorage.setItem(`mcqsai_guest_quiz_${guestSession.id}`, JSON.stringify(guestSession));
+      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', guestSession.id)}`, {
+        state: { returnPath: location.pathname },
+      });
+    } catch (error: any) {
+      console.error('Guest subject quiz error:', error);
+      toast({ variant: "destructive", title: "Failed to load questions", description: error?.message || "Please try again." });
+    } finally {
+      setIsLoadingMCQs(false);
+    }
+  };
+
   // Hydrate context from URL :id when state is missing (refresh / deep-link)
   useEffect(() => {
     if (ctx.title || !routeId) return;
