@@ -20,7 +20,7 @@ import QuizHUD from "@/components/quiz/QuizHUD";
 import QuizOption, { QuizOptionState } from "@/components/quiz/QuizOption";
 import QuizTimerRing from "@/components/quiz/QuizTimerRing";
 import QuizResultScreen from "@/components/quiz/QuizResultScreen";
-import QuizSignInGate from "@/components/quiz/QuizSignInGate";
+import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { useAuth } from "@/contexts/AuthContext";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
