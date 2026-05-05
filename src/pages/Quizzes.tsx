@@ -17,9 +17,9 @@ import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from 
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
-import { saveIntentRaw } from "@/hooks/useAuthIntent";
 import PageHeader from "@/components/ui/PageHeader";
-import { normalizeQuestion } from "@/lib/testEvaluation";
+import { loadGuestQuestions } from "@/services/guestQuestionService";
+import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
 interface TopicItem {
   id: string;
