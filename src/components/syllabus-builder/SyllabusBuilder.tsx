@@ -553,12 +553,9 @@ export const SyllabusBuilder = () => {
   };
 
   const createGuestTestSession = (questions: any[]): string => {
-    const guestId = `guest-${crypto.randomUUID?.() || Math.random().toString(36).slice(2)}`;
     const uniqueSubjects = [...new Set(questions.map(q => q.subject).filter(Boolean))];
-    sessionStorage.setItem(`mcqsai_guest_test_${guestId}`, JSON.stringify({
-      id: guestId,
+    const session = buildGuestSession({
       session_name: syllabusName,
-      question_count: questions.length,
       time_limit: quizSettings.timeLimit,
       topics: selectedTopicIds,
       subjects: uniqueSubjects,
@@ -573,11 +570,11 @@ export const SyllabusBuilder = () => {
         explanation: q.explanation,
         difficulty: q.difficulty,
         subject: q.subject,
-        topic: q.topic
+        topic: q.topic,
       })),
-      is_active: true
-    }));
-    return guestId;
+    });
+    saveGuestSession(session);
+    return session.id;
   };
 
   // Helper to create a test session and return session ID
