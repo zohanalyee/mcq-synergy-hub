@@ -94,7 +94,6 @@ const Quizzes = () => {
         .eq('status', 'approved')
         .eq('topic_id', params.topicId)
         .not('question', 'is', null)
-        .not('correct_option', 'is', null)
         .limit(fetchLimit);
       if (error) {
         console.error('[Guest Topic Quiz] DB error:', error);
@@ -146,7 +145,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .in('topic_id', topicIds)
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] topic_id query error:', error);
         pushRows(data);
@@ -160,7 +158,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .in('canonical_topic_name', canonicalNames as string[])
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] canonical query error:', error);
         pushRows(data);
@@ -174,7 +171,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .ilike('subject', params.subjectName)
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] subject query error:', error);
         pushRows(data);
@@ -188,7 +184,6 @@ const Quizzes = () => {
           .eq('status', 'approved')
           .in('topic', topicNames as string[])
           .not('question', 'is', null)
-          .not('correct_option', 'is', null)
           .limit(fetchLimit);
         if (error) console.error('[Guest Subject Quiz] topic-name query error:', error);
         pushRows(data);
@@ -199,8 +194,24 @@ const Quizzes = () => {
 
     if (rows.length === 0) return [];
 
+    // Normalize + drop rows where the resolver can't find a correct answer.
+    // The resolver understands every storage shape (correct_option letter,
+    // options[].isCorrect, correctIndex, etc.), so this is the most reliable
+    // post-fetch validity check.
+    const valid = rows
+      .map((r: any) => normalizeQuestion(r))
+      .filter((q: any) => {
+        try {
+          return Boolean(resolveCorrectAnswer(q));
+        } catch {
+          return false;
+        }
+      });
+
+    if (valid.length === 0) return [];
+
     // Fisher–Yates shuffle then slice
-    const shuffled = [...rows];
+    const shuffled = [...valid];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
