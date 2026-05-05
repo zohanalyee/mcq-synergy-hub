@@ -606,51 +606,71 @@ const Quizzes = () => {
                     )}
                   </div>
                   
-                  {/* Question Count */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                        <HelpCircle className="h-4 w-4" />
-                        Questions
+                  {!user ? (
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1.5 text-sm">
+                        <HelpCircle className="h-3.5 w-3.5" />
+                        Questions / سوالات
                       </Label>
-                      <Badge variant="secondary">{questionCountB}</Badge>
+                      <select
+                        value={questionCountB}
+                        onChange={(e) => setQuestionCountB(Number(e.target.value))}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      >
+                        <option value={10}>10 Questions / 10 سوالات</option>
+                        <option value={20}>20 Questions / 20 سوالات</option>
+                      </select>
+                      <p className="text-xs text-muted-foreground text-center pt-1">
+                        📚 Practice with available questions · موجودہ سوالات سے مشق کریں
+                      </p>
                     </div>
-                    <Slider
-                      value={[questionCountB]}
-                      onValueChange={(v) => setQuestionCountB(v[0])}
-                      min={5}
-                      max={50}
-                      step={5}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>5</span>
-                      <span>50</span>
-                    </div>
-                  </div>
-                  
-                  {/* Time Limit */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <Label className="flex items-center gap-2">
-                        <Clock className="h-4 w-4" />
-                        Time Limit
-                      </Label>
-                      <Badge variant="secondary">{timeLimitB} min</Badge>
-                    </div>
-                    <Slider
-                      value={[timeLimitB]}
-                      onValueChange={(v) => setTimeLimitB(v[0])}
-                      min={5}
-                      max={60}
-                      step={5}
-                      className="w-full"
-                    />
-                    <div className="flex justify-between text-xs text-muted-foreground">
-                      <span>5 min</span>
-                      <span>60 min</span>
-                    </div>
-                  </div>
+                  ) : (
+                    <>
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="flex items-center gap-2">
+                            <HelpCircle className="h-4 w-4" />
+                            Questions
+                          </Label>
+                          <Badge variant="secondary">{questionCountB}</Badge>
+                        </div>
+                        <Slider
+                          value={[questionCountB]}
+                          onValueChange={(v) => setQuestionCountB(v[0])}
+                          min={5}
+                          max={50}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>5</span>
+                          <span>50</span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <Label className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Time Limit
+                          </Label>
+                          <Badge variant="secondary">{timeLimitB} min</Badge>
+                        </div>
+                        <Slider
+                          value={[timeLimitB]}
+                          onValueChange={(v) => setTimeLimitB(v[0])}
+                          min={5}
+                          max={60}
+                          step={5}
+                          className="w-full"
+                        />
+                        <div className="flex justify-between text-xs text-muted-foreground">
+                          <span>5 min</span>
+                          <span>60 min</span>
+                        </div>
+                      </div>
+                    </>
+                  )}
                   
                   {/* Start Button */}
                   <Button 
