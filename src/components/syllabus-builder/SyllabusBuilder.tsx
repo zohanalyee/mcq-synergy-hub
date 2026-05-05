@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { GlassSearchInput } from '@/components/ui/GlassSearchInput';
 import { GlobalSearchResult } from '@/services/globalSearchService';
 import { getQuestionsWithFallbackInfo } from '@/services/syllabusRAGFallback';
+import { buildGuestSession, saveGuestSession } from '@/lib/guestSession';
 
 import { useSyllabusData } from './hooks/useSyllabusData';
 import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
