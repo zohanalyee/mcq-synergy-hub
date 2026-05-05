@@ -116,13 +116,7 @@ export const loadGuestQuestions = async (
     if (topicErr) console.error('[guestQuestions] topics lookup error:', topicErr);
 
     const ids = (topicRows || []).map((t: any) => t.id).filter(Boolean);
-    const canonicalNames = Array.from(
-      new Set(
-        (topicRows || [])
-          .map((t: any) => t.canonical_name)
-          .filter((v: any) => typeof v === 'string' && v.length > 0),
-      ),
-    );
+    const canonicalNames: string[] = [];
     const topicNames = Array.from(
       new Set(
         (topicRows || [])
