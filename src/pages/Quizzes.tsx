@@ -19,6 +19,7 @@ import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
 import { saveIntentRaw } from "@/hooks/useAuthIntent";
 import PageHeader from "@/components/ui/PageHeader";
+import { resolveCorrectAnswer, normalizeQuestion } from "@/lib/testEvaluation";
 
 interface TopicItem {
   id: string;
