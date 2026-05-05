@@ -10,6 +10,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
 import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
+import { useAuth } from "@/contexts/AuthContext";
 
 type SubjectTestsTabProps = {
   allMockTests: any[];
