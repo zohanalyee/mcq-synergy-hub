@@ -105,48 +105,41 @@ export const GuestResultGate = ({
           </p>
         </div>
 
-        {/* Benefits */}
-        <div className="px-6 py-4 space-y-2.5">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-            Unlock with free sign-in / مفت سائن ان سے کھولیں
-          </p>
-          {benefits.map((b) => (
-            <div key={b.en} className="flex items-start gap-2.5">
-              <b.icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm font-medium leading-tight">{b.en}</p>
-                <p
-                  className="text-xs text-muted-foreground leading-tight"
-                  dir="rtl"
-                >
-                  {b.ur}
-                </p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* CTA strip */}
-        <div className="mx-6 mb-3 rounded-lg bg-gradient-to-r from-primary/10 to-violet-500/10 px-3 py-2 text-center">
-          <p className="text-xs font-semibold">
-            🎉 100% Free Forever — No credit card needed
-          </p>
-          <p className="text-[11px] text-muted-foreground" dir="rtl">
-            ہمیشہ مفت — کوئی کریڈٹ کارڈ نہیں چاہیے
-          </p>
-        </div>
-
-        {/* Buttons */}
-        <div className="px-6 pb-4 flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={handleTryAgain}>
-            <RefreshCw className="h-4 w-4 mr-1.5" />
-            Try Again
-          </Button>
+        {/* Primary Sign In CTA */}
+        <div className="px-6 pt-4">
           <Button
-            className="flex-1 bg-gradient-to-r from-primary to-violet-500 hover:opacity-90"
+            className="w-full h-12 bg-brand-gradient text-white shadow-brand hover:brightness-110 text-base font-semibold"
             onClick={handleSignIn}
           >
-            Sign In Free
+            Sign In / سائن ان
+          </Button>
+        </div>
+
+        {/* Benefits container */}
+        <div className="px-6 pt-3 pb-4">
+          <div className="rounded-xl bg-slate-50 dark:bg-muted/40 border border-border/60 p-4 space-y-2.5">
+            {benefits.map((b) => (
+              <div key={b.en} className="flex items-start gap-2.5">
+                <b.icon className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                <div className="flex-1 flex items-start justify-between gap-2">
+                  <p className="text-sm font-medium leading-tight">{b.en}</p>
+                  <p
+                    className="text-xs text-muted-foreground leading-tight"
+                    dir="rtl"
+                  >
+                    {b.ur}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Try Again */}
+        <div className="px-6 pb-4">
+          <Button variant="outline" className="w-full" onClick={handleTryAgain}>
+            <RefreshCw className="h-4 w-4 mr-1.5" />
+            Try Again
           </Button>
         </div>
 
