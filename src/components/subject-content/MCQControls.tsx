@@ -19,6 +19,7 @@ interface MCQControlsProps {
   difficulty: string;
   selectedTopicId: string;
   topics: TopicOption[];
+  isGuest?: boolean;
   onQuestionCountChange: (value: string) => void;
   onDifficultyChange: (value: string) => void;
   onTopicChange: (value: string) => void;
@@ -36,6 +37,7 @@ const MCQControls = ({
   difficulty,
   selectedTopicId,
   topics,
+  isGuest = false,
   onQuestionCountChange,
   onDifficultyChange,
   onTopicChange,
@@ -102,53 +104,50 @@ const MCQControls = ({
           <SelectContent>
             <SelectItem value="10">10 Questions</SelectItem>
             <SelectItem value="20">20 Questions</SelectItem>
-            <SelectItem value="30">30 Questions</SelectItem>
-            <SelectItem value="50">50 Questions</SelectItem>
+            {!isGuest && <SelectItem value="30">30 Questions</SelectItem>}
+            {!isGuest && <SelectItem value="50">50 Questions</SelectItem>}
           </SelectContent>
         </Select>
 
-        <Select value={difficulty} onValueChange={onDifficultyChange}>
-          <SelectTrigger className="w-[120px] bg-background">
-            <SelectValue placeholder="Difficulty" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Easy">Easy</SelectItem>
-            <SelectItem value="Medium">Medium</SelectItem>
-            <SelectItem value="Hard">Hard</SelectItem>
-          </SelectContent>
-        </Select>
+        {isGuest ? (
+          <Button variant="default" size="sm" onClick={onRefresh} disabled={isLoading} className="gap-2">
+            <Sparkles className="w-4 h-4" />
+            Start Practice
+          </Button>
+        ) : (
+          <>
+            <Select value={difficulty} onValueChange={onDifficultyChange}>
+              <SelectTrigger className="w-[120px] bg-background">
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Easy">Easy</SelectItem>
+                <SelectItem value="Medium">Medium</SelectItem>
+                <SelectItem value="Hard">Hard</SelectItem>
+              </SelectContent>
+            </Select>
 
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRefresh}
-          disabled={isLoading}
-          className="gap-2"
-        >
-          <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+            <Button variant="outline" size="sm" onClick={onRefresh} disabled={isLoading} className="gap-2">
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
 
-        <Button
-          variant="default"
-          size="sm"
-          onClick={onGenerate}
-          disabled={isLoading}
-          className="gap-2"
-        >
-          <Sparkles className="w-4 h-4" />
-          Generate New
-        </Button>
+            <Button variant="default" size="sm" onClick={onGenerate} disabled={isLoading} className="gap-2">
+              <Sparkles className="w-4 h-4" />
+              Generate New
+            </Button>
+          </>
+        )}
       </div>
 
-      <div className="flex items-center gap-3">
+      {!isGuest && <div className="flex items-center gap-3">
         {totalQuestions > 0 && (
           <span className="text-sm text-muted-foreground">
             {totalQuestions} questions loaded
           </span>
         )}
         {getSourceBadge()}
-      </div>
+      </div>}
     </div>
   );
 };
