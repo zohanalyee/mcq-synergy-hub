@@ -19,6 +19,7 @@ import {
   fetchJobTestProgress,
   jobTestIdFromTitle,
 } from "@/services/jobTestProgressService";
+import { useAuth } from "@/contexts/AuthContext";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
