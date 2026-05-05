@@ -24,7 +24,23 @@ interface LoadResult {
 }
 
 const BASE_SELECT =
-  'id, question, title, options, correct_option, explanation, subject, topic, topic_id, difficulty';
+  'id, title, options, correct_option, explanation, subject, topic, topic_id, difficulty';
+
+const normalizeOptions = (options: any): any[] => {
+  if (!options) return [];
+  if (typeof options === 'string') {
+    try {
+      const parsed = JSON.parse(options);
+      return Array.isArray(parsed) ? parsed : Object.values(parsed || {});
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(options) && typeof options === 'object') {
+    return Object.values(options);
+  }
+  return Array.isArray(options) ? options : [];
+};
 
 const dedupePush = (
   out: any[],
@@ -39,7 +55,10 @@ const dedupePush = (
   }
 };
 
-const validate = (q: any) => q && (q.question || q.title) && q.options;
+const validate = (q: any) => {
+  const opts = normalizeOptions(q?.options);
+  return q && (q.question || q.title) && opts.length >= 2;
+};
 
 const shuffle = <T,>(arr: T[]): T[] => {
   const out = [...arr];
@@ -65,7 +84,7 @@ export const loadGuestQuestions = async (
       .select(BASE_SELECT)
       .eq('status', 'approved')
       .eq('topic_id', params.topicId)
-      .not('question', 'is', null)
+      .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] topic_id error:', error);
     dedupePush(out, seen, data);
@@ -82,7 +101,7 @@ export const loadGuestQuestions = async (
       .select(BASE_SELECT)
       .eq('status', 'approved')
       .in('topic_id', params.topicIds)
-      .not('question', 'is', null)
+      .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] topic_ids error:', error);
     dedupePush(out, seen, data);
@@ -92,18 +111,12 @@ export const loadGuestQuestions = async (
   if (out.length < fetchLimit && params.subjectId) {
     const { data: topicRows, error: topicErr } = await supabase
       .from('topics')
-      .select('id, name, canonical_name')
+      .select('id, name')
       .eq('subject_id', params.subjectId);
     if (topicErr) console.error('[guestQuestions] topics lookup error:', topicErr);
 
     const ids = (topicRows || []).map((t: any) => t.id).filter(Boolean);
-    const canonicalNames = Array.from(
-      new Set(
-        (topicRows || [])
-          .map((t: any) => t.canonical_name)
-          .filter((v: any) => typeof v === 'string' && v.length > 0),
-      ),
-    );
+    const canonicalNames: string[] = [];
     const topicNames = Array.from(
       new Set(
         (topicRows || [])
@@ -118,7 +131,7 @@ export const loadGuestQuestions = async (
         .select(BASE_SELECT)
         .eq('status', 'approved')
         .in('topic_id', ids)
-        .not('question', 'is', null)
+        .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] subj.topic_id error:', error);
       dedupePush(out, seen, data);
@@ -130,7 +143,7 @@ export const loadGuestQuestions = async (
         .select(BASE_SELECT)
         .eq('status', 'approved')
         .in('canonical_topic_name', canonicalNames as string[])
-        .not('question', 'is', null)
+        .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] canonical error:', error);
       dedupePush(out, seen, data);
@@ -142,7 +155,7 @@ export const loadGuestQuestions = async (
         .select(BASE_SELECT)
         .eq('status', 'approved')
         .in('topic', topicNames as string[])
-        .not('question', 'is', null)
+        .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] topic-name error:', error);
       dedupePush(out, seen, data);
@@ -156,20 +169,25 @@ export const loadGuestQuestions = async (
       .select(BASE_SELECT)
       .eq('status', 'approved')
       .ilike('subject', params.subjectName)
-      .not('question', 'is', null)
+      .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] subject ilike error:', error);
     dedupePush(out, seen, data);
   }
 
-  const valid = out.filter(validate);
+  const valid = out
+    .map((q) => ({
+      ...q,
+      question: q.question || q.title,
+      options: normalizeOptions(q.options),
+    }))
+    .filter(validate);
   const questions = shuffle(valid).slice(0, params.questionCount);
 
-  // Single, well-known debug log for guest flow visibility.
-  console.log('GUEST FLOW:', {
-    user: null,
-    rows: out.length,
-    questions: questions.length,
+  console.log('GUEST FLOW DEBUG:', {
+    totalRows: out.length,
+    afterValidation: valid.length,
+    sample: out[0],
   });
 
   return { rows: out, questions };
