@@ -224,6 +224,7 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         defaultQuestions={dialogTest?.questions || 20}
         defaultDuration={dialogTest?.duration || 30}
         defaultDifficulty={dialogTest?.difficulty || "medium"}
+        isGuest={!authUser}
         onStart={handleDialogStart}
         isGenerating={generatingTestId === dialogTest?.id}
       />
