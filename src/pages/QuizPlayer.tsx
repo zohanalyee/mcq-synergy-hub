@@ -21,6 +21,7 @@ import QuizOption, { QuizOptionState } from "@/components/quiz/QuizOption";
 import QuizTimerRing from "@/components/quiz/QuizTimerRing";
 import QuizResultScreen from "@/components/quiz/QuizResultScreen";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
+import { loadGuestSession } from "@/lib/guestSession";
 import { useAuth } from "@/contexts/AuthContext";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
