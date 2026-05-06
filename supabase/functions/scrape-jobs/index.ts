@@ -239,7 +239,7 @@ serve(async (req) => {
 
         const response = await fetch(source.url, {
           headers: {
-            'User-Agent': 'Mozilla/5.0 (compatible; MCQsAI-Bot/1.0; +https://mcqsai.com)',
+            'User-Agent': 'Mozilla/5.0 (compatible; MCQsAI-Bot/1.0; +https://www.mcqsai.com)',
             'Accept': 'text/html,application/xhtml+xml',
           },
         });
