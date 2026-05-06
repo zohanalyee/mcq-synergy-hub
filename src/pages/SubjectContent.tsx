@@ -642,6 +642,13 @@ const SubjectContent = () => {
 
   // Handle topic selection change - update state and refetch questions
   const handleTopicChange = (value: string) => {
+    // Guest: only the unlocked free topic is allowed
+    if (!user) {
+      if (value !== guestAllowedTopicId) {
+        openGuestGate();
+        return;
+      }
+    }
     setSelectedTopicId(value);
     if (value === "all") {
       setSelectedTopic("all");
