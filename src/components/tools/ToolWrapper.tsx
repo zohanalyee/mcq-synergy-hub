@@ -25,7 +25,7 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
 
   const seoTitle = `Free AI ${title}`;
   const seoDescription = `Use our free AI ${title} for instant results. ${toolData?.seoDescription || 'MCQsAI offers premium AI-powered tools for students and professionals.'}`;
-  const toolUrl = toolData?.href ? `https://mcqsai.com${toolData.href}` : undefined;
+  const toolUrl = toolData?.href ? `https://www.mcqsai.com${toolData.href}` : undefined;
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -36,7 +36,7 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Any',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
+    provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://www.mcqsai.com' },
   };
 
   return (

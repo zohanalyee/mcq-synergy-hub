@@ -15,7 +15,7 @@ const SEOHead = ({
   title,
   description,
   keywords,
-  image = 'https://mcqsai.com/og-image.png',
+  image = 'https://www.mcqsai.com/og-image.png',
   url,
   type = 'website',
   noindex = false,
@@ -35,24 +35,24 @@ const SEOHead = ({
   // Strip trailing slash (except root) so /tools and /tools/ don't both index.
   const pathname = rawPath.length > 1 && rawPath.endsWith('/') ? rawPath.slice(0, -1) : rawPath;
 
-  // Canonical hardening: always force apex (non-www), https, drop ?lang= query.
-  // Prevents GSC "Alternative page with proper canonical tag" + "Page with redirect"
-  // errors caused by www. duplicates and ?lang=ur hreflang variants.
+  // Canonical hardening: always force www, https, drop ?lang= query.
+  // Prevents GSC "Duplicate without user-selected canonical" by always
+  // pointing to https://www.mcqsai.com as the primary host.
   const normalizeCanonical = (raw: string): string => {
     try {
-      const u = new URL(raw, 'https://mcqsai.com');
+      const u = new URL(raw, 'https://www.mcqsai.com');
       u.protocol = 'https:';
-      u.hostname = u.hostname.replace(/^www\./i, '') || 'mcqsai.com';
+      const host = u.hostname.replace(/^www\./i, '') || 'mcqsai.com';
+      u.hostname = `www.${host}`;
       u.searchParams.delete('lang');
-      // Strip trailing slash for non-root.
       let p = u.pathname;
       if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
       return `https://${u.hostname}${p}${u.search}`;
     } catch {
-      return `https://mcqsai.com${pathname}`;
+      return `https://www.mcqsai.com${pathname}`;
     }
   };
-  const canonicalUrl = normalizeCanonical(url || `https://mcqsai.com${pathname}`);
+  const canonicalUrl = normalizeCanonical(url || `https://www.mcqsai.com${pathname}`);
   const finalLocale = language === 'ur' ? 'ur_PK' : language === 'sd' ? 'sd_PK' : 'en_US';
 
   return (

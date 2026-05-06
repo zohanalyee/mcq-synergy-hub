@@ -23,7 +23,7 @@ const ExamLandingPage = () => {
     provider: {
       '@type': 'Organization',
       name: 'MCQsAI',
-      url: 'https://mcqsai.com',
+      url: 'https://www.mcqsai.com',
     },
     hasCourseInstance: {
       '@type': 'CourseInstance',
@@ -41,7 +41,7 @@ const ExamLandingPage = () => {
         title={exam.metaTitle}
         description={exam.metaDescription}
         keywords={exam.keywords}
-        url={`https://mcqsai.com/exams/${exam.slug}`}
+        url={`https://www.mcqsai.com/exams/${exam.slug}`}
       />
       <script
         type="application/ld+json"

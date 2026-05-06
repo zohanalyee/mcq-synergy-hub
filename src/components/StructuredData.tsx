@@ -6,8 +6,8 @@ const StructuredData = () => {
     '@type': 'EducationalOrganization',
     name: 'MCQsAI',
     alternateName: 'MCQs AI',
-    url: 'https://mcqsai.com',
-    logo: 'https://mcqsai.com/logo.png',
+    url: 'https://www.mcqsai.com',
+    logo: 'https://www.mcqsai.com/logo.png',
     description:
       'AI-powered MCQ practice platform for MDCAT, ECAT, CSS, PPSC, NTS exam preparation in Pakistan',
     address: { '@type': 'PostalAddress', addressCountry: 'PK' },
@@ -22,10 +22,10 @@ const StructuredData = () => {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'MCQsAI',
-    url: 'https://mcqsai.com',
+    url: 'https://www.mcqsai.com',
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://mcqsai.com/subjects?q={search_term_string}',
+      target: 'https://www.mcqsai.com/subjects?q={search_term_string}',
       'query-input': 'required name=search_term_string',
     },
   };

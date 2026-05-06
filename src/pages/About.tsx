@@ -19,7 +19,7 @@ const aboutJsonLd = {
   mainEntity: {
     '@type': 'Organization',
     name: 'MCQsAI',
-    url: 'https://mcqsai.com',
+    url: 'https://www.mcqsai.com',
     foundingCountry: 'PK',
     description: "Pakistan's premier AI-powered educational platform",
     contactPoint: {
