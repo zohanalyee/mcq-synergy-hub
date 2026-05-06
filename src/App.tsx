@@ -10,6 +10,7 @@ import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
 import TopProgressBar from "./components/TopProgressBar";
 import ToolRouteSEO from "./components/seo/ToolRouteSEO";
+import GlobalCanonical from "./components/seo/GlobalCanonical";
 import { UserRoleProvider } from "./contexts/UserRoleContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { LearningProvider } from "./contexts/LearningContext";
@@ -214,6 +215,7 @@ const App = () => {
                     <MobileBottomNav />
                     <FloatingToolsRenderer />
                     <ToolRouteSEO />
+                    <GlobalCanonical />
                     <GlobalCreditExhaustedListener />
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
