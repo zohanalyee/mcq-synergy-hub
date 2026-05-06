@@ -62,7 +62,7 @@ const ToolRouteSEO = () => {
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
       <meta name="robots" content="index,follow" />
-      <link rel="canonical" href={canonical} />
+      {/* Canonical is emitted globally by <GlobalCanonical />. */}
 
       {/* Open Graph */}
       <meta property="og:type" content="website" />
