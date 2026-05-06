@@ -169,23 +169,23 @@ const SubjectContent = () => {
       console.log('GUEST FLOW:', { user, rows: rows.length, questions: questions.length });
 
       if (questions.length === 0) {
-        // No cached questions — DO NOT open the integrated player.
-        // Reset to topics list and pivot to a sign-in conversion prompt.
+        // No cached questions — strictly keep the integrated player hidden.
+        setGuestStarted(false);
         setMcqs([]);
         setQuestionSource(null);
         setCachedCount(0);
         setAiCount(0);
-        setGuestStarted(false);
-        toast({
-          title: "✨ AI Generation Available",
-          description: "No cached questions found. Sign in to generate questions for this topic instantly using AI!",
-        });
         openGuestGate();
+        toast({
+          title: "AI Generation Available",
+          description: "No cached questions found. Sign in to generate questions instantly using AI!",
+        });
+        setIsLoadingMCQs(false);
         return;
       }
 
       // Render INSIDE the integrated player (no redirect)
-      const transformed: MCQItem[] = rows.map((q: any, i: number) => transformBankQuestion(q, i));
+      const transformed: MCQItem[] = questions.map((q: any, i: number) => transformBankQuestion(q, i));
       setMcqs(transformed);
       setQuestionSource('cache');
       setCachedCount(transformed.length);
