@@ -169,6 +169,13 @@ const SubjectContent = () => {
       console.log('GUEST FLOW:', { user, rows: rows.length, questions: questions.length });
 
       if (questions.length === 0) {
+        // No cached questions — DO NOT open the integrated player.
+        // Reset to topics list and pivot to a sign-in conversion prompt.
+        setMcqs([]);
+        setQuestionSource(null);
+        setCachedCount(0);
+        setAiCount(0);
+        setGuestStarted(false);
         toast({
           title: "✨ AI Generation Available",
           description: "No cached questions found. Sign in to generate questions for this topic instantly using AI!",
