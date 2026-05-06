@@ -130,6 +130,23 @@ const SubjectContent = () => {
     };
   };
 
+  // Guest gate dialog state
+  const [guestGateOpen, setGuestGateOpen] = useState(false);
+  // Has the guest unlocked the in-page integrated player by clicking the free topic?
+  const [guestStarted, setGuestStarted] = useState(false);
+  // Which topic id the guest is allowed to play (the first/free one)
+  const [guestAllowedTopicId, setGuestAllowedTopicId] = useState<string | null>(null);
+
+  const { saveIntent } = useAuthIntent();
+
+  const openGuestGate = () => {
+    saveIntent({
+      action: "unlock_subject",
+      path: location.pathname + location.search,
+    });
+    setGuestGateOpen(true);
+  };
+
   const startGuestSubjectQuiz = async (overrideTopic?: { id?: string; name: string }) => {
     const requestedCount = Math.min(parseInt(questionCount) || 10, 20);
     setIsLoadingMCQs(true);
@@ -156,18 +173,18 @@ const SubjectContent = () => {
         return;
       }
 
-      const session = buildGuestSession({
-        session_name: `${title || 'Subject'} Practice`,
-        questions,
-        time_limit: 15,
-        subjects: title ? [title] : [],
-        topics: selectedTopicObj?.name ? [selectedTopicObj.name] : [],
-      });
-      saveGuestSession(session);
-
-      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', session.id)}`, {
-        state: { returnPath: location.pathname },
-      });
+      // Render INSIDE the integrated player (no redirect)
+      const transformed: MCQItem[] = rows.map((q: any, i: number) => transformBankQuestion(q, i));
+      setMcqs(transformed);
+      setQuestionSource('cache');
+      setCachedCount(transformed.length);
+      setAiCount(0);
+      if (selectedTopicObj?.id) {
+        setSelectedTopicId(selectedTopicObj.id);
+        setSelectedTopic(selectedTopicObj.name);
+        setGuestAllowedTopicId(selectedTopicObj.id);
+      }
+      setGuestStarted(true);
     } catch (error: any) {
       console.error('Guest subject quiz error:', error);
       toast({ variant: "destructive", title: "Failed to load questions", description: error?.message || "Please try again." });
