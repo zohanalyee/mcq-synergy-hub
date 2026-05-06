@@ -739,7 +739,7 @@ const SubjectContent = () => {
             topicCount={topicCount || topics.length}
           />
           
-          {user && (
+          {(user || guestStarted) && (
             <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <ModeToggle mode={studyMode} onModeChange={setStudyMode} />
               
@@ -759,8 +759,8 @@ const SubjectContent = () => {
             </div>
           )}
           
-          {/* MCQ Controls Panel — hidden for guests (minimal start UI below) */}
-          {user ? (
+          {/* MCQ Controls Panel */}
+          {(user || guestStarted) ? (
             <MCQControls
               questionCount={questionCount}
               difficulty={difficulty}
@@ -772,7 +772,7 @@ const SubjectContent = () => {
               onRefresh={handleRefresh}
               onGenerate={handleGenerateNew}
               isLoading={isLoadingMCQs}
-              isGuest={false}
+              isGuest={!user}
               questionSource={questionSource}
               totalQuestions={mcqs.length}
               cachedCount={cachedCount}
@@ -783,8 +783,8 @@ const SubjectContent = () => {
           )}
 
           
-          {/* Guest: Freemium Tease & Gate — first topic free, others locked */}
-          {!user ? (
+          {/* Guest landing: Freemium Tease & Gate — first topic free, others locked */}
+          {!user && !guestStarted ? (
             <GuestTopicsGate
               subjectTitle={title || 'Subject'}
               topics={dbTopics.length > 0 ? dbTopics : topics.map(t => ({ name: t.title, description: t.content }))}
