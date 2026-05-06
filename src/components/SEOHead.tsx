@@ -31,28 +31,9 @@ const SEOHead = ({
   const finalTitle = title ? `${title} | MCQsAI` : defaultTitle;
   const finalDescription = description || defaultDescription;
   const finalKeywords = keywords || defaultKeywords;
-  const rawPath = typeof window !== 'undefined' ? window.location.pathname : '/';
-  // Strip trailing slash (except root) so /tools and /tools/ don't both index.
-  const pathname = rawPath.length > 1 && rawPath.endsWith('/') ? rawPath.slice(0, -1) : rawPath;
-
-  // Canonical hardening: always force www, https, drop ?lang= query.
-  // Prevents GSC "Duplicate without user-selected canonical" by always
-  // pointing to https://www.mcqsai.com as the primary host.
-  const normalizeCanonical = (raw: string): string => {
-    try {
-      const u = new URL(raw, 'https://www.mcqsai.com');
-      u.protocol = 'https:';
-      const host = u.hostname.replace(/^www\./i, '') || 'mcqsai.com';
-      u.hostname = `www.${host}`;
-      u.searchParams.delete('lang');
-      let p = u.pathname;
-      if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
-      return `https://${u.hostname}${p}${u.search}`;
-    } catch {
-      return `https://www.mcqsai.com${pathname}`;
-    }
-  };
-  const canonicalUrl = normalizeCanonical(url || `https://www.mcqsai.com${pathname}`);
+  // Canonical + og:url are emitted globally by <GlobalCanonical /> in App.tsx.
+  // This component intentionally does NOT render a canonical tag to avoid
+  // multiple conflicting canonicals on the same page.
   const finalLocale = language === 'ur' ? 'ur_PK' : language === 'sd' ? 'sd_PK' : 'en_US';
 
   return (
