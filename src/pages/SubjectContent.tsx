@@ -863,6 +863,32 @@ const SubjectContent = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Guest Gate Dialog (premium actions inside integrated player) */}
+      <Dialog open={guestGateOpen} onOpenChange={setGuestGateOpen}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-brand-gradient flex items-center justify-center mb-2 shadow-brand">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
+            <DialogTitle className="text-center text-xl">Sign In to Unlock</DialogTitle>
+            <DialogDescription className="text-center">
+              Unlock all topics, AI-generated questions, and advanced practice features by signing in for free.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 pt-2">
+            <Button
+              onClick={() => { setGuestGateOpen(false); navigate('/sign-in'); }}
+              className="w-full h-11 bg-brand-gradient text-white shadow-brand"
+            >
+              Sign In — It's Free
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => setGuestGateOpen(false)}>
+              Maybe later
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Header>
   );
 };
