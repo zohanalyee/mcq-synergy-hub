@@ -90,7 +90,7 @@ const ScholarshipDetailPage = () => {
         title={`${title} - Scholarship`}
         description={`Apply for ${title}. ${description.slice(0, 120)}`}
         keywords={`${title}, Pakistan scholarships, education funding, ${org || ''}`}
-        url={`https://mcqsai.com/scholarships/${scholarshipSlug}`}
+        url={`https://www.mcqsai.com/scholarships/${scholarshipSlug}`}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 

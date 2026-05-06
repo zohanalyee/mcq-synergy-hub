@@ -140,7 +140,7 @@ const BoardTopicPage = () => {
 
   const seoTitle = `${names.topic} MCQs - ${names.subject} Class ${resolvedClassNumber || classNumber} | ${names.board}`;
   const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${resolvedClassNumber || classNumber} (${names.board}). Free online preparation with explanations.`;
-  const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${topicSlug}`;
+  const canonicalUrl = `https://www.mcqsai.com/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${topicSlug}`;
 
   useEffect(() => {
     if (!isLoading && mcqs.length === 0 && names.topic) {
@@ -158,7 +158,7 @@ const BoardTopicPage = () => {
   const quizSchema = mcqs.length > 0 ? {
     '@context': 'https://schema.org', '@type': 'Quiz', name: seoTitle,
     about: { '@type': 'Thing', name: names.topic }, educationalLevel: `Class ${resolvedClassNumber || classNumber}`,
-    numberOfQuestions: mcqs.length, provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
+    numberOfQuestions: mcqs.length, provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://www.mcqsai.com' },
   } : null;
 
   return (

@@ -29,7 +29,7 @@ const ToolRouteSEO = () => {
   const tool = ALL_TOOLS.find((t) => t.href === pathname);
   if (!tool) return null;
 
-  const canonical = `https://mcqsai.com${tool.href}`;
+  const canonical = `https://www.mcqsai.com${tool.href}`;
   const title = `${tool.name} — Free Online Tool | MCQsAI`;
   const description =
     tool.seoDescription ||
@@ -53,7 +53,7 @@ const ToolRouteSEO = () => {
     operatingSystem: 'Any',
     isAccessibleForFree: true,
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    publisher: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
+    publisher: { '@type': 'Organization', name: 'MCQsAI', url: 'https://www.mcqsai.com' },
   };
 
   return (

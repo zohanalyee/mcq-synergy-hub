@@ -90,7 +90,7 @@ const JobDetailPage = () => {
         title={`${title} - Job Opportunity`}
         description={`Apply for ${title}. ${description.slice(0, 120)}`}
         keywords={`${title}, Pakistan jobs, government jobs, ${org || ''}`}
-        url={`https://mcqsai.com/jobs/${jobSlug}`}
+        url={`https://www.mcqsai.com/jobs/${jobSlug}`}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
