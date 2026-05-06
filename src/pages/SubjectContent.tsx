@@ -23,8 +23,11 @@ import { loadGuestQuestions } from "@/services/guestQuestionService";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
 
 interface MCQItem {
@@ -127,6 +130,23 @@ const SubjectContent = () => {
     };
   };
 
+  // Guest gate dialog state
+  const [guestGateOpen, setGuestGateOpen] = useState(false);
+  // Has the guest unlocked the in-page integrated player by clicking the free topic?
+  const [guestStarted, setGuestStarted] = useState(false);
+  // Which topic id the guest is allowed to play (the first/free one)
+  const [guestAllowedTopicId, setGuestAllowedTopicId] = useState<string | null>(null);
+
+  const { saveIntent } = useAuthIntent();
+
+  const openGuestGate = () => {
+    saveIntent({
+      action: "unlock_subject",
+      path: location.pathname + location.search,
+    });
+    setGuestGateOpen(true);
+  };
+
   const startGuestSubjectQuiz = async (overrideTopic?: { id?: string; name: string }) => {
     const requestedCount = Math.min(parseInt(questionCount) || 10, 20);
     setIsLoadingMCQs(true);
@@ -153,18 +173,18 @@ const SubjectContent = () => {
         return;
       }
 
-      const session = buildGuestSession({
-        session_name: `${title || 'Subject'} Practice`,
-        questions,
-        time_limit: 15,
-        subjects: title ? [title] : [],
-        topics: selectedTopicObj?.name ? [selectedTopicObj.name] : [],
-      });
-      saveGuestSession(session);
-
-      navigate(`/quiz-session/${generateSlugUrl(title || 'subject-practice', session.id)}`, {
-        state: { returnPath: location.pathname },
-      });
+      // Render INSIDE the integrated player (no redirect)
+      const transformed: MCQItem[] = rows.map((q: any, i: number) => transformBankQuestion(q, i));
+      setMcqs(transformed);
+      setQuestionSource('cache');
+      setCachedCount(transformed.length);
+      setAiCount(0);
+      if (selectedTopicObj?.id) {
+        setSelectedTopicId(selectedTopicObj.id);
+        setSelectedTopic(selectedTopicObj.name);
+        setGuestAllowedTopicId(selectedTopicObj.id);
+      }
+      setGuestStarted(true);
     } catch (error: any) {
       console.error('Guest subject quiz error:', error);
       toast({ variant: "destructive", title: "Failed to load questions", description: error?.message || "Please try again." });
@@ -603,12 +623,18 @@ const SubjectContent = () => {
 
   // Handle generate new questions (Smart Hybrid: bank first → AI fallback)
   const handleGenerateNew = () => {
-    loadMCQs(true, false); // forceNew=true, fetchOnly=false → triggers AI if bank is empty
+    if (!user) { openGuestGate(); return; }
+    loadMCQs(true, false);
   };
 
   // Handle refresh (use cache first)
   const handleRefresh = () => {
-    loadMCQs(false); // forceNew = false
+    if (!user) {
+      // For guest, "refresh" simply reshuffles the unlocked free topic
+      startGuestSubjectQuiz(guestAllowedTopicId ? { id: guestAllowedTopicId, name: selectedTopic } : undefined);
+      return;
+    }
+    loadMCQs(false);
   };
 
   // Reload when settings change
@@ -622,6 +648,13 @@ const SubjectContent = () => {
 
   // Handle topic selection change - update state and refetch questions
   const handleTopicChange = (value: string) => {
+    // Guest: only the unlocked free topic is allowed
+    if (!user) {
+      if (value !== guestAllowedTopicId) {
+        openGuestGate();
+        return;
+      }
+    }
     setSelectedTopicId(value);
     if (value === "all") {
       setSelectedTopic("all");
@@ -706,7 +739,7 @@ const SubjectContent = () => {
             topicCount={topicCount || topics.length}
           />
           
-          {user && (
+          {(user || guestStarted) && (
             <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <ModeToggle mode={studyMode} onModeChange={setStudyMode} />
               
@@ -726,8 +759,8 @@ const SubjectContent = () => {
             </div>
           )}
           
-          {/* MCQ Controls Panel — hidden for guests (minimal start UI below) */}
-          {user ? (
+          {/* MCQ Controls Panel */}
+          {(user || guestStarted) ? (
             <MCQControls
               questionCount={questionCount}
               difficulty={difficulty}
@@ -739,7 +772,7 @@ const SubjectContent = () => {
               onRefresh={handleRefresh}
               onGenerate={handleGenerateNew}
               isLoading={isLoadingMCQs}
-              isGuest={false}
+              isGuest={!user}
               questionSource={questionSource}
               totalQuestions={mcqs.length}
               cachedCount={cachedCount}
@@ -750,8 +783,8 @@ const SubjectContent = () => {
           )}
 
           
-          {/* Guest: Freemium Tease & Gate — first topic free, others locked */}
-          {!user ? (
+          {/* Guest landing: Freemium Tease & Gate — first topic free, others locked */}
+          {!user && !guestStarted ? (
             <GuestTopicsGate
               subjectTitle={title || 'Subject'}
               topics={dbTopics.length > 0 ? dbTopics : topics.map(t => ({ name: t.title, description: t.content }))}
@@ -830,6 +863,32 @@ const SubjectContent = () => {
           </div>
         </motion.div>
       </div>
+
+      {/* Guest Gate Dialog (premium actions inside integrated player) */}
+      <Dialog open={guestGateOpen} onOpenChange={setGuestGateOpen}>
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="mx-auto w-12 h-12 rounded-full bg-brand-gradient flex items-center justify-center mb-2 shadow-brand">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
+            <DialogTitle className="text-center text-xl">Sign In to Unlock</DialogTitle>
+            <DialogDescription className="text-center">
+              Unlock all topics, AI-generated questions, and advanced practice features by signing in for free.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2 pt-2">
+            <Button
+              onClick={() => { setGuestGateOpen(false); navigate('/sign-in'); }}
+              className="w-full h-11 bg-brand-gradient text-white shadow-brand"
+            >
+              Sign In — It's Free
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => setGuestGateOpen(false)}>
+              Maybe later
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Header>
   );
 };
