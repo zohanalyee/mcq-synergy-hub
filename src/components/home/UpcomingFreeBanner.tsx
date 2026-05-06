@@ -9,7 +9,8 @@ const UpcomingFreeBanner = () => {
   if (!show) return null;
   return (
     <div className="container mx-auto px-4 pt-3">
-      <div className="relative rounded-xl border border-white/20 bg-brand-gradient/80 backdrop-blur-md px-4 py-2.5 text-sm text-white shadow-brand">
+      <div className="relative rounded-xl border border-white/20 bg-brand-gradient backdrop-blur-md px-4 py-2.5 text-sm text-white shadow-brand overflow-hidden">
+        <div className="absolute inset-0 bg-background/10 pointer-events-none" />
         <button
           aria-label="Dismiss"
           onClick={() => { localStorage.setItem(KEY, '1'); setShow(false); }}
