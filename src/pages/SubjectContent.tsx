@@ -623,12 +623,18 @@ const SubjectContent = () => {
 
   // Handle generate new questions (Smart Hybrid: bank first → AI fallback)
   const handleGenerateNew = () => {
-    loadMCQs(true, false); // forceNew=true, fetchOnly=false → triggers AI if bank is empty
+    if (!user) { openGuestGate(); return; }
+    loadMCQs(true, false);
   };
 
   // Handle refresh (use cache first)
   const handleRefresh = () => {
-    loadMCQs(false); // forceNew = false
+    if (!user) {
+      // For guest, "refresh" simply reshuffles the unlocked free topic
+      startGuestSubjectQuiz(guestAllowedTopicId ? { id: guestAllowedTopicId, name: selectedTopic } : undefined);
+      return;
+    }
+    loadMCQs(false);
   };
 
   // Reload when settings change
