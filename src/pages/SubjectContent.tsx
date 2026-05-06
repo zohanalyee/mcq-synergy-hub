@@ -169,7 +169,11 @@ const SubjectContent = () => {
       console.log('GUEST FLOW:', { user, rows: rows.length, questions: questions.length });
 
       if (questions.length === 0) {
-        toast({ title: "No questions available", description: "Please choose another topic or subject." });
+        toast({
+          title: "✨ AI Generation Available",
+          description: "No cached questions found. Sign in to generate questions for this topic instantly using AI!",
+        });
+        openGuestGate();
         return;
       }
 
