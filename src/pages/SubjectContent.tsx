@@ -23,8 +23,11 @@ import { loadGuestQuestions } from "@/services/guestQuestionService";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Lock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
 
 interface MCQItem {
