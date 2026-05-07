@@ -344,20 +344,21 @@ const SubjectContent = () => {
         .maybeSingle();
       
       if (subjectData?.id) {
-        // Get topics linked to this subject
+        // Subject exists in admin LMS — ALWAYS show its topics (even if empty),
+        // never fall back to content_items distinct topics. This guarantees that
+        // every admin-defined topic appears in dropdowns, even with 0 questions.
         const { data: topicsData } = await supabase
           .from('topics')
           .select('id, name, description')
           .eq('subject_id', subjectData.id)
+          .or('approved.is.null,approved.eq.true')
           .order('name');
         
-        if (topicsData && topicsData.length > 0) {
-          setDbTopics(topicsData);
-          return;
-        }
+        setDbTopics(topicsData || []);
+        return;
       }
       
-      // Final fallback: Get distinct topics from content_items for this subject
+      // Legacy fallback (only when subject row missing): distinct topics from content_items
       const { data: mcqTopics } = await supabase
         .from('content_items')
         .select('topic')
