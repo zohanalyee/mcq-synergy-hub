@@ -191,7 +191,8 @@ export const loadGuestQuestions = async (
     .filter(validate);
   const questions = shuffle(valid).slice(0, params.questionCount);
 
-  const broadened = tier === 'subject_topics' || tier === 'subject_ilike';
+  const finalTier: GuestQuestionTier = tier;
+  const broadened = finalTier === 'subject_topics' || finalTier === 'subject_ilike';
 
   console.log('GUEST FLOW DEBUG:', {
     totalRows: out.length,
