@@ -100,12 +100,19 @@ const Quizzes = () => {
     // GUEST PATH — DB-only, no AI, no auth toast on fetch.
     // ============================================================
     if (!user) {
-      const { rows, questions } = await loadGuestQuestions({
+      const { rows, questions, broadened } = await loadGuestQuestions({
         subjectId: opts.subjectId,
         subjectName: subjectRow.name,
         topicId: opts.topicId,
         questionCount: opts.questionCount,
       });
+
+      if (broadened && questions.length > 0 && opts.topicName) {
+        toast.info(
+          `"${opts.topicName}" ابھی خالی ہے۔ اسی مضمون کے دوسرے سوالات دیکھیں۔ — "${opts.topicName}" is empty. Showing related questions from this subject.`,
+          { duration: 5000 },
+        );
+      }
 
       console.log('GUEST FLOW:', {
         user,

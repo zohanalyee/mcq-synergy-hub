@@ -158,13 +158,23 @@ const SubjectContent = () => {
           ? dbTopics.find(t => t.id === selectedTopicId || t.name === selectedTopic)
           : undefined;
 
-      const { rows, questions } = await loadGuestQuestions({
+      const { rows, questions, broadened } = await loadGuestQuestions({
         subjectId,
         subjectName: title,
         topicId: selectedTopicObj?.id,
         topicIds: !selectedTopicObj ? dbTopics.map(t => t.id).filter(Boolean) : undefined,
         questionCount: requestedCount,
       });
+
+      if (broadened && questions.length > 0 && selectedTopicObj?.name) {
+        try {
+          const { toast: sonner } = await import('sonner');
+          sonner.info(
+            `"${selectedTopicObj.name}" ابھی خالی ہے۔ اسی مضمون کے دوسرے سوالات دکھائے جا رہے ہیں۔ — "${selectedTopicObj.name}" is empty. Showing related questions from this subject.`,
+            { duration: 5000 },
+          );
+        } catch {}
+      }
 
       console.log('GUEST FLOW:', { user, rows: rows.length, questions: questions.length });
 
