@@ -1,93 +1,97 @@
-Approved. Proceed with the 3-step plan:
+```
+Lovable ko reply do:
 
-1. Fix SubjectContent.tsx fallback logic
+"Almost correct, but one change needed:
 
-2. Verify useSubjects hook
+Point #3 - SubjectContent.tsx:
 
-3. Add optional response validator
+CHANGE FROM:
+'No fallback to subject-wide on Subject page'
 
-Run all 4 verification tests before deployment.
+CHANGE TO:
+'Guest users on Subject page should ALSO use 
+4-tier waterfall (same as Quiz page).
 
-## Audit Findings
+Only when response has 0 questions from ALL tiers 
+AND user is guest → show auth prompt.
 
-### Issue 1 — Subject/Topic display (LOW severity, mostly already correct)
+This keeps guests engaged across all pages.'
 
-None of the three pages filter by question count. Only filter applied is `approved.eq.true OR approved.is.null` (defaults to `true` in DB), which is intentional for hiding admin-rejected items. Empty topics already show.
-
-- `src/pages/Quizzes.tsx` (line 62-66): topics query uses `approved` filter only — OK, but the subject list comes from a separate `useSubjects` hook (need to verify).
-- `src/pages/SubjectContent.tsx` (line 320-374): `loadTopicsFromDB` falls back to `content_items` distinct topics if no rows in `topics` table. This fallback can hide empty topics — but only fires when no `topics` rows exist, so usually fine.
-- `src/components/syllabus-builder/hooks/useSyllabusData.ts` (line 54-130): both subjects and topics queries use `approved` filter only — already correct.
-
-**Action:** Verify `useSubjects` hook used by `Quizzes.tsx`. Confirm it doesn't filter by question count. No code changes anticipated unless it does.
-
-### Issue 2 — AI question persistence (ALREADY IMPLEMENTED)
-
-`supabase/functions/generate-test/index.ts` already inserts every AI-generated question into `content_items` (lines 1742-1809) with:
-
-- `category: 'mcq'`, `status: 'approved'` (or `flagged_duplicate` on dup)
-- `subject`, `topic`, `topic_id`, `canonical_topic_name`, `difficulty`, `options`, `correct_option`, `explanation`
-- LMS linkage via `lmsLinkageFields`
-- Three-tier insert (normal → retry with unique title → emergency save) — zero data loss
-
-Questions persist and become reusable across all users.
-
-**Action:** No fix needed. Will confirm by reading the response-builder section to ensure the insert always runs (not skipped on guest path).
-
-### Issue 3 — Structure consistency
-
-`content_items` schema is the single source of truth. Both admin-manual and AI inserts use the same columns. The fields the auditor lists (`source: 'ai_generated'` vs `'admin_created'`) do not exist as a column today — provenance is stored inside `reference_material` JSON (`generator: 'auto_fill' | 'admin_bulk' | ...`). All player fetches read `content_items` and normalize options/correct_option in `SubjectContent.tsx` lines 260-290.
-
-**Action:** No schema change. Optionally add a lightweight `validateQuestionStructure` filter in the edge function before returning to the client (not before insert — we never want to drop AI work).
+Rest approved. Please implement with this modification."
+```
 
 ---
 
-## Plan
+#### **OPTION 2: REJECT & SEND CORRECTED PROMPT**
 
-### Step 1 — Verify `Quizzes.tsx` subject source
+```
+Lovable ko bolo:
 
-Read `useSubjects` (or whichever hook supplies the dropdown) and confirm no `gt('topics.count', 0)` or similar filter. If found, strip it.
+"Please hold. 
 
-### Step 2 — Tighten `SubjectContent.tsx` topic loader
+I need to send a corrected strategy 
+that clarifies Subject page behavior 
+for guest users.
 
-In `loadTopicsFromDB`, if a matching subject exists in the `subjects` table, **always** use `topics` table results (even when empty array) and skip the `content_items` distinct-topic fallback. Only run the fallback when the subject row itself is missing. This guarantees empty admin-defined topics still appear.
+Will send updated prompt shortly."
 
-```text
-subjects table hit?
- ├─ yes → return topics rows (may be [])
- └─ no  → fallback to distinct topics from content_items (legacy)
+Then send the corrected prompt I wrote above.
 ```
 
-### Step 3 — Confirm AI persistence path
+## Issue with Point #3
 
-Read lines around the response builder in `generate-test/index.ts` to confirm the insert is unconditional for every successful AI batch (not gated on auth/guest). No edits expected.
+Current plan says:
 
-### Step 4 — Add response-side structure validation (optional, safe)
+"No fallback to subject-wide on Subject page"
 
-In `generate-test/index.ts`, before returning the questions array to the client, filter with:
+This is incorrect.
 
-```ts
-function isValidMCQ(q) {
-  return q?.question && Array.isArray(q.options) && q.options.length === 4
-      && q.correct_option && q.difficulty;
-}
-```
+## Corrected Strategy
 
-Log a warning if any are dropped. **Do not** block the DB insert path on this — bad rows still get saved as `flagged_duplicate` for admin review (existing behavior).
+**ALL PAGES should use same logic for guests:**
 
-### Step 5 — Manual verification
+### Guest User (Quiz, Subject, Syllabus):
 
-After deploy:
+1. Try exact topic_id
 
-1. Pick a subject in admin with a topic that has 0 questions → confirm it shows in all 3 pages.
-2. Generate a quiz on `/quizzes` for that topic → confirm new rows appear in `content_items` with matching `topic_id`.
-3. Re-open `/subjects/:id` and `/custom-syllabus` → confirm count > 0 reflected.
+2. Try canonical_topic_name
 
----
+3. Try ALL topics under subject_id ✅
 
-## Files to touch (max)
+4. Try subject ILIKE ✅
 
-- `src/pages/Quizzes.tsx` — only if `useSubjects` filters by count
-- `src/pages/SubjectContent.tsx` — tighten `loadTopicsFromDB` fallback
-- `supabase/functions/generate-test/index.ts` — optional response-side validator
+5. Only if ALL fail → show auth prompt
 
-No schema migration required. No changes to admin panel inserts (already consistent).
+### Logged-In User (Quiz, Subject, Syllabus):
+
+1. Try exact topic_id
+
+2. If deficit → AI generates
+
+3. Save to Question Bank
+
+4. Create topic row
+
+## Why
+
+We want guests to ALWAYS have content on ALL pages.
+
+Subject page shouldn't be different from Quiz page.
+
+Empty states should only appear when database is 
+
+completely empty for that subject.
+
+## Modified Point #3
+
+SubjectContent.tsx:
+
+- Guest: Use loadGuestQuestions (4-tier waterfall)
+
+- Logged-in: Use generate-test (strict + AI)
+
+- Show auth prompt only when waterfall returns 0
+
+Rest of plan approved.
+
+Please implement with this correction.
