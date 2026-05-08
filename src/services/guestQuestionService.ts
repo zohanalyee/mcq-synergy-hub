@@ -87,9 +87,9 @@ export const loadGuestQuestions = async (
 
   const out: any[] = [];
   const seen = new Set<string>();
-  let tier: GuestQuestionTier = 'empty';
+  let tier = 'empty' as GuestQuestionTier;
   const setTier = (t: GuestQuestionTier) => {
-    if (tier === 'empty') tier = t;
+    if (tier === ('empty' as GuestQuestionTier)) tier = t;
   };
 
   // 1) Strict topic_id (single)
@@ -191,8 +191,7 @@ export const loadGuestQuestions = async (
     .filter(validate);
   const questions = shuffle(valid).slice(0, params.questionCount);
 
-  const finalTier: GuestQuestionTier = tier;
-  const broadened = finalTier === 'subject_topics' || finalTier === 'subject_ilike';
+  const broadened = (tier as string) === 'subject_topics' || (tier as string) === 'subject_ilike';
 
   console.log('GUEST FLOW DEBUG:', {
     totalRows: out.length,
