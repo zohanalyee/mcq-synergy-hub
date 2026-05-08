@@ -721,10 +721,9 @@ const SubjectContent = () => {
     }
   }, [selectedTopicId, user, guestStarted, difficulty, questionCount]);
 
-  // Filter MCQs by selected topic (client-side filtering for already loaded MCQs)
-  const filteredMCQs = selectedTopic === "all" 
-    ? mcqs 
-    : mcqs.filter(m => m.topic === selectedTopic);
+  // Fetch already returns topic-specific MCQs; skip client-side topic filter
+  // to avoid hiding rows whose `topic` string doesn't match exactly.
+  const filteredMCQs = mcqs;
   
   return (
     <Header>
