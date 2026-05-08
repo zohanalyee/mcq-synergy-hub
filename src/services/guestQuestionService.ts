@@ -104,6 +104,7 @@ export const loadGuestQuestions = async (
     if (error) console.error('[guestQuestions] topic_id error:', error);
     if (data && data.length > 0) setTier('topic_id');
     dedupePush(out, seen, data);
+    console.log('[guestQ] after tier1:', out.length);
   }
 
   // 2) topic_id IN (...)
@@ -122,6 +123,7 @@ export const loadGuestQuestions = async (
     if (error) console.error('[guestQuestions] topic_ids error:', error);
     if (data && data.length > 0) setTier('topic_ids');
     dedupePush(out, seen, data);
+    console.log('[guestQ] after tier2:', out.length);
   }
 
   // 3) All topics under subject_id
@@ -166,6 +168,7 @@ export const loadGuestQuestions = async (
       if (data && data.length > 0) setTier('subject_topics');
       dedupePush(out, seen, data);
     }
+    console.log('[guestQ] after tier3:', out.length);
   }
 
   // 4) Subject name fallback
@@ -174,12 +177,13 @@ export const loadGuestQuestions = async (
       .from('content_items')
       .select(BASE_SELECT)
       .eq('status', 'approved')
-      .ilike('subject', params.subjectName)
+      .ilike('subject', `%${params.subjectName}%`)
       .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] subject ilike error:', error);
     if (data && data.length > 0) setTier('subject_ilike');
     dedupePush(out, seen, data);
+    console.log('[guestQ] after tier4:', out.length, '| validate sample:', out.slice(0, 2).map((q: any) => ({ hasOptions: !!q.options, optLen: Array.isArray(q.options) ? q.options.length : typeof q.options, hasAnswer: !!q.correct_option })));
   }
 
   const valid = out
