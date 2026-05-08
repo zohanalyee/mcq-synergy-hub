@@ -546,6 +546,16 @@ const SubjectContent = () => {
       if (subjectId && data.questions.length > 0) {
         setCachedQuestions(subjectId, title, data.questions);
       }
+
+      // SMART AUTO-FILL: If DB returned fewer questions than requested (auth users only),
+      // trigger background AI top-up without forcing user to click "Generate New".
+      if (user && fetchOnly && transformedMCQs.length < requestedCount && transformedMCQs.length >= 0) {
+        console.log(`🧠 Auto-fill: DB returned ${transformedMCQs.length}/${requestedCount}, requesting AI top-up...`);
+        setTimeout(() => {
+          lastFetchTimeRef.current = 0; // bypass debounce for the follow-up
+          loadMCQs(false, false);
+        }, 300);
+      }
       
       if (data.source === 'ai' || data.ai_count > 0) {
         toast({
