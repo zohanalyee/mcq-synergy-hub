@@ -191,7 +191,7 @@ const MobileBottomNav = () => {
 
                   <span className={cn(
                     "text-[9px] tracking-wide transition-colors duration-200",
-                    isProfileActive ? "text-white font-semibold" : "text-foreground/50 font-medium"
+                    isProfileActive ? "text-brand-gradient font-semibold" : "text-foreground/50 font-medium"
                   )}>
                     You
                   </span>
