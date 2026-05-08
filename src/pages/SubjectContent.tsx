@@ -700,11 +700,7 @@ const SubjectContent = () => {
       if (selectedTopicId && guestStarted) {
         const topicObj = dbTopics.find(t => t.id === selectedTopicId);
         if (topicObj && selectedTopicId === guestAllowedTopicId) {
-          // Guard: don't re-fetch if already loaded for this topic
-          const alreadyLoaded = mcqs.length > 0 && mcqs[0]?.topic === topicObj.name;
-          if (!alreadyLoaded) {
-            startGuestSubjectQuiz(topicObj);
-          }
+          startGuestSubjectQuiz(topicObj);
         }
       }
       return;
