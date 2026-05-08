@@ -1,5 +1,5 @@
 // Language selector uses text badges instead of flag images
-import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, ArrowRight, Star, Globe, Languages, Sparkles, Brain } from 'lucide-react';
+import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, Globe, Languages, Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -14,8 +14,6 @@ import {
 
 import { ThemeToggle } from '@/components/ui/theme-toggle';
 import StreakCounter from '@/components/gamification/StreakCounter';
-import { ALL_TOOLS } from '@/data/toolsData';
-import { Badge } from '@/components/ui/badge';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
@@ -71,24 +69,6 @@ const HeaderActions = ({
     return 'User';
   };
 
-  const TOOL_COLORS: Record<string, { bg: string; icon: string }> = {
-    'gpa-calculator':        { bg: 'bg-[#FFE4EC] dark:bg-[#3D2A33]', icon: 'text-[#E8A0B8]' },
-    'cgpa-calculator':       { bg: 'bg-[#F0E6FF] dark:bg-[#2E2A3D]', icon: 'text-[#B89FD9]' },
-    'percentage-calculator': { bg: 'bg-[#E6F3FF] dark:bg-[#1E2D3D]', icon: 'text-[#90CAF9]' },
-    'grade-calculator':      { bg: 'bg-[#FFF4E6] dark:bg-[#3D3425]', icon: 'text-[#E8C896]' },
-    'attendance-calculator': { bg: 'bg-[#F0F4E8] dark:bg-[#2A3025]', icon: 'text-[#A8C69F]' },
-    'age-calculator':        { bg: 'bg-[#FFE5D9] dark:bg-[#3D2E25]', icon: 'text-[#E8A87C]' },
-    'bmi-calculator':        { bg: 'bg-[#E0F9F4] dark:bg-[#1E3D35]', icon: 'text-[#8BD8C7]' },
-    'calculator':            { bg: 'bg-[#FFF8E7] dark:bg-[#3D3820]', icon: 'text-[#D4A574]' },
-  };
-
-  const STUDENT_TOOL_IDS = Object.keys(TOOL_COLORS);
-  const FEATURED_IDS = new Set(['gpa-calculator', 'cgpa-calculator', 'percentage-calculator', 'grade-calculator']);
-
-  const studentTools = STUDENT_TOOL_IDS
-    .map(id => ALL_TOOLS.find(t => t.id === id))
-    .filter(Boolean);
-
   return (
     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
       {user && <StreakCounter />}
@@ -139,66 +119,6 @@ const HeaderActions = ({
 
       {!isMobile && <ThemeToggle />}
       
-      {/* AI Tools Menu */}
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className="h-9 gap-1.5 px-2.5 rounded-full hover:bg-accent/50 transition-colors group"
-          >
-            <Sparkles className="h-4 w-4 text-indigo-400 animate-pulse drop-shadow-[0_0_6px_rgba(129,140,248,0.6)] group-hover:animate-spin group-hover:text-indigo-300 group-hover:drop-shadow-[0_0_10px_rgba(129,140,248,0.8)] transition-all duration-300" />
-            <span className="hidden sm:inline text-xs font-medium text-foreground">AI Tools</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-72 bg-popover/95 backdrop-blur-xl border border-border p-0">
-          <DropdownMenuLabel className="flex items-center justify-between px-3 py-2.5">
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Student Tools</span>
-            <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-5">Most Used</Badge>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator className="my-0" />
-          <div className="py-1">
-            {studentTools.map((tool) => {
-              if (!tool) return null;
-              const Icon = tool.icon;
-              const isFeatured = FEATURED_IDS.has(tool.id);
-              return (
-                <DropdownMenuItem
-                  key={tool.id}
-                  asChild
-                  className="cursor-pointer px-3 py-2.5 mx-1 rounded-md gap-3"
-                >
-                  <Link to={tool.href}>
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-md shrink-0 transition-transform group-hover:scale-110 ${TOOL_COLORS[tool.id]?.bg ?? 'bg-primary/10'}`}>
-                      <Icon className={`h-4 w-4 ${TOOL_COLORS[tool.id]?.icon ?? 'text-primary'}`} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm font-medium truncate">{tool.name}</span>
-                        {isFeatured && <Star className="h-3 w-3 text-accent-foreground fill-accent shrink-0" />}
-                      </div>
-                      <p className="text-[11px] text-muted-foreground truncate">{tool.description}</p>
-                    </div>
-                  </Link>
-                </DropdownMenuItem>
-              );
-            })}
-          </div>
-          <DropdownMenuSeparator className="my-0" />
-          <div className="px-2 py-1.5">
-            <DropdownMenuItem
-              asChild
-              className="cursor-pointer px-3 py-2 rounded-md justify-between text-primary font-medium text-sm"
-            >
-              <Link to="/tools">
-                <span>View All 50+ Tools</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </DropdownMenuItem>
-          </div>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
       {/* Daily AI credits meter — clickable, opens credit history */}
       {user && <CreditMeter />}
 
