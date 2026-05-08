@@ -24,7 +24,7 @@ const TAB_COLORS = {
   subjects: { active: 'text-emerald-500', inactive: 'text-emerald-400/50', dot: 'bg-emerald-500' },
   recruitment: { active: 'text-orange-500', inactive: 'text-orange-400/50', dot: 'bg-orange-500' },
   syllabus: { active: 'text-purple-500', inactive: 'text-purple-400/50', dot: 'bg-purple-500' },
-  profile: { active: 'text-white', inactive: 'text-foreground/50', dot: 'bg-[hsl(var(--brand-from))]' },
+  profile: { active: 'text-brand-gradient', inactive: 'text-foreground/50', dot: 'bg-brand-gradient' },
 } as const;
 
 const navItems = [
@@ -191,7 +191,7 @@ const MobileBottomNav = () => {
 
                   <span className={cn(
                     "text-[9px] tracking-wide transition-colors duration-200",
-                    isProfileActive ? "text-white font-semibold" : "text-foreground/50 font-medium"
+                    isProfileActive ? "text-brand-gradient font-semibold" : "text-foreground/50 font-medium"
                   )}>
                     You
                   </span>
