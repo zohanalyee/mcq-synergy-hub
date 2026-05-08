@@ -273,7 +273,7 @@ const MobileBottomNav = () => {
                     <div className="space-y-2">
                       <button
                         onClick={() => handleProfileAction('/sign-in')}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-primary text-primary-foreground font-medium text-sm"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-brand-gradient text-primary-foreground font-semibold text-sm shadow-brand hover:brightness-110 hover:shadow-glow"
                       >
                         Sign In
                       </button>
