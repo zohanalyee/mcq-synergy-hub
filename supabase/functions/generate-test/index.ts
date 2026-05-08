@@ -1318,6 +1318,59 @@ serve(async (req) => {
       ...(resolvedTopicIdForLink ? { topic_id: resolvedTopicIdForLink } : {}),
       ...(resolvedCanonicalTopicName ? { canonical_topic_name: resolvedCanonicalTopicName } : {}),
     };
+
+    // ──────────────────────────────────────────────────────────────────
+    // ensureTopicExists: when an authenticated, non-guest request has a
+    // subject_id + topic name but no topic row yet, create one so AI-saved
+    // questions link to a real topic and admin panel inventory stays in
+    // sync with the frontend.
+    // ──────────────────────────────────────────────────────────────────
+    let autoCreatedTopic = false;
+    if (
+      !isFetchOnly &&
+      !resolvedTopicIdForLink &&
+      subject_id &&
+      typeof topic === 'string' &&
+      topic.trim().length > 0 &&
+      topic !== 'General Knowledge'
+    ) {
+      try {
+        const trimmedTopic = topic.trim();
+        const { data: existing } = await supabase
+          .from('topics')
+          .select('id')
+          .eq('subject_id', subject_id as string)
+          .ilike('name', trimmedTopic)
+          .maybeSingle();
+
+        if (existing?.id) {
+          lmsLinkageFields.topic_id = existing.id;
+          console.log(`🔗 ensureTopicExists: matched existing topic id=${existing.id}`);
+        } else {
+          const { data: created, error: createErr } = await supabase
+            .from('topics')
+            .insert({
+              subject_id: subject_id as string,
+              name: trimmedTopic,
+              approved: true,
+              auto_created: true,
+              created_by_ai: true,
+            })
+            .select('id')
+            .single();
+          if (createErr) {
+            console.warn('⚠️ ensureTopicExists insert failed:', createErr.message);
+          } else if (created?.id) {
+            lmsLinkageFields.topic_id = created.id;
+            autoCreatedTopic = true;
+            console.log(`✨ ensureTopicExists: created topic id=${created.id} name="${trimmedTopic}"`);
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ ensureTopicExists threw:', e);
+      }
+    }
+    console.log(`💾 PERSISTENCE_PREP: topic_id=${lmsLinkageFields.topic_id || null} canonical=${lmsLinkageFields.canonical_topic_name || null} auto_created=${autoCreatedTopic}`);
     
     console.log('📥 Request received:', { 
       topic, 

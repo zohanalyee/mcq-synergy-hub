@@ -18,9 +18,20 @@ interface LoadParams {
   questionCount: number;
 }
 
+export type GuestQuestionTier =
+  | 'topic_id'
+  | 'topic_ids'
+  | 'subject_topics'
+  | 'subject_ilike'
+  | 'empty';
+
 interface LoadResult {
   rows: any[];
   questions: any[];
+  /** Which fallback tier ultimately satisfied the request. */
+  tier: GuestQuestionTier;
+  /** True when results came from a broader scope than the requested topic. */
+  broadened: boolean;
 }
 
 const BASE_SELECT =
@@ -76,6 +87,10 @@ export const loadGuestQuestions = async (
 
   const out: any[] = [];
   const seen = new Set<string>();
+  let tier = 'empty' as GuestQuestionTier;
+  const setTier = (t: GuestQuestionTier) => {
+    if (tier === ('empty' as GuestQuestionTier)) tier = t;
+  };
 
   // 1) Strict topic_id (single)
   if (params.topicId) {
@@ -87,6 +102,7 @@ export const loadGuestQuestions = async (
       .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] topic_id error:', error);
+    if (data && data.length > 0) setTier('topic_id');
     dedupePush(out, seen, data);
   }
 
@@ -104,6 +120,7 @@ export const loadGuestQuestions = async (
       .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] topic_ids error:', error);
+    if (data && data.length > 0) setTier('topic_ids');
     dedupePush(out, seen, data);
   }
 
@@ -116,7 +133,6 @@ export const loadGuestQuestions = async (
     if (topicErr) console.error('[guestQuestions] topics lookup error:', topicErr);
 
     const ids = (topicRows || []).map((t: any) => t.id).filter(Boolean);
-    const canonicalNames: string[] = [];
     const topicNames = Array.from(
       new Set(
         (topicRows || [])
@@ -134,18 +150,7 @@ export const loadGuestQuestions = async (
         .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] subj.topic_id error:', error);
-      dedupePush(out, seen, data);
-    }
-
-    if (out.length < fetchLimit && canonicalNames.length > 0) {
-      const { data, error } = await supabase
-        .from('content_items')
-        .select(BASE_SELECT)
-        .eq('status', 'approved')
-        .in('canonical_topic_name', canonicalNames as string[])
-        .not('title', 'is', null)
-        .limit(fetchLimit);
-      if (error) console.error('[guestQuestions] canonical error:', error);
+      if (data && data.length > 0) setTier('subject_topics');
       dedupePush(out, seen, data);
     }
 
@@ -158,6 +163,7 @@ export const loadGuestQuestions = async (
         .not('title', 'is', null)
         .limit(fetchLimit);
       if (error) console.error('[guestQuestions] topic-name error:', error);
+      if (data && data.length > 0) setTier('subject_topics');
       dedupePush(out, seen, data);
     }
   }
@@ -172,6 +178,7 @@ export const loadGuestQuestions = async (
       .not('title', 'is', null)
       .limit(fetchLimit);
     if (error) console.error('[guestQuestions] subject ilike error:', error);
+    if (data && data.length > 0) setTier('subject_ilike');
     dedupePush(out, seen, data);
   }
 
@@ -184,11 +191,15 @@ export const loadGuestQuestions = async (
     .filter(validate);
   const questions = shuffle(valid).slice(0, params.questionCount);
 
+  const broadened = (tier as string) === 'subject_topics' || (tier as string) === 'subject_ilike';
+
   console.log('GUEST FLOW DEBUG:', {
     totalRows: out.length,
     afterValidation: valid.length,
+    tier,
+    broadened,
     sample: out[0],
   });
 
-  return { rows: out, questions };
+  return { rows: out, questions, tier, broadened };
 };
