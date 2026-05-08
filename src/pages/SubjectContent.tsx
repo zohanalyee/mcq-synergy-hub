@@ -62,7 +62,7 @@ const SubjectContent = () => {
   const [selectedTopicId, setSelectedTopicId] = useState<string>("all");
   const [dbTopics, setDbTopics] = useState<TopicFromDB[]>([]);
   const [questionCount, setQuestionCount] = useState<string>("20");
-  const [difficulty, setDifficulty] = useState<string>("Medium");
+  const [difficulty, setDifficulty] = useState<string>("mix");
   const [questionSource, setQuestionSource] = useState<'cache' | 'ai' | 'hybrid' | null>(null);
   const [cachedCount, setCachedCount] = useState(0);
   const [aiCount, setAiCount] = useState(0);
@@ -425,7 +425,7 @@ const SubjectContent = () => {
       const { data, error } = await supabase.functions.invoke('generate-test', {
         body: {
           topic: topicToFetch,
-          difficulty: difficulty,
+          ...(difficulty && difficulty !== 'mix' ? { difficulty } : {}),
           question_count: requestedCount,
           forceNew: forceNew && !fetchOnly,
           fetch_only: fetchOnly,
@@ -671,11 +671,9 @@ const SubjectContent = () => {
   // Handle topic selection change - update state and refetch questions
   const handleTopicChange = (value: string) => {
     // Guest: only the unlocked free topic is allowed
-    if (!user) {
-      if (value !== guestAllowedTopicId) {
-        openGuestGate();
-        return;
-      }
+    if (!user && value !== "all" && value !== guestAllowedTopicId) {
+      openGuestGate();
+      return;
     }
     setSelectedTopicId(value);
     if (value === "all") {
@@ -688,7 +686,19 @@ const SubjectContent = () => {
 
   // SMART TOPIC SWITCHING: Check local cache first before API call
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      if (selectedTopicId && guestStarted) {
+        const topicObj = dbTopics.find(t => t.id === selectedTopicId);
+        if (topicObj && selectedTopicId === guestAllowedTopicId) {
+          // Guard: don't re-fetch if already loaded for this topic
+          const alreadyLoaded = mcqs.length > 0 && mcqs[0]?.topic === topicObj.name;
+          if (!alreadyLoaded) {
+            startGuestSubjectQuiz(topicObj);
+          }
+        }
+      }
+      return;
+    }
     if (title && isLoaded && selectedTopicId !== "all") {
       // First check if we already have questions for this topic in memory
       const existingForTopic = mcqs.filter(m => m.topic === selectedTopic);
@@ -704,7 +714,7 @@ const SubjectContent = () => {
       // When switching back to "all", just use client-side filtering
       console.log('📋 Showing all topics from local cache');
     }
-  }, [selectedTopicId, user]);
+  }, [selectedTopicId, user, guestStarted, difficulty]);
 
   // Filter MCQs by selected topic (client-side filtering for already loaded MCQs)
   const filteredMCQs = selectedTopic === "all" 
