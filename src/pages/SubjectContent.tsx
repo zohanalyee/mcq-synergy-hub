@@ -710,21 +710,16 @@ const SubjectContent = () => {
       return;
     }
     if (title && isLoaded && selectedTopicId !== "all") {
-      // First check if we already have questions for this topic in memory
-      const existingForTopic = mcqs.filter(m => m.topic === selectedTopic);
-      
-      // Only fetch from DB if we have very few cached questions locally
-      if (existingForTopic.length < 3) {
-        console.log(`📦 Topic "${selectedTopic}" has ${existingForTopic.length} cached, fetching from DB...`);
-        loadMCQs(false, true); // fetchOnly = true (DB only, no AI)
-      } else {
-        console.log(`✅ Topic "${selectedTopic}" has ${existingForTopic.length} cached, using local filter`);
-      }
+      // Always fetch fresh from DB on topic/difficulty/count change.
+      // loadMCQs will auto top-up via AI if DB returns fewer than requested.
+      console.log(`📦 Topic "${selectedTopic}" changed, fetching from DB...`);
+      loadMCQs(false, true);
     } else if (title && isLoaded && selectedTopicId === "all") {
-      // When switching back to "all", just use client-side filtering
-      console.log('📋 Showing all topics from local cache');
+      // When switching back to "all", refetch the subject-wide bank too
+      console.log('📋 Refetching all-topics from DB');
+      loadMCQs(false, true);
     }
-  }, [selectedTopicId, user, guestStarted, difficulty]);
+  }, [selectedTopicId, user, guestStarted, difficulty, questionCount]);
 
   // Filter MCQs by selected topic (client-side filtering for already loaded MCQs)
   const filteredMCQs = selectedTopic === "all" 
