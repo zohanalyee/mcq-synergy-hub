@@ -24,7 +24,7 @@ const TAB_COLORS = {
   subjects: { active: 'text-emerald-500', inactive: 'text-emerald-400/50', dot: 'bg-emerald-500' },
   recruitment: { active: 'text-orange-500', inactive: 'text-orange-400/50', dot: 'bg-orange-500' },
   syllabus: { active: 'text-purple-500', inactive: 'text-purple-400/50', dot: 'bg-purple-500' },
-  profile: { active: 'text-indigo-500', inactive: 'text-indigo-400/50', dot: 'bg-indigo-500' },
+  profile: { active: 'text-white', inactive: 'text-foreground/50', dot: 'bg-[hsl(var(--brand-from))]' },
 } as const;
 
 const navItems = [
@@ -174,14 +174,14 @@ const MobileBottomNav = () => {
                     <Avatar className={cn(
                       "h-5 w-5 transition-all duration-200",
                       isProfileActive
-                        ? "ring-[1.5px] ring-indigo-500 ring-offset-1 ring-offset-background"
+                        ? "ring-[1.5px] ring-[hsl(var(--brand-from))] ring-offset-1 ring-offset-background"
                         : "ring-1 ring-border"
                     )}>
                       <AvatarImage src={profile?.avatar_url || ''} />
                       <AvatarFallback className={cn(
                         "text-[8px] font-medium",
                         isProfileActive
-                          ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white"
+                          ? "bg-brand-gradient text-white"
                           : "bg-muted text-muted-foreground"
                       )}>
                         {getInitials(user?.email)}
@@ -191,7 +191,7 @@ const MobileBottomNav = () => {
 
                   <span className={cn(
                     "text-[9px] tracking-wide transition-colors duration-200",
-                    isProfileActive ? "text-indigo-500 font-semibold" : "text-indigo-400/50 font-medium"
+                    isProfileActive ? "text-white font-semibold" : "text-foreground/50 font-medium"
                   )}>
                     You
                   </span>
