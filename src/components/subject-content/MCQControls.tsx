@@ -121,6 +121,7 @@ const MCQControls = ({
                 <SelectValue placeholder="Difficulty" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="mix">Mix</SelectItem>
                 <SelectItem value="Easy">Easy</SelectItem>
                 <SelectItem value="Medium">Medium</SelectItem>
                 <SelectItem value="Hard">Hard</SelectItem>
