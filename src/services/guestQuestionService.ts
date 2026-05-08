@@ -18,9 +18,20 @@ interface LoadParams {
   questionCount: number;
 }
 
+export type GuestQuestionTier =
+  | 'topic_id'
+  | 'topic_ids'
+  | 'subject_topics'
+  | 'subject_ilike'
+  | 'empty';
+
 interface LoadResult {
   rows: any[];
   questions: any[];
+  /** Which fallback tier ultimately satisfied the request. */
+  tier: GuestQuestionTier;
+  /** True when results came from a broader scope than the requested topic. */
+  broadened: boolean;
 }
 
 const BASE_SELECT =
