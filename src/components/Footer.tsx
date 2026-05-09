@@ -20,7 +20,7 @@ const Footer = () => {
 
   return (
     <footer className={cn("bg-brand-gradient text-white layout-ltr", fontClass)}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-12">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
           {/* About */}
           <div className="space-y-3 col-span-2 sm:col-span-1">

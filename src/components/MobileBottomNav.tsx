@@ -251,24 +251,31 @@ const MobileBottomNav = () => {
                   </span>
                 </motion.button>
               </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-3xl pb-safe">
+              <SheetContent side="bottom" className="rounded-t-3xl pb-safe p-0 [&>button]:hidden">
+                {/* Drag handle */}
+                <div className="flex justify-center pt-2 pb-1">
+                  <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
+                </div>
+                <div className="px-6 pb-6 pt-2">
                 {user ? (
                   <>
                     <SheetHeader className="pb-2">
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                          <AvatarImage src={profile?.avatar_url || ''} />
-                          <AvatarFallback className="bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-medium">
-                            {getInitials(user?.email)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex flex-col text-left flex-1">
-                          <SheetTitle className="text-base">{getDisplayName()}</SheetTitle>
-                          <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                      <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-2xl p-4 text-white shadow-md">
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <Avatar className="h-12 w-12 ring-2 ring-white/40 shrink-0">
+                            <AvatarImage src={profile?.avatar_url || ''} />
+                            <AvatarFallback className="bg-white/20 text-white font-medium">
+                              {getInitials(user?.email)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col text-left min-w-0">
+                            <SheetTitle className="text-base text-white truncate">{getDisplayName()}</SheetTitle>
+                            <span className="text-xs text-white/80 truncate">{user?.email}</span>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-orange-500/15 to-red-500/15 border border-orange-500/30">
-                          <Flame className={cn("h-4 w-4", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
-                          <span className={cn("text-xs font-semibold", streak > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground")}>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 shrink-0">
+                          <Flame className={cn("h-4 w-4", streak > 0 ? "text-orange-200" : "text-white/70")} />
+                          <span className="text-xs font-semibold text-white whitespace-nowrap">
                             {streak} {streak === 1 ? 'Day' : 'Days'}
                           </span>
                         </div>
@@ -370,6 +377,7 @@ const MobileBottomNav = () => {
                     </div>
                   </>
                 )}
+                </div>
               </SheetContent>
             </Sheet>
           </div>
