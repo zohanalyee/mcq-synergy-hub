@@ -310,6 +310,31 @@ const MobileBottomNav = () => {
                         <span className="text-sm font-medium">Settings</span>
                       </button>
 
+                      <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40">
+                        <Languages className="h-5 w-5 text-indigo-500 shrink-0" />
+                        <span className="text-sm font-medium">Language</span>
+                        <div className="ml-auto flex items-center gap-1">
+                          {([
+                            { code: 'en' as Language, label: 'EN' },
+                            { code: 'ur' as Language, label: 'اردو' },
+                            { code: 'sd' as Language, label: 'سنڌي' },
+                          ]).map((opt) => (
+                            <button
+                              key={opt.code}
+                              onClick={() => handleLanguageChange(opt.code)}
+                              className={cn(
+                                "px-2.5 py-1 rounded-md text-xs font-semibold transition-all",
+                                language === opt.code
+                                  ? "bg-indigo-500 text-white shadow-sm"
+                                  : "bg-white/60 dark:bg-white/10 text-foreground/70 hover:bg-white"
+                              )}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
                       <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/40 dark:to-blue-950/40 transition-colors text-left">
                         {theme === 'dark' ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5 text-sky-500" />}
                         <span className="text-sm font-medium">{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
