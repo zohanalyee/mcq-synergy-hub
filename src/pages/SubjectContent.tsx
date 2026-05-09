@@ -511,19 +511,7 @@ const SubjectContent = () => {
         }
 
         // Determine correct option key
-        let correctOption = 'A';
-        if (q.answer) {
-          // If answer is the full text, find the matching option
-          const matchIndex = options.findIndex(opt => opt.text === q.answer);
-          if (matchIndex !== -1) {
-            correctOption = options[matchIndex].key;
-          } else if (['A', 'B', 'C', 'D'].includes(q.answer)) {
-            // If answer is already a key (A, B, C, D)
-            correctOption = q.answer;
-          }
-        } else if (q.correct_option) {
-          correctOption = q.correct_option;
-        }
+        const correctOption = resolveCorrectKey(options, q.answer ?? q.correct_option);
 
         return {
           id: q.id || `mcq-${index}-${Date.now()}`,
