@@ -709,7 +709,33 @@ async function generateQuestionsInBatches(
         ? `\n\n🎯 CRITICAL — focus 70% of questions on these weak topics the user struggles with:\n${weakTopics.map((t) => `- ${t}`).join('\n')}\nMake questions progressively harder within these topics.`
         : '';
 
-      const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
+      const systemPrompt = `You are an expert MCQ generator for Pakistani students preparing for board exams and competitive tests.
+
+🇵🇰 STRICT CURRICULUM RULES — follow ALL of them:
+1. Questions MUST be based ONLY on Pakistani curriculum:
+   - Matric (9th, 10th) — Punjab Board, Sindh Board, KPK Board, Federal Board, Balochistan Board
+   - FSc/FA (11th, 12th) — same boards
+   - Competitive exams: NTS, FPSC, PPSC, SPSC, STS, IBA Sukkur
+   - University entry tests: MDCAT, ECAT, NTS NAT
+2. Language — English ONLY but SIMPLE:
+   - Use simple, clear English understandable by an average Pakistani student
+   - NO complex/advanced vocabulary
+   - NO American/British/Indian curriculum references or phrasing
+3. Content accuracy:
+   - Questions must match the EXACT topic provided — do NOT drift off-topic
+   - Follow Pakistani textbook content (PTBB, Sindh Textbook Board, KPTBB, etc.)
+   - Answer options must be factually correct per Pakistani curriculum
+4. Question format:
+   - 4 options per question (A, B, C, D), one clearly correct answer
+   - No trick questions, no ambiguity
+   - Difficulty must match requested level (Easy/Medium/Hard/Mix)
+5. NEVER generate:
+   - Questions about American, British, or Indian curriculum
+   - Culturally inappropriate content
+   - Ambiguous questions with multiple correct answers
+   - Questions outside the Pakistani syllabus
+
+You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
 ${getSubjectGuidance(topic)}
 🇵🇰 MANDATORY RULES — PAKISTANI EXAM STYLE:
 
@@ -1233,6 +1259,7 @@ serve(async (req) => {
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
       subject_id, // UUID for FK link to subjects table (Subject Pages)
+      subject_name, // Actual subject name (e.g. "Biology") from Subject Pages
       canonical_topic_name: client_canonical_topic_name, // Optional: provided by Subject Pages
       session_id, // Session ID to update with generated questions (Job Tests)
       excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
@@ -2265,36 +2292,67 @@ serve(async (req) => {
             // Check for duplicates
             const dupCheck = await checkDuplicate(supabase, q.question);
             
+            const questionPayload = {
+              title: q.question,
+              description: q.explanation || '',
+              category: 'mcq',
+              subject: subject_name || sanitizedTopic,
+              topic: topic,
+              ...lmsLinkageFields,
+              difficulty: difficulty.toLowerCase(),
+              options: q.options,
+              correct_option: q.answer,
+              explanation: q.explanation || '',
+              status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
+              show_in_subjects: !dupCheck.isDuplicate,
+              show_in_mock_tests: !dupCheck.isDuplicate,
+              reference_material: JSON.stringify({
+                source_role: topic,
+                original_topic: sanitizedTopic,
+                resolved_subject: subject_name || null,
+                curriculum: 'Pakistan',
+                generated_at: new Date().toISOString(),
+                generator: 'ai',
+                ...(dupCheck.isDuplicate && {
+                  duplicate_of_id: dupCheck.originalId,
+                  duplicate_of_title: dupCheck.originalTitle
+                })
+              })
+            };
+
             const { error: insertError } = await supabase
               .from('content_items')
-              .insert({
-                title: q.question,
-                description: q.explanation || '',
-                category: 'mcq',
-                subject: sanitizedTopic,
-                topic: topic,
-                ...lmsLinkageFields,
-                difficulty: difficulty.toLowerCase(),
-                options: q.options,
-                correct_option: q.answer,
-                explanation: q.explanation || '',
-                status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
-                show_in_subjects: !dupCheck.isDuplicate,
-                show_in_mock_tests: !dupCheck.isDuplicate,
-                reference_material: JSON.stringify({
-                  source_role: topic,
-                  original_topic: sanitizedTopic,
-                  generated_at: new Date().toISOString(),
-                  generator: 'ai',
-                  ...(dupCheck.isDuplicate && {
-                    duplicate_of_id: dupCheck.originalId,
-                    duplicate_of_title: dupCheck.originalTitle
-                  })
-                })
-              });
+              .insert(questionPayload);
 
             if (insertError) {
-              console.error('Failed to save question:', insertError.message);
+              console.error('Failed to save question, retrying once:', insertError.message);
+              // Retry once with forced approved status (handles transient/constraint blips)
+              const { error: retryError } = await supabase
+                .from('content_items')
+                .insert({ ...questionPayload, status: 'approved', show_in_subjects: true });
+              if (retryError) {
+                console.error('Retry failed, emergency save (minimal payload):', retryError.message);
+                const { error: emergencyError } = await supabase
+                  .from('content_items')
+                  .insert({
+                    title: q.question,
+                    description: q.explanation || '',
+                    category: 'mcq',
+                    subject: subject_name || sanitizedTopic,
+                    topic: topic,
+                    options: q.options,
+                    correct_option: q.answer,
+                    status: 'approved',
+                    show_in_subjects: true,
+                  });
+                if (emergencyError) {
+                  console.error('Emergency save also failed:', emergencyError.message);
+                } else {
+                  savedCount++;
+                }
+              } else {
+                savedCount++;
+              }
             } else {
               if (dupCheck.isDuplicate) {
                 flaggedCount++;

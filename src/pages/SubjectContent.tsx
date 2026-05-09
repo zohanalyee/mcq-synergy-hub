@@ -422,6 +422,7 @@ const SubjectContent = () => {
           partial_mode: false,
           // LMS linkage so AI-generated MCQs persist into Question Bank correctly
           subject_id: subjectId,
+          subject_name: title,
           topic_id: selectedTopicObj?.id,
           canonical_topic_name: canonicalTopicName,
         }
