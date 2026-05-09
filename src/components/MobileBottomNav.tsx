@@ -377,6 +377,7 @@ const MobileBottomNav = () => {
                     </div>
                   </>
                 )}
+                </div>
               </SheetContent>
             </Sheet>
           </div>
