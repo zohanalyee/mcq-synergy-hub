@@ -1,5 +1,4 @@
-// Language selector uses text badges instead of flag images
-import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, Globe, Languages, Brain } from 'lucide-react';
+import { Shield, LogOut, Settings, User, MessageSquare, Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,14 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import StreakCounter from '@/components/gamification/StreakCounter';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import CreditMeter from '@/components/credits/CreditMeter';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useLanguage, type Language } from '@/contexts/LanguageContext';
-import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 
 interface HeaderActionsProps {
@@ -44,19 +41,7 @@ const HeaderActions = ({
 }: HeaderActionsProps) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const isMobile = useIsMobile();
-  const { language, setLanguage, t } = useLanguage();
-  const { toast } = useToast();
-
-  const handleLanguageChange = (value: Language) => {
-    setLanguage(value);
-    const messages: Record<Language, { title: string; desc: string }> = {
-      en: { title: 'Language Updated', desc: 'English' },
-      ur: { title: 'زبان تبدیل', desc: 'اردو' },
-      sd: { title: 'ٻولي تبديل', desc: 'سنڌي' },
-    };
-    const msg = messages[value];
-    toast({ title: msg.title, description: msg.desc, duration: 1500 });
-  };
+  const { t } = useLanguage();
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -71,52 +56,6 @@ const HeaderActions = ({
 
   return (
     <div className="flex items-center gap-2 sm:gap-3 ml-auto">
-      {user && <StreakCounter />}
-      
-      {/* Language Selector */}
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="h-9 w-9 rounded-full hover:bg-muted">
-            {isMobile ? (
-              language === 'en' ? (
-                <Globe className="h-4 w-4 shrink-0" />
-              ) : (
-                <span className="text-base leading-none shrink-0">🇵🇰</span>
-              )
-            ) : (
-              <Languages className="h-4 w-4 shrink-0" />
-            )}
-            <span className="sr-only">Language</span>
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[140px]">
-          <DropdownMenuItem onClick={() => handleLanguageChange('en')} className="gap-2 cursor-pointer">
-            {isMobile ? (
-              <span className="text-base leading-none shrink-0">🌍</span>
-            ) : (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-bold text-white shrink-0">EN</span>
-            )}
-            <span>English</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleLanguageChange('ur')} className="gap-2 cursor-pointer">
-            {isMobile ? (
-              <span className="text-base leading-none shrink-0">🇵🇰</span>
-            ) : (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-600 text-[10px] font-bold text-white shrink-0">UR</span>
-            )}
-            <span>اردو</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => handleLanguageChange('sd')} className="gap-2 cursor-pointer">
-            {isMobile ? (
-              <span className="text-base leading-none shrink-0">🇵🇰</span>
-            ) : (
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white shrink-0">SD</span>
-            )}
-            <span>سنڌي</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
       {!isMobile && <ThemeToggle />}
       
       {/* Daily AI credits meter — clickable, opens credit history */}

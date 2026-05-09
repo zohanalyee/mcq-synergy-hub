@@ -1,10 +1,13 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Briefcase, ListChecks, Shield, LogOut, Settings, User, MessageSquare, Brain, Sun, Moon } from 'lucide-react';
+import { Home, BookOpen, Briefcase, ListChecks, Shield, LogOut, Settings, User, MessageSquare, Brain, Sun, Moon, Flame, Languages } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
+import { useLanguage, type Language } from '@/contexts/LanguageContext';
+import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Sheet,
@@ -42,6 +45,9 @@ const MobileBottomNav = () => {
   const { isAdmin } = useUserRole();
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const { language, setLanguage, t } = useLanguage();
+  const { toast } = useToast();
   const [theme, setTheme] = useState<string>(() => {
     if (typeof window === 'undefined') return 'light';
     return localStorage.getItem('theme') || 'light';
@@ -52,6 +58,54 @@ const MobileBottomNav = () => {
     root.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Fetch streak count when sheet opens
+  useEffect(() => {
+    if (!user || !profileSheetOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('test_attempts')
+          .select('completed_at')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false });
+        if (cancelled || !data) return;
+        const uniqueDays = new Set<string>();
+        data.forEach((a: any) => {
+          if (a.completed_at) {
+            const d = new Date(a.completed_at);
+            d.setHours(0, 0, 0, 0);
+            uniqueDays.add(d.toISOString().split('T')[0]);
+          }
+        });
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const sortedDays = Array.from(uniqueDays).sort().reverse();
+        let s = 0;
+        for (let i = 0; i < sortedDays.length; i++) {
+          const expected = new Date(today);
+          expected.setDate(today.getDate() - i);
+          const expStr = expected.toISOString().split('T')[0];
+          if (sortedDays[i] === expStr) s++;
+          else if (i === 0 && sortedDays[0] === new Date(today.getTime() - 86400000).toISOString().split('T')[0]) s++;
+          else break;
+        }
+        if (!cancelled) setStreak(s);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [user, profileSheetOpen]);
+
+  const handleLanguageChange = (value: Language) => {
+    setLanguage(value);
+    const messages: Record<Language, { title: string; desc: string }> = {
+      en: { title: 'Language Updated', desc: 'English' },
+      ur: { title: 'زبان تبدیل', desc: 'اردو' },
+      sd: { title: 'ٻولي تبديل', desc: 'سنڌي' },
+    };
+    const msg = messages[value];
+    toast({ title: msg.title, description: msg.desc, duration: 1500 });
+  };
 
   // Immersive routes — hide bottom nav for full-focus test/quiz/auth sessions
   const IMMERSIVE_PATTERNS = [
@@ -208,9 +262,15 @@ const MobileBottomNav = () => {
                             {getInitials(user?.email)}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col text-left">
+                        <div className="flex flex-col text-left flex-1">
                           <SheetTitle className="text-base">{getDisplayName()}</SheetTitle>
-                          <span className="text-xs text-muted-foreground">{user?.email}</span>
+                          <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-orange-500/15 to-red-500/15 border border-orange-500/30">
+                          <Flame className={cn("h-4 w-4", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
+                          <span className={cn("text-xs font-semibold", streak > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground")}>
+                            {streak} {streak === 1 ? 'Day' : 'Days'}
+                          </span>
                         </div>
                       </div>
                     </SheetHeader>
@@ -249,6 +309,31 @@ const MobileBottomNav = () => {
                         <Settings className="h-5 w-5 text-rose-500" />
                         <span className="text-sm font-medium">Settings</span>
                       </button>
+
+                      <div className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40">
+                        <Languages className="h-5 w-5 text-indigo-500 shrink-0" />
+                        <span className="text-sm font-medium">Language</span>
+                        <div className="ml-auto flex items-center gap-1">
+                          {([
+                            { code: 'en' as Language, label: 'EN' },
+                            { code: 'ur' as Language, label: 'اردو' },
+                            { code: 'sd' as Language, label: 'سنڌي' },
+                          ]).map((opt) => (
+                            <button
+                              key={opt.code}
+                              onClick={() => handleLanguageChange(opt.code)}
+                              className={cn(
+                                "px-2.5 py-1 rounded-md text-xs font-semibold transition-all",
+                                language === opt.code
+                                  ? "bg-indigo-500 text-white shadow-sm"
+                                  : "bg-white/60 dark:bg-white/10 text-foreground/70 hover:bg-white"
+                              )}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
 
                       <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gradient-to-r from-sky-50 to-blue-50 dark:from-sky-950/40 dark:to-blue-950/40 transition-colors text-left">
                         {theme === 'dark' ? <Sun className="h-5 w-5 text-amber-500" /> : <Moon className="h-5 w-5 text-sky-500" />}

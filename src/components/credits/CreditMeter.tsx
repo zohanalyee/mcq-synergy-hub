@@ -12,9 +12,11 @@ const CreditMeter = ({ className }: { className?: string }) => {
   if (!user || loading) return null;
 
   const tone =
-    remaining === 0 ? 'bg-destructive/15 text-destructive border-destructive/30 hover:bg-destructive/25'
-    : remaining < 25 ? 'bg-orange-500/15 text-orange-600 border-orange-500/30 dark:text-orange-400 hover:bg-orange-500/25'
-    : 'bg-primary/10 text-primary border-primary/20 hover:bg-primary/20';
+    remaining < 10
+      ? 'bg-gradient-to-r from-red-500 to-rose-500 text-white border-transparent shadow-md shadow-red-500/30 animate-pulse hover:brightness-110'
+      : remaining <= 50
+      ? 'bg-gradient-to-r from-orange-400 to-amber-500 text-white border-transparent shadow-md shadow-orange-500/30 animate-pulse hover:brightness-110'
+      : 'bg-gradient-to-r from-purple-500 to-blue-500 text-white border-transparent shadow-md shadow-purple-500/30 hover:brightness-110';
 
   return (
     <>
@@ -22,7 +24,7 @@ const CreditMeter = ({ className }: { className?: string }) => {
         type="button"
         onClick={() => setOpen(true)}
         className={cn(
-          'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border transition-colors cursor-pointer',
+          'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all duration-300 cursor-pointer',
           tone,
           className
         )}
