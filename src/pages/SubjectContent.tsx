@@ -166,16 +166,6 @@ const SubjectContent = () => {
         questionCount: requestedCount,
       });
 
-      if (broadened && questions.length > 0 && selectedTopicObj?.name) {
-        try {
-          const { toast: sonner } = await import('sonner');
-          sonner.info(
-            `"${selectedTopicObj.name}" ابھی خالی ہے۔ اسی مضمون کے دوسرے سوالات دکھائے جا رہے ہیں۔ — "${selectedTopicObj.name}" is empty. Showing related questions from this subject.`,
-            { duration: 5000 },
-          );
-        } catch {}
-      }
-
       console.log('GUEST FLOW:', { user, rows: rows.length, questions: questions.length });
 
       if (questions.length === 0) {
