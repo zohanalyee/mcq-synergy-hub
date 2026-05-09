@@ -9,13 +9,8 @@ import { useLanguage, type Language } from '@/contexts/LanguageContext';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
+import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import { Drawer } from 'vaul';
 import { Separator } from '@/components/ui/separator';
 import { useState, useEffect } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
@@ -207,8 +202,8 @@ const MobileBottomNav = () => {
             })}
 
             {/* Profile Tab */}
-            <Sheet open={profileSheetOpen} onOpenChange={setProfileSheetOpen}>
-              <SheetTrigger asChild>
+            <Drawer.Root open={profileSheetOpen} onOpenChange={setProfileSheetOpen} snapPoints={[1]}>
+              <Drawer.Trigger asChild>
                 <motion.button
                   onMouseEnter={() => { prefetchRoute('/profile'); prefetchRoute('/analytics'); }}
                   onTouchStart={() => { prefetchRoute('/profile'); prefetchRoute('/analytics'); }}
@@ -250,8 +245,13 @@ const MobileBottomNav = () => {
                     You
                   </span>
                 </motion.button>
-              </SheetTrigger>
-              <SheetContent side="bottom" className="rounded-t-3xl pb-safe p-0 [&>button]:hidden">
+              </Drawer.Trigger>
+              <Drawer.Portal>
+                <Drawer.Overlay 
+                  className="fixed inset-0 bg-black/40 z-40" 
+                  onClick={() => setProfileSheetOpen(false)}
+                />
+                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-2xl max-h-[90vh] overflow-y-auto outline-none">
                 {/* Drag handle - tap to close */}
                 <div
                   className="flex justify-center pt-2 pb-1 cursor-pointer active:opacity-60"
@@ -381,8 +381,9 @@ const MobileBottomNav = () => {
                   </>
                 )}
                 </div>
-              </SheetContent>
-            </Sheet>
+              </Drawer.Content>
+            </Drawer.Portal>
+          </Drawer.Root>
           </div>
         </div>
       </nav>
