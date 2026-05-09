@@ -262,9 +262,15 @@ const MobileBottomNav = () => {
                             {getInitials(user?.email)}
                           </AvatarFallback>
                         </Avatar>
-                        <div className="flex flex-col text-left">
+                        <div className="flex flex-col text-left flex-1">
                           <SheetTitle className="text-base">{getDisplayName()}</SheetTitle>
-                          <span className="text-xs text-muted-foreground">{user?.email}</span>
+                          <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gradient-to-r from-orange-500/15 to-red-500/15 border border-orange-500/30">
+                          <Flame className={cn("h-4 w-4", streak > 0 ? "text-orange-500" : "text-muted-foreground")} />
+                          <span className={cn("text-xs font-semibold", streak > 0 ? "text-orange-600 dark:text-orange-400" : "text-muted-foreground")}>
+                            {streak} {streak === 1 ? 'Day' : 'Days'}
+                          </span>
                         </div>
                       </div>
                     </SheetHeader>
