@@ -105,6 +105,22 @@ const SubjectContent = () => {
 
   const defaultIcon = <Book className="h-6 w-6" style={{ color: color || '#3b82f6' }} />;
 
+  // Resolve a correct-answer value (could be a letter key OR full option text) to an A/B/C/D key.
+  const resolveCorrectKey = (
+    options: { key: string; text: string }[],
+    raw: any
+  ): string => {
+    const r = (raw == null ? '' : String(raw)).trim();
+    if (!r) return options[0]?.key || 'A';
+    const upper = r.toUpperCase();
+    if (['A', 'B', 'C', 'D'].includes(upper)) return upper;
+    const lower = r.toLowerCase();
+    const match = options.find(
+      o => o.text === r || (o.text && o.text.toLowerCase() === lower)
+    );
+    return match?.key || options[0]?.key || 'A';
+  };
+
   const transformBankQuestion = (q: any, index: number): MCQItem => {
     let options: { key: string; text: string }[] = [];
     if (Array.isArray(q.options)) {
@@ -123,7 +139,7 @@ const SubjectContent = () => {
       title: q.question || q.title || '',
       question: q.question || q.title || '',
       options,
-      correctOption: q.correct_option || q.correctOption || 'A',
+      correctOption: resolveCorrectKey(options, q.correct_option ?? q.correctOption ?? q.answer),
       explanation: q.explanation || undefined,
       difficulty: (q.difficulty as "Easy" | "Medium" | "Hard") || 'Medium',
       topic: q.topic || title,
