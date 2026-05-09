@@ -1,5 +1,4 @@
-// Language selector uses text badges instead of flag images
-import { Shield, LogOut, Settings, LayoutGrid, LayoutDashboard, User, MessageSquare, Globe, Languages, Brain } from 'lucide-react';
+import { Shield, LogOut, Settings, User, MessageSquare, Brain } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,14 +12,12 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { ThemeToggle } from '@/components/ui/theme-toggle';
-import StreakCounter from '@/components/gamification/StreakCounter';
 import { useState } from 'react';
 import SettingsDialog from '@/components/settings/SettingsDialog';
 import NotificationBell from '@/components/notifications/NotificationBell';
 import CreditMeter from '@/components/credits/CreditMeter';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { useLanguage, type Language } from '@/contexts/LanguageContext';
-import { useToast } from '@/hooks/use-toast';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 
 interface HeaderActionsProps {
