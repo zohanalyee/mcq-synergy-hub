@@ -233,7 +233,7 @@ const HeaderContent = ({
         </header>
         
         {/* Main Content - Below header */}
-        <main className="flex-1 overflow-x-hidden pb-mobile-nav mt-14">
+        <main className="flex-1 overflow-x-hidden mt-14">
           {children}
         </main>
       </div>
