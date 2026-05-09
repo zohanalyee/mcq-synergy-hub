@@ -45,6 +45,9 @@ const MobileBottomNav = () => {
   const { isAdmin } = useUserRole();
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [streak, setStreak] = useState(0);
+  const { language, setLanguage, t } = useLanguage();
+  const { toast } = useToast();
   const [theme, setTheme] = useState<string>(() => {
     if (typeof window === 'undefined') return 'light';
     return localStorage.getItem('theme') || 'light';
@@ -55,6 +58,54 @@ const MobileBottomNav = () => {
     root.classList.toggle('dark', theme === 'dark');
     localStorage.setItem('theme', theme);
   }, [theme]);
+
+  // Fetch streak count when sheet opens
+  useEffect(() => {
+    if (!user || !profileSheetOpen) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from('test_attempts')
+          .select('completed_at')
+          .eq('user_id', user.id)
+          .order('completed_at', { ascending: false });
+        if (cancelled || !data) return;
+        const uniqueDays = new Set<string>();
+        data.forEach((a: any) => {
+          if (a.completed_at) {
+            const d = new Date(a.completed_at);
+            d.setHours(0, 0, 0, 0);
+            uniqueDays.add(d.toISOString().split('T')[0]);
+          }
+        });
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        const sortedDays = Array.from(uniqueDays).sort().reverse();
+        let s = 0;
+        for (let i = 0; i < sortedDays.length; i++) {
+          const expected = new Date(today);
+          expected.setDate(today.getDate() - i);
+          const expStr = expected.toISOString().split('T')[0];
+          if (sortedDays[i] === expStr) s++;
+          else if (i === 0 && sortedDays[0] === new Date(today.getTime() - 86400000).toISOString().split('T')[0]) s++;
+          else break;
+        }
+        if (!cancelled) setStreak(s);
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [user, profileSheetOpen]);
+
+  const handleLanguageChange = (value: Language) => {
+    setLanguage(value);
+    const messages: Record<Language, { title: string; desc: string }> = {
+      en: { title: 'Language Updated', desc: 'English' },
+      ur: { title: 'زبان تبدیل', desc: 'اردو' },
+      sd: { title: 'ٻولي تبديل', desc: 'سنڌي' },
+    };
+    const msg = messages[value];
+    toast({ title: msg.title, description: msg.desc, duration: 1500 });
+  };
 
   // Immersive routes — hide bottom nav for full-focus test/quiz/auth sessions
   const IMMERSIVE_PATTERNS = [
