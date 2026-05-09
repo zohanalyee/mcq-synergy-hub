@@ -2266,36 +2266,67 @@ serve(async (req) => {
             // Check for duplicates
             const dupCheck = await checkDuplicate(supabase, q.question);
             
+            const questionPayload = {
+              title: q.question,
+              description: q.explanation || '',
+              category: 'mcq',
+              subject: subject_name || sanitizedTopic,
+              topic: topic,
+              ...lmsLinkageFields,
+              difficulty: difficulty.toLowerCase(),
+              options: q.options,
+              correct_option: q.answer,
+              explanation: q.explanation || '',
+              status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
+              show_in_subjects: !dupCheck.isDuplicate,
+              show_in_mock_tests: !dupCheck.isDuplicate,
+              reference_material: JSON.stringify({
+                source_role: topic,
+                original_topic: sanitizedTopic,
+                resolved_subject: subject_name || null,
+                curriculum: 'Pakistan',
+                generated_at: new Date().toISOString(),
+                generator: 'ai',
+                ...(dupCheck.isDuplicate && {
+                  duplicate_of_id: dupCheck.originalId,
+                  duplicate_of_title: dupCheck.originalTitle
+                })
+              })
+            };
+
             const { error: insertError } = await supabase
               .from('content_items')
-              .insert({
-                title: q.question,
-                description: q.explanation || '',
-                category: 'mcq',
-                subject: sanitizedTopic,
-                topic: topic,
-                ...lmsLinkageFields,
-                difficulty: difficulty.toLowerCase(),
-                options: q.options,
-                correct_option: q.answer,
-                explanation: q.explanation || '',
-                status: dupCheck.isDuplicate ? 'flagged_duplicate' : 'approved',
-                show_in_subjects: !dupCheck.isDuplicate,
-                show_in_mock_tests: !dupCheck.isDuplicate,
-                reference_material: JSON.stringify({
-                  source_role: topic,
-                  original_topic: sanitizedTopic,
-                  generated_at: new Date().toISOString(),
-                  generator: 'ai',
-                  ...(dupCheck.isDuplicate && {
-                    duplicate_of_id: dupCheck.originalId,
-                    duplicate_of_title: dupCheck.originalTitle
-                  })
-                })
-              });
+              .insert(questionPayload);
 
             if (insertError) {
-              console.error('Failed to save question:', insertError.message);
+              console.error('Failed to save question, retrying once:', insertError.message);
+              // Retry once with forced approved status (handles transient/constraint blips)
+              const { error: retryError } = await supabase
+                .from('content_items')
+                .insert({ ...questionPayload, status: 'approved', show_in_subjects: true });
+              if (retryError) {
+                console.error('Retry failed, emergency save (minimal payload):', retryError.message);
+                const { error: emergencyError } = await supabase
+                  .from('content_items')
+                  .insert({
+                    title: q.question,
+                    description: q.explanation || '',
+                    category: 'mcq',
+                    subject: subject_name || sanitizedTopic,
+                    topic: topic,
+                    options: q.options,
+                    correct_option: q.answer,
+                    status: 'approved',
+                    show_in_subjects: true,
+                  });
+                if (emergencyError) {
+                  console.error('Emergency save also failed:', emergencyError.message);
+                } else {
+                  savedCount++;
+                }
+              } else {
+                savedCount++;
+              }
             } else {
               if (dupCheck.isDuplicate) {
                 flaggedCount++;
