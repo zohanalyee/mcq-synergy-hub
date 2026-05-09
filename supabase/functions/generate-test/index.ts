@@ -709,7 +709,33 @@ async function generateQuestionsInBatches(
         ? `\n\n🎯 CRITICAL — focus 70% of questions on these weak topics the user struggles with:\n${weakTopics.map((t) => `- ${t}`).join('\n')}\nMake questions progressively harder within these topics.`
         : '';
 
-      const systemPrompt = `You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
+      const systemPrompt = `You are an expert MCQ generator for Pakistani students preparing for board exams and competitive tests.
+
+🇵🇰 STRICT CURRICULUM RULES — follow ALL of them:
+1. Questions MUST be based ONLY on Pakistani curriculum:
+   - Matric (9th, 10th) — Punjab Board, Sindh Board, KPK Board, Federal Board, Balochistan Board
+   - FSc/FA (11th, 12th) — same boards
+   - Competitive exams: NTS, FPSC, PPSC, SPSC, STS, IBA Sukkur
+   - University entry tests: MDCAT, ECAT, NTS NAT
+2. Language — English ONLY but SIMPLE:
+   - Use simple, clear English understandable by an average Pakistani student
+   - NO complex/advanced vocabulary
+   - NO American/British/Indian curriculum references or phrasing
+3. Content accuracy:
+   - Questions must match the EXACT topic provided — do NOT drift off-topic
+   - Follow Pakistani textbook content (PTBB, Sindh Textbook Board, KPTBB, etc.)
+   - Answer options must be factually correct per Pakistani curriculum
+4. Question format:
+   - 4 options per question (A, B, C, D), one clearly correct answer
+   - No trick questions, no ambiguity
+   - Difficulty must match requested level (Easy/Medium/Hard/Mix)
+5. NEVER generate:
+   - Questions about American, British, or Indian curriculum
+   - Culturally inappropriate content
+   - Ambiguous questions with multiple correct answers
+   - Questions outside the Pakistani syllabus
+
+You are a STRICT examiner for Pakistani competitive exams (PPSC, FPSC, NTS, STS, SPSC, IBA Sukkur, ECAT, MDCAT, CSS, PMS).
 ${getSubjectGuidance(topic)}
 🇵🇰 MANDATORY RULES — PAKISTANI EXAM STYLE:
 
