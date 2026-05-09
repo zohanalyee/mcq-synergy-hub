@@ -202,7 +202,13 @@ const MobileBottomNav = () => {
             })}
 
             {/* Profile Tab */}
-            <Drawer.Root open={profileSheetOpen} onOpenChange={setProfileSheetOpen} snapPoints={[1]}>
+            <Drawer.Root
+              open={profileSheetOpen}
+              onOpenChange={setProfileSheetOpen}
+              dismissible={true}
+              snapToSequentialPoint={true}
+              shouldScaleBackground={false}
+            >
               <Drawer.Trigger asChild>
                 <motion.button
                   onMouseEnter={() => { prefetchRoute('/profile'); prefetchRoute('/analytics'); }}
@@ -251,7 +257,12 @@ const MobileBottomNav = () => {
                   className="fixed inset-0 bg-black/40 z-40" 
                   onClick={() => setProfileSheetOpen(false)}
                 />
-                <Drawer.Content className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-2xl max-h-[90vh] overflow-y-auto outline-none">
+                <Drawer.Content
+                  className="fixed bottom-0 left-0 right-0 z-50 bg-background rounded-t-2xl max-h-[90vh] overflow-y-auto outline-none"
+                  style={{
+                    transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)'
+                  }}
+                >
                 {/* Drag handle - tap to close */}
                 <div
                   className="flex justify-center pt-2 pb-1 cursor-pointer active:opacity-60"
