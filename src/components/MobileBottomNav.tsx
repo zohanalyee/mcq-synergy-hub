@@ -252,8 +252,11 @@ const MobileBottomNav = () => {
                 </motion.button>
               </SheetTrigger>
               <SheetContent side="bottom" className="rounded-t-3xl pb-safe p-0 [&>button]:hidden">
-                {/* Drag handle */}
-                <div className="flex justify-center pt-2 pb-1">
+                {/* Drag handle - tap to close */}
+                <div
+                  className="flex justify-center pt-2 pb-1 cursor-pointer active:opacity-60"
+                  onClick={() => setProfileSheetOpen(false)}
+                >
                   <div className="w-10 h-1 rounded-full bg-gray-300 dark:bg-gray-600" />
                 </div>
                 <div className="px-6 pb-6 pt-2">
