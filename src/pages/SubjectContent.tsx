@@ -285,14 +285,7 @@ const SubjectContent = () => {
               .filter(key => q.options[key])
               .map(key => ({ key, text: q.options[key] }));
           }
-          let correctOption = 'A';
-          if (q.answer) {
-            const matchIndex = options.findIndex(opt => opt.text === q.answer);
-            if (matchIndex !== -1) correctOption = options[matchIndex].key;
-            else if (['A', 'B', 'C', 'D'].includes(q.answer)) correctOption = q.answer;
-          } else if (q.correct_option) {
-            correctOption = q.correct_option;
-          }
+          const correctOption = resolveCorrectKey(options, q.answer ?? q.correct_option);
           return {
             id: q.id || `mcq-${index}-${Date.now()}`,
             title: q.question || q.title || '',
