@@ -145,14 +145,14 @@ export const useAnalyticsData = (): AnalyticsData => {
             if (answers && typeof answers === 'object') {
               Object.values(answers).forEach((ans: unknown) => {
                 const answer = ans as Record<string, unknown>;
-                if (answer && typeof answer === 'object' && answer.topic) {
-                  const topicName = String(answer.topic);
-                  if (!subjectMap[subject].topics[topicName]) {
-                    subjectMap[subject].topics[topicName] = { total: 0, correct: 0 };
-                  }
-                  subjectMap[subject].topics[topicName].total++;
-                  if (answer.is_correct) subjectMap[subject].topics[topicName].correct++;
+                if (!answer || typeof answer !== 'object') return;
+                const topicName = String((answer.topic as string) || (answer.subject as string) || 'General');
+                if (!topicName || topicName === 'General') return;
+                if (!subjectMap[subject].topics[topicName]) {
+                  subjectMap[subject].topics[topicName] = { total: 0, correct: 0 };
                 }
+                subjectMap[subject].topics[topicName].total++;
+                if (answer.is_correct) subjectMap[subject].topics[topicName].correct++;
               });
             }
           });
