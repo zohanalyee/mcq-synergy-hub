@@ -152,6 +152,7 @@ const SubjectContent = () => {
   const [guestStarted, setGuestStarted] = useState(false);
   // Which topic id the guest is allowed to play (the first/free one)
   const [guestAllowedTopicId, setGuestAllowedTopicId] = useState<string | null>(null);
+  const [showGeneratePrompt, setShowGeneratePrompt] = useState(false);
 
   const { saveIntent } = useAuthIntent();
 
