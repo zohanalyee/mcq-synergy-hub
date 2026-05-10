@@ -2299,7 +2299,7 @@ serve(async (req) => {
               subject: subject_name || sanitizedTopic,
               topic: topic,
               ...lmsLinkageFields,
-              difficulty: difficulty.toLowerCase(),
+              difficulty: (difficulty || 'medium').toLowerCase(),
               options: q.options,
               correct_option: q.answer,
               explanation: q.explanation || '',
