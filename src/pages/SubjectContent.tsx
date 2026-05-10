@@ -701,6 +701,44 @@ const SubjectContent = () => {
   // Fetch already returns topic-specific MCQs; skip client-side topic filter
   // to avoid hiding rows whose `topic` string doesn't match exactly.
   const filteredMCQs = mcqs;
+
+  // Track Subject-page practice completion → save to test_attempts
+  const answeredRef = useRef<Map<string, boolean>>(new Map());
+  const submittedRef = useRef(false);
+  const startedAtRef = useRef<number>(Date.now());
+  useEffect(() => {
+    answeredRef.current = new Map();
+    submittedRef.current = false;
+    startedAtRef.current = Date.now();
+  }, [mcqs]);
+
+  const handleCardAnswered = async (qid: string, isCorrect: boolean) => {
+    if (!user || submittedRef.current) return;
+    answeredRef.current.set(qid, isCorrect);
+    if (answeredRef.current.size < filteredMCQs.length || filteredMCQs.length === 0) return;
+    submittedRef.current = true;
+
+    const correct = Array.from(answeredRef.current.values()).filter(Boolean).length;
+    const elapsed = Math.round((Date.now() - startedAtRef.current) / 1000);
+    const subjectName = title || 'Subject';
+    const answersArr = filteredMCQs.map((q) => ({
+      topic: (q as any).topic || (selectedTopic !== 'all' ? selectedTopic : subjectName),
+      is_correct: !!answeredRef.current.get(q.id),
+    }));
+
+    try {
+      await processTestCompletion({
+        testType: 'subject_practice',
+        score: correct,
+        totalQuestions: filteredMCQs.length,
+        timeTaken: elapsed,
+        subjects: [subjectName],
+        answers: answersArr as any,
+      });
+    } catch (e) {
+      console.error('subject_practice save failed', e);
+    }
+  };
   
   return (
     <Header>
