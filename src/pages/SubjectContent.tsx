@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
+import { processTestCompletion } from "@/utils/gamification";
 
 interface MCQItem {
   id: string;
