@@ -45,6 +45,7 @@ export const PracticeMCQCard = ({
     
     setSelectedOption(optionKey);
     setShowExplanation(true);
+    onAnswered?.(id, optionKey === correctOption);
   };
 
   const getOptionStyle = (optionKey: string) => {
