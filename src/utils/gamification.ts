@@ -74,13 +74,21 @@ export const processTestCompletion = async (data: TestCompletionData): Promise<{
     }
 
     // 1. Save test attempt
+    const normalizedAnswers: any = Array.isArray(data.answers)
+      ? (data.answers as Array<Record<string, unknown>>).map(a => ({
+          ...a,
+          topic: (a as any).topic || 'General',
+          is_correct: (a as any).is_correct,
+        }))
+      : (data.answers || {});
+
     const { error: attemptError } = await supabase.from("test_attempts").insert({
       user_id: user.id,
       test_type: data.testType,
       score: data.score,
       total_questions: data.totalQuestions,
       time_taken: data.timeTaken,
-      answers: data.answers || {},
+      answers: normalizedAnswers,
       subjects: data.subjects || [],
       content_id: data.contentId,
       completed_at: new Date().toISOString()
