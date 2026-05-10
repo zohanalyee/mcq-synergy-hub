@@ -232,5 +232,5 @@ export const useAnalyticsData = (): AnalyticsData => {
     fetch();
   }, [user]);
 
-  return { ...data, loading, hasData: data.subjects.length > 0 };
+  return { ...data, loading, hasData: data.subjects.length > 0 || data.totalTests > 0 };
 };
