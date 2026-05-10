@@ -876,6 +876,7 @@ const SubjectContent = () => {
                   difficulty={mcq.difficulty}
                   mode={studyMode}
                   index={index}
+                  onAnswered={user ? handleCardAnswered : undefined}
                 />
               ))}
             </div>
