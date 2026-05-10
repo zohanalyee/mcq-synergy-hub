@@ -537,14 +537,12 @@ const SubjectContent = () => {
         setCachedQuestions(subjectId, title, data.questions);
       }
 
-      // SMART AUTO-FILL: If DB returned fewer questions than requested (auth users only),
-      // trigger background AI top-up without forcing user to click "Generate New".
-      if (user && fetchOnly && transformedMCQs.length < requestedCount && transformedMCQs.length >= 0) {
-        console.log(`🧠 Auto-fill: DB returned ${transformedMCQs.length}/${requestedCount}, requesting AI top-up...`);
-        setTimeout(() => {
-          lastFetchTimeRef.current = 0; // bypass debounce for the follow-up
-          loadMCQs(false, false);
-        }, 300);
+      // If DB returned fewer questions than requested, prompt the user instead of auto-generating.
+      if (user && fetchOnly && transformedMCQs.length < requestedCount) {
+        console.log(`📭 DB returned ${transformedMCQs.length}/${requestedCount}, prompting for Generate New`);
+        setShowGeneratePrompt(true);
+      } else {
+        setShowGeneratePrompt(false);
       }
       
       if (data.source === 'ai' || data.ai_count > 0) {
