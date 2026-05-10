@@ -9,7 +9,7 @@ interface TestCompletionData {
   timeTaken?: number;
   testType: string;
   subjects?: string[];
-  answers?: Record<string | number, string>;
+  answers?: Record<string | number, string> | Array<Record<string, unknown>>;
   contentId?: string;
   questionIds?: string[];
 }
