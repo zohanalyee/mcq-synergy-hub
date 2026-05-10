@@ -93,11 +93,11 @@ export const PracticeMCQCard = ({
       <Card className="glass-card hover:shadow-lg transition-all duration-300">
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-2">
-              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
+            <div className="flex items-center gap-2 flex-1">
+              <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm shrink-0">
                 {index + 1}
               </span>
-              <CardTitle className="text-base font-semibold leading-tight">{title}</CardTitle>
+              <CardTitle className="text-base font-semibold leading-tight">{question}</CardTitle>
             </div>
             {difficulty && (
               <Badge className={cn("text-xs shrink-0", getDifficultyColor())}>
@@ -107,7 +107,6 @@ export const PracticeMCQCard = ({
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-foreground font-medium">{question}</p>
           
           <div className="space-y-2">
             {options.map((option) => {
