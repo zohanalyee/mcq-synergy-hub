@@ -21,6 +21,7 @@ interface PracticeMCQCardProps {
   difficulty?: "Easy" | "Medium" | "Hard";
   mode: StudyMode;
   index: number;
+  onAnswered?: (id: string, isCorrect: boolean) => void;
 }
 
 export const PracticeMCQCard = ({
@@ -33,6 +34,7 @@ export const PracticeMCQCard = ({
   difficulty,
   mode,
   index,
+  onAnswered,
 }: PracticeMCQCardProps) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -43,6 +45,7 @@ export const PracticeMCQCard = ({
     
     setSelectedOption(optionKey);
     setShowExplanation(true);
+    onAnswered?.(id, optionKey === correctOption);
   };
 
   const getOptionStyle = (optionKey: string) => {
