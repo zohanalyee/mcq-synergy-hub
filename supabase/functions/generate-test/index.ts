@@ -2325,11 +2325,17 @@ serve(async (req) => {
               .insert(questionPayload);
 
             if (insertError) {
+              // If duplicate, skip silently — question already exists
+              if ((insertError as any).code === '23505') {
+                console.log('Duplicate question skipped:', q.question?.slice(0, 50));
+                savedCount++;
+                continue;
+              }
               console.error('Failed to save question, retrying once:', insertError.message);
-              // Retry once with forced approved status (handles transient/constraint blips)
+              // Retry once with upsert to gracefully handle conflicts
               const { error: retryError } = await supabase
                 .from('content_items')
-                .insert({ ...questionPayload, status: 'approved', show_in_subjects: true });
+                .upsert({ ...questionPayload, status: 'approved', show_in_subjects: true }, { onConflict: 'title,subject', ignoreDuplicates: true });
               if (retryError) {
                 console.error('Retry failed, emergency save (minimal payload):', retryError.message);
                 const { error: emergencyError } = await supabase
