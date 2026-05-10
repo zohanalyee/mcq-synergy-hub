@@ -430,7 +430,6 @@ const SubjectContent = () => {
           forceNew: forceNew && !fetchOnly,
           fetch_only: fetchOnly,
           partial_mode: false,
-          ...(forceNew ? { mode: 'bank_only' } : {}),
           // LMS linkage so AI-generated MCQs persist into Question Bank correctly
           subject_id: subjectId,
           subject_name: title,
