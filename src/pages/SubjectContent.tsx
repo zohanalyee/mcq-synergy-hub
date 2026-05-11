@@ -886,6 +886,14 @@ const SubjectContent = () => {
                   onAnswered={user ? handleCardAnswered : undefined}
                 />
               ))}
+              {showAdvice && (
+                <ResultAdviceCard
+                  name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
+                  score={adviceScore}
+                  subject={title}
+                  topic={selectedTopic !== 'all' ? selectedTopic : undefined}
+                />
+              )}
             </div>
           ) : (
             <div className="text-center py-12">
