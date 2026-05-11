@@ -28,6 +28,10 @@ import SubjectBreakdown from "@/components/ai-coach/SubjectBreakdown";
 import AchievementsGrid from "@/components/ai-coach/AchievementsGrid";
 import StudyPlanCalendar from "@/components/ai-coach/StudyPlanCalendar";
 import TypewriterText from "@/components/TypewriterText";
+import { useUserCredits, refreshCreditsBroadcast } from "@/hooks/useUserCredits";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Sparkles as SparklesIcon } from "lucide-react";
 
 const Analytics = () => {
   const { user } = useAuth();
@@ -35,6 +39,55 @@ const Analytics = () => {
   const data = useAnalyticsData();
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const subjectRef = useRef<HTMLDivElement>(null);
+  const { remaining: aiCredits } = useUserCredits();
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAdvice, setAiAdvice] = useState<string>("");
+
+  const handleGetAIAdvice = async () => {
+    if (!user) return;
+    if (aiCredits < 10) {
+      toast.error("Insufficient credits", {
+        description: "You need 10 AI credits for personalized advice.",
+      });
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const response = await supabase.functions.invoke("generate-test", {
+        body: {
+          mode: "ai_coach",
+          user_stats: {
+            totalTests: data.totalTests,
+            avgScore: data.averageScore,
+            weakSubjects: data.subjects.filter((s) => s.accuracy < 60).map((s) => s.name),
+            strongSubjects: data.subjects.filter((s) => s.accuracy >= 80).map((s) => s.name),
+          },
+        },
+      });
+      const advice = (response.data as any)?.advice;
+      if (advice) {
+        setAiAdvice(advice);
+        refreshCreditsBroadcast();
+      } else {
+        // Rule-based fallback so the user always sees actionable guidance.
+        const weak = data.subjects.filter((s) => s.accuracy < 60).map((s) => s.name);
+        const strong = data.subjects.filter((s) => s.accuracy >= 80).map((s) => s.name);
+        const lines = [
+          `You've completed ${data.totalTests} tests with an average score of ${data.averageScore}%.`,
+          weak.length
+            ? `Focus next on: ${weak.slice(0, 3).join(", ")}. Aim for 10 targeted questions per topic.`
+            : `No critical weak subjects right now — keep practicing to maintain accuracy.`,
+          strong.length ? `Strong areas: ${strong.slice(0, 3).join(", ")} — push for advanced sets here.` : "",
+        ].filter(Boolean);
+        setAiAdvice(lines.join(" "));
+      }
+    } catch (e) {
+      console.error("AI advice failed:", e);
+      toast.error("Could not generate advice. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // No auth check needed — InstantAuthGuard handles it at route level
 
