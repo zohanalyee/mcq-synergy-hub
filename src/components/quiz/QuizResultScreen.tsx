@@ -41,8 +41,10 @@ const QuizResultScreen = ({
 }: QuizResultScreenProps) => {
   const [showReview, setShowReview] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const passed = accuracy >= 60;
+  const userName = (user?.user_metadata as any)?.full_name || user?.email?.split('@')[0];
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
