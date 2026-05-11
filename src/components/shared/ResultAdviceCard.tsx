@@ -74,23 +74,23 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
   );
 
   return (
-    <div className={`mt-4 rounded-2xl p-[2px] bg-gradient-to-br ${advice.color} shadow-lg`}>
-      <div className="rounded-2xl bg-background/95 backdrop-blur-sm p-5">
-        <div className="flex items-start gap-4">
-          <div className={`shrink-0 w-14 h-14 rounded-full bg-gradient-to-br ${advice.color} flex items-center justify-center text-3xl shadow-md`}>
+    <div className={`mt-3 rounded-xl p-[2px] bg-gradient-to-br ${advice.color} shadow-md`}>
+      <div className="rounded-xl bg-background/95 backdrop-blur-sm px-4 py-3">
+        <div className="flex items-start gap-3">
+          <div className={`shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${advice.color} flex items-center justify-center text-xl shadow-sm`}>
             {advice.emoji}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
               🤖 Ustaad Ki Advice
             </p>
-            <p className="text-sm sm:text-base leading-relaxed text-foreground">
+            <p className="text-xs leading-relaxed text-foreground">
               {advice.message}
             </p>
             <button
               type="button"
               onClick={() => navigate('/analytics')}
-              className="mt-3 text-xs sm:text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1"
+              className="mt-2 text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
             >
               📊 Dashboard mein apni detailed performance dekho →
             </button>
