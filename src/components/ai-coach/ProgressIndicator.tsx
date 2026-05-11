@@ -35,7 +35,8 @@ const ProgressIndicator = ({ userId, subject }: ProgressIndicatorProps) => {
         if (!alive) return;
         setWeak(
           rows
-            .filter((r) => r.totalAttempts > 0 && r.topic)
+            .filter((r) => r.totalAttempts > 0 && r.topic && r.weaknessScore >= 30)
+            .sort((a, b) => b.weaknessScore - a.weaknessScore)
             .slice(0, 5)
             .map((r) => ({
               topic: r.topic,
@@ -101,27 +102,31 @@ const ProgressIndicator = ({ userId, subject }: ProgressIndicatorProps) => {
         )}
 
         {/* Weakness bars */}
-        {weak.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                Weakest Topics
-              </h4>
-              {metrics && metrics.weaknessImprovement !== 0 && (
-                <span
-                  className={`text-[11px] inline-flex items-center gap-1 ${
-                    metrics.weaknessImprovement < 0 ? "text-emerald-600" : "text-amber-600"
-                  }`}
-                >
-                  {metrics.weaknessImprovement < 0 ? (
-                    <TrendingDown className="h-3 w-3" />
-                  ) : (
-                    <TrendingUp className="h-3 w-3" />
-                  )}
-                  {Math.abs(metrics.weaknessImprovement)} pts
-                </span>
-              )}
-            </div>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+              Weakest Topics
+            </h4>
+            {metrics && metrics.weaknessImprovement !== 0 && weak.length > 0 && (
+              <span
+                className={`text-[11px] inline-flex items-center gap-1 ${
+                  metrics.weaknessImprovement < 0 ? "text-emerald-600" : "text-amber-600"
+                }`}
+              >
+                {metrics.weaknessImprovement < 0 ? (
+                  <TrendingDown className="h-3 w-3" />
+                ) : (
+                  <TrendingUp className="h-3 w-3" />
+                )}
+                {Math.abs(metrics.weaknessImprovement)} pts
+              </span>
+            )}
+          </div>
+          {weak.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              🎉 No weak topics right now! Keep practicing.
+            </p>
+          ) : (
             <div className="space-y-2">
               {weak.map((w) => (
                 <div key={w.topic}>
@@ -144,8 +149,8 @@ const ProgressIndicator = ({ userId, subject }: ProgressIndicatorProps) => {
                 </div>
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Retry queue */}
         {retries.length > 0 && (

@@ -28,6 +28,10 @@ import SubjectBreakdown from "@/components/ai-coach/SubjectBreakdown";
 import AchievementsGrid from "@/components/ai-coach/AchievementsGrid";
 import StudyPlanCalendar from "@/components/ai-coach/StudyPlanCalendar";
 import TypewriterText from "@/components/TypewriterText";
+import { useUserCredits, refreshCreditsBroadcast } from "@/hooks/useUserCredits";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+
 
 const Analytics = () => {
   const { user } = useAuth();
@@ -35,6 +39,55 @@ const Analytics = () => {
   const data = useAnalyticsData();
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const subjectRef = useRef<HTMLDivElement>(null);
+  const { remaining: aiCredits } = useUserCredits();
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiAdvice, setAiAdvice] = useState<string>("");
+
+  const handleGetAIAdvice = async () => {
+    if (!user) return;
+    if (aiCredits < 10) {
+      toast.error("Insufficient credits", {
+        description: "You need 10 AI credits for personalized advice.",
+      });
+      return;
+    }
+    setAiLoading(true);
+    try {
+      const response = await supabase.functions.invoke("generate-test", {
+        body: {
+          mode: "ai_coach",
+          user_stats: {
+            totalTests: data.totalTests,
+            avgScore: data.averageScore,
+            weakSubjects: data.subjects.filter((s) => s.accuracy < 60).map((s) => s.name),
+            strongSubjects: data.subjects.filter((s) => s.accuracy >= 80).map((s) => s.name),
+          },
+        },
+      });
+      const advice = (response.data as any)?.advice;
+      if (advice) {
+        setAiAdvice(advice);
+        refreshCreditsBroadcast();
+      } else {
+        // Rule-based fallback so the user always sees actionable guidance.
+        const weak = data.subjects.filter((s) => s.accuracy < 60).map((s) => s.name);
+        const strong = data.subjects.filter((s) => s.accuracy >= 80).map((s) => s.name);
+        const lines = [
+          `You've completed ${data.totalTests} tests with an average score of ${data.averageScore}%.`,
+          weak.length
+            ? `Focus next on: ${weak.slice(0, 3).join(", ")}. Aim for 10 targeted questions per topic.`
+            : `No critical weak subjects right now — keep practicing to maintain accuracy.`,
+          strong.length ? `Strong areas: ${strong.slice(0, 3).join(", ")} — push for advanced sets here.` : "",
+        ].filter(Boolean);
+        setAiAdvice(lines.join(" "));
+      }
+    } catch (e) {
+      console.error("AI advice failed:", e);
+      toast.error("Could not generate advice. Please try again.");
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   // No auth check needed — InstantAuthGuard handles it at route level
 
@@ -94,7 +147,7 @@ const Analytics = () => {
                 'Tracking your daily streak...',
               ]}
               className="text-xs md:text-sm text-primary/80 font-medium"
-              minHeightClass="min-h-[1.5rem]"
+              minHeightClass="min-h-[3rem] md:min-h-[2rem]"
             />
           }
         />
@@ -111,6 +164,33 @@ const Analytics = () => {
             </Card>
           ))}
         </div>
+
+        {/* AI Coach Advice */}
+        <Card className="mb-4 border-purple-200/60 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/60 to-blue-50/60 dark:from-purple-950/20 dark:to-blue-950/20">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-purple-500" />
+                Personalized AI Coach Advice
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Get a tailored study plan based on your stats. Costs 10 AI credits.
+              </p>
+            </div>
+            <button
+              onClick={handleGetAIAdvice}
+              disabled={aiCredits < 10 || aiLoading}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 disabled:opacity-50 shrink-0"
+            >
+              {aiLoading ? "⏳ Analyzing..." : "✨ Get AI Advice (10 credits)"}
+            </button>
+          </CardContent>
+          {aiAdvice && (
+            <div className="mx-4 mb-4 p-4 bg-card/70 rounded-xl border border-purple-200/60 dark:border-purple-900/40">
+              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{aiAdvice}</p>
+            </div>
+          )}
+        </Card>
 
         {/* AI Insights */}
         <AIInsightsPanel

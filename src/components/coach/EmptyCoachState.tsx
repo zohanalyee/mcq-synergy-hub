@@ -1,5 +1,4 @@
 import { BookOpen, Brain, Briefcase, Target } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { motion } from 'framer-motion';
@@ -61,27 +60,25 @@ const EmptyCoachState = () => {
   return (
     <div className="space-y-4">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10">
-          <CardHeader className="text-center pb-3 pt-5">
-            <div className="mx-auto w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-2">
-              <Brain className="h-6 w-6 text-primary" />
-            </div>
-            <CardTitle className="text-lg">
-              {getText(
-                '👋 Welcome to AI Personal Coach!',
-                '👋 AI Personal Coach میں خوش آمدید!',
-                '👋 AI Personal Coach ۾ ڀلي ڪري آيا!'
-              )}
-            </CardTitle>
-            <CardDescription className="text-sm mt-1">
-              {getText(
-                "You haven't attempted any tests yet. Pick an option below to start:",
-                'آپ نے ابھی تک کوئی ٹیسٹ attempt نہیں کیا۔ شروع کرنے کے لیے نیچے سے منتخب کریں:',
-                'توهان اڃا تائين ڪو به ٽيسٽ attempt نه ڪيو آهي. هيٺان چونڊيو:'
-              )}
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <div className="bg-gradient-to-br from-purple-600 via-purple-500 to-blue-500 rounded-2xl p-8 text-white text-center shadow-lg">
+          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+            <Brain className="h-8 w-8 text-white" />
+          </div>
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {getText(
+              '👋 Welcome to AI Personal Coach!',
+              '👋 AI Personal Coach میں خوش آمدید!',
+              '👋 AI Personal Coach ۾ ڀلي ڪري آيا!'
+            )}
+          </h2>
+          <p className="text-white/80 text-sm mb-6">
+            {getText(
+              "You haven't attempted any tests yet. Pick an option below to start:",
+              'آپ نے ابھی تک کوئی ٹیسٹ attempt نہیں کیا۔ شروع کرنے کے لیے نیچے سے منتخب کریں:',
+              'توهان اڃا تائين ڪو به ٽيسٽ attempt نه ڪيو آهي. هيٺان چونڊيو:'
+            )}
+          </p>
+        </div>
       </motion.div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -94,24 +91,22 @@ const EmptyCoachState = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 * (i + 1) }}
             >
-              <Card
-                className="hover:shadow-md transition-shadow cursor-pointer group h-full"
+              <button
                 onClick={() => navigate(item.path)}
+                className="w-full text-left border-2 border-purple-200 dark:border-purple-900/40 rounded-xl p-4 flex items-center gap-3 bg-card hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-all"
               >
-                <CardContent className="p-4 flex items-start gap-3">
-                  <div className={`p-2 rounded-lg bg-muted group-hover:scale-110 transition-transform ${item.color}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-semibold text-sm mb-0.5">
-                      {getText(item.titleEn, item.titleUr, item.titleSd)}
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      {getText(item.descEn, item.descUr, item.descSd)}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
+                <div className={`p-2 rounded-lg bg-muted ${item.color}`}>
+                  <Icon className="h-5 w-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm mb-0.5">
+                    {getText(item.titleEn, item.titleUr, item.titleSd)}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    {getText(item.descEn, item.descUr, item.descSd)}
+                  </p>
+                </div>
+              </button>
             </motion.div>
           );
         })}
