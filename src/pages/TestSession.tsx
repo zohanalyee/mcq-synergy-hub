@@ -726,6 +726,13 @@ const TestSession = () => {
                   ))}
                 </div>
 
+                <ResultAdviceCard
+                  name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
+                  score={percentage}
+                  subject={(testData as any)?.subject || (testData as any)?.session_name}
+                  topic={(testData as any)?.topic}
+                />
+
                 <SmartFeedbackCard
                   score={score}
                   totalQuestions={totalQ}
