@@ -5,6 +5,8 @@ import { Award, Flame, Target, Clock, RotateCcw, Sparkles, ChevronDown, Check, X
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cleanQuestionText } from "@/lib/questionUtils";
+import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QuizResultScreenProps {
   title: string;
