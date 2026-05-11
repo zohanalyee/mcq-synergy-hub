@@ -94,7 +94,7 @@ const Analytics = () => {
                 'Tracking your daily streak...',
               ]}
               className="text-xs md:text-sm text-primary/80 font-medium"
-              minHeightClass="min-h-[1.5rem]"
+              minHeightClass="min-h-[3rem] md:min-h-[2rem]"
             />
           }
         />
