@@ -85,6 +85,12 @@ const QuizResultScreen = ({
               {correctCount} of {totalQuestions} correct
             </p>
 
+            <ResultAdviceCard
+              name={userName}
+              score={accuracy}
+              subject={title}
+            />
+
             <div className="grid grid-cols-3 gap-3 mb-6">
               <div className="rounded-xl bg-muted/50 p-3">
                 <div className="flex items-center justify-center text-primary mb-1">
