@@ -30,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
 import { processTestCompletion } from "@/utils/gamification";
+import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 
 interface MCQItem {
   id: string;
@@ -706,10 +707,14 @@ const SubjectContent = () => {
   const answeredRef = useRef<Map<string, boolean>>(new Map());
   const submittedRef = useRef(false);
   const startedAtRef = useRef<number>(Date.now());
+  const [showAdvice, setShowAdvice] = useState(false);
+  const [adviceScore, setAdviceScore] = useState(0);
   useEffect(() => {
     answeredRef.current = new Map();
     submittedRef.current = false;
     startedAtRef.current = Date.now();
+    setShowAdvice(false);
+    setAdviceScore(0);
   }, [mcqs]);
 
   const handleCardAnswered = async (qid: string, isCorrect: boolean) => {
