@@ -35,7 +35,8 @@ const ProgressIndicator = ({ userId, subject }: ProgressIndicatorProps) => {
         if (!alive) return;
         setWeak(
           rows
-            .filter((r) => r.totalAttempts > 0 && r.topic)
+            .filter((r) => r.totalAttempts > 0 && r.topic && r.weaknessScore >= 30)
+            .sort((a, b) => b.weaknessScore - a.weaknessScore)
             .slice(0, 5)
             .map((r) => ({
               topic: r.topic,
