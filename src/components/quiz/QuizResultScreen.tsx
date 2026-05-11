@@ -5,6 +5,8 @@ import { Award, Flame, Target, Clock, RotateCcw, Sparkles, ChevronDown, Check, X
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cleanQuestionText } from "@/lib/questionUtils";
+import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface QuizResultScreenProps {
   title: string;
@@ -39,8 +41,10 @@ const QuizResultScreen = ({
 }: QuizResultScreenProps) => {
   const [showReview, setShowReview] = useState(false);
   const navigate = useNavigate();
+  const { user } = useAuth();
   const accuracy = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
   const passed = accuracy >= 60;
+  const userName = (user?.user_metadata as any)?.full_name || user?.email?.split('@')[0];
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
@@ -80,6 +84,12 @@ const QuizResultScreen = ({
             <p className="text-sm text-muted-foreground mb-6">
               {correctCount} of {totalQuestions} correct
             </p>
+
+            <ResultAdviceCard
+              name={userName}
+              score={accuracy}
+              subject={title}
+            />
 
             <div className="grid grid-cols-3 gap-3 mb-6">
               <div className="rounded-xl bg-muted/50 p-3">

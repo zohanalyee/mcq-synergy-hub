@@ -29,6 +29,7 @@ import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestPro
 import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { loadGuestSession } from "@/lib/guestSession";
+import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 
 type LastUsedTestContext = {
   subject?: string;
@@ -724,6 +725,13 @@ const TestSession = () => {
                     </Card>
                   ))}
                 </div>
+
+                <ResultAdviceCard
+                  name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
+                  score={percentage}
+                  subject={(testData as any)?.subject || (testData as any)?.session_name}
+                  topic={(testData as any)?.topic}
+                />
 
                 <SmartFeedbackCard
                   score={score}

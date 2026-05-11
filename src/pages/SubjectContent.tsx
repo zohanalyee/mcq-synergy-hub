@@ -30,6 +30,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
 import { processTestCompletion } from "@/utils/gamification";
+import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 
 interface MCQItem {
   id: string;
@@ -706,10 +707,14 @@ const SubjectContent = () => {
   const answeredRef = useRef<Map<string, boolean>>(new Map());
   const submittedRef = useRef(false);
   const startedAtRef = useRef<number>(Date.now());
+  const [showAdvice, setShowAdvice] = useState(false);
+  const [adviceScore, setAdviceScore] = useState(0);
   useEffect(() => {
     answeredRef.current = new Map();
     submittedRef.current = false;
     startedAtRef.current = Date.now();
+    setShowAdvice(false);
+    setAdviceScore(0);
   }, [mcqs]);
 
   const handleCardAnswered = async (qid: string, isCorrect: boolean) => {
@@ -738,6 +743,8 @@ const SubjectContent = () => {
     } catch (e) {
       console.error('subject_practice save failed', e);
     }
+    setAdviceScore(Math.round((correct / filteredMCQs.length) * 100));
+    setShowAdvice(true);
   };
   
   return (
@@ -879,6 +886,14 @@ const SubjectContent = () => {
                   onAnswered={user ? handleCardAnswered : undefined}
                 />
               ))}
+              {showAdvice && (
+                <ResultAdviceCard
+                  name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
+                  score={adviceScore}
+                  subject={title}
+                  topic={selectedTopic !== 'all' ? selectedTopic : undefined}
+                />
+              )}
             </div>
           ) : (
             <div className="text-center py-12">
