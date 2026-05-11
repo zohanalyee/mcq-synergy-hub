@@ -709,17 +709,22 @@ const SubjectContent = () => {
   const startedAtRef = useRef<number>(Date.now());
   const [showAdvice, setShowAdvice] = useState(false);
   const [adviceScore, setAdviceScore] = useState(0);
+  const [allAnswered, setAllAnswered] = useState(false);
   useEffect(() => {
     answeredRef.current = new Map();
     submittedRef.current = false;
     startedAtRef.current = Date.now();
     setShowAdvice(false);
     setAdviceScore(0);
+    setAllAnswered(false);
   }, [mcqs]);
 
   const handleCardAnswered = async (qid: string, isCorrect: boolean) => {
     if (!user || submittedRef.current) return;
     answeredRef.current.set(qid, isCorrect);
+    if (answeredRef.current.size === filteredMCQs.length && filteredMCQs.length > 0) {
+      setAllAnswered(true);
+    }
     if (answeredRef.current.size < filteredMCQs.length || filteredMCQs.length === 0) return;
     submittedRef.current = true;
 
@@ -886,7 +891,19 @@ const SubjectContent = () => {
                   onAnswered={user ? handleCardAnswered : undefined}
                 />
               ))}
-              {showAdvice && (
+              {allAnswered && !showAdvice && (
+                <button
+                  onClick={() => {
+                    const correct = Array.from(answeredRef.current.values()).filter(Boolean).length;
+                    setAdviceScore(Math.round((correct / filteredMCQs.length) * 100));
+                    setShowAdvice(true);
+                  }}
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-3 rounded-xl font-medium mt-4"
+                >
+                  ✅ Finish Practice & See Results
+                </button>
+              )}
+              {showAdvice && user && (
                 <ResultAdviceCard
                   name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
                   score={adviceScore}
