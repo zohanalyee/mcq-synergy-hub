@@ -29,6 +29,7 @@ import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestPro
 import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { loadGuestSession } from "@/lib/guestSession";
+import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 
 type LastUsedTestContext = {
   subject?: string;
