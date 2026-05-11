@@ -165,6 +165,33 @@ const Analytics = () => {
           ))}
         </div>
 
+        {/* AI Coach Advice */}
+        <Card className="mb-4 border-purple-200/60 dark:border-purple-900/40 bg-gradient-to-br from-purple-50/60 to-blue-50/60 dark:from-purple-950/20 dark:to-blue-950/20">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold flex items-center gap-1.5">
+                <SparklesIcon className="w-4 h-4 text-purple-500" />
+                Personalized AI Coach Advice
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Get a tailored study plan based on your stats. Costs 10 AI credits.
+              </p>
+            </div>
+            <button
+              onClick={handleGetAIAdvice}
+              disabled={aiCredits < 10 || aiLoading}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 disabled:opacity-50 shrink-0"
+            >
+              {aiLoading ? "⏳ Analyzing..." : "✨ Get AI Advice (10 credits)"}
+            </button>
+          </CardContent>
+          {aiAdvice && (
+            <div className="mx-4 mb-4 p-4 bg-card/70 rounded-xl border border-purple-200/60 dark:border-purple-900/40">
+              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{aiAdvice}</p>
+            </div>
+          )}
+        </Card>
+
         {/* AI Insights */}
         <AIInsightsPanel
           data={data}
