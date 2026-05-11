@@ -743,6 +743,8 @@ const SubjectContent = () => {
     } catch (e) {
       console.error('subject_practice save failed', e);
     }
+    setAdviceScore(Math.round((correct / filteredMCQs.length) * 100));
+    setShowAdvice(true);
   };
   
   return (
