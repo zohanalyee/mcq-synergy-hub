@@ -97,7 +97,7 @@ const AchievementsSection = ({ totalTests, averageScore, totalQuestions }: Props
         <div>
           <h3 className="text-sm font-semibold mb-2">Earned Badges</h3>
           <div className="flex flex-wrap gap-2">
-            {badges.map((ub: any) => (
+            {[...new Map((badges as any[]).map((b: any) => [b.badges?.id ?? b.id, b])).values()].map((ub: any) => (
               <Badge key={ub.id} variant="secondary" className="gap-1 text-xs py-1">
                 <span>{ub.badges?.icon || "🏅"}</span>
                 {ub.badges?.name || "Badge"}
