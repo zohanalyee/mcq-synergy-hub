@@ -726,12 +726,14 @@ const TestSession = () => {
                   ))}
                 </div>
 
-                <ResultAdviceCard
-                  name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
-                  score={percentage}
-                  subject={(testData as any)?.subject || (testData as any)?.session_name}
-                  topic={(testData as any)?.topic}
-                />
+                {user && (
+                  <ResultAdviceCard
+                    name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
+                    score={percentage}
+                    subject={(testData as any)?.subject || (testData as any)?.session_name}
+                    topic={(testData as any)?.topic}
+                  />
+                )}
 
                 <SmartFeedbackCard
                   score={score}
@@ -792,7 +794,12 @@ const TestSession = () => {
 
                 <div className="flex gap-3 justify-center flex-wrap">
                   <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
-                  <Button size="sm" variant="outline" onClick={() => navigate("/analytics")}>AI Coach</Button>
+                  <button
+                    onClick={() => navigate('/analytics')}
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 rounded-full text-sm font-medium"
+                  >
+                    📊 AI Coach — View Full Analysis
+                  </button>
                 </div>
               </div>
             );
