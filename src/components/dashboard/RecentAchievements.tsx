@@ -108,7 +108,7 @@ const RecentAchievements = () => {
         <CardContent className="space-y-2">
           {badges.length > 0 ? (
             <>
-              {badges.map((badge) => (
+              {[...new Map(badges.map((b) => [b.id, b])).values()].map((badge) => (
                 <BadgeCard
                   key={badge.id}
                   name={badge.name}
