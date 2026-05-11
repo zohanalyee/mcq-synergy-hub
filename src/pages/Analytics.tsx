@@ -170,7 +170,7 @@ const Analytics = () => {
           <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
             <div className="min-w-0">
               <p className="text-sm font-semibold flex items-center gap-1.5">
-                <SparklesIcon className="w-4 h-4 text-purple-500" />
+                <Sparkles className="w-4 h-4 text-purple-500" />
                 Personalized AI Coach Advice
               </p>
               <p className="text-xs text-muted-foreground">
