@@ -31,7 +31,7 @@ import TypewriterText from "@/components/TypewriterText";
 import { useUserCredits, refreshCreditsBroadcast } from "@/hooks/useUserCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Sparkles as SparklesIcon } from "lucide-react";
+
 
 const Analytics = () => {
   const { user } = useAuth();
