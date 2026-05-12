@@ -85,13 +85,12 @@ const QuizResultScreen = ({
               {correctCount} of {totalQuestions} correct
             </p>
 
-            {user && (
-              <ResultAdviceCard
-                name={userName}
-                score={accuracy}
-                subject={title}
-              />
-            )}
+            <ResultAdviceCard
+              name={userName}
+              score={accuracy}
+              subject={title}
+              isGuest={!user}
+            />
 
             <div className="grid grid-cols-3 gap-3 mb-6">
               <div className="rounded-xl bg-muted/50 p-3">

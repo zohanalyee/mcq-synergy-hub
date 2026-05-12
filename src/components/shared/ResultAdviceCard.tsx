@@ -8,6 +8,7 @@ interface ResultAdviceCardProps {
   topic?: string;
   weakTopic?: string;
   strongTopic?: string;
+  isGuest?: boolean;
 }
 
 const getAdvice = (
@@ -55,6 +56,39 @@ const getAdvice = (
   };
 };
 
+const getGuestAdvice = (score: number): { emoji: string; message: string; color: string } => {
+  if (score >= 90) return {
+    emoji: '🏆',
+    color: 'from-emerald-500 to-green-400',
+    message: `Mashallah! ${score}% — Kya baat hai yaar! Zabardast! Aur aage jaana hai toh sign up kar — poori journey track hogi! / ماشاءاللہ! آگے بڑھنا ہے تو sign up کرو!`
+  };
+  if (score >= 75) return {
+    emoji: '💪',
+    color: 'from-blue-500 to-indigo-400',
+    message: `Wah bhai wah! ${score}% — solid performance! Sign up kar — apni progress track karte hain saath mein! / واہ! اپنی progress track کرو — sign up کرو!`
+  };
+  if (score >= 60) return {
+    emoji: '😊',
+    color: 'from-purple-500 to-violet-400',
+    message: `Theek thaak ${score}%! Aur behtar ho sakta tha yaar! Sign up kar — weak topics pakad ke saath sudhaarein ge! / Sign up کرو — کمزور topics ٹھیک کریں گے!`
+  };
+  if (score >= 50) return {
+    emoji: '😐',
+    color: 'from-amber-500 to-yellow-400',
+    message: `Ho sakta tha better yaar! ${score}% — mehnat aur chahiye! Sign up kar — AI Coach guide karega har step pe! / AI Coach ہر قدم پر رہنمائی کرے گا — sign up کرو!`
+  };
+  if (score >= 35) return {
+    emoji: '😅',
+    color: 'from-orange-500 to-amber-400',
+    message: `Arre yaar ${score}%? Reels band kar bhai! Sign up kar — serious ho ja apni padhai mein! / پڑھائی سیریس لو — sign up کرو ابھی!`
+  };
+  return {
+    emoji: '💙',
+    color: 'from-rose-500 to-pink-400',
+    message: `${score}% bhai? Koi baat nahi — sab ka bura din hota hai! Sign up kar — saath milke sudhaarein ge! / Sign up کرو — مل کر بہتر کریں گے!`
+  };
+};
+
 const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
   name,
   score,
@@ -62,16 +96,19 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
   topic,
   weakTopic,
   strongTopic,
+  isGuest,
 }) => {
   const navigate = useNavigate();
-  const advice = getAdvice(
-    score,
-    name || 'Bhai',
-    subject || '',
-    topic || '',
-    weakTopic || '',
-    strongTopic || ''
-  );
+  const advice = isGuest
+    ? getGuestAdvice(score)
+    : getAdvice(
+        score,
+        name || 'Bhai',
+        subject || '',
+        topic || '',
+        weakTopic || '',
+        strongTopic || ''
+      );
 
   return (
     <div className={`mt-3 rounded-xl p-[2px] bg-gradient-to-br ${advice.color} shadow-md`}>
@@ -87,13 +124,23 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
             <p className="text-xs leading-relaxed text-foreground">
               {advice.message}
             </p>
-            <button
-              type="button"
-              onClick={() => navigate('/analytics')}
-              className="mt-2 text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
-            >
-              📊 Dashboard mein apni detailed performance dekho →
-            </button>
+            {isGuest ? (
+              <button
+                type="button"
+                onClick={() => navigate('/auth')}
+                className="mt-3 text-xs font-bold bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-full transition-all inline-flex items-center gap-1"
+              >
+                🔥 Sign Up Free — Full Analysis dekho →
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => navigate('/analytics')}
+                className="mt-2 text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+              >
+                📊 Dashboard mein apni detailed performance dekho →
+              </button>
+            )}
           </div>
         </div>
       </div>
