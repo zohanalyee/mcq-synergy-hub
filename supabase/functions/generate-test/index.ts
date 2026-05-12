@@ -1254,7 +1254,9 @@ serve(async (req) => {
       requestId, 
       partial_mode, 
       fetch_only,
-      mode, // 'bank_only' for admin bulk generator
+      mode, // 'bank_only' | 'ai_coach'
+      user_stats, // for ai_coach mode
+      language, // 'en' | 'ur' | 'sd'
       source, // 'auto_fill' for auto-fill feature
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
