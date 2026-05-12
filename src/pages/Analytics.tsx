@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import SEOHead from '@/components/SEOHead';
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +31,8 @@ import TypewriterText from "@/components/TypewriterText";
 import { useUserCredits, refreshCreditsBroadcast } from "@/hooks/useUserCredits";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useLanguage } from "@/contexts/LanguageContext";
+
 
 
 const Analytics = () => {
@@ -40,50 +42,83 @@ const Analytics = () => {
   const [testDialogOpen, setTestDialogOpen] = useState(false);
   const subjectRef = useRef<HTMLDivElement>(null);
   const { remaining: aiCredits } = useUserCredits();
+  const { language } = useLanguage();
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAdvice, setAiAdvice] = useState<string>("");
+  const [adviceUsedForAttempt, setAdviceUsedForAttempt] = useState(false);
+  const [lastAttemptCount, setLastAttemptCount] = useState(0);
+
+  // Reset gate when user attempts a new test
+  useEffect(() => {
+    if (data.totalTests > lastAttemptCount) {
+      setAdviceUsedForAttempt(false);
+      setLastAttemptCount(data.totalTests);
+    }
+  }, [data.totalTests, lastAttemptCount]);
 
   const handleGetAIAdvice = async () => {
     if (!user) return;
-    if (aiCredits < 10) {
-      toast.error("Insufficient credits", {
-        description: "You need 10 AI credits for personalized advice.",
+
+    if (adviceUsedForAttempt) {
+      toast.info("Pehle ek aur test do! 🎯", {
+        description: "Nayi advice ke liye ek aur attempt chahiye — taake hum tumhari progress properly evaluate kar sakein!",
+        duration: 4000,
       });
       return;
     }
+
+    if (aiCredits < 10) {
+      toast.error("Credits kam hain!", {
+        description: "AI Coach advice ke liye 10 credits chahiye.",
+      });
+      return;
+    }
+
     setAiLoading(true);
     try {
+      const recentAttempts = (data.recentAttempts || []).slice(0, 5).map((t: any) => ({
+        subject: (Array.isArray(t.subjects) ? t.subjects[0] : t.subject) || 'General',
+        score: t.total_questions ? Math.round((t.score / t.total_questions) * 100) : (t.score || 0),
+        date: t.created_at ? new Date(t.created_at).toLocaleDateString() : 'recently',
+      }));
+
       const response = await supabase.functions.invoke("generate-test", {
         body: {
           mode: "ai_coach",
+          language: language || 'en',
           user_stats: {
             totalTests: data.totalTests,
             avgScore: data.averageScore,
-            weakSubjects: data.subjects.filter((s) => s.accuracy < 60).map((s) => s.name),
-            strongSubjects: data.subjects.filter((s) => s.accuracy >= 80).map((s) => s.name),
+            weakSubjects: data.subjects
+              .filter((s: any) => s.accuracy < 60)
+              .map((s: any) => `${s.name} (${s.accuracy}%)`),
+            strongSubjects: data.subjects
+              .filter((s: any) => s.accuracy >= 80)
+              .map((s: any) => s.name),
+            recentAttempts,
           },
         },
       });
+
       const advice = (response.data as any)?.advice;
       if (advice) {
         setAiAdvice(advice);
+        setAdviceUsedForAttempt(true);
         refreshCreditsBroadcast();
       } else {
-        // Rule-based fallback so the user always sees actionable guidance.
-        const weak = data.subjects.filter((s) => s.accuracy < 60).map((s) => s.name);
-        const strong = data.subjects.filter((s) => s.accuracy >= 80).map((s) => s.name);
-        const lines = [
-          `You've completed ${data.totalTests} tests with an average score of ${data.averageScore}%.`,
-          weak.length
-            ? `Focus next on: ${weak.slice(0, 3).join(", ")}. Aim for 10 targeted questions per topic.`
-            : `No critical weak subjects right now — keep practicing to maintain accuracy.`,
-          strong.length ? `Strong areas: ${strong.slice(0, 3).join(", ")} — push for advanced sets here.` : "",
-        ].filter(Boolean);
-        setAiAdvice(lines.join(" "));
+        const weak = data.subjects.filter((s: any) => s.accuracy < 60).map((s: any) => s.name);
+        const strong = data.subjects.filter((s: any) => s.accuracy >= 80).map((s: any) => s.name);
+        const fallback = [
+          `${data.totalTests} tests diye hain — mehnat dikh rahi hai! 💪`,
+          weak.length ? `${weak.slice(0, 2).join(' aur ')} mein aur practice chahiye — kal 15 min do!` : `Koi weak subject nahi — keep it up!`,
+          strong.length ? `${strong[0]} mein mast ho — aur push karo! 🔥` : '',
+        ].filter(Boolean).join(' ');
+        setAiAdvice(fallback);
+        setAdviceUsedForAttempt(true);
       }
     } catch (e) {
       console.error("AI advice failed:", e);
-      toast.error("Could not generate advice. Please try again.");
+      toast.error("Advice nahi mili — dobara try karo!");
     } finally {
       setAiLoading(false);
     }
@@ -179,10 +214,14 @@ const Analytics = () => {
             </div>
             <button
               onClick={handleGetAIAdvice}
-              disabled={aiCredits < 10 || aiLoading}
-              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 disabled:opacity-50 shrink-0"
+              disabled={aiLoading || aiCredits < 10}
+              className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 disabled:opacity-50 transition-all shrink-0"
             >
-              {aiLoading ? "⏳ Analyzing..." : "✨ Get AI Advice (10 credits)"}
+              {aiLoading
+                ? '⏳ Ustaad soch raha hai...'
+                : adviceUsedForAttempt
+                ? '✅ Advice mili — test do phir aao!'
+                : '✨ Ustaad Se Pooch (10 credits)'}
             </button>
           </CardContent>
           {aiAdvice && (

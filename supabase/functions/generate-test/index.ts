@@ -1254,7 +1254,9 @@ serve(async (req) => {
       requestId, 
       partial_mode, 
       fetch_only,
-      mode, // 'bank_only' for admin bulk generator
+      mode, // 'bank_only' | 'ai_coach'
+      user_stats, // for ai_coach mode
+      language, // 'en' | 'ur' | 'sd'
       source, // 'auto_fill' for auto-fill feature
       topic_id, // UUID for FK link to topics table
       topic_ids, // Array of UUIDs from Syllabus Builder
@@ -1294,7 +1296,122 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Resolve topic name from topic_ids if rawTopic is not provided
+    // ============= AI COACH MODE =============
+    if (mode === 'ai_coach') {
+      if (!verified_user_id) {
+        return new Response(
+          JSON.stringify({ error: 'Authentication required' }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      const stats = user_stats || {};
+      const totalTests = stats.totalTests || 0;
+      const avgScore = stats.avgScore || 0;
+      const weakSubjects = stats.weakSubjects || [];
+      const strongSubjects = stats.strongSubjects || [];
+      const recentAttempts = stats.recentAttempts || [];
+      const lang = language || 'en';
+
+      const trendText = recentAttempts.length >= 2
+        ? (() => {
+            const recent = recentAttempts.slice(0, 3);
+            const older = recentAttempts.slice(3, 6);
+            const recentAvg = recent.reduce((s: number, a: any) => s + (a.score || 0), 0) / (recent.length || 1);
+            const olderAvg = older.length
+              ? older.reduce((s: number, a: any) => s + (a.score || 0), 0) / older.length
+              : recentAvg;
+            const diff = Math.round(recentAvg - olderAvg);
+            if (diff > 5) return `improving by ${diff} points recently`;
+            if (diff < -5) return `declining by ${Math.abs(diff)} points recently`;
+            return 'staying consistent';
+          })()
+        : 'just starting out';
+
+      const langInstructions = lang === 'ur'
+        ? 'Mix Hinglish with Urdu. Use Roman Urdu naturally. Example: "Yaar, mehnat karo — امتحان قریب ہے!"'
+        : lang === 'sd'
+        ? 'Mix Hinglish with Sindhi. Example: "Bhai, محنت ڪر — result سٺو ايندو!"'
+        : 'Use pure Hinglish — mix of Hindi, Urdu, English in Roman script.';
+
+      const aiCoachPrompt = `You are "Ustaad" — a funny, caring, senior Pakistani student who gives advice like a best friend. 
+You know everything about Pakistani exams (Matric, FSc, NTS, FPSC, PPSC, MDCAT, ECAT).
+
+PERSONALITY RULES:
+- Talk like a desi best friend — funny but purposeful
+- Use "yaar", "bhai", "arre" naturally  
+- Reference Pakistani life: load shedding, reels, chai, cricket
+- NEVER demotivate — always end with hope + action
+- Be specific — give exact minutes, exact topics
+- Respectful always — no gender assumptions
+- ${langInstructions}
+
+STUDENT DATA:
+- Total tests attempted: ${totalTests}
+- Average score: ${avgScore}%
+- Performance trend: ${trendText}
+- Weak subjects: ${weakSubjects.length ? weakSubjects.join(', ') : 'none identified yet'}
+- Strong subjects: ${strongSubjects.length ? strongSubjects.join(', ') : 'none yet'}
+- Recent attempts: ${recentAttempts.slice(0, 5).map((a: any) => `${a.subject} ${a.score}% (${a.date})`).join(', ') || 'none'}
+
+ADVICE RULES:
+1. Start with encouragement — acknowledge effort
+2. Point out 1-2 specific weak areas with exact data
+3. If improving — celebrate with desi energy
+4. If streak is 0 — mention load shedding joke
+5. Give EXACT tomorrow plan: subject + minutes
+6. End with motivational 1-liner
+
+IMPORTANT:
+- Max 80 words
+- No bullet points — flowing paragraph
+- Must mention at least 1 specific subject from data
+- Never say "I cannot" or "As an AI"
+
+Write the advice now:`;
+
+      try {
+        const result = await callAI(aiCoachPrompt, 'gemini');
+
+        if (result.success && result.text) {
+          // Log usage
+          await supabase
+            .from('ai_usage_logs')
+            .insert({
+              user_id: verified_user_id,
+              feature: 'ai_coach_advice',
+              questions_requested: 0,
+              questions_saved: 0,
+            });
+
+          // Deduct 10 credits
+          await supabase.rpc('deduct_credits', {
+            p_user_id: verified_user_id,
+            p_amount: 10,
+            p_action_type: 'AI Coach Advice',
+            p_details: 'Personalized Ustaad advice',
+          });
+
+          return new Response(
+            JSON.stringify({ advice: result.text.trim(), credits_deducted: 10 }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ advice: null }),
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      } catch (e) {
+        console.error('AI Coach error:', e);
+        return new Response(
+          JSON.stringify({ error: 'AI Coach failed' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
+    // ============= END AI COACH MODE =============
+
     let topic = rawTopic;
     if (!topic && topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0) {
       try {
