@@ -23,6 +23,7 @@ import QuizResultScreen from "@/components/quiz/QuizResultScreen";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { loadGuestSession } from "@/lib/guestSession";
 import { useAuth } from "@/contexts/AuthContext";
+import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const AUTO_ADVANCE_MS = 4000;
