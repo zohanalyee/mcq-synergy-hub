@@ -1371,9 +1371,9 @@ IMPORTANT:
 Write the advice now:`;
 
       try {
-        const result = await callAI(aiCoachPrompt, 'gemini');
+        const result = await callAIWithAutoSwitch('You are Ustaad, a desi senior student giving short personalized study advice.', aiCoachPrompt);
 
-        if (result.success && result.text) {
+        if (result && result.text) {
           // Log usage
           await supabase
             .from('ai_usage_logs')
