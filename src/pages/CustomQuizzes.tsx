@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useLocation } from "react-router-dom";
 import Header from "@/components/Header";
+import SEOHead from "@/components/SEOHead";
 import { Badge } from "@/components/ui/badge";
 import { subjects } from "@/data/subjectsData";
 import { CustomSubject, QuizSettings } from "@/components/custom-quizzes/interfaces";
@@ -133,6 +134,11 @@ const CustomQuizzes = () => {
 
   return (
     <>
+      <SEOHead
+        title="Custom MCQ Quiz Generator | NTS FPSC PPSC Practice | MCQsAI"
+        description="Create custom MCQ quizzes for NTS, FPSC, PPSC, Matric, FSc exams. AI-powered quiz generator for Pakistani students — free on MCQsAI."
+        keywords="custom MCQ quiz, NTS quiz generator, FPSC quiz, PPSC practice test, Pakistani exam quiz"
+      />
       <Header />
       <div className="container mx-auto px-4 pt-28 pb-16 max-w-7xl">
         <motion.div

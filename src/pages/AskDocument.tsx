@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import Header from "@/components/Header";
+import SEOHead from "@/components/SEOHead";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
@@ -334,6 +335,11 @@ const AskDocument: React.FC = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Ask AI About Your Document | MCQ Generator | MCQsAI"
+        description="Upload any document and generate MCQs instantly with AI. Perfect for Pakistani students preparing for board exams, NTS, FPSC, PPSC."
+        keywords="AI MCQ generator, document to MCQ, study tool Pakistan, AI exam preparation"
+      />
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
 
         {/* ── Sidebar ──────────────────────────────────────────────── */}
