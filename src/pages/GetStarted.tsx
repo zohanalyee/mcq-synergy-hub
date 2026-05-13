@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Check, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
 import Header from "@/components/Header";
+import SEOHead from "@/components/SEOHead";
 
 const GetStarted = () => {
   const container = {
@@ -25,6 +26,11 @@ const GetStarted = () => {
 
   return (
     <Header>
+      <SEOHead
+        title="Get Started Free | AI MCQ Practice Platform | MCQsAI Pakistan"
+        description="Start your free MCQ practice on MCQsAI. Prepare for Matric, FSc, NTS, FPSC, PPSC, MDCAT, ECAT with AI-powered questions and instant feedback."
+        keywords="free MCQ practice Pakistan, get started MCQsAI, online exam preparation Pakistan"
+      />
       <div className="max-w-7xl mx-auto px-4 pt-6 pb-12">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
