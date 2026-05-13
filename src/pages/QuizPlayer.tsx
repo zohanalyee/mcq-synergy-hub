@@ -267,6 +267,13 @@ const QuizPlayer = () => {
     if (!user) {
       return (
         <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+          <div className="max-w-2xl mx-auto px-4 pt-6">
+            <ResultAdviceCard
+              score={total > 0 ? Math.round((correctCount / total) * 100) : 0}
+              subject={subjectName}
+              isGuest={true}
+            />
+          </div>
           <GuestResultGate
             open={true}
             onClose={() => navigate(returnPath)}
