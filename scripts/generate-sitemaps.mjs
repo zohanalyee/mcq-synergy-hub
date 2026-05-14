@@ -18,7 +18,7 @@ const PUBLIC = resolve(ROOT, "public");
 const SITEMAPS_DIR = resolve(PUBLIC, "sitemaps");
 mkdirSync(SITEMAPS_DIR, { recursive: true });
 
-const BASE_URL = "https://www.mcqsai.com";
+const BASE_URL = "https://mcqsai.com";
 const ITEMS_PER_SITEMAP = 1000;
 
 // Read .env for VITE_SUPABASE_URL / VITE_SUPABASE_PUBLISHABLE_KEY
