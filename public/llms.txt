@@ -1,0 +1,30 @@
+# MCQsAI
+
+> AI-powered exam preparation platform for Pakistani students — MDCAT, ECAT, CSS, PPSC, FPSC, NTS, and board exams (Matric, FSc) with 6000+ MCQs, AI tutor, and Urdu/Sindhi language support.
+
+MCQsAI helps Pakistani students prepare for competitive and board exams with adaptive AI-generated tests, past papers, syllabus-aligned MCQs, and a personal AI study coach. Content covers all major Pakistani education boards (BISE, FBISE) and entrance/competitive exams.
+
+## Pages
+
+- [Home](/): Overview of MCQsAI features and exam prep tools.
+- [Boards](/boards): Pakistani education boards (BISE, FBISE) with class, subject, and topic-level MCQs.
+- [Exams](/exams): Competitive exam landing pages — MDCAT, ECAT, CSS, PPSC, NTS, FPSC.
+- [Subjects](/subjects): Subject-wise MCQ practice across medical, engineering, sciences, and social sciences.
+- [Past Papers](/past-papers): Past paper MCQs for board and competitive exams.
+- [Mock Tests](/mock-tests): Full-length timed mock tests.
+- [Custom Quizzes](/custom-quizzes): Build your own quiz by topic and difficulty.
+- [Ask Document](/ask-document): Upload a PDF and ask questions or generate MCQs.
+- [Tools](/tools): Free student tools — GPA, percentage, CGPA, attendance, unit converters, calculators.
+- [Jobs](/jobs): Pakistan government and private job listings with test prep.
+- [Scholarships](/scholarships): Scholarship opportunities for Pakistani students.
+- [Blog](/blog): Study guides, exam tips, and education news.
+- [About](/about): About MCQsAI.
+- [Contact](/contact): Get in touch.
+- [FAQ](/faq): Frequently asked questions.
+
+## Optional
+
+- [Leaderboard](/leaderboard): Top performers across the platform.
+- [Reviews](/reviews): Student reviews and feedback.
+- [Privacy Policy](/privacy-policy): Privacy policy.
+- [Terms of Service](/terms-of-service): Terms of service.

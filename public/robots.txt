@@ -14,4 +14,4 @@ Disallow: /verify-email*
 Disallow: /reset-password
 Disallow: /forgot-password
 
-Sitemap: https://www.mcqsai.com/sitemap.xml
+Sitemap: https://mcqsai.com/sitemap.xml
