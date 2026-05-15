@@ -67,6 +67,7 @@ const QuizPlayer = lazy(() => import("./pages/QuizPlayer"));
 const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
 const About = lazy(() => import("./pages/About"));
+const MDCATSyllabus = lazy(() => import("./pages/MDCATSyllabus"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
