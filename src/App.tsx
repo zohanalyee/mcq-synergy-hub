@@ -280,6 +280,7 @@ const App = () => {
                       
                       {/* Content & SEO Pages */}
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
+                      <Route path="/mdcat-syllabus-2026" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
                       <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={<TopProgressBar />}><BlogPost /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><FAQ /></Suspense>} />
