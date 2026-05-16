@@ -68,6 +68,11 @@ const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
 const About = lazy(() => import("./pages/About"));
 const MDCATSyllabus = lazy(() => import("./pages/MDCATSyllabus"));
+const MDCATPastPapers = lazy(() => import("./pages/seo/MDCATPastPapers"));
+const PPSCPastPapers = lazy(() => import("./pages/seo/PPSCPastPapers"));
+const FPSCPastPapers = lazy(() => import("./pages/seo/FPSCPastPapers"));
+const CSSMCQs = lazy(() => import("./pages/seo/CSSMCQs"));
+const ECATPreparation = lazy(() => import("./pages/seo/ECATPreparation"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
@@ -282,6 +287,11 @@ const App = () => {
                       {/* Content & SEO Pages */}
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
                       <Route path="/mdcat-syllabus-2026" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
+                      <Route path="/mdcat-past-papers" element={<Suspense fallback={<TopProgressBar />}><MDCATPastPapers /></Suspense>} />
+                      <Route path="/ppsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><PPSCPastPapers /></Suspense>} />
+                      <Route path="/fpsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><FPSCPastPapers /></Suspense>} />
+                      <Route path="/css-mcqs-practice" element={<Suspense fallback={<TopProgressBar />}><CSSMCQs /></Suspense>} />
+                      <Route path="/ecat-preparation" element={<Suspense fallback={<TopProgressBar />}><ECATPreparation /></Suspense>} />
                       <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={<TopProgressBar />}><BlogPost /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><FAQ /></Suspense>} />
