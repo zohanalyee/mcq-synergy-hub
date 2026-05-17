@@ -73,6 +73,14 @@ const PPSCPastPapers = lazy(() => import("./pages/seo/PPSCPastPapers"));
 const FPSCPastPapers = lazy(() => import("./pages/seo/FPSCPastPapers"));
 const CSSMCQs = lazy(() => import("./pages/seo/CSSMCQs"));
 const ECATPreparation = lazy(() => import("./pages/seo/ECATPreparation"));
+const NUSTEntryTest = lazy(() => import("./pages/seo/NUSTEntryTest"));
+const PunjabUniversityEntryTest = lazy(() => import("./pages/seo/PunjabUniversityEntryTest"));
+const COMSATSEntryTest = lazy(() => import("./pages/seo/COMSATSEntryTest"));
+const SindhUniversitiesEntryTest = lazy(() => import("./pages/seo/SindhUniversitiesEntryTest"));
+const EngineeringUniversitiesEntryTest = lazy(() => import("./pages/seo/EngineeringUniversitiesEntryTest"));
+const PSTSSTTestPreparation = lazy(() => import("./pages/seo/PSTSSTTestPreparation"));
+const NinthClassMCQs = lazy(() => import("./pages/seo/NinthClassMCQs"));
+const BoardMCQs = lazy(() => import("./pages/seo/BoardMCQs"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
@@ -292,6 +300,14 @@ const App = () => {
                       <Route path="/fpsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><FPSCPastPapers /></Suspense>} />
                       <Route path="/css-mcqs-practice" element={<Suspense fallback={<TopProgressBar />}><CSSMCQs /></Suspense>} />
                       <Route path="/ecat-preparation" element={<Suspense fallback={<TopProgressBar />}><ECATPreparation /></Suspense>} />
+                      <Route path="/nust-entry-test" element={<Suspense fallback={<TopProgressBar />}><NUSTEntryTest /></Suspense>} />
+                      <Route path="/punjab-university-entry-test" element={<Suspense fallback={<TopProgressBar />}><PunjabUniversityEntryTest /></Suspense>} />
+                      <Route path="/comsats-entry-test" element={<Suspense fallback={<TopProgressBar />}><COMSATSEntryTest /></Suspense>} />
+                      <Route path="/sindh-universities-entry-test" element={<Suspense fallback={<TopProgressBar />}><SindhUniversitiesEntryTest /></Suspense>} />
+                      <Route path="/engineering-universities-entry-test" element={<Suspense fallback={<TopProgressBar />}><EngineeringUniversitiesEntryTest /></Suspense>} />
+                      <Route path="/pst-sst-test-preparation" element={<Suspense fallback={<TopProgressBar />}><PSTSSTTestPreparation /></Suspense>} />
+                      <Route path="/9th-class-mcqs" element={<Suspense fallback={<TopProgressBar />}><NinthClassMCQs /></Suspense>} />
+                      <Route path="/board-mcqs" element={<Suspense fallback={<TopProgressBar />}><BoardMCQs /></Suspense>} />
                       <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={<TopProgressBar />}><BlogPost /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><FAQ /></Suspense>} />
