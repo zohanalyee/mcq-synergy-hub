@@ -21,7 +21,7 @@ const Footer = () => {
   return (
     <footer className={cn("bg-brand-gradient text-white layout-ltr", fontClass)}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-[calc(3.5rem+env(safe-area-inset-bottom,0px))] md:pb-12">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-8">
           {/* About */}
           <div className="space-y-3 col-span-2 sm:col-span-1">
             <h3 className="text-lg font-bold text-white" style={{ fontFamily: 'Orbitron, sans-serif' }}>MCQSAI</h3>
@@ -119,6 +119,29 @@ const Footer = () => {
                         {link.badge}
                       </span>
                     )}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Exam Preparation (SEO landing pages) */}
+          <div className="space-y-3">
+            <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Exam Preparation</h4>
+            <ul className="space-y-2 text-sm">
+              {[
+                { label: 'NUST Entry Test', path: '/nust-entry-test' },
+                { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
+                { label: 'PPSC Past Papers', path: '/ppsc-past-papers' },
+                { label: 'FPSC Past Papers', path: '/fpsc-past-papers' },
+                { label: 'CSS MCQs', path: '/css-mcqs-practice' },
+                { label: 'ECAT Preparation', path: '/ecat-preparation' },
+                { label: 'Board MCQs', path: '/board-mcqs' },
+                { label: '9th Class MCQs', path: '/9th-class-mcqs' },
+              ].map(link => (
+                <li key={link.path}>
+                  <Link to={link.path} className="text-white/80 hover:text-white transition-colors">
+                    {link.label}
                   </Link>
                 </li>
               ))}

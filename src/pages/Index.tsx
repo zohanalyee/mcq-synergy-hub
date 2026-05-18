@@ -465,7 +465,64 @@ const Home = () => {
           </div>
         </div>
       </motion.section>
-      
+
+      {/* SEO Landing Pages — Internal Links */}
+      <section className="py-8 bg-background border-t">
+        <div className="container px-4 mx-auto max-w-5xl">
+          <h2 className="text-lg font-bold mb-6 text-center">Popular Exam Preparations</h2>
+
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">University Entry Tests</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'NUST Entry Test', url: '/nust-entry-test' },
+                { label: 'Punjab University', url: '/punjab-university-entry-test' },
+                { label: 'COMSATS Entry Test', url: '/comsats-entry-test' },
+                { label: 'Sindh Universities', url: '/sindh-universities-entry-test' },
+                { label: 'Engineering Unis', url: '/engineering-universities-entry-test' },
+                { label: 'MDCAT Syllabus', url: '/mdcat-syllabus-2026' },
+                { label: 'ECAT Preparation', url: '/ecat-preparation' },
+                { label: '9th Class MCQs', url: '/9th-class-mcqs' },
+              ].map(link => (
+                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Past Papers</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'MDCAT Past Papers', url: '/mdcat-past-papers' },
+                { label: 'PPSC Past Papers', url: '/ppsc-past-papers' },
+                { label: 'FPSC Past Papers', url: '/fpsc-past-papers' },
+                { label: 'CSS MCQs', url: '/css-mcqs-practice' },
+              ].map(link => (
+                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Teaching & Board Exams</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'PST & SST Test', url: '/pst-sst-test-preparation' },
+                { label: 'Board MCQs', url: '/board-mcqs' },
+              ].map(link => (
+                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <Footer />
       <UserSatisfactionPopup />

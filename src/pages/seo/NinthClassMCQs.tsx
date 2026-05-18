@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const NinthClassMCQs = () => (
@@ -7,6 +8,20 @@ const NinthClassMCQs = () => (
       title="9th Class MCQs | All Subjects Pakistan | Free Practice | MCQsAI"
       description="Free 9th class MCQs practice for Biology, Chemistry, Physics, Mathematics, English. All Pakistani boards — Sindh, Punjab, Federal, KPK."
       keywords="9th class mcqs, class 9 MCQs Pakistan, matric part 1 MCQs, 9th class biology chemistry physics"
+    />
+    <ExamPageSchema
+      name="9th Class MCQs — Matric Part 1"
+      description="Free 9th class (Matric Part 1) MCQs for all Pakistani boards covering Biology, Chemistry, Physics, Math, English and more."
+      url="https://mcqsai.com/9th-class-mcqs"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "9th Class MCQs", url: "https://mcqsai.com/9th-class-mcqs" },
+      ]}
+      faqs={[
+        { question: "Are 9th class MCQs free here?", answer: "Yes, all 9th class MCQs on MCQsAI are 100% free with instant explanations." },
+        { question: "Which boards are covered?", answer: "All Pakistani boards: Punjab, Sindh, Federal, KPK, Balochistan and AJK." },
+        { question: "Do MCQs follow the new syllabus?", answer: "Yes, MCQs follow the latest board-aligned syllabus." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">9th Class MCQs — All Subjects Pakistan</h1>

@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const PunjabUniversityEntryTest = () => (
@@ -7,6 +8,20 @@ const PunjabUniversityEntryTest = () => (
       title="Punjab University Entry Test 2026 | Free MCQs | MCQsAI"
       description="Free Punjab University (PU) entry test preparation 2026. English, GK, Science, Social Sciences MCQs for all PU programs."
       keywords="Punjab University entry test, PU admission test, Punjab University MCQs, PU entry test 2026"
+    />
+    <ExamPageSchema
+      name="Punjab University Entry Test Preparation"
+      description="Free Punjab University (PU) entry test preparation MCQs for admission across faculties."
+      url="https://mcqsai.com/punjab-university-entry-test"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "Punjab University Entry Test", url: "https://mcqsai.com/punjab-university-entry-test" },
+      ]}
+      faqs={[
+        { question: "What subjects are in the PU entry test?", answer: "Punjab University entry tests cover English, General Knowledge, Mathematics and subject-specific MCQs depending on the program." },
+        { question: "Is the PU entry test free to practice online?", answer: "Yes, MCQsAI offers fully free Punjab University entry test MCQ practice." },
+        { question: "When is the Punjab University admission test held?", answer: "PU admission tests are typically held between July and September each year." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">Punjab University Entry Test 2026 — Free MCQ Practice</h1>

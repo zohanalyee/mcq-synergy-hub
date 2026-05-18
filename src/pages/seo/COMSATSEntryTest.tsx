@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const COMSATSEntryTest = () => (
@@ -7,6 +8,20 @@ const COMSATSEntryTest = () => (
       title="COMSATS Entry Test 2026 | Free Preparation | MCQsAI"
       description="Free COMSATS University Islamabad (CUI) entry test preparation. Math, Physics, CS, English MCQs."
       keywords="COMSATS entry test, CUI admission, COMSATS MCQs, COMSATS preparation 2026"
+    />
+    <ExamPageSchema
+      name="COMSATS Entry Test (NTS NAT) Preparation"
+      description="Free COMSATS University Islamabad (CUI) entry test preparation. Math, Physics, CS, English MCQs."
+      url="https://mcqsai.com/comsats-entry-test"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "COMSATS Entry Test", url: "https://mcqsai.com/comsats-entry-test" },
+      ]}
+      faqs={[
+        { question: "What is the COMSATS entry test format?", answer: "COMSATS uses NTS NAT-style MCQs covering Math, Physics, English and analytical reasoning." },
+        { question: "Is COMSATS entry test difficult?", answer: "It is moderate difficulty; consistent MCQ practice on MCQsAI helps clear the merit comfortably." },
+        { question: "How many MCQs in the COMSATS test?", answer: "NTS NAT for COMSATS usually has 90 MCQs to be solved in 120 minutes." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">COMSATS Entry Test 2026 — Free Preparation</h1>

@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const EngineeringUniversitiesEntryTest = () => (
@@ -8,8 +9,22 @@ const EngineeringUniversitiesEntryTest = () => (
       description="Free entry test preparation for GIKI, LUMS, FAST NUCES, Bahria, Aga Khan, Air University and top engineering universities."
       keywords="GIKI entry test, LUMS entry test, FAST NUCES, Bahria University, engineering university test Pakistan"
     />
+    <ExamPageSchema
+      name="Engineering Universities Entry Test 2026"
+      description="Free entry test preparation for GIKI, LUMS, FAST NUCES, Bahria, Aga Khan, Air University and top engineering universities of Pakistan."
+      url="https://mcqsai.com/engineering-universities-entry-test"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "Engineering Universities Entry Test", url: "https://mcqsai.com/engineering-universities-entry-test" },
+      ]}
+      faqs={[
+        { question: "Which engineering universities are covered?", answer: "GIKI, LUMS, FAST NUCES, Bahria, Aga Khan, Air University, Islamia University and Hamdard University." },
+        { question: "What subjects are tested?", answer: "Mathematics, Physics, Chemistry, English and analytical reasoning." },
+        { question: "Are these MCQs free?", answer: "Yes, all engineering university entry test MCQs on MCQsAI are completely free." },
+      ]}
+    />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">Engineering Universities Entry Test 2026</h1>
+      <h1 className="text-3xl font-bold mb-2">Engineering Universities Entry Test 2026 | Pakistan MCQ Practice</h1>
       <p className="text-muted-foreground mb-8">Preparation for GIKI, LUMS, FAST NUCES, Bahria University, Aga Khan, and other top engineering universities.</p>
       
 

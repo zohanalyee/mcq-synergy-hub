@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const NUSTEntryTest = () => (
@@ -7,6 +8,20 @@ const NUSTEntryTest = () => (
       title="NUST Entry Test (NET) 2026 | Free Preparation | MCQsAI"
       description="Free NUST Entry Test (NET) 2026 preparation. Mathematics, Physics, Chemistry, English MCQs for National University of Sciences & Technology."
       keywords="NUST entry test, NET 2026, NUST preparation, NUST MCQs, National University Sciences Technology"
+    />
+    <ExamPageSchema
+      name="NUST Entry Test (NET) Preparation"
+      description="Free NUST entry test (NET) preparation with Math, Physics, Chemistry, English MCQs."
+      url="https://mcqsai.com/nust-entry-test"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "NUST Entry Test", url: "https://mcqsai.com/nust-entry-test" },
+      ]}
+      faqs={[
+        { question: "What is the NUST entry test?", answer: "NUST Entry Test (NET) is the admission test for the National University of Sciences and Technology covering Math, Physics, Chemistry and English." },
+        { question: "How can I prepare for NUST NET for free?", answer: "Use MCQsAI to practice subject-wise NUST NET MCQs free of cost with instant feedback and AI explanations." },
+        { question: "What is the NUST NET passing score?", answer: "NUST typically requires a competitive aggregate score; merit varies by program and year, usually 60%+ for engineering." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">NUST Entry Test (NET) 2026 — Free Preparation</h1>

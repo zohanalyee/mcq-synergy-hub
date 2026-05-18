@@ -1,5 +1,80 @@
 import { Helmet } from 'react-helmet-async';
 
+interface ExamPageSchemaProps {
+  name: string;
+  description: string;
+  url: string;
+  provider?: string;
+  breadcrumbs: { name: string; url: string }[];
+  faqs?: { question: string; answer: string }[];
+}
+
+export const ExamPageSchema: React.FC<ExamPageSchemaProps> = ({
+  name,
+  description,
+  url,
+  provider = 'MCQsAI',
+  breadcrumbs,
+  faqs = [],
+}) => {
+  const schemas: Record<string, unknown>[] = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Course',
+      name,
+      description,
+      url,
+      provider: {
+        '@type': 'Organization',
+        name: provider,
+        url: 'https://mcqsai.com',
+      },
+      isAccessibleForFree: true,
+      inLanguage: 'en-PK',
+      audience: {
+        '@type': 'EducationalAudience',
+        educationalRole: 'student',
+        geographicArea: 'Pakistan',
+      },
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbs.map((item, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: item.name,
+        item: item.url,
+      })),
+    },
+  ];
+
+  if (faqs.length > 0) {
+    schemas.push({
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: faqs.map((faq) => ({
+        '@type': 'Question',
+        name: faq.question,
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: faq.answer,
+        },
+      })),
+    });
+  }
+
+  return (
+    <Helmet>
+      {schemas.map((schema, i) => (
+        <script key={i} type="application/ld+json">
+          {JSON.stringify(schema)}
+        </script>
+      ))}
+    </Helmet>
+  );
+};
+
 const StructuredData = () => {
   const organizationSchema = {
     '@context': 'https://schema.org',
