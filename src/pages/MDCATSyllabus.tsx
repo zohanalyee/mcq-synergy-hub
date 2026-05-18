@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const MDCATSyllabus = () => {
@@ -9,6 +10,20 @@ const MDCATSyllabus = () => {
         description="Complete MDCAT 2026 syllabus for Pakistan. Biology, Chemistry, Physics, English topics with free MCQ practice. PMC official syllabus breakdown."
         keywords="MDCAT syllabus 2026, MDCAT topics, PMC MDCAT syllabus, MDCAT preparation Pakistan, MDCAT biology chemistry physics"
       />
+    <ExamPageSchema
+      name="MDCAT Syllabus 2026 — Complete Guide"
+      description="Complete MDCAT 2026 syllabus with chapter-wise breakdown for Biology, Chemistry, Physics and English."
+      url="https://mcqsai.com/mdcat-syllabus-2026"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "MDCAT Syllabus 2026", url: "https://mcqsai.com/mdcat-syllabus-2026" },
+      ]}
+      faqs={[
+        { question: "What is in the MDCAT 2026 syllabus?", answer: "MDCAT 2026 covers Biology, Chemistry, Physics, English and Logical Reasoning per PMC guidelines." },
+        { question: "Is the MDCAT 2026 syllabus changed?", answer: "PMC reviews the syllabus annually; check the official notification for any changes." },
+        { question: "Where can I practice MDCAT MCQs?", answer: "Practice topic-wise MDCAT MCQs free on MCQsAI." },
+      ]}
+    />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-3xl font-bold mb-2">
           MDCAT Syllabus 2026 — Complete Guide

@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const sections = [
@@ -38,6 +39,20 @@ const PPSCPastPapers = () => (
       title="PPSC Past Papers MCQs | Free Online Practice | MCQsAI Pakistan"
       description="Solve PPSC past papers MCQs online free. Punjab Public Service Commission previous year papers with answers for all posts. General Knowledge, English, Pakistan Studies."
       keywords="PPSC past papers, PPSC MCQs, PPSC test preparation, Punjab Public Service Commission papers, PPSC past papers with answers"
+    />
+    <ExamPageSchema
+      name="PPSC Past Papers Practice"
+      description="Free PPSC past papers practice with MCQs from previous years — General Knowledge, English, Current Affairs and subject papers."
+      url="https://mcqsai.com/ppsc-past-papers"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "PPSC Past Papers", url: "https://mcqsai.com/ppsc-past-papers" },
+      ]}
+      faqs={[
+        { question: "Are PPSC past papers free?", answer: "Yes, PPSC past paper MCQ practice on MCQsAI is fully free." },
+        { question: "Which posts are covered?", answer: "Coverage includes Lecturer, Inspector, ASI, Naib Tehsildar and other common PPSC posts." },
+        { question: "Are answers verified?", answer: "Yes, answers are reviewed and explanations are added." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">

@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const MDCATPastPapers = () => (
@@ -7,6 +8,20 @@ const MDCATPastPapers = () => (
       title="MDCAT Past Papers 2024-2026 | Free MCQ Practice | MCQsAI Pakistan"
       description="Solve MDCAT past papers online free. PMC MDCAT 2024, 2023, 2022 past papers with answers. Biology, Chemistry, Physics, English MCQs from previous years."
       keywords="MDCAT past papers, MDCAT past papers 2024, MDCAT past papers with answers, PMC past papers, MDCAT MCQs Pakistan"
+    />
+    <ExamPageSchema
+      name="MDCAT Past Papers — Free Online Practice"
+      description="PMC MDCAT past papers from 2019-2024 with answers and explanations. Free online practice."
+      url="https://mcqsai.com/mdcat-past-papers"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "MDCAT Past Papers", url: "https://mcqsai.com/mdcat-past-papers" },
+      ]}
+      faqs={[
+        { question: "Where can I solve MDCAT past papers?", answer: "Practice them free on MCQsAI with answers and detailed explanations." },
+        { question: "Are MDCAT 2024 past papers available?", answer: "Yes, MDCAT 2024 along with 2019-2023 past papers are available." },
+        { question: "Is MCQsAI past paper practice free?", answer: "Yes, all past papers are completely free." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">

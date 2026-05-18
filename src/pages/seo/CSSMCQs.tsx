@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const sections = [
@@ -31,6 +32,20 @@ const CSSMCQs = () => (
       title="CSS MCQs Practice Online Free | CSS Exam Preparation | MCQsAI"
       description="Free CSS exam MCQs online. Central Superior Services preparation — General Knowledge, Current Affairs, English, Pakistan Affairs, Islamic Studies MCQs."
       keywords="CSS MCQs, CSS exam preparation, CSS past papers MCQs, Central Superior Services MCQs, CSS test Pakistan"
+    />
+    <ExamPageSchema
+      name="CSS MCQs Practice — Compulsory & Optional"
+      description="Free CSS MCQs practice covering compulsory subjects (English, Pakistan Affairs, Islamic Studies, Current Affairs) and optional groups."
+      url="https://mcqsai.com/css-mcqs-practice"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "CSS MCQs Practice", url: "https://mcqsai.com/css-mcqs-practice" },
+      ]}
+      faqs={[
+        { question: "Are CSS MCQs free on MCQsAI?", answer: "Yes, all CSS MCQs are 100% free." },
+        { question: "What subjects are covered?", answer: "Compulsory subjects plus Social Sciences and Science optional groups." },
+        { question: "Do MCQs include explanations?", answer: "Yes, with verified answers and detailed explanations." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">

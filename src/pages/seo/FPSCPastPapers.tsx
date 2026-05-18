@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const sections = [
@@ -38,6 +39,20 @@ const FPSCPastPapers = () => (
       title="FPSC Past Papers MCQs | Federal PSC Test Prep | MCQsAI Pakistan"
       description="FPSC past papers MCQs online free. Federal Public Service Commission previous papers for CSS, Inspectors, Assistants. General Knowledge, English, Pakistan Studies."
       keywords="FPSC past papers, FPSC MCQs, Federal Public Service Commission papers, FPSC test preparation, FPSC past papers with answers"
+    />
+    <ExamPageSchema
+      name="FPSC Past Papers Practice"
+      description="Free FPSC past papers practice MCQs — General Knowledge, English, Pakistan Studies, Islamiat, Quantitative Reasoning."
+      url="https://mcqsai.com/fpsc-past-papers"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "FPSC Past Papers", url: "https://mcqsai.com/fpsc-past-papers" },
+      ]}
+      faqs={[
+        { question: "What does FPSC test cover?", answer: "FPSC tests typically cover GK, English, Pakistan Studies, Islamiat and quantitative reasoning." },
+        { question: "Is FPSC past paper practice free?", answer: "Yes, completely free on MCQsAI." },
+        { question: "Are explanations included?", answer: "Yes, every MCQ includes a detailed explanation." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">

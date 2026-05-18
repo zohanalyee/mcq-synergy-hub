@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const BoardMCQs = () => (
@@ -7,6 +8,20 @@ const BoardMCQs = () => (
       title="Board Exam MCQs | Class 9-12 Pakistan | Free Practice | MCQsAI"
       description="Free board exam MCQs for Matric (9th-10th) and FSc/FA (11th-12th). All Pakistani boards — Sindh, Punjab, Federal, KPK covered."
       keywords="board mcqs Pakistan, matric MCQs, FSc MCQs, intermediate MCQs, 10th class MCQs, 11th 12th class MCQs"
+    />
+    <ExamPageSchema
+      name="Board Exam MCQs — Class 9-12 Pakistan"
+      description="Free board exam MCQs for Matric (9-10) and FSc/FA (11-12). All Pakistani boards — Sindh, Punjab, Federal, KPK."
+      url="https://mcqsai.com/board-mcqs"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "Board MCQs", url: "https://mcqsai.com/board-mcqs" },
+      ]}
+      faqs={[
+        { question: "Which classes are covered?", answer: "9th, 10th, 11th and 12th class for all major Pakistani boards." },
+        { question: "Are board MCQs free?", answer: "Yes, every board MCQ on MCQsAI is free to practice." },
+        { question: "Are answer explanations provided?", answer: "Yes, every question includes a detailed answer explanation." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">Board Exam MCQs — Class 9 to 12 Pakistan</h1>

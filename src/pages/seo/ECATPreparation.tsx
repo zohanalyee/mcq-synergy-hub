@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const sections = [
@@ -38,6 +39,20 @@ const ECATPreparation = () => (
       title="ECAT Preparation 2026 | Free MCQ Practice | MCQsAI Pakistan"
       description="Free ECAT preparation MCQs. Engineering College Admission Test — Mathematics, Physics, Chemistry, English. UET, NED, NUST entry test practice."
       keywords="ECAT preparation, ECAT MCQs, ECAT 2026 Pakistan, engineering entry test, UET entry test, NUST entry test MCQs"
+    />
+    <ExamPageSchema
+      name="ECAT Preparation — Free Online Practice"
+      description="Free ECAT preparation MCQs — Mathematics 40%, Physics 30%, Chemistry 20%, English 10%."
+      url="https://mcqsai.com/ecat-preparation"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "ECAT Preparation", url: "https://mcqsai.com/ecat-preparation" },
+      ]}
+      faqs={[
+        { question: "What is the ECAT pattern?", answer: "ECAT is roughly 40% Math, 30% Physics, 20% Chemistry and 10% English." },
+        { question: "Is ECAT preparation free here?", answer: "Yes, all ECAT MCQs are free on MCQsAI." },
+        { question: "Are MCQs subject-wise?", answer: "Yes, MCQs are organized by subject and topic." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">

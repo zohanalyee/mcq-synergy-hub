@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const SindhUniversitiesEntryTest = () => (
@@ -7,6 +8,20 @@ const SindhUniversitiesEntryTest = () => (
       title="Sindh Universities Entry Test 2026 | IBA, MUET, LUMHS | MCQsAI"
       description="Complete preparation for IBA Sukkur, MUET, LUMHS, University of Sindh, Mehran UET and all Sindh universities entry tests."
       keywords="Sindh university entry test, IBA Sukkur, MUET, LUMHS, University of Sindh, Mehran UET"
+    />
+    <ExamPageSchema
+      name="Sindh Universities Entry Test Preparation"
+      description="Free entry test preparation for IBA Sukkur, MUET, LUMHS, University of Sindh and Mehran University."
+      url="https://mcqsai.com/sindh-universities-entry-test"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "Sindh Universities Entry Test", url: "https://mcqsai.com/sindh-universities-entry-test" },
+      ]}
+      faqs={[
+        { question: "Which Sindh universities does this cover?", answer: "Coverage includes IBA Sukkur, MUET Jamshoro, LUMHS, University of Sindh and Mehran University." },
+        { question: "Is Sindh universities entry test online?", answer: "Most Sindh public universities now offer online and on-campus admission tests." },
+        { question: "What is the test syllabus?", answer: "Typically English, Math, Physics, Chemistry and Biology — varies by program." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">Sindh Universities Entry Test 2026 — Free Preparation</h1>

@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
 
 const PSTSSTTestPreparation = () => (
@@ -7,6 +8,20 @@ const PSTSSTTestPreparation = () => (
       title="PST & SST Test Preparation 2026 | Free MCQs | MCQsAI"
       description="Free Primary School Teacher (PST) and Secondary School Teacher (SST) recruitment test preparation. Education, GK, English MCQs."
       keywords="PST test preparation, SST test preparation, teacher recruitment test, educators test Pakistan"
+    />
+    <ExamPageSchema
+      name="PST & SST Teaching Test Preparation"
+      description="Free PST and SST teaching test preparation MCQs — pedagogy, education, general knowledge and subject content."
+      url="https://mcqsai.com/pst-sst-test-preparation"
+      breadcrumbs={[
+        { name: 'Home', url: 'https://mcqsai.com/' },
+        { name: "PST & SST Test Preparation", url: "https://mcqsai.com/pst-sst-test-preparation" },
+      ]}
+      faqs={[
+        { question: "What is the PST test?", answer: "Primary School Teacher (PST) test is a recruitment exam for primary school teaching posts." },
+        { question: "What is the SST test?", answer: "Secondary School Teacher (SST) test recruits teachers for secondary classes; it covers subject mastery plus pedagogy." },
+        { question: "How can I prepare PST/SST online free?", answer: "Use MCQsAI to practice subject-wise and pedagogy MCQs free with instant feedback." },
+      ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">PST & SST Test Preparation 2026 — Free MCQs</h1>
