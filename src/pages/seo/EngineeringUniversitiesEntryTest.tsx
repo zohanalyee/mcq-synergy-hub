@@ -9,7 +9,7 @@ const EngineeringUniversitiesEntryTest = () => (
       keywords="GIKI entry test, LUMS entry test, FAST NUCES, Bahria University, engineering university test Pakistan"
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">Engineering Universities Entry Test 2026</h1>
+      <h1 className="text-3xl font-bold mb-2">Engineering Universities Entry Test 2026 | Pakistan MCQ Practice</h1>
       <p className="text-muted-foreground mb-8">Preparation for GIKI, LUMS, FAST NUCES, Bahria University, Aga Khan, and other top engineering universities.</p>
       
 
