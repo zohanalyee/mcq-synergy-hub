@@ -81,6 +81,10 @@ const EngineeringUniversitiesEntryTest = lazy(() => import("./pages/seo/Engineer
 const PSTSSTTestPreparation = lazy(() => import("./pages/seo/PSTSSTTestPreparation"));
 const NinthClassMCQs = lazy(() => import("./pages/seo/NinthClassMCQs"));
 const BoardMCQs = lazy(() => import("./pages/seo/BoardMCQs"));
+const PakArmyTest = lazy(() => import("./pages/seo/PakArmyTest"));
+const PAFTest = lazy(() => import("./pages/seo/PAFTest"));
+const ASFTest = lazy(() => import("./pages/seo/ASFTest"));
+const ForcesJobsTests = lazy(() => import("./pages/seo/ForcesJobsTests"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
@@ -308,6 +312,10 @@ const App = () => {
                       <Route path="/pst-sst-test-preparation" element={<Suspense fallback={<TopProgressBar />}><PSTSSTTestPreparation /></Suspense>} />
                       <Route path="/9th-class-mcqs" element={<Suspense fallback={<TopProgressBar />}><NinthClassMCQs /></Suspense>} />
                       <Route path="/board-mcqs" element={<Suspense fallback={<TopProgressBar />}><BoardMCQs /></Suspense>} />
+                      <Route path="/pak-army-test" element={<Suspense fallback={<TopProgressBar />}><PakArmyTest /></Suspense>} />
+                      <Route path="/paf-test" element={<Suspense fallback={<TopProgressBar />}><PAFTest /></Suspense>} />
+                      <Route path="/asf-test" element={<Suspense fallback={<TopProgressBar />}><ASFTest /></Suspense>} />
+                      <Route path="/forces-jobs-tests" element={<Suspense fallback={<TopProgressBar />}><ForcesJobsTests /></Suspense>} />
                       <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={<TopProgressBar />}><BlogPost /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><FAQ /></Suspense>} />
