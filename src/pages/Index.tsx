@@ -520,6 +520,22 @@ const Home = () => {
               ))}
             </div>
           </div>
+
+          <div>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Forces & Government Jobs</h3>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Pak Army Test', url: '/pak-army-test' },
+                { label: 'PAF Test', url: '/paf-test' },
+                { label: 'ASF Test', url: '/asf-test' },
+                { label: 'Navy/Rangers/FIA', url: '/forces-jobs-tests' },
+              ].map(link => (
+                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
