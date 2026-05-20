@@ -30,9 +30,22 @@ const MDCATPastPapers = () => (
       <p className="text-muted-foreground mb-2">
         PMC MDCAT past papers from 2019–2024 with answers and explanations.
       </p>
-      <p className="text-sm text-purple-600 font-medium mb-8">
+      <p className="text-sm text-purple-600 font-medium mb-6">
         4,400+ students search for this every month — practice smarter!
       </p>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+        <p className="text-sm font-semibold text-yellow-800">
+          📅 MDCAT Sindh 2026 — Important Date
+        </p>
+        <p className="text-sm text-yellow-700 mt-1">
+          MDCAT Sindh 2026 will be conducted on{' '}
+          <strong>August 16, 2026</strong> by{' '}
+          <strong>STS (Sindh Testing Service)</strong>.
+          For admission to LUMHS, DUHS, SMBBMU and other Sindh medical universities.
+          Start preparation now — only 3 months left!
+        </p>
+      </div>
 
       {[
         { year: '2024', topics: ['Biology', 'Chemistry', 'Physics', 'English'], total: 200 },

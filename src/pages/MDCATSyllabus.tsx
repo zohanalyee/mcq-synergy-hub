@@ -28,9 +28,22 @@ const MDCATSyllabus = () => {
         <h1 className="text-3xl font-bold mb-2">
           MDCAT Syllabus 2026 — Complete Guide
         </h1>
-        <p className="text-muted-foreground mb-8">
+        <p className="text-muted-foreground mb-6">
           Official PMC MDCAT syllabus breakdown with free MCQ practice for each topic.
         </p>
+
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+          <p className="text-sm font-semibold text-yellow-800">
+            📅 MDCAT Sindh 2026 — Important Date
+          </p>
+          <p className="text-sm text-yellow-700 mt-1">
+            MDCAT Sindh 2026 will be conducted on{' '}
+            <strong>August 16, 2026</strong> by{' '}
+            <strong>STS (Sindh Testing Service)</strong>.
+            For admission to LUMHS, DUHS, SMBBMU and other Sindh medical universities.
+            Start preparation now — only 3 months left!
+          </p>
+        </div>
 
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-purple-700">

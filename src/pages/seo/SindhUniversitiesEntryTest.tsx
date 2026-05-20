@@ -6,8 +6,8 @@ const SindhUniversitiesEntryTest = () => (
   <>
     <SEOHead
       title="Sindh Universities Entry Test 2026 | IBA, MUET, LUMHS | MCQsAI"
-      description="Complete preparation for IBA Sukkur, MUET, LUMHS, University of Sindh, Mehran UET and all Sindh universities entry tests."
-      keywords="Sindh university entry test, IBA Sukkur, MUET, LUMHS, University of Sindh, Mehran UET"
+      description="Complete preparation for IBA Sukkur, MUET, LUMHS, DUHS, SMBBMU, University of Sindh, Mehran UET. MDCAT Sindh 2026 on August 16 by STS."
+      keywords="Sindh university entry test, IBA Sukkur, MUET, LUMHS, DUHS, SMBBMU, MDCAT Sindh 2026 date, STS MDCAT 2026, MDCAT August 16 2026, LUMHS DUHS SMBBMU admission test 2026"
     />
     <ExamPageSchema
       name="Sindh Universities Entry Test Preparation"
@@ -25,7 +25,22 @@ const SindhUniversitiesEntryTest = () => (
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">Sindh Universities Entry Test 2026 — Free Preparation</h1>
-      <p className="text-muted-foreground mb-8">Complete preparation for IBA Sukkur, MUET, LUMHS, University of Sindh, Mehran UET and all Sindh universities.</p>
+      <p className="text-muted-foreground mb-6">Complete preparation for IBA Sukkur, MUET, LUMHS, University of Sindh, Mehran UET and all Sindh universities.</p>
+
+      <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
+        <p className="text-sm font-semibold text-yellow-800">
+          📅 MDCAT Sindh 2026 — Important Date
+        </p>
+        <p className="text-sm text-yellow-700 mt-1">
+          MDCAT Sindh 2026 will be conducted on{' '}
+          <strong>August 16, 2026</strong> by{' '}
+          <strong>STS (Sindh Testing Service)</strong>.
+          For admission to LUMHS, DUHS, SMBBMU and other Sindh medical universities.
+          Start preparation now — only 3 months left!
+        </p>
+      </div>
+
+
       
 
       <section className="mb-8 p-6 bg-orange-50 rounded-xl">

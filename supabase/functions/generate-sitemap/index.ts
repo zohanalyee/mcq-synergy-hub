@@ -19,7 +19,7 @@ async function safeBranch(label: string, fn: () => Promise<Response>): Promise<R
   }
 }
 
-const BASE_URL = "https://www.mcqsai.com";
+const BASE_URL = "https://mcqsai.com";
 const ITEMS_PER_SITEMAP = 1000;
 
 function toSlug(name: string): string {
