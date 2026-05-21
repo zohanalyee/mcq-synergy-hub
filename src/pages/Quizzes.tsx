@@ -254,9 +254,9 @@ const Quizzes = () => {
   return (
     <Header>
       <SEOHead
-        title="Online Quiz Practice Tests"
-        description="Take free online quizzes for MDCAT, ECAT, CSS, PPSC preparation. AI-powered quizzes with instant results and explanations."
-        keywords="online quiz, practice test, MCQ quiz, MDCAT quiz, ECAT quiz, free practice"
+        title="Free MCQ Quizzes with Answers 2026 — NTS, FPSC, MDCAT"
+        description="Free online MCQ quizzes with answers for NTS, FPSC, PPSC, MDCAT, ECAT & CSS preparation. AI-powered quizzes with instant results and detailed explanations — MCQsAI Pakistan."
+        keywords="online quiz Pakistan, MCQ quiz with answers, NTS quiz, FPSC quiz, MDCAT quiz, ECAT quiz, free practice test 2026"
       />
       <div className="container mx-auto px-4 pt-6 pb-10">
         <PageHeader
