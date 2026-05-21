@@ -40,8 +40,9 @@ const BoardLandingPage = () => {
   return (
     <Header>
       <SEOHead
-        title={`${boardName} – Classes & Subjects`}
-        description={`Browse MCQs for ${boardName}. Select your class to start practicing.`}
+        title={`${boardName} MCQs 2026 — All Classes & Subjects`}
+        description={`Free ${boardName} MCQs with answers for all classes and subjects. AI-powered practice with instant feedback — MCQsAI Pakistan.`}
+        keywords={`${boardName} MCQs, ${boardName} past papers, ${boardName} class 9, ${boardName} class 10, ${boardName} class 11, ${boardName} class 12, Pakistan board MCQs`}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <PageBreadcrumb items={[

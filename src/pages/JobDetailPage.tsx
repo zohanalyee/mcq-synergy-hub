@@ -87,9 +87,9 @@ const JobDetailPage = () => {
   return (
     <Header>
       <SEOHead
-        title={`${title} - Job Opportunity`}
-        description={`Apply for ${title}. ${description.slice(0, 120)}`}
-        keywords={`${title}, Pakistan jobs, government jobs, ${org || ''}`}
+        title={`${title} 2026 — Apply Online, Test Preparation`}
+        description={`Apply online for ${title}${org ? ` at ${org}` : ''}. Eligibility, last date, test syllabus & free MCQ preparation — MCQsAI Pakistan.`}
+        keywords={`${title}, ${title} 2026, ${title} apply online, ${title} test preparation, Pakistan government jobs, ${org || ''}`}
         url={`https://www.mcqsai.com/jobs/${jobSlug}`}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />

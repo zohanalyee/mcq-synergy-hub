@@ -87,9 +87,9 @@ const ScholarshipDetailPage = () => {
   return (
     <Header>
       <SEOHead
-        title={`${title} - Scholarship`}
-        description={`Apply for ${title}. ${description.slice(0, 120)}`}
-        keywords={`${title}, Pakistan scholarships, education funding, ${org || ''}`}
+        title={`${title} 2026 — Eligibility, Last Date, Apply Online`}
+        description={`Apply for ${title}${org ? ` by ${org}` : ''}. Eligibility criteria, last date, application form & required documents — MCQsAI Pakistan.`}
+        keywords={`${title}, ${title} 2026, ${title} apply online, Pakistan scholarships 2026, fully funded scholarships, ${org || ''}`}
         url={`https://www.mcqsai.com/scholarships/${scholarshipSlug}`}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
