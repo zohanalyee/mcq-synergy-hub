@@ -39,7 +39,7 @@ const ExamLandingPage = () => {
     <Header>
       <SEOHead
         title={exam.metaTitle}
-        description={exam.metaDescription}
+        description={`Free ${exam.name} preparation MCQs with answers. Practice ${exam.name} test online — ${exam.subjects?.slice(0,3).join(', ')}. No signup needed — MCQsAI Pakistan.`}
         keywords={exam.keywords}
         url={`https://www.mcqsai.com/exams/${exam.slug}`}
       />
