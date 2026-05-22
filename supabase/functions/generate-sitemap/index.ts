@@ -255,6 +255,31 @@ function generateStaticSitemap(): string {
     { loc: "/boards", priority: "0.8", freq: "weekly" },
     { loc: "/privacy-policy", priority: "0.3", freq: "yearly" },
     { loc: "/terms-of-service", priority: "0.3", freq: "yearly" },
+    // SEO landing pages
+    { loc: "/mdcat-syllabus-2026", priority: "0.9", freq: "monthly" },
+    { loc: "/mdcat-past-papers", priority: "0.9", freq: "monthly" },
+    { loc: "/ppsc-past-papers", priority: "0.9", freq: "monthly" },
+    { loc: "/fpsc-past-papers", priority: "0.9", freq: "monthly" },
+    { loc: "/css-mcqs-practice", priority: "0.8", freq: "monthly" },
+    { loc: "/ecat-preparation", priority: "0.9", freq: "monthly" },
+    { loc: "/nust-entry-test", priority: "0.9", freq: "monthly" },
+    { loc: "/punjab-university-entry-test", priority: "0.9", freq: "monthly" },
+    { loc: "/comsats-entry-test", priority: "0.8", freq: "monthly" },
+    { loc: "/sindh-universities-entry-test", priority: "0.8", freq: "monthly" },
+    { loc: "/engineering-universities-entry-test", priority: "0.8", freq: "monthly" },
+    { loc: "/pst-sst-test-preparation", priority: "0.8", freq: "monthly" },
+    { loc: "/9th-class-mcqs", priority: "0.9", freq: "monthly" },
+    { loc: "/board-mcqs", priority: "0.9", freq: "monthly" },
+    { loc: "/pak-army-test", priority: "0.9", freq: "monthly" },
+    { loc: "/paf-test", priority: "0.9", freq: "monthly" },
+    { loc: "/asf-test", priority: "0.8", freq: "monthly" },
+    { loc: "/forces-jobs-tests", priority: "0.8", freq: "monthly" },
+    // Additional public routes
+    { loc: "/get-started", priority: "0.7", freq: "monthly" },
+    { loc: "/custom-quizzes", priority: "0.7", freq: "monthly" },
+    { loc: "/tenders", priority: "0.7", freq: "weekly" },
+    { loc: "/board-results", priority: "0.8", freq: "weekly" },
+    { loc: "/ask-document", priority: "0.7", freq: "monthly" },
   ];
 
   const urls = pages.map(
