@@ -76,12 +76,15 @@ const ScholarshipDetailPage = () => {
 
   const jsonLd = {
     '@context': 'https://schema.org',
-    '@type': 'Scholarship',
+    '@type': 'EducationalOccupationalProgram',
     name: title,
     description,
+    programType: 'Scholarship',
     provider: { '@type': 'Organization', name: org || 'MCQsAI' },
     ...(deadline && { applicationDeadline: deadline }),
-    areaServed: { '@type': 'Country', name: 'Pakistan' },
+    educationalCredentialAwarded: 'Scholarship',
+    occupationalCategory: 'Student',
+    offers: { '@type': 'Offer', category: 'Scholarship', availability: 'https://schema.org/InStock' },
   };
 
   return (

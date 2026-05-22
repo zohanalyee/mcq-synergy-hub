@@ -1,0 +1,16 @@
+{
+  "name": "MCQsAI — AI-Powered Exam Prep",
+  "short_name": "MCQsAI",
+  "description": "Free AI MCQ practice for NTS, FPSC, PPSC, MDCAT, ECAT, Matric & FSc.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#7C3AED",
+  "icons": [
+    { "src": "/favicon-16x16.png", "sizes": "16x16", "type": "image/png" },
+    { "src": "/favicon-32x32.png", "sizes": "32x32", "type": "image/png" },
+    { "src": "/favicon.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
