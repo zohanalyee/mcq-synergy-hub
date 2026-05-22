@@ -1,162 +1,75 @@
-# SEO + Favicon Plan
+# Plan — SSR audit, Pakistan Exam Hub, meta-description fixes, favicon lock
 
-Mix of audit (read-only) + fixes. Below = findings first, then proposed changes grouped so you can approve/reject.
-
----
-
-## A. Findings (audit-only, no changes proposed)
-
-### A1. Favicon files in `public/`
-
-- `favicon.ico` ✅ exists (1.1 KB — old heart)
-- `favicon.png` ✅ exists (152 KB — old heart)
-- `favicon-16x16.png` ❌ missing
-- `favicon-32x32.png` ❌ missing
-- `logo.png` ❌ missing (referenced by `index.html` `msapplication-TileImage` and `browserconfig.xml` → currently 404)
-
-The "brain logo" in the navbar is **not an image file** — it's the Lucide `<Brain />` SVG icon inside a purple-gradient rounded square in `src/components/header/HeaderLogo.tsx`. There is no PNG/SVG asset to copy. A new favicon PNG must be generated to match that visual.
-
-### A2. `public/sitemaps/exams.xml`
-
-Already updated — contains **26 URLs**: `/exams`, fpsc, nts, css, pms, ppsc, spsc, kppsc, bpsc, ajkpsc, mdcat, mdcat-sindh, nums, amc, ecat, nts-nat, nts-gat, matric, fsc-pre-medical, fsc-pre-engineering, sst, pst, educators, lecturer, fia, police. ✅ Includes all the ones you listed (spsc, kppsc, matric, fsc-pre-medical, etc.). No fix needed.
-
-### A3. Meta description (your point #7)
-
-**It was updated.** Current `index.html` line 14:
-
-```
-content="Free AI MCQ practice for NTS, FPSC, PPSC, MDCAT, ECAT, Matric & FSc. 100,000+ questions with instant feedback. No signup needed — MCQsAI Pakistan."
-```
-
-Difference vs your latest message: previously agreed text says **"100,000+"**, your new message says **"10,000+"**. Need you to confirm which number is correct before I touch it again. (Browser may also be showing a cached old description — hard refresh / new deploy needed.)
-
-### A4. GA4 tracking
-
-✅ Installed in `index.html`. Measurement ID: `**G-92HVL8ZQFC**`.
-
-### A5. Title patterns (dynamic pages)
-
-
-| Page                    | Current title pattern                               | Verdict                                                                |
-| ----------------------- | --------------------------------------------------- | ---------------------------------------------------------------------- |
-| `BoardLandingPage`      | `${boardName} – Classes & Subjects | MCQsAI`        | OK, could add "MCQs Pakistan"                                          |
-| `BoardTopicPage`        | Custom `seoTitle` w/ topic+subject+class+board ✅    | Good                                                                   |
-| `SubjectContent`        | `${title} MCQs - Practice Questions | MCQsAI`       | OK but no board/class                                                  |
-| `BlogPost`              | `meta_title || post.title`                          | Depends on data                                                        |
-| `JobDetailPage`         | `${title} - Job Opportunity | MCQsAI`               | Weak — no location/year                                                |
-| `ScholarshipDetailPage` | `${title} - Scholarship | MCQsAI`                   | Weak — no year/country                                                 |
-| `Tools`                 | `Free AI Tools & Calculators for Students | MCQsAI` | OK (index only — **individual tool pages have no `<SEOHead>` at all**) |
-| `Quizzes`               | `Online Quiz Practice Tests | MCQsAI`               | Weak — no "Pakistan/MCQs"                                              |
-| `MockTests`             | `Competitive Exam Practice Tests | MCQs AI`         | OK                                                                     |
-
-
-**Biggest gap: 80+ individual `/tools/*` pages have no SEO head at all.**
-
-### A6. GSC-based CTR title recommendations
-
-I do **not** have GSC API access from this session — only Semrush. Real GSC CTR data would need the GSC connector or you exporting Queries CSV. What I *can* do: pull Semrush ranking data for your pages and recommend titles based on intent + Pakistani search modifiers ("2026", "free", "pdf", "with answers", "in Urdu").
-
-### A7. Competitor `top_pages` (your point #6)
-
-Need to run Semrush `top_pages` + `page_analysis` against `mcqshome.com`, `solvedmcqs.com`, `testpreparation.ca` in the **PK** database. This is a separate read-only step — propose to run it as part of execution.
+This plan groups your 5 requests into a single sequenced workflow. Items 1 and 3 are research/audit only (no code). Item 4 is a verification step. Items 2 and 5 are the only code changes.
 
 ---
 
-## B. Proposed changes (require approval)
+## 1. SSR / prerendering audit (research, no code)
 
-### Fix 1 — Brain favicon
+Deliverable: a written report posted in chat covering:
 
-1. Generate a new favicon image matching navbar: white Lucide-style brain icon on purple→pink gradient rounded square, on solid white background, at 512×512.
-  - Save to `public/favicon.png` (overwrite old heart), `src/assets/logo.png` (for app reuse).
-2. Generate 32×32 and 16×16 variants → `public/favicon-32x32.png`, `public/favicon-16x16.png`.
-3. Copy the 512px PNG to `public/logo.png` (fixes the current 404 referenced by `msapplication-TileImage` and `browserconfig.xml`).
-4. Delete stale `public/favicon.ico` (it's the old heart and overrides PNGs in some browsers).
-5. Update `index.html` favicon block to exactly:
-  ```html
-   <link rel="icon" type="image/png" href="/favicon.png">
-   <link rel="shortcut icon" type="image/png" href="/favicon.png">
-   <link rel="apple-touch-icon" href="/favicon.png">
-   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-   <meta name="msapplication-TileImage" content="/favicon.png">
-  ```
-6. Update `public/browserconfig.xml` → `<square150x150logo src="/favicon.png"/>`.
+- **Render mode of mcqsai.com today** — confirm it is a pure client-side React SPA (Vite build, no SSR, no static prerender). Evidence will be the contents of `view-source:https://www.mcqsai.com/` — the `<div id="root">` should be empty, and no MCQ text should appear in the raw HTML. Will fetch the live HTML and quote the relevant lines.
+- **What is in source vs. what needs JS** — list which SEO-critical elements are server-rendered (title, meta description, canonical from `index.html`) vs. JS-only (per-route Helmet tags, MCQ content, board/exam pages).
+- **Lovable platform support** — check Lovable docs for prerendering / SSG / SSR options for the Vite + React stack.
+- **Recommendation** — options ranked by effort: (a) keep CSR + rely on Googlebot JS rendering, (b) add a prerender service (Prerender.io / react-snap) at build time for the ~50 SEO landing routes, (c) migrate to a framework with SSR. No code changes in this step.
 
-### Fix 2 — Meta description number
+## 2. Pakistan Exam Intelligence Hub (`/pakistan-exam-hub`)
 
-Confirm the correct figure: **"100,000+"** (current) or **"10,000+"** (your new message). I will not change unless you tell me which.
+New public SEO landing page that aggregates live exam intel. Scope for v1 (static content + manually curated data, no scrapers yet):
 
-### Fix 3 — Title improvements (optional, batch)
+- New file: `src/pages/seo/PakistanExamHub.tsx`
+- New route in `src/App.tsx`: `/pakistan-exam-hub` (public, outside auth wrapper)
+- Link added under a new "Exam Intelligence" section on `src/pages/Index.tsx`
+- Sitemap entry in `public/sitemaps/static.xml`
 
-Only if you approve, I'll tighten these for PK CTR:
+Sections on the page (all static JSX, data hard-coded for now):
+1. Hero — "Pakistan Exam Intelligence Hub 2026"
+2. Upcoming test dates table (MDCAT Aug 16 2026, ECAT, PPSC, FPSC, NTS) — same data already in `examData.ts`
+3. Aggregate calculators — link out to existing `/tools/marks-calculator`, `/tools/gpa-calculator`, `/tools/percentage-calculator`
+4. Merit lists & answer keys — placeholder cards linking to `/board-results`
+5. Admission deadlines list
+6. Internal links to all `/exams/*` landing pages
+7. `Course` + `FAQPage` JSON-LD via `<SEOHead>`
 
-- `Quizzes`: → `Free MCQ Quizzes with Answers 2026 | NTS, FPSC, MDCAT — MCQsAI Pakistan`
-- `BoardLandingPage`: → `${boardName} MCQs 2026 — All Classes & Subjects | MCQsAI Pakistan`
-- `SubjectContent`: → `${title} MCQs with Answers — Free Practice | MCQsAI Pakistan`
-- `JobDetailPage`: → `${title} 2026 — Apply Online, Test Preparation | MCQsAI`
-- `ScholarshipDetailPage`: → `${title} 2026 — Eligibility, Last Date, Apply | MCQsAI`
-- Add a generic `<SEOHead>` wrapper to **all `/tools/*` pages** that derives `title` + `description` from the tool name (single shared component change, no per-file edits beyond import).
+Out of scope for v1 (call out in plan, defer): live scraper-fed PPSC/FPSC notifications, real-time merit lists. Those need an `agent_tasks` scraper task; can be a follow-up.
 
-### Step 4 — Competitor research (read-only Semrush calls)
+## 3. EEAT author profiles + programmatic SEO (research, no code)
 
-Run, in PK database:
+Deliverable: a written follow-up plan (separate `.lovable/plan.md` revision later) covering:
 
-- `top_pages` × 3 (mcqshome / solvedmcqs / testpreparation)
-- `page_analysis` on the top 2 URLs from each
-- Compile a low-KD (<30) keyword shortlist with PK volume.
+- Author bio component pattern (`src/components/AuthorBio.tsx`) + `Person` JSON-LD
+- Which page types get bylines (blog posts, exam guides, syllabus pages)
+- Programmatic SEO matrix: `{exam} × {city}` and `{subject} × {class} × {board}` route templates
+- Merit/aggregate calculator pages list
 
-Output: a single ranked table. No code changes from this step.
+No code in this turn — only flagged as a follow-up so you can prioritise.
 
----
+## 4. Favicon verification (likely no change)
 
-## Questions before executing
+`public/favicon.png` (95.8 KB) was regenerated last turn as a purple→pink gradient rounded square with a white brain. Will:
 
-1. Description number: **100,000+** or **10,000+**?
-2. Approve Fix 1 (favicon regeneration with auto-generated brain image)?
-3. Approve Fix 3 (title rewrites + tools SEOHead wrapper)?
-4. Approve Step 4 (Semrush competitor pulls — consumes a few API calls)?   
+- Open the generated PNG and visually confirm it matches `HeaderLogo.tsx` (purple→pink gradient, rounded square, white Lucide `Brain`).
+- If it matches: no edit. Report "locked" status.
+- If it does not match: regenerate **once** with a tighter prompt, then lock.
 
-Plan dekh liya — sab approve karo! Yeh sahi hai:
+After this step, treat `public/favicon.png`, `public/favicon-32x32.png`, `public/favicon-16x16.png`, `public/logo.png` as locked — won't be modified in future turns unless you explicitly ask.
 
----
+## 5. Meta-description fixes (code, 3 files)
 
-**Fix 1 — Favicon:** ✅ Approve Brain icon banana — logo.png 404 fix — favicon-32x32, 16x16 generate
+| File | Change |
+|---|---|
+| `src/pages/Quizzes.tsx` line 258 | Replace `description=` value with: `"Free MCQ quizzes with answers for NTS, FPSC, PPSC, MDCAT, ECAT, Matric & FSc. 10,000+ questions with instant feedback. No signup needed — MCQsAI Pakistan."` |
+| `src/pages/exams/ExamLandingPage.tsx` line 42 | Change `description={exam.metaDescription}` to dynamic template: `` description={`Free ${exam.name} preparation MCQs with answers. Practice ${exam.name} test online — ${exam.subjects?.slice(0,3).join(', ')}. No signup needed — MCQsAI Pakistan.`} `` |
+| `index.html` line 15 | Already matches the requested string — verify only, no edit needed. |
 
-**Fix 2 — Meta description:**
-
-```
-10,000+ sahi hai — 100,000+ galat hai
-Abhi itne questions nahi hain
-
-```
-
-**10,000+** confirm karo Lovable ko
-
-**Fix 3 — Title improvements:** ✅ Approve
-
-```
-Quizzes title ✅
-BoardLandingPage ✅
-SubjectContent ✅
-JobDetailPage ✅
-ScholarshipDetailPage ✅
-Tools SEOHead wrapper ✅
-
-```
-
-**Step 4 — Competitor research:** ✅ Approve
-
-```
-mcqshome.com
-solvedmcqs.com
-testpreparation.ca
-
-```
+No other files touched.
 
 ---
 
-**Lovable ko yeh reply do:**
+## Execution order after approval
 
-> "Approved all fixes. For Fix 2 — use 10,000+ not 100,000+. Proceed with Fix 1, Fix 2, Fix 3, and Step 4 all together."
-
-&nbsp;
+1. Fetch `view-source:` of live site → write SSR audit report (chat only).
+2. Apply meta-description edits (item 5) — 2 file edits.
+3. Verify favicon visually (item 4) — likely no edit.
+4. Build `/pakistan-exam-hub` page + route + sitemap entry + Index link (item 2).
+5. Post item 3 as a follow-up planning note in chat (no code).
