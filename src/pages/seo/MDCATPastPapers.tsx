@@ -1,6 +1,7 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
 import { Link } from 'react-router-dom';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 
 const MDCATPastPapers = () => (
   <>
@@ -125,6 +126,7 @@ const MDCATPastPapers = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="mdcat-past-papers" title="Continue your MDCAT prep" />
     </div>
   </>
 );

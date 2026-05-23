@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BookOpen, CheckCircle, Lightbulb, GraduationCap, Clock, Award, ExternalLink, ArrowRight } from 'lucide-react';
 import NotFound from '@/pages/NotFound';
+import RelatedContent from '@/components/seo/related/RelatedContent';
+import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 
 const ExamLandingPage = () => {
   const { examSlug } = useParams<{ examSlug: string }>();
@@ -46,6 +48,13 @@ const ExamLandingPage = () => {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: 'Home', path: '/' },
+          { name: 'Exams', path: '/exams' },
+          { name: `${exam.name} Preparation`, path: `/exams/${exam.slug}` },
+        ]}
       />
 
       <div className="max-w-5xl mx-auto px-4 py-8">
@@ -209,6 +218,9 @@ const ExamLandingPage = () => {
             </Card>
           </div>
         </div>
+
+        {/* Semantic internal linking — syllabus, prep tools, related exams */}
+        <RelatedContent entitySlug={exam.slug} title={`More for ${exam.name} aspirants`} />
       </div>
       <Footer />
     </Header>
