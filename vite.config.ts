@@ -2,8 +2,53 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import { vitePrerenderPlugin } from "vite-prerender-plugin";
 
-// https://vitejs.dev/config/
+// Opt-in static prerender. Default: OFF (keeps Lovable sandbox builds fast and
+// avoids puppeteer in dev). Enable in CI / production with PRERENDER=true.
+// Routes are intentionally limited to anonymous-safe SEO pages — no dashboard,
+// auth, or user-personalised flows. Detail pages remain CSR + sitemap.
+const PRERENDER_ROUTES = [
+  "/",
+  "/quizzes",
+  "/exams",
+  "/exams/mdcat",
+  "/exams/ecat",
+  "/exams/nts",
+  "/exams/fpsc",
+  "/exams/ppsc",
+  "/exams/css",
+  "/exams/pms",
+  "/about",
+  "/contact",
+  "/faq",
+  "/reviews",
+  "/tools",
+  "/blog",
+  "/boards",
+  "/scholarships",
+  "/jobs",
+  // SEO landing pages
+  "/mdcat-syllabus-2026",
+  "/mdcat-past-papers",
+  "/ppsc-past-papers",
+  "/fpsc-past-papers",
+  "/css-mcqs-practice",
+  "/ecat-preparation",
+  "/nust-entry-test",
+  "/punjab-university-entry-test",
+  "/comsats-entry-test",
+  "/sindh-universities-entry-test",
+  "/engineering-universities-entry-test",
+  "/pst-sst-test-preparation",
+  "/9th-class-mcqs",
+  "/board-mcqs",
+  "/pak-army-test",
+  "/paf-test",
+  "/asf-test",
+  "/forces-jobs-tests",
+];
+
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
@@ -13,10 +58,6 @@ export default defineConfig(({ mode }) => ({
     target: 'es2022',
     rollupOptions: {
       output: {
-        // Conservative chunking: only split heavy, leaf-style libs that do NOT
-        // need to share a React context with the main bundle. Splitting React,
-        // React-DOM, Radix, or React Query into separate chunks broke prod
-        // (white screen) because of init-order / multiple-React-instance issues.
         manualChunks(id) {
           if (!id.includes('node_modules')) return;
           if (id.includes('framer-motion')) return 'framer';
@@ -35,8 +76,12 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    mode === 'development' &&
-    componentTagger(),
+    mode === 'development' && componentTagger(),
+    process.env.PRERENDER === 'true' && vitePrerenderPlugin({
+      renderTarget: '#root',
+      prerenderScript: path.resolve(__dirname, 'src/prerender.tsx'),
+      additionalPrerenderRoutes: PRERENDER_ROUTES,
+    }),
   ].filter(Boolean),
   resolve: {
     alias: {
