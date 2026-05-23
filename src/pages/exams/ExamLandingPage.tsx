@@ -218,6 +218,10 @@ const ExamLandingPage = () => {
             </Card>
           </div>
         </div>
+
+        {/* Semantic internal linking — syllabus, prep tools, related exams */}
+        <RelatedContent entitySlug={exam.slug} title={`More for ${exam.name} aspirants`} />
+      </div>
       </div>
       <Footer />
     </Header>
