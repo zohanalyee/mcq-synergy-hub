@@ -114,11 +114,6 @@ export const semanticGraph: Record<string, Relation[]> = {
     { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'related-exam', priority: 'medium' },
     { kind: 'exam', path: '/exams/css', label: 'CSS Preparation', reason: 'related-exam', priority: 'medium' },
   ],
-  'mdcat-syllabus-2026': [
-    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' },
-    { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'high' },
-    { kind: 'seo-page', path: '/ecat-preparation', label: 'ECAT Preparation', reason: 'related-exam', priority: 'low' },
-  ],
 };
 
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 } as const;
