@@ -315,7 +315,7 @@ const App = () => {
                       {/* Content & SEO Pages */}
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
                       <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
-                      <Route path="/mdcat-syllabus-2026" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
+                      <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
                       <Route path="/mdcat-past-papers" element={<Suspense fallback={<TopProgressBar />}><MDCATPastPapers /></Suspense>} />
                       <Route path="/ppsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><PPSCPastPapers /></Suspense>} />
                       <Route path="/fpsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><FPSCPastPapers /></Suspense>} />

@@ -182,7 +182,7 @@ const MDCATSyllabus = () => {
             ))}
           </div>
         </div>
-        <RelatedContent entitySlug="mdcat-syllabus-2026" title="Continue Preparing" />
+        <RelatedContent entitySlug="mdcat-syllabus" title="Continue Preparing" />
       </div>
     </>
   );

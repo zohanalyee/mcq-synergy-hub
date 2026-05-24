@@ -37,7 +37,7 @@ export interface Relation {
 export const semanticGraph: Record<string, Relation[]> = {
   mdcat: [
     { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'high' },
-    { kind: 'seo-page', path: '/mdcat-syllabus-2026', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' },
+    { kind: 'seo-page', path: '/mdcat-syllabus', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' },
     { kind: 'tool', path: '/tools/aggregate-calculator', label: 'MDCAT Aggregate Calculator', reason: 'prep-tool', priority: 'high' },
     { kind: 'subject', path: '/subjects', label: 'Biology MCQs', reason: 'syllabus', priority: 'high' },
     { kind: 'subject', path: '/subjects', label: 'Chemistry MCQs', reason: 'syllabus', priority: 'medium' },
@@ -76,8 +76,8 @@ export const semanticGraph: Record<string, Relation[]> = {
     { kind: 'exam', path: '/exams/ppsc', label: 'PPSC Preparation', reason: 'related-exam', priority: 'medium' },
   ],
   // SEO landing pages
-  'mdcat-past-papers':       [{ kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' }, { kind: 'seo-page', path: '/mdcat-syllabus-2026', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' }],
-  'mdcat-syllabus-2026':     [{ kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' }, { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'high' }],
+  'mdcat-past-papers':       [{ kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' }, { kind: 'seo-page', path: '/mdcat-syllabus', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' }],
+  'mdcat-syllabus':     [{ kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' }, { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'high' }],
   'ecat-preparation':        [{ kind: 'exam', path: '/exams/ecat', label: 'ECAT Exam Details', reason: 'next-step', priority: 'high' }, { kind: 'seo-page', path: '/nust-entry-test', label: 'NUST Entry Test', reason: 'related-exam', priority: 'high' }, { kind: 'seo-page', path: '/engineering-universities-entry-test', label: 'Engineering Universities', reason: 'university', priority: 'medium' }],
   'nust-entry-test':         [{ kind: 'seo-page', path: '/ecat-preparation', label: 'ECAT Preparation', reason: 'related-exam', priority: 'high' }, { kind: 'seo-page', path: '/engineering-universities-entry-test', label: 'Engineering Universities', reason: 'university', priority: 'medium' }],
   'comsats-entry-test':      [{ kind: 'seo-page', path: '/nust-entry-test', label: 'NUST Entry Test', reason: 'related-exam', priority: 'high' }, { kind: 'seo-page', path: '/ecat-preparation', label: 'ECAT Preparation', reason: 'related-exam', priority: 'medium' }],
