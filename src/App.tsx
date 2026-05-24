@@ -7,7 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // already provides a <StaticRouter>, so we render a passthrough fragment to
 // avoid BrowserRouter touching `document`/`window.history` at render time.
 const Router = ({ children }: { children: React.ReactNode }) =>
-  typeof window === 'undefined' ? <>{children}</> : <BrowserRouter>{children}</BrowserRouter>;
+  (typeof window === 'undefined' || (globalThis as any).__PRERENDER__)
+    ? <>{children}</>
+    : <BrowserRouter>{children}</BrowserRouter>;
 import { useState, lazy, Suspense, useEffect } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
@@ -61,36 +63,37 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const Reviews = lazy(() => import("./pages/Reviews"));
+import Reviews from "./pages/Reviews";
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmailSent = lazy(() => import("./pages/VerifyEmailSent"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 
-const Quizzes = lazy(() => import("./pages/Quizzes"));
+import Quizzes from "./pages/Quizzes";
 const QuizPlayer = lazy(() => import("./pages/QuizPlayer"));
 const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
-const About = lazy(() => import("./pages/About"));
-const MDCATSyllabus = lazy(() => import("./pages/MDCATSyllabus"));
-const MDCATPastPapers = lazy(() => import("./pages/seo/MDCATPastPapers"));
-const PPSCPastPapers = lazy(() => import("./pages/seo/PPSCPastPapers"));
-const FPSCPastPapers = lazy(() => import("./pages/seo/FPSCPastPapers"));
-const CSSMCQs = lazy(() => import("./pages/seo/CSSMCQs"));
-const ECATPreparation = lazy(() => import("./pages/seo/ECATPreparation"));
-const NUSTEntryTest = lazy(() => import("./pages/seo/NUSTEntryTest"));
-const PunjabUniversityEntryTest = lazy(() => import("./pages/seo/PunjabUniversityEntryTest"));
-const COMSATSEntryTest = lazy(() => import("./pages/seo/COMSATSEntryTest"));
-const SindhUniversitiesEntryTest = lazy(() => import("./pages/seo/SindhUniversitiesEntryTest"));
-const EngineeringUniversitiesEntryTest = lazy(() => import("./pages/seo/EngineeringUniversitiesEntryTest"));
-const PSTSSTTestPreparation = lazy(() => import("./pages/seo/PSTSSTTestPreparation"));
-const NinthClassMCQs = lazy(() => import("./pages/seo/NinthClassMCQs"));
-const BoardMCQs = lazy(() => import("./pages/seo/BoardMCQs"));
-const PakArmyTest = lazy(() => import("./pages/seo/PakArmyTest"));
-const PAFTest = lazy(() => import("./pages/seo/PAFTest"));
-const ASFTest = lazy(() => import("./pages/seo/ASFTest"));
-const ForcesJobsTests = lazy(() => import("./pages/seo/ForcesJobsTests"));
-const Contact = lazy(() => import("./pages/Contact"));
+// Eager: SEO/public prerender whitelisted routes (need real HTML in #root)
+import About from "./pages/About";
+import MDCATSyllabus from "./pages/MDCATSyllabus";
+import MDCATPastPapers from "./pages/seo/MDCATPastPapers";
+import PPSCPastPapers from "./pages/seo/PPSCPastPapers";
+import FPSCPastPapers from "./pages/seo/FPSCPastPapers";
+import CSSMCQs from "./pages/seo/CSSMCQs";
+import ECATPreparation from "./pages/seo/ECATPreparation";
+import NUSTEntryTest from "./pages/seo/NUSTEntryTest";
+import PunjabUniversityEntryTest from "./pages/seo/PunjabUniversityEntryTest";
+import COMSATSEntryTest from "./pages/seo/COMSATSEntryTest";
+import SindhUniversitiesEntryTest from "./pages/seo/SindhUniversitiesEntryTest";
+import EngineeringUniversitiesEntryTest from "./pages/seo/EngineeringUniversitiesEntryTest";
+import PSTSSTTestPreparation from "./pages/seo/PSTSSTTestPreparation";
+import NinthClassMCQs from "./pages/seo/NinthClassMCQs";
+import BoardMCQs from "./pages/seo/BoardMCQs";
+import PakArmyTest from "./pages/seo/PakArmyTest";
+import PAFTest from "./pages/seo/PAFTest";
+import ASFTest from "./pages/seo/ASFTest";
+import ForcesJobsTests from "./pages/seo/ForcesJobsTests";
+import Contact from "./pages/Contact";
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
 const EditorialPolicy = lazy(() => import("./pages/legal/EditorialPolicy"));
@@ -172,22 +175,23 @@ const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
 const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
 
 // Content & SEO pages
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const FAQ = lazy(() => import("./pages/FAQ"));
+// Content & SEO pages (eager for prerender whitelist)
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import FAQ from "./pages/FAQ";
 const StudyGuides = lazy(() => import("./pages/StudyGuides"));
-const Boards = lazy(() => import("./pages/Boards"));
-const BoardLandingPage = lazy(() => import("./pages/BoardLandingPage"));
-const BoardClassPage = lazy(() => import("./pages/BoardClassPage"));
-const BoardSubjectPage = lazy(() => import("./pages/BoardSubjectPage"));
-const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
-const ExamLandingPage = lazy(() => import("./pages/exams/ExamLandingPage"));
+import Boards from "./pages/Boards";
+import BoardLandingPage from "./pages/BoardLandingPage";
+import BoardClassPage from "./pages/BoardClassPage";
+import BoardSubjectPage from "./pages/BoardSubjectPage";
+import BoardTopicPage from "./pages/BoardTopicPage";
+import ExamLandingPage from "./pages/exams/ExamLandingPage";
 const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
 const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
-const ProgrammaticLandingPage = lazy(() => import("./pages/programmatic/ProgrammaticLandingPage"));
+import ProgrammaticLandingPage from "./pages/programmatic/ProgrammaticLandingPage";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient({
