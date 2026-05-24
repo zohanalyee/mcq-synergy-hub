@@ -61,7 +61,7 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const Reviews = lazy(() => import("./pages/Reviews"));
+import Reviews from "./pages/Reviews";
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmailSent = lazy(() => import("./pages/VerifyEmailSent"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
