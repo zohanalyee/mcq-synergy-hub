@@ -88,6 +88,7 @@ const ForcesJobsTests = lazy(() => import("./pages/seo/ForcesJobsTests"));
 const Contact = lazy(() => import("./pages/Contact"));
 const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
+const EditorialPolicy = lazy(() => import("./pages/legal/EditorialPolicy"));
 const QuestionBank = lazy(() => import("./pages/QuestionBank"));
 const AskDocument = lazy(() => import("./pages/AskDocument"));
 const TestSession = lazy(() => import("./pages/TestSession"));

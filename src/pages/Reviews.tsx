@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import SEOHead from '@/components/SEOHead';
+import { AggregateReviewSchema, ReviewListSchema } from '@/components/seo/schemas';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
@@ -105,7 +106,27 @@ const Reviews = () => {
         title="Student Reviews & Testimonials"
         description="Read real reviews from students using MCQsAI for exam preparation. See how MCQsAI helps students succeed."
         keywords="MCQsAI reviews, student testimonials, exam prep reviews, user feedback"
+        url="https://mcqsai.com/reviews"
       />
+      {stats && stats.total_reviews > 0 && (
+        <AggregateReviewSchema
+          itemName="MCQsAI — AI MCQ Practice Platform"
+          url="https://mcqsai.com/reviews"
+          ratingValue={stats.avg_rating}
+          reviewCount={stats.total_reviews}
+        />
+      )}
+      {reviews && reviews.length > 0 && (
+        <ReviewListSchema
+          itemName="MCQsAI"
+          reviews={reviews.filter(r => r.message).slice(0, 10).map(r => ({
+            author: r.user_name || 'Anonymous Student',
+            rating: r.stars,
+            body: r.message || undefined,
+            datePublished: r.created_at,
+          }))}
+        />
+      )}
       <div className="container px-4 mx-auto py-8 max-w-4xl">
         <div className="text-center mb-6">
           <h1 className="text-2xl font-bold mb-2">User Reviews</h1>
