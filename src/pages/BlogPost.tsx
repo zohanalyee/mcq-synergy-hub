@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import RelatedContent from "@/components/seo/related/RelatedContent";
+import { ArticleSchema } from "@/components/seo/schemas";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -63,6 +64,16 @@ const BlogPost = () => {
         { name: 'Blog', path: '/blog' },
         { name: post.title, path: `/blog/${post.slug}` },
       ]} />
+      <ArticleSchema
+        headline={post.title}
+        description={post.excerpt || post.meta_description || undefined}
+        url={`https://mcqsai.com/blog/${post.slug}`}
+        datePublished={post.published_at || undefined}
+        dateModified={(post as any).updated_at || post.published_at || undefined}
+        authorName={post.author_name || 'MCQsAI Editorial Team'}
+        keywords={post.tags || undefined}
+        articleSection={post.category || undefined}
+      />
       <Header>
         <div className="max-w-3xl mx-auto px-4 py-8">
           <PageBreadcrumb

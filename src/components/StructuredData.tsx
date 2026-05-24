@@ -75,32 +75,61 @@ export const ExamPageSchema: React.FC<ExamPageSchemaProps> = ({
   );
 };
 
+const ORIGIN = 'https://mcqsai.com';
+const ORG_ID = `${ORIGIN}/#organization`;
+const SITE_ID = `${ORIGIN}/#website`;
+
 const StructuredData = () => {
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'EducationalOrganization',
+    '@id': ORG_ID,
     name: 'MCQsAI',
-    alternateName: 'MCQs AI',
-    url: 'https://www.mcqsai.com',
-    logo: 'https://www.mcqsai.com/logo.png',
+    alternateName: ['MCQs AI', 'MCQSAI'],
+    url: ORIGIN,
+    logo: {
+      '@type': 'ImageObject',
+      url: `${ORIGIN}/logo.png`,
+      width: 512,
+      height: 512,
+    },
+    image: `${ORIGIN}/og-image.png`,
     description:
       'AI-powered MCQ practice platform for MDCAT, ECAT, CSS, PPSC, NTS exam preparation in Pakistan',
-    address: { '@type': 'PostalAddress', addressCountry: 'PK' },
+    foundingDate: '2024',
+    foundingLocation: { '@type': 'Place', name: 'Karachi, Pakistan' },
+    areaServed: { '@type': 'Country', name: 'Pakistan' },
+    knowsLanguage: ['en', 'ur', 'sd'],
+    address: { '@type': 'PostalAddress', addressLocality: 'Karachi', addressRegion: 'Sindh', addressCountry: 'PK' },
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'hello@mcqsai.com',
       contactType: 'Customer Service',
+      availableLanguage: ['English', 'Urdu', 'Sindhi'],
     },
+    publishingPrinciples: `${ORIGIN}/editorial-policy`,
+    sameAs: [
+      'https://www.facebook.com/mcqsai',
+      'https://www.instagram.com/mcqsai',
+      'https://twitter.com/mcqsai',
+      'https://www.linkedin.com/company/mcqsai',
+    ],
   };
 
   const websiteSchema = {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
+    '@id': SITE_ID,
     name: 'MCQsAI',
-    url: 'https://www.mcqsai.com',
+    url: ORIGIN,
+    publisher: { '@id': ORG_ID },
+    inLanguage: 'en-PK',
     potentialAction: {
       '@type': 'SearchAction',
-      target: 'https://www.mcqsai.com/subjects?q={search_term_string}',
+      target: {
+        '@type': 'EntryPoint',
+        urlTemplate: `${ORIGIN}/subjects?q={search_term_string}`,
+      },
       'query-input': 'required name=search_term_string',
     },
   };
@@ -135,6 +164,7 @@ const StructuredData = () => {
       },
     ],
   };
+
 
   return (
     <Helmet>

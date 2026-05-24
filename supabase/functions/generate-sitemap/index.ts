@@ -255,6 +255,7 @@ function generateStaticSitemap(): string {
     { loc: "/boards", priority: "0.8", freq: "weekly" },
     { loc: "/privacy-policy", priority: "0.3", freq: "yearly" },
     { loc: "/terms-of-service", priority: "0.3", freq: "yearly" },
+    { loc: "/editorial-policy", priority: "0.4", freq: "monthly" },
     // SEO landing pages
     { loc: "/mdcat-syllabus-2026", priority: "0.9", freq: "monthly" },
     { loc: "/mdcat-past-papers", priority: "0.9", freq: "monthly" },
