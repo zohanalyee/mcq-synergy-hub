@@ -94,6 +94,31 @@ export const semanticGraph: Record<string, Relation[]> = {
   'paf-test':                [{ kind: 'seo-page', path: '/pak-army-test', label: 'Pak Army Test', reason: 'related-exam', priority: 'high' }, { kind: 'seo-page', path: '/asf-test', label: 'ASF Test', reason: 'related-exam', priority: 'medium' }],
   'asf-test':                [{ kind: 'seo-page', path: '/pak-army-test', label: 'Pak Army Test', reason: 'related-exam', priority: 'high' }, { kind: 'seo-page', path: '/paf-test', label: 'PAF Test', reason: 'related-exam', priority: 'medium' }],
   'forces-jobs-tests':       [{ kind: 'seo-page', path: '/pak-army-test', label: 'Pak Army Test', reason: 'related-exam', priority: 'high' }, { kind: 'seo-page', path: '/paf-test', label: 'PAF Test', reason: 'related-exam', priority: 'high' }, { kind: 'seo-page', path: '/asf-test', label: 'ASF Test', reason: 'related-exam', priority: 'medium' }],
+
+  // Hubs for dynamic detail pages
+  'scholarships-hub': [
+    { kind: 'seo-page', path: '/scholarships', label: 'All Scholarships', reason: 'related-exam', priority: 'high' },
+    { kind: 'seo-page', path: '/nust-entry-test', label: 'NUST Entry Test', reason: 'university', priority: 'high' },
+    { kind: 'seo-page', path: '/punjab-university-entry-test', label: 'Punjab University Entry Test', reason: 'university', priority: 'medium' },
+    { kind: 'tool', path: '/tools/aggregate-calculator', label: 'Aggregate Calculator', reason: 'prep-tool', priority: 'medium' },
+  ],
+  'jobs-hub': [
+    { kind: 'seo-page', path: '/jobs', label: 'All Government Jobs', reason: 'related-exam', priority: 'high' },
+    { kind: 'seo-page', path: '/forces-jobs-tests', label: 'Forces Jobs Tests', reason: 'related-exam', priority: 'high' },
+    { kind: 'exam', path: '/exams/nts', label: 'NTS Preparation', reason: 'prep-tool', priority: 'high' },
+    { kind: 'exam', path: '/exams/fpsc', label: 'FPSC Preparation', reason: 'prep-tool', priority: 'medium' },
+    { kind: 'exam', path: '/exams/ppsc', label: 'PPSC Preparation', reason: 'prep-tool', priority: 'medium' },
+  ],
+  'blog-hub': [
+    { kind: 'seo-page', path: '/blog', label: 'All Articles', reason: 'related-exam', priority: 'high' },
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'related-exam', priority: 'medium' },
+    { kind: 'exam', path: '/exams/css', label: 'CSS Preparation', reason: 'related-exam', priority: 'medium' },
+  ],
+  'mdcat-syllabus-2026': [
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'high' },
+    { kind: 'seo-page', path: '/ecat-preparation', label: 'ECAT Preparation', reason: 'related-exam', priority: 'low' },
+  ],
 };
 
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 } as const;
