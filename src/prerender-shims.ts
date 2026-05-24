@@ -56,9 +56,9 @@ if (typeof g.navigator === 'undefined') {
   g.navigator = { userAgent: 'node-prerender', language: 'en' };
 }
 
-// Expose `window` last so component code that does `typeof window !== 'undefined'`
-// will see one and use the shimmed APIs above (rather than bare ReferenceError).
-if (!hadWindow) g.window = g;
+// Do NOT define window — many libs (framer-motion etc.) gate browser-only
+// side effects on `typeof window !== 'undefined'`. Defining it would trigger
+// those paths during SSR and break renderToString.
 
 g.__PRERENDER__ = true;
 
