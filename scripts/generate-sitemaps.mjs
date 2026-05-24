@@ -92,6 +92,7 @@ const STATIC_PAGES = [
   { loc: "/faq", priority: "0.7", freq: "monthly" },
   { loc: "/study-guides", priority: "0.7", freq: "weekly" },
   { loc: "/boards", priority: "0.8", freq: "weekly" },
+  { loc: "/mdcat-syllabus", priority: "0.8", freq: "monthly" },
   { loc: "/privacy-policy", priority: "0.3", freq: "yearly" },
   { loc: "/terms-of-service", priority: "0.3", freq: "yearly" },
 ];

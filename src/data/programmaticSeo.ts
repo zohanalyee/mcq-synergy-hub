@@ -56,7 +56,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     domicile: 'Karachi domicile holders compete in the Sindh provincial quota. Federal-area applicants (e.g. KPT colony) may need additional documentation. Domicile, FSc result and PRC must be submitted with the STS application.',
     prepResources: [
       { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
-      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus-2026' },
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
       { label: 'Aggregate Calculator', path: '/tools/aggregate-calculator' },
       { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
     ],
@@ -101,7 +101,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     ],
     domicile: 'Only Sindh domicile and Permanent Resident Certificate (PRC) holders are eligible for Sindh provincial seats. Documentation is verified at STS application stage.',
     prepResources: [
-      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus-2026' },
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
       { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
       { label: 'MDCAT Karachi Guide', path: '/p/mdcat-karachi' },
       { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
@@ -111,7 +111,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'What is the MDCAT Sindh 2026 date?', a: 'August 16, 2026. Admit cards are released ~2 weeks prior on the STS portal.' },
       { q: 'Is MDCAT Sindh easier than federal MDCAT?', a: 'No. Both follow the PMC syllabus and difficulty is comparable. STS papers are independently set.' },
     ],
-    relatedSlug: 'mdcat-syllabus-2026',
+    relatedSlug: 'mdcat-syllabus',
     indexable: true,
     lastUpdated: '2026-05-20',
   },
@@ -141,7 +141,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     ],
     domicile: 'Federal-area domicile (Islamabad Capital Territory) is required for federal quota seats. Holders of provincial domiciles apply under their own provincial quotas.',
     prepResources: [
-      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus-2026' },
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
       { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
       { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
     ],
@@ -149,7 +149,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'When is MDCAT 2026 in Islamabad?', a: 'PMC announces the unified national MDCAT date each year, typically in September. Islamabad follows the federal schedule.' },
       { q: 'Is SZABMU merit higher than Punjab?', a: 'Federal seats often close near 91%+ due to limited quota size. Punjab universities like KEMU close similar or higher.' },
     ],
-    relatedSlug: 'mdcat-syllabus-2026',
+    relatedSlug: 'mdcat-syllabus',
     indexable: true,
     lastUpdated: '2026-05-20',
   },
@@ -383,7 +383,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     ],
     prepResources: [
       { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
-      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus-2026' },
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
       { label: 'Board MCQs Practice', path: '/board-mcqs' },
       { label: '9th Class MCQs', path: '/9th-class-mcqs' },
     ],

@@ -480,7 +480,7 @@ const Home = () => {
                 { label: 'COMSATS Entry Test', url: '/comsats-entry-test' },
                 { label: 'Sindh Universities', url: '/sindh-universities-entry-test' },
                 { label: 'Engineering Unis', url: '/engineering-universities-entry-test' },
-                { label: 'MDCAT Syllabus', url: '/mdcat-syllabus-2026' },
+                { label: 'MDCAT Syllabus', url: '/mdcat-syllabus' },
                 { label: 'ECAT Preparation', url: '/ecat-preparation' },
                 { label: '9th Class MCQs', url: '/9th-class-mcqs' },
               ].map(link => (

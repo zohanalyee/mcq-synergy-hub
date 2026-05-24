@@ -112,7 +112,7 @@ const MDCATPastPapers = () => (
         <h2 className="font-semibold mb-3">Related Resources</h2>
         <div className="flex flex-wrap gap-2">
           {[
-            { label: 'MDCAT Syllabus 2026', url: '/mdcat-syllabus-2026' },
+            { label: 'MDCAT Syllabus 2026', url: '/mdcat-syllabus' },
             { label: 'ECAT Preparation', url: '/ecat-preparation' },
             { label: 'PPSC Past Papers', url: '/ppsc-past-papers' },
             { label: 'FPSC Past Papers', url: '/fpsc-past-papers' },

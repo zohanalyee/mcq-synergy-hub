@@ -14,10 +14,10 @@ const MDCATSyllabus = () => {
     <ExamPageSchema
       name="MDCAT Syllabus 2026 — Complete Guide"
       description="Complete MDCAT 2026 syllabus with chapter-wise breakdown for Biology, Chemistry, Physics and English."
-      url="https://mcqsai.com/mdcat-syllabus-2026"
+      url="https://mcqsai.com/mdcat-syllabus"
       breadcrumbs={[
         { name: 'Home', url: 'https://mcqsai.com/' },
-        { name: "MDCAT Syllabus 2026", url: "https://mcqsai.com/mdcat-syllabus-2026" },
+        { name: "MDCAT Syllabus 2026", url: "https://mcqsai.com/mdcat-syllabus" },
       ]}
       faqs={[
         { question: "What is in the MDCAT 2026 syllabus?", answer: "MDCAT 2026 covers Biology, Chemistry, Physics, English and Logical Reasoning per PMC guidelines." },
@@ -182,7 +182,7 @@ const MDCATSyllabus = () => {
             ))}
           </div>
         </div>
-        <RelatedContent entitySlug="mdcat-syllabus-2026" title="Continue Preparing" />
+        <RelatedContent entitySlug="mdcat-syllabus" title="Continue Preparing" />
       </div>
     </>
   );
