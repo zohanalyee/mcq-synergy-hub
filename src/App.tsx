@@ -173,22 +173,23 @@ const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
 const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
 
 // Content & SEO pages
-const Blog = lazy(() => import("./pages/Blog"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const FAQ = lazy(() => import("./pages/FAQ"));
+// Content & SEO pages (eager for prerender whitelist)
+import Blog from "./pages/Blog";
+import BlogPost from "./pages/BlogPost";
+import FAQ from "./pages/FAQ";
 const StudyGuides = lazy(() => import("./pages/StudyGuides"));
-const Boards = lazy(() => import("./pages/Boards"));
-const BoardLandingPage = lazy(() => import("./pages/BoardLandingPage"));
-const BoardClassPage = lazy(() => import("./pages/BoardClassPage"));
-const BoardSubjectPage = lazy(() => import("./pages/BoardSubjectPage"));
-const BoardTopicPage = lazy(() => import("./pages/BoardTopicPage"));
-const ExamLandingPage = lazy(() => import("./pages/exams/ExamLandingPage"));
+import Boards from "./pages/Boards";
+import BoardLandingPage from "./pages/BoardLandingPage";
+import BoardClassPage from "./pages/BoardClassPage";
+import BoardSubjectPage from "./pages/BoardSubjectPage";
+import BoardTopicPage from "./pages/BoardTopicPage";
+import ExamLandingPage from "./pages/exams/ExamLandingPage";
 const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
 const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
-const ProgrammaticLandingPage = lazy(() => import("./pages/programmatic/ProgrammaticLandingPage"));
+import ProgrammaticLandingPage from "./pages/programmatic/ProgrammaticLandingPage";
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient({
