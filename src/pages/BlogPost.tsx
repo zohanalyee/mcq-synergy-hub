@@ -10,6 +10,8 @@ import { Calendar, User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
+import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
+import RelatedContent from "@/components/seo/related/RelatedContent";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -56,6 +58,11 @@ const BlogPost = () => {
         description={post.meta_description || post.excerpt || undefined}
         type="article"
       />
+      <BreadcrumbSchema items={[
+        { name: 'Home', path: '/' },
+        { name: 'Blog', path: '/blog' },
+        { name: post.title, path: `/blog/${post.slug}` },
+      ]} />
       <Header>
         <div className="max-w-3xl mx-auto px-4 py-8">
           <PageBreadcrumb
@@ -115,6 +122,8 @@ const BlogPost = () => {
               </div>
             </section>
           )}
+
+          <RelatedContent entitySlug="blog-hub" title="Continue Reading" />
         </div>
         <Footer />
       </Header>

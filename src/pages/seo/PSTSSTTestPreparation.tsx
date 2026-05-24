@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const PSTSSTTestPreparation = () => (
@@ -188,6 +189,7 @@ const PSTSSTTestPreparation = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="pst-sst-test-preparation" title="Continue Preparing" />
     </div>
   </>
 );

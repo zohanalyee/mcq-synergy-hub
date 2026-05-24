@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const NUSTEntryTest = () => (
@@ -185,6 +186,7 @@ const NUSTEntryTest = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="nust-entry-test" title="Continue Preparing" />
     </div>
   </>
 );

@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const sections = [
@@ -107,6 +108,7 @@ const PakArmyTest = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="pak-army-test" title="Continue Preparing" />
     </div>
   </>
 );

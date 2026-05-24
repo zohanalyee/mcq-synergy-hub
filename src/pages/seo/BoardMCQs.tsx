@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const BoardMCQs = () => (
@@ -216,6 +217,7 @@ const BoardMCQs = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="board-mcqs" title="Continue Preparing" />
     </div>
   </>
 );

@@ -23,6 +23,7 @@ import { supabase as supabaseClient } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 
 interface MCQOption { key: string; text: string; }
 
@@ -165,6 +166,15 @@ const BoardTopicPage = () => {
     <Header>
       <SEOHead title={seoTitle} description={seoDesc} keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`} url={canonicalUrl} />
       {quizSchema && <Helmet><script type="application/ld+json">{JSON.stringify(quizSchema)}</script></Helmet>}
+      <BreadcrumbSchema items={[
+        { name: 'Home', path: '/' },
+        { name: 'Boards', path: '/boards' },
+        { name: names.board, path: `/boards/${boardSlug}` },
+        { name: `Class ${resolvedClassNumber || classNumber}`, path: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}` },
+        { name: names.subject, path: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}` },
+        { name: names.topic, path: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${topicSlug}` },
+      ]} />
+
 
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <PageBreadcrumb items={[

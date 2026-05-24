@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const sections = [
@@ -85,6 +86,7 @@ const ASFTest = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="asf-test" title="Continue Preparing" />
     </div>
   </>
 );

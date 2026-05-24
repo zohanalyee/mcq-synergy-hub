@@ -181,6 +181,7 @@ const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage")
 const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
 const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
+const ProgrammaticLandingPage = lazy(() => import("./pages/programmatic/ProgrammaticLandingPage"));
 
 const App = () => {
   const [queryClient] = useState(() => new QueryClient({
@@ -239,6 +240,11 @@ const App = () => {
                     <Suspense fallback={<TopProgressBar />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
+
+                      {/* Programmatic SEO — curated /p/:slug landing pages */}
+                      <Route path="/p/:slug" element={<Suspense fallback={<TopProgressBar />}><ProgrammaticLandingPage /></Suspense>} />
+
+
 
                       {/* Programmatic SEO - Board Routes (most specific first) */}
                       <Route path="/boards/:boardSlug/:classNumber/:subjectSlug/:topicSlug" element={<Suspense fallback={<TopProgressBar />}><BoardTopicPage /></Suspense>} />
