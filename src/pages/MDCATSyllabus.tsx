@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const MDCATSyllabus = () => {
@@ -181,6 +182,7 @@ const MDCATSyllabus = () => {
             ))}
           </div>
         </div>
+        <RelatedContent entitySlug="mdcat-syllabus-2026" title="Continue Preparing" />
       </div>
     </>
   );

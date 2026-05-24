@@ -8,6 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { GraduationCap, MapPin, Calendar, ExternalLink, ArrowLeft, Building2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
 
 const ScholarshipDetailPage = () => {
@@ -96,6 +98,11 @@ const ScholarshipDetailPage = () => {
         url={`https://www.mcqsai.com/scholarships/${scholarshipSlug}`}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', path: '/' },
+        { name: 'Scholarships', path: '/scholarships' },
+        { name: title, path: `/scholarships/${scholarshipSlug}` },
+      ]} />
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <nav className="text-sm text-muted-foreground mb-6">
@@ -143,6 +150,8 @@ const ScholarshipDetailPage = () => {
             </a>
           </Button>
         )}
+
+        <RelatedContent entitySlug="scholarships-hub" title="Explore Related Resources" />
       </div>
       <Footer />
     </Header>

@@ -8,6 +8,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Briefcase, MapPin, Calendar, ExternalLink, ArrowLeft, Building2 } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
+import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
 
 const JobDetailPage = () => {
@@ -93,6 +95,11 @@ const JobDetailPage = () => {
         url={`https://www.mcqsai.com/jobs/${jobSlug}`}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <BreadcrumbSchema items={[
+        { name: 'Home', path: '/' },
+        { name: 'Jobs', path: '/jobs' },
+        { name: title, path: `/jobs/${jobSlug}` },
+      ]} />
 
       <div className="max-w-3xl mx-auto px-4 py-8">
         <nav className="text-sm text-muted-foreground mb-6">
@@ -140,6 +147,8 @@ const JobDetailPage = () => {
             </a>
           </Button>
         )}
+
+        <RelatedContent entitySlug="jobs-hub" title="Prepare for the Test" />
       </div>
       <Footer />
     </Header>
