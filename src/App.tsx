@@ -6,10 +6,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // SSR-safe Router: during prerender (Node, no window) the prerender entry
 // already provides a <StaticRouter>, so we render a passthrough fragment to
 // avoid BrowserRouter touching `document`/`window.history` at render time.
-const Router: React.FC<{ children: React.ReactNode }> =
-  typeof window === 'undefined'
-    ? ({ children }) => <>{children}</>
-    : ({ children }) => <BrowserRouter>{children}</BrowserRouter>;
+const Router = ({ children }: { children: React.ReactNode }) =>
+  typeof window === 'undefined' ? <>{children}</> : <BrowserRouter>{children}</BrowserRouter>;
 import { useState, lazy, Suspense, useEffect } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
