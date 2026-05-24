@@ -7,7 +7,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 // already provides a <StaticRouter>, so we render a passthrough fragment to
 // avoid BrowserRouter touching `document`/`window.history` at render time.
 const Router = ({ children }: { children: React.ReactNode }) =>
-  typeof window === 'undefined' ? <>{children}</> : <BrowserRouter>{children}</BrowserRouter>;
+  (typeof window === 'undefined' || (globalThis as any).__PRERENDER__)
+    ? <>{children}</>
+    : <BrowserRouter>{children}</BrowserRouter>;
 import { useState, lazy, Suspense, useEffect } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
