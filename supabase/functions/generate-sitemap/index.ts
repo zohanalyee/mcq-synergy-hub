@@ -280,6 +280,17 @@ function generateStaticSitemap(): string {
     { loc: "/tenders", priority: "0.7", freq: "weekly" },
     { loc: "/board-results", priority: "0.8", freq: "weekly" },
     { loc: "/ask-document", priority: "0.7", freq: "monthly" },
+    // Programmatic SEO — curated city/subject combinations (Phase 2C)
+    { loc: "/p/mdcat-karachi", priority: "0.8", freq: "monthly" },
+    { loc: "/p/mdcat-sindh", priority: "0.8", freq: "monthly" },
+    { loc: "/p/mdcat-islamabad", priority: "0.8", freq: "monthly" },
+    { loc: "/p/nts-karachi", priority: "0.7", freq: "monthly" },
+    { loc: "/p/nts-lahore", priority: "0.7", freq: "monthly" },
+    { loc: "/p/css-islamabad", priority: "0.8", freq: "monthly" },
+    { loc: "/p/fpsc-islamabad", priority: "0.7", freq: "monthly" },
+    { loc: "/p/ppsc-lahore", priority: "0.8", freq: "monthly" },
+    { loc: "/p/ecat-punjab", priority: "0.8", freq: "monthly" },
+    { loc: "/p/biology-mcqs-class-12", priority: "0.8", freq: "monthly" },
   ];
 
   const urls = pages.map(
