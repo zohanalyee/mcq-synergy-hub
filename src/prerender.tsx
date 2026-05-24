@@ -1,18 +1,19 @@
 // Prerender entry point — used only when PRERENDER=true at build time.
-// IMPORTANT: shims MUST be the first import so DOM globals exist before
-// any component module (which may touch document/localStorage at top level)
-// is evaluated.
+// Strategy: set up Node-side browser API shims SYNCHRONOUSLY first, then
+// dynamic-import App so its module-init document/window access is safe.
 import './prerender-shims';
-
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
 import { HelmetProvider } from 'react-helmet-async';
-import App from './App';
 import './index.css';
 
 export async function prerender(data: { url: string }) {
   const helmetContext: any = {};
   (globalThis as any).__PRERENDER_URL__ = data.url;
+
+  // Dynamic import ensures App's transitive component modules evaluate AFTER
+  // shims (which ran at the top of this file via static import).
+  const { default: App } = await import('./App');
 
   const html = renderToString(
     <HelmetProvider context={helmetContext}>
