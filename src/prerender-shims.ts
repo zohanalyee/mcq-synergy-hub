@@ -56,6 +56,10 @@ if (typeof g.navigator === 'undefined') {
   g.navigator = { userAgent: 'node-prerender', language: 'en' };
 }
 
+// Expose `window` last so component code that does `typeof window !== 'undefined'`
+// will see one and use the shimmed APIs above (rather than bare ReferenceError).
+if (!hadWindow) g.window = g;
+
 g.__PRERENDER__ = true;
 
 export {};
