@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import SEOHead from '@/components/SEOHead';
+import { QuizSchema } from '@/components/seo/schemas';
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -257,6 +258,15 @@ const Quizzes = () => {
         title="Free MCQ Quizzes with Answers 2026 — NTS, FPSC, MDCAT"
         description="Free MCQ quizzes with answers for NTS, FPSC, PPSC, MDCAT, ECAT, Matric & FSc. 10,000+ questions with instant feedback. No signup needed — MCQsAI Pakistan."
         keywords="online quiz Pakistan, MCQ quiz with answers, NTS quiz, FPSC quiz, MDCAT quiz, ECAT quiz, free practice test 2026"
+        url="https://mcqsai.com/quizzes"
+      />
+      <QuizSchema
+        name="Free MCQ Quizzes — NTS, FPSC, MDCAT, ECAT"
+        description="Topic and subject-wise MCQ quizzes with instant answers and explanations across Pakistani competitive exams."
+        url="https://mcqsai.com/quizzes"
+        numQuestions={10000}
+        educationalLevel="Secondary, Higher Secondary, Competitive"
+        about="Pakistani competitive exams"
       />
       <div className="container mx-auto px-4 pt-6 pb-10">
         <PageHeader
