@@ -28,6 +28,34 @@ if (typeof g.window === 'undefined') {
     addEventListener: () => {}, removeEventListener: () => {},
     dispatchEvent: () => false,
   });
+  // Inert document shim — covers component module-level access. The actual
+  // SSR output is produced by react-dom/server (string), not by touching the DOM.
+  if (typeof g.document === 'undefined') {
+    const noop = () => {};
+    const elStub: any = {
+      style: {}, classList: { add: noop, remove: noop, toggle: noop, contains: () => false },
+      setAttribute: noop, removeAttribute: noop, getAttribute: () => null,
+      appendChild: (x: any) => x, removeChild: (x: any) => x, addEventListener: noop, removeEventListener: noop,
+      querySelector: () => null, querySelectorAll: () => [],
+    };
+    g.document = {
+      documentElement: elStub,
+      body: elStub,
+      head: elStub,
+      createElement: () => ({ ...elStub }),
+      createTextNode: (t: string) => ({ nodeValue: t }),
+      getElementById: () => null,
+      getElementsByTagName: () => [],
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      addEventListener: noop, removeEventListener: noop,
+      cookie: '',
+      readyState: 'complete',
+    };
+  }
+  if (typeof g.navigator === 'undefined') {
+    g.navigator = { userAgent: 'node-prerender', language: 'en' };
+  }
 }
 
 import { renderToString } from 'react-dom/server';
