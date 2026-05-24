@@ -2,6 +2,34 @@
 // Renders the app to a static HTML string per route. Anonymous-only:
 // auth/session state is forced to logged-out so JSX matches the eventual
 // hydration on the client (where the real session loads after mount).
+
+// --- Minimal browser-API shims for Node-side prerender ---
+// Many components touch `localStorage`/`sessionStorage`/`matchMedia` at render
+// time. Rather than refactor every one, we provide inert in-memory shims so
+// the static render is crash-safe. Real browser APIs replace these at hydration.
+const g: any = globalThis as any;
+if (typeof g.window === 'undefined') {
+  const memStore = () => {
+    const m = new Map<string, string>();
+    return {
+      getItem: (k: string) => (m.has(k) ? m.get(k)! : null),
+      setItem: (k: string, v: string) => { m.set(k, String(v)); },
+      removeItem: (k: string) => { m.delete(k); },
+      clear: () => m.clear(),
+      key: (i: number) => Array.from(m.keys())[i] ?? null,
+      get length() { return m.size; },
+    };
+  };
+  g.localStorage = memStore();
+  g.sessionStorage = memStore();
+  g.matchMedia = (q: string) => ({
+    matches: false, media: q, onchange: null,
+    addListener: () => {}, removeListener: () => {},
+    addEventListener: () => {}, removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+}
+
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
 import { HelmetProvider } from 'react-helmet-async';
@@ -9,19 +37,14 @@ import App from './App';
 import './index.css';
 
 // Flag consumed by context providers to short-circuit browser-only side effects
-// (window/localStorage/Supabase auth listeners) during static render.
 (globalThis as any).__PRERENDER__ = true;
 
 export async function prerender(data: { url: string }) {
   const helmetContext: any = {};
-  // App already mounts BrowserRouter internally; for prerender we wrap with
-  // StaticRouter via a side-channel. Simpler: rely on App's own router which
-  // reads window.location — at prerender time we set it via globalThis.
   (globalThis as any).__PRERENDER_URL__ = data.url;
 
   const html = renderToString(
     <HelmetProvider context={helmetContext}>
-      {/* StaticRouter wins because App's BrowserRouter is replaced via env check */}
       <StaticRouter location={data.url}>
         <App />
       </StaticRouter>

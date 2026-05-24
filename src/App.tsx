@@ -2,7 +2,12 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+// SSR-safe Router: during prerender (Node, no window) the prerender entry
+// already provides a <StaticRouter>, so we render a passthrough fragment to
+// avoid BrowserRouter touching `document`/`window.history` at render time.
+const Router = ({ children }: { children: React.ReactNode }) =>
+  typeof window === 'undefined' ? <>{children}</> : <BrowserRouter>{children}</BrowserRouter>;
 import { useState, lazy, Suspense, useEffect } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
