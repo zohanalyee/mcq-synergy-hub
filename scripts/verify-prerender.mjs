@@ -5,8 +5,8 @@ import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const DIST = join(process.cwd(), 'dist');
-if (!existsSync(DIST) || process.env.PRERENDER !== 'true') {
-  console.log('[verify-prerender] skipped (PRERENDER not enabled)');
+if (!existsSync(DIST)) {
+  console.log('[verify-prerender] skipped (no dist/)');
   process.exit(0);
 }
 
