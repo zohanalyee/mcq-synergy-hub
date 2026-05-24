@@ -405,6 +405,7 @@ const App = () => {
                       <Route path="/contact" element={<Suspense fallback={<TopProgressBar />}><Contact /></Suspense>} />
                       <Route path="/privacy-policy" element={<Suspense fallback={<TopProgressBar />}><PrivacyPolicy /></Suspense>} />
                       <Route path="/terms-of-service" element={<Suspense fallback={<TopProgressBar />}><TermsOfService /></Suspense>} />
+                      <Route path="/editorial-policy" element={<Suspense fallback={<TopProgressBar />}><EditorialPolicy /></Suspense>} />
                       
                       <Route path="*" element={<NotFound />} />
                     </Routes>
