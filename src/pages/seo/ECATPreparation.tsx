@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const sections = [
@@ -105,6 +106,7 @@ const ECATPreparation = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="ecat-preparation" title="Continue Preparing" />
     </div>
   </>
 );

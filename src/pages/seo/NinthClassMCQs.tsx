@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const NinthClassMCQs = () => (
@@ -275,6 +276,7 @@ const NinthClassMCQs = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="9th-class-mcqs" title="Continue Preparing" />
     </div>
   </>
 );

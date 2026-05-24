@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const forces = [
@@ -111,6 +112,7 @@ const ForcesJobsTests = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="forces-jobs-tests" title="Continue Preparing" />
     </div>
   </>
 );

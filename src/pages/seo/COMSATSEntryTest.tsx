@@ -1,5 +1,6 @@
 import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
+import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
 const COMSATSEntryTest = () => (
@@ -168,6 +169,7 @@ const COMSATSEntryTest = () => (
           ))}
         </div>
       </div>
+      <RelatedContent entitySlug="comsats-entry-test" title="Continue Preparing" />
     </div>
   </>
 );
