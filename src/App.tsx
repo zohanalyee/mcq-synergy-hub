@@ -67,7 +67,7 @@ const VerifyEmailSent = lazy(() => import("./pages/VerifyEmailSent"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 
-const Quizzes = lazy(() => import("./pages/Quizzes"));
+import Quizzes from "./pages/Quizzes";
 const QuizPlayer = lazy(() => import("./pages/QuizPlayer"));
 const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
