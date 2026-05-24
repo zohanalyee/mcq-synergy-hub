@@ -3,7 +3,8 @@
 // access to `document`/`window`/`localStorage` does not crash SSR.
 const g: any = globalThis as any;
 
-if (typeof g.window === 'undefined') {
+const hadWindow = typeof g.window !== 'undefined';
+if (!hadWindow) {
   const memStore = () => {
     const m = new Map<string, string>();
     return {
