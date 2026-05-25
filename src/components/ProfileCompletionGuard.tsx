@@ -26,6 +26,11 @@ const ALLOWED_ROUTES = [
 ];
 
 const ProfileCompletionGuard = ({ children }: ProfileCompletionGuardProps) => {
+  // SSR/prerender bypass: render children directly so crawlers see real page
+  // content instead of the auth loading shell.
+  if (typeof window === 'undefined' || (globalThis as any).__PRERENDER__) {
+    return <>{children}</>;
+  }
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
