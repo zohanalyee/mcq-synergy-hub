@@ -26,7 +26,11 @@ const GlobalCanonical = () => {
   const canonical = `https://www.mcqsai.com${p}`;
 
   return (
-    <Helmet prioritizeSeoTags>
+    // NOTE: do NOT use `prioritizeSeoTags` — react-helmet-async@2.0.4 has a
+    // bug where enabling it on any Helmet in the tree empties helmet.link
+    // and helmet.script outputs across the entire app (canonical + JSON-LD
+    // disappear from SSR). Order does not matter for crawlers anyway.
+    <Helmet>
       <link rel="canonical" href={canonical} />
       <meta property="og:url" content={canonical} />
       <meta name="twitter:url" content={canonical} />
