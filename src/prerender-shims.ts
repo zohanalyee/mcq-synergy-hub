@@ -55,9 +55,10 @@ if (typeof g.document === 'undefined') {
   };
 }
 
-if (typeof g.navigator === 'undefined') {
-  g.navigator = { userAgent: 'node-prerender', language: 'en', maxTouchPoints: 0, hardwareConcurrency: 4 };
-}
+// Node 22+ has a read-only `navigator` on globalThis. We cannot overwrite it,
+// but we can READ from it; that's enough for libraries doing feature detection.
+const _nav: any = (typeof g.navigator !== 'undefined' && g.navigator) || { userAgent: 'node-prerender', language: 'en' };
+try { _nav.maxTouchPoints = _nav.maxTouchPoints ?? 0; _nav.hardwareConcurrency = _nav.hardwareConcurrency ?? 4; } catch {}
 
 // Minimal `window` shim. We initially avoided defining window so framer-motion
 // would take its SSR branch — but the bundled prerender chunk references
