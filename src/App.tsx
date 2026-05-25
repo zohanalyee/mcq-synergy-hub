@@ -113,8 +113,8 @@ const GPACalculator = lazy(() => import("./pages/tools/GPACalculator"));
 const UnitConverter = lazy(() => import("./pages/tools/UnitConverter"));
 const NotesTool = lazy(() => import("./pages/tools/NotesTool"));
 
-// Tools listing page
-const Tools = lazy(() => import("./pages/Tools"));
+// Tools listing page — eager for SSR prerender
+import Tools from "./pages/Tools";
 
 // Lazy-loaded new tool pages
 const BMICalculator = lazy(() => import("./pages/tools/BMICalculator"));
