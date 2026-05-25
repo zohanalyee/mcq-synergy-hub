@@ -72,7 +72,7 @@ const ProfileCompletionGuard = ({ children }: ProfileCompletionGuardProps) => {
     check();
   }, [user, loading, location.pathname, navigate]);
 
-  if (loading || checking) {
+  if (!IS_SSR && (loading || checking)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <BrandingLoader message="Checking profile..." size="sm" inline />
