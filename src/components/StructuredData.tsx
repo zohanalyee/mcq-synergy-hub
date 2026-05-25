@@ -1,4 +1,5 @@
 import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
 
 interface ExamPageSchemaProps {
   name: string;
@@ -80,6 +81,11 @@ const ORG_ID = `${ORIGIN}/#organization`;
 const SITE_ID = `${ORIGIN}/#website`;
 
 const StructuredData = () => {
+  const { pathname } = useLocation();
+  // Only emit the generic site-wide FAQPage on the homepage to avoid
+  // duplicate FAQPage schema on routes that ship their own (e.g.
+  // /mdcat-syllabus, /faq, /exams/*, /p/*, all SEO landing pages).
+  const includeGlobalFaq = pathname === '/';
   const organizationSchema = {
     '@context': 'https://schema.org',
     '@type': 'EducationalOrganization',
@@ -170,7 +176,9 @@ const StructuredData = () => {
     <Helmet>
       <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
       <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>
-      <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+      {includeGlobalFaq && (
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+      )}
     </Helmet>
   );
 };
