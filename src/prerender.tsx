@@ -1,37 +1,89 @@
 // Prerender entry point — used only when PRERENDER=true at build time.
-// Strategy: set up Node-side browser API shims SYNCHRONOUSLY first, then
-// dynamic-import App so its module-init document/window access is safe.
 import './prerender-shims';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
 import { HelmetProvider } from 'react-helmet-async';
 import './index.css';
 
+/**
+ * Parse a Helmet-emitted HTML string (e.g. '<title data-rh="true">X</title><meta data-rh="true" name="description" content="...">')
+ * into an array of {type, props, children} elements consumed by vite-prerender-plugin.
+ */
+function parseHelmetHtml(html: string): Array<{ type: string; props: Record<string, string>; children?: string }> {
+  const out: Array<{ type: string; props: Record<string, string>; children?: string }> = [];
+  if (!html) return out;
+  const parseAttrs = (s: string) => {
+    const props: Record<string, string> = {};
+    const attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s/>]+)))?/g;
+    let a: RegExpExecArray | null;
+    while ((a = attrRe.exec(s)) !== null) {
+      const name = a[1];
+      if (name === 'data-rh' || name === 'data-react-helmet') continue;
+      props[name] = a[2] ?? a[3] ?? a[4] ?? '';
+    }
+    return props;
+  };
+  // Void elements
+  const voidRe = /<(meta|link|base)\b([^>]*?)\/?>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = voidRe.exec(html)) !== null) {
+    out.push({ type: m[1].toLowerCase(), props: parseAttrs(m[2]) });
+  }
+  // Paired elements
+  const pairRe = /<(title|script|style)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  while ((m = pairRe.exec(html)) !== null) {
+    out.push({ type: m[1].toLowerCase(), props: parseAttrs(m[2]), children: m[3] });
+  }
+  return out;
+}
+
+
 export async function prerender(data: { url: string }) {
-  const helmetContext: any = {};
+  const helmetContext: { helmet?: any } = {};
   (globalThis as any).__PRERENDER_URL__ = data.url;
+  (globalThis as any).__PRERENDER__ = true;
 
-  // Dynamic import ensures App's transitive component modules evaluate AFTER
-  // shims (which ran at the top of this file via static import).
-  const { default: App } = await import('./App');
+  let App: any;
+  try {
+    App = (await import('./App')).default;
+  } catch (err) {
+    console.error(`[prerender] FAILED loading App for ${data.url}:`, err);
+    throw err;
+  }
 
-  const html = renderToString(
-    <HelmetProvider context={helmetContext}>
-      <StaticRouter location={data.url}>
-        <App />
-      </StaticRouter>
-    </HelmetProvider>
-  );
+  let html = '';
+  try {
+    html = renderToString(
+      <HelmetProvider context={helmetContext}>
+        <StaticRouter location={data.url}>
+          <App />
+        </StaticRouter>
+      </HelmetProvider>
+    );
+  } catch (err) {
+    const e = err as Error;
+    console.error(`[prerender] RENDER FAILED ${data.url}: ${e.message}\n${e.stack}`);
+    throw err;
+  }
 
+  const elements = new Set<any>();
   const { helmet } = helmetContext;
-  const head = helmet
-    ? [
-        helmet.title?.toString() ?? '',
-        helmet.meta?.toString() ?? '',
-        helmet.link?.toString() ?? '',
-        helmet.script?.toString() ?? '',
-      ].join('\n')
-    : '';
+  if (helmet) {
+    const sources = [
+      helmet.title?.toString?.() ?? '',
+      helmet.meta?.toString?.() ?? '',
+      helmet.link?.toString?.() ?? '',
+      helmet.script?.toString?.() ?? '',
+      helmet.style?.toString?.() ?? '',
+      helmet.base?.toString?.() ?? '',
+    ].join('');
+    for (const el of parseHelmetHtml(sources)) elements.add(el);
+    if (!sources || elements.size === 0) {
+      console.warn(`[prerender] WARN ${data.url}: Helmet produced no head tags`);
+    }
+  } else {
+    console.warn(`[prerender] WARN ${data.url}: helmetContext.helmet is undefined`);
+  }
 
-  return { html, head: { elements: new Set([{ type: 'raw', value: head }]) } };
+  return { html, head: { elements } };
 }
