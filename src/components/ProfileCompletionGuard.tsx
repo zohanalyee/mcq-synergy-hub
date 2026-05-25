@@ -25,6 +25,8 @@ const ALLOWED_ROUTES = [
   '/verify-email-sent',
 ];
 
+const IS_SSR = typeof window === 'undefined' || !!(globalThis as any).__PRERENDER__;
+
 const ProfileCompletionGuard = ({ children }: ProfileCompletionGuardProps) => {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -70,7 +72,7 @@ const ProfileCompletionGuard = ({ children }: ProfileCompletionGuardProps) => {
     check();
   }, [user, loading, location.pathname, navigate]);
 
-  if (loading || checking) {
+  if (!IS_SSR && (loading || checking)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <BrandingLoader message="Checking profile..." size="sm" inline />
