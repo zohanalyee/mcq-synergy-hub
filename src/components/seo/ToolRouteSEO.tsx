@@ -57,7 +57,8 @@ const ToolRouteSEO = () => {
   };
 
   return (
-    <Helmet prioritizeSeoTags>
+    <Helmet>
+{/* prioritizeSeoTags removed — broken in react-helmet-async@2.0.4 (drops link+script). */}
       <title>{title}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
