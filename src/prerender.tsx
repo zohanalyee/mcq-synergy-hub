@@ -12,28 +12,31 @@ import './index.css';
 function parseHelmetHtml(html: string): Array<{ type: string; props: Record<string, string>; children?: string }> {
   const out: Array<{ type: string; props: Record<string, string>; children?: string }> = [];
   if (!html) return out;
-  // Match self-closing & paired tags. Captures: 1=tag 2=attrs 3=innerHTML(optional)
-  const tagRe = /<(title|meta|link|script|style|base)([^>]*?)(?:\/?>([\s\S]*?)<\/\1>|\/?>)/gi;
-  let m: RegExpExecArray | null;
-  while ((m = tagRe.exec(html)) !== null) {
-    const type = m[1].toLowerCase();
-    const attrStr = m[2] || '';
-    const children = m[3];
+  const parseAttrs = (s: string) => {
     const props: Record<string, string> = {};
-    const attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+    const attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s/>]+)))?/g;
     let a: RegExpExecArray | null;
-    while ((a = attrRe.exec(attrStr)) !== null) {
+    while ((a = attrRe.exec(s)) !== null) {
       const name = a[1];
       if (name === 'data-rh' || name === 'data-react-helmet') continue;
-      const value = a[2] ?? a[3] ?? a[4] ?? '';
-      props[name] = value;
+      props[name] = a[2] ?? a[3] ?? a[4] ?? '';
     }
-    const el: { type: string; props: Record<string, string>; children?: string } = { type, props };
-    if (children != null && children.length) el.children = children;
-    out.push(el);
+    return props;
+  };
+  // Void elements
+  const voidRe = /<(meta|link|base)\b([^>]*?)\/?>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = voidRe.exec(html)) !== null) {
+    out.push({ type: m[1].toLowerCase(), props: parseAttrs(m[2]) });
+  }
+  // Paired elements
+  const pairRe = /<(title|script|style)\b([^>]*)>([\s\S]*?)<\/\1>/gi;
+  while ((m = pairRe.exec(html)) !== null) {
+    out.push({ type: m[1].toLowerCase(), props: parseAttrs(m[2]), children: m[3] });
   }
   return out;
 }
+
 
 export async function prerender(data: { url: string }) {
   const helmetContext: { helmet?: any } = {};
