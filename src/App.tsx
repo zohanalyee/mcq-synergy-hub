@@ -47,8 +47,8 @@ const MockTests = lazy(() => import("./pages/MockTests"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const PastPapers = lazy(() => import("./pages/PastPapers"));
-const Jobs = lazy(() => import("./pages/Jobs"));
-const Scholarships = lazy(() => import("./pages/Scholarships"));
+import Jobs from "./pages/Jobs";
+import Scholarships from "./pages/Scholarships";
 const CustomSyllabus = lazy(() => import("./pages/CustomSyllabus"));
 const SubjectContent = lazy(() => import("./pages/SubjectContent"));
 const CustomQuizzes = lazy(() => import("./pages/CustomQuizzes"));
@@ -113,8 +113,8 @@ const GPACalculator = lazy(() => import("./pages/tools/GPACalculator"));
 const UnitConverter = lazy(() => import("./pages/tools/UnitConverter"));
 const NotesTool = lazy(() => import("./pages/tools/NotesTool"));
 
-// Tools listing page
-const Tools = lazy(() => import("./pages/Tools"));
+// Tools listing page — eager for SSR prerender
+import Tools from "./pages/Tools";
 
 // Lazy-loaded new tool pages
 const BMICalculator = lazy(() => import("./pages/tools/BMICalculator"));
