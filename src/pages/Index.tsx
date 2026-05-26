@@ -35,7 +35,11 @@ import {
   LayoutGrid,
   ListChecks,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  GraduationCap,
+  FileText,
+  Landmark,
+  ShieldAlert
 } from 'lucide-react';
 
 // Stagger container variants
