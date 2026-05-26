@@ -147,6 +147,9 @@ const QRGenerator = () => {
               <Button onClick={share} variant="outline" className="gap-2" disabled={!dataUrl}>
                 <Share2 className="h-4 w-4" /> Share
               </Button>
+              <Button onClick={copyShareLink} variant="outline" className="gap-2">
+                <Link2 className="h-4 w-4" /> Copy link
+              </Button>
               <CopyButton text={text} />
             </div>
             <p className="text-xs text-muted-foreground text-center max-w-md">
