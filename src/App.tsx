@@ -159,6 +159,7 @@ const WorldClock = lazy(() => import("./pages/tools/WorldClock"));
 const WordCounter = lazy(() => import("./pages/tools/WordCounter"));
 const CharacterCounter = lazy(() => import("./pages/tools/CharacterCounter"));
 const QRGenerator = lazy(() => import("./pages/tools/QRGenerator"));
+const QRScanner = lazy(() => import("./pages/tools/QRScanner"));
 const PasswordGenerator = lazy(() => import("./pages/tools/PasswordGenerator"));
 const NameGenerator = lazy(() => import("./pages/tools/NameGenerator"));
 const ColorPicker = lazy(() => import("./pages/tools/ColorPicker"));
@@ -392,6 +393,7 @@ const App = () => {
                       <Route path="/tools/word-counter" element={<Suspense fallback={<TopProgressBar />}><WordCounter /></Suspense>} />
                       <Route path="/tools/character-counter" element={<Suspense fallback={<TopProgressBar />}><CharacterCounter /></Suspense>} />
                       <Route path="/tools/qr-generator" element={<Suspense fallback={<TopProgressBar />}><QRGenerator /></Suspense>} />
+                      <Route path="/tools/qr-scanner" element={<Suspense fallback={<TopProgressBar />}><QRScanner /></Suspense>} />
                       <Route path="/tools/password-generator" element={<Suspense fallback={<TopProgressBar />}><PasswordGenerator /></Suspense>} />
                       <Route path="/tools/name-generator" element={<Suspense fallback={<TopProgressBar />}><NameGenerator /></Suspense>} />
                       <Route path="/tools/color-picker" element={<Suspense fallback={<TopProgressBar />}><ColorPicker /></Suspense>} />
