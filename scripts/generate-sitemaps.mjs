@@ -118,6 +118,19 @@ const TOOL_PATHS = [
   "/tools/random-number","/tools/equation-solver",
 ];
 
+// Programmatic SEO /p/* slugs — mirrors indexableProgSeoSlugs() in src/data/programmaticSeo.ts
+const PROG_SEO_SLUGS = [
+  "mdcat-karachi","mdcat-sindh","mdcat-islamabad",
+  "nts-karachi","nts-lahore","nts-islamabad",
+  "css-islamabad","css-karachi",
+  "fpsc-islamabad","fpsc-karachi",
+  "ppsc-lahore","ppsc-punjab",
+  "ecat-punjab","ecat-lahore",
+  "mdcat-lahore","mdcat-punjab",
+  "biology-mcqs-class-12","biology-mcqs-class-11",
+  "chemistry-mcqs-class-12","physics-mcqs-class-12",
+];
+
 const EXAM_SLUGS = ["mdcat","ecat","css","ppsc","fpsc","nts"];
 
 function writeStatic() {
