@@ -143,6 +143,8 @@ const Blog = () => {
               ))}
             </div>
           )}
+
+          <RelatedContent entitySlug="blog-hub" title="Related Exam Prep" limit={6} />
         </div>
         <Footer />
       </Header>
