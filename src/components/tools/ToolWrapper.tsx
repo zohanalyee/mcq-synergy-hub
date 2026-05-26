@@ -131,6 +131,23 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         </Card>
       )}
 
+      {/* FAQ */}
+      {faq.length > 0 && (
+        <Card className="border-border/50">
+          <CardContent className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-3">Frequently Asked Questions</h2>
+            <div className="space-y-3">
+              {faq.map((f, i) => (
+                <details key={i} className="group rounded-lg border border-border/50 p-3 open:bg-accent/20">
+                  <summary className="cursor-pointer text-sm font-medium text-foreground">{f.q}</summary>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.a}</p>
+                </details>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* MCQ CTA */}
       <Card className="border-primary/20 bg-primary/5">
         <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

@@ -19,6 +19,7 @@ export interface ToolDefinition {
   href: string;
   seoDescription?: string;
   howToUse?: string[];
+  faq?: { q: string; a: string }[];
 }
 
 export const TOOL_CATEGORIES = [
