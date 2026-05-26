@@ -6,7 +6,7 @@ import SEOHead from '@/components/SEOHead';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
-import { getProgEntry } from '@/data/programmaticSeo';
+import { getProgEntry, isProgEntryIndexable } from '@/data/programmaticSeo';
 import { Card, CardContent } from '@/components/ui/card';
 import { ArrowRight, MapPin, GraduationCap, FileText, Calendar } from 'lucide-react';
 
@@ -41,6 +41,7 @@ const ProgrammaticLandingPage = () => {
     dateModified: entry.lastUpdated,
   };
 
+  const allowIndex = isProgEntryIndexable(entry);
   return (
     <Header>
       <SEOHead
@@ -48,8 +49,9 @@ const ProgrammaticLandingPage = () => {
         description={entry.metaDescription}
         keywords={entry.keywords}
         url={url}
-        noindex={!entry.indexable}
+        noindex={!allowIndex}
       />
+
       <BreadcrumbSchema items={[
         { name: 'Home', path: '/' },
         { name: 'Guides', path: '/p' },

@@ -118,6 +118,19 @@ const TOOL_PATHS = [
   "/tools/random-number","/tools/equation-solver",
 ];
 
+// Programmatic SEO /p/* slugs — mirrors indexableProgSeoSlugs() in src/data/programmaticSeo.ts
+const PROG_SEO_SLUGS = [
+  "mdcat-karachi","mdcat-sindh","mdcat-islamabad",
+  "nts-karachi","nts-lahore","nts-islamabad",
+  "css-islamabad","css-karachi",
+  "fpsc-islamabad","fpsc-karachi",
+  "ppsc-lahore","ppsc-punjab",
+  "ecat-punjab","ecat-lahore",
+  "mdcat-lahore","mdcat-punjab",
+  "biology-mcqs-class-12","biology-mcqs-class-11",
+  "chemistry-mcqs-class-12","physics-mcqs-class-12",
+];
+
 const EXAM_SLUGS = ["mdcat","ecat","css","ppsc","fpsc","nts"];
 
 function writeStatic() {
@@ -133,6 +146,11 @@ function writeTools() {
 function writeExams() {
   write("exams.xml", urlSet(EXAM_SLUGS.map(s => ({
     loc: `${BASE_URL}/exams/${s}`, lastmod: today, freq: "monthly", priority: "0.8",
+  }))));
+}
+function writeProgSeo() {
+  write("programmatic.xml", urlSet(PROG_SEO_SLUGS.map(s => ({
+    loc: `${BASE_URL}/p/${s}`, lastmod: today, freq: "monthly", priority: "0.7",
   }))));
 }
 
@@ -189,7 +207,7 @@ async function buildBoards() {
 
 function writeIndex(boardPages) {
   const entries = [
-    "static.xml", "tools.xml", "exams.xml",
+    "static.xml", "tools.xml", "exams.xml", "programmatic.xml",
     "jobs.xml", "scholarships.xml", "blog.xml",
     ...Array.from({ length: boardPages }, (_, i) => `boards-${i + 1}.xml`),
   ].map(name =>
@@ -209,6 +227,7 @@ ${entries.join("\n")}
   writeStatic();
   writeTools();
   writeExams();
+  writeProgSeo();
 
   let boardPages = 1;
 

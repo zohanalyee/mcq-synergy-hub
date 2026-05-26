@@ -1,133 +1,135 @@
-# Phase 2E → 2F → 2G Roadmap
+# Phase 2F — Core Web Vitals + SEO Growth
 
-Sequential plan. Each phase ships independently and is verifiable before moving on.
-
----
-
-## Phase 2E — Real Prerender Output (HIGHEST PRIORITY)
-
-**Goal:** `view-source:` on whitelisted SEO routes shows real `<title>`, `<h1>`, body copy, internal links, and JSON-LD — not an empty `<div id="root">`.
-
-### Step 1 — Identify offending browser-API access at module load
-Sweep the eager-imported SEO route tree for top-level `window`, `document`, `localStorage`, `sessionStorage`, `navigator`, `matchMedia` access. Start points:
-- `src/pages/Index.tsx`, `Quizzes.tsx`, `Blog.tsx`, `About.tsx`, `Contact.tsx`, `FAQ.tsx`, `Reviews.tsx`, `Boards.tsx`, `MDCATSyllabus.tsx`
-- `src/pages/exams/ExamLandingPage.tsx`
-- `src/pages/seo/*` (17 landing pages)
-- `src/pages/programmatic/ProgrammaticLandingPage.tsx`
-- Every context provider mounted in `App.tsx` (`AuthContext`, `AppearanceContext`, `LanguageContext`, `LearningContext`, `LoadingContext`, `UserRoleContext`, `DeviceCapabilityContext`, `FloatingToolsContext`)
-- `src/hooks/useScrollDirection.ts`, `use-mobile.tsx`, `useDeviceCapability.ts`
-- `src/lib/queryPersister.ts`, `prefetchRoutes.ts`, `guestSession.ts`, `agentQueue.ts`
-- `src/utils/analytics.ts`
-
-Tool: `rg -n "^[^/]*\b(window|document|localStorage|sessionStorage|matchMedia|navigator)\b" src --type=ts --type=tsx` plus targeted reads.
-
-### Step 2 — Guard each offender
-Wrap with `typeof window !== 'undefined'` (or `typeof document !== 'undefined'`). Pattern:
-```ts
-const initial = typeof window !== 'undefined' ? window.localStorage.getItem('x') : null;
-```
-For hooks/effects, move access inside `useEffect` (already client-only). For context defaults, return SSR-safe defaults when `globalThis.__PRERENDER__` is true.
-
-### Step 3 — Tighten prerender shims
-Keep `src/prerender-shims.ts` minimal but ensure `document` shim covers anything libraries touch at import time (e.g., `document.documentElement.classList` from theme providers). Still **no `window` global** — framer-motion etc. must take their SSR branch.
-
-### Step 4 — Re-enable prerender for production
-`vite.config.ts`: `(process.env.PRERENDER === 'true' || mode === 'production') && vitePrerenderPlugin({...})`. Keep current whitelist untouched.
-
-### Step 5 — Strengthen `verify-prerender`
-Currently soft-fails (`process.exit(0)`). Upgrade to:
-- Hard-fail when `<div id="root">` content length < 500 chars (catches empty shells).
-- Require `<h1` AND `application/ld+json` per whitelisted route.
-- Exit 1 on any failure so CI catches regressions.
-
-### Step 6 — Manual verification
-`view-source:` on `/`, `/quizzes`, `/mdcat-syllabus`, `/exams/mdcat`, `/blog`, `/reviews` — confirm title, H1, paragraphs, canonical, JSON-LD all present pre-hydration.
-
-**Out of scope:** auth, Supabase client, dashboard, admin, AI edge functions, routing logic.
+Scope-locked: no changes to auth, Supabase, RLS, dashboards, AI systems, branding, routing, or EEAT schema architecture. UI/UX visually identical.
 
 ---
 
-## Phase 2F — Core Web Vitals & Mobile Performance
+## A. Core Web Vitals (priority 1)
 
-**Goal:** Lift mobile LCP / CLS / INP on Pakistan 3G–4G. Measured via Lighthouse mobile + PageSpeed Insights on `/`, `/mdcat-syllabus`, top opportunity detail page (currently 56 views/day).
+**Audit targets:** `/`, `/mdcat-syllabus`, `/p/mdcat-karachi`, `/jobs`
 
-### Step 1 — Audit baseline
-Run `browser--performance_profile` on `/` and `/mdcat-syllabus`. Capture LCP element, longest task, CLS sources, total JS bytes per route.
+1. **LCP image optimization**
+  - Identify hero/LCP image on each target page (likely `src/pages/Index.tsx` hero, programmatic page hero, jobs banner).
+  - Convert hero JPG/PNG sources to AVIF + WebP via `vite-imagetools` (add plugin to `vite.config.ts`).
+  - Add explicit `width`/`height`, `fetchpriority="high"`, `decoding="async"` on hero `<img>`.
+  - Add `<link rel="preload" as="image">` for the single sitewide hero in `index.html` (only if same hero across landing).
+2. **Below-fold lazy loading**
+  - Sweep `src/pages/Index.tsx`, `Quizzes.tsx`, `Jobs.tsx`, `Scholarships.tsx`, `seo/*`, `programmatic/ProgrammaticLandingPage.tsx`, `MDCATSyllabus.tsx` for `<img>` without `loading` attribute → add `loading="lazy" decoding="async"`.
+  - Wrap heavy below-fold sections (testimonials, FAQ accordions, RelatedContent, large grids) in `React.lazy` + `Suspense` with a fixed-height skeleton placeholder (prevents CLS).
+3. **Defer framer-motion until visible**
+  - Create `src/components/perf/LazyMotion.tsx` wrapper: uses `IntersectionObserver` to mount motion components only when within viewport. Apply to hero/below-fold animated blocks on the 4 audit pages.
+  - For sitewide motion, switch to framer-motion's `LazyMotion` + `domAnimation` features bundle (smaller runtime).
+4. **CLS fixes (mobile)**
+  - Reserve space on hero image containers (`aspect-ratio` class).
+  - Reserve min-height on dynamically loaded card grids (Jobs, Scholarships, Blog lists).
+  - Audit topbars/banners for layout shift on hydration.
+5. **Font display**
+  - Verify Poppins/Orbitron `@font-face` in `index.css` includes `font-display: swap`. Patch if missing.
+6. **Hydration cost**
+  - Audit `src/App.tsx` route tree — ensure all SEO/public route components are already `React.lazy`. Add `lazy()` for any eagerly-imported public route.
 
-### Step 2 — Image optimization
-- Convert hero / above-fold images to AVIF + WebP via `vite-imagetools` (build-time).
-- Add explicit `width`/`height` on all `<img>` to kill CLS.
-- `loading="lazy"` + `decoding="async"` on below-fold images; `fetchpriority="high"` on LCP image.
-- Preload LCP image in `index.html` for landing pages.
-
-### Step 3 — Hydration weight
-- Audit current eager bundle (`/` + shared chunks). Re-lazy any heavy SEO page subcomponent that isn't above-the-fold (e.g., long FAQ accordions, animated sections).
-- Defer framer-motion-heavy sections behind `IntersectionObserver` mount.
-- Verify `manualChunks` split (framer, charts, pdf, excel, markdown) is still effective — add `radix` and `lucide` splits if their combined size > 100KB.
-
-### Step 4 — Font + CSS
-- `font-display: swap` on all webfonts (Poppins, Orbitron).
-- Preload Orbitron WOFF2 (used in brand mark, above the fold).
-- Audit `index.css` for unused tokens; verify Tailwind purge is tight.
-
-### Step 5 — Third-party scripts
-- GA4 + any pixels: `async` + `defer`, load after `requestIdleCallback`.
-- Move noscript pixels to `<body>` (already a project rule).
-
-### Step 6 — Verify
-Lighthouse mobile target: LCP < 2.5s, CLS < 0.1, INP < 200ms on `/` and `/mdcat-syllabus`. Document before/after in commit message.
-
-**Out of scope:** backend, AI quotas, business logic.
+**Acceptance:** mobile LCP < 2.5s, CLS < 0.1, INP < 200ms via Lighthouse on the 4 pages.
 
 ---
 
-## Phase 2G — AI Coach + Engagement Audit
+## B. Internal linking expansion
 
-**Goal:** Lift session duration, pages/session, and return-visit rate. Current analytics: 1.93 pages/visit, 80% bounce — both have room.
+Extend `src/data/semanticGraph.ts` only — no new components needed (RelatedContent already consumes it).
 
-### Step 1 — Funnel audit (read-only)
-Map current paths:
-- AI Coach entry points (where users discover it)
-- Suggestion engine triggers (after test? on dashboard? idle?)
-- Dashboard "what's next" CTAs
-- Notification / re-engagement loops (email, push, in-app)
-
-Use `code--view` on `src/pages/Analytics.tsx`, `src/services/aiCoachService.ts`, `src/lib/aiCoach.ts`, dashboard widgets, notification service. No edits.
-
-### Step 2 — Identify gaps
-For each loop, document: trigger, payload, expected next action, measured CTR (if tracked). Flag missing tracking events.
-
-### Step 3 — Smart-prompt improvements (UI-only)
-- Post-test result: always surface 1 AI Coach suggestion + 1 "recommended next test" card.
-- Dashboard empty/low-activity state: proactive "Resume MDCAT Biology — 3 weak topics" prompt.
-- Idle-tab return: lightweight toast/banner ("Continue where you left off").
-- Streak nudges + badge unlock confetti already exist (per memory) — verify they fire on these flows.
-
-### Step 4 — Retention loops
-- "Tomorrow's plan" card generated by AI Coach at session end.
-- Weekly email digest of weak topics (uses existing edge functions; only template wiring).
-- Resume-test deep links (already in place per memory; audit coverage).
-
-### Step 5 — Instrumentation
-Add GA4 custom events for: `coach_prompt_shown`, `coach_prompt_clicked`, `recommended_test_started`, `resume_session_clicked`. Required to measure phase impact.
-
-### Step 6 — Measure
-2-week A/B-style before/after on pages/session, session duration, 7-day return rate. Document in `.lovable/plan.md`.
-
-**Out of scope:** changing AI Coach model, Supabase schema, quota system, RLS.
+1. Add entries for: blog post hub, individual exam pages cross-referencing jobs/scholarships, `/p/*` programmatic hubs, quizzes.
+2. Add new relation labels for blocks: **Related Exams**, **Popular in Pakistan**, **Continue Preparing**, **Related Opportunities** (use existing `reason` field; extend enum if needed).
+3. Mount `RelatedContent` (with appropriate `entitySlug` + section title) on:
+  - `src/pages/Jobs.tsx` (Related Exams + Continue Preparing)
+  - `src/pages/Scholarships.tsx` (Related Opportunities)
+  - `src/pages/Quizzes.tsx` (Popular in Pakistan)
+  - `src/pages/Blog.tsx` (Continue Preparing)
+  - `src/pages/exams/ExamLandingPage.tsx` (Related Opportunities — jobs/scholarships)
+  - `src/pages/programmatic/ProgrammaticLandingPage.tsx` (Related Exams)
+4. Hard cap: max 6 links per block (already enforced in `getRelated`); ensure no duplicate anchor text across blocks on same page.
 
 ---
 
-## Sequencing & checkpoints
+## C. Programmatic SEO enhancement
 
-```text
-Phase 2E ──► verify-prerender hard-passes + 6 routes show real HTML in view-source
-   │
-   ▼
-Phase 2F ──► Lighthouse mobile: LCP<2.5s, CLS<0.1 on / and /mdcat-syllabus
-   │
-   ▼
-Phase 2G ──► +0.5 pages/session, -10pp bounce, instrumented coach events
-```
+1. Extend `src/data/programmaticSeo.ts` with the 10 requested slugs:
+  - `mdcat-lahore`, `mdcat-punjab`, `nts-islamabad`, `ecat-lahore`, `css-karachi`, `ppsc-punjab`, `fpsc-karachi`, `chemistry-mcqs-class-12`, `physics-mcqs-class-12`, `biology-mcqs-class-11`.
+2. Each entry must include: local universities, merit/cutoff info, test centres, domicile guidance, prep strategy, ≥5 FAQs, ≥4 internal links. Pages below quality threshold get `noindex` automatically.
+3. Add a content-quality gate in `ProgrammaticLandingPage.tsx`: if word count < 600 OR FAQs < 3 → render `<meta name="robots" content="noindex">` via Helmet.
+4. Add the new slugs to `vite.config.ts` `PRERENDER_ROUTES` and to the sitemap generator (`scripts/generate-sitemaps.mjs`).
+5. Add semantic graph entries for each new slug.
 
-Each phase ends with a verification checkpoint before the next starts. Constraints carried through all phases: no changes to Supabase schema, auth, RLS, AI edge functions, dashboard logic, or routing structure.
+---
+
+## D. CTR optimization
+
+Audit + rewrite titles & meta descriptions for Pakistan exam intent on:
+
+- All `src/pages/seo/*.tsx`
+- All `src/pages/exams/*` via `ExamLandingPage` data
+- Programmatic pages
+- `Jobs.tsx`, `Scholarships.tsx`, `Quizzes.tsx`
+
+Rules:
+
+- Title ≤ 60 chars, primary keyword first, year (2026) where relevant, "Pakistan" or city where relevant.
+- Description ≤ 160 chars, includes intent + benefit + soft CTA ("Free", "AI-powered", "with past papers").
+- Internal anchor text revisited in `semanticGraph.ts` — replace generic anchors ("Practice →") with specific intent ("MDCAT Biology MCQs 2026").
+- FAQ snippets: ensure top FAQ on each SEO page is a high-volume question (verify against existing data — no new SEMrush calls needed unless ambiguous).
+
+---
+
+## E. Verification (no code changes)
+
+1. `PRERENDER=true npx vite build`
+2. `node scripts/verify-prerender.mjs` — expect 47 routes (37 existing + 10 new programmatic) all passing canonical, JSON-LD, h1, body, links.
+3. `node scripts/verify-sitemap.mjs` — confirms new entries.
+4. Browser Lighthouse mobile run on the 4 audit pages — capture LCP/CLS/INP.
+5. Hydration mismatch check via dev console on each audit page.
+6. Confirm no duplicate `FAQPage` schema regression.
+
+---
+
+## Technical Details
+
+**New files:**
+
+- `src/components/perf/LazyMotion.tsx` — IntersectionObserver-gated motion wrapper.
+- `src/components/perf/LazyImage.tsx` (optional helper) — standard `<img>` with `loading="lazy" decoding="async"` defaults and explicit dims.
+
+**Modified files (presentation only):**
+
+- `vite.config.ts` (imagetools plugin, +10 prerender routes)
+- `index.html` (preload hero, font-display verify)
+- `src/index.css` (font-display: swap if missing)
+- `src/data/semanticGraph.ts` (graph expansion)
+- `src/data/programmaticSeo.ts` (10 new entries)
+- `src/pages/programmatic/ProgrammaticLandingPage.tsx` (noindex gate, lazy sections)
+- `src/pages/Index.tsx`, `Jobs.tsx`, `Scholarships.tsx`, `Quizzes.tsx`, `Blog.tsx`, `MDCATSyllabus.tsx`, `seo/*.tsx`, `exams/ExamLandingPage.tsx` (titles/desc, RelatedContent mounts, lazy below-fold, image attrs)
+- `scripts/generate-sitemaps.mjs` (new slugs)
+
+**Untouched:** AuthContext, services/*, Supabase migrations, edge functions, RLS, dashboard pages, AdminPanel, AI generation paths, routing structure.
+
+---
+
+## Out of scope
+
+- New routes beyond the 10 programmatic slugs
+- Schema architecture changes
+- Refactoring auth/dashboard/AI/business logic
+- Color/branding/typography redesign
+
+&nbsp;
+
+&nbsp;
+
+Important constraint:
+
+Do NOT redesign or visually alter the existing UI/UX, color palette, branding, typography style, spacing system, motion identity, gradients, shadows, or component aesthetics.
+
+&nbsp;
+
+Performance optimizations must preserve the current visual experience exactly as-is. Animations may be deferred/lazy-mounted for performance, but their visual behavior and styling must remain unchanged once triggered.
+
+&nbsp;
+
+No simplification/downgrade of premium visual feel.

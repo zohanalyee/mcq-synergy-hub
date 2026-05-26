@@ -114,6 +114,66 @@ export const semanticGraph: Record<string, Relation[]> = {
     { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'related-exam', priority: 'medium' },
     { kind: 'exam', path: '/exams/css', label: 'CSS Preparation', reason: 'related-exam', priority: 'medium' },
   ],
+  'quizzes-hub': [
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Quick Practice', reason: 'related-exam', priority: 'high' },
+    { kind: 'exam', path: '/exams/ecat', label: 'ECAT Quick Practice', reason: 'related-exam', priority: 'high' },
+    { kind: 'exam', path: '/exams/nts', label: 'NTS Quick Practice', reason: 'related-exam', priority: 'high' },
+    { kind: 'seo-page', path: '/css-mcqs-practice', label: 'CSS MCQs Practice', reason: 'related-exam', priority: 'medium' },
+    { kind: 'seo-page', path: '/board-mcqs', label: 'Board MCQs', reason: 'related-exam', priority: 'medium' },
+  ],
+
+  // ===== Phase 2F: programmatic city/province + class-subject pages =====
+  'mdcat-lahore': [
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/mdcat-syllabus', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' },
+    { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'medium' },
+    { kind: 'tool', path: '/tools/aggregate-calculator', label: 'Aggregate Calculator', reason: 'prep-tool', priority: 'medium' },
+  ],
+  'mdcat-punjab': [
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/mdcat-syllabus', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' },
+    { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'medium' },
+  ],
+  'nts-islamabad': [
+    { kind: 'exam', path: '/exams/nts', label: 'NTS Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'exam', path: '/exams/fpsc', label: 'FPSC Preparation', reason: 'related-exam', priority: 'medium' },
+    { kind: 'seo-page', path: '/fpsc-past-papers', label: 'FPSC Past Papers', reason: 'past-papers', priority: 'medium' },
+  ],
+  'ecat-lahore': [
+    { kind: 'seo-page', path: '/ecat-preparation', label: 'ECAT Preparation Guide', reason: 'next-step', priority: 'high' },
+    { kind: 'exam', path: '/exams/ecat', label: 'ECAT MCQs Practice', reason: 'related-exam', priority: 'high' },
+    { kind: 'seo-page', path: '/nust-entry-test', label: 'NUST Entry Test', reason: 'related-exam', priority: 'medium' },
+  ],
+  'css-karachi': [
+    { kind: 'exam', path: '/exams/css', label: 'CSS Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/css-mcqs-practice', label: 'CSS MCQs Practice', reason: 'prep-tool', priority: 'high' },
+    { kind: 'seo-page', path: '/fpsc-past-papers', label: 'FPSC Past Papers', reason: 'past-papers', priority: 'medium' },
+  ],
+  'ppsc-punjab': [
+    { kind: 'exam', path: '/exams/ppsc', label: 'PPSC Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/ppsc-past-papers', label: 'PPSC Past Papers', reason: 'past-papers', priority: 'high' },
+    { kind: 'exam', path: '/exams/pms', label: 'PMS Preparation', reason: 'related-exam', priority: 'medium' },
+  ],
+  'fpsc-karachi': [
+    { kind: 'exam', path: '/exams/fpsc', label: 'FPSC Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/fpsc-past-papers', label: 'FPSC Past Papers', reason: 'past-papers', priority: 'high' },
+    { kind: 'exam', path: '/exams/css', label: 'CSS Preparation', reason: 'related-exam', priority: 'medium' },
+  ],
+  'chemistry-mcqs-class-12': [
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/board-mcqs', label: 'Board MCQs Practice', reason: 'related-exam', priority: 'high' },
+    { kind: 'seo-page', path: '/ecat-preparation', label: 'ECAT Preparation', reason: 'related-exam', priority: 'medium' },
+  ],
+  'physics-mcqs-class-12': [
+    { kind: 'seo-page', path: '/ecat-preparation', label: 'ECAT Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/nust-entry-test', label: 'NUST Entry Test', reason: 'related-exam', priority: 'high' },
+    { kind: 'seo-page', path: '/board-mcqs', label: 'Board MCQs Practice', reason: 'related-exam', priority: 'medium' },
+  ],
+  'biology-mcqs-class-11': [
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT Preparation', reason: 'next-step', priority: 'high' },
+    { kind: 'seo-page', path: '/mdcat-syllabus', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' },
+    { kind: 'seo-page', path: '/board-mcqs', label: 'Board MCQs Practice', reason: 'related-exam', priority: 'medium' },
+  ],
 };
 
 const PRIORITY_ORDER = { high: 0, medium: 1, low: 2 } as const;

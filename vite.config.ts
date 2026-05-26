@@ -47,6 +47,17 @@ const PRERENDER_ROUTES = [
   "/paf-test",
   "/asf-test",
   "/forces-jobs-tests",
+  // Phase 2F programmatic SEO pages
+  "/p/mdcat-lahore",
+  "/p/mdcat-punjab",
+  "/p/nts-islamabad",
+  "/p/ecat-lahore",
+  "/p/css-karachi",
+  "/p/ppsc-punjab",
+  "/p/fpsc-karachi",
+  "/p/chemistry-mcqs-class-12",
+  "/p/physics-mcqs-class-12",
+  "/p/biology-mcqs-class-11",
 ];
 
 export default defineConfig(({ mode }) => ({

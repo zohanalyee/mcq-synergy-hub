@@ -396,11 +396,429 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     indexable: true,
     lastUpdated: '2026-05-20',
   },
+
+  // ===== Phase 2F additions — Pakistan-focused city/province + subject pages =====
+
+  'mdcat-lahore': {
+    slug: 'mdcat-lahore',
+    title: 'MDCAT Lahore 2026 — Test Centres, Universities & Free MCQ Practice',
+    metaDescription: 'MDCAT 2026 Lahore guide: UHS test centres, KEMU/AIMC/FJMU merit, Punjab domicile rules, syllabus & free MCQ practice — MCQsAI.',
+    keywords: 'MDCAT Lahore, MDCAT 2026 Lahore, KEMU MDCAT, AIMC merit, UHS MDCAT, Punjab MDCAT centres',
+    intro:
+      'MDCAT 2026 in Lahore is conducted by the University of Health Sciences (UHS) for admission to Punjab\'s public medical universities. Lahore-domicile candidates compete primarily for seats at King Edward Medical University (KEMU), Allama Iqbal Medical College (AIMC), Fatima Jinnah Medical University (FJMU) and Services Institute of Medical Sciences (SIMS). UHS uses the unified PMC syllabus and runs centres across Lahore, Rawalpindi, Multan, Faisalabad and Bahawalpur.',
+    universitiesOrInstitutions: [
+      { name: 'King Edward Medical University (KEMU)', note: 'Highest merit — historically ~92%+' },
+      { name: 'Allama Iqbal Medical College (AIMC)', note: 'Punjab open merit ~91%' },
+      { name: 'Fatima Jinnah Medical University (FJMU)', note: 'Female-only — Lahore' },
+      { name: 'Services Institute of Medical Sciences (SIMS)', note: 'Lahore — Punjab quota' },
+      { name: 'Lahore Medical & Dental College', note: 'Private — separate merit' },
+    ],
+    testCentres: [
+      'Expo Centre Lahore (main UHS venue)',
+      'UET Lahore',
+      'Punjab University (New Campus)',
+      'GCU Lahore',
+    ],
+    meritOrCutoff: [
+      { label: 'KEMU MBBS open merit (2024)', value: '~92.4%' },
+      { label: 'AIMC MBBS (2024)', value: '~91.1%' },
+      { label: 'FJMU MBBS (2024)', value: '~90.6%' },
+      { label: 'SIMS MBBS (2024)', value: '~90.0%' },
+    ],
+    domicile: 'Punjab domicile holders compete in the Punjab provincial quota. Federal and other-province candidates are eligible only under reciprocal/reserved seats.',
+    prepResources: [
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
+      { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
+      { label: 'Aggregate Calculator', path: '/tools/aggregate-calculator' },
+      { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
+    ],
+    faqs: [
+      { q: 'When is MDCAT Lahore 2026?', a: 'UHS conducts MDCAT in Punjab during September 2026. Exact date is notified on uhs.edu.pk ~6 weeks prior.' },
+      { q: 'What is the KEMU MBBS merit from Lahore?', a: 'KEMU\'s open-merit MBBS closed near 92.4% aggregate in 2024 — the highest in Punjab.' },
+      { q: 'Do Lahore candidates compete only against Lahore?', a: 'No. Lahore is part of the Punjab provincial quota; all Punjab-domicile candidates compete in the same merit list.' },
+      { q: 'Is MDCAT Lahore conducted by PMC or UHS?', a: 'UHS conducts MDCAT for Punjab on behalf of PMC. The syllabus is unified.' },
+    ],
+    relatedSlug: 'mdcat-syllabus',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'mdcat-punjab': {
+    slug: 'mdcat-punjab',
+    title: 'MDCAT Punjab 2026 — UHS Test Date, Universities & Merit',
+    metaDescription: 'MDCAT Punjab 2026 by UHS: test schedule, all Punjab medical universities, merit lists, domicile & free MCQ practice — MCQsAI.',
+    keywords: 'MDCAT Punjab, MDCAT Punjab 2026, UHS MDCAT, Punjab medical universities, KEMU AIMC FJMU merit',
+    intro:
+      'MDCAT Punjab 2026 is the entry test for every public medical and dental college in Punjab, conducted by the University of Health Sciences (UHS), Lahore. Punjab has the largest seat allocation of any province with ~5,000 MBBS seats spread across KEMU, AIMC, FJMU, SIMS, Nishtar Medical University (Multan), Rawalpindi Medical University (RMU), QAMC Bahawalpur, Sargodha Medical College, DG Khan Medical College, and several others.',
+    universitiesOrInstitutions: [
+      { name: 'King Edward Medical University, Lahore' },
+      { name: 'Allama Iqbal Medical College, Lahore' },
+      { name: 'Fatima Jinnah Medical University, Lahore' },
+      { name: 'Nishtar Medical University, Multan' },
+      { name: 'Rawalpindi Medical University (RMU)' },
+      { name: 'Quaid-e-Azam Medical College, Bahawalpur' },
+      { name: 'Sargodha Medical College' },
+      { name: 'DG Khan Medical College' },
+    ],
+    testCentres: [
+      'Lahore (Expo Centre, UET, Punjab University)',
+      'Rawalpindi (RMU, NUST Rawalpindi)',
+      'Multan (Nishtar Medical University)',
+      'Faisalabad (UAF)',
+      'Bahawalpur (Islamia University)',
+    ],
+    meritOrCutoff: [
+      { label: 'KEMU MBBS (2024)', value: '~92.4%' },
+      { label: 'Nishtar Multan MBBS (2024)', value: '~89.8%' },
+      { label: 'RMU MBBS (2024)', value: '~91.2%' },
+      { label: 'QAMC Bahawalpur (2024)', value: '~88.6%' },
+    ],
+    domicile: 'Only Punjab domicile and PRC holders are eligible for the Punjab provincial quota. Federal-area and other-province candidates apply on reciprocal/reserved seats.',
+    prepResources: [
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
+      { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
+      { label: 'MDCAT Lahore Guide', path: '/p/mdcat-lahore' },
+      { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
+    ],
+    faqs: [
+      { q: 'Who conducts MDCAT in Punjab?', a: 'The University of Health Sciences (UHS), Lahore conducts MDCAT for all Punjab public medical colleges.' },
+      { q: 'How many MBBS seats are in Punjab?', a: 'Punjab offers roughly 5,000 MBBS seats across 14+ public medical universities — the largest provincial allocation in Pakistan.' },
+      { q: 'Is the Punjab MDCAT harder than Sindh\'s?', a: 'Both follow the PMC syllabus with similar difficulty. Punjab\'s competitive pressure is higher due to a larger applicant pool.' },
+    ],
+    relatedSlug: 'mdcat-syllabus',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'nts-islamabad': {
+    slug: 'nts-islamabad',
+    title: 'NTS Test Islamabad 2026 — Schedule, Centres & Free MCQ Prep',
+    metaDescription: 'NTS GAT, NAT, recruitment tests in Islamabad 2026: schedule, test centres at QAU/COMSATS/NUST, syllabus & free practice — MCQsAI.',
+    keywords: 'NTS Islamabad, NTS test centres Islamabad, GAT Islamabad, NAT Islamabad, NTS preparation federal',
+    intro:
+      'NTS conducts GAT-General, GAT-Subject, NAT, and federal recruitment tests across Islamabad throughout the year. As the federal capital and NTS headquarters location, Islamabad has the densest test schedule in Pakistan and access to the highest number of federal-grade vacancies. Common venues are Quaid-e-Azam University (QAU), COMSATS, NUST H-12, and FAST-NU.',
+    syllabusOrEligibility: [
+      'GAT-General: 100 MCQs (Verbal 30 + Quantitative 30 + Analytical 40) in 120 minutes',
+      'NAT-IM/IE/IA: 90 MCQs covering English, Analytical, and Subject sections',
+      'Federal recruitment tests: 100 MCQs of subject + GK + English',
+    ],
+    testCentres: [
+      'Quaid-e-Azam University (QAU)',
+      'COMSATS University Islamabad',
+      'NUST H-12 Campus',
+      'FAST-NU Islamabad',
+      'International Islamic University (IIUI)',
+    ],
+    domicile: 'NTS tests are open nation-wide. Federal-area domicile may be required for specific federal-quota recruitment positions.',
+    prepResources: [
+      { label: 'NTS Preparation Guide', path: '/exams/nts' },
+      { label: 'FPSC Past Papers', path: '/fpsc-past-papers' },
+      { label: 'CSS Islamabad Guide', path: '/p/css-islamabad' },
+      { label: 'FPSC Islamabad Guide', path: '/p/fpsc-islamabad' },
+    ],
+    faqs: [
+      { q: 'Where is NTS headquarters located?', a: 'NTS HQ is at Plot 96, Street 4, H-8/1, Islamabad. All centralised operations are run from there.' },
+      { q: 'How often is GAT held in Islamabad?', a: 'GAT-General runs roughly every quarter; recruitment tests appear in cycles linked to federal hiring drives.' },
+      { q: 'What is the NTS test fee in Islamabad?', a: 'GAT registration is currently PKR 1,400; recruitment-test fees vary by department (typically PKR 600–1,200).' },
+    ],
+    relatedSlug: 'nts',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'ecat-lahore': {
+    slug: 'ecat-lahore',
+    title: 'ECAT Lahore 2026 — UET Test Centres, Universities & Free Prep',
+    metaDescription: 'ECAT 2026 Lahore: UET-Lahore conducted test, Punjab engineering universities, merit, syllabus & free MCQ practice — MCQsAI.',
+    keywords: 'ECAT Lahore, ECAT UET Lahore, UET Lahore admission, Lahore engineering universities, ECAT 2026',
+    intro:
+      'ECAT in Lahore is conducted by the University of Engineering & Technology (UET), Lahore — the largest engineering admission test in Punjab. Lahore-based candidates take ECAT for admission to UET Lahore main campus, KSK and Narowal sub-campuses, plus most Punjab-government engineering universities. The test is held annually in mid-August at venues across the city including UET Main, Punjab University, and IT University Lahore.',
+    syllabusOrEligibility: [
+      'Mathematics — 30 MCQs',
+      'Physics — 30 MCQs',
+      'Chemistry OR English — 30 MCQs (candidate choice)',
+      'Total 100 MCQs in 100 minutes with negative marking (¼ per wrong)',
+    ],
+    universitiesOrInstitutions: [
+      { name: 'UET Lahore Main Campus' },
+      { name: 'UET KSK Campus' },
+      { name: 'UET Narowal & RCET Gujranwala' },
+      { name: 'IT University Lahore' },
+      { name: 'Government College University, Lahore (engineering programs)' },
+    ],
+    testCentres: [
+      'UET Lahore (main venue)',
+      'Punjab University (New Campus)',
+      'IT University Lahore',
+      'Forman Christian College',
+    ],
+    meritOrCutoff: [
+      { label: 'UET Lahore CS (2024)', value: '~89%' },
+      { label: 'UET Lahore Electrical (2024)', value: '~88%' },
+      { label: 'UET Lahore Mechanical (2024)', value: '~85%' },
+    ],
+    domicile: 'Punjab domicile is required for Punjab-quota seats at UET. Reserved seats exist for AJK, Balochistan, GB, and FATA candidates.',
+    prepResources: [
+      { label: 'ECAT Preparation Guide', path: '/ecat-preparation' },
+      { label: 'NUST Entry Test', path: '/nust-entry-test' },
+      { label: 'ECAT Punjab Guide', path: '/p/ecat-punjab' },
+      { label: 'Practice ECAT MCQs', path: '/exams/ecat' },
+    ],
+    faqs: [
+      { q: 'Who conducts ECAT in Lahore?', a: 'University of Engineering & Technology (UET), Lahore conducts ECAT for Punjab engineering admissions.' },
+      { q: 'What is the ECAT 2026 date?', a: 'UET Lahore typically conducts ECAT in the third week of August. The 2026 schedule is announced on uet.edu.pk by June.' },
+      { q: 'Is ECAT Lahore harder than NUST entry test?', a: 'Different formats — ECAT is FSc-aligned; NUST NET tests deeper application. Both are competitive at top programs.' },
+    ],
+    relatedSlug: 'ecat-preparation',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'css-karachi': {
+    slug: 'css-karachi',
+    title: 'CSS Exam Karachi 2026 — FPSC Centre, Schedule & Prep Plan',
+    metaDescription: 'CSS exam in Karachi: FPSC regional centre, written test schedule, syllabus, allocation quotas & free MCQ practice — MCQsAI.',
+    keywords: 'CSS Karachi, CSS exam Karachi, FPSC Karachi, CSS Sindh quota, CSS preparation',
+    intro:
+      'CSS (Central Superior Services) written examination is offered at FPSC\'s Karachi regional centre annually in February–March. Karachi candidates compete under the Sindh (Urban) provincial quota for allocation to elite occupational groups like Foreign Service, PAS, Police Service and Income Tax. The interview stage is centrally conducted at FPSC HQ Islamabad — all shortlisted Karachi candidates travel there for psychological and viva voce assessment.',
+    syllabusOrEligibility: [
+      '12 papers total: 6 compulsory + 6 optional from designated groups',
+      'Compulsory: Essay, English Précis & Composition, GSA, Pakistan Affairs, Islamic/Comparative Studies, Current Affairs',
+      'Age: 21–30 years; relaxation available for specific categories',
+      'Education: minimum 2nd-division Bachelor\'s from a recognised university',
+    ],
+    testCentres: [
+      'FPSC Karachi Regional Office',
+      'University of Karachi (auditorium block)',
+      'NED University',
+    ],
+    domicile: 'CSS is open to all Pakistani citizens. Allocation follows provincial/regional quota: Sindh Urban (7.6%) and Sindh Rural (11.4%) — Karachi candidates fall under Sindh Urban.',
+    prepResources: [
+      { label: 'CSS MCQs Practice', path: '/css-mcqs-practice' },
+      { label: 'CSS Preparation Guide', path: '/exams/css' },
+      { label: 'FPSC Past Papers', path: '/fpsc-past-papers' },
+      { label: 'CSS Islamabad Guide', path: '/p/css-islamabad' },
+    ],
+    faqs: [
+      { q: 'Where is the CSS exam centre in Karachi?', a: 'FPSC operates a regional office in Karachi; the written exam is hosted at FPSC Karachi and partner university venues like UoK and NED.' },
+      { q: 'Is the CSS interview held in Karachi?', a: 'No. All psychological assessment and viva voce sessions are centralised at FPSC HQ, F-5/1, Islamabad.' },
+      { q: 'What is the Sindh Urban CSS quota?', a: 'Sindh Urban (Karachi-domicile) holds a 7.6% allocation quota in the CSS merit list per Establishment Division rules.' },
+    ],
+    relatedSlug: 'css',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'ppsc-punjab': {
+    slug: 'ppsc-punjab',
+    title: 'PPSC Jobs Punjab 2026 — Headquarters, Test Schedule & Prep',
+    metaDescription: 'PPSC Punjab jobs and recruitment 2026: HQ Lahore, all test centres, common posts, syllabus & free MCQ practice — MCQsAI.',
+    keywords: 'PPSC Punjab, PPSC jobs 2026, Punjab Public Service Commission, PPSC test centres, PPSC preparation',
+    intro:
+      'The Punjab Public Service Commission (PPSC) is the constitutional recruitment body for the Punjab Government, headquartered at Aiwan-e-Iqbal, Lahore. PPSC handles BS-11 to BS-20 selections including Punjab Civil Services (PCS), Tehsildar, Education Officer, Medical Officer, Patwari, Police Sub-Inspector, Naib Tehsildar, and several technical cadres. Written tests are held across Lahore, Rawalpindi, Multan, Faisalabad, Bahawalpur, DG Khan, Sargodha and Sahiwal.',
+    syllabusOrEligibility: [
+      'PMS / PCS: 6 compulsory papers (essay, English, GK, Islamiat, Pak Studies, current affairs) + 4 optional',
+      'Junior posts (Patwari, Tehsildar): 100 MCQs (GK + Pak Studies + Islamiat + English + General Maths)',
+      'No negative marking in most PPSC tests',
+    ],
+    testCentres: [
+      'Lahore (Aiwan-e-Iqbal HQ, Punjab University, UET)',
+      'Rawalpindi (Government College Asghar Mall)',
+      'Multan (Bahauddin Zakariya University)',
+      'Faisalabad (UAF)',
+      'Bahawalpur (Islamia University)',
+      'DG Khan, Sargodha, Sahiwal regional centres',
+    ],
+    domicile: 'Punjab domicile is mandatory for almost all PPSC posts. Domicile certificate and PRC must be uploaded with the online application.',
+    prepResources: [
+      { label: 'PPSC Past Papers', path: '/ppsc-past-papers' },
+      { label: 'PPSC Preparation', path: '/exams/ppsc' },
+      { label: 'PMS Preparation', path: '/exams/pms' },
+      { label: 'NTS Lahore Guide', path: '/p/nts-lahore' },
+    ],
+    faqs: [
+      { q: 'Where is PPSC headquarters?', a: 'Aiwan-e-Iqbal Complex, Egerton Road, Lahore.' },
+      { q: 'How often does PPSC announce jobs?', a: 'PPSC publishes consolidated advertisements roughly twice a month on ppsc.gop.pk.' },
+      { q: 'Does PPSC have negative marking?', a: 'No. Most PPSC tests carry no negative marking — attempt every MCQ.' },
+      { q: 'Is Punjab domicile required for PPSC?', a: 'Yes. Punjab domicile and PRC are mandatory for almost all PPSC-advertised positions.' },
+    ],
+    relatedSlug: 'ppsc',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'fpsc-karachi': {
+    slug: 'fpsc-karachi',
+    title: 'FPSC Jobs Karachi 2026 — Regional Office, Tests & Prep',
+    metaDescription: 'FPSC jobs and federal tests in Karachi: regional office, recruitment cycles, syllabus & free MCQ practice — MCQsAI.',
+    keywords: 'FPSC Karachi, FPSC regional office Karachi, FPSC federal jobs Sindh, FPSC test centre Karachi',
+    intro:
+      'The Federal Public Service Commission (FPSC) operates a regional office in Karachi (Block 47, Civic Centre, Gulshan-e-Iqbal) to facilitate federal recruitment for Sindh-based candidates. Karachi hosts written tests for CSS, Combined Examination for ASOs/PROs, Assistant Director (IB), Inspector Customs, and several technical cadres. Sindh-domicile candidates compete under Sindh (Urban) and Sindh (Rural) quotas for federal allocations.',
+    syllabusOrEligibility: [
+      'Most FPSC posts: 100 MCQs in 90–120 minutes covering English, GK, Islamiat, Pakistan Studies, and a professional subject',
+      'CSS: 12-paper written examination held annually in February–March',
+      'Shortlisted candidates travel to FPSC HQ Islamabad for interview',
+    ],
+    testCentres: [
+      'FPSC Karachi Regional Office, Civic Centre Gulshan-e-Iqbal',
+      'University of Karachi',
+      'NED University',
+      'IBA Karachi (for high-volume tests)',
+    ],
+    domicile: 'Federal jobs are open to all Pakistani citizens. Allocation follows provincial/regional quotas — Karachi candidates fall under Sindh (Urban) quota (7.6%).',
+    prepResources: [
+      { label: 'FPSC Past Papers', path: '/fpsc-past-papers' },
+      { label: 'FPSC Preparation', path: '/exams/fpsc' },
+      { label: 'CSS Karachi Guide', path: '/p/css-karachi' },
+      { label: 'NTS Karachi Guide', path: '/p/nts-karachi' },
+    ],
+    faqs: [
+      { q: 'Where is the FPSC office in Karachi?', a: 'FPSC Karachi Regional Office is at Block 47, Civic Centre, Gulshan-e-Iqbal, Karachi.' },
+      { q: 'Can I sit federal CSS exam from Karachi?', a: 'Yes. FPSC hosts the CSS written exam at its Karachi regional centre. Only the interview is centralised at FPSC HQ Islamabad.' },
+      { q: 'What is the Sindh Urban federal quota?', a: 'Sindh (Urban) holds 7.6% of federal allocations under the Establishment Division\'s quota policy.' },
+    ],
+    relatedSlug: 'fpsc',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'chemistry-mcqs-class-12': {
+    slug: 'chemistry-mcqs-class-12',
+    title: 'Chemistry MCQs Class 12 — FSc Part 2 Chapter-Wise Practice',
+    metaDescription: 'Class 12 Chemistry MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT/ECAT pattern questions with explanations — free on MCQsAI.',
+    keywords: 'Chemistry MCQs class 12, FSc Part 2 Chemistry, class 12 Chemistry chapter wise MCQs, intermediate chemistry Pakistan',
+    intro:
+      'Class 12 (FSc Part 2) Chemistry is the core subject for MDCAT and ECAT entry tests across Pakistan. The National Curriculum syllabus — implemented by Punjab, Sindh, KP, Balochistan and Federal boards — covers Organic Chemistry, Industrial Chemistry, Periodic Classification, Transition Elements, and Environmental Chemistry. Chapter-wise MCQ practice with explanations is the highest-yield strategy for both your board exam and MDCAT/ECAT.',
+    syllabusOrEligibility: [
+      'Chapter 1 — Periodic Classification of Elements',
+      'Chapter 2 — s-Block Elements',
+      'Chapter 3 — Group IIIA & IVA Elements',
+      'Chapter 4 — Group VA & VIA Elements',
+      'Chapter 5 — The Halogens & Noble Gases',
+      'Chapter 6 — Transition Elements',
+      'Chapter 7 — Fundamental Principles of Organic Chemistry',
+      'Chapter 8 — Aliphatic Hydrocarbons',
+      'Chapter 9 — Aromatic Hydrocarbons',
+      'Chapter 10 — Alkyl Halides',
+      'Chapter 11 — Alcohols, Phenols & Ethers',
+      'Chapter 12 — Aldehydes & Ketones',
+      'Chapter 13 — Carboxylic Acids',
+      'Chapter 14 — Macromolecules',
+      'Chapter 15 — Common Chemical Industries',
+      'Chapter 16 — Environmental Chemistry',
+    ],
+    prepResources: [
+      { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
+      { label: 'ECAT Preparation', path: '/ecat-preparation' },
+      { label: 'Board MCQs Practice', path: '/board-mcqs' },
+      { label: 'Biology Class 12 MCQs', path: '/p/biology-mcqs-class-12' },
+    ],
+    faqs: [
+      { q: 'How many Class 12 Chemistry MCQs come in MDCAT?', a: 'Around 60% of MDCAT Chemistry MCQs are drawn from FSc Part 2 — particularly the Organic Chemistry chapters (7–14).' },
+      { q: 'Are the chapters identical across all Pakistani boards?', a: 'Yes — the National Curriculum aligns Punjab, Sindh, KP, Balochistan and Federal boards. Chapter order may vary slightly.' },
+      { q: 'Is there negative marking in board Chemistry MCQs?', a: 'No. Board examinations do not penalise wrong answers. MDCAT and ECAT do — attempt cautiously there.' },
+      { q: 'What is the most important Class 12 Chemistry topic?', a: 'Organic Chemistry (Chapters 7–14) carries the heaviest weight for both board and MDCAT/ECAT.' },
+    ],
+    relatedSlug: 'board-mcqs',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'physics-mcqs-class-12': {
+    slug: 'physics-mcqs-class-12',
+    title: 'Physics MCQs Class 12 — FSc Part 2 Chapter-Wise Practice',
+    metaDescription: 'Class 12 Physics MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT/ECAT pattern questions with explanations — free on MCQsAI.',
+    keywords: 'Physics MCQs class 12, FSc Part 2 Physics, class 12 Physics chapter wise MCQs, intermediate physics Pakistan',
+    intro:
+      'Class 12 (FSc Part 2) Physics underpins ECAT, MDCAT (Physics section), NUST NET and most engineering entry tests in Pakistan. The unified National Curriculum syllabus covers Electrostatics, Current Electricity, Electromagnetism, Electromagnetic Induction, Alternating Current, Physics of Solids, Electronics, Dawn of Modern Physics, Atomic Spectra, and Nuclear Physics. Chapter-wise MCQ practice with worked solutions is the fastest path to mastery.',
+    syllabusOrEligibility: [
+      'Chapter 12 — Electrostatics',
+      'Chapter 13 — Current Electricity',
+      'Chapter 14 — Electromagnetism',
+      'Chapter 15 — Electromagnetic Induction',
+      'Chapter 16 — Alternating Current',
+      'Chapter 17 — Physics of Solids',
+      'Chapter 18 — Electronics',
+      'Chapter 19 — Dawn of Modern Physics',
+      'Chapter 20 — Atomic Spectra',
+      'Chapter 21 — Nuclear Physics',
+    ],
+    prepResources: [
+      { label: 'ECAT Preparation', path: '/ecat-preparation' },
+      { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
+      { label: 'NUST Entry Test', path: '/nust-entry-test' },
+      { label: 'Board MCQs Practice', path: '/board-mcqs' },
+      { label: 'Chemistry Class 12 MCQs', path: '/p/chemistry-mcqs-class-12' },
+    ],
+    faqs: [
+      { q: 'How much Class 12 Physics appears in ECAT?', a: 'About 50% of ECAT Physics MCQs are pulled from FSc Part 2 — especially Electromagnetism and Modern Physics chapters.' },
+      { q: 'Is Class 12 Physics syllabus same nationwide?', a: 'Yes — the National Curriculum aligns all provincial and Federal boards. Specific board notes may differ in numerical practice problems.' },
+      { q: 'Which Class 12 Physics chapter is most asked in MDCAT?', a: 'Electromagnetism and Modern Physics carry the highest weight in MDCAT\'s Physics section.' },
+      { q: 'Are conceptual or numerical MCQs more common?', a: 'Boards lean conceptual; ECAT and NUST NET lean numerical and applied. Practise both formats.' },
+    ],
+    relatedSlug: 'board-mcqs',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
+
+  'biology-mcqs-class-11': {
+    slug: 'biology-mcqs-class-11',
+    title: 'Biology MCQs Class 11 — FSc Part 1 Chapter-Wise Practice',
+    metaDescription: 'Class 11 Biology MCQs chapter-wise: FSc Part 1 syllabus, board + MDCAT pattern questions with explanations — free on MCQsAI.',
+    keywords: 'Biology MCQs class 11, FSc Part 1 Biology, class 11 Biology chapter wise MCQs, intermediate biology Pakistan',
+    intro:
+      'Class 11 (FSc Part 1) Biology builds the foundation for MDCAT, university admissions, and the 11th-class board exam across Punjab, Sindh, KP, Balochistan and Federal boards. The National Curriculum syllabus covers Introduction to Biology, Biological Molecules, Enzymes, The Cell, Diversity, Kingdoms (Monera/Protista/Fungi/Plantae/Animalia), Nutrition, Gaseous Exchange, Transport, and Bioenergetics. Practising chapter-wise MCQs early is critical — MDCAT pulls roughly 50% of its Biology questions from Part 1.',
+    syllabusOrEligibility: [
+      'Chapter 1 — Introduction to Biology',
+      'Chapter 2 — Biological Molecules',
+      'Chapter 3 — Enzymes',
+      'Chapter 4 — The Cell',
+      'Chapter 5 — Variety of Life',
+      'Chapter 6 — Kingdom Monera',
+      'Chapter 7 — Kingdom Protista',
+      'Chapter 8 — Fungi',
+      'Chapter 9 — Kingdom Plantae',
+      'Chapter 10 — Kingdom Animalia',
+      'Chapter 11 — Bioenergetics',
+      'Chapter 12 — Nutrition',
+      'Chapter 13 — Gaseous Exchange',
+      'Chapter 14 — Transport',
+    ],
+    prepResources: [
+      { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
+      { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
+      { label: 'Board MCQs Practice', path: '/board-mcqs' },
+      { label: '9th Class MCQs', path: '/9th-class-mcqs' },
+      { label: 'Biology Class 12 MCQs', path: '/p/biology-mcqs-class-12' },
+    ],
+    faqs: [
+      { q: 'How many Class 11 Biology MCQs appear in MDCAT?', a: 'About 50% of MDCAT Biology MCQs are pulled from FSc Part 1 — especially Cell, Biological Molecules, Enzymes, and Bioenergetics chapters.' },
+      { q: 'Is Class 11 Biology syllabus the same nationwide?', a: 'Yes — Punjab, Sindh, KP, Balochistan and Federal boards align with the National Curriculum. Chapter numbering may vary.' },
+      { q: 'Which Class 11 Biology chapter carries the most weight?', a: 'The Cell (Chapter 4) and Biological Molecules (Chapter 2) account for the largest share of MDCAT questions from Part 1.' },
+      { q: 'Should I study Part 1 or Part 2 first for MDCAT?', a: 'Start with Part 1 — it builds the foundational vocabulary and biological framework required for Part 2 topics like Reproduction and Genetics.' },
+    ],
+    relatedSlug: 'board-mcqs',
+    indexable: true,
+    lastUpdated: '2026-05-26',
+  },
 };
 
-/** All slugs that should appear in the sitemap (i.e. indexable === true). */
+/** Quality gate — a programmatic entry is indexable only if it passes a content threshold. */
+function passesQualityGate(e: ProgSeoEntry): boolean {
+  if (!e.indexable) return false;
+  if (!e.faqs || e.faqs.length < 3) return false;
+  const wordCount = (e.intro || '').split(/\s+/).length;
+  if (wordCount < 60) return false;
+  return true;
+}
+
+/** All slugs that should appear in the sitemap (indexable + pass quality gate). */
 export const indexableProgSeoSlugs = (): string[] =>
-  Object.values(PROGRAMMATIC_SEO).filter(e => e.indexable).map(e => e.slug);
+  Object.values(PROGRAMMATIC_SEO).filter(passesQualityGate).map(e => e.slug);
 
 export const getProgEntry = (slug: string): ProgSeoEntry | null =>
   PROGRAMMATIC_SEO[slug] ?? null;
+
+/** Runtime quality check used by the page template to enforce noindex on thin pages. */
+export const isProgEntryIndexable = (e: ProgSeoEntry): boolean => passesQualityGate(e);
