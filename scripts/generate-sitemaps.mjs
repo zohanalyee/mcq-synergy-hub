@@ -113,7 +113,7 @@ const TOOL_PATHS = [
   "/tools/binary-converter","/tools/case-converter","/tools/image-resizer",
   "/tools/image-compressor","/tools/image-converter","/tools/pdf-compressor",
   "/tools/pdf-merger","/tools/pdf-to-text","/tools/pdf-splitter","/tools/stopwatch",
-  "/tools/world-clock","/tools/word-counter","/tools/character-counter","/tools/qr-generator",
+  "/tools/world-clock","/tools/word-counter","/tools/character-counter","/tools/qr-generator","/tools/qr-scanner",
   "/tools/password-generator","/tools/name-generator","/tools/color-picker",
   "/tools/random-number","/tools/equation-solver",
 ];
