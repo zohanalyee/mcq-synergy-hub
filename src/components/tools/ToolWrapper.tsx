@@ -24,9 +24,14 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
   const howToUse = toolData?.howToUse || [];
   const faq = toolData?.faq || [];
 
-  const seoTitle = `Free AI ${title}`;
-  const seoDescription = `Use our free AI ${title} for instant results. ${toolData?.seoDescription || 'MCQsAI offers premium AI-powered tools for students and professionals.'}`;
+  // Enriched H1 + SEO title — keyword-rich without losing the "Free Online" cue.
+  const h1 = `${title} — Free Online ${category || 'Tool'}`;
+  const seoTitle = `${title} — Free Online ${category || 'Tool'} | MCQsAI`;
+  const seoDescription =
+    toolData?.seoDescription ||
+    `Use our free ${title.toLowerCase()} for instant results. ${description}. No signup, works in your browser.`;
   const toolUrl = toolData?.href ? `https://www.mcqsai.com${toolData.href}` : undefined;
+  const ogImage = 'https://www.mcqsai.com/og-image.jpg';
 
   const webAppLd = {
     '@context': 'https://schema.org',
@@ -60,17 +65,36 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
     })),
   } : null;
 
+  // HowTo schema — emitted only when steps exist. Distinct @type so it stacks
+  // cleanly with WebApplication + FAQPage without triggering duplicate warnings.
+  const howToLd = howToUse.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'HowTo',
+    name: `How to use ${title}`,
+    totalTime: 'PT1M',
+    step: howToUse.map((s, i) => ({
+      '@type': 'HowToStep',
+      position: i + 1,
+      name: `Step ${i + 1}`,
+      text: s,
+    })),
+  } : null;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
       <SEOHead
         title={seoTitle}
         description={seoDescription}
         url={toolUrl}
+        image={ogImage}
       />
       <Helmet>
+        <meta property="og:image" content={ogImage} />
+        <meta name="twitter:image" content={ogImage} />
         <script type="application/ld+json">{JSON.stringify(webAppLd)}</script>
         <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
         {faqLd && <script type="application/ld+json">{JSON.stringify(faqLd)}</script>}
+        {howToLd && <script type="application/ld+json">{JSON.stringify(howToLd)}</script>}
       </Helmet>
 
       {/* Back Button */}
