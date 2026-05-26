@@ -43,19 +43,9 @@ const ToolRouteSEO = () => {
     'Pakistan student tools',
   ].join(', ');
 
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type': 'WebApplication',
-    name: tool.name,
-    description,
-    url: canonical,
-    applicationCategory: 'EducationalApplication',
-    operatingSystem: 'Any',
-    isAccessibleForFree: true,
-    offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    publisher: { '@type': 'Organization', name: 'MCQsAI', url: 'https://www.mcqsai.com' },
-  };
-
+  // NOTE: WebApplication / BreadcrumbList / FAQPage / HowTo JSON-LD is emitted
+  // by <ToolWrapper> on every tool page. We intentionally do NOT re-emit it here
+  // — duplicate structured data triggers Google Search Console warnings.
   return (
     <Helmet>
 {/* prioritizeSeoTags removed — broken in react-helmet-async@2.0.4 (drops link+script). */}
@@ -76,8 +66,6 @@ const ToolRouteSEO = () => {
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={title} />
       <meta name="twitter:description" content={description} />
-
-      <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
     </Helmet>
   );
 };
