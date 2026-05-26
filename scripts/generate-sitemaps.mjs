@@ -227,6 +227,7 @@ ${entries.join("\n")}
   writeStatic();
   writeTools();
   writeExams();
+  writeProgSeo();
 
   let boardPages = 1;
 
