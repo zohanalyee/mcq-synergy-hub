@@ -33,6 +33,24 @@ const QRGenerator = () => {
     QRCode.toString(text, { ...opts, type: 'svg' }).then(setSvg).catch(() => setSvg(''));
   }, [text, size, ecl, fg, bg]);
 
+  // Mirror state into the URL so users can share/bookmark a specific QR config.
+  useEffect(() => {
+    const next = new URLSearchParams();
+    if (text) next.set('t', text);
+    if (size !== 320) next.set('s', String(size));
+    if (ecl !== 'M') next.set('e', ecl);
+    if (fg !== '#0f172a') next.set('fg', fg);
+    if (bg !== '#ffffff') next.set('bg', bg);
+    setParams(next, { replace: true });
+  }, [text, size, ecl, fg, bg, setParams]);
+
+  const copyShareLink = async () => {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast.success('Link copied — share to reproduce this QR');
+    } catch { toast.error('Could not copy link'); }
+  };
+
   const downloadPng = () => {
     if (!dataUrl) return;
     const a = document.createElement('a');
