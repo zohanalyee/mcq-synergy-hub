@@ -22,12 +22,13 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
   const navigate = useNavigate();
   const toolData = ALL_TOOLS.find(t => t.id === toolId);
   const howToUse = toolData?.howToUse || [];
+  const faq = toolData?.faq || [];
 
   const seoTitle = `Free AI ${title}`;
   const seoDescription = `Use our free AI ${title} for instant results. ${toolData?.seoDescription || 'MCQsAI offers premium AI-powered tools for students and professionals.'}`;
   const toolUrl = toolData?.href ? `https://www.mcqsai.com${toolData.href}` : undefined;
 
-  const jsonLd = {
+  const webAppLd = {
     '@context': 'https://schema.org',
     '@type': 'WebApplication',
     name: title,
@@ -39,6 +40,26 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
     provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://www.mcqsai.com' },
   };
 
+  const breadcrumbLd = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Tools', item: 'https://www.mcqsai.com/tools' },
+      ...(category ? [{ '@type': 'ListItem', position: 2, name: category, item: `https://www.mcqsai.com/tools?category=${encodeURIComponent(category)}` }] : []),
+      { '@type': 'ListItem', position: category ? 3 : 2, name: title, item: toolUrl },
+    ],
+  };
+
+  const faqLd = faq.length > 0 ? {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faq.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  } : null;
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-4 space-y-4">
       <SEOHead
@@ -47,7 +68,9 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         url={toolUrl}
       />
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(webAppLd)}</script>
+        <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
+        {faqLd && <script type="application/ld+json">{JSON.stringify(faqLd)}</script>}
       </Helmet>
 
       {/* Back Button */}
@@ -104,6 +127,23 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
                 <li key={i} className="text-sm leading-relaxed">{step}</li>
               ))}
             </ol>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* FAQ */}
+      {faq.length > 0 && (
+        <Card className="border-border/50">
+          <CardContent className="p-4 sm:p-6">
+            <h2 className="text-lg font-semibold text-foreground mb-3">Frequently Asked Questions</h2>
+            <div className="space-y-3">
+              {faq.map((f, i) => (
+                <details key={i} className="group rounded-lg border border-border/50 p-3 open:bg-accent/20">
+                  <summary className="cursor-pointer text-sm font-medium text-foreground">{f.q}</summary>
+                  <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.a}</p>
+                </details>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}

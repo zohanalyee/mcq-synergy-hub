@@ -26,7 +26,7 @@ const SalaryCalculator = () => {
     <Header>
       <ToolWrapper toolId="salary-calculator" title="Salary Calculator" description="Calculate monthly & annual salary breakdowns" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><Label>Amount</Label><Input type="number" value={amount} onChange={e => setAmount(e.target.value)} placeholder="50000" /></div>
+          <div><Label>Amount</Label><Input type="number" inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="50000" /></div>
           <div><Label>Period</Label>
             <Select value={period} onValueChange={setPeriod}>
               <SelectTrigger><SelectValue /></SelectTrigger>

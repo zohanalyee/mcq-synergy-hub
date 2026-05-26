@@ -23,8 +23,8 @@ const PercentageCalculator = () => {
     <Header>
       <ToolWrapper toolId="percentage-calculator" title="Percentage Calculator" description="Calculate percentages easily" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><Label>Value</Label><Input type="number" value={value} onChange={e => setValue(e.target.value)} placeholder="25" /></div>
-          <div><Label>Total</Label><Input type="number" value={total} onChange={e => setTotal(e.target.value)} placeholder="200" /></div>
+          <div><Label>Value</Label><Input type="number" inputMode="decimal" value={value} onChange={e => setValue(e.target.value)} placeholder="25" /></div>
+          <div><Label>Total</Label><Input type="number" inputMode="decimal" value={total} onChange={e => setTotal(e.target.value)} placeholder="200" /></div>
         </div>
         <AnimatePresence>
           {result && (

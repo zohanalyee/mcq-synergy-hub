@@ -25,8 +25,8 @@ const DiscountCalculator = () => {
     <Header>
       <ToolWrapper toolId="discount-calculator" title="Discount Calculator" description="Calculate discounted prices" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><Label>Original Price</Label><Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="1000" /></div>
-          <div><Label>Discount %</Label><Input type="number" value={discount} onChange={e => setDiscount(e.target.value)} placeholder="20" /></div>
+          <div><Label>Original Price</Label><Input type="number" inputMode="decimal" value={price} onChange={e => setPrice(e.target.value)} placeholder="1000" /></div>
+          <div><Label>Discount %</Label><Input type="number" inputMode="decimal" value={discount} onChange={e => setDiscount(e.target.value)} placeholder="20" /></div>
         </div>
         <AnimatePresence>
           {result && (

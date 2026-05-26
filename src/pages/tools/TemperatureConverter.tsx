@@ -24,9 +24,9 @@ const TemperatureConverter = () => {
     <Header>
       <ToolWrapper toolId="temperature-converter" title="Temperature Converter" description="Convert between °C, °F, and K" category="Converters">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div><Label>Celsius (°C)</Label><Input type="number" value={celsius} onChange={e => { setCelsius(e.target.value); setLast('c'); }} /></div>
-          <div><Label>Fahrenheit (°F)</Label><Input type="number" value={fahrenheit} onChange={e => { setFahrenheit(e.target.value); setLast('f'); }} /></div>
-          <div><Label>Kelvin (K)</Label><Input type="number" value={kelvin} onChange={e => { setKelvin(e.target.value); setLast('k'); }} /></div>
+          <div><Label>Celsius (°C)</Label><Input type="number" inputMode="decimal" value={celsius} onChange={e => { setCelsius(e.target.value); setLast('c'); }} /></div>
+          <div><Label>Fahrenheit (°F)</Label><Input type="number" inputMode="decimal" value={fahrenheit} onChange={e => { setFahrenheit(e.target.value); setLast('f'); }} /></div>
+          <div><Label>Kelvin (K)</Label><Input type="number" inputMode="decimal" value={kelvin} onChange={e => { setKelvin(e.target.value); setLast('k'); }} /></div>
         </div>
       </ToolWrapper>
     </Header>

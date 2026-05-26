@@ -33,8 +33,8 @@ const AreaCalculator = () => {
             <Select value={shape} onValueChange={v => { setShape(v); setD1(''); setD2(''); }}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="rectangle">Rectangle</SelectItem><SelectItem value="circle">Circle</SelectItem><SelectItem value="triangle">Triangle</SelectItem><SelectItem value="square">Square</SelectItem></SelectContent></Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><Label>{shape === 'circle' ? 'Radius' : shape === 'square' ? 'Side' : shape === 'triangle' ? 'Base' : 'Length'}</Label><Input type="number" value={d1} onChange={e => setD1(e.target.value)} /></div>
-            {(shape === 'rectangle' || shape === 'triangle') && <div><Label>{shape === 'triangle' ? 'Height' : 'Width'}</Label><Input type="number" value={d2} onChange={e => setD2(e.target.value)} /></div>}
+            <div><Label>{shape === 'circle' ? 'Radius' : shape === 'square' ? 'Side' : shape === 'triangle' ? 'Base' : 'Length'}</Label><Input type="number" inputMode="decimal" value={d1} onChange={e => setD1(e.target.value)} /></div>
+            {(shape === 'rectangle' || shape === 'triangle') && <div><Label>{shape === 'triangle' ? 'Height' : 'Width'}</Label><Input type="number" inputMode="decimal" value={d2} onChange={e => setD2(e.target.value)} /></div>}
           </div>
         </div>
         <AnimatePresence>

@@ -26,9 +26,9 @@ const FuelCalculator = () => {
     <Header>
       <ToolWrapper toolId="fuel-calculator" title="Fuel Calculator" description="Calculate fuel consumption & cost" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div><Label>Distance (km)</Label><Input type="number" value={distance} onChange={e => setDistance(e.target.value)} placeholder="500" /></div>
-          <div><Label>Mileage (km/L)</Label><Input type="number" value={mileage} onChange={e => setMileage(e.target.value)} placeholder="15" /></div>
-          <div><Label>Fuel Price/L</Label><Input type="number" value={price} onChange={e => setPrice(e.target.value)} placeholder="280" /></div>
+          <div><Label>Distance (km)</Label><Input type="number" inputMode="decimal" value={distance} onChange={e => setDistance(e.target.value)} placeholder="500" /></div>
+          <div><Label>Mileage (km/L)</Label><Input type="number" inputMode="decimal" value={mileage} onChange={e => setMileage(e.target.value)} placeholder="15" /></div>
+          <div><Label>Fuel Price/L</Label><Input type="number" inputMode="decimal" value={price} onChange={e => setPrice(e.target.value)} placeholder="280" /></div>
         </div>
         <AnimatePresence>
           {result && (

@@ -26,9 +26,9 @@ const TipCalculator = () => {
     <Header>
       <ToolWrapper toolId="tip-calculator" title="Tip Calculator" description="Calculate tip amounts quickly" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div><Label>Bill Amount</Label><Input type="number" value={bill} onChange={e => setBill(e.target.value)} placeholder="100" /></div>
-          <div><Label>Tip %</Label><Input type="number" value={tipPct} onChange={e => setTipPct(e.target.value)} /></div>
-          <div><Label>Split Between</Label><Input type="number" value={people} onChange={e => setPeople(e.target.value)} min="1" /></div>
+          <div><Label>Bill Amount</Label><Input type="number" inputMode="decimal" value={bill} onChange={e => setBill(e.target.value)} placeholder="100" /></div>
+          <div><Label>Tip %</Label><Input type="number" inputMode="decimal" value={tipPct} onChange={e => setTipPct(e.target.value)} /></div>
+          <div><Label>Split Between</Label><Input type="number" inputMode="decimal" value={people} onChange={e => setPeople(e.target.value)} min="1" /></div>
         </div>
         <AnimatePresence>
           {result && (
