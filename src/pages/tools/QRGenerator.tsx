@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import QRCode from 'qrcode';
 import Header from '@/components/Header';
 import ToolWrapper, { CopyButton } from '@/components/tools/ToolWrapper';
@@ -6,17 +7,18 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Download, Share2 } from 'lucide-react';
+import { Download, Share2, Link2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 type ECL = 'L' | 'M' | 'Q' | 'H';
 
 const QRGenerator = () => {
-  const [text, setText] = useState('https://www.mcqsai.com');
-  const [size, setSize] = useState(320);
-  const [ecl, setEcl] = useState<ECL>('M');
-  const [fg, setFg] = useState('#0f172a');
-  const [bg, setBg] = useState('#ffffff');
+  const [params, setParams] = useSearchParams();
+  const [text, setText] = useState(params.get('t') || 'https://www.mcqsai.com');
+  const [size, setSize] = useState(Number(params.get('s')) || 320);
+  const [ecl, setEcl] = useState<ECL>((params.get('e') as ECL) || 'M');
+  const [fg, setFg] = useState(params.get('fg') || '#0f172a');
+  const [bg, setBg] = useState(params.get('bg') || '#ffffff');
   const [dataUrl, setDataUrl] = useState<string>('');
   const [svg, setSvg] = useState<string>('');
   const canvasRef = useRef<HTMLCanvasElement>(null);
