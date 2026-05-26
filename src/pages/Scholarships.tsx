@@ -216,6 +216,8 @@ const Scholarships = () => {
           isLoading={isLoading}
           type="scholarship"
         />
+
+        <RelatedContent entitySlug="scholarships-hub" title="Related Exam Prep" limit={6} />
       </div>
     </Header>
   );
