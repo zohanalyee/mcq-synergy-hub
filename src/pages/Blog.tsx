@@ -35,9 +35,9 @@ const Blog = () => {
   return (
     <>
       <SEOHead
-        title="Blog - Exam Tips & Study Guides"
-        description="Read expert articles on MDCAT preparation, study techniques, college guides, and exam strategies for Pakistani students."
-        keywords="MDCAT blog, exam tips Pakistan, study guides, medical college guide"
+        title="MCQsAI Blog — Pakistan Exam Tips, MDCAT & FPSC Guides"
+        description="Expert guides on MDCAT, ECAT, FPSC, NTS preparation, study techniques and college admissions for Pakistani students. Updated regularly."
+        keywords="MDCAT blog, FPSC tips, exam tips Pakistan, study guides, medical college guide, NTS preparation"
       />
       <Header>
         <div className="max-w-6xl mx-auto px-4 py-8">
