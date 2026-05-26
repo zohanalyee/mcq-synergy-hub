@@ -23,8 +23,8 @@ const CGPACalculator = () => {
         <div className="space-y-3">
           {semesters.map((sem, i) => (
             <div key={i} className="flex items-end gap-2">
-              <div className="flex-1"><Label>Semester {i + 1} GPA</Label><Input type="number" value={sem.gpa} onChange={e => update(i, 'gpa', e.target.value)} placeholder="3.5" /></div>
-              <div className="flex-1"><Label>Credits</Label><Input type="number" value={sem.credits} onChange={e => update(i, 'credits', e.target.value)} placeholder="18" /></div>
+              <div className="flex-1"><Label>Semester {i + 1} GPA</Label><Input type="number" inputMode="decimal" value={sem.gpa} onChange={e => update(i, 'gpa', e.target.value)} placeholder="3.5" /></div>
+              <div className="flex-1"><Label>Credits</Label><Input type="number" inputMode="decimal" value={sem.credits} onChange={e => update(i, 'credits', e.target.value)} placeholder="18" /></div>
               {semesters.length > 1 && <Button variant="ghost" size="icon" onClick={() => removeSemester(i)}><Trash2 className="h-4 w-4" /></Button>}
             </div>
           ))}

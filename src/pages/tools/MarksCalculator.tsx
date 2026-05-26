@@ -24,8 +24,8 @@ const MarksCalculator = () => {
           {subjects.map((sub, i) => (
             <div key={i} className="flex items-end gap-2">
               <div className="flex-1"><Label>Subject</Label><Input value={sub.name} onChange={e => update(i, 'name', e.target.value)} /></div>
-              <div className="w-24"><Label>Obtained</Label><Input type="number" value={sub.obtained} onChange={e => update(i, 'obtained', e.target.value)} /></div>
-              <div className="w-24"><Label>Total</Label><Input type="number" value={sub.total} onChange={e => update(i, 'total', e.target.value)} /></div>
+              <div className="w-24"><Label>Obtained</Label><Input type="number" inputMode="decimal" value={sub.obtained} onChange={e => update(i, 'obtained', e.target.value)} /></div>
+              <div className="w-24"><Label>Total</Label><Input type="number" inputMode="decimal" value={sub.total} onChange={e => update(i, 'total', e.target.value)} /></div>
               {subjects.length > 1 && <Button variant="ghost" size="icon" onClick={() => remove(i)}><Trash2 className="h-4 w-4" /></Button>}
             </div>
           ))}

@@ -27,8 +27,8 @@ const BMICalculator = () => {
     <Header>
       <ToolWrapper toolId="bmi-calculator" title="BMI Calculator" description="Calculate your Body Mass Index" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><Label>Weight (kg)</Label><Input type="number" value={weight} onChange={e => setWeight(e.target.value)} placeholder="70" /></div>
-          <div><Label>Height (cm)</Label><Input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="175" /></div>
+          <div><Label>Weight (kg)</Label><Input type="number" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} placeholder="70" /></div>
+          <div><Label>Height (cm)</Label><Input type="number" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} placeholder="175" /></div>
         </div>
         <AnimatePresence>
           {bmi !== null && (

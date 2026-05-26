@@ -28,9 +28,9 @@ const BMRCalculator = () => {
     <Header>
       <ToolWrapper toolId="bmr-calculator" title="BMR Calculator" description="Calculate Basal Metabolic Rate" category="Calculators">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div><Label>Weight (kg)</Label><Input type="number" value={weight} onChange={e => setWeight(e.target.value)} placeholder="70" /></div>
-          <div><Label>Height (cm)</Label><Input type="number" value={height} onChange={e => setHeight(e.target.value)} placeholder="175" /></div>
-          <div><Label>Age</Label><Input type="number" value={age} onChange={e => setAge(e.target.value)} placeholder="25" /></div>
+          <div><Label>Weight (kg)</Label><Input type="number" inputMode="decimal" value={weight} onChange={e => setWeight(e.target.value)} placeholder="70" /></div>
+          <div><Label>Height (cm)</Label><Input type="number" inputMode="decimal" value={height} onChange={e => setHeight(e.target.value)} placeholder="175" /></div>
+          <div><Label>Age</Label><Input type="number" inputMode="decimal" value={age} onChange={e => setAge(e.target.value)} placeholder="25" /></div>
           <div><Label>Gender</Label>
             <Select value={gender} onValueChange={setGender}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="male">Male</SelectItem><SelectItem value="female">Female</SelectItem></SelectContent></Select>
           </div>

@@ -27,8 +27,8 @@ const RatioCalculator = () => {
     <Header>
       <ToolWrapper toolId="ratio-calculator" title="Ratio Calculator" description="Calculate and simplify ratios" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div><Label>First Value</Label><Input type="number" value={a} onChange={e => setA(e.target.value)} placeholder="12" /></div>
-          <div><Label>Second Value</Label><Input type="number" value={b} onChange={e => setB(e.target.value)} placeholder="8" /></div>
+          <div><Label>First Value</Label><Input type="number" inputMode="decimal" value={a} onChange={e => setA(e.target.value)} placeholder="12" /></div>
+          <div><Label>Second Value</Label><Input type="number" inputMode="decimal" value={b} onChange={e => setB(e.target.value)} placeholder="8" /></div>
         </div>
         <AnimatePresence>
           {result && (

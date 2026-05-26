@@ -27,9 +27,9 @@ const LoanCalculator = () => {
     <Header>
       <ToolWrapper toolId="loan-calculator" title="Loan Calculator" description="Calculate loan payments & interest" category="Calculators">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div><Label>Loan Amount</Label><Input type="number" value={principal} onChange={e => setPrincipal(e.target.value)} placeholder="1000000" /></div>
-          <div><Label>Interest Rate (%/yr)</Label><Input type="number" value={rate} onChange={e => setRate(e.target.value)} placeholder="10" /></div>
-          <div><Label>Loan Term (years)</Label><Input type="number" value={years} onChange={e => setYears(e.target.value)} placeholder="10" /></div>
+          <div><Label>Loan Amount</Label><Input type="number" inputMode="decimal" value={principal} onChange={e => setPrincipal(e.target.value)} placeholder="1000000" /></div>
+          <div><Label>Interest Rate (%/yr)</Label><Input type="number" inputMode="decimal" value={rate} onChange={e => setRate(e.target.value)} placeholder="10" /></div>
+          <div><Label>Loan Term (years)</Label><Input type="number" inputMode="decimal" value={years} onChange={e => setYears(e.target.value)} placeholder="10" /></div>
         </div>
         <AnimatePresence>
           {result && (

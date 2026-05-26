@@ -34,8 +34,8 @@ const SpeedCalculator = () => {
             <Select value={mode} onValueChange={setMode}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="speed">Speed</SelectItem><SelectItem value="distance">Distance</SelectItem><SelectItem value="time">Time</SelectItem></SelectContent></Select>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div><Label>{labels[0]}</Label><Input type="number" value={v1} onChange={e => setV1(e.target.value)} /></div>
-            <div><Label>{labels[1]}</Label><Input type="number" value={v2} onChange={e => setV2(e.target.value)} /></div>
+            <div><Label>{labels[0]}</Label><Input type="number" inputMode="decimal" value={v1} onChange={e => setV1(e.target.value)} /></div>
+            <div><Label>{labels[1]}</Label><Input type="number" inputMode="decimal" value={v2} onChange={e => setV2(e.target.value)} /></div>
           </div>
         </div>
         <AnimatePresence>
