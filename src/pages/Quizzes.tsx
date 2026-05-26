@@ -18,6 +18,7 @@ import { BookOpen, Shuffle, Target, Clock, HelpCircle, Loader2, Sparkles } from 
 import { LMSSubjectSelector } from "@/components/quizzes/LMSSubjectSelector";
 import { LMSTopicSelector } from "@/components/quizzes/LMSTopicSelector";
 import { generateSlugUrl } from "@/utils/slugify";
+import RelatedContent from "@/components/seo/related/RelatedContent";
 import PageHeader from "@/components/ui/PageHeader";
 import { loadGuestQuestions } from "@/services/guestQuestionService";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
