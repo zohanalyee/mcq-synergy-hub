@@ -89,8 +89,6 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         image={ogImage}
       />
       <Helmet>
-        <meta property="og:image" content={ogImage} />
-        <meta name="twitter:image" content={ogImage} />
         <script type="application/ld+json">{JSON.stringify(webAppLd)}</script>
         <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
         {faqLd && <script type="application/ld+json">{JSON.stringify(faqLd)}</script>}
