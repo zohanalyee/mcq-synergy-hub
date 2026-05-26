@@ -148,6 +148,11 @@ function writeExams() {
     loc: `${BASE_URL}/exams/${s}`, lastmod: today, freq: "monthly", priority: "0.8",
   }))));
 }
+function writeProgSeo() {
+  write("programmatic.xml", urlSet(PROG_SEO_SLUGS.map(s => ({
+    loc: `${BASE_URL}/p/${s}`, lastmod: today, freq: "monthly", priority: "0.7",
+  }))));
+}
 
 // ---------- DB-backed sitemaps ----------
 async function buildOpportunitySitemap(category, type, fileName) {
@@ -202,7 +207,7 @@ async function buildBoards() {
 
 function writeIndex(boardPages) {
   const entries = [
-    "static.xml", "tools.xml", "exams.xml",
+    "static.xml", "tools.xml", "exams.xml", "programmatic.xml",
     "jobs.xml", "scholarships.xml", "blog.xml",
     ...Array.from({ length: boardPages }, (_, i) => `boards-${i + 1}.xml`),
   ].map(name =>
