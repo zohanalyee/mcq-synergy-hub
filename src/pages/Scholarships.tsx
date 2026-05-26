@@ -86,9 +86,9 @@ const Scholarships = () => {
   return (
     <Header>
       <SEOHead
-        title="Scholarships for Students in Pakistan"
-        description="Discover scholarships for Pakistani students. HEC, Fulbright, DAAD, and local scholarship opportunities with deadlines and application links."
-        keywords="Pakistan scholarships, HEC scholarship, student funding, educational grants, scholarship opportunities"
+        title="Scholarships in Pakistan 2026 — HEC, Fulbright, DAAD"
+        description="Latest scholarships for Pakistani students: HEC, Fulbright, DAAD & local funding. Eligibility, deadlines and apply links — updated weekly."
+        keywords="Pakistan scholarships 2026, HEC scholarship, Fulbright Pakistan, DAAD scholarship, student funding Pakistan"
       />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-16 overflow-x-hidden">
         <PageBreadcrumb items={[{ title: 'Scholarships', href: '/scholarships', isCurrent: true }]} showHomeButton={true} />
