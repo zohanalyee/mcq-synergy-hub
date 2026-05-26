@@ -12,6 +12,7 @@ import { getApprovedOpportunities } from "@/services/externalOpportunitiesServic
 import { ContentItem } from "@/interfaces/content";
 import { ExternalOpportunity, ExternalOpportunityFilters } from "@/types/externalOpportunities";
 import ExternalOpportunitiesSection from "@/components/external/ExternalOpportunitiesSection";
+import RelatedContent from "@/components/seo/related/RelatedContent";
 
 const Jobs = () => {
   const [jobs, setJobs] = useState<ContentItem[]>([]);
