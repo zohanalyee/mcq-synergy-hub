@@ -592,6 +592,8 @@ const Quizzes = () => {
             </Card>
           </div>
         </motion.div>
+
+        <RelatedContent entitySlug="quizzes-hub" title="Popular Exam Practice" limit={6} />
       </div>
     </Header>
   );
