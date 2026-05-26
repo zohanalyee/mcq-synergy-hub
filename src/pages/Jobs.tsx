@@ -104,6 +104,8 @@ const Jobs = () => {
           isLoading={isLoading}
           type="job"
         />
+
+        <RelatedContent entitySlug="jobs-hub" title="Related Exam Prep" limit={6} />
       </div>
     </Header>
   );
