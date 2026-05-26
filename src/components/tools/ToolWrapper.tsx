@@ -124,7 +124,7 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
       >
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{title}</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{h1}</h1>
         <p className="text-muted-foreground mt-1">{seoDescription}</p>
       </motion.div>
 
