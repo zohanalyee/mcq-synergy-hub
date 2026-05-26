@@ -12,6 +12,7 @@ import { Search, Calendar, User, ArrowRight, Newspaper } from "lucide-react";
 import { format } from "date-fns";
 import { motion } from "framer-motion";
 import PageHeader from "@/components/ui/PageHeader";
+import RelatedContent from "@/components/seo/related/RelatedContent";
 
 const CATEGORIES = ["all", "preparation", "colleges", "tips"];
 
