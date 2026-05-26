@@ -59,9 +59,9 @@ const Jobs = () => {
   return (
     <Header>
       <SEOHead
-        title="Latest Jobs in Pakistan"
-        description="Find latest government and private job opportunities in Pakistan. PPSC, FPSC, NTS job listings and application details."
-        keywords="Pakistan jobs, government jobs, PPSC jobs, FPSC jobs, NTS jobs, career opportunities"
+        title="Latest Government Jobs in Pakistan 2026 — PPSC, FPSC, NTS"
+        description="Browse latest Pakistan government & private jobs: PPSC, FPSC, NTS vacancies with eligibility, deadlines and apply links. Updated daily."
+        keywords="Pakistan jobs 2026, government jobs Pakistan, PPSC jobs, FPSC jobs, NTS jobs, latest vacancies"
       />
       <div className="max-w-7xl mx-auto px-4 pt-4 pb-10 overflow-x-hidden">
         <PageBreadcrumb items={[{ title: 'Jobs', href: '/jobs', isCurrent: true }]} showHomeButton={true} />
