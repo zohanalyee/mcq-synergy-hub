@@ -26,7 +26,7 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
 
   // Enriched H1 + SEO title — keyword-rich without losing the "Free Online" cue.
   const h1 = `${title} — Free Online ${category || 'Tool'}`;
-  const seoTitle = `${title} — Free Online ${category || 'Tool'} | MCQsAI`;
+  const seoTitle = `${title} — Free Online ${category || 'Tool'}`;
   const seoDescription =
     toolData?.seoDescription ||
     `Use our free ${title.toLowerCase()} for instant results. ${description}. No signup, works in your browser.`;
