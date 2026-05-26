@@ -35,7 +35,11 @@ import {
   LayoutGrid,
   ListChecks,
   CheckCircle2,
-  Sparkles
+  Sparkles,
+  GraduationCap,
+  FileText,
+  Landmark,
+  ShieldAlert
 } from 'lucide-react';
 
 // Stagger container variants
@@ -467,14 +471,17 @@ const Home = () => {
       </motion.section>
 
       {/* SEO Landing Pages — Internal Links */}
-      <section className="py-8 bg-background border-t">
+      <section className="py-12 bg-gradient-to-b from-white via-slate-50 to-purple-50/60 dark:from-background dark:via-background dark:to-purple-950/20">
         <div className="container px-4 mx-auto max-w-5xl">
-          <h2 className="text-lg font-bold mb-6 text-center">Popular Exam Preparations</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-8 text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-blue-600">
+            Popular Exam Preparations
+          </h2>
 
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">University Entry Tests</h3>
-            <div className="flex flex-wrap gap-2">
-              {[
+          {[
+            {
+              title: 'University Entry Tests',
+              icon: GraduationCap,
+              links: [
                 { label: 'NUST Entry Test', url: '/nust-entry-test' },
                 { label: 'Punjab University', url: '/punjab-university-entry-test' },
                 { label: 'COMSATS Entry Test', url: '/comsats-entry-test' },
@@ -483,61 +490,61 @@ const Home = () => {
                 { label: 'MDCAT Syllabus', url: '/mdcat-syllabus' },
                 { label: 'ECAT Preparation', url: '/ecat-preparation' },
                 { label: '9th Class MCQs', url: '/9th-class-mcqs' },
-              ].map(link => (
-                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Past Papers</h3>
-            <div className="flex flex-wrap gap-2">
-              {[
+              ],
+            },
+            {
+              title: 'Past Papers',
+              icon: FileText,
+              links: [
                 { label: 'MDCAT Past Papers', url: '/mdcat-past-papers' },
                 { label: 'PPSC Past Papers', url: '/ppsc-past-papers' },
                 { label: 'FPSC Past Papers', url: '/fpsc-past-papers' },
                 { label: 'CSS MCQs', url: '/css-mcqs-practice' },
-              ].map(link => (
-                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Teaching & Board Exams</h3>
-            <div className="flex flex-wrap gap-2">
-              {[
+              ],
+            },
+            {
+              title: 'Teaching & Board Exams',
+              icon: Landmark,
+              links: [
                 { label: 'PST & SST Test', url: '/pst-sst-test-preparation' },
                 { label: 'Board MCQs', url: '/board-mcqs' },
-              ].map(link => (
-                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Forces & Government Jobs</h3>
-            <div className="flex flex-wrap gap-2">
-              {[
+              ],
+            },
+            {
+              title: 'Forces & Government Jobs',
+              icon: ShieldAlert,
+              links: [
                 { label: 'Pak Army Test', url: '/pak-army-test' },
                 { label: 'PAF Test', url: '/paf-test' },
                 { label: 'ASF Test', url: '/asf-test' },
                 { label: 'Navy/Rangers/FIA', url: '/forces-jobs-tests' },
-              ].map(link => (
-                <Link key={link.url} to={link.url} className="px-3 py-1.5 text-sm border rounded-full hover:bg-primary/5 hover:border-primary/40 transition-colors">
-                  {link.label}
-                </Link>
-              ))}
-            </div>
-          </div>
+              ],
+            },
+          ].map((group) => {
+            const Icon = group.icon;
+            return (
+              <div key={group.title} className="mb-7 last:mb-0">
+                <h3 className="flex items-center gap-2 text-xs font-bold tracking-widest uppercase text-purple-700/80 dark:text-purple-300/80 mb-3">
+                  <Icon className="h-3.5 w-3.5" />
+                  {group.title}
+                </h3>
+                <div className="flex flex-wrap gap-3">
+                  {group.links.map((link) => (
+                    <Link
+                      key={link.url}
+                      to={link.url}
+                      className="bg-white dark:bg-background border border-purple-100 dark:border-purple-900/40 shadow-sm text-slate-700 dark:text-slate-200 hover:text-white hover:bg-gradient-to-r hover:from-purple-600 hover:to-blue-600 hover:border-transparent hover:shadow-md transition-all duration-300 rounded-full px-4 py-2.5 text-sm font-medium"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
+
 
       {/* Footer */}
       <Footer />
