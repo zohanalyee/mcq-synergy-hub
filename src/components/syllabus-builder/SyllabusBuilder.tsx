@@ -66,6 +66,16 @@ export const SyllabusBuilder = () => {
     }
   }, [location.state]);
 
+  // Prefill search from URL params (?subject=, ?topic=, ?q=) — used by SEO landing-page deep-links
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const q = params.get('topic') || params.get('subject') || params.get('q');
+    if (q && q.trim().length > 0) {
+      setSearchQuery(q.trim());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.search]);
+
   // Calculate selection counts
   const { selectedSubjectsCount, selectedTopicsCount, selectedTopicIds } = useMemo(() => {
     let subjectsCount = 0;
