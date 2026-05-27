@@ -137,6 +137,10 @@ const GPAToPercentage = lazy(() => import("./pages/tools/GPAToPercentage"));
 const PercentageToGPA = lazy(() => import("./pages/tools/PercentageToGPA"));
 const GradeCalculator = lazy(() => import("./pages/tools/GradeCalculator"));
 const MarksCalculator = lazy(() => import("./pages/tools/MarksCalculator"));
+const AggregateCalculator = lazy(() => import("./pages/tools/AggregateCalculator"));
+const MeritCalculator = lazy(() => import("./pages/tools/MeritCalculator"));
+const PakistanTaxCalculator = lazy(() => import("./pages/tools/PakistanTaxCalculator"));
+const ZakatCalculator = lazy(() => import("./pages/tools/ZakatCalculator"));
 const AttendanceCalculator = lazy(() => import("./pages/tools/AttendanceCalculator"));
 const ResultCalculator = lazy(() => import("./pages/tools/ResultCalculator"));
 const FormulaSheet = lazy(() => import("./pages/tools/FormulaSheet"));
@@ -371,6 +375,10 @@ const App = () => {
                       <Route path="/tools/percentage-to-gpa" element={<Suspense fallback={<TopProgressBar />}><PercentageToGPA /></Suspense>} />
                       <Route path="/tools/grade-calculator" element={<Suspense fallback={<TopProgressBar />}><GradeCalculator /></Suspense>} />
                       <Route path="/tools/marks-calculator" element={<Suspense fallback={<TopProgressBar />}><MarksCalculator /></Suspense>} />
+                      <Route path="/tools/aggregate-calculator" element={<Suspense fallback={<TopProgressBar />}><AggregateCalculator /></Suspense>} />
+                      <Route path="/tools/merit-calculator" element={<Suspense fallback={<TopProgressBar />}><MeritCalculator /></Suspense>} />
+                      <Route path="/tools/pakistan-tax-calculator" element={<Suspense fallback={<TopProgressBar />}><PakistanTaxCalculator /></Suspense>} />
+                      <Route path="/tools/zakat-calculator" element={<Suspense fallback={<TopProgressBar />}><ZakatCalculator /></Suspense>} />
                       <Route path="/tools/attendance-calculator" element={<Suspense fallback={<TopProgressBar />}><AttendanceCalculator /></Suspense>} />
                       <Route path="/tools/result-calculator" element={<Suspense fallback={<TopProgressBar />}><ResultCalculator /></Suspense>} />
                       <Route path="/tools/formula-sheet" element={<Suspense fallback={<TopProgressBar />}><FormulaSheet /></Suspense>} />

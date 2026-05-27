@@ -88,10 +88,11 @@ const StructuredData = () => {
   const includeGlobalFaq = pathname === '/';
   const organizationSchema = {
     '@context': 'https://schema.org',
-    '@type': 'EducationalOrganization',
+    '@type': ['Organization', 'EducationalOrganization'],
     '@id': ORG_ID,
     name: 'MCQsAI',
     alternateName: ['MCQs AI', 'MCQSAI'],
+    teaches: ['MDCAT', 'ECAT', 'NTS', 'FPSC', 'PPSC', 'CSS', 'Matric', 'FSc', 'NUST NET', 'NUMS'],
     url: ORIGIN,
     logo: {
       '@type': 'ImageObject',

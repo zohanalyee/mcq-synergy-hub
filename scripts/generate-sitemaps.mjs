@@ -95,6 +95,7 @@ const STATIC_PAGES = [
   { loc: "/mdcat-syllabus", priority: "0.8", freq: "monthly" },
   { loc: "/privacy-policy", priority: "0.3", freq: "yearly" },
   { loc: "/terms-of-service", priority: "0.3", freq: "yearly" },
+  { loc: "/editorial-policy", priority: "0.5", freq: "monthly" },
 ];
 
 const TOOL_PATHS = [
@@ -116,6 +117,8 @@ const TOOL_PATHS = [
   "/tools/world-clock","/tools/word-counter","/tools/character-counter","/tools/qr-generator","/tools/qr-scanner",
   "/tools/password-generator","/tools/name-generator","/tools/color-picker",
   "/tools/random-number","/tools/equation-solver",
+  "/tools/aggregate-calculator","/tools/merit-calculator",
+  "/tools/pakistan-tax-calculator","/tools/zakat-calculator",
 ];
 
 // Programmatic SEO /p/* slugs — mirrors indexableProgSeoSlugs() in src/data/programmaticSeo.ts

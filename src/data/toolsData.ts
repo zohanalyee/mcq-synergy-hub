@@ -6,7 +6,8 @@ import {
   Key, Type, Hash, CaseSensitive, User, Palette, Image, FileText,
   Clock, Globe, Shuffle, Heart, Hourglass, Maximize, Binary,
   Thermometer, Gauge, Square, Atom, QrCode, Coins,
-  Wrench, LucideIcon, Merge, FileOutput, Building2, Moon
+  Wrench, LucideIcon, Merge, FileOutput, Building2, Moon,
+  Target, Trophy, Wallet, HandCoins
 } from 'lucide-react';
 
 export interface ToolDefinition {
@@ -166,6 +167,38 @@ export const ALL_TOOLS: ToolDefinition[] = [
   { id: 'fuel-calculator', name: 'Fuel Calculator', description: 'Calculate fuel cost & mileage', category: 'Calculators', icon: Fuel, href: '/tools/fuel-calculator',
     seoDescription: 'Free fuel cost calculator. Calculate fuel consumption, mileage, and trip cost based on distance and fuel price.',
     howToUse: ['Enter the distance of your trip', 'Enter your vehicle fuel efficiency', 'Enter fuel price to see total trip cost'] },
+
+  // === Pakistan-specific high-intent calculators ===
+  { id: 'aggregate-calculator', name: 'Aggregate Calculator', description: 'MDCAT, ECAT, NUST, NUMS & UHS aggregate', category: 'Student Tools', icon: Target, popular: true, href: '/tools/aggregate-calculator',
+    seoDescription: 'Free MDCAT, ECAT, NUST, NUMS and UHS aggregate calculator for Pakistani medical and engineering admissions. Get aggregate % and admission-chance band instantly.',
+    howToUse: ['Pick your exam (MDCAT / ECAT / NUST / NUMS / UHS)', 'Enter Matric, FSc and entry-test marks', 'View aggregate % and admission-chance band'],
+    faq: [
+      { q: 'Which formula does this use for MDCAT?', a: 'PMC standard: 10% Matric + 40% FSc + 50% MDCAT.' },
+      { q: 'Is the NUST aggregate formula different?', a: 'Yes — NUST weights NET heavily: 75% NET + 15% FSc + 10% Matric.' },
+      { q: 'Are admission chances guaranteed?', a: 'No. Bands are based on 2024 open-merit closings and are indicative only — always confirm against the official prospectus.' },
+    ] },
+  { id: 'merit-calculator', name: 'Merit Calculator', description: 'University merit with hafiz & quota bonuses', category: 'Student Tools', icon: Trophy, popular: true, href: '/tools/merit-calculator',
+    seoDescription: 'Free Pakistani university merit calculator. Apply hafiz-e-Quran bonus, sports, disability, minorities and overseas quotas to your open-merit percentage.',
+    howToUse: ['Enter your open-merit percentage', 'Toggle hafiz-e-Quran bonus if applicable', 'Pick your quota / category to see adjusted merit'],
+    faq: [
+      { q: 'How much is the hafiz bonus?', a: 'Most Pakistani boards award +20 marks (≈ +1.82% on a 1100-mark base) for verified hafiz-e-Quran candidates.' },
+      { q: 'Do all universities accept these quotas?', a: 'Quota policies vary by institution and province. Confirm eligibility with the admission office.' },
+    ] },
+  { id: 'pakistan-tax-calculator', name: 'Pakistan Income Tax Calculator', description: 'FBR 2025-26 salaried income tax', category: 'Calculators', icon: Wallet, popular: true, href: '/tools/pakistan-tax-calculator',
+    seoDescription: 'Free Pakistan income tax calculator using FBR 2025-26 salaried slabs. Get monthly and annual tax, effective rate and slab-wise breakdown in PKR.',
+    howToUse: ['Pick monthly or annual salary', 'Enter your gross salary in PKR', 'View tax, take-home and slab-wise breakdown'],
+    faq: [
+      { q: 'Which slabs are used?', a: 'FBR 2025-26 salaried-individual slabs: 0% up to 600k, then 5%, 15%, 25%, 30% and 35% on the highest band.' },
+      { q: 'Does this include super tax?', a: 'No. Super tax, surcharges and additional withholding are not applied — this is the base salaried income tax only.' },
+    ] },
+  { id: 'zakat-calculator', name: 'Zakat Calculator', description: '2.5% Zakat on cash, gold & business assets', category: 'Calculators', icon: HandCoins, popular: true, href: '/tools/zakat-calculator',
+    seoDescription: 'Free Zakat calculator for Pakistan. Compute 2.5% Zakat on cash, gold, silver and business assets with editable gold/silver nisab rates in PKR.',
+    howToUse: ['Update today\'s gold and silver price per gram', 'Enter cash, gold, silver, business assets and liabilities', 'View Zakat due if you exceed nisab'],
+    faq: [
+      { q: 'Which nisab does the tool use?', a: 'Silver nisab (612.36 g) when you hold any silver, otherwise gold nisab (87.48 g) — the safer scholarly position.' },
+      { q: 'Are the gold/silver prices live?', a: 'Defaults are indicative — update the price/gram fields to today\'s market rate before calculating.' },
+    ] },
+
 
   // === Student Tools (10 new) ===
   { id: 'cgpa-calculator', name: 'CGPA Calculator', description: 'Calculate cumulative GPA', category: 'Student Tools', icon: GraduationCap, href: '/tools/cgpa-calculator',
