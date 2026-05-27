@@ -116,6 +116,8 @@ const TOOL_PATHS = [
   "/tools/world-clock","/tools/word-counter","/tools/character-counter","/tools/qr-generator","/tools/qr-scanner",
   "/tools/password-generator","/tools/name-generator","/tools/color-picker",
   "/tools/random-number","/tools/equation-solver",
+  "/tools/aggregate-calculator","/tools/merit-calculator",
+  "/tools/pakistan-tax-calculator","/tools/zakat-calculator",
 ];
 
 // Programmatic SEO /p/* slugs — mirrors indexableProgSeoSlugs() in src/data/programmaticSeo.ts
