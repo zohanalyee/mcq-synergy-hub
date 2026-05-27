@@ -57,7 +57,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     prepResources: [
       { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
       { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
-      { label: 'Aggregate Calculator', path: '/tools/marks-calculator' },
+      { label: 'Aggregate Calculator', path: '/tools/aggregate-calculator' },
       { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
     ],
     faqs: [
@@ -429,7 +429,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     prepResources: [
       { label: 'MDCAT Syllabus 2026', path: '/mdcat-syllabus' },
       { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
-      { label: 'Aggregate Calculator', path: '/tools/marks-calculator' },
+      { label: 'Aggregate Calculator', path: '/tools/aggregate-calculator' },
       { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
     ],
     faqs: [
