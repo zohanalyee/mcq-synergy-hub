@@ -22,6 +22,13 @@ const aboutJsonLd = {
     url: 'https://www.mcqsai.com',
     foundingCountry: 'PK',
     description: "Pakistan's premier AI-powered educational platform",
+    founder: {
+      '@type': 'Person',
+      name: 'Zohaib Ali Channa',
+      jobTitle: 'Founder & Developer',
+      worksFor: { '@type': 'Organization', name: 'MCQsAI' },
+      url: 'https://mcqsai.com/about',
+    },
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'hello@mcqsai.com',
@@ -30,6 +37,16 @@ const aboutJsonLd = {
       availableLanguage: ['English', 'Urdu', 'Sindhi'],
     },
   },
+};
+
+const personJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Person',
+  name: 'Zohaib Ali Channa',
+  jobTitle: 'Founder & Developer',
+  worksFor: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
+  url: 'https://mcqsai.com/about',
+  nationality: { '@type': 'Country', name: 'Pakistan' },
 };
 
 const About = () => {
