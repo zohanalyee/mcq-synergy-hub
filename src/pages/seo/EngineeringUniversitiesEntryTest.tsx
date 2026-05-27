@@ -53,27 +53,27 @@ const EngineeringUniversitiesEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-purple-700">Mathematics</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Calculus" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Calculus" to={`/custom-syllabus?topic=Calculus`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Calculus</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Algebra" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Algebra" to={`/custom-syllabus?topic=Algebra`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Algebra</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Trigonometry" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Trigonometry" to={`/custom-syllabus?topic=Trigonometry`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Trigonometry</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Coordinate Geometry" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Coordinate Geometry" to={`/custom-syllabus?topic=Coordinate%20Geometry`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Coordinate Geometry</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Statistics" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Statistics" to={`/custom-syllabus?topic=Statistics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Statistics</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Probability" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Probability" to={`/custom-syllabus?topic=Probability`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Probability</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
@@ -83,27 +83,27 @@ const EngineeringUniversitiesEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-blue-700">Physics</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Mechanics" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Mechanics" to={`/custom-syllabus?topic=Mechanics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Mechanics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Waves" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Waves" to={`/custom-syllabus?topic=Waves`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Waves</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Electricity" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Electricity" to={`/custom-syllabus?topic=Electricity`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Electricity</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Magnetism" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Magnetism" to={`/custom-syllabus?topic=Magnetism`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Magnetism</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Thermodynamics" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Thermodynamics" to={`/custom-syllabus?topic=Thermodynamics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Thermodynamics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Modern Physics" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Modern Physics" to={`/custom-syllabus?topic=Modern%20Physics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Modern Physics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
@@ -113,27 +113,27 @@ const EngineeringUniversitiesEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-green-700">Chemistry</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Organic" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Organic" to={`/custom-syllabus?topic=Organic`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Organic</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Inorganic" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Inorganic" to={`/custom-syllabus?topic=Inorganic`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Inorganic</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Physical" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Physical" to={`/custom-syllabus?topic=Physical`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Physical</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Analytical" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Analytical" to={`/custom-syllabus?topic=Analytical`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Analytical</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Industrial" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Industrial" to={`/custom-syllabus?topic=Industrial`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Industrial</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Environmental" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Environmental" to={`/custom-syllabus?topic=Environmental`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Environmental</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
@@ -143,27 +143,27 @@ const EngineeringUniversitiesEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-orange-700">English & Reasoning</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Vocabulary" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Vocabulary" to={`/custom-syllabus?topic=Vocabulary`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Vocabulary</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Grammar" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Grammar" to={`/custom-syllabus?topic=Grammar`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Grammar</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Comprehension" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Comprehension" to={`/custom-syllabus?topic=Comprehension`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Comprehension</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Analytical" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Analytical" to={`/custom-syllabus?topic=Analytical`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Analytical</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Logical Reasoning" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Logical Reasoning" to={`/custom-syllabus?topic=Logical%20Reasoning`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Logical Reasoning</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="IQ" to="/exams/ecat" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="IQ" to={`/custom-syllabus?topic=IQ`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">IQ</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>

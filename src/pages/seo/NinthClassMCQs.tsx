@@ -34,51 +34,51 @@ const NinthClassMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-green-700">Biology — Class 9</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Introduction to Biology" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Introduction to Biology" to={`/custom-syllabus?topic=Introduction%20to%20Biology`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Introduction to Biology</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Solving a Biological Problem" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Solving a Biological Problem" to={`/custom-syllabus?topic=Solving%20a%20Biological%20Problem`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Solving a Biological Problem</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Biodiversity" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Biodiversity" to={`/custom-syllabus?topic=Biodiversity`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Biodiversity</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Cells" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Cells" to={`/custom-syllabus?topic=Cells`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Cells</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Cell Cycle" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Cell Cycle" to={`/custom-syllabus?topic=Cell%20Cycle`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Cell Cycle</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Enzymes" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Enzymes" to={`/custom-syllabus?topic=Enzymes`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Enzymes</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Bioenergetics" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Bioenergetics" to={`/custom-syllabus?topic=Bioenergetics`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Bioenergetics</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Nutrition" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Nutrition" to={`/custom-syllabus?topic=Nutrition`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Nutrition</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Transport" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Transport" to={`/custom-syllabus?topic=Transport`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Transport</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Gaseous Exchange" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Gaseous Exchange" to={`/custom-syllabus?topic=Gaseous%20Exchange`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Gaseous Exchange</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Homeostasis" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Homeostasis" to={`/custom-syllabus?topic=Homeostasis`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Homeostasis</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Support & Movement" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Support & Movement" to={`/custom-syllabus?topic=Support%20%26%20Movement`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Support & Movement</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
@@ -88,35 +88,35 @@ const NinthClassMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-blue-700">Chemistry — Class 9</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Introduction to Chemistry" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Introduction to Chemistry" to={`/custom-syllabus?topic=Introduction%20to%20Chemistry`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Introduction to Chemistry</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Structure of Atoms" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Structure of Atoms" to={`/custom-syllabus?topic=Structure%20of%20Atoms`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Structure of Atoms</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Periodic Table" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Periodic Table" to={`/custom-syllabus?topic=Periodic%20Table`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Periodic Table</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Structure of Molecules" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Structure of Molecules" to={`/custom-syllabus?topic=Structure%20of%20Molecules`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Structure of Molecules</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Physical States of Matter" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Physical States of Matter" to={`/custom-syllabus?topic=Physical%20States%20of%20Matter`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Physical States of Matter</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Solutions" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Solutions" to={`/custom-syllabus?topic=Solutions`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Solutions</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Electrochemistry" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Electrochemistry" to={`/custom-syllabus?topic=Electrochemistry`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Electrochemistry</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Chemical Reactivity" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Chemical Reactivity" to={`/custom-syllabus?topic=Chemical%20Reactivity`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Chemical Reactivity</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
@@ -126,39 +126,39 @@ const NinthClassMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-purple-700">Physics — Class 9</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Physical Quantities" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Physical Quantities" to={`/custom-syllabus?topic=Physical%20Quantities`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Physical Quantities</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Kinematics" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Kinematics" to={`/custom-syllabus?topic=Kinematics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Kinematics</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Dynamics" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Dynamics" to={`/custom-syllabus?topic=Dynamics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Dynamics</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Turning Effect" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Turning Effect" to={`/custom-syllabus?topic=Turning%20Effect`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Turning Effect</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Gravitation" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Gravitation" to={`/custom-syllabus?topic=Gravitation`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Gravitation</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Work & Energy" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Work & Energy" to={`/custom-syllabus?topic=Work%20%26%20Energy`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Work & Energy</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Properties of Matter" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Properties of Matter" to={`/custom-syllabus?topic=Properties%20of%20Matter`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Properties of Matter</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Thermal Properties" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Thermal Properties" to={`/custom-syllabus?topic=Thermal%20Properties`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Thermal Properties</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Transfer of Heat" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Transfer of Heat" to={`/custom-syllabus?topic=Transfer%20of%20Heat`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Transfer of Heat</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
@@ -168,43 +168,43 @@ const NinthClassMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-orange-700">Mathematics — Class 9</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Matrices" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Matrices" to={`/custom-syllabus?topic=Matrices`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Matrices</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Real Numbers" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Real Numbers" to={`/custom-syllabus?topic=Real%20Numbers`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Real Numbers</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Logarithms" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Logarithms" to={`/custom-syllabus?topic=Logarithms`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Logarithms</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Algebraic Expressions" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Algebraic Expressions" to={`/custom-syllabus?topic=Algebraic%20Expressions`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Algebraic Expressions</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Factorization" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Factorization" to={`/custom-syllabus?topic=Factorization`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Factorization</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Algebraic Manipulation" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Algebraic Manipulation" to={`/custom-syllabus?topic=Algebraic%20Manipulation`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Algebraic Manipulation</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Linear Equations" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Linear Equations" to={`/custom-syllabus?topic=Linear%20Equations`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Linear Equations</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Linear Inequalities" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Linear Inequalities" to={`/custom-syllabus?topic=Linear%20Inequalities`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Linear Inequalities</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Trigonometry" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Trigonometry" to={`/custom-syllabus?topic=Trigonometry`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Trigonometry</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Congruent Triangles" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Congruent Triangles" to={`/custom-syllabus?topic=Congruent%20Triangles`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Congruent Triangles</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
@@ -214,35 +214,35 @@ const NinthClassMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-pink-700">English & Other Subjects — Class 9</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="English Grammar" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="English Grammar" to={`/custom-syllabus?topic=English%20Grammar`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">English Grammar</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Comprehension" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="Comprehension" to={`/custom-syllabus?topic=Comprehension`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">Comprehension</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Urdu" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="Urdu" to={`/custom-syllabus?topic=Urdu`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">Urdu</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Pakistan Studies" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="Pakistan Studies" to={`/custom-syllabus?topic=Pakistan%20Studies`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">Pakistan Studies</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Islamiyat" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="Islamiyat" to={`/custom-syllabus?topic=Islamiyat`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">Islamiyat</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Computer Science" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="Computer Science" to={`/custom-syllabus?topic=Computer%20Science`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">Computer Science</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>
-          <Link key="General Science" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="General Science" to={`/custom-syllabus?topic=General%20Science`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">General Science</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Home Economics" to="/boards" className="p-3 border rounded-lg hover:bg-pink-50 text-center">
+          <Link key="Home Economics" to={`/custom-syllabus?topic=Home%20Economics`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
             <p className="text-sm font-medium">Home Economics</p>
             <p className="text-xs text-pink-600 mt-1">Practice →</p>
           </Link>

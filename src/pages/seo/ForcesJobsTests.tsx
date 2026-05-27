@@ -84,7 +84,7 @@ const ForcesJobsTests = () => (
             <h2 className={`text-xl font-semibold mb-3 ${c.head}`}>{section.subject}</h2>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
               {section.topics.map((topic) => (
-                <Link key={topic} to="/exams/nts" className={`p-3 border rounded-lg ${c.hover} text-center`}>
+                <Link key={topic} to={`/custom-syllabus?subject=${encodeURIComponent(section.subject)}&topic=${encodeURIComponent(topic)}`} className={`p-3 border rounded-lg ${c.hover} text-center`}>
                   <p className="text-sm font-medium">{topic}</p>
                   <p className={`text-xs ${c.text} mt-1`}>Practice →</p>
                 </Link>
