@@ -170,18 +170,33 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         </Card>
       )}
 
-      {/* MCQ CTA */}
-      <Card className="border-primary/20 bg-primary/5">
-        <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div>
-            <p className="font-semibold text-foreground">Students? Try our MCQ Platform!</p>
-            <p className="text-sm text-muted-foreground">10,000+ free practice questions for all subjects</p>
-          </div>
-          <Button asChild size="sm">
-            <Link to="/subjects">Explore MCQs →</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      {/* MCQ CTA — exam-contextual where the tool maps to a specific test prep flow */}
+      {(() => {
+        const examContext: Record<string, { label: string; url: string; sub: string }> = {
+          'aggregate-calculator':      { label: 'Practice MDCAT MCQs Free →', url: '/exams/mdcat', sub: 'MDCAT past papers & topic-wise MCQs' },
+          'merit-calculator':          { label: 'Practice MDCAT MCQs Free →', url: '/exams/mdcat', sub: 'Boost your aggregate with MDCAT practice' },
+          'gpa-calculator':            { label: 'Practice Entry Test MCQs →', url: '/exams/ecat',  sub: 'ECAT & engineering test prep' },
+          'cgpa-calculator':           { label: 'Practice Entry Test MCQs →', url: '/exams/ecat',  sub: 'ECAT & engineering test prep' },
+          'age-calculator':            { label: 'Practice NTS MCQs Free →',   url: '/exams/nts',   sub: 'NTS, NAT & GAT MCQ banks' },
+          'percentage-calculator':     { label: 'Practice FPSC MCQs Free →',  url: '/exams/fpsc',  sub: 'FPSC, PPSC & CSS preparation' },
+          'pakistan-tax-calculator':   { label: 'Practice FPSC MCQs Free →',  url: '/exams/fpsc',  sub: 'FPSC, PPSC general knowledge MCQs' },
+          'marks-calculator':          { label: 'Practice Board MCQs Free →', url: '/boards',      sub: '9th, 10th, 11th & 12th class MCQs' },
+        };
+        const cta = examContext[toolId] || { label: 'Explore MCQs →', url: '/subjects', sub: '10,000+ free practice questions for all subjects' };
+        return (
+          <Card className="border-primary/20 bg-primary/5">
+            <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div>
+                <p className="font-semibold text-foreground">Students? Try our MCQ Platform!</p>
+                <p className="text-sm text-muted-foreground">{cta.sub}</p>
+              </div>
+              <Button asChild size="sm">
+                <Link to={cta.url}>{cta.label}</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })()}
 
       {/* Related Tools */}
       {relatedTools.length > 0 && (
