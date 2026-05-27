@@ -58,6 +58,7 @@ const About = () => {
         keywords="about MCQsAI, AI exam platform, Pakistan education, EdTech"
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-6">About MCQSAI</h1>
 
