@@ -34,35 +34,35 @@ const BoardMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-purple-700">Class 9 — Matric Part 1</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Biology" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Biology" to={`/custom-syllabus?topic=Biology`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Biology</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Chemistry" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Chemistry" to={`/custom-syllabus?topic=Chemistry`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Chemistry</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Physics" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Physics" to={`/custom-syllabus?topic=Physics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Physics</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Mathematics" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Mathematics" to={`/custom-syllabus?topic=Mathematics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Mathematics</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="English" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="English" to={`/custom-syllabus?topic=English`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">English</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Urdu" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Urdu" to={`/custom-syllabus?topic=Urdu`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Urdu</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Pakistan Studies" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Pakistan Studies" to={`/custom-syllabus?topic=Pakistan%20Studies`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Pakistan Studies</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Computer Science" to="/boards" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Computer Science" to={`/custom-syllabus?topic=Computer%20Science`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Computer Science</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
@@ -72,35 +72,35 @@ const BoardMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-blue-700">Class 10 — Matric Part 2</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Biology" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Biology" to={`/custom-syllabus?topic=Biology`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Biology</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Chemistry" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Chemistry" to={`/custom-syllabus?topic=Chemistry`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Chemistry</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Physics" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Physics" to={`/custom-syllabus?topic=Physics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Physics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Mathematics" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Mathematics" to={`/custom-syllabus?topic=Mathematics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Mathematics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="English" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="English" to={`/custom-syllabus?topic=English`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">English</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Urdu" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Urdu" to={`/custom-syllabus?topic=Urdu`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Urdu</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Pakistan Studies" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Pakistan Studies" to={`/custom-syllabus?topic=Pakistan%20Studies`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Pakistan Studies</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Computer Science" to="/boards" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Computer Science" to={`/custom-syllabus?topic=Computer%20Science`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Computer Science</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
@@ -110,35 +110,35 @@ const BoardMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-green-700">Class 11 — FSc/FA Part 1</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Biology" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Biology" to={`/custom-syllabus?topic=Biology`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Biology</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Chemistry" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Chemistry" to={`/custom-syllabus?topic=Chemistry`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Chemistry</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Physics" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Physics" to={`/custom-syllabus?topic=Physics`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Physics</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Mathematics" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Mathematics" to={`/custom-syllabus?topic=Mathematics`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Mathematics</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="English" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="English" to={`/custom-syllabus?topic=English`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">English</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Urdu" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Urdu" to={`/custom-syllabus?topic=Urdu`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Urdu</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Pakistan Studies" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Pakistan Studies" to={`/custom-syllabus?topic=Pakistan%20Studies`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Pakistan Studies</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Economics" to="/boards" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Economics" to={`/custom-syllabus?topic=Economics`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Economics</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
@@ -148,35 +148,35 @@ const BoardMCQs = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-orange-700">Class 12 — FSc/FA Part 2</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Biology" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Biology" to={`/custom-syllabus?topic=Biology`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Biology</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Chemistry" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Chemistry" to={`/custom-syllabus?topic=Chemistry`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Chemistry</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Physics" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Physics" to={`/custom-syllabus?topic=Physics`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Physics</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Mathematics" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Mathematics" to={`/custom-syllabus?topic=Mathematics`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Mathematics</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="English" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="English" to={`/custom-syllabus?topic=English`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">English</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Urdu" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Urdu" to={`/custom-syllabus?topic=Urdu`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Urdu</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Pakistan Studies" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Pakistan Studies" to={`/custom-syllabus?topic=Pakistan%20Studies`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Pakistan Studies</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Economics" to="/boards" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Economics" to={`/custom-syllabus?topic=Economics`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Economics</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>

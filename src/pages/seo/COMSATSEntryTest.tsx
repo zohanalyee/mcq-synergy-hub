@@ -34,27 +34,27 @@ const COMSATSEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-purple-700">Mathematics</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Algebra" to="/exams/nts" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Algebra" to={`/custom-syllabus?topic=Algebra`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Algebra</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Calculus" to="/exams/nts" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Calculus" to={`/custom-syllabus?topic=Calculus`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Calculus</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Trigonometry" to="/exams/nts" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Trigonometry" to={`/custom-syllabus?topic=Trigonometry`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Trigonometry</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Statistics" to="/exams/nts" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Statistics" to={`/custom-syllabus?topic=Statistics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Statistics</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Matrices" to="/exams/nts" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Matrices" to={`/custom-syllabus?topic=Matrices`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Matrices</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Probability" to="/exams/nts" className="p-3 border rounded-lg hover:bg-purple-50 text-center">
+          <Link key="Probability" to={`/custom-syllabus?topic=Probability`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
             <p className="text-sm font-medium">Probability</p>
             <p className="text-xs text-purple-600 mt-1">Practice →</p>
           </Link>
@@ -64,27 +64,27 @@ const COMSATSEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-blue-700">Physics</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Mechanics" to="/exams/nts" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Mechanics" to={`/custom-syllabus?topic=Mechanics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Mechanics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Electricity" to="/exams/nts" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Electricity" to={`/custom-syllabus?topic=Electricity`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Electricity</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Waves" to="/exams/nts" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Waves" to={`/custom-syllabus?topic=Waves`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Waves</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Thermodynamics" to="/exams/nts" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Thermodynamics" to={`/custom-syllabus?topic=Thermodynamics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Thermodynamics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Modern Physics" to="/exams/nts" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Modern Physics" to={`/custom-syllabus?topic=Modern%20Physics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Modern Physics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Optics" to="/exams/nts" className="p-3 border rounded-lg hover:bg-blue-50 text-center">
+          <Link key="Optics" to={`/custom-syllabus?topic=Optics`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
             <p className="text-sm font-medium">Optics</p>
             <p className="text-xs text-blue-600 mt-1">Practice →</p>
           </Link>
@@ -94,27 +94,27 @@ const COMSATSEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-green-700">Computer Science</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Programming Basics" to="/exams/nts" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Programming Basics" to={`/custom-syllabus?topic=Programming%20Basics`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Programming Basics</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Data Structures" to="/exams/nts" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Data Structures" to={`/custom-syllabus?topic=Data%20Structures`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Data Structures</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Algorithms" to="/exams/nts" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Algorithms" to={`/custom-syllabus?topic=Algorithms`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Algorithms</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Database" to="/exams/nts" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Database" to={`/custom-syllabus?topic=Database`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Database</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Networking" to="/exams/nts" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="Networking" to={`/custom-syllabus?topic=Networking`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">Networking</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
-          <Link key="OOP" to="/exams/nts" className="p-3 border rounded-lg hover:bg-green-50 text-center">
+          <Link key="OOP" to={`/custom-syllabus?topic=OOP`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
             <p className="text-sm font-medium">OOP</p>
             <p className="text-xs text-green-600 mt-1">Practice →</p>
           </Link>
@@ -124,19 +124,19 @@ const COMSATSEntryTest = () => (
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3 text-orange-700">English</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Grammar" to="/exams/nts" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Grammar" to={`/custom-syllabus?topic=Grammar`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Grammar</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Vocabulary" to="/exams/nts" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Vocabulary" to={`/custom-syllabus?topic=Vocabulary`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Vocabulary</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Comprehension" to="/exams/nts" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Comprehension" to={`/custom-syllabus?topic=Comprehension`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Comprehension</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
-          <Link key="Analytical Reasoning" to="/exams/nts" className="p-3 border rounded-lg hover:bg-orange-50 text-center">
+          <Link key="Analytical Reasoning" to={`/custom-syllabus?topic=Analytical%20Reasoning`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
             <p className="text-sm font-medium">Analytical Reasoning</p>
             <p className="text-xs text-orange-600 mt-1">Practice →</p>
           </Link>
