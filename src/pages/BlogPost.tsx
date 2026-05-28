@@ -185,55 +185,76 @@ const BlogPost = () => {
               </div>
             </header>
 
-            <BlogTrustStrip
-              lastUpdated={lastUpdated}
-              readingMinutes={readingMinutes}
-              hasSource={sources.length > 0}
-            />
+            <BlogErrorBoundary label="trust-strip">
+              <BlogTrustStrip
+                lastUpdated={lastUpdated}
+                readingMinutes={readingMinutes}
+                hasSource={sources.length > 0}
+              />
+            </BlogErrorBoundary>
 
-            <BlogHighlightsCard highlights={highlights} />
+            <BlogErrorBoundary label="highlights">
+              <BlogHighlightsCard highlights={highlights} />
+            </BlogErrorBoundary>
 
-            <BlogTOC markdown={post.content || ""} />
+            <BlogErrorBoundary label="toc">
+              <BlogTOC markdown={rawContent} />
+            </BlogErrorBoundary>
 
-            <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
-                            prose-headings:scroll-mt-20 prose-headings:font-semibold
-                            prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
-                            prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
-                            prose-p:leading-relaxed prose-li:leading-relaxed
-                            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                            prose-table:text-sm prose-th:bg-muted/60
-                            [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{firstHalf}</ReactMarkdown>
-            </div>
-
-            {tables.length > 0 && <BlogTables tables={tables} />}
-
-            {/* Mid-article preparation funnel */}
-            {prepBlocks.length > 0 && <BlogPrepFunnel blocks={prepBlocks.slice(0, 2)} />}
-
-            {secondHalf && (
+            <BlogErrorBoundary label="markdown-first">
               <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
                               prose-headings:scroll-mt-20 prose-headings:font-semibold
                               prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
                               prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
                               prose-p:leading-relaxed prose-li:leading-relaxed
                               prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                              prose-table:text-sm prose-th:bg-muted/60
                               [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{secondHalf}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{firstHalf || ""}</ReactMarkdown>
               </div>
-            )}
+            </BlogErrorBoundary>
 
-            {/* Remaining prep blocks before conclusion */}
-            {prepBlocks.length > 2 && (
-              <BlogPrepFunnel blocks={prepBlocks.slice(2)} heading="Keep Practising" />
-            )}
+            <BlogErrorBoundary label="tables">
+              {tables.length > 0 && <BlogTables tables={tables} />}
+            </BlogErrorBoundary>
 
-            <BlogFAQ faqs={faqs} />
+            <BlogErrorBoundary label="prep-funnel-1">
+              {prepBlocks.length > 0 && <BlogPrepFunnel blocks={prepBlocks.slice(0, 2)} />}
+            </BlogErrorBoundary>
 
-            <BlogInternalLinks links={internalLinks} />
+            <BlogErrorBoundary label="markdown-second">
+              {secondHalf && (
+                <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
+                                prose-headings:scroll-mt-20 prose-headings:font-semibold
+                                prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
+                                prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
+                                prose-p:leading-relaxed prose-li:leading-relaxed
+                                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                                [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{secondHalf}</ReactMarkdown>
+                </div>
+              )}
+            </BlogErrorBoundary>
 
-            <BlogSources sources={sources} />
+            <BlogErrorBoundary label="prep-funnel-2">
+              {prepBlocks.length > 2 && (
+                <BlogPrepFunnel blocks={prepBlocks.slice(2)} heading="Keep Practising" />
+              )}
+            </BlogErrorBoundary>
+
+            <BlogErrorBoundary label="faq">
+              <BlogFAQ faqs={faqs} />
+            </BlogErrorBoundary>
+
+            <BlogErrorBoundary label="internal-links">
+              <BlogInternalLinks links={internalLinks} />
+            </BlogErrorBoundary>
+
+            <BlogErrorBoundary label="sources">
+              <BlogSources sources={sources} />
+            </BlogErrorBoundary>
           </article>
+
 
           {/* Related Posts */}
           {relatedPosts.length > 0 && (
