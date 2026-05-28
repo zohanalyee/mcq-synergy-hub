@@ -48,6 +48,48 @@ const breadcrumbForType = (type: string) => {
   }
 };
 
+/** Parse free-form salary string into Schema.org MonetaryAmount, or null if not numeric. */
+const parseSalaryToMonetary = (raw?: string | null) => {
+  if (!raw || typeof raw !== "string") return null;
+  const s = raw.replace(/,/g, "").trim();
+  // Reject pure pay-scale codes / vague text (BPS-17, Competitive, Negotiable, etc.)
+  if (/^(bps|bs|grade|scale)[-\s]?\d+/i.test(s)) return null;
+  if (/competitive|negotiable|market|as per|attractive/i.test(s)) return null;
+  // Match a single number or numeric range like 50000-80000 or 50000 to 80000
+  const range = s.match(/(\d{4,})\s*(?:-|to|–)\s*(\d{4,})/i);
+  if (range) {
+    const min = Number(range[1]);
+    const max = Number(range[2]);
+    if (Number.isFinite(min) && Number.isFinite(max) && min > 0 && max >= min) {
+      return {
+        "@type": "MonetaryAmount",
+        currency: "PKR",
+        value: { "@type": "QuantitativeValue", minValue: min, maxValue: max, unitText: "MONTH" },
+      };
+    }
+  }
+  const single = s.match(/(\d{4,})/);
+  if (single) {
+    const n = Number(single[1]);
+    if (Number.isFinite(n) && n > 0) {
+      return {
+        "@type": "MonetaryAmount",
+        currency: "PKR",
+        value: { "@type": "QuantitativeValue", value: n, unitText: "MONTH" },
+      };
+    }
+  }
+  return null;
+};
+
+const cleanStr = (v: unknown): string | null => {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t) return null;
+  if (/^(n\/?a|none|not specified|unspecified|null|undefined)$/i.test(t)) return null;
+  return t;
+};
+
 const buildJsonLd = (op: any) => {
   const base: any = {
     "@context": "https://schema.org",
@@ -58,19 +100,28 @@ const buildJsonLd = (op: any) => {
     ...(op.deadline_date && { validThrough: op.deadline_date }),
   };
   if (op.type === "job") {
+    const locality = cleanStr(op.location);
+    const address: Record<string, string> = {
+      "@type": "PostalAddress",
+      addressCountry: "PK",
+    };
+    if (locality) address.addressLocality = locality;
+
+    const baseSalary = parseSalaryToMonetary(op.salary);
+    const qualifications = cleanStr(op.qualification);
+    const experience = cleanStr(op.experience);
+    const orgName = cleanStr(op.organization) || cleanStr(op.source_name) || "MCQsAI";
+
     return {
       ...base,
       "@type": "JobPosting",
       title: op.title,
-      employmentType: op.employment_type || "FULL_TIME",
-      hiringOrganization: { "@type": "Organization", name: op.organization || op.source_name || "MCQsAI" },
-      jobLocation: {
-        "@type": "Place",
-        address: { "@type": "PostalAddress", addressLocality: op.location || "Pakistan", addressCountry: "PK" },
-      },
-      ...(op.salary && { baseSalary: { "@type": "MonetaryAmount", currency: "PKR", value: { "@type": "QuantitativeValue", value: op.salary, unitText: "MONTH" } } }),
-      ...(op.qualification && { qualifications: op.qualification }),
-      ...(op.experience && { experienceRequirements: op.experience }),
+      employmentType: cleanStr(op.employment_type) || "FULL_TIME",
+      hiringOrganization: { "@type": "Organization", name: orgName },
+      jobLocation: { "@type": "Place", address },
+      ...(baseSalary && { baseSalary }),
+      ...(qualifications && { qualifications }),
+      ...(experience && experience.length > 3 && { experienceRequirements: experience }),
     };
   }
   if (op.type === "scholarship") {
