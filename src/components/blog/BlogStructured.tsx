@@ -86,7 +86,7 @@ export const BlogHighlightsCard = ({ highlights }: { highlights: Highlights | nu
 /* ---------------- TOC ---------------- */
 export const BlogTOC = ({ markdown }: { markdown: string }) => {
   const headings = Array.from(markdown.matchAll(/^##\s+(.+)$/gm)).map(m => m[1].trim());
-  if (headings.length < 4) return null;
+  if (headings.length < 3) return null;
   return (
     <nav aria-label="Table of contents" className="my-5 p-3 rounded-md border border-border bg-muted/40">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">On this page</p>
@@ -268,6 +268,43 @@ export const JobPostingSchema = ({ data, url, title, description, datePosted }: 
       value: { "@type": "QuantitativeValue", value: data.baseSalary.value, unitText: data.baseSalary.unitText || "MONTH" },
     };
   }
+  return (
+    <Helmet>
+      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+    </Helmet>
+  );
+};
+
+/* ---------------- HowTo Schema (Study Guides / Preparation Tips) ---------------- */
+export const HowToSchema = ({
+  name,
+  description,
+  url,
+  steps,
+  totalTimeMinutes,
+}: {
+  name: string;
+  description?: string;
+  url: string;
+  steps: { name: string; text: string }[];
+  totalTimeMinutes?: number;
+}) => {
+  if (!steps?.length) return null;
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    description: description || name,
+    url,
+    step: steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+      url: `${url}#step-${i + 1}`,
+    })),
+  };
+  if (totalTimeMinutes) schema.totalTime = `PT${totalTimeMinutes}M`;
   return (
     <Helmet>
       <script type="application/ld+json">{JSON.stringify(schema)}</script>
