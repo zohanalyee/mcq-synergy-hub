@@ -154,6 +154,7 @@ const BlogManager = () => {
           <CardTitle>{editing ? "Edit Post" : "New Blog Post"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {!editing && <AIGeneratePanel onApplyDraft={applyDraft} />}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label>Title</Label>
