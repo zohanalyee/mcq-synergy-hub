@@ -188,6 +188,14 @@ const BlogManager = () => {
             <Label>Content (Markdown)</Label>
             <Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={12} className="font-mono text-xs" />
           </div>
+          <div>
+            <Label>Tags (comma-separated)</Label>
+            <Input
+              value={form.tags.join(", ")}
+              onChange={(e) => setForm({ ...form, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })}
+              placeholder="MDCAT, preparation, Pakistan"
+            />
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label>Meta Title</Label>
