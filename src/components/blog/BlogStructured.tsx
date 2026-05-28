@@ -86,7 +86,7 @@ export const BlogHighlightsCard = ({ highlights }: { highlights: Highlights | nu
 /* ---------------- TOC ---------------- */
 export const BlogTOC = ({ markdown }: { markdown: string }) => {
   const headings = Array.from(markdown.matchAll(/^##\s+(.+)$/gm)).map(m => m[1].trim());
-  if (headings.length < 4) return null;
+  if (headings.length < 3) return null;
   return (
     <nav aria-label="Table of contents" className="my-5 p-3 rounded-md border border-border bg-muted/40">
       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1.5">On this page</p>

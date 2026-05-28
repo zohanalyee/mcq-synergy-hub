@@ -23,7 +23,10 @@ import {
   BlogInternalLinks,
   BlogSources,
   JobPostingSchema,
+  HowToSchema,
 } from "@/components/blog/BlogStructured";
+import { calculateReadingTime, autoLinkMarkdown, extractHowToSteps } from "@/lib/blogContentUtils";
+import { useMemo } from "react";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
