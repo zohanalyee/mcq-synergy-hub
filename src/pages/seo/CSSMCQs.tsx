@@ -2,30 +2,19 @@ import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
+import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
+import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
+
+const EXAM_NAME = 'CSS';
+const RETURN_PATH = '/css-mcqs-practice';
 
 const sections = [
-  {
-    subject: 'Compulsory Subjects',
-    headingClass: 'text-purple-700',
-    cardHover: 'hover:bg-purple-50',
-    linkClass: 'text-purple-600',
-    topics: ['English Essay', 'English Precis', 'General Science', 'Current Affairs', 'Pakistan Affairs', 'Islamic Studies', 'Every Day Science', 'Urdu']
-  },
-  {
-    subject: 'Optional — Social Sciences',
-    headingClass: 'text-blue-700',
-    cardHover: 'hover:bg-blue-50',
-    linkClass: 'text-blue-600',
-    topics: ['Political Science', 'International Relations', 'Sociology', 'History', 'Economics', 'Public Administration']
-  },
-  {
-    subject: 'Optional — Sciences',
-    headingClass: 'text-green-700',
-    cardHover: 'hover:bg-green-50',
-    linkClass: 'text-green-600',
-    topics: ['Computer Science', 'Physics', 'Chemistry', 'Mathematics', 'Statistics', 'Environmental Science']
-  },
+  { title: 'Compulsory Subjects', accent: 'text-purple-700', subject: 'Compulsory Subjects', topics: ['English Essay', 'English Precis', 'General Science', 'Current Affairs', 'Pakistan Affairs', 'Islamic Studies', 'Every Day Science', 'Urdu'] },
+  { title: 'Optional — Social Sciences', accent: 'text-blue-700', subject: 'Social Sciences', topics: ['Political Science', 'International Relations', 'Sociology', 'History', 'Economics', 'Public Administration'] },
+  { title: 'Optional — Sciences', accent: 'text-green-700', subject: 'Sciences', topics: ['Computer Science', 'Physics', 'Chemistry', 'Mathematics', 'Statistics', 'Environmental Science'] },
 ];
+
+const ALL_SUBJECTS = sections.map((s) => s.subject);
 
 const CSSMCQs = () => (
   <>
@@ -40,49 +29,34 @@ const CSSMCQs = () => (
       url="https://mcqsai.com/css-mcqs-practice"
       breadcrumbs={[
         { name: 'Home', url: 'https://mcqsai.com/' },
-        { name: "CSS MCQs Practice", url: "https://mcqsai.com/css-mcqs-practice" },
+        { name: 'CSS MCQs Practice', url: 'https://mcqsai.com/css-mcqs-practice' },
       ]}
       faqs={[
-        { question: "Are CSS MCQs free on MCQsAI?", answer: "Yes, all CSS MCQs are 100% free." },
-        { question: "What subjects are covered?", answer: "Compulsory subjects plus Social Sciences and Science optional groups." },
-        { question: "Do MCQs include explanations?", answer: "Yes, with verified answers and detailed explanations." },
+        { question: 'Are CSS MCQs free on MCQsAI?', answer: 'Yes, all CSS MCQs are 100% free.' },
+        { question: 'What subjects are covered?', answer: 'Compulsory subjects plus Social Sciences and Science optional groups.' },
+        { question: 'Do MCQs include explanations?', answer: 'Yes, with verified answers and detailed explanations.' },
       ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">
-        CSS MCQs Practice — Free Online
-      </h1>
-      <p className="text-muted-foreground mb-8">
-        Central Superior Services (CSS) exam preparation with comprehensive MCQs. All compulsory and optional subjects covered.
-      </p>
+      <h1 className="text-3xl font-bold mb-2">CSS MCQs Practice — Free Online</h1>
+      <p className="text-muted-foreground mb-6">Central Superior Services (CSS) exam preparation with comprehensive MCQs. All compulsory and optional subjects covered.</p>
 
-      {sections.map(section => (
-        <section key={section.subject} className="mb-8">
-          <h2 className={`text-xl font-semibold mb-3 ${section.headingClass}`}>
-            {section.subject}
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {section.topics.map(topic => (
-              <Link key={topic} to={`/custom-syllabus?subject=${encodeURIComponent(section.subject)}&topic=${encodeURIComponent(topic)}`}
-                className={`p-3 border rounded-lg ${section.cardHover} text-center`}>
-                <p className="text-sm font-medium">{topic}</p>
-                <p className={`text-xs ${section.linkClass} mt-1`}>Practice →</p>
-              </Link>
-            ))}
-          </div>
-        </section>
+      <div className="mb-10 flex flex-wrap gap-3">
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
+        <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
+      </div>
+
+      {sections.map((s) => (
+        <SeoSectionGrid key={s.title} {...s} examName={EXAM_NAME} returnPath={RETURN_PATH} />
       ))}
 
       <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl p-8 text-white text-center">
         <h2 className="text-2xl font-bold mb-2">Start CSS Preparation Free</h2>
         <p className="opacity-90 mb-4">AI-powered CSS MCQs. Thousands of questions. No signup needed.</p>
-        <Link to="/exams/css"
-          className="bg-white text-purple-700 px-8 py-3 rounded-full font-semibold inline-block">
-          Practice CSS MCQs →
-        </Link>
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} variant="hero" label="Practice CSS MCQs →" returnPath={RETURN_PATH} />
       </div>
 
-      <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+      <div className="mt-8 p-6 bg-muted/40 rounded-xl">
         <h2 className="font-semibold mb-3">Related Resources</h2>
         <div className="flex flex-wrap gap-2">
           {[
@@ -91,9 +65,8 @@ const CSSMCQs = () => (
             { label: 'Current Affairs MCQs', url: '/exams/css' },
             { label: 'Pakistan Affairs', url: '/exams/fpsc' },
             { label: 'General Knowledge', url: '/exams/nts' },
-          ].map(link => (
-            <Link key={link.url} to={link.url}
-              className="px-4 py-2 bg-white border rounded-full text-sm hover:bg-purple-50 text-purple-700">
+          ].map((link) => (
+            <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}
             </Link>
           ))}

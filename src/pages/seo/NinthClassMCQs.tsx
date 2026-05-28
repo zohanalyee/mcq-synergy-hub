@@ -2,6 +2,21 @@ import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
+import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
+import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
+
+const EXAM_NAME = '9th Class (Matric Part 1)';
+const RETURN_PATH = '/9th-class-mcqs';
+
+const sections = [
+  { title: 'Biology — Class 9', accent: 'text-green-700', subject: 'Biology', topics: ['Introduction to Biology', 'Solving a Biological Problem', 'Biodiversity', 'Cells', 'Cell Cycle', 'Enzymes', 'Bioenergetics', 'Nutrition', 'Transport', 'Gaseous Exchange', 'Homeostasis', 'Support & Movement'] },
+  { title: 'Chemistry — Class 9', accent: 'text-blue-700', subject: 'Chemistry', topics: ['Introduction to Chemistry', 'Structure of Atoms', 'Periodic Table', 'Structure of Molecules', 'Physical States of Matter', 'Solutions', 'Electrochemistry', 'Chemical Reactivity'] },
+  { title: 'Physics — Class 9', accent: 'text-purple-700', subject: 'Physics', topics: ['Physical Quantities', 'Kinematics', 'Dynamics', 'Turning Effect', 'Gravitation', 'Work & Energy', 'Properties of Matter', 'Thermal Properties', 'Transfer of Heat'] },
+  { title: 'Mathematics — Class 9', accent: 'text-orange-700', subject: 'Mathematics', topics: ['Matrices', 'Real Numbers', 'Logarithms', 'Algebraic Expressions', 'Factorization', 'Algebraic Manipulation', 'Linear Equations', 'Linear Inequalities', 'Trigonometry', 'Congruent Triangles'] },
+  { title: 'English & Other Subjects — Class 9', accent: 'text-pink-700', subject: 'English & Others', topics: ['English Grammar', 'Comprehension', 'Urdu', 'Pakistan Studies', 'Islamiyat', 'Computer Science', 'General Science', 'Home Economics'] },
+];
+
+const ALL_SUBJECTS = sections.map((s) => s.subject);
 
 const NinthClassMCQs = () => (
   <>
@@ -16,250 +31,35 @@ const NinthClassMCQs = () => (
       url="https://mcqsai.com/9th-class-mcqs"
       breadcrumbs={[
         { name: 'Home', url: 'https://mcqsai.com/' },
-        { name: "9th Class MCQs", url: "https://mcqsai.com/9th-class-mcqs" },
+        { name: '9th Class MCQs', url: 'https://mcqsai.com/9th-class-mcqs' },
       ]}
       faqs={[
-        { question: "Are 9th class MCQs free here?", answer: "Yes, all 9th class MCQs on MCQsAI are 100% free with instant explanations." },
-        { question: "Which boards are covered?", answer: "All Pakistani boards: Punjab, Sindh, Federal, KPK, Balochistan and AJK." },
-        { question: "Do MCQs follow the new syllabus?", answer: "Yes, MCQs follow the latest board-aligned syllabus." },
+        { question: 'Are 9th class MCQs free here?', answer: 'Yes, all 9th class MCQs on MCQsAI are 100% free with instant explanations.' },
+        { question: 'Which boards are covered?', answer: 'All Pakistani boards: Punjab, Sindh, Federal, KPK, Balochistan and AJK.' },
+        { question: 'Do MCQs follow the new syllabus?', answer: 'Yes, MCQs follow the latest board-aligned syllabus.' },
       ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">9th Class MCQs — All Subjects Pakistan</h1>
       <p className="text-muted-foreground mb-2">Complete MCQ practice for Class 9 — all subjects, all Pakistani boards (Sindh, Punjab, Federal, KPK).</p>
-      <p className="text-sm text-purple-600 font-medium mb-8">140+ students search for this every month!</p>
+      <p className="text-sm text-purple-600 font-medium mb-6">140+ students search for this every month!</p>
 
+      <div className="mb-10 flex flex-wrap gap-3">
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
+        <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
+      </div>
 
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-green-700">Biology — Class 9</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Introduction to Biology" to={`/custom-syllabus?topic=Introduction%20to%20Biology`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Introduction to Biology</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Solving a Biological Problem" to={`/custom-syllabus?topic=Solving%20a%20Biological%20Problem`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Solving a Biological Problem</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Biodiversity" to={`/custom-syllabus?topic=Biodiversity`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Biodiversity</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Cells" to={`/custom-syllabus?topic=Cells`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Cells</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Cell Cycle" to={`/custom-syllabus?topic=Cell%20Cycle`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Cell Cycle</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Enzymes" to={`/custom-syllabus?topic=Enzymes`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Enzymes</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Bioenergetics" to={`/custom-syllabus?topic=Bioenergetics`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Bioenergetics</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Nutrition" to={`/custom-syllabus?topic=Nutrition`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Nutrition</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Transport" to={`/custom-syllabus?topic=Transport`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Transport</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Gaseous Exchange" to={`/custom-syllabus?topic=Gaseous%20Exchange`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Gaseous Exchange</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Homeostasis" to={`/custom-syllabus?topic=Homeostasis`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Homeostasis</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Support & Movement" to={`/custom-syllabus?topic=Support%20%26%20Movement`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Support & Movement</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-blue-700">Chemistry — Class 9</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Introduction to Chemistry" to={`/custom-syllabus?topic=Introduction%20to%20Chemistry`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Introduction to Chemistry</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Structure of Atoms" to={`/custom-syllabus?topic=Structure%20of%20Atoms`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Structure of Atoms</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Periodic Table" to={`/custom-syllabus?topic=Periodic%20Table`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Periodic Table</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Structure of Molecules" to={`/custom-syllabus?topic=Structure%20of%20Molecules`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Structure of Molecules</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Physical States of Matter" to={`/custom-syllabus?topic=Physical%20States%20of%20Matter`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Physical States of Matter</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Solutions" to={`/custom-syllabus?topic=Solutions`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Solutions</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Electrochemistry" to={`/custom-syllabus?topic=Electrochemistry`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Electrochemistry</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Chemical Reactivity" to={`/custom-syllabus?topic=Chemical%20Reactivity`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Chemical Reactivity</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-purple-700">Physics — Class 9</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Physical Quantities" to={`/custom-syllabus?topic=Physical%20Quantities`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Physical Quantities</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Kinematics" to={`/custom-syllabus?topic=Kinematics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Kinematics</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Dynamics" to={`/custom-syllabus?topic=Dynamics`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Dynamics</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Turning Effect" to={`/custom-syllabus?topic=Turning%20Effect`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Turning Effect</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Gravitation" to={`/custom-syllabus?topic=Gravitation`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Gravitation</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Work & Energy" to={`/custom-syllabus?topic=Work%20%26%20Energy`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Work & Energy</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Properties of Matter" to={`/custom-syllabus?topic=Properties%20of%20Matter`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Properties of Matter</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Thermal Properties" to={`/custom-syllabus?topic=Thermal%20Properties`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Thermal Properties</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Transfer of Heat" to={`/custom-syllabus?topic=Transfer%20of%20Heat`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Transfer of Heat</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-orange-700">Mathematics — Class 9</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Matrices" to={`/custom-syllabus?topic=Matrices`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Matrices</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Real Numbers" to={`/custom-syllabus?topic=Real%20Numbers`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Real Numbers</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Logarithms" to={`/custom-syllabus?topic=Logarithms`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Logarithms</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Algebraic Expressions" to={`/custom-syllabus?topic=Algebraic%20Expressions`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Algebraic Expressions</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Factorization" to={`/custom-syllabus?topic=Factorization`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Factorization</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Algebraic Manipulation" to={`/custom-syllabus?topic=Algebraic%20Manipulation`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Algebraic Manipulation</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Linear Equations" to={`/custom-syllabus?topic=Linear%20Equations`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Linear Equations</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Linear Inequalities" to={`/custom-syllabus?topic=Linear%20Inequalities`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Linear Inequalities</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Trigonometry" to={`/custom-syllabus?topic=Trigonometry`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Trigonometry</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Congruent Triangles" to={`/custom-syllabus?topic=Congruent%20Triangles`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Congruent Triangles</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-pink-700">English & Other Subjects — Class 9</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="English Grammar" to={`/custom-syllabus?topic=English%20Grammar`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">English Grammar</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Comprehension" to={`/custom-syllabus?topic=Comprehension`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">Comprehension</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Urdu" to={`/custom-syllabus?topic=Urdu`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">Urdu</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Pakistan Studies" to={`/custom-syllabus?topic=Pakistan%20Studies`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">Pakistan Studies</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Islamiyat" to={`/custom-syllabus?topic=Islamiyat`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">Islamiyat</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Computer Science" to={`/custom-syllabus?topic=Computer%20Science`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">Computer Science</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="General Science" to={`/custom-syllabus?topic=General%20Science`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">General Science</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Home Economics" to={`/custom-syllabus?topic=Home%20Economics`} className="p-3 border rounded-lg hover:bg-pink-50 text-center">
-            <p className="text-sm font-medium">Home Economics</p>
-            <p className="text-xs text-pink-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-
+      {sections.map((s) => (
+        <SeoSectionGrid key={s.title} {...s} examName={EXAM_NAME} returnPath={RETURN_PATH} />
+      ))}
 
       <div className="bg-gradient-to-r from-green-600 to-purple-600 rounded-2xl p-8 text-white text-center">
         <h2 className="text-2xl font-bold mb-2">Practice 9th Class MCQs Free</h2>
         <p className="opacity-90 mb-4">AI-generated MCQs for all 9th class subjects. Instant feedback. No signup needed.</p>
-        <Link to="/boards" className="bg-white text-green-700 px-8 py-3 rounded-full font-semibold inline-block">
-          Start Practice →
-        </Link>
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} variant="hero" label="Start Practice →" returnPath={RETURN_PATH} />
       </div>
 
-      <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+      <div className="mt-8 p-6 bg-muted/40 rounded-xl">
         <h2 className="font-semibold mb-3">Related Resources</h2>
         <div className="flex flex-wrap gap-2">
           {[
@@ -268,9 +68,9 @@ const NinthClassMCQs = () => (
             { label: 'FSc Pre-Medical', url: '/exams/fsc-pre-medical' },
             { label: 'FSc Pre-Engineering', url: '/exams/fsc-pre-engineering' },
             { label: 'Biology MCQs', url: '/boards' },
-            { label: 'Chemistry MCQs', url: '/boards' }
-          ].map(link => (
-            <Link key={link.url} to={link.url} className="px-4 py-2 bg-white border rounded-full text-sm hover:bg-purple-50 text-purple-700">
+            { label: 'Chemistry MCQs', url: '/boards' },
+          ].map((link) => (
+            <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}
             </Link>
           ))}
