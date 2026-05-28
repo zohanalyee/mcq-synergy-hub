@@ -39,6 +39,22 @@ const BlogPost = () => {
     .filter((p) => p.slug !== slug && p.category === post?.category)
     .slice(0, 3);
 
+  const p = (post as any) || {};
+  const rawContent = typeof post?.content === "string" ? post!.content : "";
+  const categoryLower = (post?.category || "").toLowerCase();
+  const howToCategories = new Set(["study-guides", "preparation", "preparation-tips", "guides"]);
+  const isHowToCategory = howToCategories.has(categoryLower);
+
+  // Hooks MUST run on every render — keep them above any early returns.
+  const linkedContent = useMemo(
+    () => autoLinkMarkdown(rawContent, post?.category, 6),
+    [rawContent, post?.category],
+  );
+  const howToSteps = useMemo(
+    () => (isHowToCategory ? extractHowToSteps(rawContent) : []),
+    [rawContent, isHowToCategory],
+  );
+
   if (isLoading) {
     return (
       <Header>
@@ -68,7 +84,6 @@ const BlogPost = () => {
     );
   }
 
-  const p = (post as any) || {};
   const highlights = p.highlights ?? null;
   const tables = Array.isArray(p.structured_tables) ? p.structured_tables : [];
   const faqs = Array.isArray(p.faqs) ? p.faqs : [];
@@ -77,26 +92,10 @@ const BlogPost = () => {
   const sources = Array.isArray(p.sources) ? p.sources : [];
   const jobposting = p.jobposting && typeof p.jobposting === "object" ? p.jobposting : null;
   const schemaType = p.schema_type || "Article";
-  const rawContent = typeof post.content === "string" ? post.content : "";
   const safeTags = Array.isArray(post.tags) ? post.tags : [];
-
-
-  // Auto-inject up to 6 contextual internal links into body markdown.
-  const linkedContent = useMemo(
-    () => autoLinkMarkdown(rawContent, post.category, 6),
-    [rawContent, post.category],
-  );
 
   const readingMinutes = p.reading_time_minutes || calculateReadingTime(rawContent);
   const lastUpdated = p.last_updated_at || p.updated_at || p.published_at;
-
-  // HowTo schema only for guide-like categories AND when steps are extractable.
-  const howToCategories = new Set(["study-guides", "preparation", "preparation-tips", "guides"]);
-  const isHowToCategory = howToCategories.has((post.category || "").toLowerCase());
-  const howToSteps = useMemo(
-    () => (isHowToCategory ? extractHowToSteps(rawContent) : []),
-    [rawContent, isHowToCategory],
-  );
 
   // Split content roughly in half to inject prep funnel mid-article
   const lines = linkedContent.split("\n");
@@ -104,6 +103,7 @@ const BlogPost = () => {
   const splitAt = lines.findIndex((l, i) => i >= midpoint && /^##\s+/.test(l));
   const firstHalf = splitAt > 0 ? lines.slice(0, splitAt).join("\n") : linkedContent;
   const secondHalf = splitAt > 0 ? lines.slice(splitAt).join("\n") : "";
+
 
   const articleUrl = `https://mcqsai.com/blog/${post.slug}`;
 
