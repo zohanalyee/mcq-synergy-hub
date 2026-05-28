@@ -75,19 +75,33 @@ const BlogPost = () => {
   const sources = Array.isArray(p.sources) ? p.sources : [];
   const jobposting = p.jobposting;
   const schemaType = p.schema_type || "Article";
-  const readingMinutes = p.reading_time_minutes;
+  const rawContent = post.content || "";
+
+  // Auto-inject up to 6 contextual internal links into body markdown.
+  const linkedContent = useMemo(
+    () => autoLinkMarkdown(rawContent, post.category, 6),
+    [rawContent, post.category],
+  );
+
+  const readingMinutes = p.reading_time_minutes || calculateReadingTime(rawContent);
   const lastUpdated = p.last_updated_at || p.updated_at || p.published_at;
 
+  // HowTo schema only for guide-like categories AND when steps are extractable.
+  const howToCategories = new Set(["study-guides", "preparation", "preparation-tips", "guides"]);
+  const isHowToCategory = howToCategories.has((post.category || "").toLowerCase());
+  const howToSteps = useMemo(
+    () => (isHowToCategory ? extractHowToSteps(rawContent) : []),
+    [rawContent, isHowToCategory],
+  );
+
   // Split content roughly in half to inject prep funnel mid-article
-  const lines = (post.content || "").split("\n");
+  const lines = linkedContent.split("\n");
   const midpoint = Math.floor(lines.length / 2);
   const splitAt = lines.findIndex((l, i) => i >= midpoint && /^##\s+/.test(l));
-  const firstHalf = splitAt > 0 ? lines.slice(0, splitAt).join("\n") : post.content;
+  const firstHalf = splitAt > 0 ? lines.slice(0, splitAt).join("\n") : linkedContent;
   const secondHalf = splitAt > 0 ? lines.slice(splitAt).join("\n") : "";
 
   const articleUrl = `https://mcqsai.com/blog/${post.slug}`;
-  const ogTitle = p.og_title || post.meta_title || post.title;
-  const twitterTitle = p.twitter_title || ogTitle;
 
   return (
     <>
@@ -119,6 +133,15 @@ const BlogPost = () => {
           title={post.title}
           description={post.excerpt || undefined}
           datePosted={post.published_at || undefined}
+        />
+      )}
+      {isHowToCategory && howToSteps.length >= 2 && (
+        <HowToSchema
+          name={post.title}
+          description={post.excerpt || undefined}
+          url={articleUrl}
+          steps={howToSteps}
+          totalTimeMinutes={readingMinutes || undefined}
         />
       )}
       <Header>
