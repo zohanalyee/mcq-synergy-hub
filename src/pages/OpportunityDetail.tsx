@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { extractIdFromSlug } from "@/utils/slugify";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
@@ -46,6 +48,48 @@ const breadcrumbForType = (type: string) => {
   }
 };
 
+/** Parse free-form salary string into Schema.org MonetaryAmount, or null if not numeric. */
+const parseSalaryToMonetary = (raw?: string | null) => {
+  if (!raw || typeof raw !== "string") return null;
+  const s = raw.replace(/,/g, "").trim();
+  // Reject pure pay-scale codes / vague text (BPS-17, Competitive, Negotiable, etc.)
+  if (/^(bps|bs|grade|scale)[-\s]?\d+/i.test(s)) return null;
+  if (/competitive|negotiable|market|as per|attractive/i.test(s)) return null;
+  // Match a single number or numeric range like 50000-80000 or 50000 to 80000
+  const range = s.match(/(\d{4,})\s*(?:-|to|–)\s*(\d{4,})/i);
+  if (range) {
+    const min = Number(range[1]);
+    const max = Number(range[2]);
+    if (Number.isFinite(min) && Number.isFinite(max) && min > 0 && max >= min) {
+      return {
+        "@type": "MonetaryAmount",
+        currency: "PKR",
+        value: { "@type": "QuantitativeValue", minValue: min, maxValue: max, unitText: "MONTH" },
+      };
+    }
+  }
+  const single = s.match(/(\d{4,})/);
+  if (single) {
+    const n = Number(single[1]);
+    if (Number.isFinite(n) && n > 0) {
+      return {
+        "@type": "MonetaryAmount",
+        currency: "PKR",
+        value: { "@type": "QuantitativeValue", value: n, unitText: "MONTH" },
+      };
+    }
+  }
+  return null;
+};
+
+const cleanStr = (v: unknown): string | null => {
+  if (typeof v !== "string") return null;
+  const t = v.trim();
+  if (!t) return null;
+  if (/^(n\/?a|none|not specified|unspecified|null|undefined)$/i.test(t)) return null;
+  return t;
+};
+
 const buildJsonLd = (op: any) => {
   const base: any = {
     "@context": "https://schema.org",
@@ -56,19 +100,28 @@ const buildJsonLd = (op: any) => {
     ...(op.deadline_date && { validThrough: op.deadline_date }),
   };
   if (op.type === "job") {
+    const locality = cleanStr(op.location);
+    const address: Record<string, string> = {
+      "@type": "PostalAddress",
+      addressCountry: "PK",
+    };
+    if (locality) address.addressLocality = locality;
+
+    const baseSalary = parseSalaryToMonetary(op.salary);
+    const qualifications = cleanStr(op.qualification);
+    const experience = cleanStr(op.experience);
+    const orgName = cleanStr(op.organization) || cleanStr(op.source_name) || "MCQsAI";
+
     return {
       ...base,
       "@type": "JobPosting",
       title: op.title,
-      employmentType: op.employment_type || "FULL_TIME",
-      hiringOrganization: { "@type": "Organization", name: op.organization || op.source_name || "MCQsAI" },
-      jobLocation: {
-        "@type": "Place",
-        address: { "@type": "PostalAddress", addressLocality: op.location || "Pakistan", addressCountry: "PK" },
-      },
-      ...(op.salary && { baseSalary: { "@type": "MonetaryAmount", currency: "PKR", value: { "@type": "QuantitativeValue", value: op.salary, unitText: "MONTH" } } }),
-      ...(op.qualification && { qualifications: op.qualification }),
-      ...(op.experience && { experienceRequirements: op.experience }),
+      employmentType: cleanStr(op.employment_type) || "FULL_TIME",
+      hiringOrganization: { "@type": "Organization", name: orgName },
+      jobLocation: { "@type": "Place", address },
+      ...(baseSalary && { baseSalary }),
+      ...(qualifications && { qualifications }),
+      ...(experience && experience.length > 3 && { experienceRequirements: experience }),
     };
   }
   if (op.type === "scholarship") {
@@ -219,17 +272,7 @@ const OpportunityDetail = () => {
                 )}
               </div>
 
-              {/* Description */}
-              {opportunity.description && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-2">Description</h2>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                    {opportunity.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Job specific fields */}
+              {/* Job specific fields — moved above description for quick facts */}
               {opportunity.type === "job" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {opportunity.qualification && (
@@ -324,6 +367,42 @@ const OpportunityDetail = () => {
                   )}
                 </div>
               )}
+
+              {/* Description — markdown with GFM tables */}
+              {opportunity.description && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2">Description</h2>
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed
+                    prose-headings:text-foreground prose-headings:font-semibold
+                    prose-h2:text-base prose-h2:mt-4 prose-h2:mb-2
+                    prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1.5
+                    prose-strong:text-foreground prose-a:text-primary
+                    prose-ul:my-2 prose-li:my-0.5">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        table: ({ node, ...props }) => (
+                          <div className="overflow-x-auto my-3 -mx-1">
+                            <table className="w-full border-collapse text-xs" {...props} />
+                          </div>
+                        ),
+                        thead: ({ node, ...props }) => <thead className="bg-muted/60" {...props} />,
+                        th: ({ node, ...props }) => (
+                          <th className="border border-border/50 px-2 py-1.5 text-left font-semibold text-foreground align-top" {...props} />
+                        ),
+                        td: ({ node, ...props }) => (
+                          <td className="border border-border/40 px-2 py-1.5 text-left align-top [tbody_tr:nth-child(even)_&]:bg-muted/30" {...props} />
+                        ),
+                        tr: ({ node, ...props }) => <tr className="even:bg-muted/20" {...props} />,
+                      }}
+                    >
+                      {opportunity.description}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
+
 
               {/* ========== NATIVE PDF VIEWER ========== */}
               {hasPdf && (

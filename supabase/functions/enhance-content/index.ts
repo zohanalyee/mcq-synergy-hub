@@ -11,7 +11,11 @@ const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models
 const categoryPrompts: Record<string, string> = {
   job: `Extract these fields from the job advertisement:
 - title: Professional job title (e.g., "Assistant Director BPS-17 - Ministry of Finance")
-- description: 2-3 clean paragraphs summarizing the job, requirements, and how to apply
+- description: A GitHub-Flavored Markdown string. STRICT FORMATTING RULES:
+  * Use "## Overview" (2-3 short sentences), "## Eligibility", "## How to Apply", "## Important Dates" sections.
+  * If the ad lists multiple posts/positions side-by-side, output a MARKDOWN TABLE with columns like: | Post Name | BPS | Vacancies | Quota / Domicile | Qualifications |. Omit columns that don't apply. Use one row per post.
+  * Use bulleted lists ("- ") for eligibility criteria, age limits, required documents, fees.
+  * NEVER produce a wall of text. Keep prose paragraphs ≤ 3 sentences.
 - deadline: Date in YYYY-MM-DD format if found
 - organization: Hiring organization name
 - location: City/Province
@@ -23,6 +27,7 @@ const categoryPrompts: Record<string, string> = {
 - sector: "government" or "private"
 - region: One of: federal, sindh, punjab, kpk, balochistan
 - keywords: Array of 5-8 SEO keywords`,
+
 
   scholarship: `Extract these fields from the scholarship notice:
 - title: Professional title (e.g., "HEC Overseas PhD Scholarship 2026")
@@ -197,9 +202,9 @@ serve(async (req) => {
 Your job is to take raw text from job ads, scholarship notices, tenders, or board results and produce clean, professional, SEO-optimized content.
 
 IMPORTANT RULES:
-1. Output ONLY valid JSON — no markdown, no code fences, no explanation
+1. Output ONLY valid JSON — no outer markdown fence, no explanation. The OUTER response is JSON.
 2. Clean up all formatting artifacts (extra spaces, broken lines, OCR errors)
-3. Write descriptions in professional English, 2-3 paragraphs
+3. The "description" field VALUE is a SINGLE STRING containing GitHub-Flavored Markdown. Use "##" headings, bulleted lists ("- "), and pipe-separated markdown tables for tabular data (posts/BPS/vacancies/quota). NEVER produce wall-of-text paragraphs.
 4. If a field is not found in the text, set it to null
 5. For Pakistani dates like "15 جولائی 2026", convert to YYYY-MM-DD
 6. Keywords should target Pakistani search queries (e.g., "PPSC Jobs 2026", "HEC Scholarship")`;

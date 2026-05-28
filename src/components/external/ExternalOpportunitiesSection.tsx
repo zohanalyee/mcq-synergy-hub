@@ -228,6 +228,13 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                   "hover:ring-1 hover:ring-primary/20 hover:border-primary/40"
                 )}
               >
+                {/* Full-card click overlay */}
+                <Link
+                  to={detailHref}
+                  aria-label={`View details for ${opp.title}`}
+                  className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary rounded-lg"
+                />
+
                 {/* Decorative gradient blob — stronger on hover */}
                 <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-3xl opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
 
@@ -309,7 +316,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                     <Link
                       to={detailHref}
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold",
+                        "relative z-20 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold",
                         "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground",
                         "transition-all duration-200 group-hover:translate-x-0.5"
                       )}
@@ -318,6 +325,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                       {ctaLabel}
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
+
                   </div>
                 </CardContent>
               </Card>
