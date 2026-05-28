@@ -135,6 +135,7 @@ const BlogManager = () => {
       status: post.status,
       meta_title: post.meta_title || "",
       meta_description: post.meta_description || "",
+      tags: post.tags || [],
     });
   };
 
