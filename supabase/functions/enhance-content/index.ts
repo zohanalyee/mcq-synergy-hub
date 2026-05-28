@@ -11,7 +11,11 @@ const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models
 const categoryPrompts: Record<string, string> = {
   job: `Extract these fields from the job advertisement:
 - title: Professional job title (e.g., "Assistant Director BPS-17 - Ministry of Finance")
-- description: 2-3 clean paragraphs summarizing the job, requirements, and how to apply
+- description: A GitHub-Flavored Markdown string. STRICT FORMATTING RULES:
+  * Use "## Overview" (2-3 short sentences), "## Eligibility", "## How to Apply", "## Important Dates" sections.
+  * If the ad lists multiple posts/positions side-by-side, output a MARKDOWN TABLE with columns like: | Post Name | BPS | Vacancies | Quota / Domicile | Qualifications |. Omit columns that don't apply. Use one row per post.
+  * Use bulleted lists ("- ") for eligibility criteria, age limits, required documents, fees.
+  * NEVER produce a wall of text. Keep prose paragraphs ≤ 3 sentences.
 - deadline: Date in YYYY-MM-DD format if found
 - organization: Hiring organization name
 - location: City/Province
@@ -23,6 +27,7 @@ const categoryPrompts: Record<string, string> = {
 - sector: "government" or "private"
 - region: One of: federal, sindh, punjab, kpk, balochistan
 - keywords: Array of 5-8 SEO keywords`,
+
 
   scholarship: `Extract these fields from the scholarship notice:
 - title: Professional title (e.g., "HEC Overseas PhD Scholarship 2026")
