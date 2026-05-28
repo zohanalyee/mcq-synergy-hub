@@ -169,6 +169,10 @@ const BlogPost = () => {
                 <span className="flex items-center gap-1">
                   <User className="h-4 w-4" />{post.author_name}
                 </span>
+                {post.published_at && (
+                  <span>· {new Date(post.published_at).toLocaleDateString("en-PK", { year: "numeric", month: "short", day: "numeric" })}</span>
+                )}
+                {readingMinutes ? <span>· {readingMinutes} min read</span> : null}
               </div>
             </header>
 
