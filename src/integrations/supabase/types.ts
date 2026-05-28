@@ -261,15 +261,27 @@ export type Database = {
           created_at: string
           created_by: string | null
           excerpt: string | null
+          faqs: Json | null
+          highlights: Json | null
           id: string
           image_url: string | null
+          internal_links: Json | null
+          jobposting: Json | null
+          last_updated_at: string | null
           meta_description: string | null
           meta_title: string | null
+          og_title: string | null
+          prep_blocks: Json | null
           published_at: string | null
+          reading_time_minutes: number | null
+          schema_type: string | null
           slug: string
+          sources: Json | null
           status: string
+          structured_tables: Json | null
           tags: string[] | null
           title: string
+          twitter_title: string | null
           updated_at: string
         }
         Insert: {
@@ -279,15 +291,27 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           excerpt?: string | null
+          faqs?: Json | null
+          highlights?: Json | null
           id?: string
           image_url?: string | null
+          internal_links?: Json | null
+          jobposting?: Json | null
+          last_updated_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          og_title?: string | null
+          prep_blocks?: Json | null
           published_at?: string | null
+          reading_time_minutes?: number | null
+          schema_type?: string | null
           slug: string
+          sources?: Json | null
           status?: string
+          structured_tables?: Json | null
           tags?: string[] | null
           title: string
+          twitter_title?: string | null
           updated_at?: string
         }
         Update: {
@@ -297,15 +321,27 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           excerpt?: string | null
+          faqs?: Json | null
+          highlights?: Json | null
           id?: string
           image_url?: string | null
+          internal_links?: Json | null
+          jobposting?: Json | null
+          last_updated_at?: string | null
           meta_description?: string | null
           meta_title?: string | null
+          og_title?: string | null
+          prep_blocks?: Json | null
           published_at?: string | null
+          reading_time_minutes?: number | null
+          schema_type?: string | null
           slug?: string
+          sources?: Json | null
           status?: string
+          structured_tables?: Json | null
           tags?: string[] | null
           title?: string
+          twitter_title?: string | null
           updated_at?: string
         }
         Relationships: []
