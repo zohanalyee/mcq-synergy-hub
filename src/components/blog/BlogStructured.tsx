@@ -49,12 +49,17 @@ export const BlogTrustStrip = ({
       <ShieldCheck className="h-3.5 w-3.5 text-primary" />
       Reviewed by MCQSAI Editorial Team
     </span>
-    {lastUpdated && (
-      <span className="inline-flex items-center gap-1.5">
-        <CalendarCheck className="h-3.5 w-3.5" />
-        Last updated: {format(new Date(lastUpdated), "MMM d, yyyy")}
-      </span>
-    )}
+    {(() => {
+      if (!lastUpdated) return null;
+      const d = new Date(lastUpdated);
+      if (isNaN(d.getTime())) return null;
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarCheck className="h-3.5 w-3.5" />
+          Last updated: {format(d, "MMM d, yyyy")}
+        </span>
+      );
+    })()}
     {readingMinutes ? (
       <span className="inline-flex items-center gap-1.5">
         <Clock className="h-3.5 w-3.5" />
@@ -64,6 +69,7 @@ export const BlogTrustStrip = ({
     {hasSource && <span className="inline-flex items-center gap-1.5"><Link2 className="h-3.5 w-3.5" />Verified from official source</span>}
   </div>
 );
+
 
 /* ---------------- Highlights Card ---------------- */
 export const BlogHighlightsCard = ({ highlights }: { highlights: Highlights | null | undefined }) => {
