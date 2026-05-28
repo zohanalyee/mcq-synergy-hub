@@ -274,3 +274,40 @@ export const JobPostingSchema = ({ data, url, title, description, datePosted }: 
     </Helmet>
   );
 };
+
+/* ---------------- HowTo Schema (Study Guides / Preparation Tips) ---------------- */
+export const HowToSchema = ({
+  name,
+  description,
+  url,
+  steps,
+  totalTimeMinutes,
+}: {
+  name: string;
+  description?: string;
+  url: string;
+  steps: { name: string; text: string }[];
+  totalTimeMinutes?: number;
+}) => {
+  if (!steps?.length) return null;
+  const schema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name,
+    description: description || name,
+    url,
+    step: steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+      url: `${url}#step-${i + 1}`,
+    })),
+  };
+  if (totalTimeMinutes) schema.totalTime = `PT${totalTimeMinutes}M`;
+  return (
+    <Helmet>
+      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+    </Helmet>
+  );
+};
