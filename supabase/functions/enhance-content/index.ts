@@ -202,9 +202,9 @@ serve(async (req) => {
 Your job is to take raw text from job ads, scholarship notices, tenders, or board results and produce clean, professional, SEO-optimized content.
 
 IMPORTANT RULES:
-1. Output ONLY valid JSON — no markdown, no code fences, no explanation
+1. Output ONLY valid JSON — no outer markdown fence, no explanation. The OUTER response is JSON.
 2. Clean up all formatting artifacts (extra spaces, broken lines, OCR errors)
-3. Write descriptions in professional English, 2-3 paragraphs
+3. The "description" field VALUE is a SINGLE STRING containing GitHub-Flavored Markdown. Use "##" headings, bulleted lists ("- "), and pipe-separated markdown tables for tabular data (posts/BPS/vacancies/quota). NEVER produce wall-of-text paragraphs.
 4. If a field is not found in the text, set it to null
 5. For Pakistani dates like "15 جولائی 2026", convert to YYYY-MM-DD
 6. Keywords should target Pakistani search queries (e.g., "PPSC Jobs 2026", "HEC Scholarship")`;
