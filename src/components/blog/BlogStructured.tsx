@@ -90,7 +90,8 @@ export const BlogHighlightsCard = ({ highlights }: { highlights: Highlights | nu
 };
 
 /* ---------------- TOC ---------------- */
-export const BlogTOC = ({ markdown }: { markdown: string }) => {
+export const BlogTOC = ({ markdown }: { markdown: string | null | undefined }) => {
+  if (!markdown || typeof markdown !== "string") return null;
   const headings = Array.from(markdown.matchAll(/^##\s+(.+)$/gm)).map(m => m[1].trim());
   if (headings.length < 3) return null;
   return (
@@ -109,6 +110,7 @@ export const BlogTOC = ({ markdown }: { markdown: string }) => {
     </nav>
   );
 };
+
 
 /* ---------------- Standalone Tables ---------------- */
 export const BlogTables = ({ tables }: { tables: BlogTableData[] | null | undefined }) => {
