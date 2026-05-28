@@ -2,20 +2,20 @@ import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
+import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
+import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
+
+const EXAM_NAME = 'Pak Army Test';
+const RETURN_PATH = '/pak-army-test';
 
 const sections = [
-  { subject: 'Intelligence & IQ', color: 'green', topics: ['Verbal Intelligence', 'Non-Verbal Intelligence', 'Analytical Reasoning', 'Logical Reasoning', 'Pattern Recognition', 'Mathematical Reasoning', 'Spatial Reasoning', 'Memory Test'] },
-  { subject: 'General Knowledge', color: 'blue', topics: ['Pakistan Studies', 'Pakistan Army History', 'Current Affairs', 'Islamic Studies', 'World Affairs', 'Geography', 'Science & Tech', 'Sports'] },
-  { subject: 'Mathematics', color: 'purple', topics: ['Arithmetic', 'Algebra', 'Geometry', 'Percentage', 'Ratio & Proportion', 'Time & Work', 'Speed & Distance', 'Statistics'] },
-  { subject: 'English', color: 'orange', topics: ['Grammar', 'Vocabulary', 'Comprehension', 'Sentence Correction', 'Synonyms & Antonyms', 'Fill in the Blanks'] },
+  { title: 'Intelligence & IQ', accent: 'text-green-700', subject: 'Intelligence & IQ', topics: ['Verbal Intelligence', 'Non-Verbal Intelligence', 'Analytical Reasoning', 'Logical Reasoning', 'Pattern Recognition', 'Mathematical Reasoning', 'Spatial Reasoning', 'Memory Test'] },
+  { title: 'General Knowledge', accent: 'text-blue-700', subject: 'General Knowledge', topics: ['Pakistan Studies', 'Pakistan Army History', 'Current Affairs', 'Islamic Studies', 'World Affairs', 'Geography', 'Science & Tech', 'Sports'] },
+  { title: 'Mathematics', accent: 'text-purple-700', subject: 'Mathematics', topics: ['Arithmetic', 'Algebra', 'Geometry', 'Percentage', 'Ratio & Proportion', 'Time & Work', 'Speed & Distance', 'Statistics'] },
+  { title: 'English', accent: 'text-orange-700', subject: 'English', topics: ['Grammar', 'Vocabulary', 'Comprehension', 'Sentence Correction', 'Synonyms & Antonyms', 'Fill in the Blanks'] },
 ];
 
-const colorMap: Record<string, { head: string; hover: string; text: string }> = {
-  green: { head: 'text-green-700', hover: 'hover:bg-green-50', text: 'text-green-600' },
-  blue: { head: 'text-blue-700', hover: 'hover:bg-blue-50', text: 'text-blue-600' },
-  purple: { head: 'text-purple-700', hover: 'hover:bg-purple-50', text: 'text-purple-600' },
-  orange: { head: 'text-orange-700', hover: 'hover:bg-orange-50', text: 'text-orange-600' },
-};
+const ALL_SUBJECTS = sections.map((s) => s.subject);
 
 const programs = [
   { name: 'PMA Long Course', detail: 'Officer — ISSB + Academic Test' },
@@ -59,24 +59,16 @@ const PakArmyTest = () => (
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">Pak Army Test Preparation 2026 — Free MCQs Pakistan</h1>
       <p className="text-muted-foreground mb-2">Complete preparation for Pak Army written test, intelligence test and ISSB.</p>
-      <p className="text-xs text-muted-foreground mb-8">590+ students search for this every month.</p>
+      <p className="text-xs text-muted-foreground mb-6">590+ students search for this every month.</p>
 
-      {sections.map((section) => {
-        const c = colorMap[section.color];
-        return (
-          <section key={section.subject} className="mb-8">
-            <h2 className={`text-xl font-semibold mb-3 ${c.head}`}>{section.subject}</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-              {section.topics.map((topic) => (
-                <Link key={topic} to={`/custom-syllabus?subject=${encodeURIComponent(section.subject)}&topic=${encodeURIComponent(topic)}`} className={`p-3 border rounded-lg ${c.hover} text-center`}>
-                  <p className="text-sm font-medium">{topic}</p>
-                  <p className={`text-xs ${c.text} mt-1`}>Practice →</p>
-                </Link>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      <div className="mb-10 flex flex-wrap gap-3">
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
+        <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
+      </div>
+
+      {sections.map((s) => (
+        <SeoSectionGrid key={s.title} {...s} examName={EXAM_NAME} returnPath={RETURN_PATH} />
+      ))}
 
       <section className="mb-8">
         <h2 className="text-xl font-semibold mb-3">Pak Army Entry Programs</h2>
@@ -93,16 +85,14 @@ const PakArmyTest = () => (
       <div className="bg-gradient-to-r from-green-600 to-emerald-600 rounded-2xl p-8 text-white text-center">
         <h2 className="text-2xl font-bold mb-2">Start Pak Army Test Prep Free</h2>
         <p className="opacity-90 mb-4">AI MCQs for Intelligence, GK, Maths, English. No signup needed.</p>
-        <Link to="/exams/nts" className="bg-white text-green-700 px-8 py-3 rounded-full font-semibold inline-block">
-          Practice Now →
-        </Link>
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} variant="hero" label="Practice Now →" returnPath={RETURN_PATH} />
       </div>
 
-      <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+      <div className="mt-8 p-6 bg-muted/40 rounded-xl">
         <h2 className="font-semibold mb-3">Related Resources</h2>
         <div className="flex flex-wrap gap-2">
           {related.map((link) => (
-            <Link key={link.url} to={link.url} className="px-4 py-2 bg-white border rounded-full text-sm hover:bg-green-50 text-green-700">
+            <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}
             </Link>
           ))}

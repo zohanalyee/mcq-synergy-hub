@@ -2,6 +2,20 @@ import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
+import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
+import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
+
+const EXAM_NAME = 'PST & SST Test';
+const RETURN_PATH = '/pst-sst-test-preparation';
+
+const sections = [
+  { title: 'Education & Pedagogy', accent: 'text-purple-700', subject: 'Education & Pedagogy', topics: ['Teaching Methods', 'Child Psychology', 'Classroom Management', 'Curriculum', 'Assessment', 'Special Education'] },
+  { title: 'General Knowledge', accent: 'text-blue-700', subject: 'General Knowledge', topics: ['Pakistan Studies', 'Islamic Studies', 'Current Affairs', 'Science GK', 'World Affairs', 'Sports'] },
+  { title: 'English', accent: 'text-green-700', subject: 'English', topics: ['Grammar', 'Vocabulary', 'Comprehension', 'Sentence Correction', 'Teaching English', 'Writing Skills'] },
+  { title: 'Subject Knowledge (SST)', accent: 'text-orange-700', subject: 'Subject Knowledge', topics: ['Mathematics', 'Biology', 'Chemistry', 'Physics', 'Computer Science', 'Social Studies'] },
+];
+
+const ALL_SUBJECTS = sections.map((s) => s.subject);
 
 const PSTSSTTestPreparation = () => (
   <>
@@ -16,18 +30,22 @@ const PSTSSTTestPreparation = () => (
       url="https://mcqsai.com/pst-sst-test-preparation"
       breadcrumbs={[
         { name: 'Home', url: 'https://mcqsai.com/' },
-        { name: "PST & SST Test Preparation", url: "https://mcqsai.com/pst-sst-test-preparation" },
+        { name: 'PST & SST Test Preparation', url: 'https://mcqsai.com/pst-sst-test-preparation' },
       ]}
       faqs={[
-        { question: "What is the PST test?", answer: "Primary School Teacher (PST) test is a recruitment exam for primary school teaching posts." },
-        { question: "What is the SST test?", answer: "Secondary School Teacher (SST) test recruits teachers for secondary classes; it covers subject mastery plus pedagogy." },
-        { question: "How can I prepare PST/SST online free?", answer: "Use MCQsAI to practice subject-wise and pedagogy MCQs free with instant feedback." },
+        { question: 'What is the PST test?', answer: 'Primary School Teacher (PST) test is a recruitment exam for primary school teaching posts.' },
+        { question: 'What is the SST test?', answer: 'Secondary School Teacher (SST) test recruits teachers for secondary classes; it covers subject mastery plus pedagogy.' },
+        { question: 'How can I prepare PST/SST online free?', answer: 'Use MCQsAI to practice subject-wise and pedagogy MCQs free with instant feedback.' },
       ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">PST & SST Test Preparation 2026 — Free MCQs</h1>
-      <p className="text-muted-foreground mb-8">Primary School Teacher (PST) and Secondary School Teacher (SST) recruitment test preparation. NTS-style MCQs.</p>
-      
+      <p className="text-muted-foreground mb-6">Primary School Teacher (PST) and Secondary School Teacher (SST) recruitment test preparation. NTS-style MCQs.</p>
+
+      <div className="mb-10 flex flex-wrap gap-3">
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
+        <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
+      </div>
 
       <section className="mb-8 p-6 bg-purple-50 rounded-xl">
         <h2 className="text-lg font-semibold mb-4">PST vs SST — Key Difference</h2>
@@ -43,137 +61,17 @@ const PSTSSTTestPreparation = () => (
         </div>
       </section>
 
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-purple-700">Education & Pedagogy</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Teaching Methods" to={`/custom-syllabus?topic=Teaching%20Methods`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Teaching Methods</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Child Psychology" to={`/custom-syllabus?topic=Child%20Psychology`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Child Psychology</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Classroom Management" to={`/custom-syllabus?topic=Classroom%20Management`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Classroom Management</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Curriculum" to={`/custom-syllabus?topic=Curriculum`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Curriculum</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Assessment" to={`/custom-syllabus?topic=Assessment`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Assessment</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Special Education" to={`/custom-syllabus?topic=Special%20Education`} className="p-3 border rounded-lg hover:bg-purple-50 text-center">
-            <p className="text-sm font-medium">Special Education</p>
-            <p className="text-xs text-purple-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-blue-700">General Knowledge</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Pakistan Studies" to={`/custom-syllabus?topic=Pakistan%20Studies`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Pakistan Studies</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Islamic Studies" to={`/custom-syllabus?topic=Islamic%20Studies`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Islamic Studies</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Current Affairs" to={`/custom-syllabus?topic=Current%20Affairs`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Current Affairs</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Science GK" to={`/custom-syllabus?topic=Science%20GK`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Science GK</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="World Affairs" to={`/custom-syllabus?topic=World%20Affairs`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">World Affairs</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Sports" to={`/custom-syllabus?topic=Sports`} className="p-3 border rounded-lg hover:bg-blue-50 text-center">
-            <p className="text-sm font-medium">Sports</p>
-            <p className="text-xs text-blue-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-green-700">English</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Grammar" to={`/custom-syllabus?topic=Grammar`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Grammar</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Vocabulary" to={`/custom-syllabus?topic=Vocabulary`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Vocabulary</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Comprehension" to={`/custom-syllabus?topic=Comprehension`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Comprehension</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Sentence Correction" to={`/custom-syllabus?topic=Sentence%20Correction`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Sentence Correction</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Teaching English" to={`/custom-syllabus?topic=Teaching%20English`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Teaching English</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Writing Skills" to={`/custom-syllabus?topic=Writing%20Skills`} className="p-3 border rounded-lg hover:bg-green-50 text-center">
-            <p className="text-sm font-medium">Writing Skills</p>
-            <p className="text-xs text-green-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-      <section className="mb-8">
-        <h2 className="text-xl font-semibold mb-3 text-orange-700">Subject Knowledge (SST)</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          <Link key="Mathematics" to={`/custom-syllabus?topic=Mathematics`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Mathematics</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Biology" to={`/custom-syllabus?topic=Biology`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Biology</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Chemistry" to={`/custom-syllabus?topic=Chemistry`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Chemistry</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Physics" to={`/custom-syllabus?topic=Physics`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Physics</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Computer Science" to={`/custom-syllabus?topic=Computer%20Science`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Computer Science</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-          <Link key="Social Studies" to={`/custom-syllabus?topic=Social%20Studies`} className="p-3 border rounded-lg hover:bg-orange-50 text-center">
-            <p className="text-sm font-medium">Social Studies</p>
-            <p className="text-xs text-orange-600 mt-1">Practice →</p>
-          </Link>
-        </div>
-      </section>
-
-
+      {sections.map((s) => (
+        <SeoSectionGrid key={s.title} {...s} examName={EXAM_NAME} returnPath={RETURN_PATH} />
+      ))}
 
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 rounded-2xl p-8 text-white text-center">
         <h2 className="text-2xl font-bold mb-2">Start Teacher Test Prep Free</h2>
         <p className="opacity-90 mb-4">AI MCQs for PST & SST recruitment. No signup needed.</p>
-        <Link to="/exams/educators" className="bg-white text-purple-700 px-8 py-3 rounded-full font-semibold inline-block">
-          Practice Now →
-        </Link>
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} variant="hero" label="Practice Now →" returnPath={RETURN_PATH} />
       </div>
 
-      <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+      <div className="mt-8 p-6 bg-muted/40 rounded-xl">
         <h2 className="font-semibold mb-3">Related Resources</h2>
         <div className="flex flex-wrap gap-2">
           {[
@@ -181,9 +79,9 @@ const PSTSSTTestPreparation = () => (
             { label: 'PPSC Past Papers', url: '/ppsc-past-papers' },
             { label: 'Educators Test', url: '/exams/educators' },
             { label: 'General Knowledge MCQs', url: '/exams/nts' },
-            { label: 'English Grammar MCQs', url: '/subjects' }
-          ].map(link => (
-            <Link key={link.url} to={link.url} className="px-4 py-2 bg-white border rounded-full text-sm hover:bg-purple-50 text-purple-700">
+            { label: 'English Grammar MCQs', url: '/subjects' },
+          ].map((link) => (
+            <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}
             </Link>
           ))}

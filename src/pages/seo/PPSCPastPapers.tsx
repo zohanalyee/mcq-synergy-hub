@@ -2,37 +2,20 @@ import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
+import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
+import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
+
+const EXAM_NAME = 'PPSC';
+const RETURN_PATH = '/ppsc-past-papers';
 
 const sections = [
-  {
-    subject: 'General Knowledge',
-    headingClass: 'text-purple-700',
-    cardHover: 'hover:bg-purple-50',
-    linkClass: 'text-purple-600',
-    topics: ['Pakistan History', 'Geography', 'Current Affairs', 'Islamic Studies', 'World GK', 'Science & Tech']
-  },
-  {
-    subject: 'English',
-    headingClass: 'text-blue-700',
-    cardHover: 'hover:bg-blue-50',
-    linkClass: 'text-blue-600',
-    topics: ['Grammar', 'Vocabulary', 'Sentence Correction', 'Comprehension', 'Synonyms', 'Antonyms']
-  },
-  {
-    subject: 'Pakistan Studies',
-    headingClass: 'text-green-700',
-    cardHover: 'hover:bg-green-50',
-    linkClass: 'text-green-600',
-    topics: ['Pakistan History', 'Constitution', 'Geography', 'Economy', 'Foreign Policy', 'Current Affairs']
-  },
-  {
-    subject: 'Mathematics',
-    headingClass: 'text-orange-700',
-    cardHover: 'hover:bg-orange-50',
-    linkClass: 'text-orange-600',
-    topics: ['Basic Arithmetic', 'Algebra', 'Geometry', 'Percentage', 'Ratio', 'Profit & Loss']
-  },
+  { title: 'General Knowledge MCQs', accent: 'text-purple-700', subject: 'General Knowledge', topics: ['Pakistan History', 'Geography', 'Current Affairs', 'Islamic Studies', 'World GK', 'Science & Tech'] },
+  { title: 'English MCQs', accent: 'text-blue-700', subject: 'English', topics: ['Grammar', 'Vocabulary', 'Sentence Correction', 'Comprehension', 'Synonyms', 'Antonyms'] },
+  { title: 'Pakistan Studies MCQs', accent: 'text-green-700', subject: 'Pakistan Studies', topics: ['Pakistan History', 'Constitution', 'Geography', 'Economy', 'Foreign Policy', 'Current Affairs'] },
+  { title: 'Mathematics MCQs', accent: 'text-orange-700', subject: 'Mathematics', topics: ['Basic Arithmetic', 'Algebra', 'Geometry', 'Percentage', 'Ratio', 'Profit & Loss'] },
 ];
+
+const ALL_SUBJECTS = sections.map((s) => s.subject);
 
 const PPSCPastPapers = () => (
   <>
@@ -47,49 +30,34 @@ const PPSCPastPapers = () => (
       url="https://mcqsai.com/ppsc-past-papers"
       breadcrumbs={[
         { name: 'Home', url: 'https://mcqsai.com/' },
-        { name: "PPSC Past Papers", url: "https://mcqsai.com/ppsc-past-papers" },
+        { name: 'PPSC Past Papers', url: 'https://mcqsai.com/ppsc-past-papers' },
       ]}
       faqs={[
-        { question: "Are PPSC past papers free?", answer: "Yes, PPSC past paper MCQ practice on MCQsAI is fully free." },
-        { question: "Which posts are covered?", answer: "Coverage includes Lecturer, Inspector, ASI, Naib Tehsildar and other common PPSC posts." },
-        { question: "Are answers verified?", answer: "Yes, answers are reviewed and explanations are added." },
+        { question: 'Are PPSC past papers free?', answer: 'Yes, PPSC past paper MCQ practice on MCQsAI is fully free.' },
+        { question: 'Which posts are covered?', answer: 'Coverage includes Lecturer, Inspector, ASI, Naib Tehsildar and other common PPSC posts.' },
+        { question: 'Are answers verified?', answer: 'Yes, answers are reviewed and explanations are added.' },
       ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">
-        PPSC Past Papers — Free MCQ Practice
-      </h1>
-      <p className="text-muted-foreground mb-8">
-        Punjab Public Service Commission past papers with answers. Practice for all PPSC posts.
-      </p>
+      <h1 className="text-3xl font-bold mb-2">PPSC Past Papers — Free MCQ Practice</h1>
+      <p className="text-muted-foreground mb-6">Punjab Public Service Commission past papers with answers. Practice for all PPSC posts.</p>
 
-      {sections.map(section => (
-        <section key={section.subject} className="mb-8">
-          <h2 className={`text-xl font-semibold mb-3 ${section.headingClass}`}>
-            {section.subject} MCQs
-          </h2>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {section.topics.map(topic => (
-              <Link key={topic} to={`/custom-syllabus?subject=${encodeURIComponent(section.subject)}&topic=${encodeURIComponent(topic)}`}
-                className={`p-3 border rounded-lg ${section.cardHover} text-center`}>
-                <p className="text-sm font-medium">{topic}</p>
-                <p className={`text-xs ${section.linkClass} mt-1`}>Practice →</p>
-              </Link>
-            ))}
-          </div>
-        </section>
+      <div className="mb-10 flex flex-wrap gap-3">
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
+        <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
+      </div>
+
+      {sections.map((s) => (
+        <SeoSectionGrid key={s.title} {...s} examName={EXAM_NAME} returnPath={RETURN_PATH} />
       ))}
 
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white text-center">
         <h2 className="text-2xl font-bold mb-2">Practice PPSC MCQs Free</h2>
         <p className="opacity-90 mb-4">AI-powered PPSC preparation. 1000+ MCQs. No signup needed.</p>
-        <Link to="/exams/ppsc"
-          className="bg-white text-blue-700 px-8 py-3 rounded-full font-semibold hover:bg-blue-50 inline-block">
-          Start Practice →
-        </Link>
+        <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} variant="hero" label="Start Practice →" returnPath={RETURN_PATH} />
       </div>
 
-      <div className="mt-8 p-6 bg-gray-50 rounded-xl">
+      <div className="mt-8 p-6 bg-muted/40 rounded-xl">
         <h2 className="font-semibold mb-3">Related Resources</h2>
         <div className="flex flex-wrap gap-2">
           {[
@@ -98,9 +66,8 @@ const PPSCPastPapers = () => (
             { label: 'CSS MCQs', url: '/css-mcqs-practice' },
             { label: 'SPSC Past Papers', url: '/exams/spsc' },
             { label: 'General Knowledge MCQs', url: '/exams/ppsc' },
-          ].map(link => (
-            <Link key={link.url} to={link.url}
-              className="px-4 py-2 bg-white border rounded-full text-sm hover:bg-blue-50 text-blue-700">
+          ].map((link) => (
+            <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}
             </Link>
           ))}
