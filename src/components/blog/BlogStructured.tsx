@@ -114,23 +114,28 @@ export const BlogTOC = ({ markdown }: { markdown: string | null | undefined }) =
 
 /* ---------------- Standalone Tables ---------------- */
 export const BlogTables = ({ tables }: { tables: BlogTableData[] | null | undefined }) => {
-  if (!tables?.length) return null;
+  const safe = (tables || []).filter(
+    (t) => t && Array.isArray(t.headers) && t.headers.length > 0 && Array.isArray(t.rows),
+  );
+  if (!safe.length) return null;
   return (
     <div className="space-y-5 my-5">
-      {tables.map((t, i) => (
+      {safe.map((t, i) => (
         <div key={i}>
           {t.title && <h3 className="text-base font-semibold mb-2">{t.title}</h3>}
           <div className="overflow-x-auto rounded-md border border-border">
             <table className="w-full text-sm">
               <thead className="bg-muted/60">
                 <tr>{t.headers.map((h, hi) => (
-                  <th key={hi} className="text-left px-3 py-2 font-medium">{h}</th>
+                  <th key={hi} className="text-left px-3 py-2 font-medium">{h ?? ""}</th>
                 ))}</tr>
               </thead>
               <tbody>
                 {t.rows.map((row, ri) => (
                   <tr key={ri} className="border-t border-border">
-                    {row.map((c, ci) => <td key={ci} className="px-3 py-2 align-top">{c}</td>)}
+                    {(Array.isArray(row) ? row : []).map((c, ci) => (
+                      <td key={ci} className="px-3 py-2 align-top">{c ?? ""}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -141,6 +146,7 @@ export const BlogTables = ({ tables }: { tables: BlogTableData[] | null | undefi
     </div>
   );
 };
+
 
 /* ---------------- FAQ (emits single FAQPage JSON-LD) ---------------- */
 export const BlogFAQ = ({ faqs }: { faqs: FAQItem[] | null | undefined }) => {
