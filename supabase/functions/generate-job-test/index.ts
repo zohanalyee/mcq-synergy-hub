@@ -13,6 +13,34 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+// Verify admin authorization (or service-role caller for cron/agent jobs)
+async function verifyAdmin(req: Request, supabase: any): Promise<{ authorized: boolean; userId?: string; error?: string }> {
+  const authHeader = req.headers.get("Authorization");
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (serviceKey && authHeader?.includes(serviceKey)) {
+    return { authorized: true, userId: "service_role" };
+  }
+  if (!authHeader?.startsWith("Bearer ")) {
+    return { authorized: false, error: "Missing or invalid authorization header" };
+  }
+  const token = authHeader.replace("Bearer ", "");
+  const { data, error } = await supabase.auth.getUser(token);
+  if (error || !data?.user) {
+    return { authorized: false, error: "Invalid token" };
+  }
+  const { data: roleData } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", data.user.id)
+    .eq("role", "admin")
+    .single();
+  if (!roleData) {
+    return { authorized: false, error: "Admin privileges required" };
+  }
+  return { authorized: true, userId: data.user.id };
+}
+
+
 const MAX_BATCHES = 5; // Allow up to ~50 questions (5 × 10)
 const BATCH_SIZE = 10;
 const DELAY_BETWEEN_BATCHES_MS = 2000;
