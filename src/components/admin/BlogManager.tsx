@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
+import AIGeneratePanel, { GeneratedDraft } from "./blog/AIGeneratePanel";
 
 interface BlogPost {
   id: string;
@@ -44,7 +45,22 @@ const BlogManager = () => {
     status: "draft" as string,
     meta_title: "",
     meta_description: "",
+    tags: [] as string[],
   });
+
+  const applyDraft = (draft: GeneratedDraft) => {
+    setForm((f) => ({
+      ...f,
+      title: draft.title,
+      slug: draft.slug,
+      excerpt: draft.excerpt,
+      content: draft.content,
+      category: draft.category,
+      meta_title: draft.meta_title,
+      meta_description: draft.meta_description,
+      tags: draft.tags || [],
+    }));
+  };
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["admin-blog-posts"],
@@ -102,7 +118,7 @@ const BlogManager = () => {
   const resetForm = () => {
     setEditing(null);
     setIsCreating(false);
-    setForm({ title: "", slug: "", content: "", excerpt: "", category: "", image_url: "", author_name: "MCQSAI Team", status: "draft", meta_title: "", meta_description: "" });
+    setForm({ title: "", slug: "", content: "", excerpt: "", category: "", image_url: "", author_name: "MCQSAI Team", status: "draft", meta_title: "", meta_description: "", tags: [] });
   };
 
   const startEdit = (post: BlogPost) => {
@@ -119,6 +135,7 @@ const BlogManager = () => {
       status: post.status,
       meta_title: post.meta_title || "",
       meta_description: post.meta_description || "",
+      tags: post.tags || [],
     });
   };
 
@@ -137,6 +154,7 @@ const BlogManager = () => {
           <CardTitle>{editing ? "Edit Post" : "New Blog Post"}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          {!editing && <AIGeneratePanel onApplyDraft={applyDraft} />}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <Label>Title</Label>
@@ -169,6 +187,14 @@ const BlogManager = () => {
           <div>
             <Label>Content (Markdown)</Label>
             <Textarea value={form.content} onChange={(e) => setForm({ ...form, content: e.target.value })} rows={12} className="font-mono text-xs" />
+          </div>
+          <div>
+            <Label>Tags (comma-separated)</Label>
+            <Input
+              value={form.tags.join(", ")}
+              onChange={(e) => setForm({ ...form, tags: e.target.value.split(",").map(t => t.trim()).filter(Boolean) })}
+              placeholder="MDCAT, preparation, Pakistan"
+            />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
