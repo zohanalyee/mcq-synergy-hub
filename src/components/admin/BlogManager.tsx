@@ -45,7 +45,22 @@ const BlogManager = () => {
     status: "draft" as string,
     meta_title: "",
     meta_description: "",
+    tags: [] as string[],
   });
+
+  const applyDraft = (draft: GeneratedDraft) => {
+    setForm((f) => ({
+      ...f,
+      title: draft.title,
+      slug: draft.slug,
+      excerpt: draft.excerpt,
+      content: draft.content,
+      category: draft.category,
+      meta_title: draft.meta_title,
+      meta_description: draft.meta_description,
+      tags: draft.tags || [],
+    }));
+  };
 
   const { data: posts = [], isLoading } = useQuery({
     queryKey: ["admin-blog-posts"],
