@@ -128,24 +128,29 @@ const BlogPost = () => {
         keywords={post.tags || undefined}
         articleSection={post.category || undefined}
       />
-      {schemaType === "JobPosting" && jobposting && (
-        <JobPostingSchema
-          data={jobposting}
-          url={articleUrl}
-          title={post.title}
-          description={post.excerpt || undefined}
-          datePosted={post.published_at || undefined}
-        />
-      )}
-      {isHowToCategory && howToSteps.length >= 2 && (
-        <HowToSchema
-          name={post.title}
-          description={post.excerpt || undefined}
-          url={articleUrl}
-          steps={howToSteps}
-          totalTimeMinutes={readingMinutes || undefined}
-        />
-      )}
+      <BlogErrorBoundary label="job-schema">
+        {schemaType === "JobPosting" && jobposting && Object.keys(jobposting).length > 0 && (
+          <JobPostingSchema
+            data={jobposting}
+            url={articleUrl}
+            title={post.title}
+            description={post.excerpt || undefined}
+            datePosted={post.published_at || undefined}
+          />
+        )}
+      </BlogErrorBoundary>
+      <BlogErrorBoundary label="howto-schema">
+        {isHowToCategory && howToSteps.length >= 2 && (
+          <HowToSchema
+            name={post.title}
+            description={post.excerpt || undefined}
+            url={articleUrl}
+            steps={howToSteps}
+            totalTimeMinutes={readingMinutes || undefined}
+          />
+        )}
+      </BlogErrorBoundary>
+
       <Header>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <PageBreadcrumb
