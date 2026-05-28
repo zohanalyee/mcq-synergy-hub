@@ -352,6 +352,16 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
+    // Auth gate: only admins or service-role callers may trigger AI generation
+    const auth = await verifyAdmin(req, supabase);
+    if (!auth.authorized) {
+      console.warn(`[generate-job-test] unauthorized: ${auth.error}`);
+      return new Response(
+        JSON.stringify({ error: auth.error || "Unauthorized" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
     const body = await req.json().catch(() => ({}));
     const { job_test_id, subject } = body as {
       job_test_id?: string;
