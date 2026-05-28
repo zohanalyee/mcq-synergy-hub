@@ -228,6 +228,13 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                   "hover:ring-1 hover:ring-primary/20 hover:border-primary/40"
                 )}
               >
+                {/* Full-card click overlay */}
+                <Link
+                  to={detailHref}
+                  aria-label={`View details for ${opp.title}`}
+                  className="absolute inset-0 z-10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary rounded-lg"
+                />
+
                 {/* Decorative gradient blob — stronger on hover */}
                 <div className="pointer-events-none absolute -top-12 -right-12 h-32 w-32 rounded-full bg-primary/10 blur-3xl opacity-30 group-hover:opacity-100 transition-opacity duration-500" />
 
