@@ -6,13 +6,24 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar, User, ArrowLeft } from "lucide-react";
+import { User, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
 import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import RelatedContent from "@/components/seo/related/RelatedContent";
 import { ArticleSchema } from "@/components/seo/schemas";
+import {
+  BlogTrustStrip,
+  BlogHighlightsCard,
+  BlogTOC,
+  BlogTables,
+  BlogFAQ,
+  BlogPrepFunnel,
+  BlogInternalLinks,
+  BlogSources,
+  JobPostingSchema,
+} from "@/components/blog/BlogStructured";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -52,6 +63,29 @@ const BlogPost = () => {
     );
   }
 
+  const p = post as any;
+  const highlights = p.highlights;
+  const tables = Array.isArray(p.structured_tables) ? p.structured_tables : [];
+  const faqs = Array.isArray(p.faqs) ? p.faqs : [];
+  const internalLinks = Array.isArray(p.internal_links) ? p.internal_links : [];
+  const prepBlocks = Array.isArray(p.prep_blocks) ? p.prep_blocks : [];
+  const sources = Array.isArray(p.sources) ? p.sources : [];
+  const jobposting = p.jobposting;
+  const schemaType = p.schema_type || "Article";
+  const readingMinutes = p.reading_time_minutes;
+  const lastUpdated = p.last_updated_at || p.updated_at || p.published_at;
+
+  // Split content roughly in half to inject prep funnel mid-article
+  const lines = (post.content || "").split("\n");
+  const midpoint = Math.floor(lines.length / 2);
+  const splitAt = lines.findIndex((l, i) => i >= midpoint && /^##\s+/.test(l));
+  const firstHalf = splitAt > 0 ? lines.slice(0, splitAt).join("\n") : post.content;
+  const secondHalf = splitAt > 0 ? lines.slice(splitAt).join("\n") : "";
+
+  const articleUrl = `https://mcqsai.com/blog/${post.slug}`;
+  const ogTitle = p.og_title || post.meta_title || post.title;
+  const twitterTitle = p.twitter_title || ogTitle;
+
   return (
     <>
       <SEOHead
@@ -59,6 +93,7 @@ const BlogPost = () => {
         description={post.meta_description || post.excerpt || undefined}
         type="article"
       />
+      {/* OG / Twitter overrides */}
       <BreadcrumbSchema items={[
         { name: 'Home', path: '/' },
         { name: 'Blog', path: '/blog' },
@@ -67,15 +102,24 @@ const BlogPost = () => {
       <ArticleSchema
         headline={post.title}
         description={post.excerpt || post.meta_description || undefined}
-        url={`https://mcqsai.com/blog/${post.slug}`}
+        url={articleUrl}
         datePublished={post.published_at || undefined}
-        dateModified={(post as any).updated_at || post.published_at || undefined}
+        dateModified={lastUpdated || post.published_at || undefined}
         authorName={post.author_name || 'MCQsAI Editorial Team'}
         keywords={post.tags || undefined}
         articleSection={post.category || undefined}
       />
+      {schemaType === "JobPosting" && jobposting && (
+        <JobPostingSchema
+          data={jobposting}
+          url={articleUrl}
+          title={post.title}
+          description={post.excerpt || undefined}
+          datePosted={post.published_at || undefined}
+        />
+      )}
       <Header>
-        <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <PageBreadcrumb
             items={[
               { title: "Home", href: "/" },
@@ -85,32 +129,71 @@ const BlogPost = () => {
           />
 
           <article>
-            <header className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
+            <header className="mb-4">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
                 {post.category && (
                   <Badge variant="secondary" className="capitalize">{post.category}</Badge>
                 )}
-                {post.tags?.map((tag) => (
+                {(post.tags || []).slice(0, 4).map((tag) => (
                   <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                 ))}
               </div>
-              <h1 className="text-3xl font-bold text-foreground mb-3">{post.title}</h1>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">{post.title}</h1>
+              <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1">
                   <User className="h-4 w-4" />{post.author_name}
                 </span>
-                {post.published_at && (
-                  <span className="flex items-center gap-1">
-                    <Calendar className="h-4 w-4" />
-                    {format(new Date(post.published_at), "MMMM d, yyyy")}
-                  </span>
-                )}
               </div>
             </header>
 
-            <div className="prose prose-sm sm:prose dark:prose-invert max-w-none">
-              <ReactMarkdown>{post.content}</ReactMarkdown>
+            <BlogTrustStrip
+              lastUpdated={lastUpdated}
+              readingMinutes={readingMinutes}
+              hasSource={sources.length > 0}
+            />
+
+            <BlogHighlightsCard highlights={highlights} />
+
+            <BlogTOC markdown={post.content || ""} />
+
+            <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
+                            prose-headings:scroll-mt-20 prose-headings:font-semibold
+                            prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
+                            prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
+                            prose-p:leading-relaxed prose-li:leading-relaxed
+                            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                            prose-table:text-sm prose-th:bg-muted/60
+                            [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{firstHalf}</ReactMarkdown>
             </div>
+
+            {tables.length > 0 && <BlogTables tables={tables} />}
+
+            {/* Mid-article preparation funnel */}
+            {prepBlocks.length > 0 && <BlogPrepFunnel blocks={prepBlocks.slice(0, 2)} />}
+
+            {secondHalf && (
+              <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
+                              prose-headings:scroll-mt-20 prose-headings:font-semibold
+                              prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
+                              prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
+                              prose-p:leading-relaxed prose-li:leading-relaxed
+                              prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                              [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{secondHalf}</ReactMarkdown>
+              </div>
+            )}
+
+            {/* Remaining prep blocks before conclusion */}
+            {prepBlocks.length > 2 && (
+              <BlogPrepFunnel blocks={prepBlocks.slice(2)} heading="Keep Practising" />
+            )}
+
+            <BlogFAQ faqs={faqs} />
+
+            <BlogInternalLinks links={internalLinks} />
+
+            <BlogSources sources={sources} />
           </article>
 
           {/* Related Posts */}

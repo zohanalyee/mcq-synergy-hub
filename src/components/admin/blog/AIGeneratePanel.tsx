@@ -20,6 +20,18 @@ export interface GeneratedDraft {
   tags: string[];
   meta_title: string;
   meta_description: string;
+  og_title?: string;
+  twitter_title?: string;
+  highlights?: any;
+  tables?: any[];
+  faqs?: any[];
+  internal_links?: any[];
+  prep_blocks?: any[];
+  sources?: any[];
+  jobposting?: any;
+  schema_type?: string;
+  reading_time_minutes?: number;
+  last_updated_iso?: string;
 }
 
 interface Props {
