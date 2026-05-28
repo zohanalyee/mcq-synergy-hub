@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
+import AIGeneratePanel, { GeneratedDraft } from "./blog/AIGeneratePanel";
 
 interface BlogPost {
   id: string;
