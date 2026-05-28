@@ -118,7 +118,7 @@ const BlogManager = () => {
   const resetForm = () => {
     setEditing(null);
     setIsCreating(false);
-    setForm({ title: "", slug: "", content: "", excerpt: "", category: "", image_url: "", author_name: "MCQSAI Team", status: "draft", meta_title: "", meta_description: "" });
+    setForm({ title: "", slug: "", content: "", excerpt: "", category: "", image_url: "", author_name: "MCQSAI Team", status: "draft", meta_title: "", meta_description: "", tags: [] });
   };
 
   const startEdit = (post: BlogPost) => {
