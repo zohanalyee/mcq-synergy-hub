@@ -25,6 +25,8 @@ import {
   JobPostingSchema,
   HowToSchema,
 } from "@/components/blog/BlogStructured";
+import { BlogErrorBoundary } from "@/components/blog/BlogErrorBoundary";
+
 import { calculateReadingTime, autoLinkMarkdown, extractHowToSteps } from "@/lib/blogContentUtils";
 import { useMemo } from "react";
 
@@ -66,16 +68,18 @@ const BlogPost = () => {
     );
   }
 
-  const p = post as any;
-  const highlights = p.highlights;
+  const p = (post as any) || {};
+  const highlights = p.highlights ?? null;
   const tables = Array.isArray(p.structured_tables) ? p.structured_tables : [];
   const faqs = Array.isArray(p.faqs) ? p.faqs : [];
   const internalLinks = Array.isArray(p.internal_links) ? p.internal_links : [];
   const prepBlocks = Array.isArray(p.prep_blocks) ? p.prep_blocks : [];
   const sources = Array.isArray(p.sources) ? p.sources : [];
-  const jobposting = p.jobposting;
+  const jobposting = p.jobposting && typeof p.jobposting === "object" ? p.jobposting : null;
   const schemaType = p.schema_type || "Article";
-  const rawContent = post.content || "";
+  const rawContent = typeof post.content === "string" ? post.content : "";
+  const safeTags = Array.isArray(post.tags) ? post.tags : [];
+
 
   // Auto-inject up to 6 contextual internal links into body markdown.
   const linkedContent = useMemo(
@@ -126,24 +130,29 @@ const BlogPost = () => {
         keywords={post.tags || undefined}
         articleSection={post.category || undefined}
       />
-      {schemaType === "JobPosting" && jobposting && (
-        <JobPostingSchema
-          data={jobposting}
-          url={articleUrl}
-          title={post.title}
-          description={post.excerpt || undefined}
-          datePosted={post.published_at || undefined}
-        />
-      )}
-      {isHowToCategory && howToSteps.length >= 2 && (
-        <HowToSchema
-          name={post.title}
-          description={post.excerpt || undefined}
-          url={articleUrl}
-          steps={howToSteps}
-          totalTimeMinutes={readingMinutes || undefined}
-        />
-      )}
+      <BlogErrorBoundary label="job-schema">
+        {schemaType === "JobPosting" && jobposting && Object.keys(jobposting).length > 0 && (
+          <JobPostingSchema
+            data={jobposting}
+            url={articleUrl}
+            title={post.title}
+            description={post.excerpt || undefined}
+            datePosted={post.published_at || undefined}
+          />
+        )}
+      </BlogErrorBoundary>
+      <BlogErrorBoundary label="howto-schema">
+        {isHowToCategory && howToSteps.length >= 2 && (
+          <HowToSchema
+            name={post.title}
+            description={post.excerpt || undefined}
+            url={articleUrl}
+            steps={howToSteps}
+            totalTimeMinutes={readingMinutes || undefined}
+          />
+        )}
+      </BlogErrorBoundary>
+
       <Header>
         <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
           <PageBreadcrumb
@@ -160,9 +169,10 @@ const BlogPost = () => {
                 {post.category && (
                   <Badge variant="secondary" className="capitalize">{post.category}</Badge>
                 )}
-                {(post.tags || []).slice(0, 4).map((tag) => (
+                {safeTags.slice(0, 4).map((tag) => (
                   <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                 ))}
+
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">{post.title}</h1>
               <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
@@ -176,55 +186,76 @@ const BlogPost = () => {
               </div>
             </header>
 
-            <BlogTrustStrip
-              lastUpdated={lastUpdated}
-              readingMinutes={readingMinutes}
-              hasSource={sources.length > 0}
-            />
+            <BlogErrorBoundary label="trust-strip">
+              <BlogTrustStrip
+                lastUpdated={lastUpdated}
+                readingMinutes={readingMinutes}
+                hasSource={sources.length > 0}
+              />
+            </BlogErrorBoundary>
 
-            <BlogHighlightsCard highlights={highlights} />
+            <BlogErrorBoundary label="highlights">
+              <BlogHighlightsCard highlights={highlights} />
+            </BlogErrorBoundary>
 
-            <BlogTOC markdown={post.content || ""} />
+            <BlogErrorBoundary label="toc">
+              <BlogTOC markdown={rawContent} />
+            </BlogErrorBoundary>
 
-            <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
-                            prose-headings:scroll-mt-20 prose-headings:font-semibold
-                            prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
-                            prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
-                            prose-p:leading-relaxed prose-li:leading-relaxed
-                            prose-a:text-primary prose-a:no-underline hover:prose-a:underline
-                            prose-table:text-sm prose-th:bg-muted/60
-                            [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{firstHalf}</ReactMarkdown>
-            </div>
-
-            {tables.length > 0 && <BlogTables tables={tables} />}
-
-            {/* Mid-article preparation funnel */}
-            {prepBlocks.length > 0 && <BlogPrepFunnel blocks={prepBlocks.slice(0, 2)} />}
-
-            {secondHalf && (
+            <BlogErrorBoundary label="markdown-first">
               <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
                               prose-headings:scroll-mt-20 prose-headings:font-semibold
                               prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
                               prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
                               prose-p:leading-relaxed prose-li:leading-relaxed
                               prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                              prose-table:text-sm prose-th:bg-muted/60
                               [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{secondHalf}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{firstHalf || ""}</ReactMarkdown>
               </div>
-            )}
+            </BlogErrorBoundary>
 
-            {/* Remaining prep blocks before conclusion */}
-            {prepBlocks.length > 2 && (
-              <BlogPrepFunnel blocks={prepBlocks.slice(2)} heading="Keep Practising" />
-            )}
+            <BlogErrorBoundary label="tables">
+              {tables.length > 0 && <BlogTables tables={tables} />}
+            </BlogErrorBoundary>
 
-            <BlogFAQ faqs={faqs} />
+            <BlogErrorBoundary label="prep-funnel-1">
+              {prepBlocks.length > 0 && <BlogPrepFunnel blocks={prepBlocks.slice(0, 2)} />}
+            </BlogErrorBoundary>
 
-            <BlogInternalLinks links={internalLinks} />
+            <BlogErrorBoundary label="markdown-second">
+              {secondHalf && (
+                <div className="prose prose-sm sm:prose-base dark:prose-invert max-w-none
+                                prose-headings:scroll-mt-20 prose-headings:font-semibold
+                                prose-h2:text-xl prose-h2:mt-7 prose-h2:mb-3
+                                prose-h3:text-lg prose-h3:mt-5 prose-h3:mb-2
+                                prose-p:leading-relaxed prose-li:leading-relaxed
+                                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                                [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{secondHalf}</ReactMarkdown>
+                </div>
+              )}
+            </BlogErrorBoundary>
 
-            <BlogSources sources={sources} />
+            <BlogErrorBoundary label="prep-funnel-2">
+              {prepBlocks.length > 2 && (
+                <BlogPrepFunnel blocks={prepBlocks.slice(2)} heading="Keep Practising" />
+              )}
+            </BlogErrorBoundary>
+
+            <BlogErrorBoundary label="faq">
+              <BlogFAQ faqs={faqs} />
+            </BlogErrorBoundary>
+
+            <BlogErrorBoundary label="internal-links">
+              <BlogInternalLinks links={internalLinks} />
+            </BlogErrorBoundary>
+
+            <BlogErrorBoundary label="sources">
+              <BlogSources sources={sources} />
+            </BlogErrorBoundary>
           </article>
+
 
           {/* Related Posts */}
           {relatedPosts.length > 0 && (

@@ -49,12 +49,17 @@ export const BlogTrustStrip = ({
       <ShieldCheck className="h-3.5 w-3.5 text-primary" />
       Reviewed by MCQSAI Editorial Team
     </span>
-    {lastUpdated && (
-      <span className="inline-flex items-center gap-1.5">
-        <CalendarCheck className="h-3.5 w-3.5" />
-        Last updated: {format(new Date(lastUpdated), "MMM d, yyyy")}
-      </span>
-    )}
+    {(() => {
+      if (!lastUpdated) return null;
+      const d = new Date(lastUpdated);
+      if (isNaN(d.getTime())) return null;
+      return (
+        <span className="inline-flex items-center gap-1.5">
+          <CalendarCheck className="h-3.5 w-3.5" />
+          Last updated: {format(d, "MMM d, yyyy")}
+        </span>
+      );
+    })()}
     {readingMinutes ? (
       <span className="inline-flex items-center gap-1.5">
         <Clock className="h-3.5 w-3.5" />
@@ -64,6 +69,7 @@ export const BlogTrustStrip = ({
     {hasSource && <span className="inline-flex items-center gap-1.5"><Link2 className="h-3.5 w-3.5" />Verified from official source</span>}
   </div>
 );
+
 
 /* ---------------- Highlights Card ---------------- */
 export const BlogHighlightsCard = ({ highlights }: { highlights: Highlights | null | undefined }) => {
@@ -84,7 +90,8 @@ export const BlogHighlightsCard = ({ highlights }: { highlights: Highlights | nu
 };
 
 /* ---------------- TOC ---------------- */
-export const BlogTOC = ({ markdown }: { markdown: string }) => {
+export const BlogTOC = ({ markdown }: { markdown: string | null | undefined }) => {
+  if (!markdown || typeof markdown !== "string") return null;
   const headings = Array.from(markdown.matchAll(/^##\s+(.+)$/gm)).map(m => m[1].trim());
   if (headings.length < 3) return null;
   return (
@@ -104,25 +111,31 @@ export const BlogTOC = ({ markdown }: { markdown: string }) => {
   );
 };
 
+
 /* ---------------- Standalone Tables ---------------- */
 export const BlogTables = ({ tables }: { tables: BlogTableData[] | null | undefined }) => {
-  if (!tables?.length) return null;
+  const safe = (tables || []).filter(
+    (t) => t && Array.isArray(t.headers) && t.headers.length > 0 && Array.isArray(t.rows),
+  );
+  if (!safe.length) return null;
   return (
     <div className="space-y-5 my-5">
-      {tables.map((t, i) => (
+      {safe.map((t, i) => (
         <div key={i}>
           {t.title && <h3 className="text-base font-semibold mb-2">{t.title}</h3>}
           <div className="overflow-x-auto rounded-md border border-border">
             <table className="w-full text-sm">
               <thead className="bg-muted/60">
                 <tr>{t.headers.map((h, hi) => (
-                  <th key={hi} className="text-left px-3 py-2 font-medium">{h}</th>
+                  <th key={hi} className="text-left px-3 py-2 font-medium">{h ?? ""}</th>
                 ))}</tr>
               </thead>
               <tbody>
                 {t.rows.map((row, ri) => (
                   <tr key={ri} className="border-t border-border">
-                    {row.map((c, ci) => <td key={ci} className="px-3 py-2 align-top">{c}</td>)}
+                    {(Array.isArray(row) ? row : []).map((c, ci) => (
+                      <td key={ci} className="px-3 py-2 align-top">{c ?? ""}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -134,13 +147,15 @@ export const BlogTables = ({ tables }: { tables: BlogTableData[] | null | undefi
   );
 };
 
+
 /* ---------------- FAQ (emits single FAQPage JSON-LD) ---------------- */
 export const BlogFAQ = ({ faqs }: { faqs: FAQItem[] | null | undefined }) => {
-  if (!faqs?.length) return null;
+  const safe = (faqs || []).filter((f) => f && typeof f.q === "string" && f.q.trim() && typeof f.a === "string" && f.a.trim());
+  if (!safe.length) return null;
   const schema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqs.map(f => ({
+    mainEntity: safe.map(f => ({
       "@type": "Question",
       name: f.q,
       acceptedAnswer: { "@type": "Answer", text: f.a },
@@ -153,7 +168,7 @@ export const BlogFAQ = ({ faqs }: { faqs: FAQItem[] | null | undefined }) => {
       </Helmet>
       <h2 className="text-xl font-bold mb-3">Frequently Asked Questions</h2>
       <Accordion type="single" collapsible className="w-full">
-        {faqs.map((f, i) => (
+        {safe.map((f, i) => (
           <AccordionItem key={i} value={`faq-${i}`}>
             <AccordionTrigger className="text-left text-sm font-medium">{f.q}</AccordionTrigger>
             <AccordionContent className="text-sm text-muted-foreground leading-relaxed">{f.a}</AccordionContent>
@@ -163,6 +178,7 @@ export const BlogFAQ = ({ faqs }: { faqs: FAQItem[] | null | undefined }) => {
     </section>
   );
 };
+
 
 /* ---------------- Preparation Funnel ---------------- */
 export const BlogPrepFunnel = ({ blocks, heading = "Prepare for This Test" }: { blocks: PrepBlock[] | null | undefined; heading?: string }) => {
