@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { extractIdFromSlug } from "@/utils/slugify";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
