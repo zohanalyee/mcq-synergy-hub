@@ -272,17 +272,7 @@ const OpportunityDetail = () => {
                 )}
               </div>
 
-              {/* Description */}
-              {opportunity.description && (
-                <div>
-                  <h2 className="text-sm font-semibold mb-2">Description</h2>
-                  <p className="text-sm text-muted-foreground whitespace-pre-line leading-relaxed">
-                    {opportunity.description}
-                  </p>
-                </div>
-              )}
-
-              {/* Job specific fields */}
+              {/* Job specific fields — moved above description for quick facts */}
               {opportunity.type === "job" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {opportunity.qualification && (
@@ -377,6 +367,42 @@ const OpportunityDetail = () => {
                   )}
                 </div>
               )}
+
+              {/* Description — markdown with GFM tables */}
+              {opportunity.description && (
+                <div>
+                  <h2 className="text-sm font-semibold mb-2">Description</h2>
+                  <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground leading-relaxed
+                    prose-headings:text-foreground prose-headings:font-semibold
+                    prose-h2:text-base prose-h2:mt-4 prose-h2:mb-2
+                    prose-h3:text-sm prose-h3:mt-3 prose-h3:mb-1.5
+                    prose-strong:text-foreground prose-a:text-primary
+                    prose-ul:my-2 prose-li:my-0.5">
+                    <ReactMarkdown
+                      remarkPlugins={[remarkGfm]}
+                      components={{
+                        table: ({ node, ...props }) => (
+                          <div className="overflow-x-auto my-3 -mx-1">
+                            <table className="w-full border-collapse text-xs" {...props} />
+                          </div>
+                        ),
+                        thead: ({ node, ...props }) => <thead className="bg-muted/60" {...props} />,
+                        th: ({ node, ...props }) => (
+                          <th className="border border-border/50 px-2 py-1.5 text-left font-semibold text-foreground align-top" {...props} />
+                        ),
+                        td: ({ node, ...props }) => (
+                          <td className="border border-border/40 px-2 py-1.5 text-left align-top [tbody_tr:nth-child(even)_&]:bg-muted/30" {...props} />
+                        ),
+                        tr: ({ node, ...props }) => <tr className="even:bg-muted/20" {...props} />,
+                      }}
+                    >
+                      {opportunity.description}
+                    </ReactMarkdown>
+                  </div>
+                </div>
+              )}
+
+
 
               {/* ========== NATIVE PDF VIEWER ========== */}
               {hasPdf && (
