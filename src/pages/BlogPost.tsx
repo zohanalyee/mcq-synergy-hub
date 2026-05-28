@@ -25,6 +25,8 @@ import {
   JobPostingSchema,
   HowToSchema,
 } from "@/components/blog/BlogStructured";
+import { BlogErrorBoundary } from "@/components/blog/BlogErrorBoundary";
+
 import { calculateReadingTime, autoLinkMarkdown, extractHowToSteps } from "@/lib/blogContentUtils";
 import { useMemo } from "react";
 
