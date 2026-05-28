@@ -66,16 +66,18 @@ const BlogPost = () => {
     );
   }
 
-  const p = post as any;
-  const highlights = p.highlights;
+  const p = (post as any) || {};
+  const highlights = p.highlights ?? null;
   const tables = Array.isArray(p.structured_tables) ? p.structured_tables : [];
   const faqs = Array.isArray(p.faqs) ? p.faqs : [];
   const internalLinks = Array.isArray(p.internal_links) ? p.internal_links : [];
   const prepBlocks = Array.isArray(p.prep_blocks) ? p.prep_blocks : [];
   const sources = Array.isArray(p.sources) ? p.sources : [];
-  const jobposting = p.jobposting;
+  const jobposting = p.jobposting && typeof p.jobposting === "object" ? p.jobposting : null;
   const schemaType = p.schema_type || "Article";
-  const rawContent = post.content || "";
+  const rawContent = typeof post.content === "string" ? post.content : "";
+  const safeTags = Array.isArray(post.tags) ? post.tags : [];
+
 
   // Auto-inject up to 6 contextual internal links into body markdown.
   const linkedContent = useMemo(
