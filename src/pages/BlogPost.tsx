@@ -169,9 +169,10 @@ const BlogPost = () => {
                 {post.category && (
                   <Badge variant="secondary" className="capitalize">{post.category}</Badge>
                 )}
-                {(post.tags || []).slice(0, 4).map((tag) => (
+                {safeTags.slice(0, 4).map((tag) => (
                   <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                 ))}
+
               </div>
               <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight">{post.title}</h1>
               <div className="flex items-center gap-3 mt-2 text-sm text-muted-foreground">
