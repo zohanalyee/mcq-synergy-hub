@@ -316,7 +316,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                     <Link
                       to={detailHref}
                       className={cn(
-                        "inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold",
+                        "relative z-20 inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold",
                         "bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground",
                         "transition-all duration-200 group-hover:translate-x-0.5"
                       )}
@@ -325,6 +325,7 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                       {ctaLabel}
                       <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
+
                   </div>
                 </CardContent>
               </Card>
