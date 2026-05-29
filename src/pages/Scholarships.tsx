@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { getContentByCategory } from "@/services/contentService";
 import { getApprovedOpportunities } from "@/services/externalOpportunitiesService";
+import { sortContentOpportunities } from "@/lib/opportunitySorting";
 import { ExternalOpportunity, ExternalOpportunityFilters } from "@/types/externalOpportunities";
 import { useAuth } from "@/contexts/AuthContext";
 import ExternalOpportunitiesSection from "@/components/external/ExternalOpportunitiesSection";
@@ -59,12 +60,14 @@ const Scholarships = () => {
     fetchScholarships();
   }, [externalFilters]);
   
-  const filteredScholarships = scholarships.filter(item => 
-    item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (item.institution && item.institution.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (item.scholarshipType && item.scholarshipType.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredScholarships = sortContentOpportunities(
+    scholarships.filter(item =>
+      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.description && item.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.institution && item.institution.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (item.scholarshipType && item.scholarshipType.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
+    )
   );
 
   const filteredExternalScholarships = externalScholarships.filter(item =>

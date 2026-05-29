@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { sortOpportunities } from "@/lib/opportunitySorting";
 import { 
   ExternalOpportunity, 
   ExternalOpportunityInsert, 
@@ -104,7 +105,8 @@ export const getApprovedOpportunities = async (
     throw error;
   }
   
-  return (data || []) as ExternalOpportunity[];
+  // Apply global stable ordering: featured → active (nearest deadline) → newest → expired last
+  return sortOpportunities((data || []) as ExternalOpportunity[]);
 };
 
 // Update opportunity status (approve/reject)
