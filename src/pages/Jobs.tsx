@@ -8,6 +8,7 @@ import { Briefcase } from "lucide-react";
 import GlassJobsFilters from "@/components/jobs/GlassJobsFilters";
 import JobsGrid from "@/components/jobs/JobsGrid";
 import { getContentByCategory } from "@/services/contentService";
+import { sortContentOpportunities } from "@/lib/opportunitySorting";
 import { getApprovedOpportunities } from "@/services/externalOpportunitiesService";
 import { ContentItem } from "@/interfaces/content";
 import { ExternalOpportunity, ExternalOpportunityFilters } from "@/types/externalOpportunities";
