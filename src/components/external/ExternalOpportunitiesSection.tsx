@@ -271,6 +271,18 @@ const ExternalOpportunitiesSection = ({ opportunities, isLoading, type }: Extern
                             Pending
                           </Badge>
                         )}
+                        {opp.created_at &&
+                          (Date.now() - new Date(opp.created_at).getTime()) / 86400000 <= 7 &&
+                          dl.tier !== "expired" && (
+                            <Badge
+                              className={cn(
+                                pillBase,
+                                "bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300"
+                              )}
+                            >
+                              New
+                            </Badge>
+                          )}
                       </div>
                       <CardTitle className="text-base font-semibold text-gray-900 dark:text-foreground line-clamp-2 leading-snug group-hover:text-primary transition-colors break-words">
                         {opp.title}
