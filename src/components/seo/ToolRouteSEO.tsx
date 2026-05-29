@@ -30,7 +30,7 @@ const ToolRouteSEO = () => {
   const tool = ALL_TOOLS.find((t) => t.href === pathname);
   if (!tool) return null;
 
-  const canonical = `https://www.mcqsai.com${tool.href}`;
+  const canonical = `${SITE_ORIGIN}${tool.href}`;
   const title = `${tool.name} — Free Online Tool | MCQsAI`;
   const description =
     tool.seoDescription ||
