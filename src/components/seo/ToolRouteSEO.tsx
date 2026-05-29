@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { ALL_TOOLS } from '@/data/toolsData';
-import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, ogImageForPath } from '@/lib/seoUrls';
+import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, SITE_ORIGIN, ogImageForPath } from '@/lib/seoUrls';
 
 /**
  * Global SEO injector for /tools/* routes.
