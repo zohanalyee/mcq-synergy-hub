@@ -44,15 +44,15 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Any',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://www.mcqsai.com' },
+    provider: { '@type': 'Organization', name: 'MCQsAI', url: SITE_ORIGIN },
   };
 
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Tools', item: 'https://www.mcqsai.com/tools' },
-      ...(category ? [{ '@type': 'ListItem', position: 2, name: category, item: `https://www.mcqsai.com/tools?category=${encodeURIComponent(category)}` }] : []),
+      { '@type': 'ListItem', position: 1, name: 'Tools', item: `${SITE_ORIGIN}/tools` },
+      ...(category ? [{ '@type': 'ListItem', position: 2, name: category, item: `${SITE_ORIGIN}/tools?category=${encodeURIComponent(category)}` }] : []),
       { '@type': 'ListItem', position: category ? 3 : 2, name: title, item: toolUrl },
     ],
   };
