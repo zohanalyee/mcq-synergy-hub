@@ -84,7 +84,7 @@ if (typeof g.window === 'undefined') {
   win.requestAnimationFrame = (_cb: any) => 0;
   win.cancelAnimationFrame = noop;
   win.getComputedStyle = () => ({ getPropertyValue: () => '' });
-  win.location = { href: 'https://mcqsai.com/', origin: 'https://mcqsai.com', pathname: '/', search: '', hash: '', protocol: 'https:', host: 'www.mcqsai.com', assign: noop, replace: noop, reload: noop };
+  win.location = { href: 'https://mcqsai.com/', origin: 'https://mcqsai.com', pathname: '/', search: '', hash: '', protocol: 'https:', host: 'mcqsai.com', assign: noop, replace: noop, reload: noop };
   win.history = { pushState: noop, replaceState: noop, back: noop, forward: noop, go: noop, state: null, length: 1 };
   win.matchMedia = g.matchMedia;
   win.localStorage = g.localStorage;
