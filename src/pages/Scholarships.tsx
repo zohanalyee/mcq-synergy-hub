@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { ContentItem } from "@/interfaces/content";
 import { getContentByCategory } from "@/services/contentService";
 import { getApprovedOpportunities } from "@/services/externalOpportunitiesService";
+import { sortContentOpportunities } from "@/lib/opportunitySorting";
 import { ExternalOpportunity, ExternalOpportunityFilters } from "@/types/externalOpportunities";
 import { useAuth } from "@/contexts/AuthContext";
 import ExternalOpportunitiesSection from "@/components/external/ExternalOpportunitiesSection";
