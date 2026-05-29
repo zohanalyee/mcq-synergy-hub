@@ -95,7 +95,7 @@ const buildJsonLd = (op: any) => {
     "@context": "https://schema.org",
     name: op.title,
     description: op.description || `${op.type} opportunity from ${op.organization || op.source_name || "MCQsAI"}`,
-    url: typeof window !== "undefined" ? window.location.href : `https://www.mcqsai.com/opportunity/${op.id}`,
+    url: typeof window !== "undefined" ? window.location.href : `https://mcqsai.com/opportunity/${op.id}`,
     datePosted: op.created_at,
     ...(op.deadline_date && { validThrough: op.deadline_date }),
   };
@@ -190,8 +190,8 @@ const OpportunityDetail = () => {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: "https://www.mcqsai.com/" },
-      { "@type": "ListItem", position: 2, name: crumb.label, item: `https://www.mcqsai.com${crumb.href}` },
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://mcqsai.com/" },
+      { "@type": "ListItem", position: 2, name: crumb.label, item: `https://mcqsai.com${crumb.href}` },
       { "@type": "ListItem", position: 3, name: opportunity.title },
     ],
   };

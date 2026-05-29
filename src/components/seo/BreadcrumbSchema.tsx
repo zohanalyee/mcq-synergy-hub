@@ -7,7 +7,7 @@ interface Crumb {
  * Emits BreadcrumbList JSON-LD. Renders no visible UI — pair with a visible
  * breadcrumb nav for users; this is purely for search engines.
  */
-const BreadcrumbSchema = ({ items, baseUrl = 'https://www.mcqsai.com' }: { items: Crumb[]; baseUrl?: string }) => {
+const BreadcrumbSchema = ({ items, baseUrl = 'https://mcqsai.com' }: { items: Crumb[]; baseUrl?: string }) => {
   if (!items.length) return null;
   const json = {
     '@context': 'https://schema.org',
