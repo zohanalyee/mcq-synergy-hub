@@ -118,3 +118,19 @@ export function partitionOpportunities<T extends SortableOpportunity>(items: T[]
     expired: sorted.filter((o) => isExpired(o, today)),
   };
 }
+
+/**
+ * Adapter for ContentItem-shaped rows (manual / AI-generated content_items)
+ * which use `deadline` and `createdAt` field names.
+ */
+export function sortContentOpportunities<
+  T extends { deadline?: string | null; createdAt?: string | null; metadata?: Record<string, unknown> | null }
+>(items: T[]): T[] {
+  const decorated = items.map((item) => ({
+    item,
+    deadline_date: item.deadline ?? null,
+    created_at: item.createdAt ?? null,
+    metadata: item.metadata ?? null,
+  }));
+  return sortOpportunities(decorated).map((d) => d.item);
+}
