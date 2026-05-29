@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { sortOpportunities } from "@/lib/opportunitySorting";
 import { 
   ExternalOpportunity, 
   ExternalOpportunityInsert, 
