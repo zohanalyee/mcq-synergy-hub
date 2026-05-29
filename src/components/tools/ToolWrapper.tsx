@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import SEOHead from '@/components/SEOHead';
 import { Helmet } from 'react-helmet-async';
+import { SITE_ORIGIN, ogImageForPath } from '@/lib/seoUrls';
 
 interface ToolWrapperProps {
   toolId: string;
