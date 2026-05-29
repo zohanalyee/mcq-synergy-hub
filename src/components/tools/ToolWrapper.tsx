@@ -30,8 +30,9 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
   const seoDescription =
     toolData?.seoDescription ||
     `Use our free ${title.toLowerCase()} for instant results. ${description}. No signup, works in your browser.`;
-  const toolUrl = toolData?.href ? `https://www.mcqsai.com${toolData.href}` : undefined;
-  const ogImage = 'https://www.mcqsai.com/og-image.jpg';
+  const toolUrl = toolData?.href ? `${SITE_ORIGIN}${toolData.href}` : undefined;
+  // Tools category banner — absolute HTTPS apex URL (no redirect, crawler-safe).
+  const ogImage = ogImageForPath('/tools');
 
   const webAppLd = {
     '@context': 'https://schema.org',
