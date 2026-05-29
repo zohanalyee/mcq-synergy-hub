@@ -8,6 +8,7 @@ import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import SEOHead from '@/components/SEOHead';
 import { Helmet } from 'react-helmet-async';
+import { SITE_ORIGIN, ogImageForPath } from '@/lib/seoUrls';
 
 interface ToolWrapperProps {
   toolId: string;
@@ -30,8 +31,9 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
   const seoDescription =
     toolData?.seoDescription ||
     `Use our free ${title.toLowerCase()} for instant results. ${description}. No signup, works in your browser.`;
-  const toolUrl = toolData?.href ? `https://www.mcqsai.com${toolData.href}` : undefined;
-  const ogImage = 'https://www.mcqsai.com/og-image.jpg';
+  const toolUrl = toolData?.href ? `${SITE_ORIGIN}${toolData.href}` : undefined;
+  // Tools category banner — absolute HTTPS apex URL (no redirect, crawler-safe).
+  const ogImage = ogImageForPath('/tools');
 
   const webAppLd = {
     '@context': 'https://schema.org',
@@ -42,15 +44,15 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
     applicationCategory: 'UtilitiesApplication',
     operatingSystem: 'Any',
     offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
-    provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://www.mcqsai.com' },
+    provider: { '@type': 'Organization', name: 'MCQsAI', url: SITE_ORIGIN },
   };
 
   const breadcrumbLd = {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'Tools', item: 'https://www.mcqsai.com/tools' },
-      ...(category ? [{ '@type': 'ListItem', position: 2, name: category, item: `https://www.mcqsai.com/tools?category=${encodeURIComponent(category)}` }] : []),
+      { '@type': 'ListItem', position: 1, name: 'Tools', item: `${SITE_ORIGIN}/tools` },
+      ...(category ? [{ '@type': 'ListItem', position: 2, name: category, item: `${SITE_ORIGIN}/tools?category=${encodeURIComponent(category)}` }] : []),
       { '@type': 'ListItem', position: category ? 3 : 2, name: title, item: toolUrl },
     ],
   };

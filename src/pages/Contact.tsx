@@ -28,7 +28,7 @@ const contactJsonLd = {
   mainEntity: {
     '@type': 'Organization',
     name: 'MCQsAI',
-    url: 'https://www.mcqsai.com',
+    url: 'https://mcqsai.com',
     contactPoint: [
       { '@type': 'ContactPoint', email: 'hello@mcqsai.com', contactType: 'general inquiry' },
       { '@type': 'ContactPoint', email: 'support@mcqsai.com', contactType: 'customer support' },

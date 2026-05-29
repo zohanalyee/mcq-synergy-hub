@@ -1,5 +1,6 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
+import { SITE_ORIGIN } from '@/lib/seoUrls';
 
 /**
  * GlobalCanonical — single source of truth for <link rel="canonical">.
@@ -11,7 +12,9 @@ import { useLocation } from 'react-router-dom';
  *
  * Rules enforced here:
  *   - Always https
- *   - Always www.mcqsai.com (never apex)
+ *   - Always the APEX origin https://mcqsai.com (never www.* — www. 302-redirects
+ *     to apex, and crawlers must not be pointed at a redirecting URL; this also
+ *     keeps og:url === og:image host, so social previews resolve directly).
  *   - Strip query string entirely (incl. ?lang=)
  *   - Strip trailing slash (except root)
  *
@@ -23,7 +26,7 @@ const GlobalCanonical = () => {
   let p = pathname || '/';
   if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
 
-  const canonical = `https://www.mcqsai.com${p}`;
+  const canonical = `${SITE_ORIGIN}${p}`;
 
   return (
     // NOTE: do NOT use `prioritizeSeoTags` — react-helmet-async@2.0.4 has a
