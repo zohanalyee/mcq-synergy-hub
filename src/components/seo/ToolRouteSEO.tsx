@@ -44,6 +44,9 @@ const ToolRouteSEO = () => {
     'Pakistan student tools',
   ].join(', ');
 
+  // Tools category banner (absolute HTTPS apex URL — crawler-safe).
+  const ogImage = ogImageForPath('/tools');
+
   // NOTE: WebApplication / BreadcrumbList / FAQPage / HowTo JSON-LD is emitted
   // by <ToolWrapper> on every tool page. We intentionally do NOT re-emit it here
   // — duplicate structured data triggers Google Search Console warnings.
