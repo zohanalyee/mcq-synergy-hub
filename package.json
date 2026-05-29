@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "prebuild": "node scripts/generate-sitemaps.mjs && node scripts/verify-sitemap.mjs pre",
-    "build": "vite build && node scripts/verify-sitemap.mjs post",
-    "build:dev": "vite build --mode development && node scripts/verify-sitemap.mjs post",
+    "build": "vite build && node scripts/dedupe-og.mjs && node scripts/verify-sitemap.mjs post",
+    "build:dev": "vite build --mode development && node scripts/dedupe-og.mjs && node scripts/verify-sitemap.mjs post",
     "lint": "eslint .",
     "preview": "vite preview"
   },
