@@ -75,7 +75,7 @@ const PRERENDER_ROUTES = [
 export default defineConfig(({ mode }) => {
   const shouldPrerender = process.env.PRERENDER === 'true' || mode === 'production';
 
-  return ({
+  return {
   server: {
     host: "::",
     port: 8080,
@@ -114,4 +114,5 @@ export default defineConfig(({ mode }) => {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  };
 });
