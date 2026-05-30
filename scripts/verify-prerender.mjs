@@ -21,6 +21,15 @@ const checks = [
   { name: 'internal-a',  re: /<a[^>]+href=["']\/[^"'#]+["']/i },
 ];
 
+const requiredRouteFiles = [
+  'index.html',
+  'jobs/index.html',
+  'scholarships/index.html',
+  'blog/index.html',
+  'tools/index.html',
+  'mdcat-syllabus/index.html',
+];
+
 const singletonMetaProps = [
   'og:image', 'og:image:secure_url', 'og:image:type', 'og:image:width',
   'og:image:height', 'og:image:alt', 'og:url', 'og:title', 'og:description',
@@ -70,6 +79,12 @@ function walk(dir) {
 
 const files = walk(DIST);
 let failed = 0;
+for (const routeFile of requiredRouteFiles) {
+  if (!existsSync(join(DIST, routeFile))) {
+    console.warn(`⚠️  /${routeFile} — missing required prerendered HTML`);
+    failed++;
+  }
+}
 for (const f of files) {
   const html = readFileSync(f, 'utf8');
   const issues = checks.filter(c => !c.re.test(html)).map(c => `missing ${c.name}`);
@@ -92,5 +107,4 @@ for (const f of files) {
   }
 }
 console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK`);
-// Soft-fail: warnings only, don't break the build during initial rollout.
-process.exit(0);
+process.exit(failed ? 1 : 0);
