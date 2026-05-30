@@ -4,8 +4,9 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { vitePrerenderPlugin } from "vite-prerender-plugin";
 
-// Opt-in static prerender. Default: OFF (keeps Lovable sandbox builds fast and
-// avoids puppeteer in dev). Enable in CI / production with PRERENDER=true.
+// Static prerender is mandatory for production social previews: WhatsApp/FB/X
+// read raw HTML only, so route-specific OG/Twitter tags must be server-visible.
+// Dev server remains fast; non-production builds can opt in with PRERENDER=true.
 // Routes are intentionally limited to anonymous-safe SEO pages — no dashboard,
 // auth, or user-personalised flows. Detail pages remain CSR + sitemap.
 const PRERENDER_ROUTES = [
@@ -71,7 +72,10 @@ const PRERENDER_ROUTES = [
   "/p/biology-mcqs-class-11",
 ];
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(({ mode }) => {
+  const shouldPrerender = process.env.PRERENDER === 'true' || mode === 'production';
+
+  return {
   server: {
     host: "::",
     port: 8080,
@@ -99,7 +103,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
-    process.env.PRERENDER === 'true' && vitePrerenderPlugin({
+    shouldPrerender && vitePrerenderPlugin({
       renderTarget: '#root',
       prerenderScript: path.resolve(__dirname, 'src/prerender.tsx'),
       additionalPrerenderRoutes: PRERENDER_ROUTES,
@@ -110,4 +114,5 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-}));
+  };
+});
