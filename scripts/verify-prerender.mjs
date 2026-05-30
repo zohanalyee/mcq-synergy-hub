@@ -100,6 +100,8 @@ for (const f of files) {
   const ogImage = ogImageTag.match(/\bcontent=["']([^"']+)["']/i)?.[1] || '';
   const expected = expectedOgImage(f);
   if (ogImage !== expected) issues.push(`og:image=${ogImage || 'missing'} expected=${expected}`);
+  const titleCount = (html.match(/<title\b[^>]*>[\s\S]*?<\/title>/gi) || []).length;
+  if (titleCount !== 1) issues.push(`title count=${titleCount}`);
   if (issues.length) {
     console.warn(`⚠️  ${f.replace(DIST, '')} — ${issues.join(', ')}`);
     failed++;
