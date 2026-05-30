@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Verifies prerendered HTML output contains the SEO essentials.
-// Skips silently when PRERENDER is not enabled (no snapshots produced).
+// Verifies prerendered HTML output contains crawler-visible SEO essentials and
+// exactly one single-value OG/Twitter/canonical tag per page.
 import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -21,6 +21,42 @@ const checks = [
   { name: 'internal-a',  re: /<a[^>]+href=["']\/[^"'#]+["']/i },
 ];
 
+const singletonMetaProps = [
+  'og:image', 'og:image:secure_url', 'og:image:type', 'og:image:width',
+  'og:image:height', 'og:image:alt', 'og:url', 'og:title', 'og:description',
+  'og:type', 'og:site_name', 'og:locale',
+];
+const singletonMetaNames = [
+  'twitter:title', 'twitter:description', 'twitter:image', 'twitter:image:alt',
+  'twitter:card', 'twitter:url', 'twitter:site', 'description', 'keywords',
+  'robots', 'author',
+];
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function countMeta(html, attr, value) {
+  const re = new RegExp(`<meta\\b(?=[^>]*\\b${attr}=["']${escapeRegExp(value)}["'])[^>]*>`, 'gi');
+  return (html.match(re) || []).length;
+}
+
+function contentOf(html, attr, value) {
+  const re = new RegExp(`<meta\\b(?=[^>]*\\b${attr}=["']${escapeRegExp(value)}["'])[^>]*\\bcontent=["']([^"']+)["'][^>]*>`, 'i');
+  return html.match(re)?.[1] || '';
+}
+
+function expectedOgImage(file) {
+  const route = file.replace(DIST, '').replace(/\/index\.html$/, '') || '/';
+  if (route.startsWith('/jobs')) return 'https://mcqsai.com/og/jobs-og.jpg';
+  if (route.startsWith('/scholarships')) return 'https://mcqsai.com/og/scholarships-og.jpg';
+  if (route.startsWith('/blog')) return 'https://mcqsai.com/og/blog-og.jpg';
+  if (route.startsWith('/tools')) return 'https://mcqsai.com/og/tools-og.jpg';
+  if (route.startsWith('/boards') || route.includes('class-mcqs') || route.startsWith('/9th-class') || route.startsWith('/board-mcqs')) return 'https://mcqsai.com/og/boards-og.jpg';
+  if (route.startsWith('/exams') || route.startsWith('/mdcat') || route.startsWith('/ecat') || route.startsWith('/css') || route.includes('entry-test') || route.includes('past-papers') || route.includes('-test') || route.startsWith('/forces-jobs-tests') || route.startsWith('/pst-sst')) return 'https://mcqsai.com/og/exams-og.jpg';
+  return 'https://mcqsai.com/og/default-og.jpg';
+}
+
 function walk(dir) {
   const out = [];
   for (const f of readdirSync(dir)) {
@@ -36,9 +72,20 @@ const files = walk(DIST);
 let failed = 0;
 for (const f of files) {
   const html = readFileSync(f, 'utf8');
-  const missing = checks.filter(c => !c.re.test(html)).map(c => c.name);
-  if (missing.length) {
-    console.warn(`⚠️  ${f.replace(DIST, '')} — missing: ${missing.join(', ')}`);
+  const issues = checks.filter(c => !c.re.test(html)).map(c => `missing ${c.name}`);
+  for (const prop of singletonMetaProps) {
+    const count = countMeta(html, 'property', prop);
+    if (count !== 1) issues.push(`${prop} count=${count}`);
+  }
+  for (const name of singletonMetaNames) {
+    const count = countMeta(html, 'name', name);
+    if (count !== 1) issues.push(`${name} count=${count}`);
+  }
+  const ogImage = contentOf(html, 'property', 'og:image');
+  const expected = expectedOgImage(f);
+  if (ogImage !== expected) issues.push(`og:image=${ogImage || 'missing'} expected=${expected}`);
+  if (issues.length) {
+    console.warn(`⚠️  ${f.replace(DIST, '')} — ${issues.join(', ')}`);
     failed++;
   } else {
     console.log(`✅ ${f.replace(DIST, '')}`);
