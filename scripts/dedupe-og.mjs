@@ -59,12 +59,22 @@ function dedupeCanonical(html) {
   return html.replace(re, (m) => (++count < total ? '' : m));
 }
 
+function dedupeTitle(html) {
+  const re = /<title\b[^>]*>[\s\S]*?<\/title>/gi;
+  const matches = html.match(re);
+  if (!matches || matches.length <= 1) return html;
+  let count = 0;
+  const total = matches.length;
+  return html.replace(re, (m) => (++count < total ? '' : m));
+}
+
 function processFile(p) {
   let html = readFileSync(p, 'utf8');
   const before = html;
   for (const prop of META_PROPS) html = dedupeAttr(html, 'property', prop);
   for (const name of META_NAMES) html = dedupeAttr(html, 'name', name);
   html = dedupeCanonical(html);
+  html = dedupeTitle(html);
   if (html !== before) {
     writeFileSync(p, html);
     return true;
