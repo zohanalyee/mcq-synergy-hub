@@ -96,7 +96,8 @@ for (const f of files) {
     const count = countMeta(html, 'name', name);
     if (count !== 1) issues.push(`${name} count=${count}`);
   }
-  const ogImage = contentOf(html, 'property', 'og:image');
+  const ogImageTag = html.match(/<meta\b(?=[^>]*\bproperty=["']og:image["'])[^>]*>/i)?.[0] || '';
+  const ogImage = ogImageTag.match(/\bcontent=["']([^"']+)["']/i)?.[1] || '';
   const expected = expectedOgImage(f);
   if (ogImage !== expected) issues.push(`og:image=${ogImage || 'missing'} expected=${expected}`);
   if (issues.length) {
