@@ -15,6 +15,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { safeMarkdownComponents } from "@/components/SafeMarkdownLink";
+import { sanitizeEmailLinks } from "@/lib/markdownSanitize";
 import { cn } from "@/lib/utils";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -142,7 +144,7 @@ const MessageBubble: React.FC<{ message: Message }> = ({ message }) => {
             <p className="whitespace-pre-wrap">{message.content}</p>
           ) : (
             <div className="prose prose-sm dark:prose-invert max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-headings:mt-2 prose-headings:mb-1">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+              <ReactMarkdown components={safeMarkdownComponents}>{sanitizeEmailLinks(message.content)}</ReactMarkdown>
             </div>
           )}
         </div>
