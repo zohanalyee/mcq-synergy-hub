@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
+import { mailtoForEmailHref, isBareEmailHref } from '@/lib/markdownSanitize';
 
 const JobDetailPage = () => {
   const { jobSlug } = useParams<{ jobSlug: string }>();
