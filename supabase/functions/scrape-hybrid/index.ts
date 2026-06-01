@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+import { sanitizeEmailLinks, mailtoForApplyUrl } from "../_shared/sanitize.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -653,8 +654,8 @@ serve(async (req) => {
         const insertData: any = {
           type: source.type,
           title: cleanTitle,
-          description: cleanDesc.substring(0, 500),
-          apply_url: finalUrl,
+          description: sanitizeEmailLinks(cleanDesc.substring(0, 500)),
+          apply_url: mailtoForApplyUrl(finalUrl),
           organization: item.organization,
           deadline_date: item.deadline,
           source_name: source.name,
