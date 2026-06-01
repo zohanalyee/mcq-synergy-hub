@@ -80,7 +80,7 @@ export const useSeoLmsCoverage = (ctx: SeoLmsContext | null) => {
         );
       if (!topics?.length) return [];
 
-      // 3. Approved MCQ counts per topic_id (single query).
+      // 3a. Approved MCQ counts per topic_id (single query).
       const { data: mcqs } = await supabase
         .from("content_items")
         .select("topic_id")
@@ -96,6 +96,21 @@ export const useSeoLmsCoverage = (ctx: SeoLmsContext | null) => {
         if (m.topic_id) counts.set(m.topic_id, (counts.get(m.topic_id) || 0) + 1);
       });
 
+      // 3b. Canonical-name matches (legacy MCQs not yet linked by topic_id).
+      const slugToTopicId = new Map(topics.map((t) => [toSlug(t.name), t.id]));
+      const { data: canonical } = await supabase
+        .from("content_items")
+        .select("canonical_topic_name")
+        .eq("category", "mcq")
+        .eq("status", "approved")
+        .is("topic_id", null)
+        .in("canonical_topic_name", Array.from(slugToTopicId.keys()));
+
+      (canonical || []).forEach((m: any) => {
+        const tid = slugToTopicId.get(m.canonical_topic_name);
+        if (tid) counts.set(tid, (counts.get(tid) || 0) + 1);
+      });
+
       return topics.map((t) => ({
         topicName: t.name,
         topicId: t.id,
@@ -105,6 +120,7 @@ export const useSeoLmsCoverage = (ctx: SeoLmsContext | null) => {
       }));
     },
   });
+
 
   const rows = data || [];
   const bySlug = new Map(rows.map((r) => [toSlug(r.topicName), r]));
