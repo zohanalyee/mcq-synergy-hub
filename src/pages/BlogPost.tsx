@@ -13,6 +13,8 @@ import remarkGfm from "remark-gfm";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import RelatedContent from "@/components/seo/related/RelatedContent";
 import { ArticleSchema } from "@/components/seo/schemas";
+import { safeMarkdownComponents } from "@/components/SafeMarkdownLink";
+import { sanitizeEmailLinks } from "@/lib/markdownSanitize";
 import {
   BlogTrustStrip,
   BlogHighlightsCard,
@@ -47,7 +49,7 @@ const BlogPost = () => {
 
   // Hooks MUST run on every render — keep them above any early returns.
   const linkedContent = useMemo(
-    () => autoLinkMarkdown(rawContent, post?.category, 6),
+    () => sanitizeEmailLinks(autoLinkMarkdown(rawContent, post?.category, 6)),
     [rawContent, post?.category],
   );
   const howToSteps = useMemo(
@@ -211,7 +213,7 @@ const BlogPost = () => {
                               prose-a:text-primary prose-a:no-underline hover:prose-a:underline
                               prose-table:text-sm prose-th:bg-muted/60
                               [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{firstHalf || ""}</ReactMarkdown>
+                <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>{firstHalf || ""}</ReactMarkdown>
               </div>
             </BlogErrorBoundary>
 
@@ -232,7 +234,7 @@ const BlogPost = () => {
                                 prose-p:leading-relaxed prose-li:leading-relaxed
                                 prose-a:text-primary prose-a:no-underline hover:prose-a:underline
                                 [&_table]:block [&_table]:overflow-x-auto [&_table]:w-full">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{secondHalf}</ReactMarkdown>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]} components={safeMarkdownComponents}>{secondHalf}</ReactMarkdown>
                 </div>
               )}
             </BlogErrorBoundary>

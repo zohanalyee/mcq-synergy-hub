@@ -1,48 +1,78 @@
-## Goal
-Make social-share previews (WhatsApp, Facebook, X, LinkedIn, Discord) reliably show a banner on every page, by fixing the Open Graph + Twitter pipeline globally.
 
-## Root cause (confirmed)
-The live site serves on the **apex** `https://mcqsai.com` (HTTP 200). `https://www.mcqsai.com/*` **302-redirects** to apex. Social crawlers do **not** follow redirects on `og:image`. But several emitters point OG/canonical at `www`:
-- `SEOHead` default image → `https://www.mcqsai.com/og-image.png` (redirects → no image on ~60 pages)
-- `ToolWrapper` → `https://www.mcqsai.com/og-image.jpg` (redirects **and** the `.jpg` file does not exist → 404)
-- `GlobalCanonical` emits `og:url` + `canonical` on `www` (a redirecting URL)
-- `ToolRouteSEO` emits **no** `og:image` at all
+# MCQSAI — Email-URL Fix, /p/* Indexability Fix, and SEMrush Audit
 
-Decisions confirmed by user: align canonical + og:url + og:image to **apex** everywhere, and create **per-category branded banners**.
+Three independent workstreams. Parts 1 & 2 are code fixes; Part 3 is a read-only data report.
 
-## 1. Shared OG/URL helper (new `src/lib/seoUrls.ts`)
-Single source of truth so future routes inherit valid metadata:
-- `SITE_ORIGIN = "https://mcqsai.com"` (apex, no redirect).
-- `absoluteUrl(path)` → builds clean absolute apex URL (strips query, trailing slash except root).
-- `OG_IMAGES` map + `ogImageForPath(pathname)` implementing the fallback hierarchy: page-specific → category (jobs/scholarships/blog/tools/exams/boards) → global default. Always returns an absolute HTTPS apex URL.
-- `assertOgImage(url)` dev-only helper: `console.warn` if image URL is missing, relative, or non-HTTPS (requirement #7).
-- Header doc comment with the "checklist for new pages" (requirement #10).
+---
 
-## 2. Generate branded OG banners (1200×630 JPG, < 5MB) into `public/og/`
-- `default-og.jpg`, `jobs-og.jpg`, `scholarships-og.jpg`, `blog-og.jpg`, `tools-og.jpg`, `exams-og.jpg`, `boards-og.jpg`.
-- Consistent MCQsAI brand (Orbitron wordmark, violet/cyan gradient). QA each by inspecting the rendered file before finalizing.
-- Keep existing `public/og-image.png` as the ultimate fallback.
+## Part 1 — Email addresses generating broken internal URLs
 
-## 3. Fix every OG emitter to use apex + full tag set
-- **`src/components/SEOHead.tsx`**: default `image` → apex helper; add `og:image:secure_url`, `og:image:type`, `og:image:width`(1200)/`height`(630), `og:image:alt`; ensure og:title/description/image/type/url and twitter:card/title/description/image all present; run `assertOgImage`.
-- **`src/components/seo/GlobalCanonical.tsx`**: switch canonical + og:url + twitter:url from `www` → apex (`https://mcqsai.com`). Now og:url === canonical exactly (requirement #8).
-- **`src/components/seo/ToolRouteSEO.tsx`**: add `og:image`/`twitter:image` (tools banner) + image dimension tags — currently missing entirely.
-- **`src/components/tools/ToolWrapper.tsx`**: replace broken `www…/og-image.jpg` with apex tools banner.
-- Confirm `StructuredData.tsx` / `seo/schemas/index.tsx` already use apex `ORIGIN` (they do) — no change.
-- **`index.html`**: already apex and complete — verify/keep as the static fallback every crawler sees.
+### Root cause (confirmed)
+`react-markdown` + `remark-gfm` renders content correctly for *bare* emails (`hr@psg.edu.pk` → `mailto:hr@psg.edu.pk`), **but** an explicit markdown link whose URL is an email **without a scheme** — e.g. `[hr@bbsutsd.edu.pk](hr@bbsutsd.edu.pk)` — is kept as a relative href `hr@bbsutsd.edu.pk`. The browser/Googlebot then resolves it against the current path, producing `/opportunity/hr@bbsutsd.edu.pk` and `/blog/hr@psg.edu.pk` → 404. AI-generated job/scholarship descriptions contain exactly this pattern.
 
-## 4. Category defaults for raw-Helmet pages
-Pages using raw `<Helmet>` without `og:image` (e.g. `Jobs`, `Scholarships` via SEOHead, `OpportunityDetail`, `JobDetailPage`, `MDCATSyllabus`, `PastPapers`, `MockTests`, `SindhUniversitiesEntryTest`) will pass the correct category image via `SEOHead`'s `image` prop or the helper, so each inherits a relevant banner instead of only the global default.
+### Fixes
 
-## 5. Server-visibility note (important, honest constraint)
-`<Helmet>` only mutates the head client-side. Crawler-visible OG comes from either `index.html` (static) or the **prerender** whitelist in `vite.config.ts` (`PRERENDER=true`). 
-- Prerendered routes (home, exams, tools landing, blog/jobs/scholarships index, SEO landing pages) → get full per-page OG in page source.
-- Non-prerendered **detail** pages (individual blog post, job/scholarship detail, board sub-pages) fall back to `index.html`'s static apex banner — which now loads correctly (image always appears, generic). Per-detail server-side OG would require adding them to prerender/SSR; out of scope for this reliability fix unless you want it later.
+**A. New shared sanitizer util** `src/lib/markdownSanitize.ts`
+- `mailtoForEmailHref(href)`: if an href has no scheme and matches an email pattern (or is `mailto:`-less email), return `mailto:<email>`; otherwise return href unchanged.
+- `sanitizeEmailLinks(markdown)`: rewrite `[text](email)` → `[text](mailto:email)` and any bare-email autolink edge cases, leaving real URLs untouched. Pure function, unit-testable.
 
-## 6. Validation & docs
-- Dev `console.warn` guards in the helper (missing/relative/non-HTTPS og:image).
-- Verification checklist in `seoUrls.ts` comments for future routes.
-- After build, spot-check a prerendered route's emitted head and confirm all banner URLs return HTTP 200 on apex (no redirect).
+**B. Custom `a` renderer for every `ReactMarkdown`** (`src/pages/OpportunityDetail.tsx`, `src/pages/BlogPost.tsx` — both renderers, `src/pages/AskDocument.tsx`):
+- Add a `components.a` that runs href through `mailtoForEmailHref`, and for any remaining relative/unsafe href containing `@`, render as plain text or `mailto:`. External links get `rel="nofollow noopener noreferrer" target="_blank"`. This guarantees no email can ever become a site route even if DB content is dirty.
 
-## Out of scope (unchanged)
-Branding/layout, routing, auth, dashboards, MCQ engine, AI systems. This is strictly a metadata/social-preview reliability fix.
+**C. Pre-render sanitization**: pass description/content through `sanitizeEmailLinks(...)` before handing to `ReactMarkdown` in the same files (BlogPost already runs `autoLinkMarkdown`; ensure `autoLinkMarkdown` never matches inside an email — add an email-skip guard in `src/lib/blogContentUtils.ts`).
+
+**D. Edge-function hardening** (future AI/scraped content): add the same email-link normalization in the description/content builders of `supabase/functions/scrape-jobs`, `scrape-scholarships`, `scrape-hybrid`, and `generate-blog` so stored markdown already uses `mailto:`. (Shared TS helper duplicated into `_shared` for Deno.)
+
+**E. Repair existing published content** (one-time): via a migration / data script, rewrite rows in `external_opportunities.description` and `blog_posts.content` that match `](email)` to `](mailto:email)`. Also null/clean any `external_opportunities.apply_url` that is a bare email → convert to `mailto:`. Read-audit first with `read_query`, then a guarded `UPDATE` migration.
+
+---
+
+## Part 2 — /p/* SEO landing pages "Excluded by noindex"
+
+### Root cause (confirmed)
+`ProgrammaticLandingPage` sets `noindex={!isProgEntryIndexable(entry)}`. `isProgEntryIndexable` → `passesQualityGate`, which requires **intro ≥ 60 words AND ≥ 3 FAQs**. The 8 reported slugs fail this gate, so SEOHead emits `noindex,nofollow`:
+
+| slug | words | faqs | verdict |
+|---|---|---|---|
+| ppsc-punjab | 59 | 4 | fail (words) |
+| nts-islamabad | 50 | 3 | fail (words) |
+| nts-lahore | 53 | 2 | fail |
+| nts-karachi | 46 | 2 | fail |
+| physics-mcqs-class-12 | 59 | 4 | fail (words) |
+| ecat-punjab | 54 | 2 | fail |
+| mdcat-islamabad | 53 | 2 | fail |
+| fpsc-karachi | 56 | 3 | fail (words) |
+
+`/p` (bare) has **no route** → falls to `NotFound` (which is `noindex`).
+
+### Fixes
+- **Enrich the 8 thin entries** in `src/data/programmaticSeo.ts`: expand each `intro` past the word threshold and top up `faqs` to ≥ 4 with genuine, locally-relevant Q&A (test centres, merit, eligibility) — no fabricated stats; reuse the existing factual style. This makes them legitimately pass the quality gate (preferred over weakening the gate, keeps thin-content protection intact).
+- **Add a `/p` hub route**: a `ProgrammaticIndex` page listing all indexable guides (internal-linking + indexable), registered in `src/App.tsx`. Removes the `/p` 404/noindex.
+- **Sitemap + prerender**: include all indexable `/p/*` slugs in the programmatic sitemap generation (`scripts/generate-sitemaps.mjs` / `public/sitemaps/programmatic.xml`) and re-add the `/p` hub + the (now-passing) slugs to `PRERENDER_ROUTES` in `vite.config.ts` **only if** build time allows; otherwise rely on CSR + sitemap (Googlebot executes JS and will read `index,follow`). Given prior build-timeout history, default to **sitemap + CSR**, prerender just the `/p` hub.
+- **Verification**: confirm rendered head emits `index,follow`, canonical, title, meta description, and OG tags for each fixed slug (via `verify-prerender.mjs` for prerendered ones; manual SEOHead check for CSR).
+
+### Report produced
+Component that applied noindex (`ProgrammaticLandingPage` via `passesQualityGate`), affected URLs (the 8 + `/p`), and the change (content enrichment to pass the gate + new hub route). No changes to jobs/scholarships/blogs/LMS/MCQs/routing/branding beyond the additive `/p` hub.
+
+---
+
+## Part 3 — SEMrush SEO & keyword intelligence audit (read-only deliverable)
+
+Using the built-in SEMrush tools against `mcqsai.com` (database `us`, noting PK market where relevant), produce a structured report covering as much of the request as the connected plan's quota allows:
+
+1. **Keyword audit** — `domain_analysis` + `top_pages`: ranking keywords with position, volume, KDI, traffic %, ranking URL, grouped into the requested clusters (Jobs, Scholarships, MDCAT, ECAT, NTS, FPSC, PPSC, CSS, Board exams, class-/subject-wise MCQs, calculators, guides).
+2. **Competitor & gap analysis** — `competitive_analysis` + `compare_domains`: top competitors, shared keywords, competitor-only keywords, where they outrank us, quick-wins (positions 4–20).
+3. **Content gap** — missing topic clusters, exam categories, city-based, scholarship, and university entry-test keywords (from gap data + keyword research on representative seeds).
+4. **Technical SEO** — summarized from this codebase audit (indexability incl. the /p fix, canonicals via GlobalCanonical, noindex usage, sitemap coverage, structured data) rather than crawling.
+5. **Traffic opportunity** — 30-day / 90-day / 6–12-month buckets tied to quick-win vs higher-KDI keywords.
+6. **Authority & backlinks** — `backlink_analysis`: authority score, referring domains, backlink gaps vs competitors, educational link opportunities.
+7. **Priority roadmap** — HIGH / MEDIUM / LOW ROI actions with estimated traffic impact.
+
+Delivered as a written report with tables in chat (optionally exported to `/mnt/documents/mcqsai-seo-audit.md`). SEMrush is the data source and will be named as such; numbers presented as estimates. If quota is exhausted, that's surfaced and the report covers what was retrievable.
+
+---
+
+## Technical notes / constraints
+- No redesign, no branding, auth, dashboard, routing changes beyond the additive `/p` hub.
+- Email fix is defense-in-depth: render-layer guard + content sanitization + edge-function normalization + one-time DB repair.
+- Build-time risk: keep `/p/*` on sitemap + CSR by default to avoid re-triggering the prior prerender timeout.

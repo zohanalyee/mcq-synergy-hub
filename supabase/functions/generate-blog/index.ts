@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { callAIWithAutoSwitch } from "../_shared/gemini.ts";
+import { sanitizeEmailLinks } from "../_shared/sanitize.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -193,6 +194,11 @@ function sanitiseDraft(parsed: any, fallbackTitle: string, sourceUrl?: string) {
     const re = new RegExp(phrase, 'ig');
     content_markdown = content_markdown.replace(re, '');
   }
+
+  // Ensure email links carry a mailto: scheme (never relative internal routes).
+  content_markdown = sanitizeEmailLinks(content_markdown);
+
+
 
   let category = String(parsed.category || 'general').toLowerCase().trim();
   if (!VALID_CATEGORIES.includes(category)) category = 'general';

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+import { sanitizeEmailLinks, mailtoForApplyUrl } from "../_shared/sanitize.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -276,10 +277,10 @@ serve(async (req) => {
             .insert({
               type: 'job',
               title: job.title,
-              description: job.description,
+              description: sanitizeEmailLinks(job.description),
               organization: job.organization,
               location: job.location,
-              apply_url: job.applyUrl,
+              apply_url: mailtoForApplyUrl(job.applyUrl),
               source_name: source.name,
               sector: job.sector,
               region: job.region,

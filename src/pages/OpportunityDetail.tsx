@@ -14,6 +14,8 @@ import { formatDistanceToNow } from "date-fns";
 import { extractIdFromSlug } from "@/utils/slugify";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
+import { sanitizeEmailLinks, mailtoForEmailHref, isBareEmailHref } from "@/lib/markdownSanitize";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
@@ -394,9 +396,10 @@ const OpportunityDetail = () => {
                           <td className="border border-border/40 px-2 py-1.5 text-left align-top [tbody_tr:nth-child(even)_&]:bg-muted/30" {...props} />
                         ),
                         tr: ({ node, ...props }) => <tr className="even:bg-muted/20" {...props} />,
+                        a: SafeMarkdownLink,
                       }}
                     >
-                      {opportunity.description}
+                      {sanitizeEmailLinks(opportunity.description)}
                     </ReactMarkdown>
                   </div>
                 </div>
@@ -456,7 +459,12 @@ const OpportunityDetail = () => {
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
                 {opportunity.apply_url && (
-                  <a href={opportunity.apply_url} target="_blank" rel="noopener noreferrer">
+                  <a
+                    href={mailtoForEmailHref(opportunity.apply_url)}
+                    {...(isBareEmailHref(opportunity.apply_url)
+                      ? { rel: "nofollow" }
+                      : { target: "_blank", rel: "noopener noreferrer" })}
+                  >
                     <Button>
                       <ExternalLink className="h-4 w-4 mr-2" />
                       {opportunity.type === "tender" ? "Visit Official Tender Page" : "Apply on Official Website"}

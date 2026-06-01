@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
+import { mailtoForEmailHref, isBareEmailHref } from '@/lib/markdownSanitize';
 
 const ScholarshipDetailPage = () => {
   const { scholarshipSlug } = useParams<{ scholarshipSlug: string }>();
@@ -143,7 +144,7 @@ const ScholarshipDetailPage = () => {
 
         {applyUrl && (
           <Button asChild>
-            <a href={applyUrl} target="_blank" rel="noopener noreferrer">
+            <a href={mailtoForEmailHref(applyUrl)} {...(isBareEmailHref(applyUrl) ? { rel: "nofollow" } : { target: "_blank", rel: "noopener noreferrer" })}>
               <GraduationCap className="w-4 h-4 mr-2" />
               Apply Now
               <ExternalLink className="w-3 h-3 ml-1" />
