@@ -624,7 +624,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'PPSC Punjab jobs and recruitment 2026: HQ Lahore, all test centres, common posts, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'PPSC Punjab, PPSC jobs 2026, Punjab Public Service Commission, PPSC test centres, PPSC preparation',
     intro:
-      'The Punjab Public Service Commission (PPSC) is the constitutional recruitment body for the Punjab Government, headquartered at Aiwan-e-Iqbal, Lahore. PPSC handles BS-11 to BS-20 selections including Punjab Civil Services (PCS), Tehsildar, Education Officer, Medical Officer, Patwari, Police Sub-Inspector, Naib Tehsildar, and several technical cadres. Written tests are held across Lahore, Rawalpindi, Multan, Faisalabad, Bahawalpur, DG Khan, Sargodha and Sahiwal.',
+      'The Punjab Public Service Commission (PPSC) is the constitutional recruitment body for the Punjab Government, headquartered at Aiwan-e-Iqbal, Lahore. PPSC handles BS-11 to BS-20 selections including Punjab Civil Services (PCS), Tehsildar, Education Officer, Medical Officer, Patwari, Police Sub-Inspector, Naib Tehsildar, and several technical cadres. Written tests are held across Lahore, Rawalpindi, Multan, Faisalabad, Bahawalpur, DG Khan, Sargodha and Sahiwal. This guide explains the PPSC application process, the test patterns for PMS and junior posts, the regional test-centre network, domicile and quota rules, and a high-yield MCQ practice plan covering general knowledge, Pakistan Studies, Islamiat, English and basic maths.',
     syllabusOrEligibility: [
       'PMS / PCS: 6 compulsory papers (essay, English, GK, Islamiat, Pak Studies, current affairs) + 4 optional',
       'Junior posts (Patwari, Tehsildar): 100 MCQs (GK + Pak Studies + Islamiat + English + General Maths)',
@@ -662,7 +662,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'FPSC jobs and federal tests in Karachi: regional office, recruitment cycles, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'FPSC Karachi, FPSC regional office Karachi, FPSC federal jobs Sindh, FPSC test centre Karachi',
     intro:
-      'The Federal Public Service Commission (FPSC) operates a regional office in Karachi (Block 47, Civic Centre, Gulshan-e-Iqbal) to facilitate federal recruitment for Sindh-based candidates. Karachi hosts written tests for CSS, Combined Examination for ASOs/PROs, Assistant Director (IB), Inspector Customs, and several technical cadres. Sindh-domicile candidates compete under Sindh (Urban) and Sindh (Rural) quotas for federal allocations.',
+      'The Federal Public Service Commission (FPSC) operates a regional office in Karachi (Block 47, Civic Centre, Gulshan-e-Iqbal) to facilitate federal recruitment for Sindh-based candidates. Karachi hosts written tests for CSS, Combined Examination for ASOs/PROs, Assistant Director (IB), Inspector Customs, and several technical cadres. Sindh-domicile candidates compete under Sindh (Urban) and Sindh (Rural) quotas for federal allocations. This guide walks Karachi applicants through FPSC recruitment cycles, the Karachi test venues, the standard 100-MCQ test pattern, regional quota percentages, and a focused MCQ practice plan covering English, general knowledge, Islamiat, Pakistan Studies and professional subjects.',
     syllabusOrEligibility: [
       'Most FPSC posts: 100 MCQs in 90–120 minutes covering English, GK, Islamiat, Pakistan Studies, and a professional subject',
       'CSS: 12-paper written examination held annually in February–March',
