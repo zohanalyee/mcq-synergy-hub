@@ -504,7 +504,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'NTS GAT, NAT, recruitment tests in Islamabad 2026: schedule, test centres at QAU/COMSATS/NUST, syllabus & free practice — MCQsAI.',
     keywords: 'NTS Islamabad, NTS test centres Islamabad, GAT Islamabad, NAT Islamabad, NTS preparation federal',
     intro:
-      'NTS conducts GAT-General, GAT-Subject, NAT, and federal recruitment tests across Islamabad throughout the year. As the federal capital and NTS headquarters location, Islamabad has the densest test schedule in Pakistan and access to the highest number of federal-grade vacancies. Common venues are Quaid-e-Azam University (QAU), COMSATS, NUST H-12, and FAST-NU.',
+      'NTS conducts GAT-General, GAT-Subject, NAT, and federal recruitment tests across Islamabad throughout the year. As the federal capital and NTS headquarters location, Islamabad has the densest test schedule in Pakistan and access to the highest number of federal-grade vacancies. Common venues are Quaid-e-Azam University (QAU), COMSATS, NUST H-12, and FAST-NU. This guide details the Islamabad test-centre network, the GAT, NAT and federal recruitment formats, current registration fees and deadlines, and a structured MCQ practice plan covering verbal, quantitative and analytical reasoning so federal-capital candidates can secure the score their programme or post demands.',
     syllabusOrEligibility: [
       'GAT-General: 100 MCQs (Verbal 30 + Quantitative 30 + Analytical 40) in 120 minutes',
       'NAT-IM/IE/IA: 90 MCQs covering English, Analytical, and Subject sections',
@@ -527,7 +527,8 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     faqs: [
       { q: 'Where is NTS headquarters located?', a: 'NTS HQ is at Plot 96, Street 4, H-8/1, Islamabad. All centralised operations are run from there.' },
       { q: 'How often is GAT held in Islamabad?', a: 'GAT-General runs roughly every quarter; recruitment tests appear in cycles linked to federal hiring drives.' },
-      { q: 'What is the NTS test fee in Islamabad?', a: 'GAT registration is currently PKR 1,400; recruitment-test fees vary by department (typically PKR 600–1,200).' },
+      { q: 'What is the NTS test fee in Islamabad?', a: 'GAT registration is currently around PKR 1,400; recruitment-test fees vary by department (typically PKR 600–1,200).' },
+      { q: 'How long is a GAT score valid for federal jobs?', a: 'A GAT-General score is valid for two years. Many MS/MPhil, PhD and federal recruitment processes accept your highest valid score within that window.' },
     ],
     relatedSlug: 'nts',
     indexable: true,
