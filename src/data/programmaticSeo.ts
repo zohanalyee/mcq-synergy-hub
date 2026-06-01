@@ -330,7 +330,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'ECAT 2026 Punjab: UET-conducted entry test, engineering universities, merit, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'ECAT Punjab, ECAT UET, UET Lahore ECAT, Punjab engineering universities, ECAT 2026',
     intro:
-      'ECAT (Engineering College Admission Test) for Punjab is conducted by the University of Engineering & Technology (UET) Lahore each year, typically in mid-August. Punjab-domicile candidates use ECAT for admission to UET Lahore and its constituent campuses (Faisalabad, Rachna RYK, Narowal), plus most Punjab-government engineering universities. NUST and GIKI run their own separate entry tests.',
+      'ECAT (Engineering College Admission Test) for Punjab is conducted by the University of Engineering & Technology (UET) Lahore each year, typically in mid-August. Punjab-domicile candidates use ECAT for admission to UET Lahore and its constituent campuses (Faisalabad, Rachna RYK, Narowal), plus most Punjab-government engineering universities. NUST and GIKI run their own separate entry tests. This guide covers the UET test pattern and negative marking, the engineering universities that accept ECAT, recent closing-merit trends by discipline, Punjab domicile and quota rules, and a Maths–Physics–Chemistry MCQ practice plan tuned to the official ECAT syllabus.',
     syllabusOrEligibility: [
       'Mathematics — 30 MCQs',
       'Physics — 30 MCQs',
@@ -357,8 +357,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'Practice ECAT MCQs', path: '/exams/ecat' },
     ],
     faqs: [
-      { q: 'When is ECAT 2026 held?', a: 'UET Lahore typically conducts ECAT in the third week of August. Exact date is announced on uet.edu.pk by June.' },
-      { q: 'Is there negative marking in ECAT?', a: 'Yes. Wrong answers carry a 1/4 mark penalty. Skip questions you are unsure about.' },
+      { q: 'When is ECAT 2026 held?', a: 'UET Lahore typically conducts ECAT in the third week of August. The exact date is announced on uet.edu.pk by June.' },
+      { q: 'Is there negative marking in ECAT?', a: 'Yes. Wrong answers carry a 1/4 mark penalty, so skip questions you are genuinely unsure about rather than guessing blindly.' },
+      { q: 'What is the ECAT subject breakdown?', a: 'ECAT has 100 MCQs in 100 minutes: 30 Mathematics, 30 Physics, and 30 from Chemistry or English (candidate chooses), plus 10 from the chosen elective.' },
+      { q: 'How is the UET aggregate calculated?', a: 'Most UET programmes weight FSc marks heavily alongside the ECAT score. Use the aggregate calculator to estimate your standing against past closing merits.' },
     ],
     relatedSlug: 'ecat-preparation',
     indexable: true,
