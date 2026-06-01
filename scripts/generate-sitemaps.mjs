@@ -163,9 +163,13 @@ function writeExams() {
   }))));
 }
 function writeProgSeo() {
-  write("programmatic.xml", urlSet(PROG_SEO_SLUGS.map(s => ({
-    loc: `${BASE_URL}/p/${s}`, lastmod: today, freq: "monthly", priority: "0.7",
-  }))));
+  const entries = [
+    { loc: `${BASE_URL}/p`, lastmod: today, freq: "weekly", priority: "0.7" },
+    ...PROG_SEO_SLUGS.map(s => ({
+      loc: `${BASE_URL}/p/${s}`, lastmod: today, freq: "monthly", priority: "0.7",
+    })),
+  ];
+  write("programmatic.xml", urlSet(entries));
 }
 
 // ---------- DB-backed sitemaps ----------
