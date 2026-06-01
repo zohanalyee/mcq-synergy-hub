@@ -37,7 +37,18 @@ const env = { ...loadEnv(), ...process.env };
 const SUPABASE_URL = env.VITE_SUPABASE_URL || "https://pzhvipkcssxrsxxljbbz.supabase.co";
 const SUPABASE_KEY = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY;
 
-const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+const FETCH_TIMEOUT_MS = Number(process.env.SITEMAP_FETCH_TIMEOUT_MS || 6000);
+
+function fetchWithTimeout(input, init = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const signal = init.signal || controller.signal;
+  return fetch(input, { ...init, signal }).finally(() => clearTimeout(timeout));
+}
+
+const supabase = SUPABASE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_KEY, { global: { fetch: fetchWithTimeout } })
+  : null;
 const today = new Date().toISOString().split("T")[0];
 
 // ---------- helpers ----------
@@ -244,21 +255,17 @@ ${entries.join("\n")}
     return;
   }
 
-  try {
-    await buildOpportunitySitemap("job", "job", "jobs.xml");
-  } catch (e) {
-    console.warn("[sitemap] jobs failed:", e?.message); write("jobs.xml", urlSet([]));
-  }
-  try {
-    await buildOpportunitySitemap("scholarship", "scholarship", "scholarships.xml");
-  } catch (e) {
-    console.warn("[sitemap] scholarships failed:", e?.message); write("scholarships.xml", urlSet([]));
-  }
-  try {
-    await buildBlog();
-  } catch (e) {
-    console.warn("[sitemap] blog failed:", e?.message); write("blog.xml", urlSet([]));
-  }
+  await Promise.all([
+    buildOpportunitySitemap("job", "job", "jobs.xml").catch(e => {
+      console.warn("[sitemap] jobs failed:", e?.message); write("jobs.xml", urlSet([]));
+    }),
+    buildOpportunitySitemap("scholarship", "scholarship", "scholarships.xml").catch(e => {
+      console.warn("[sitemap] scholarships failed:", e?.message); write("scholarships.xml", urlSet([]));
+    }),
+    buildBlog().catch(e => {
+      console.warn("[sitemap] blog failed:", e?.message); write("blog.xml", urlSet([]));
+    }),
+  ]);
   try {
     boardPages = await buildBoards();
   } catch (e) {
@@ -267,6 +274,7 @@ ${entries.join("\n")}
 
   writeIndex(boardPages);
   console.log("[sitemap] DONE — all URLs are same-origin (mcqsai.com)");
+  process.exit(0);
 })().catch(err => {
   console.error("[sitemap] FATAL:", err);
   // Don't fail the build over sitemap issues
