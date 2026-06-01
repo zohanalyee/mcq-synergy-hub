@@ -14,6 +14,8 @@ import { formatDistanceToNow } from "date-fns";
 import { extractIdFromSlug } from "@/utils/slugify";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
+import { sanitizeEmailLinks } from "@/lib/markdownSanitize";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
