@@ -117,10 +117,12 @@ const BoardTopicPage = () => {
         mcqQuery = mcqQuery.eq('status', 'approved');
       }
 
+      const canonicalSlug = toSlug(topicName);
       if (topic) {
-        mcqQuery = mcqQuery.eq('topic_id', topic.id);
+        // Surface MCQs linked by topic_id OR by legacy canonical_topic_name.
+        mcqQuery = mcqQuery.or(`topic_id.eq.${topic.id},canonical_topic_name.eq.${canonicalSlug}`);
       } else {
-        mcqQuery = mcqQuery.eq('canonical_topic_name', toSlug(topicName));
+        mcqQuery = mcqQuery.eq('canonical_topic_name', canonicalSlug);
       }
 
       const { data: mcqs } = await mcqQuery;
