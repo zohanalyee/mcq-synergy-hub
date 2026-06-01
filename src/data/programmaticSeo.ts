@@ -740,7 +740,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'Class 12 Physics MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT/ECAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Physics MCQs class 12, FSc Part 2 Physics, class 12 Physics chapter wise MCQs, intermediate physics Pakistan',
     intro:
-      'Class 12 (FSc Part 2) Physics underpins ECAT, MDCAT (Physics section), NUST NET and most engineering entry tests in Pakistan. The unified National Curriculum syllabus covers Electrostatics, Current Electricity, Electromagnetism, Electromagnetic Induction, Alternating Current, Physics of Solids, Electronics, Dawn of Modern Physics, Atomic Spectra, and Nuclear Physics. Chapter-wise MCQ practice with worked solutions is the fastest path to mastery.',
+      'Class 12 (FSc Part 2) Physics underpins ECAT, MDCAT (Physics section), NUST NET and most engineering entry tests in Pakistan. The unified National Curriculum syllabus covers Electrostatics, Current Electricity, Electromagnetism, Electromagnetic Induction, Alternating Current, Physics of Solids, Electronics, Dawn of Modern Physics, Atomic Spectra, and Nuclear Physics. Chapter-wise MCQ practice with worked solutions is the fastest path to mastery for both your board exam and entry tests. This guide maps every Part 2 chapter to its board and entry-test weight and links straight into free, explanation-backed MCQ practice so you can revise efficiently.',
     syllabusOrEligibility: [
       'Chapter 12 — Electrostatics',
       'Chapter 13 — Current Electricity',
