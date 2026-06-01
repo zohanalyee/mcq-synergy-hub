@@ -3,9 +3,10 @@ import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
-import { QuickTestChip } from '@/components/quick-test/QuickTestChip';
+import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
 
 const EXAM_NAME = 'NUST Entry Test';
+const RETURN_PATH = '/nust-entry-test';
 const ALL_SUBJECTS = ['Mathematics', 'Physics', 'Chemistry', 'English'];
 
 const Section = ({
@@ -19,20 +20,14 @@ const Section = ({
   subject: string;
   topics: string[];
 }) => (
-  <section className="mb-8">
-    <h2 className={`text-xl font-semibold mb-3 ${accent}`}>{title}</h2>
-    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-      {topics.map((t) => (
-        <QuickTestChip
-          key={t}
-          topicName={t}
-          subjects={[subject]}
-          examName={EXAM_NAME}
-          returnPath="/nust-entry-test"
-        />
-      ))}
-    </div>
-  </section>
+  <SeoSectionGrid
+    title={title}
+    accent={accent}
+    subject={subject}
+    topics={topics}
+    examName={EXAM_NAME}
+    returnPath={RETURN_PATH}
+  />
 );
 
 const NUSTEntryTest = () => (
