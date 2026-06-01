@@ -394,9 +394,10 @@ const OpportunityDetail = () => {
                           <td className="border border-border/40 px-2 py-1.5 text-left align-top [tbody_tr:nth-child(even)_&]:bg-muted/30" {...props} />
                         ),
                         tr: ({ node, ...props }) => <tr className="even:bg-muted/20" {...props} />,
+                        a: SafeMarkdownLink,
                       }}
                     >
-                      {opportunity.description}
+                      {sanitizeEmailLinks(opportunity.description)}
                     </ReactMarkdown>
                   </div>
                 </div>
