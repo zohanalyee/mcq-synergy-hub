@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { DOMParser } from "https://deno.land/x/deno_dom@v0.1.38/deno-dom-wasm.ts";
+import { sanitizeEmailLinks, mailtoForApplyUrl } from "../_shared/sanitize.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -241,10 +242,10 @@ serve(async (req) => {
             .insert({
               type: 'scholarship',
               title: s.title,
-              description: s.description,
+              description: sanitizeEmailLinks(s.description),
               deadline_date: s.deadline ? null : null, // Raw text deadlines need manual parsing
               organization: s.organization,
-              apply_url: s.applyUrl,
+              apply_url: mailtoForApplyUrl(s.applyUrl),
               source_name: source.name,
               scholarship_scope: s.scholarshipScope,
               status: 'pending',
