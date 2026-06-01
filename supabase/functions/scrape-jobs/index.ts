@@ -276,10 +276,10 @@ serve(async (req) => {
             .insert({
               type: 'job',
               title: job.title,
-              description: job.description,
+              description: sanitizeEmailLinks(job.description),
               organization: job.organization,
               location: job.location,
-              apply_url: job.applyUrl,
+              apply_url: mailtoForApplyUrl(job.applyUrl),
               source_name: source.name,
               sector: job.sector,
               region: job.region,
