@@ -49,7 +49,7 @@ const BlogPost = () => {
 
   // Hooks MUST run on every render — keep them above any early returns.
   const linkedContent = useMemo(
-    () => autoLinkMarkdown(rawContent, post?.category, 6),
+    () => sanitizeEmailLinks(autoLinkMarkdown(rawContent, post?.category, 6)),
     [rawContent, post?.category],
   );
   const howToSteps = useMemo(
