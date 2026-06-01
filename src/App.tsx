@@ -199,13 +199,14 @@ const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
 import ProgrammaticLandingPage from "./pages/programmatic/ProgrammaticLandingPage";
 
 const App = () => {
+  const isPrerender = typeof window === 'undefined' || (globalThis as any).__PRERENDER__;
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000,
-        gcTime: 30 * 60 * 1000,
+        gcTime: isPrerender ? Infinity : 30 * 60 * 1000,
         refetchOnWindowFocus: false,
-        retry: 1,
+        retry: isPrerender ? false : 1,
       },
     },
   }));
