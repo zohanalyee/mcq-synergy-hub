@@ -162,7 +162,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'NTS GAT, NAT, recruitment tests in Karachi 2026: schedule, test centres, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'NTS Karachi, NTS test centres Karachi, GAT general Karachi, NAT Karachi, NTS preparation',
     intro:
-      'The National Testing Service (NTS) conducts GAT-General, GAT-Subject, NAT, and recruitment tests across multiple Karachi venues year-round. Karachi candidates typically attend at university campuses like IBA, Karachi University, and NED. Roll-number slips and exact venues are issued ~10 days before each test on the NTS portal.',
+      'The National Testing Service (NTS) conducts GAT-General, GAT-Subject, NAT, and recruitment tests across multiple Karachi venues year-round. Karachi candidates typically attend at university campuses like IBA, Karachi University, and NED. Roll-number slips and exact venues are issued around 10 days before each test on the NTS portal. This guide explains the Karachi test-centre network, the GAT and NAT formats, registration fees and deadlines, and the most efficient way to practise verbal, quantitative and analytical MCQs so you can target the score required by your degree programme or recruiting department.',
     syllabusOrEligibility: [
       'GAT-General: Verbal (30) + Quantitative (30) + Analytical (40) = 100 MCQs in 120 min',
       'NAT-I (intermediate-level entry tests): English + Analytical + Subject section',
@@ -182,8 +182,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'PPSC Past Papers', path: '/ppsc-past-papers' },
     ],
     faqs: [
-      { q: 'How often does NTS conduct GAT in Karachi?', a: 'GAT-General runs on roughly a quarterly cycle. Schedules are published on nts.org.pk.' },
-      { q: 'Where can I take NTS test in Karachi?', a: 'Primary centres include University of Karachi, IBA, NED University, Federal Urdu University, and Sir Syed University.' },
+      { q: 'How often does NTS conduct GAT in Karachi?', a: 'GAT-General runs on roughly a quarterly cycle. Schedules are published in advance on nts.org.pk so you can plan your registration.' },
+      { q: 'Where can I take the NTS test in Karachi?', a: 'Primary centres include University of Karachi, IBA, NED University, Federal Urdu University, and Sir Syed University. The allocated venue appears on your roll-number slip.' },
+      { q: 'How long is a GAT-General score valid?', a: 'A GAT-General score is valid for two years from the test date, which most universities accept for MS/MPhil and PhD admissions.' },
+      { q: 'What is the GAT-General passing percentage?', a: 'Most programmes require a minimum of 50%, though competitive departments set higher cut-offs. Aim well above 50% to stay safe.' },
     ],
     relatedSlug: 'nts',
     indexable: true,
