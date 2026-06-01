@@ -95,6 +95,11 @@ export function autoLinkMarkdown(
       const closeBrackets = (before.match(/]/g) || []).length;
       if (openBrackets > closeBrackets) continue; // inside a link text
 
+      // Never link inside an email address (e.g. "info@css.edu.pk").
+      const charBefore = idx > 0 ? line[idx - 1] : "";
+      const charAfter = line[idx + match[1].length] || "";
+      if (charBefore === "@" || charAfter === "@" || charBefore === ".") continue;
+
       lines[i] =
         line.slice(0, idx) +
         `[${match[1]}](${kw.href})` +
