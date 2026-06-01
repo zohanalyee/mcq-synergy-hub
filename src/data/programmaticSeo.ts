@@ -122,7 +122,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'MDCAT 2026 Islamabad: federal test centres, SZABMU/AIMC merit, federal quota rules, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Islamabad, MDCAT 2026 Islamabad, SZABMU MBBS, federal MDCAT, AIMC Islamabad',
     intro:
-      'MDCAT Islamabad serves federal-area candidates competing for seats at Shaheed Zulfiqar Ali Bhutto Medical University (SZABMU) and federal-quota allocations at top-tier universities country-wide. The test is conducted by PMC on the unified national date, with venues across Islamabad and Rawalpindi. Federal-domicile candidates have access to federally-administered quota seats not available to provincial applicants.',
+      'MDCAT Islamabad serves federal-area candidates competing for seats at Shaheed Zulfiqar Ali Bhutto Medical University (SZABMU) and federal-quota allocations at top-tier universities country-wide. The test is conducted by PMC on the unified national date, with venues across Islamabad and Rawalpindi. Federal-domicile candidates have access to federally-administered quota seats not available to provincial applicants. This guide covers the Islamabad and Rawalpindi test centres, SZABMU and Federal Medical College merit trends, federal-quota eligibility rules, the unified PMC syllabus, and a focused MCQ practice plan so Islamabad aspirants can prepare with confidence and avoid common registration mistakes.',
     universitiesOrInstitutions: [
       { name: 'SZABMU (PIMS), Islamabad', note: 'Premier federal medical university' },
       { name: 'Federal Medical College, Islamabad' },
@@ -146,8 +146,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
     ],
     faqs: [
-      { q: 'When is MDCAT 2026 in Islamabad?', a: 'PMC announces the unified national MDCAT date each year, typically in September. Islamabad follows the federal schedule.' },
-      { q: 'Is SZABMU merit higher than Punjab?', a: 'Federal seats often close near 91%+ due to limited quota size. Punjab universities like KEMU close similar or higher.' },
+      { q: 'When is MDCAT 2026 in Islamabad?', a: 'PMC announces the unified national MDCAT date each year, typically in September. Islamabad follows the federal schedule and venues are confirmed on the candidate roll-number slip.' },
+      { q: 'Is SZABMU merit higher than Punjab?', a: 'Federal seats often close near 91%+ due to limited quota size. Punjab universities like KEMU close similar or higher in open merit.' },
+      { q: 'Which test centres are used in Islamabad and Rawalpindi?', a: 'Common venues include COMSATS University, Quaid-e-Azam University, NUST H-12 campus and the PIMS auditorium. Your exact centre is printed on your admit slip.' },
+      { q: 'Who is eligible for federal-quota MBBS seats?', a: 'Candidates holding an Islamabad Capital Territory (federal) domicile compete for federal-quota seats. Provincial-domicile holders apply under their own provincial quota instead.' },
     ],
     relatedSlug: 'mdcat-syllabus',
     indexable: true,
