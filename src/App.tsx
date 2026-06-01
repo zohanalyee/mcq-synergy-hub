@@ -197,6 +197,7 @@ const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
 const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
 import ProgrammaticLandingPage from "./pages/programmatic/ProgrammaticLandingPage";
+import ProgrammaticIndex from "./pages/programmatic/ProgrammaticIndex";
 
 const App = () => {
   const isPrerender = typeof window === 'undefined' || (globalThis as any).__PRERENDER__;
@@ -257,7 +258,8 @@ const App = () => {
                     <Routes>
                       <Route path="/" element={<Index />} />
 
-                      {/* Programmatic SEO — curated /p/:slug landing pages */}
+                      {/* Programmatic SEO — curated /p hub + /p/:slug landing pages */}
+                      <Route path="/p" element={<ProgrammaticIndex />} />
                       <Route path="/p/:slug" element={<Suspense fallback={<TopProgressBar />}><ProgrammaticLandingPage /></Suspense>} />
 
 

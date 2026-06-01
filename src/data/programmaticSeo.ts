@@ -122,7 +122,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'MDCAT 2026 Islamabad: federal test centres, SZABMU/AIMC merit, federal quota rules, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Islamabad, MDCAT 2026 Islamabad, SZABMU MBBS, federal MDCAT, AIMC Islamabad',
     intro:
-      'MDCAT Islamabad serves federal-area candidates competing for seats at Shaheed Zulfiqar Ali Bhutto Medical University (SZABMU) and federal-quota allocations at top-tier universities country-wide. The test is conducted by PMC on the unified national date, with venues across Islamabad and Rawalpindi. Federal-domicile candidates have access to federally-administered quota seats not available to provincial applicants.',
+      'MDCAT Islamabad serves federal-area candidates competing for seats at Shaheed Zulfiqar Ali Bhutto Medical University (SZABMU) and federal-quota allocations at top-tier universities country-wide. The test is conducted by PMC on the unified national date, with venues across Islamabad and Rawalpindi. Federal-domicile candidates have access to federally-administered quota seats not available to provincial applicants. This guide covers the Islamabad and Rawalpindi test centres, SZABMU and Federal Medical College merit trends, federal-quota eligibility rules, the unified PMC syllabus, and a focused MCQ practice plan so Islamabad aspirants can prepare with confidence and avoid common registration mistakes.',
     universitiesOrInstitutions: [
       { name: 'SZABMU (PIMS), Islamabad', note: 'Premier federal medical university' },
       { name: 'Federal Medical College, Islamabad' },
@@ -146,8 +146,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'Practice MDCAT MCQs', path: '/exams/mdcat' },
     ],
     faqs: [
-      { q: 'When is MDCAT 2026 in Islamabad?', a: 'PMC announces the unified national MDCAT date each year, typically in September. Islamabad follows the federal schedule.' },
-      { q: 'Is SZABMU merit higher than Punjab?', a: 'Federal seats often close near 91%+ due to limited quota size. Punjab universities like KEMU close similar or higher.' },
+      { q: 'When is MDCAT 2026 in Islamabad?', a: 'PMC announces the unified national MDCAT date each year, typically in September. Islamabad follows the federal schedule and venues are confirmed on the candidate roll-number slip.' },
+      { q: 'Is SZABMU merit higher than Punjab?', a: 'Federal seats often close near 91%+ due to limited quota size. Punjab universities like KEMU close similar or higher in open merit.' },
+      { q: 'Which test centres are used in Islamabad and Rawalpindi?', a: 'Common venues include COMSATS University, Quaid-e-Azam University, NUST H-12 campus and the PIMS auditorium. Your exact centre is printed on your admit slip.' },
+      { q: 'Who is eligible for federal-quota MBBS seats?', a: 'Candidates holding an Islamabad Capital Territory (federal) domicile compete for federal-quota seats. Provincial-domicile holders apply under their own provincial quota instead.' },
     ],
     relatedSlug: 'mdcat-syllabus',
     indexable: true,
@@ -160,7 +162,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'NTS GAT, NAT, recruitment tests in Karachi 2026: schedule, test centres, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'NTS Karachi, NTS test centres Karachi, GAT general Karachi, NAT Karachi, NTS preparation',
     intro:
-      'The National Testing Service (NTS) conducts GAT-General, GAT-Subject, NAT, and recruitment tests across multiple Karachi venues year-round. Karachi candidates typically attend at university campuses like IBA, Karachi University, and NED. Roll-number slips and exact venues are issued ~10 days before each test on the NTS portal.',
+      'The National Testing Service (NTS) conducts GAT-General, GAT-Subject, NAT, and recruitment tests across multiple Karachi venues year-round. Karachi candidates typically attend at university campuses like IBA, Karachi University, and NED. Roll-number slips and exact venues are issued around 10 days before each test on the NTS portal. This guide explains the Karachi test-centre network, the GAT and NAT formats, registration fees and deadlines, and the most efficient way to practise verbal, quantitative and analytical MCQs so you can target the score required by your degree programme or recruiting department.',
     syllabusOrEligibility: [
       'GAT-General: Verbal (30) + Quantitative (30) + Analytical (40) = 100 MCQs in 120 min',
       'NAT-I (intermediate-level entry tests): English + Analytical + Subject section',
@@ -180,8 +182,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'PPSC Past Papers', path: '/ppsc-past-papers' },
     ],
     faqs: [
-      { q: 'How often does NTS conduct GAT in Karachi?', a: 'GAT-General runs on roughly a quarterly cycle. Schedules are published on nts.org.pk.' },
-      { q: 'Where can I take NTS test in Karachi?', a: 'Primary centres include University of Karachi, IBA, NED University, Federal Urdu University, and Sir Syed University.' },
+      { q: 'How often does NTS conduct GAT in Karachi?', a: 'GAT-General runs on roughly a quarterly cycle. Schedules are published in advance on nts.org.pk so you can plan your registration.' },
+      { q: 'Where can I take the NTS test in Karachi?', a: 'Primary centres include University of Karachi, IBA, NED University, Federal Urdu University, and Sir Syed University. The allocated venue appears on your roll-number slip.' },
+      { q: 'How long is a GAT-General score valid?', a: 'A GAT-General score is valid for two years from the test date, which most universities accept for MS/MPhil and PhD admissions.' },
+      { q: 'What is the GAT-General passing percentage?', a: 'Most programmes require a minimum of 50%, though competitive departments set higher cut-offs. Aim well above 50% to stay safe.' },
     ],
     relatedSlug: 'nts',
     indexable: true,
@@ -194,7 +198,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'NTS GAT, NAT, recruitment tests in Lahore 2026: schedule, test centres, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'NTS Lahore, NTS test centres Lahore, GAT general Lahore, NTS preparation Punjab',
     intro:
-      'NTS holds GAT, NAT, and recruitment tests for Punjab-government and federal positions throughout the year in Lahore. Common venues include Punjab University, University of Engineering & Technology (UET), and Government College University (GCU). Test slips with allocated venue, time, and roll number are downloadable from the NTS portal ~10 days before each test.',
+      'NTS holds GAT, NAT, and recruitment tests for Punjab-government and federal positions throughout the year in Lahore. Common venues include Punjab University, University of Engineering & Technology (UET), and Government College University (GCU). Test slips with allocated venue, time, and roll number are downloadable from the NTS portal around 10 days before each test. This guide walks Lahore candidates through the full test-centre list, the GAT and NAT structures, registration fees and deadlines, and a section-by-section MCQ practice routine covering verbal, quantitative and analytical reasoning so you arrive on test day fully prepared.',
     syllabusOrEligibility: [
       'GAT-General: 100 MCQs in 120 minutes',
       'NAT: depending on stream (NAT-IM, NAT-IE, etc.)',
@@ -214,8 +218,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'PPSC Lahore Jobs Guide', path: '/p/ppsc-lahore' },
     ],
     faqs: [
-      { q: 'What is the cost of NTS test in Lahore?', a: 'GAT registration fee is currently PKR 1,400. Recruitment-test fees vary by department, usually PKR 600–1,200.' },
-      { q: 'How do I select Lahore as NTS centre?', a: 'During online registration on nts.org.pk, choose "Lahore" as preferred test city. Final venue is allocated based on capacity.' },
+      { q: 'What is the cost of the NTS test in Lahore?', a: 'GAT registration fee is currently around PKR 1,400. Recruitment-test fees vary by department, usually PKR 600–1,200.' },
+      { q: 'How do I select Lahore as my NTS centre?', a: 'During online registration on nts.org.pk, choose "Lahore" as your preferred test city. The final venue is allocated based on seat capacity.' },
+      { q: 'Which subjects does the GAT-General cover?', a: 'GAT-General tests verbal reasoning, quantitative reasoning and analytical reasoning across 100 MCQs in 120 minutes, with no subject-specific section.' },
+      { q: 'Can I retake the NTS test to improve my score?', a: 'Yes. NTS allows repeated attempts on later test dates, and most universities accept your highest valid score within the two-year validity window.' },
     ],
     relatedSlug: 'nts',
     indexable: true,
@@ -324,7 +330,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'ECAT 2026 Punjab: UET-conducted entry test, engineering universities, merit, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'ECAT Punjab, ECAT UET, UET Lahore ECAT, Punjab engineering universities, ECAT 2026',
     intro:
-      'ECAT (Engineering College Admission Test) for Punjab is conducted by the University of Engineering & Technology (UET) Lahore each year, typically in mid-August. Punjab-domicile candidates use ECAT for admission to UET Lahore and its constituent campuses (Faisalabad, Rachna RYK, Narowal), plus most Punjab-government engineering universities. NUST and GIKI run their own separate entry tests.',
+      'ECAT (Engineering College Admission Test) for Punjab is conducted by the University of Engineering & Technology (UET) Lahore each year, typically in mid-August. Punjab-domicile candidates use ECAT for admission to UET Lahore and its constituent campuses (Faisalabad, Rachna RYK, Narowal), plus most Punjab-government engineering universities. NUST and GIKI run their own separate entry tests. This guide covers the UET test pattern and negative marking, the engineering universities that accept ECAT, recent closing-merit trends by discipline, Punjab domicile and quota rules, and a Maths–Physics–Chemistry MCQ practice plan tuned to the official ECAT syllabus.',
     syllabusOrEligibility: [
       'Mathematics — 30 MCQs',
       'Physics — 30 MCQs',
@@ -351,8 +357,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'Practice ECAT MCQs', path: '/exams/ecat' },
     ],
     faqs: [
-      { q: 'When is ECAT 2026 held?', a: 'UET Lahore typically conducts ECAT in the third week of August. Exact date is announced on uet.edu.pk by June.' },
-      { q: 'Is there negative marking in ECAT?', a: 'Yes. Wrong answers carry a 1/4 mark penalty. Skip questions you are unsure about.' },
+      { q: 'When is ECAT 2026 held?', a: 'UET Lahore typically conducts ECAT in the third week of August. The exact date is announced on uet.edu.pk by June.' },
+      { q: 'Is there negative marking in ECAT?', a: 'Yes. Wrong answers carry a 1/4 mark penalty, so skip questions you are genuinely unsure about rather than guessing blindly.' },
+      { q: 'What is the ECAT subject breakdown?', a: 'ECAT has 100 MCQs in 100 minutes: 30 Mathematics, 30 Physics, and 30 from Chemistry or English (candidate chooses), plus 10 from the chosen elective.' },
+      { q: 'How is the UET aggregate calculated?', a: 'Most UET programmes weight FSc marks heavily alongside the ECAT score. Use the aggregate calculator to estimate your standing against past closing merits.' },
     ],
     relatedSlug: 'ecat-preparation',
     indexable: true,
@@ -496,7 +504,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'NTS GAT, NAT, recruitment tests in Islamabad 2026: schedule, test centres at QAU/COMSATS/NUST, syllabus & free practice — MCQsAI.',
     keywords: 'NTS Islamabad, NTS test centres Islamabad, GAT Islamabad, NAT Islamabad, NTS preparation federal',
     intro:
-      'NTS conducts GAT-General, GAT-Subject, NAT, and federal recruitment tests across Islamabad throughout the year. As the federal capital and NTS headquarters location, Islamabad has the densest test schedule in Pakistan and access to the highest number of federal-grade vacancies. Common venues are Quaid-e-Azam University (QAU), COMSATS, NUST H-12, and FAST-NU.',
+      'NTS conducts GAT-General, GAT-Subject, NAT, and federal recruitment tests across Islamabad throughout the year. As the federal capital and NTS headquarters location, Islamabad has the densest test schedule in Pakistan and access to the highest number of federal-grade vacancies. Common venues are Quaid-e-Azam University (QAU), COMSATS, NUST H-12, and FAST-NU. This guide details the Islamabad test-centre network, the GAT, NAT and federal recruitment formats, current registration fees and deadlines, and a structured MCQ practice plan covering verbal, quantitative and analytical reasoning so federal-capital candidates can secure the score their programme or post demands.',
     syllabusOrEligibility: [
       'GAT-General: 100 MCQs (Verbal 30 + Quantitative 30 + Analytical 40) in 120 minutes',
       'NAT-IM/IE/IA: 90 MCQs covering English, Analytical, and Subject sections',
@@ -519,7 +527,8 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     faqs: [
       { q: 'Where is NTS headquarters located?', a: 'NTS HQ is at Plot 96, Street 4, H-8/1, Islamabad. All centralised operations are run from there.' },
       { q: 'How often is GAT held in Islamabad?', a: 'GAT-General runs roughly every quarter; recruitment tests appear in cycles linked to federal hiring drives.' },
-      { q: 'What is the NTS test fee in Islamabad?', a: 'GAT registration is currently PKR 1,400; recruitment-test fees vary by department (typically PKR 600–1,200).' },
+      { q: 'What is the NTS test fee in Islamabad?', a: 'GAT registration is currently around PKR 1,400; recruitment-test fees vary by department (typically PKR 600–1,200).' },
+      { q: 'How long is a GAT score valid for federal jobs?', a: 'A GAT-General score is valid for two years. Many MS/MPhil, PhD and federal recruitment processes accept your highest valid score within that window.' },
     ],
     relatedSlug: 'nts',
     indexable: true,
@@ -615,7 +624,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'PPSC Punjab jobs and recruitment 2026: HQ Lahore, all test centres, common posts, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'PPSC Punjab, PPSC jobs 2026, Punjab Public Service Commission, PPSC test centres, PPSC preparation',
     intro:
-      'The Punjab Public Service Commission (PPSC) is the constitutional recruitment body for the Punjab Government, headquartered at Aiwan-e-Iqbal, Lahore. PPSC handles BS-11 to BS-20 selections including Punjab Civil Services (PCS), Tehsildar, Education Officer, Medical Officer, Patwari, Police Sub-Inspector, Naib Tehsildar, and several technical cadres. Written tests are held across Lahore, Rawalpindi, Multan, Faisalabad, Bahawalpur, DG Khan, Sargodha and Sahiwal.',
+      'The Punjab Public Service Commission (PPSC) is the constitutional recruitment body for the Punjab Government, headquartered at Aiwan-e-Iqbal, Lahore. PPSC handles BS-11 to BS-20 selections including Punjab Civil Services (PCS), Tehsildar, Education Officer, Medical Officer, Patwari, Police Sub-Inspector, Naib Tehsildar, and several technical cadres. Written tests are held across Lahore, Rawalpindi, Multan, Faisalabad, Bahawalpur, DG Khan, Sargodha and Sahiwal. This guide explains the PPSC application process, the test patterns for PMS and junior posts, the regional test-centre network, domicile and quota rules, and a high-yield MCQ practice plan covering general knowledge, Pakistan Studies, Islamiat, English and basic maths.',
     syllabusOrEligibility: [
       'PMS / PCS: 6 compulsory papers (essay, English, GK, Islamiat, Pak Studies, current affairs) + 4 optional',
       'Junior posts (Patwari, Tehsildar): 100 MCQs (GK + Pak Studies + Islamiat + English + General Maths)',
@@ -653,7 +662,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'FPSC jobs and federal tests in Karachi: regional office, recruitment cycles, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'FPSC Karachi, FPSC regional office Karachi, FPSC federal jobs Sindh, FPSC test centre Karachi',
     intro:
-      'The Federal Public Service Commission (FPSC) operates a regional office in Karachi (Block 47, Civic Centre, Gulshan-e-Iqbal) to facilitate federal recruitment for Sindh-based candidates. Karachi hosts written tests for CSS, Combined Examination for ASOs/PROs, Assistant Director (IB), Inspector Customs, and several technical cadres. Sindh-domicile candidates compete under Sindh (Urban) and Sindh (Rural) quotas for federal allocations.',
+      'The Federal Public Service Commission (FPSC) operates a regional office in Karachi (Block 47, Civic Centre, Gulshan-e-Iqbal) to facilitate federal recruitment for Sindh-based candidates. Karachi hosts written tests for CSS, Combined Examination for ASOs/PROs, Assistant Director (IB), Inspector Customs, and several technical cadres. Sindh-domicile candidates compete under Sindh (Urban) and Sindh (Rural) quotas for federal allocations. This guide walks Karachi applicants through FPSC recruitment cycles, the Karachi test venues, the standard 100-MCQ test pattern, regional quota percentages, and a focused MCQ practice plan covering English, general knowledge, Islamiat, Pakistan Studies and professional subjects.',
     syllabusOrEligibility: [
       'Most FPSC posts: 100 MCQs in 90–120 minutes covering English, GK, Islamiat, Pakistan Studies, and a professional subject',
       'CSS: 12-paper written examination held annually in February–March',
@@ -731,7 +740,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'Class 12 Physics MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT/ECAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Physics MCQs class 12, FSc Part 2 Physics, class 12 Physics chapter wise MCQs, intermediate physics Pakistan',
     intro:
-      'Class 12 (FSc Part 2) Physics underpins ECAT, MDCAT (Physics section), NUST NET and most engineering entry tests in Pakistan. The unified National Curriculum syllabus covers Electrostatics, Current Electricity, Electromagnetism, Electromagnetic Induction, Alternating Current, Physics of Solids, Electronics, Dawn of Modern Physics, Atomic Spectra, and Nuclear Physics. Chapter-wise MCQ practice with worked solutions is the fastest path to mastery.',
+      'Class 12 (FSc Part 2) Physics underpins ECAT, MDCAT (Physics section), NUST NET and most engineering entry tests in Pakistan. The unified National Curriculum syllabus covers Electrostatics, Current Electricity, Electromagnetism, Electromagnetic Induction, Alternating Current, Physics of Solids, Electronics, Dawn of Modern Physics, Atomic Spectra, and Nuclear Physics. Chapter-wise MCQ practice with worked solutions is the fastest path to mastery for both your board exam and entry tests. This guide maps every Part 2 chapter to its board and entry-test weight and links straight into free, explanation-backed MCQ practice so you can revise efficiently.',
     syllabusOrEligibility: [
       'Chapter 12 — Electrostatics',
       'Chapter 13 — Current Electricity',
