@@ -198,7 +198,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'NTS GAT, NAT, recruitment tests in Lahore 2026: schedule, test centres, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'NTS Lahore, NTS test centres Lahore, GAT general Lahore, NTS preparation Punjab',
     intro:
-      'NTS holds GAT, NAT, and recruitment tests for Punjab-government and federal positions throughout the year in Lahore. Common venues include Punjab University, University of Engineering & Technology (UET), and Government College University (GCU). Test slips with allocated venue, time, and roll number are downloadable from the NTS portal ~10 days before each test.',
+      'NTS holds GAT, NAT, and recruitment tests for Punjab-government and federal positions throughout the year in Lahore. Common venues include Punjab University, University of Engineering & Technology (UET), and Government College University (GCU). Test slips with allocated venue, time, and roll number are downloadable from the NTS portal around 10 days before each test. This guide walks Lahore candidates through the full test-centre list, the GAT and NAT structures, registration fees and deadlines, and a section-by-section MCQ practice routine covering verbal, quantitative and analytical reasoning so you arrive on test day fully prepared.',
     syllabusOrEligibility: [
       'GAT-General: 100 MCQs in 120 minutes',
       'NAT: depending on stream (NAT-IM, NAT-IE, etc.)',
@@ -218,8 +218,10 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { label: 'PPSC Lahore Jobs Guide', path: '/p/ppsc-lahore' },
     ],
     faqs: [
-      { q: 'What is the cost of NTS test in Lahore?', a: 'GAT registration fee is currently PKR 1,400. Recruitment-test fees vary by department, usually PKR 600–1,200.' },
-      { q: 'How do I select Lahore as NTS centre?', a: 'During online registration on nts.org.pk, choose "Lahore" as preferred test city. Final venue is allocated based on capacity.' },
+      { q: 'What is the cost of the NTS test in Lahore?', a: 'GAT registration fee is currently around PKR 1,400. Recruitment-test fees vary by department, usually PKR 600–1,200.' },
+      { q: 'How do I select Lahore as my NTS centre?', a: 'During online registration on nts.org.pk, choose "Lahore" as your preferred test city. The final venue is allocated based on seat capacity.' },
+      { q: 'Which subjects does the GAT-General cover?', a: 'GAT-General tests verbal reasoning, quantitative reasoning and analytical reasoning across 100 MCQs in 120 minutes, with no subject-specific section.' },
+      { q: 'Can I retake the NTS test to improve my score?', a: 'Yes. NTS allows repeated attempts on later test dates, and most universities accept your highest valid score within the two-year validity window.' },
     ],
     relatedSlug: 'nts',
     indexable: true,
