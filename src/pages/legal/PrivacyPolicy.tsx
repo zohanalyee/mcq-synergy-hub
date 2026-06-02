@@ -40,12 +40,48 @@ const PrivacyPolicy = () => {
             <p>We use trusted third-party services including:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Google Analytics (for usage analytics)</li>
+              <li>Google AdSense (for displaying advertisements)</li>
               <li>Supabase (for secure data storage)</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground">5. Your Rights</h2>
+            <h2 className="text-xl font-semibold text-foreground">5. Cookies & Advertising</h2>
+            <p>
+              We use cookies and similar technologies to keep you signed in, remember your
+              preferences, and understand how our platform is used. You can disable cookies in
+              your browser settings, though some features may not work as intended.
+            </p>
+            <p className="mt-3">
+              We use Google AdSense to serve advertisements on this site. Google, as a
+              third-party vendor, uses cookies (including the DoubleClick advertising cookie)
+              to serve ads based on your prior visits to this and other websites. This enables
+              Google and its partners to show relevant ads to you.
+            </p>
+            <ul className="list-disc pl-5 space-y-1 mt-3">
+              <li>
+                You may opt out of personalized advertising by visiting{' '}
+                <a href="https://www.google.com/settings/ads" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Google Ads Settings
+                </a>.
+              </li>
+              <li>
+                Learn more about how Google uses data at{' '}
+                <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  Google's Privacy &amp; Terms
+                </a>.
+              </li>
+              <li>
+                You can opt out of third-party vendor cookies at{' '}
+                <a href="https://www.aboutads.info" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                  www.aboutads.info
+                </a>.
+              </li>
+            </ul>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">6. Your Rights</h2>
             <p>You have the right to:</p>
             <ul className="list-disc pl-5 space-y-1">
               <li>Access your personal data</li>
@@ -56,12 +92,13 @@ const PrivacyPolicy = () => {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground">6. Contact Us</h2>
+            <h2 className="text-xl font-semibold text-foreground">7. Contact Us</h2>
             <p>
               For privacy-related questions, email us at{' '}
               <a href="mailto:privacy@mcqsai.com" className="text-primary hover:underline">privacy@mcqsai.com</a>
             </p>
           </section>
+
         </div>
       </div>
       <Footer />

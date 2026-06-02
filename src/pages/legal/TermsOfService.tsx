@@ -43,7 +43,13 @@ const TermsOfService = () => {
           <section>
             <h2 className="text-xl font-semibold text-foreground">5. Disclaimer</h2>
             <p>MCQSAI provides educational content "as is" without warranties. We do not guarantee exam success.</p>
+            <p className="mt-3 font-medium text-foreground">
+              This is an independent educational platform and not affiliated with any official
+              government testing agency like FPSC, SPSC, or NTS. All information is for
+              preparation purposes only.
+            </p>
           </section>
+
 
           <section>
             <h2 className="text-xl font-semibold text-foreground">6. Contact</h2>
