@@ -179,6 +179,7 @@ const Footer = () => {
         <div className="mt-10 pt-6 border-t border-white/20 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/70">
           <p>© {currentYear} MCQSAI. {t('footer.allRightsReserved')}.</p>
           <div className="flex gap-4 flex-wrap justify-center">
+            <Link to="/about" className="hover:text-white transition-colors">{t('footer.aboutUs')}</Link>
             <Link to="/privacy-policy" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
             <Link to="/terms-of-service" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
             <Link to="/editorial-policy" className="hover:text-white transition-colors">Editorial Policy</Link>
