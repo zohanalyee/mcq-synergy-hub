@@ -22,6 +22,7 @@ import {
 } from "@/services/jobTestProgressService";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
+import { toJobTestSlug } from "@/lib/jobTestSlug";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
