@@ -1396,6 +1396,36 @@ export type Database = {
         }
         Relationships: []
       }
+      job_test_custom_syllabus: {
+        Row: {
+          created_at: string
+          id: string
+          job_test_id: string
+          notes: string | null
+          sections: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          job_test_id: string
+          notes?: string | null
+          sections?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          job_test_id?: string
+          notes?: string | null
+          sections?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       job_test_definitions: {
         Row: {
           created_at: string

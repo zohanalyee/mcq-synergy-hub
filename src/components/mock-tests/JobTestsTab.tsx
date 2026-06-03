@@ -14,6 +14,7 @@ import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgre
 import {
   findDefinitionByTitle,
   getApprovedQuestionsForDefinition,
+  getEffectiveSyllabus,
 } from "@/services/jobTestService";
 import {
   fetchJobTestProgress,
@@ -21,6 +22,7 @@ import {
 } from "@/services/jobTestProgressService";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
+import { toJobTestSlug } from "@/lib/jobTestSlug";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
@@ -192,8 +194,10 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         }
       }
 
-      // Extract syllabus data
-      const syllabusData = test.syllabus
+      // Extract syllabus data — honor the user's saved custom syllabus when present,
+      // otherwise fall back to the official syllabus. Official data is never mutated.
+      const effectiveSyllabus = await getEffectiveSyllabus(test.id, test.syllabus);
+      const syllabusData = effectiveSyllabus
         .filter((item) => item.topic && item.percentage && item.percentage > 0)
         .map((item) => ({ topic: item.topic, percentage: item.percentage || 0 }));
 
@@ -461,6 +465,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
                 toggleCustomizeJobTest={toggleCustomizeJobTest}
                 handleStartJobTest={handleStartJobTest}
                 isGenerating={generatingTestId === test.id}
+                detailHref={`/mock-tests/${toJobTestSlug(test, jobTests)}`}
               />
             </motion.div>
           ))}

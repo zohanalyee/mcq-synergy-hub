@@ -197,6 +197,39 @@ async function buildBlog() {
   }))));
 }
 
+// Mirror of src/lib/jobTestSlug.ts so public URLs match the React routes.
+function orgSuffix(organization) {
+  if (!organization) return "";
+  const paren = String(organization).match(/\(([^)]+)\)/);
+  if (paren && paren[1]) return toSlug(paren[1]);
+  const acronym = (String(organization).match(/[A-Z]/g) || []).join("");
+  if (acronym.length >= 2) return acronym.toLowerCase();
+  return toSlug(organization).split("-").slice(0, 2).join("-");
+}
+function jobTestSlug(test, all) {
+  const base = toSlug(test.title);
+  const collisions = all.filter((t) => toSlug(t.title) === base);
+  if (collisions.length <= 1) return base;
+  const suffix = orgSuffix(test.organization);
+  const withOrg = suffix ? `${base}-${suffix}` : base;
+  const orgCollisions = collisions.filter((t) => `${base}-${orgSuffix(t.organization)}` === withOrg);
+  if (orgCollisions.length <= 1) return withOrg;
+  const index = orgCollisions.findIndex((t) => t.id === test.id);
+  return index <= 0 ? withOrg : `${withOrg}-${index + 1}`;
+}
+
+async function buildMockTests() {
+  const { data: tests } = await supabase
+    .from("job_tests")
+    .select("id,title,organization,updated_at");
+  const all = tests || [];
+  write("mock-tests.xml", urlSet(all.map((t) => ({
+    loc: `${BASE_URL}/mock-tests/${jobTestSlug(t, all)}`,
+    lastmod: (t.updated_at || "").split("T")[0] || today,
+    freq: "weekly", priority: "0.8",
+  }))));
+}
+
 async function buildBoards() {
   const { data: topics, error } = await supabase
     .from("topics")
@@ -225,7 +258,7 @@ async function buildBoards() {
 
 function writeIndex(boardPages) {
   const entries = [
-    "static.xml", "tools.xml", "exams.xml", "programmatic.xml",
+    "static.xml", "tools.xml", "exams.xml", "mock-tests.xml", "programmatic.xml",
     "jobs.xml", "scholarships.xml", "blog.xml",
     ...Array.from({ length: boardPages }, (_, i) => `boards-${i + 1}.xml`),
   ].map(name =>
@@ -254,6 +287,7 @@ ${entries.join("\n")}
     write("jobs.xml", urlSet([]));
     write("scholarships.xml", urlSet([]));
     write("blog.xml", urlSet([]));
+    write("mock-tests.xml", urlSet([]));
     write("boards-1.xml", urlSet([]));
     writeIndex(1);
     return;
@@ -268,6 +302,9 @@ ${entries.join("\n")}
     }),
     buildBlog().catch(e => {
       console.warn("[sitemap] blog failed:", e?.message); write("blog.xml", urlSet([]));
+    }),
+    buildMockTests().catch(e => {
+      console.warn("[sitemap] mock-tests failed:", e?.message); write("mock-tests.xml", urlSet([]));
     }),
   ]);
   try {
