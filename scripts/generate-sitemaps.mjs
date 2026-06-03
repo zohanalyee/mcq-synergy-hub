@@ -258,7 +258,7 @@ async function buildBoards() {
 
 function writeIndex(boardPages) {
   const entries = [
-    "static.xml", "tools.xml", "exams.xml", "programmatic.xml",
+    "static.xml", "tools.xml", "exams.xml", "mock-tests.xml", "programmatic.xml",
     "jobs.xml", "scholarships.xml", "blog.xml",
     ...Array.from({ length: boardPages }, (_, i) => `boards-${i + 1}.xml`),
   ].map(name =>
