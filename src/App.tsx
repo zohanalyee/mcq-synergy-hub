@@ -44,6 +44,7 @@ import NotFound from "./pages/NotFound";
 // Lazy: large feature pages (code-split for mobile performance)
 const Subjects = lazy(() => import("./pages/Subjects"));
 const MockTests = lazy(() => import("./pages/MockTests"));
+const MockTestDetail = lazy(() => import("./pages/MockTestDetail"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const PastPapers = lazy(() => import("./pages/PastPapers"));
