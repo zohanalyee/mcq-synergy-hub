@@ -287,6 +287,7 @@ ${entries.join("\n")}
     write("jobs.xml", urlSet([]));
     write("scholarships.xml", urlSet([]));
     write("blog.xml", urlSet([]));
+    write("mock-tests.xml", urlSet([]));
     write("boards-1.xml", urlSet([]));
     writeIndex(1);
     return;
