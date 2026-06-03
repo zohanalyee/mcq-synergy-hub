@@ -1,64 +1,77 @@
-# AdSense Compliance Audit & Fix Plan
+# Competitive Exam Practice — SEO Pages + Per-Test Syllabus
 
-## Audit findings
+## Audit Summary (read-only findings)
 
-All four required static pages already exist and are routed:
+**Data:** 17 mock tests in `job_tests` (DB) + 5 hardcoded fallbacks. 2 isolated `job_test_definitions`.
 
-- `/privacy-policy` → `src/pages/legal/PrivacyPolicy.tsx`
-- `/terms-of-service` → `src/pages/legal/TermsOfService.tsx`
-- `/about` → `src/pages/About.tsx`
-- `/contact` → `src/pages/Contact.tsx` (already has a working contact form + support email)
+| Requirement | Current state |
+|---|---|
+| 1. SEO URL + detail page per test | ❌ None. Only `/mock-tests` list + 6 `/exams/:slug` category pages. No per-test route/component/slug. |
+| 2. Sitemap coverage of detail pages | ❌ Only `/mock-tests` + 6 exam slugs in `exams.xml`. Zero individual tests. |
+| 3. Internal linking between related tests | ❌ None. |
+| 4. Official vs Custom syllabus | ⚠️ Official syllabus stored per test. `user_custom_syllabus` exists but is topic-based for the Builder, not per-test/weightage. No guest temp, save/edit/delete, or restore. |
+| AI generation | ✅ Already simple Pakistani English, syllabus-locked, no drift, weightage via Largest Remainder. Always uses official syllabus — no custom branch. |
 
-Gaps that would trigger AdSense rejection:
+No new exams will be created; we only add pages/structure around the existing 17.
 
-1. **Privacy Policy** lists only Google Analytics + Supabase. It has **no cookies clause and no Google AdSense / third-party advertising tracking disclosure** — required now that the AdSense script is live.
-2. **Terms of Service** has a generic disclaimer but **no statement disowning affiliation with FPSC/SPSC/NTS** or other official testing agencies.
-3. **Footer**: Privacy, Terms, Editorial Policy, and Contact are in the bottom bar; "About Us" only appears in the Resources column. All four are reachable, but About is not in the primary legal bar.
-4. **Thin content**: `TestSession.tsx` active exam view is buttons/questions only — no descriptive text, which AdSense flags as low-value.
+---
 
-## Planned changes
+## What we will build
 
-### 1. Privacy Policy — add cookies & AdSense clause
+### A. Slug system (clean URLs, UUID internal)
+- New `src/lib/jobTestSlug.ts`: `toJobTestSlug(test)` builds a clean slug from the title (reuse `toSlug`). On collision within the loaded list, append a meaningful suffix derived from organization (e.g. `-fia`, `-sindh-high-court`), never a UUID.
+- `resolveJobTestBySlug(slug, tests)` maps a slug back to the DB row (exact slug match, then org-suffix match). UUID stays internal only.
+- Cards and list link to `/mock-tests/<slug>`; the test session still uses internal UUIDs.
 
-Add a new "Cookies & Advertising" section to `PrivacyPolicy.tsx`:
+### B. Detail page (full SEO landing) — `/mock-tests/:slug`
+New route in `App.tsx` and `src/pages/MockTestDetail.tsx` (wrapped in `<Header>`), containing:
+- `<SEOHead>` title/description/canonical (`https://mcqsai.com/mock-tests/<slug>`).
+- H1 = official job title; intro paragraph (organization + exam purpose, simple Pakistani English).
+- "Official Syllabus" badge + table (subjects, weightage %, computed question distribution) from the test's official syllabus.
+- Test pattern block (duration, total questions). Eligibility only when present (no invented data).
+- "Last Updated" from the row's `updated_at`.
+- **Custom Syllabus editor** (section C).
+- Start Mock Test CTA → reuses existing `handleStartJobTest` flow.
+- Related Mock Tests (section D).
+- FAQ section (generated from the test's own syllabus/org — factual, no invented claims).
+- JSON-LD: `WebPage` + `BreadcrumbList` + `FAQPage` via the existing structured-data pattern.
 
-- Explain cookies usage.
-- Disclose Google AdSense as a third-party vendor using cookies (incl. the DoubleClick/advertising cookie) to serve ads based on prior visits.
-- Link to Google's ad settings / how users can opt out.
-- Add Google AdSense to the existing third-party services list.
+### C. Per-test Custom Syllabus
+New table `job_test_custom_syllabus` (independent from `user_custom_syllabus`):
+- Columns: `user_id`, `job_test_id` (uuid, references the `job_tests` row internally), `sections` jsonb (`[{subject, percentage, enabled}]`), `notes` text, `created_at`, `updated_at`. Unique on `(user_id, job_test_id)`.
+- RLS: each user manages only their own rows; service_role full access. No anon access.
 
-### 2. Terms of Service — add affiliation disclaimer
+Editor behavior (`src/components/mock-tests/CustomSyllabusEditor.tsx`):
+- Default = official syllabus (read-only badge "Official").
+- Edit subject weightage, toggle sections on/off, optional notes. Adding subjects outside the official list requires explicit enable.
+- **Guest:** can interact, but Save triggers the existing login/guest-choice flow; nothing persists.
+- **Logged-in:** Save / Edit / Delete their per-test custom syllabus.
+- **Reset to Official Syllabus:** deletes the custom row, restoring the official syllabus. Official is never mutated for anyone.
+- "Official syllabus changed" notice: when the test's `updated_at` is newer than the saved custom row, show a banner offering "Keep mine" or "Update from latest official".
 
-Expand the Disclaimer section in `TermsOfService.tsx` with the exact required statement:
+### D. Internal linking
+- Detail page "Related Mock Tests" = up to 6 other tests, prioritizing same organization, then others — each linking to its `/mock-tests/<slug>` page.
+- List page (`JobTestCard`) title/CTA links to the detail page.
 
-> "This is an independent educational platform and not affiliated with any official government testing agency like FPSC, SPSC, or NTS. All information is for preparation purposes only."
+### E. Sitemap coverage
+- `scripts/generate-sitemaps.mjs`: fetch all `job_tests` rows, emit one `/mock-tests/<slug>` URL per test into `exams.xml` (or a new `mock-tests.xml` added to the index). Keep existing entries.
+- Regenerate `public/sitemaps/*` and `sitemap.xml` index.
 
-### 3. Footer — ensure all 4 links in the legal bar
+### F. AI generation honors custom syllabus
+- In `JobTestsTab.handleStartJobTest` (and detail-page start): before computing per-subject quotas, look up the logged-in user's `job_test_custom_syllabus` for that test. If a saved custom syllabus exists, use its enabled sections + weightage for the Largest Remainder quotas; otherwise use the official syllabus.
+- Pass the effective subject list to the existing generator. No prompt changes needed — it already enforces simple Pakistani English, syllabus-only scope, and no unrelated subjects. Disabled/extra-subject rules are enforced by the section list we pass.
 
-Update `src/components/Footer.tsx` bottom bar to include **About** alongside Privacy, Terms, and Contact (keeping the existing Editorial Policy link). All four compliance pages will be clearly visible in the global footer.
-
-### 4. Thin-content fix on test pages
-
-Add a small contextual description block to the active exam area in `TestSession.tsx` (above the `QuestionCard`). It will render a 2–3 sentence dynamic blurb built from the current test's subject/topic name, e.g.:
-
-> "You are practicing [Subject] multiple-choice questions designed for Pakistani competitive and board exam preparation. Each question includes the correct answer and explanation to help you learn as you go. Use this practice test to assess your knowledge and track your progress."
-
-This guarantees real text content on the test view. A reusable `TestContextBlurb` snippet keeps it tidy.
-
-### 5. Empty-category protection
-
-Review nav components (`Header`, `MobileBottomNav`, `AppSidebar`). Scholarships and Jobs route to DB-backed pages with content, so they stay. No `/admissions` route exists. If any nav item is found pointing to a genuinely empty page, it will get a "Coming Soon" badge or be hidden. (No removals planned unless an empty target is confirmed during implementation.)
+---
 
 ## Technical notes
+- SPA + react-router: detail route is client-rendered; SEO relies on `<SEOHead>` (Helmet) + sitemap inclusion, consistent with existing `/exams/:slug` and opportunity pages.
+- Slugs are derived deterministically from title; UUID never appears in public URLs (per your spec).
+- One migration (new table + GRANTs + RLS). All other work is frontend + the sitemap script.
 
-- All edits are frontend/presentation only (legal copy, footer JSX, a text block in the test page). No schema, business-logic, or data changes.
-- New copy uses existing semantic tokens (`text-foreground`, `text-muted-foreground`, `text-primary`) and existing section markup patterns.
-- The test blurb derives its subject/topic from already-available `testData` / question context — no new fetches.
+## Out of scope
+- No new exams/tests. No change to official syllabus data. No backend prompt rewrite (already compliant).
 
-This AdSense Compliance Audit and Fix Plan is absolutely perfect. It hits every requirement accurately without bloating the UI.
-
-Please proceed with the implementation exactly as outlined.
-
-A quick note for TestSession.tsx: Make sure the new dynamic text blurb uses a muted text color (e.g., text-muted-foreground) and a slightly smaller font size (e.g., text-sm) so it satisfies the AdSense text requirement without distracting the user from their active exam questions.
-
-Go ahead and build this!
+## Files
+- New: `src/pages/MockTestDetail.tsx`, `src/lib/jobTestSlug.ts`, `src/components/mock-tests/CustomSyllabusEditor.tsx`, `src/components/mock-tests/RelatedMockTests.tsx`
+- Edit: `src/App.tsx`, `src/components/mock-tests/JobTestCard.tsx`, `src/components/mock-tests/JobTestsTab.tsx`, `src/services/jobTestService.ts`, `scripts/generate-sitemaps.mjs`, `public/sitemaps/*`
+- DB: migration for `job_test_custom_syllabus`
