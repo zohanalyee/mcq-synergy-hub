@@ -294,6 +294,7 @@ const App = () => {
                       <Route path="/ai-coach" element={<InstantAuthGuard title="AI Coach Dashboard" description="Sign in to view your personalized AI coach insights" actionName="AI Coach"><Analytics /></InstantAuthGuard>} />
                       {/* Job/recruitment tests are public — guests use DB-only approved questions; no AI generation, no auth gate. */}
                       <Route path="/mock-tests" element={<MockTests />} />
+                      <Route path="/mock-tests/:slug" element={<Suspense fallback={<TopProgressBar />}><MockTestDetail /></Suspense>} />
                       <Route path="/custom-quizzes" element={<CustomQuizzes />} />
                       <Route path="/custom-syllabus" element={<CustomSyllabus />} />
                       <Route path="/leaderboard" element={<Leaderboard />} />
