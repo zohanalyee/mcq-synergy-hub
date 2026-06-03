@@ -36,6 +36,8 @@ export type JobTestCardProps = {
   toggleCustomizeJobTest: (testId: string, event: React.MouseEvent) => void;
   handleStartJobTest: (test: any, settings?: any) => void;
   isGenerating?: boolean;
+  /** SEO detail page URL for this test. When set, the title links to it. */
+  detailHref?: string;
 };
 
 export const JobTestCard = ({
