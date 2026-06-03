@@ -192,8 +192,10 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
         }
       }
 
-      // Extract syllabus data
-      const syllabusData = test.syllabus
+      // Extract syllabus data — honor the user's saved custom syllabus when present,
+      // otherwise fall back to the official syllabus. Official data is never mutated.
+      const effectiveSyllabus = await getEffectiveSyllabus(test.id, test.syllabus);
+      const syllabusData = effectiveSyllabus
         .filter((item) => item.topic && item.percentage && item.percentage > 0)
         .map((item) => ({ topic: item.topic, percentage: item.percentage || 0 }));
 
