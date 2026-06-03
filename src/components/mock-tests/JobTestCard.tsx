@@ -47,7 +47,8 @@ export const JobTestCard = ({
   toggleExpandJobTest,
   toggleCustomizeJobTest,
   handleStartJobTest,
-  isGenerating = false
+  isGenerating = false,
+  detailHref,
 }: JobTestCardProps) => {
   const [customSettings, setCustomSettings] = useState<{ 
     difficulty: "easy" | "medium" | "hard";
