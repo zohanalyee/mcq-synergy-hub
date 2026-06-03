@@ -14,6 +14,7 @@ import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgre
 import {
   findDefinitionByTitle,
   getApprovedQuestionsForDefinition,
+  getEffectiveSyllabus,
 } from "@/services/jobTestService";
 import {
   fetchJobTestProgress,
