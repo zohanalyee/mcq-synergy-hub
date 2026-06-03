@@ -303,6 +303,9 @@ ${entries.join("\n")}
     buildBlog().catch(e => {
       console.warn("[sitemap] blog failed:", e?.message); write("blog.xml", urlSet([]));
     }),
+    buildMockTests().catch(e => {
+      console.warn("[sitemap] mock-tests failed:", e?.message); write("mock-tests.xml", urlSet([]));
+    }),
   ]);
   try {
     boardPages = await buildBoards();
