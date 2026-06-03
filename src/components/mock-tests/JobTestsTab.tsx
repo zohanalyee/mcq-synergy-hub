@@ -464,6 +464,7 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
                 toggleCustomizeJobTest={toggleCustomizeJobTest}
                 handleStartJobTest={handleStartJobTest}
                 isGenerating={generatingTestId === test.id}
+                detailHref={`/mock-tests/${toJobTestSlug(test, jobTests)}`}
               />
             </motion.div>
           ))}
