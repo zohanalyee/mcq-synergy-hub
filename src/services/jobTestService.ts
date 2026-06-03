@@ -301,3 +301,115 @@ export const generateForSubject = async (
   }
   return { success: true, message: "Generation complete", results: data?.results };
 };
+
+// ---------- Per-test Custom Syllabus (user-specific) ----------
+
+export interface CustomSyllabusSection {
+  subject: string;
+  percentage: number;
+  enabled: boolean;
+}
+
+export interface JobTestCustomSyllabus {
+  id: string;
+  user_id: string;
+  job_test_id: string;
+  sections: CustomSyllabusSection[];
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Convert an official syllabus into editable custom sections (all enabled). */
+export const officialToCustomSections = (
+  syllabus: SyllabusItem[],
+): CustomSyllabusSection[] =>
+  (syllabus || []).map((s) => ({
+    subject: s.topic,
+    percentage: s.percentage || 0,
+    enabled: true,
+  }));
+
+/** Fetch a logged-in user's saved custom syllabus for a specific test, if any. */
+export const getCustomSyllabus = async (
+  jobTestId: string,
+): Promise<JobTestCustomSyllabus | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("job_test_custom_syllabus")
+    .select("*")
+    .eq("user_id", user.id)
+    .eq("job_test_id", jobTestId)
+    .maybeSingle();
+  if (error) {
+    console.error("Error loading custom syllabus:", error);
+    return null;
+  }
+  return (data as any) || null;
+};
+
+/** Create or update the user's custom syllabus for a test. Requires auth. */
+export const saveCustomSyllabus = async (
+  jobTestId: string,
+  sections: CustomSyllabusSection[],
+  notes?: string,
+): Promise<JobTestCustomSyllabus | null> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data, error } = await supabase
+    .from("job_test_custom_syllabus")
+    .upsert(
+      {
+        user_id: user.id,
+        job_test_id: jobTestId,
+        sections: sections as any,
+        notes: notes ?? null,
+      },
+      { onConflict: "user_id,job_test_id" },
+    )
+    .select("*")
+    .single();
+  if (error) {
+    console.error("Error saving custom syllabus:", error);
+    return null;
+  }
+  return data as any;
+};
+
+/** Delete the custom syllabus, restoring the official syllabus for that user. */
+export const deleteCustomSyllabus = async (
+  jobTestId: string,
+): Promise<boolean> => {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { error } = await supabase
+    .from("job_test_custom_syllabus")
+    .delete()
+    .eq("user_id", user.id)
+    .eq("job_test_id", jobTestId);
+  if (error) {
+    console.error("Error deleting custom syllabus:", error);
+    return false;
+  }
+  return true;
+};
+
+/**
+ * Returns the syllabus the AI generator should follow for this test:
+ * the user's saved custom syllabus (enabled sections only) when present,
+ * otherwise the official syllabus. Never mutates official data.
+ */
+export const getEffectiveSyllabus = async (
+  jobTestId: string,
+  officialSyllabus: SyllabusItem[],
+): Promise<SyllabusItem[]> => {
+  const custom = await getCustomSyllabus(jobTestId);
+  if (!custom || !Array.isArray(custom.sections) || custom.sections.length === 0) {
+    return officialSyllabus;
+  }
+  const enabled = custom.sections
+    .filter((s) => s.enabled && s.percentage > 0)
+    .map((s) => ({ topic: s.subject, percentage: s.percentage }));
+  return enabled.length > 0 ? enabled : officialSyllabus;
+};
