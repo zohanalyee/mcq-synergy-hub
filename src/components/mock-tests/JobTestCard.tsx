@@ -102,7 +102,13 @@ export const JobTestCard = ({
             {/* Title & Organization */}
             <div className="flex-1 min-w-0">
               <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight mb-0.5">
-                {test.title}
+                {detailHref ? (
+                  <Link to={detailHref} onClick={(e) => e.stopPropagation()} className="hover:underline">
+                    {test.title}
+                  </Link>
+                ) : (
+                  test.title
+                )}
               </h3>
               <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400">
                 <Building className="h-2.5 w-2.5" />
