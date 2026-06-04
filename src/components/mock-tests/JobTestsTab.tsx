@@ -26,9 +26,11 @@ import { toJobTestSlug } from "@/lib/jobTestSlug";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
+  /** When set, hands the parent a bound start fn + generating flag (used by detail-page top CTA). */
+  onReady?: (state: { start: () => void; isGenerating: boolean }) => void;
 };
 
-export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
+export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [expandedJobTest, setExpandedJobTest] = useState<string | null>(null);
