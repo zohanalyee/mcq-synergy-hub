@@ -205,20 +205,40 @@ export const CustomSyllabusEditor = ({
       )}
 
       <p className="text-xs text-muted-foreground">
-        Adjust subject weightage or disable subjects you want to skip. AI-generated questions will follow your saved
-        syllabus; otherwise they follow the official MCQSAI syllabus. Subjects outside the official syllabus are not added.
+        Adjust subject weightage, rename a subject's description, or disable subjects you want to skip. AI-generated
+        questions follow your saved syllabus; otherwise they follow the official MCQSAI syllabus. You can alter up to{" "}
+        <strong>{ALTER_LIMIT}</strong> subject descriptions ({alteredCount}/{ALTER_LIMIT} used). Subjects outside the
+        official syllabus are not added.
       </p>
 
       <div className="space-y-2">
-        {sections.map((s, idx) => (
+        {sections.map((s, idx) => {
+          const altered = isAltered(idx);
+          const lockEdit = !user || (!altered && alteredCount >= ALTER_LIMIT);
+          return (
           <div
-            key={s.subject + idx}
-            className={`flex items-center gap-3 rounded-xl border border-border px-3 py-2 ${
+            key={idx}
+            className={`flex items-center gap-2 sm:gap-3 rounded-xl border border-border px-3 py-2 flex-wrap ${
               s.enabled ? "bg-background" : "bg-muted/40 opacity-70"
             }`}
           >
             <Switch checked={s.enabled} onCheckedChange={() => toggleSection(idx)} aria-label={`Toggle ${s.subject}`} />
-            <span className="flex-1 text-sm text-foreground line-clamp-1">{s.subject}</span>
+            {user ? (
+              <Input
+                value={s.subject}
+                disabled={lockEdit}
+                onChange={(e) => updateSubject(idx, e.target.value)}
+                aria-label={`Edit ${official[idx]?.subject || s.subject} description`}
+                className="flex-1 min-w-[140px] h-8 text-sm"
+              />
+            ) : (
+              <span className="flex-1 min-w-[140px] text-sm text-foreground line-clamp-1">{s.subject}</span>
+            )}
+            {altered && (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <Pencil className="h-2.5 w-2.5" /> Customized
+              </Badge>
+            )}
             <div className="flex items-center gap-1">
               <Input
                 type="number"
