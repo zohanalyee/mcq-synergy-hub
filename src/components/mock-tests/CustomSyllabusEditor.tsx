@@ -84,11 +84,26 @@ export const CustomSyllabusEditor = ({
   const isCustomised = !sectionsEqual(sections, official) || hasSaved;
   const totalEnabled = sections.filter((s) => s.enabled).reduce((sum, s) => sum + (s.percentage || 0), 0);
 
+  // A subject is "altered" when its text differs from the official version (by index).
+  const isAltered = (idx: number) =>
+    !!official[idx] && (sections[idx]?.subject || "").trim() !== official[idx].subject.trim();
+  const alteredCount = sections.reduce((n, _s, i) => (isAltered(i) ? n + 1 : n), 0);
+  const ALTER_LIMIT = 2;
+
   // Official syllabus changed AFTER the user saved their custom version.
   const officialChanged =
     hasSaved && savedAt && officialUpdatedAt
       ? new Date(officialUpdatedAt).getTime() > new Date(savedAt).getTime()
       : false;
+
+  const updateSubject = (idx: number, value: string) => {
+    // Block altering a NEW (currently-unaltered) subject once the limit is reached.
+    if (!isAltered(idx) && alteredCount >= ALTER_LIMIT) {
+      toast.error("Limit reached: You can only alter up to 2 subjects.");
+      return;
+    }
+    setSections((prev) => prev.map((s, i) => (i === idx ? { ...s, subject: value } : s)));
+  };
 
   const updatePct = (idx: number, value: number) => {
     setSections((prev) => prev.map((s, i) => (i === idx ? { ...s, percentage: Math.max(0, Math.min(100, value)) } : s)));
