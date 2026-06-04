@@ -104,7 +104,10 @@ export const JobTestCard = ({
             <div className="flex-1 min-w-0">
               <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight mb-0.5">
                 {detailHref ? (
-                  <Link to={detailHref} onClick={(e) => e.stopPropagation()} className="hover:underline">
+                  <Link
+                    to={detailHref}
+                    className="hover:underline after:absolute after:inset-0 after:content-['']"
+                  >
                     {test.title}
                   </Link>
                 ) : (
