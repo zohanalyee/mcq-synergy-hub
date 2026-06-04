@@ -145,7 +145,7 @@ export const JobTestCard = ({
           </div>
 
           {/* Action Buttons Row */}
-          <div className="flex gap-1 mb-2">
+          <div className="relative z-10 flex gap-1 mb-2">
             <Button 
               onClick={(e) => { e.stopPropagation(); toggleExpandJobTest(test.id); }}
               variant="ghost" 
