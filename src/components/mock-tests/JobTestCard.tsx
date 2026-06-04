@@ -245,7 +245,7 @@ export const JobTestCard = ({
 
         {/* Customization Panel */}
         {isCustomizing && (
-          <div className="px-3 pb-3 pt-0 border-t border-slate-100 dark:border-slate-700">
+          <div className="relative z-10 px-3 pb-3 pt-0 border-t border-slate-100 dark:border-slate-700">
             <div className="pt-2 space-y-2">
               <h4 className="font-medium text-[10px] text-slate-700 dark:text-slate-300">
                 Customize Settings
