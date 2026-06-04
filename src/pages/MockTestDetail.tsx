@@ -230,7 +230,7 @@ const MockTestDetail = () => {
           <h2 id="start-heading" className="text-lg font-semibold text-foreground">
             Start Your {test.title} Mock Test
           </h2>
-          <JobTestsTab jobTests={[test]} />
+          <JobTestsTab jobTests={[test]} onReady={setTopStart} />
         </section>
 
         {/* Related */}
