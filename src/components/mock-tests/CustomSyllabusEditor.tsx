@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RotateCcw, Save, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Loader2, RotateCcw, Save, Trash2, ShieldCheck, AlertTriangle, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   CustomSyllabusSection,
