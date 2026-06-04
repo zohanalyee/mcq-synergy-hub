@@ -82,7 +82,7 @@ export const JobTestCard = ({
       className="cursor-pointer group"
     >
       <div
-        className="rounded-2xl border border-white/50 dark:border-white/20 shadow-sm 
+        className="relative rounded-2xl border border-white/50 dark:border-white/20 shadow-sm 
                    hover:shadow-lg transition-all duration-300 overflow-hidden glass-card themed-card"
         style={{
           background: `linear-gradient(135deg, ${theme.pastel} 0%, rgba(var(--card-rgb), var(--cards-opacity, 0.95)) 100%)`,
@@ -104,7 +104,10 @@ export const JobTestCard = ({
             <div className="flex-1 min-w-0">
               <h3 className="text-xs font-bold text-slate-800 dark:text-slate-100 line-clamp-2 leading-tight mb-0.5">
                 {detailHref ? (
-                  <Link to={detailHref} onClick={(e) => e.stopPropagation()} className="hover:underline">
+                  <Link
+                    to={detailHref}
+                    className="hover:underline after:absolute after:inset-0 after:content-['']"
+                  >
                     {test.title}
                   </Link>
                 ) : (
@@ -142,7 +145,7 @@ export const JobTestCard = ({
           </div>
 
           {/* Action Buttons Row */}
-          <div className="flex gap-1 mb-2">
+          <div className="relative z-10 flex gap-1 mb-2">
             <Button 
               onClick={(e) => { e.stopPropagation(); toggleExpandJobTest(test.id); }}
               variant="ghost" 
@@ -167,7 +170,7 @@ export const JobTestCard = ({
           </div>
 
           {/* Bottom Action Row */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+          <div className="relative z-10 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
             <button
               onClick={(e) => { e.stopPropagation(); handleStartTest(); }}
               disabled={isGenerating}
@@ -208,7 +211,7 @@ export const JobTestCard = ({
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               transition={{ duration: 0.25, ease: "easeInOut" }}
-              className="overflow-hidden border-t border-slate-100 dark:border-slate-700"
+              className="relative z-10 overflow-hidden border-t border-slate-100 dark:border-slate-700"
             >
               <div className="px-3 pb-3 pt-2">
                 <h4 className="font-medium text-[10px] text-slate-700 dark:text-slate-300 mb-1.5">
@@ -242,7 +245,7 @@ export const JobTestCard = ({
 
         {/* Customization Panel */}
         {isCustomizing && (
-          <div className="px-3 pb-3 pt-0 border-t border-slate-100 dark:border-slate-700">
+          <div className="relative z-10 px-3 pb-3 pt-0 border-t border-slate-100 dark:border-slate-700">
             <div className="pt-2 space-y-2">
               <h4 className="font-medium text-[10px] text-slate-700 dark:text-slate-300">
                 Customize Settings

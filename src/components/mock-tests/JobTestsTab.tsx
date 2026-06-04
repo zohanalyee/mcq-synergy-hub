@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { JobTestCard } from "./JobTestCard";
@@ -26,9 +26,11 @@ import { toJobTestSlug } from "@/lib/jobTestSlug";
 
 type JobTestsTabProps = {
   jobTests: JobTest[];
+  /** When set, hands the parent a bound start fn + generating flag (used by detail-page top CTA). */
+  onReady?: (state: { start: () => void; isGenerating: boolean }) => void;
 };
 
-export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
+export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [expandedJobTest, setExpandedJobTest] = useState<string | null>(null);
@@ -420,6 +422,20 @@ export const JobTestsTab = ({ jobTests }: JobTestsTabProps) => {
   const handleDialogStart = (settings: { difficulty: "easy" | "medium" | "hard"; questionCount: number; duration: number }) => {
     if (dialogTest) handleStartJobTest(dialogTest, settings);
   };
+
+  // Detail-page top CTA: expose a bound start fn + generating flag for the first test.
+  const firstTest = jobTests[0];
+  const firstTestId = firstTest?.id;
+  useEffect(() => {
+    if (!onReady) return;
+    onReady({
+      start: () => firstTest && handleStartJobTest(firstTest),
+      isGenerating: !!firstTestId && generatingTestId === firstTestId,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onReady, firstTestId, generatingTestId]);
+
+
 
   const container = {
     hidden: { opacity: 0 },

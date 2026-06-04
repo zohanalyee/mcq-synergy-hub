@@ -1,9 +1,10 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck } from "lucide-react";
+import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck, Play } from "lucide-react";
 import Header from "@/components/Header";
+import { Button } from "@/components/ui/button";
 import SEOHead from "@/components/SEOHead";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +20,10 @@ const BASE = "https://mcqsai.com";
 
 const MockTestDetail = () => {
   const { slug = "" } = useParams();
+  const [topStart, setTopStart] = useState<{ start: () => void; isGenerating: boolean }>({
+    start: () => {},
+    isGenerating: false,
+  });
 
   const { data: dbJobTests = [], isLoading } = useQuery({
     queryKey: ["job-tests"],
@@ -130,6 +135,21 @@ const MockTestDetail = () => {
           {lastUpdated && (
             <p className="text-xs text-muted-foreground">Last updated: {lastUpdated}</p>
           )}
+          <div className="pt-1">
+            <Button
+              size="lg"
+              onClick={() => topStart.start()}
+              disabled={topStart.isGenerating}
+              className="gap-2"
+            >
+              {topStart.isGenerating ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Play className="h-5 w-5" />
+              )}
+              {topStart.isGenerating ? "Starting…" : "Start Exam"}
+            </Button>
+          </div>
         </motion.header>
 
         {/* Test pattern */}
@@ -210,7 +230,7 @@ const MockTestDetail = () => {
           <h2 id="start-heading" className="text-lg font-semibold text-foreground">
             Start Your {test.title} Mock Test
           </h2>
-          <JobTestsTab jobTests={[test]} />
+          <JobTestsTab jobTests={[test]} onReady={setTopStart} />
         </section>
 
         {/* Related */}

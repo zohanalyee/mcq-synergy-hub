@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, RotateCcw, Save, Trash2, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Loader2, RotateCcw, Save, Trash2, ShieldCheck, AlertTriangle, Pencil } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   CustomSyllabusSection,
@@ -84,11 +84,26 @@ export const CustomSyllabusEditor = ({
   const isCustomised = !sectionsEqual(sections, official) || hasSaved;
   const totalEnabled = sections.filter((s) => s.enabled).reduce((sum, s) => sum + (s.percentage || 0), 0);
 
+  // A subject is "altered" when its text differs from the official version (by index).
+  const isAltered = (idx: number) =>
+    !!official[idx] && (sections[idx]?.subject || "").trim() !== official[idx].subject.trim();
+  const alteredCount = sections.reduce((n, _s, i) => (isAltered(i) ? n + 1 : n), 0);
+  const ALTER_LIMIT = 2;
+
   // Official syllabus changed AFTER the user saved their custom version.
   const officialChanged =
     hasSaved && savedAt && officialUpdatedAt
       ? new Date(officialUpdatedAt).getTime() > new Date(savedAt).getTime()
       : false;
+
+  const updateSubject = (idx: number, value: string) => {
+    // Block altering a NEW (currently-unaltered) subject once the limit is reached.
+    if (!isAltered(idx) && alteredCount >= ALTER_LIMIT) {
+      toast.error("Limit reached: You can only alter up to 2 subjects.");
+      return;
+    }
+    setSections((prev) => prev.map((s, i) => (i === idx ? { ...s, subject: value } : s)));
+  };
 
   const updatePct = (idx: number, value: number) => {
     setSections((prev) => prev.map((s, i) => (i === idx ? { ...s, percentage: Math.max(0, Math.min(100, value)) } : s)));
@@ -190,20 +205,40 @@ export const CustomSyllabusEditor = ({
       )}
 
       <p className="text-xs text-muted-foreground">
-        Adjust subject weightage or disable subjects you want to skip. AI-generated questions will follow your saved
-        syllabus; otherwise they follow the official MCQSAI syllabus. Subjects outside the official syllabus are not added.
+        Adjust subject weightage, rename a subject's description, or disable subjects you want to skip. AI-generated
+        questions follow your saved syllabus; otherwise they follow the official MCQSAI syllabus. You can alter up to{" "}
+        <strong>{ALTER_LIMIT}</strong> subject descriptions ({alteredCount}/{ALTER_LIMIT} used). Subjects outside the
+        official syllabus are not added.
       </p>
 
       <div className="space-y-2">
-        {sections.map((s, idx) => (
+        {sections.map((s, idx) => {
+          const altered = isAltered(idx);
+          const lockEdit = !user || (!altered && alteredCount >= ALTER_LIMIT);
+          return (
           <div
-            key={s.subject + idx}
-            className={`flex items-center gap-3 rounded-xl border border-border px-3 py-2 ${
+            key={idx}
+            className={`flex items-center gap-2 sm:gap-3 rounded-xl border border-border px-3 py-2 flex-wrap ${
               s.enabled ? "bg-background" : "bg-muted/40 opacity-70"
             }`}
           >
             <Switch checked={s.enabled} onCheckedChange={() => toggleSection(idx)} aria-label={`Toggle ${s.subject}`} />
-            <span className="flex-1 text-sm text-foreground line-clamp-1">{s.subject}</span>
+            {user ? (
+              <Input
+                value={s.subject}
+                disabled={lockEdit}
+                onChange={(e) => updateSubject(idx, e.target.value)}
+                aria-label={`Edit ${official[idx]?.subject || s.subject} description`}
+                className="flex-1 min-w-[140px] h-8 text-sm"
+              />
+            ) : (
+              <span className="flex-1 min-w-[140px] text-sm text-foreground line-clamp-1">{s.subject}</span>
+            )}
+            {altered && (
+              <Badge variant="secondary" className="gap-1 text-[10px]">
+                <Pencil className="h-2.5 w-2.5" /> Customized
+              </Badge>
+            )}
             <div className="flex items-center gap-1">
               <Input
                 type="number"
@@ -217,7 +252,8 @@ export const CustomSyllabusEditor = ({
               <span className="text-xs text-muted-foreground">%</span>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="space-y-1">
