@@ -135,6 +135,21 @@ const MockTestDetail = () => {
           {lastUpdated && (
             <p className="text-xs text-muted-foreground">Last updated: {lastUpdated}</p>
           )}
+          <div className="pt-1">
+            <Button
+              size="lg"
+              onClick={() => topStart.start()}
+              disabled={topStart.isGenerating}
+              className="gap-2"
+            >
+              {topStart.isGenerating ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Play className="h-5 w-5" />
+              )}
+              {topStart.isGenerating ? "Starting…" : "Start Exam"}
+            </Button>
+          </div>
         </motion.header>
 
         {/* Test pattern */}
