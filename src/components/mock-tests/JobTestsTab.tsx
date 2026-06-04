@@ -424,15 +424,17 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
   };
 
   // Detail-page top CTA: expose a bound start fn + generating flag for the first test.
+  const firstTest = jobTests[0];
+  const firstTestId = firstTest?.id;
   useEffect(() => {
     if (!onReady) return;
-    const first = jobTests[0];
     onReady({
-      start: () => first && handleStartJobTest(first),
-      isGenerating: !!first && generatingTestId === first.id,
+      start: () => firstTest && handleStartJobTest(firstTest),
+      isGenerating: !!firstTestId && generatingTestId === firstTestId,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onReady, jobTests, generatingTestId]);
+  }, [onReady, firstTestId, generatingTestId]);
+
 
 
   const container = {
