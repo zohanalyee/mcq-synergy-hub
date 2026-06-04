@@ -97,6 +97,7 @@ const MockTestDetail = () => {
 
   return (
     <Header>
+      <CustomSyllabusGuideModal />
       <SEOHead title={metaTitle} description={metaDescription} url={url} type="article" />
       <ExamPageSchema
         name={`${test.title} Mock Test`}
