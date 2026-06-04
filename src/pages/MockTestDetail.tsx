@@ -20,6 +20,10 @@ const BASE = "https://mcqsai.com";
 
 const MockTestDetail = () => {
   const { slug = "" } = useParams();
+  const [topStart, setTopStart] = useState<{ start: () => void; isGenerating: boolean }>({
+    start: () => {},
+    isGenerating: false,
+  });
 
   const { data: dbJobTests = [], isLoading } = useQuery({
     queryKey: ["job-tests"],
