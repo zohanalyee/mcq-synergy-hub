@@ -170,7 +170,7 @@ export const JobTestCard = ({
           </div>
 
           {/* Bottom Action Row */}
-          <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+          <div className="relative z-10 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
             <button
               onClick={(e) => { e.stopPropagation(); handleStartTest(); }}
               disabled={isGenerating}
