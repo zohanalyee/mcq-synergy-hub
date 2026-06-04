@@ -12,6 +12,7 @@ import { ExamPageSchema } from "@/components/StructuredData";
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { CustomSyllabusEditor } from "@/components/mock-tests/CustomSyllabusEditor";
 import { RelatedMockTests } from "@/components/mock-tests/RelatedMockTests";
+import { CustomSyllabusGuideModal } from "@/components/mock-tests/CustomSyllabusGuideModal";
 import { getJobTests, JobTest } from "@/services/jobTestService";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { resolveJobTestBySlug, toJobTestSlug } from "@/lib/jobTestSlug";
@@ -96,6 +97,7 @@ const MockTestDetail = () => {
 
   return (
     <Header>
+      <CustomSyllabusGuideModal />
       <SEOHead title={metaTitle} description={metaDescription} url={url} type="article" />
       <ExamPageSchema
         name={`${test.title} Mock Test`}
