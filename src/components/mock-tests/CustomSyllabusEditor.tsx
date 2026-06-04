@@ -252,7 +252,8 @@ export const CustomSyllabusEditor = ({
               <span className="text-xs text-muted-foreground">%</span>
             </div>
           </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className="space-y-1">
