@@ -120,8 +120,8 @@ const Home = () => {
 
   const testCategories = [
     {
-      title: "Competitive Exams",
-      description: "Practice full-length job recruitment and exam simulations",
+      title: "Mock Tests",
+      description: "Full-length competitive exam and recruitment mock tests with official syllabus coverage.",
       icon: <Timer size={32} className="text-white" />,
       bgClass: "bg-gradient-to-br from-blue-600 to-blue-400 text-white",
       route: "/mock-tests"
