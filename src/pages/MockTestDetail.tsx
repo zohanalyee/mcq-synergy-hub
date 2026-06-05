@@ -116,7 +116,7 @@ const MockTestDetail = () => {
         <PageBreadcrumb
           items={[
             { title: "Home", href: "/" },
-            { title: "Competitive Exams", href: "/mock-tests" },
+            { title: "Mock Tests", href: "/mock-tests" },
             { title: test.title, href: `/mock-tests/${canonicalSlug}`, isCurrent: true },
           ]}
         />
