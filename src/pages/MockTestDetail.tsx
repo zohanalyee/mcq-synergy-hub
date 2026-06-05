@@ -106,7 +106,7 @@ const MockTestDetail = () => {
         provider="MCQsAI"
         breadcrumbs={[
           { name: "Home", url: BASE },
-          { name: "Competitive Exams", url: `${BASE}/mock-tests` },
+          { name: "Mock Tests", url: `${BASE}/mock-tests` },
           { name: test.title, url },
         ]}
         faqs={faqs}
