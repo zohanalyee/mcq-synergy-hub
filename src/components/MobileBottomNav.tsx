@@ -28,7 +28,7 @@ const TAB_COLORS = {
 const navItems = [
   { icon: Home, label: 'Home', path: '/', colorKey: 'home' as const },
   { icon: BookOpen, label: 'Subjects', path: '/subjects', colorKey: 'subjects' as const },
-  { icon: Briefcase, label: 'Tests', path: '/mock-tests', colorKey: 'recruitment' as const },
+  { icon: Timer, label: 'Tests', path: '/mock-tests', colorKey: 'recruitment' as const },
   { icon: ListChecks, label: 'Syllabus', path: '/custom-syllabus', colorKey: 'syllabus' as const },
 ];
 
