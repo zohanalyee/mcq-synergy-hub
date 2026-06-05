@@ -55,7 +55,7 @@ const MockTestDetail = () => {
           <h1 className="text-2xl font-bold text-foreground">Mock test not found</h1>
           <p className="text-muted-foreground">The test you are looking for may have moved.</p>
           <Link to="/mock-tests" className="text-primary font-medium">
-            Browse all competitive exam practice tests →
+            Browse all mock tests →
           </Link>
         </div>
       </Header>
