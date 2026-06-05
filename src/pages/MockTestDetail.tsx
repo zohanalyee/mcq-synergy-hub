@@ -236,6 +236,9 @@ const MockTestDetail = () => {
           <JobTestsTab jobTests={[test]} onReady={setTopStart} />
         </section>
 
+        {/* People also prepare for — contextual internal linking */}
+        <PeopleAlsoPrepareFor current={test} allTests={allTests} />
+
         {/* Related */}
         <RelatedMockTests current={test} allTests={allTests} />
 
