@@ -47,23 +47,23 @@ const CompetitiveExams = () => {
   return (
     <Header>
       <SEOHead
-        title="Competitive Exam Practice Tests | MCQs AI"
-        description="Practice for competitive exams including FPSC, PPSC, NTS, and more with AI-powered mock tests."
+        title="Competitive Exam Mock Tests | MCQSAI"
+        description="Free competitive exam mock tests for FPSC, PPSC, NTS, FIA, ASF and other recruitment exams. Practice with AI-powered, timed mock tests and official syllabus coverage."
       />
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
         <PageBreadcrumb
           items={[
             { title: "Home", href: "/" },
-            { title: "Competitive Exams", href: "/mock-tests", isCurrent: true }
+            { title: "Mock Tests", href: "/mock-tests", isCurrent: true }
           ]}
         />
         <div className="mt-6">
           <PageHeader
-            title="Competitive Exam Practice"
+            title="Mock Tests"
             icon={GraduationCap}
             colorTheme="cyan"
-            tagline="AI-powered mock tests"
-            description="Prepare for Pakistan's top competitive exams — FPSC, PPSC, NTS and more — with realistic timed practice."
+            tagline="AI-powered Competitive Exam Mock Tests"
+            description="AI-powered Competitive Exam Mock Tests for FPSC, PPSC, NTS, FIA, ASF and more."
           />
 
           <ExamFiltersBar

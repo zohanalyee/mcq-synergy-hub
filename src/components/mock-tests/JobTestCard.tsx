@@ -180,7 +180,7 @@ export const JobTestCard = ({
                 className="text-[9px] font-bold uppercase tracking-wide"
                 style={{ color: theme.main }}
               >
-                {isGenerating ? "STARTING..." : "START EXAM"}
+                {isGenerating ? "STARTING..." : "START MOCK TEST"}
               </span>
               {isGenerating && <Loader2 className="h-2.5 w-2.5 animate-spin" style={{ color: theme.main }} />}
             </button>

@@ -12,6 +12,7 @@ import { ExamPageSchema } from "@/components/StructuredData";
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { CustomSyllabusEditor } from "@/components/mock-tests/CustomSyllabusEditor";
 import { RelatedMockTests } from "@/components/mock-tests/RelatedMockTests";
+import { PeopleAlsoPrepareFor } from "@/components/mock-tests/PeopleAlsoPrepareFor";
 import { CustomSyllabusGuideModal } from "@/components/mock-tests/CustomSyllabusGuideModal";
 import { getJobTests, JobTest } from "@/services/jobTestService";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
@@ -55,7 +56,7 @@ const MockTestDetail = () => {
           <h1 className="text-2xl font-bold text-foreground">Mock test not found</h1>
           <p className="text-muted-foreground">The test you are looking for may have moved.</p>
           <Link to="/mock-tests" className="text-primary font-medium">
-            Browse all competitive exam practice tests →
+            Browse all mock tests →
           </Link>
         </div>
       </Header>
@@ -106,7 +107,7 @@ const MockTestDetail = () => {
         provider="MCQsAI"
         breadcrumbs={[
           { name: "Home", url: BASE },
-          { name: "Competitive Exams", url: `${BASE}/mock-tests` },
+          { name: "Mock Tests", url: `${BASE}/mock-tests` },
           { name: test.title, url },
         ]}
         faqs={faqs}
@@ -116,7 +117,7 @@ const MockTestDetail = () => {
         <PageBreadcrumb
           items={[
             { title: "Home", href: "/" },
-            { title: "Competitive Exams", href: "/mock-tests" },
+            { title: "Mock Tests", href: "/mock-tests" },
             { title: test.title, href: `/mock-tests/${canonicalSlug}`, isCurrent: true },
           ]}
         />
@@ -234,6 +235,9 @@ const MockTestDetail = () => {
           </h2>
           <JobTestsTab jobTests={[test]} onReady={setTopStart} />
         </section>
+
+        {/* People also prepare for — contextual internal linking */}
+        <PeopleAlsoPrepareFor current={test} allTests={allTests} />
 
         {/* Related */}
         <RelatedMockTests current={test} allTests={allTests} />

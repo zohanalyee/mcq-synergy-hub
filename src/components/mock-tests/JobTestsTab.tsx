@@ -488,7 +488,7 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
         </motion.div>
       ) : (
         <div className="text-center py-16 bg-secondary/10 rounded-lg">
-          <p className="text-muted-foreground mb-4">No job tests match your search criteria.</p>
+          <p className="text-muted-foreground mb-4">No mock tests match your search criteria.</p>
           <Button onClick={() => {}}>Clear Search</Button>
         </div>
       )}
