@@ -9,7 +9,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { BookOpen, FileText, Users, Briefcase, Target, Clock, PenTool, GraduationCap } from 'lucide-react';
+import { BookOpen, FileText, Users, Briefcase, Target, Timer, PenTool, GraduationCap } from 'lucide-react';
 
 interface NavItem {
   title: string;
@@ -31,7 +31,7 @@ const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }
     { title: 'Subjects', path: '/subjects', icon: <FileText className="w-4 h-4" /> },
     { title: 'MCQs', path: '/mcqs', icon: <PenTool className="w-4 h-4" /> },
     { title: 'Quizzes', path: '/quizzes', icon: <Target className="w-4 h-4" /> },
-    { title: 'Mock Tests', path: '/mock-tests', icon: <Clock className="w-4 h-4" /> },
+    { title: 'Mock Tests', path: '/mock-tests', icon: <Timer className="w-4 h-4" /> },
     { title: 'Custom Syllabus', path: '/custom-syllabus', icon: <GraduationCap className="w-4 h-4" /> },
     { title: 'Scholarships', path: '/scholarships', icon: <Users className="w-4 h-4" /> },
     { title: 'Jobs', path: '/jobs', icon: <Briefcase className="w-4 h-4" /> },

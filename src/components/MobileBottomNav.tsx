@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Briefcase, ListChecks, Shield, LogOut, Settings, User, MessageSquare, Brain, Sun, Moon, Flame, Languages } from 'lucide-react';
+import { Home, BookOpen, Briefcase, ListChecks, Shield, LogOut, Settings, User, MessageSquare, Brain, Sun, Moon, Flame, Languages, Timer } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -28,7 +28,7 @@ const TAB_COLORS = {
 const navItems = [
   { icon: Home, label: 'Home', path: '/', colorKey: 'home' as const },
   { icon: BookOpen, label: 'Subjects', path: '/subjects', colorKey: 'subjects' as const },
-  { icon: Briefcase, label: 'Tests', path: '/mock-tests', colorKey: 'recruitment' as const },
+  { icon: Timer, label: 'Tests', path: '/mock-tests', colorKey: 'recruitment' as const },
   { icon: ListChecks, label: 'Syllabus', path: '/custom-syllabus', colorKey: 'syllabus' as const },
 ];
 

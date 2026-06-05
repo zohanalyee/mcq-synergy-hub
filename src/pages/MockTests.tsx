@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import Header from "@/components/Header";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import PageHeader from "@/components/ui/PageHeader";
-import { GraduationCap } from "lucide-react";
+import { Timer } from "lucide-react";
 import ExamFiltersBar, { ExamFilters } from "@/components/mock-tests/ExamFilters";
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { getJobTests } from "@/services/jobTestService";
@@ -60,7 +60,7 @@ const CompetitiveExams = () => {
         <div className="mt-6">
           <PageHeader
             title="Mock Tests"
-            icon={GraduationCap}
+            icon={Timer}
             colorTheme="cyan"
             tagline="AI-powered Competitive Exam Mock Tests"
             description="AI-powered Competitive Exam Mock Tests for FPSC, PPSC, NTS, FIA, ASF and more."
