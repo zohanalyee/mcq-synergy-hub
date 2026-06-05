@@ -9,7 +9,7 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { BookOpen, FileText, Users, Briefcase, Target, Clock, PenTool, GraduationCap } from 'lucide-react';
+import { BookOpen, FileText, Users, Briefcase, Target, Timer, PenTool, GraduationCap } from 'lucide-react';
 
 interface NavItem {
   title: string;
