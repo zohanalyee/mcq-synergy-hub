@@ -60,7 +60,7 @@ const CompetitiveExams = () => {
         <div className="mt-6">
           <PageHeader
             title="Mock Tests"
-            icon={GraduationCap}
+            icon={Timer}
             colorTheme="cyan"
             tagline="AI-powered Competitive Exam Mock Tests"
             description="AI-powered Competitive Exam Mock Tests for FPSC, PPSC, NTS, FIA, ASF and more."
