@@ -54,16 +54,16 @@ const CompetitiveExams = () => {
         <PageBreadcrumb
           items={[
             { title: "Home", href: "/" },
-            { title: "Competitive Exams", href: "/mock-tests", isCurrent: true }
+            { title: "Mock Tests", href: "/mock-tests", isCurrent: true }
           ]}
         />
         <div className="mt-6">
           <PageHeader
-            title="Competitive Exam Practice"
+            title="Mock Tests"
             icon={GraduationCap}
             colorTheme="cyan"
-            tagline="AI-powered mock tests"
-            description="Prepare for Pakistan's top competitive exams — FPSC, PPSC, NTS and more — with realistic timed practice."
+            tagline="AI-powered Competitive Exam Mock Tests"
+            description="AI-powered Competitive Exam Mock Tests for FPSC, PPSC, NTS, FIA, ASF and more."
           />
 
           <ExamFiltersBar
