@@ -21,7 +21,7 @@ const getIcon = (title: string) => {
     'Subjects': <FileText className="w-4 h-4" />,
     'MCQs': <PenTool className="w-4 h-4" />,
     'Quizzes': <Target className="w-4 h-4" />,
-    'Mock Tests': <Clock className="w-4 h-4" />,
+    'Mock Tests': <Timer className="w-4 h-4" />,
     'Custom Syllabus': <GraduationCap className="w-4 h-4" />,
     'Scholarships': <Users className="w-4 h-4" />,
     'Jobs': <Briefcase className="w-4 h-4" />,
