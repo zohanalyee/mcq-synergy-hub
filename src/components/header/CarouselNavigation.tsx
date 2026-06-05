@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
-import { BookOpen, FileText, Users, Briefcase, Target, Clock, PenTool, GraduationCap, TrendingUp, MessageSquare, Database } from 'lucide-react';
+import { BookOpen, FileText, Users, Briefcase, Target, Timer, PenTool, GraduationCap, TrendingUp, MessageSquare, Database } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
