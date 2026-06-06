@@ -1,0 +1,1 @@
+UPDATE public.navigation_items SET label = 'Mock Tests' WHERE href = '/mock-tests' AND label = 'Recruitment Tests';
