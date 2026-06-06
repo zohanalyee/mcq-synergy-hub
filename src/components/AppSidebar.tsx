@@ -1,6 +1,6 @@
 import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, SidebarRail, SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import { Link } from 'react-router-dom';
-import { Brain, BrainCircuit, Sparkles, Home, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, ClipboardCheck, Bot, BookOpen, BriefcaseBusiness } from 'lucide-react';
+import { Brain, BrainCircuit, Sparkles, Home, FileText, Users, Briefcase, Target, GraduationCap, TrendingUp, MessageSquare, Database, ChevronRight, ClipboardCheck, Bot, BookOpen, BriefcaseBusiness, Timer } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { useNewJobsCount } from '@/hooks/useNewJobsCount';
@@ -33,8 +33,8 @@ const getIcon = (path: string) => {
       icon: <Target size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-red-500" />,
       hoverClass: "hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400"
     },
-    '/recruitment-tests': { 
-      icon: <BriefcaseBusiness size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-600" />,
+    '/mock-tests': { 
+      icon: <Timer size={18} strokeWidth={2.5} absoluteStrokeWidth className="w-4.5 h-4.5 text-orange-600" />,
       hoverClass: "hover:bg-orange-500/10 hover:text-orange-600 dark:hover:text-orange-400"
     },
     '/custom-syllabus': { 
