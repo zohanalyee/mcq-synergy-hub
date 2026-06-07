@@ -89,6 +89,7 @@ const fetchSubjectQuota = async (
     topics: [subjectName],
     limit: quota * 3,
     excludeIds: options.excludeQuestionIds,
+    examCategory: options.examCategory,
   };
   if (options.difficulty !== 'mixed') {
     const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
