@@ -104,8 +104,10 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
     }
 
-    // Order by usage count and created date
+    // Order: featured first, then by quality grade (A/B before low-priority C),
+    // then by usage count and recency.
     query = query.order('is_featured', { ascending: false })
+                 .order('quality_grade', { ascending: true, nullsFirst: false })
                  .order('usage_count', { ascending: false })
                  .order('created_at', { ascending: false });
 
