@@ -67,7 +67,8 @@ export const generateTestFromSyllabus = async (
       timeLimit: options.timeLimit || 30,
       includeExplanations: options.includeExplanations ?? true,
       shuffleQuestions: options.shuffleQuestions ?? true,
-      shuffleOptions: options.shuffleOptions ?? true
+      shuffleOptions: options.shuffleOptions ?? true,
+      examCategory: options.examCategory,
     };
 
     return await generateCustomTest(testOptions);
