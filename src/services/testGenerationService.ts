@@ -23,6 +23,10 @@ export interface TestGenerationOptions {
   syllabusWeights?: Record<string, number>; // legacy, kept for compat
   syllabusData?: { topic: string; percentage: number }[]; // RAW syllabus from job_tests
   excludeQuestionIds?: string[]; // IDs of questions user has already answered
+  // Phase 3 — DB Reuse Safety. Exam category gate (FIA, MDCAT, NTS, ...).
+  // Reuse only questions matching this exam (or uncategorised). Cross-exam
+  // questions are never reused; the deficit is filled by AI generation instead.
+  examCategory?: string;
 }
 
 export interface GeneratedTest {
