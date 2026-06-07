@@ -266,6 +266,7 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
         topics: options.topics,
         limit: options.questionCount * 3,
         excludeIds: options.excludeQuestionIds,
+        examCategory: options.examCategory,
       };
       const crossQuestions = await getQuestionBank(topicOnlyFilters);
       const existingIds = new Set(availableQuestions.map(q => q.id));
