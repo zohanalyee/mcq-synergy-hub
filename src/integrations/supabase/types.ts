@@ -526,6 +526,7 @@ export type Database = {
           department: string | null
           description: string | null
           difficulty: string | null
+          exam_category: string | null
           exam_type: string | null
           exam_year: string | null
           explanation: string | null
@@ -542,6 +543,7 @@ export type Database = {
           meta_keywords: string | null
           meta_title: string | null
           options: Json | null
+          quality_grade: string | null
           question_type: string | null
           questions: Json | null
           reference_material: string | null
@@ -574,6 +576,7 @@ export type Database = {
           department?: string | null
           description?: string | null
           difficulty?: string | null
+          exam_category?: string | null
           exam_type?: string | null
           exam_year?: string | null
           explanation?: string | null
@@ -590,6 +593,7 @@ export type Database = {
           meta_keywords?: string | null
           meta_title?: string | null
           options?: Json | null
+          quality_grade?: string | null
           question_type?: string | null
           questions?: Json | null
           reference_material?: string | null
@@ -622,6 +626,7 @@ export type Database = {
           department?: string | null
           description?: string | null
           difficulty?: string | null
+          exam_category?: string | null
           exam_type?: string | null
           exam_year?: string | null
           explanation?: string | null
@@ -638,6 +643,7 @@ export type Database = {
           meta_keywords?: string | null
           meta_title?: string | null
           options?: Json | null
+          quality_grade?: string | null
           question_type?: string | null
           questions?: Json | null
           reference_material?: string | null
