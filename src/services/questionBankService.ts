@@ -37,6 +37,11 @@ export interface QuestionFilters {
   limit?: number;
   offset?: number;
   excludeIds?: string[]; // IDs to exclude (anti-repetition)
+  // Phase 3 — DB Reuse Safety. When set, a question is only reused if its
+  // exam_category matches the requested exam (or is uncategorised/NULL).
+  // This stops cross-exam leakage (e.g. a Biology MCQ surfacing in an FIA
+  // paper, or a Pakistan Affairs MCQ surfacing in MDCAT).
+  examCategory?: string;
 }
 
 export interface CustomTestSession {
