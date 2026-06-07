@@ -62,7 +62,11 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       .select('*')
       .eq('category', 'mcq')
       .eq('status', 'approved')
-      .eq('question_type', 'mcq');
+      .eq('question_type', 'mcq')
+      // Pakistan Academic Quality Guardrail: only reuse A/B/C graded questions.
+      // D/F (orphaned or structurally broken) are excluded from the reuse pool.
+      // NULL grade is allowed so freshly-generated, not-yet-graded questions still surface.
+      .or('quality_grade.in.(A,B,C),quality_grade.is.null');
 
     // Apply filters - only if arrays have items
     if (filters.subjects?.length && filters.subjects.length > 0) {
