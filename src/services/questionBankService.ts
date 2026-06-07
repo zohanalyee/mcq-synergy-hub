@@ -93,6 +93,15 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       query = query.eq('is_featured', filters.is_featured);
     }
 
+    // Phase 3 — Exam Category Match. Only reuse questions tagged for this exam
+    // OR not yet categorised (NULL). Questions belonging to a DIFFERENT exam are
+    // never reused, preventing cross-exam contamination. When no exam category
+    // is requested, this gate is skipped (subject/topic/difficulty still apply).
+    if (filters.examCategory) {
+      const ec = filters.examCategory.replace(/[(),]/g, '');
+      query = query.or(`exam_category.eq.${ec},exam_category.is.null`);
+    }
+
     // Anti-repetition: exclude already-answered question IDs
     if (filters.excludeIds?.length && filters.excludeIds.length > 0) {
       // Supabase PostgREST supports .not('id', 'in', '(id1,id2,...)')
