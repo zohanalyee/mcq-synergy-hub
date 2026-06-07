@@ -44,3 +44,39 @@ export const EXCLUDED_GRADES: QualityGrade[] = ['D', 'F'];
 
 export const isReusableGrade = (grade?: string | null): boolean =>
   grade == null || REUSABLE_GRADES.includes(grade as QualityGrade);
+
+// Phase 3 — DB Reuse Safety helper.
+// Infer the exam category for a given exam/job-test context (organisation,
+// title, or department text). Used to scope DB reuse so a question is only
+// reused inside the same exam family — never leaked across exams.
+// Returns undefined when no confident match is found (gate is then skipped
+// and subject/topic/difficulty matching still protects relevance).
+const EXAM_KEYWORDS: Record<ExamCategory, RegExp> = {
+  FIA: /\bfia\b|federal investigation/i,
+  ASF: /\basf\b|airport security/i,
+  FPSC: /\bfpsc\b|federal public service|\bcss\b screening/i,
+  PPSC: /\bppsc\b|punjab public service/i,
+  NTS: /\bnts\b|national testing/i,
+  STS: /\bsts\b|siba testing/i,
+  SPSC: /\bspsc\b|sindh public service/i,
+  MDCAT: /\bmdcat\b|medical college/i,
+  ECAT: /\becat\b|engineering college/i,
+  CSS: /\bcss\b|central superior/i,
+  PMS: /\bpms\b|provincial management/i,
+  BOARDS: /\bboard\b|matric|inter(mediate)?|\bf\.?sc\b|9th|10th|11th|12th/i,
+  UNI_ENTRY: /entry test|\bnust\b|\bnums\b|comsats|university/i,
+};
+
+export const inferExamCategory = (...parts: (string | null | undefined)[]): ExamCategory | undefined => {
+  const blob = parts.filter(Boolean).join(' ');
+  if (!blob.trim()) return undefined;
+  // Check specific exams before generic BOARDS/UNI_ENTRY.
+  const ordered: ExamCategory[] = [
+    'FIA', 'ASF', 'MDCAT', 'ECAT', 'PPSC', 'FPSC', 'SPSC', 'STS', 'NTS', 'CSS', 'PMS', 'UNI_ENTRY', 'BOARDS',
+  ];
+  for (const cat of ordered) {
+    if (EXAM_KEYWORDS[cat].test(blob)) return cat;
+  }
+  return undefined;
+};
+

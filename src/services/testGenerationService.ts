@@ -23,6 +23,10 @@ export interface TestGenerationOptions {
   syllabusWeights?: Record<string, number>; // legacy, kept for compat
   syllabusData?: { topic: string; percentage: number }[]; // RAW syllabus from job_tests
   excludeQuestionIds?: string[]; // IDs of questions user has already answered
+  // Phase 3 — DB Reuse Safety. Exam category gate (FIA, MDCAT, NTS, ...).
+  // Reuse only questions matching this exam (or uncategorised). Cross-exam
+  // questions are never reused; the deficit is filled by AI generation instead.
+  examCategory?: string;
 }
 
 export interface GeneratedTest {
@@ -63,7 +67,8 @@ export const generateTestFromSyllabus = async (
       timeLimit: options.timeLimit || 30,
       includeExplanations: options.includeExplanations ?? true,
       shuffleQuestions: options.shuffleQuestions ?? true,
-      shuffleOptions: options.shuffleOptions ?? true
+      shuffleOptions: options.shuffleOptions ?? true,
+      examCategory: options.examCategory,
     };
 
     return await generateCustomTest(testOptions);
@@ -85,6 +90,7 @@ const fetchSubjectQuota = async (
     topics: [subjectName],
     limit: quota * 3,
     excludeIds: options.excludeQuestionIds,
+    examCategory: options.examCategory,
   };
   if (options.difficulty !== 'mixed') {
     const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
@@ -98,6 +104,7 @@ const fetchSubjectQuota = async (
       subjects: [subjectName],
       limit: quota * 3,
       excludeIds: options.excludeQuestionIds,
+      examCategory: options.examCategory,
     };
     if (options.difficulty !== 'mixed') {
       const difficultyMap = { 'easy': ['Easy'], 'medium': ['Medium'], 'hard': ['Hard'] };
@@ -231,6 +238,7 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
       subtopics: options.subtopics,
       limit: options.questionCount * 3,
       excludeIds: options.excludeQuestionIds,
+      examCategory: options.examCategory,
     };
 
     if (options.difficulty !== 'mixed') {
@@ -259,6 +267,7 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
         topics: options.topics,
         limit: options.questionCount * 3,
         excludeIds: options.excludeQuestionIds,
+        examCategory: options.examCategory,
       };
       const crossQuestions = await getQuestionBank(topicOnlyFilters);
       const existingIds = new Set(availableQuestions.map(q => q.id));
@@ -273,6 +282,7 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
         subjects: options.subjects,
         limit: options.questionCount * 3,
         excludeIds: options.excludeQuestionIds,
+        examCategory: options.examCategory,
       };
       const subjectQuestions = await getQuestionBank(subjectOnlyFilters);
       const existingIds = new Set(availableQuestions.map(q => q.id));
