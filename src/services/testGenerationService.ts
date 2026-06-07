@@ -237,6 +237,7 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
       subtopics: options.subtopics,
       limit: options.questionCount * 3,
       excludeIds: options.excludeQuestionIds,
+      examCategory: options.examCategory,
     };
 
     if (options.difficulty !== 'mixed') {
