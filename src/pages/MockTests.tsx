@@ -47,8 +47,8 @@ const CompetitiveExams = () => {
   return (
     <Header>
       <SEOHead
-        title="Competitive Exam Mock Tests | MCQSAI"
-        description="Free competitive exam mock tests for FPSC, PPSC, NTS, FIA, ASF and other recruitment exams. Practice with AI-powered, timed mock tests and official syllabus coverage."
+        title="Mock Tests | Free Online Exam Preparation | MCQSAI"
+        description="Free mock tests for FPSC, PPSC, NTS, FIA, ASF and more. Practice with AI-powered, timed mock tests and official syllabus coverage."
       />
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">
         <PageBreadcrumb
@@ -62,8 +62,8 @@ const CompetitiveExams = () => {
             title="Mock Tests"
             icon={Timer}
             colorTheme="cyan"
-            tagline="AI-powered Competitive Exam Mock Tests"
-            description="AI-powered Competitive Exam Mock Tests for FPSC, PPSC, NTS, FIA, ASF and more."
+            tagline="AI-powered Mock Tests"
+            description="AI-powered Mock Tests for FPSC, PPSC, NTS, FIA, ASF and more."
           />
 
           <ExamFiltersBar
