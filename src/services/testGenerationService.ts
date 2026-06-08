@@ -338,6 +338,13 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
   };
 
   console.log(`✅ Test generated: ${selectedQuestions.length} from bank, deficit: ${deficit}`);
+
+  // Phase 5 — Question Freshness rotation: record that these bank questions were
+  // served so they rotate to the back of the pool next time. Fire-and-forget.
+  if (selectedQuestions.length > 0) {
+    void recordQuestionUsage(selectedQuestions);
+  }
+
   return generatedTest;
 };
 
