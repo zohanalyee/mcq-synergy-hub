@@ -172,21 +172,20 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
 // then naturally de-prioritises these questions in future papers, so popular
 // questions stop being reused repeatedly. Fire-and-forget; never blocks the
 // test flow if the update fails.
-export const recordQuestionUsage = async (questions: { id: string; usage_count?: number }[]): Promise<void> => {
+export const recordQuestionUsage = async (questions: { id: string }[]): Promise<void> => {
   if (!questions?.length) return;
   try {
-    const now = new Date().toISOString();
-    await Promise.all(
-      questions
-        .filter(q => q?.id)
-        .map(q =>
-          supabase
-            .from('content_items')
-            .update({ usage_count: (q.usage_count || 0) + 1, last_used_at: now })
-            .eq('id', q.id)
-        )
-    );
-    console.log(`🔄 Recorded usage for ${questions.length} questions (freshness rotation)`);
+    const ids = questions.filter(q => q?.id).map(q => q.id);
+    if (ids.length === 0) return;
+    // Uses a SECURITY DEFINER RPC so usage is recorded for ALL users (students
+    // can't UPDATE content_items directly under RLS). Bumps usage_count and
+    // stamps last_used_at server-side.
+    const { error } = await supabase.rpc('record_question_usage', { question_ids: ids });
+    if (error) {
+      console.warn("Could not record question usage (non-fatal):", error.message);
+      return;
+    }
+    console.log(`🔄 Recorded usage for ${ids.length} questions (freshness rotation)`);
   } catch (error) {
     console.warn("Could not record question usage (non-fatal):", error);
   }
