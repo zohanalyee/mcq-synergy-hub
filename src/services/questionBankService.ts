@@ -166,6 +166,33 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
   }
 };
 
+// Phase 5 — Question Freshness rotation. Records that a set of questions was
+// served in a paper by bumping usage_count and stamping last_used_at. The
+// freshness ordering in getQuestionBank (usage_count ASC, last_used_at ASC)
+// then naturally de-prioritises these questions in future papers, so popular
+// questions stop being reused repeatedly. Fire-and-forget; never blocks the
+// test flow if the update fails.
+export const recordQuestionUsage = async (questions: { id: string; usage_count?: number }[]): Promise<void> => {
+  if (!questions?.length) return;
+  try {
+    const now = new Date().toISOString();
+    await Promise.all(
+      questions
+        .filter(q => q?.id)
+        .map(q =>
+          supabase
+            .from('content_items')
+            .update({ usage_count: (q.usage_count || 0) + 1, last_used_at: now })
+            .eq('id', q.id)
+        )
+    );
+    console.log(`🔄 Recorded usage for ${questions.length} questions (freshness rotation)`);
+  } catch (error) {
+    console.warn("Could not record question usage (non-fatal):", error);
+  }
+};
+
+
 // Helper: Fetch previously answered question IDs for a user
 export const getUserAnsweredQuestionIds = async (userId: string): Promise<string[]> => {
   try {
