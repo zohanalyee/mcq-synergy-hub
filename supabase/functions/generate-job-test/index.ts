@@ -367,7 +367,7 @@ async function generateForSection(
     console.log(`[BATCH ${batch + 1}] Parsed ${parsed.length} questions from response`);
 
     for (const q of parsed) {
-      if (accepted.length >= target) break;
+      if (accepted.length >= deficit) break;
       if (!isStructurallyValid(q)) {
         rejectionReasons["invalid_structure"] = (rejectionReasons["invalid_structure"] || 0) + 1;
         continue;
