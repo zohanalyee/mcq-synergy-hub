@@ -119,7 +119,8 @@ interface SampleQ {
 async function callGemini(prompt: string): Promise<string> {
   console.log(`[AI] Calling auto-switcher (Gemini → Lovable Gateway fallback)...`);
   try {
-    const { text, provider, cost } = await callAIWithAutoSwitch('', prompt, {
+    // Phase 7 — pass Pakistan grounding as the systemInstruction.
+    const { text, provider, cost } = await callAIWithAutoSwitch(PAKISTAN_GROUNDING_SYSTEM, prompt, {
       temperature: 0.8,
       maxOutputTokens: 8000,
     });
@@ -136,6 +137,7 @@ function buildPrompt(
   section: SyllabusSection,
   samples: SampleQ[],
   count: number,
+  examLabel?: string,
 ): string {
   const sampleBlock =
     samples.length > 0
@@ -156,8 +158,13 @@ function buildPrompt(
       ? `\nFORBIDDEN — DO NOT INCLUDE ANY of these:\n${section.forbidden.map((f) => `❌ ${f}`).join("\n")}\n`
       : "";
 
+  const examLine = examLabel
+    ? `TARGET EXAM: ${examLabel} — a Pakistani recruitment exam. Match its real syllabus and difficulty.`
+    : `TARGET EXAM: Pakistani recruitment exam (FPSC/PPSC/NTS standard).`;
+
   return `You are generating MCQ questions for a Pakistani competitive exam (FPSC/PPSC/NTS standard).
 
+${examLine}
 SUBJECT: ${section.subject}
 COUNT: ${count}
 DIFFICULTY MIX: ~30% easy, 50% medium, 20% hard
@@ -169,6 +176,7 @@ HARD RULES:
 4. correct_answer must be one of "A", "B", "C", "D".
 5. Provide a concise explanation.
 6. No duplicates.
+7. Pakistan context only — never US SAT, UK GCSE, or foreign curriculum.
 
 Return ONLY a JSON array (no markdown), exactly this shape:
 [
@@ -182,6 +190,7 @@ Return ONLY a JSON array (no markdown), exactly this shape:
   }
 ]`;
 }
+
 
 function parseQuestions(text: string): any[] {
   let cleaned = text.trim();
