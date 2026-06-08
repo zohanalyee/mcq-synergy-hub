@@ -46,6 +46,59 @@ const BATCH_SIZE = 10;
 const DELAY_BETWEEN_BATCHES_MS = 2000;
 const DAILY_LOG_CAP = 200; // per job_test_id
 
+// Phase 7 — Pakistan Grounding Upgrade.
+// Explicit system instruction so the AI always reasons about Pakistan's
+// federal/provincial recruitment exams — never US SAT, UK GCSE, or any
+// foreign curriculum. Used as the Gemini systemInstruction for every batch.
+const PAKISTAN_GROUNDING_SYSTEM = `You are an expert question setter for PAKISTAN recruitment and competitive examinations.
+
+You MUST ground every question in the Pakistani context: Pakistani laws, institutions, geography, history, current affairs, Islamiat, Pakistan Studies, and the official syllabi of Pakistani testing bodies.
+
+You understand the style, difficulty, and subject coverage of these Pakistani recruitment exams:
+- FIA (Federal Investigation Agency)
+- ASF (Airport Security Force)
+- ANF (Anti-Narcotics Force)
+- NAB (National Accountability Bureau)
+- FBR (Federal Board of Revenue)
+- Sindh High Court (SHC) recruitment tests
+- BPSC (Balochistan Public Service Commission)
+- STS (Sindh Testing Service)
+- SPSC (Sindh Public Service Commission)
+- PTS (Pakistan Testing Service)
+- plus FPSC, PPSC, NTS and similar national/provincial bodies.
+
+STRICT GROUNDING RULES:
+1. NEVER produce questions based on US SAT, UK GCSE, A-Levels, or any non-Pakistani curriculum.
+2. Use Pakistani spellings, currency (PKR), measurement conventions, and local examples.
+3. For GK/Current Affairs/Pakistan Studies, prioritize Pakistan-specific facts.
+4. Match the tone and rigor of official Pakistani recruitment papers.`;
+
+// Map a job-test context to the closest known Pakistani exam body for the prompt.
+const JOB_EXAM_KEYWORDS: { label: string; re: RegExp }[] = [
+  { label: "FIA (Federal Investigation Agency)", re: /\bfia\b|federal investigation/i },
+  { label: "ASF (Airport Security Force)", re: /\basf\b|airport security/i },
+  { label: "ANF (Anti-Narcotics Force)", re: /\banf\b|anti[- ]?narcotics/i },
+  { label: "NAB (National Accountability Bureau)", re: /\bnab\b|national accountability/i },
+  { label: "FBR (Federal Board of Revenue)", re: /\bfbr\b|federal board of revenue|inland revenue/i },
+  { label: "Sindh High Court", re: /sindh high court|\bshc\b/i },
+  { label: "BPSC (Balochistan Public Service Commission)", re: /\bbpsc\b|balochistan public service/i },
+  { label: "SPSC (Sindh Public Service Commission)", re: /\bspsc\b|sindh public service/i },
+  { label: "STS (Sindh Testing Service)", re: /\bsts\b|sindh testing/i },
+  { label: "PTS (Pakistan Testing Service)", re: /\bpts\b|pakistan testing/i },
+  { label: "FPSC (Federal Public Service Commission)", re: /\bfpsc\b|federal public service/i },
+  { label: "PPSC (Punjab Public Service Commission)", re: /\bppsc\b|punjab public service/i },
+  { label: "NTS (National Testing Service)", re: /\bnts\b|national testing/i },
+];
+
+function inferJobExam(...parts: (string | null | undefined)[]): string | undefined {
+  const blob = parts.filter(Boolean).join(" ");
+  if (!blob.trim()) return undefined;
+  for (const { label, re } of JOB_EXAM_KEYWORDS) {
+    if (re.test(blob)) return label;
+  }
+  return undefined;
+}
+
 interface SyllabusSection {
   subject: string;
   percentage?: number;
@@ -66,7 +119,8 @@ interface SampleQ {
 async function callGemini(prompt: string): Promise<string> {
   console.log(`[AI] Calling auto-switcher (Gemini → Lovable Gateway fallback)...`);
   try {
-    const { text, provider, cost } = await callAIWithAutoSwitch('', prompt, {
+    // Phase 7 — pass Pakistan grounding as the systemInstruction.
+    const { text, provider, cost } = await callAIWithAutoSwitch(PAKISTAN_GROUNDING_SYSTEM, prompt, {
       temperature: 0.8,
       maxOutputTokens: 8000,
     });
@@ -83,6 +137,7 @@ function buildPrompt(
   section: SyllabusSection,
   samples: SampleQ[],
   count: number,
+  examLabel?: string,
 ): string {
   const sampleBlock =
     samples.length > 0
@@ -103,8 +158,13 @@ function buildPrompt(
       ? `\nFORBIDDEN — DO NOT INCLUDE ANY of these:\n${section.forbidden.map((f) => `❌ ${f}`).join("\n")}\n`
       : "";
 
+  const examLine = examLabel
+    ? `TARGET EXAM: ${examLabel} — a Pakistani recruitment exam. Match its real syllabus and difficulty.`
+    : `TARGET EXAM: Pakistani recruitment exam (FPSC/PPSC/NTS standard).`;
+
   return `You are generating MCQ questions for a Pakistani competitive exam (FPSC/PPSC/NTS standard).
 
+${examLine}
 SUBJECT: ${section.subject}
 COUNT: ${count}
 DIFFICULTY MIX: ~30% easy, 50% medium, 20% hard
@@ -116,6 +176,7 @@ HARD RULES:
 4. correct_answer must be one of "A", "B", "C", "D".
 5. Provide a concise explanation.
 6. No duplicates.
+7. Pakistan context only — never US SAT, UK GCSE, or foreign curriculum.
 
 Return ONLY a JSON array (no markdown), exactly this shape:
 [
@@ -129,6 +190,7 @@ Return ONLY a JSON array (no markdown), exactly this shape:
   }
 ]`;
 }
+
 
 function parseQuestions(text: string): any[] {
   let cleaned = text.trim();
@@ -211,6 +273,7 @@ async function generateForSection(
   section: SyllabusSection,
   samples: SampleQ[],
   batchNumber: number,
+  examLabel?: string,
 ) {
   console.log(`\n${"=".repeat(60)}`);
   console.log(`[GENERATE] Subject: ${section.subject}`);
@@ -219,18 +282,69 @@ async function generateForSection(
 
   const startedAt = Date.now();
   const target = section.question_count || 10;
+
+  // ===== DB PRECHECK (reuse-first) =====
+  // Count approved, quality-graded, exam-compatible questions that already
+  // exist for this job test + subject. Reuse those before spending any AI
+  // credits — only the deficit is generated. Syllabus weightage is preserved
+  // because `target` still comes from the official section.question_count.
+  let existingApproved = 0;
+  try {
+    const { count } = await supabase
+      .from("job_test_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("job_test_id", jobTestId)
+      .eq("subject", section.subject)
+      .eq("admin_approved", true);
+    existingApproved = count ?? 0;
+  } catch (e) {
+    console.warn(`[PRECHECK] count failed for ${section.subject}:`, (e as Error).message);
+  }
+
+  const deficit = Math.max(0, target - existingApproved);
+  console.log(`[PRECHECK] ${section.subject}: existing_approved=${existingApproved} target=${target} deficit=${deficit}`);
+
+  if (deficit === 0) {
+    // Enough relevant questions already exist — reuse, skip AI entirely.
+    await supabase.from("job_test_generation_logs").insert({
+      job_test_id: jobTestId,
+      subject: section.subject,
+      requested_count: target,
+      difficulty: "mixed",
+      generated_count: 0,
+      accepted_count: 0,
+      rejected_count: 0,
+      rejection_reasons: { reused_from_db: existingApproved },
+      api_calls_made: 0,
+      generation_time_seconds: 0,
+      status: "success",
+      error_message: null,
+    });
+    console.log(`[PRECHECK] ✅ ${section.subject}: reusing ${existingApproved} DB questions, AI skipped`);
+    return {
+      subject: section.subject,
+      requested: target,
+      generated: 0,
+      accepted: 0,
+      inserted: 0,
+      reused: existingApproved,
+      status: "reused",
+    };
+  }
+
   const accepted: any[] = [];
   const rejectionReasons: Record<string, number> = {};
   let apiCalls = 0;
   let generated = 0;
   let stopEarly = false;
 
-  for (let batch = 0; batch < MAX_BATCHES && accepted.length < target && !stopEarly; batch++) {
-    const remaining = target - accepted.length;
+  for (let batch = 0; batch < MAX_BATCHES && accepted.length < deficit && !stopEarly; batch++) {
+    const remaining = deficit - accepted.length;
     const want = Math.min(BATCH_SIZE, remaining);
-    const prompt = buildPrompt(section, samples, want);
+    const prompt = buildPrompt(section, samples, want, examLabel);
 
     console.log(`[BATCH ${batch + 1}/${MAX_BATCHES}] Requesting ${want} questions...`);
+
 
     let raw = "";
     try {
@@ -253,7 +367,7 @@ async function generateForSection(
     console.log(`[BATCH ${batch + 1}] Parsed ${parsed.length} questions from response`);
 
     for (const q of parsed) {
-      if (accepted.length >= target) break;
+      if (accepted.length >= deficit) break;
       if (!isStructurallyValid(q)) {
         rejectionReasons["invalid_structure"] = (rejectionReasons["invalid_structure"] || 0) + 1;
         continue;
@@ -280,9 +394,9 @@ async function generateForSection(
       });
     }
 
-    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${target}`);
+    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${deficit}`);
 
-    if (batch < MAX_BATCHES - 1 && accepted.length < target && !stopEarly) {
+    if (batch < MAX_BATCHES - 1 && accepted.length < deficit && !stopEarly) {
       await new Promise((r) => setTimeout(r, DELAY_BETWEEN_BATCHES_MS));
     }
   }
@@ -305,19 +419,19 @@ async function generateForSection(
   const status =
     accepted.length === 0
       ? "failed"
-      : accepted.length < target
+      : accepted.length < deficit
         ? "partial"
         : "success";
 
   await supabase.from("job_test_generation_logs").insert({
     job_test_id: jobTestId,
     subject: section.subject,
-    requested_count: target,
+    requested_count: deficit,
     difficulty: "mixed",
     generated_count: generated,
     accepted_count: accepted.length,
     rejected_count: generated - accepted.length,
-    rejection_reasons: rejectionReasons,
+    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved },
     api_calls_made: apiCalls,
     generation_time_seconds: elapsed,
     status,
@@ -326,7 +440,7 @@ async function generateForSection(
   });
 
   console.log(`\n[COMPLETE] ${section.subject}`);
-  console.log(`  status=${status} requested=${target} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
+  console.log(`  status=${status} target=${target} reused=${existingApproved} deficit=${deficit} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
   if (Object.keys(rejectionReasons).length > 0) {
     console.log(`  rejections=${JSON.stringify(rejectionReasons)}`);
   }
@@ -337,6 +451,7 @@ async function generateForSection(
     generated,
     accepted: accepted.length,
     inserted: inserted.length,
+    reused: existingApproved,
     status,
   };
 }
@@ -423,6 +538,9 @@ Deno.serve(async (req) => {
 
     const samplesAll = (def.sample_questions || {}) as Record<string, SampleQ[]>;
     const batchNumber = Math.floor(Date.now() / 1000);
+    // Phase 7 — infer the Pakistani exam body from the definition for grounding.
+    const examLabel = inferJobExam(def.job_title, def.department);
+    console.log(`[GROUNDING] exam=${examLabel || "(generic Pakistan recruitment)"}`);
     const results = [];
 
     for (const section of targetSections) {
@@ -433,6 +551,7 @@ Deno.serve(async (req) => {
         section,
         samples,
         batchNumber,
+        examLabel,
       );
       results.push(r);
       // brief pause between sections
@@ -440,15 +559,18 @@ Deno.serve(async (req) => {
     }
 
     const totalAccepted = results.reduce((s, r) => s + r.accepted, 0);
-    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} sections=${results.length}`);
-    console.log(`  per-section: ${JSON.stringify(results.map(r => ({ s: r.subject, a: r.accepted, st: r.status })))}`);
+    const totalReused = results.reduce((s, r) => s + (r.reused || 0), 0);
+    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} sections=${results.length}`);
+    console.log(`  per-section: ${JSON.stringify(results.map(r => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, st: r.status })))}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         job_test_id,
+        exam_grounding: examLabel || "generic_pakistan_recruitment",
         results,
         total_accepted: totalAccepted,
+        total_reused: totalReused,
         needs_review: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
