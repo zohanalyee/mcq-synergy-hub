@@ -118,11 +118,18 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
     }
 
-    // Order: featured first, then by quality grade (A/B before low-priority C),
-    // then by usage count and recency.
+    // Phase 5 — Question Freshness rotation.
+    // Order: featured first, then quality grade (A/B before low-priority C),
+    // then LEAST-USED first (usage_count ASC) and OLDEST-USED first
+    // (last_used_at ASC, never-used surfacing first via nullsFirst) so popular
+    // questions stop dominating and students see fresher papers. A wide
+    // candidate pool (limit * 3) is fetched then Fisher-Yates shuffled upstream,
+    // so this ordering biases selection toward fresh questions without making
+    // papers deterministic.
     query = query.order('is_featured', { ascending: false })
                  .order('quality_grade', { ascending: true, nullsFirst: false })
-                 .order('usage_count', { ascending: false })
+                 .order('usage_count', { ascending: true, nullsFirst: true })
+                 .order('last_used_at', { ascending: true, nullsFirst: true })
                  .order('created_at', { ascending: false });
 
     const { data, error } = await query;
