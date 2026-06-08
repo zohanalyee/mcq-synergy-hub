@@ -273,6 +273,7 @@ async function generateForSection(
   section: SyllabusSection,
   samples: SampleQ[],
   batchNumber: number,
+  examLabel?: string,
 ) {
   console.log(`\n${"=".repeat(60)}`);
   console.log(`[GENERATE] Subject: ${section.subject}`);
@@ -281,18 +282,69 @@ async function generateForSection(
 
   const startedAt = Date.now();
   const target = section.question_count || 10;
+
+  // ===== DB PRECHECK (reuse-first) =====
+  // Count approved, quality-graded, exam-compatible questions that already
+  // exist for this job test + subject. Reuse those before spending any AI
+  // credits — only the deficit is generated. Syllabus weightage is preserved
+  // because `target` still comes from the official section.question_count.
+  let existingApproved = 0;
+  try {
+    const { count } = await supabase
+      .from("job_test_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("job_test_id", jobTestId)
+      .eq("subject", section.subject)
+      .eq("admin_approved", true);
+    existingApproved = count ?? 0;
+  } catch (e) {
+    console.warn(`[PRECHECK] count failed for ${section.subject}:`, (e as Error).message);
+  }
+
+  const deficit = Math.max(0, target - existingApproved);
+  console.log(`[PRECHECK] ${section.subject}: existing_approved=${existingApproved} target=${target} deficit=${deficit}`);
+
+  if (deficit === 0) {
+    // Enough relevant questions already exist — reuse, skip AI entirely.
+    await supabase.from("job_test_generation_logs").insert({
+      job_test_id: jobTestId,
+      subject: section.subject,
+      requested_count: target,
+      difficulty: "mixed",
+      generated_count: 0,
+      accepted_count: 0,
+      rejected_count: 0,
+      rejection_reasons: { reused_from_db: existingApproved },
+      api_calls_made: 0,
+      generation_time_seconds: 0,
+      status: "success",
+      error_message: null,
+    });
+    console.log(`[PRECHECK] ✅ ${section.subject}: reusing ${existingApproved} DB questions, AI skipped`);
+    return {
+      subject: section.subject,
+      requested: target,
+      generated: 0,
+      accepted: 0,
+      inserted: 0,
+      reused: existingApproved,
+      status: "reused",
+    };
+  }
+
   const accepted: any[] = [];
   const rejectionReasons: Record<string, number> = {};
   let apiCalls = 0;
   let generated = 0;
   let stopEarly = false;
 
-  for (let batch = 0; batch < MAX_BATCHES && accepted.length < target && !stopEarly; batch++) {
-    const remaining = target - accepted.length;
+  for (let batch = 0; batch < MAX_BATCHES && accepted.length < deficit && !stopEarly; batch++) {
+    const remaining = deficit - accepted.length;
     const want = Math.min(BATCH_SIZE, remaining);
-    const prompt = buildPrompt(section, samples, want);
+    const prompt = buildPrompt(section, samples, want, examLabel);
 
     console.log(`[BATCH ${batch + 1}/${MAX_BATCHES}] Requesting ${want} questions...`);
+
 
     let raw = "";
     try {
