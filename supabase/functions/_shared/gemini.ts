@@ -98,24 +98,30 @@ export async function callGeminiText(
   const model = config.model || DEFAULT_MODEL;
   const url = `${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`;
 
-  const contents: any[] = [];
+  // Phase 6 — use Gemini's native systemInstruction field for grounding instead
+  // of faking a user/model turn. This improves instruction adherence (Pakistan
+  // syllabus grounding, exam style) AND trims the boilerplate "Understood..."
+  // round-trip tokens. Quality is preserved/improved — not reduced.
+  const contents: any[] = [
+    { role: "user", parts: [{ text: userPrompt }] },
+  ];
+
+  const requestBody: any = {
+    contents,
+    generationConfig: {
+      temperature: config.temperature ?? 0.7,
+      maxOutputTokens: config.maxOutputTokens ?? 8192,
+    },
+    safetySettings: DEFAULT_SAFETY_SETTINGS,
+  };
   if (systemPrompt) {
-    contents.push({ role: "user", parts: [{ text: systemPrompt }] });
-    contents.push({ role: "model", parts: [{ text: "Understood. I will follow these instructions." }] });
+    requestBody.systemInstruction = { parts: [{ text: systemPrompt }] };
   }
-  contents.push({ role: "user", parts: [{ text: userPrompt }] });
 
   const response = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents,
-      generationConfig: {
-        temperature: config.temperature ?? 0.7,
-        maxOutputTokens: config.maxOutputTokens ?? 8192,
-      },
-      safetySettings: DEFAULT_SAFETY_SETTINGS,
-    }),
+    body: JSON.stringify(requestBody),
   });
 
   if (!response.ok) {

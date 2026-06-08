@@ -118,11 +118,18 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       query = query.range(filters.offset, filters.offset + (filters.limit || 10) - 1);
     }
 
-    // Order: featured first, then by quality grade (A/B before low-priority C),
-    // then by usage count and recency.
+    // Phase 5 — Question Freshness rotation.
+    // Order: featured first, then quality grade (A/B before low-priority C),
+    // then LEAST-USED first (usage_count ASC) and OLDEST-USED first
+    // (last_used_at ASC, never-used surfacing first via nullsFirst) so popular
+    // questions stop dominating and students see fresher papers. A wide
+    // candidate pool (limit * 3) is fetched then Fisher-Yates shuffled upstream,
+    // so this ordering biases selection toward fresh questions without making
+    // papers deterministic.
     query = query.order('is_featured', { ascending: false })
                  .order('quality_grade', { ascending: true, nullsFirst: false })
-                 .order('usage_count', { ascending: false })
+                 .order('usage_count', { ascending: true, nullsFirst: true })
+                 .order('last_used_at', { ascending: true, nullsFirst: true })
                  .order('created_at', { ascending: false });
 
     const { data, error } = await query;
@@ -158,6 +165,33 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
     return [];
   }
 };
+
+// Phase 5 — Question Freshness rotation. Records that a set of questions was
+// served in a paper by bumping usage_count and stamping last_used_at. The
+// freshness ordering in getQuestionBank (usage_count ASC, last_used_at ASC)
+// then naturally de-prioritises these questions in future papers, so popular
+// questions stop being reused repeatedly. Fire-and-forget; never blocks the
+// test flow if the update fails.
+export const recordQuestionUsage = async (questions: { id: string; usage_count?: number }[]): Promise<void> => {
+  if (!questions?.length) return;
+  try {
+    const now = new Date().toISOString();
+    await Promise.all(
+      questions
+        .filter(q => q?.id)
+        .map(q =>
+          supabase
+            .from('content_items')
+            .update({ usage_count: (q.usage_count || 0) + 1, last_used_at: now })
+            .eq('id', q.id)
+        )
+    );
+    console.log(`🔄 Recorded usage for ${questions.length} questions (freshness rotation)`);
+  } catch (error) {
+    console.warn("Could not record question usage (non-fatal):", error);
+  }
+};
+
 
 // Helper: Fetch previously answered question IDs for a user
 export const getUserAnsweredQuestionIds = async (userId: string): Promise<string[]> => {
