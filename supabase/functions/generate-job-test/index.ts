@@ -394,9 +394,9 @@ async function generateForSection(
       });
     }
 
-    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${target}`);
+    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${deficit}`);
 
-    if (batch < MAX_BATCHES - 1 && accepted.length < target && !stopEarly) {
+    if (batch < MAX_BATCHES - 1 && accepted.length < deficit && !stopEarly) {
       await new Promise((r) => setTimeout(r, DELAY_BETWEEN_BATCHES_MS));
     }
   }
