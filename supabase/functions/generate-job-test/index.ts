@@ -419,19 +419,19 @@ async function generateForSection(
   const status =
     accepted.length === 0
       ? "failed"
-      : accepted.length < target
+      : accepted.length < deficit
         ? "partial"
         : "success";
 
   await supabase.from("job_test_generation_logs").insert({
     job_test_id: jobTestId,
     subject: section.subject,
-    requested_count: target,
+    requested_count: deficit,
     difficulty: "mixed",
     generated_count: generated,
     accepted_count: accepted.length,
     rejected_count: generated - accepted.length,
-    rejection_reasons: rejectionReasons,
+    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved },
     api_calls_made: apiCalls,
     generation_time_seconds: elapsed,
     status,
@@ -440,7 +440,7 @@ async function generateForSection(
   });
 
   console.log(`\n[COMPLETE] ${section.subject}`);
-  console.log(`  status=${status} requested=${target} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
+  console.log(`  status=${status} target=${target} reused=${existingApproved} deficit=${deficit} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
   if (Object.keys(rejectionReasons).length > 0) {
     console.log(`  rejections=${JSON.stringify(rejectionReasons)}`);
   }
@@ -451,6 +451,7 @@ async function generateForSection(
     generated,
     accepted: accepted.length,
     inserted: inserted.length,
+    reused: existingApproved,
     status,
   };
 }
