@@ -1,4 +1,4 @@
-import { getQuestionBank, QuestionFilters, QuestionBankItem } from './questionBankService';
+import { getQuestionBank, recordQuestionUsage, QuestionFilters, QuestionBankItem } from './questionBankService';
 
 // Fisher-Yates shuffle for true randomization
 const fisherYatesShuffle = <T,>(array: T[]): T[] => {
