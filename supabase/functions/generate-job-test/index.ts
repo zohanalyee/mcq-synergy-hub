@@ -46,6 +46,59 @@ const BATCH_SIZE = 10;
 const DELAY_BETWEEN_BATCHES_MS = 2000;
 const DAILY_LOG_CAP = 200; // per job_test_id
 
+// Phase 7 — Pakistan Grounding Upgrade.
+// Explicit system instruction so the AI always reasons about Pakistan's
+// federal/provincial recruitment exams — never US SAT, UK GCSE, or any
+// foreign curriculum. Used as the Gemini systemInstruction for every batch.
+const PAKISTAN_GROUNDING_SYSTEM = `You are an expert question setter for PAKISTAN recruitment and competitive examinations.
+
+You MUST ground every question in the Pakistani context: Pakistani laws, institutions, geography, history, current affairs, Islamiat, Pakistan Studies, and the official syllabi of Pakistani testing bodies.
+
+You understand the style, difficulty, and subject coverage of these Pakistani recruitment exams:
+- FIA (Federal Investigation Agency)
+- ASF (Airport Security Force)
+- ANF (Anti-Narcotics Force)
+- NAB (National Accountability Bureau)
+- FBR (Federal Board of Revenue)
+- Sindh High Court (SHC) recruitment tests
+- BPSC (Balochistan Public Service Commission)
+- STS (Sindh Testing Service)
+- SPSC (Sindh Public Service Commission)
+- PTS (Pakistan Testing Service)
+- plus FPSC, PPSC, NTS and similar national/provincial bodies.
+
+STRICT GROUNDING RULES:
+1. NEVER produce questions based on US SAT, UK GCSE, A-Levels, or any non-Pakistani curriculum.
+2. Use Pakistani spellings, currency (PKR), measurement conventions, and local examples.
+3. For GK/Current Affairs/Pakistan Studies, prioritize Pakistan-specific facts.
+4. Match the tone and rigor of official Pakistani recruitment papers.`;
+
+// Map a job-test context to the closest known Pakistani exam body for the prompt.
+const JOB_EXAM_KEYWORDS: { label: string; re: RegExp }[] = [
+  { label: "FIA (Federal Investigation Agency)", re: /\bfia\b|federal investigation/i },
+  { label: "ASF (Airport Security Force)", re: /\basf\b|airport security/i },
+  { label: "ANF (Anti-Narcotics Force)", re: /\banf\b|anti[- ]?narcotics/i },
+  { label: "NAB (National Accountability Bureau)", re: /\bnab\b|national accountability/i },
+  { label: "FBR (Federal Board of Revenue)", re: /\bfbr\b|federal board of revenue|inland revenue/i },
+  { label: "Sindh High Court", re: /sindh high court|\bshc\b/i },
+  { label: "BPSC (Balochistan Public Service Commission)", re: /\bbpsc\b|balochistan public service/i },
+  { label: "SPSC (Sindh Public Service Commission)", re: /\bspsc\b|sindh public service/i },
+  { label: "STS (Sindh Testing Service)", re: /\bsts\b|sindh testing/i },
+  { label: "PTS (Pakistan Testing Service)", re: /\bpts\b|pakistan testing/i },
+  { label: "FPSC (Federal Public Service Commission)", re: /\bfpsc\b|federal public service/i },
+  { label: "PPSC (Punjab Public Service Commission)", re: /\bppsc\b|punjab public service/i },
+  { label: "NTS (National Testing Service)", re: /\bnts\b|national testing/i },
+];
+
+function inferJobExam(...parts: (string | null | undefined)[]): string | undefined {
+  const blob = parts.filter(Boolean).join(" ");
+  if (!blob.trim()) return undefined;
+  for (const { label, re } of JOB_EXAM_KEYWORDS) {
+    if (re.test(blob)) return label;
+  }
+  return undefined;
+}
+
 interface SyllabusSection {
   subject: string;
   percentage?: number;
