@@ -538,6 +538,9 @@ Deno.serve(async (req) => {
 
     const samplesAll = (def.sample_questions || {}) as Record<string, SampleQ[]>;
     const batchNumber = Math.floor(Date.now() / 1000);
+    // Phase 7 — infer the Pakistani exam body from the definition for grounding.
+    const examLabel = inferJobExam(def.job_title, def.department);
+    console.log(`[GROUNDING] exam=${examLabel || "(generic Pakistan recruitment)"}`);
     const results = [];
 
     for (const section of targetSections) {
@@ -548,6 +551,7 @@ Deno.serve(async (req) => {
         section,
         samples,
         batchNumber,
+        examLabel,
       );
       results.push(r);
       // brief pause between sections
