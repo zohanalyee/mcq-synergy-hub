@@ -559,15 +559,18 @@ Deno.serve(async (req) => {
     }
 
     const totalAccepted = results.reduce((s, r) => s + r.accepted, 0);
-    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} sections=${results.length}`);
-    console.log(`  per-section: ${JSON.stringify(results.map(r => ({ s: r.subject, a: r.accepted, st: r.status })))}`);
+    const totalReused = results.reduce((s, r) => s + (r.reused || 0), 0);
+    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} sections=${results.length}`);
+    console.log(`  per-section: ${JSON.stringify(results.map(r => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, st: r.status })))}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         job_test_id,
+        exam_grounding: examLabel || "generic_pakistan_recruitment",
         results,
         total_accepted: totalAccepted,
+        total_reused: totalReused,
         needs_review: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
