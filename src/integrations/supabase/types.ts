@@ -3544,6 +3544,10 @@ export type Database = {
           similarity: number
         }[]
       }
+      record_question_usage: {
+        Args: { question_ids: string[] }
+        Returns: undefined
+      }
       update_job_test_progress: {
         Args: {
           p_ip_address: unknown
