@@ -1619,6 +1619,7 @@ Write the advice now:`;
             .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
             .eq('category', 'mcq')
             .eq('status', 'approved')
+            .not('quality_grade', 'in', '(D,F)')
             .eq('topic_id', resolvedTopicIdForLink as string);
           if (safeExcludeIds.length > 0) q = q.not('id', 'in', `(${safeExcludeIds.join(',')})`);
           const r = await q.limit(qc * 3);
@@ -1633,6 +1634,7 @@ Write the advice now:`;
               .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .eq('canonical_topic_name', resolvedCanonicalTopicName as string);
             if (safeExcludeIds.length > 0) q2 = q2.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const r2 = await q2.limit(qc * 3);
@@ -1648,6 +1650,7 @@ Write the advice now:`;
               .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .eq('subject', resolvedSubjectName)
               .or(searchConditions);
             if (safeExcludeIds.length > 0) q3 = q3.not('id', 'in', `(${safeExcludeIds.join(',')})`);
@@ -1676,6 +1679,7 @@ Write the advice now:`;
               .select(baseSelect)
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .in('topic_id', resolvedSubjectTopicIds);
             if (safeExcludeIds.length > 0) qByTopicId = qByTopicId.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const rByTopicId = await qByTopicId.limit(subjectLimit);
@@ -1689,6 +1693,7 @@ Write the advice now:`;
               .select(baseSelect)
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .in('canonical_topic_name', resolvedSubjectCanonicalNames);
             if (safeExcludeIds.length > 0) qByCanonical = qByCanonical.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const rByCanonical = await qByCanonical.limit(subjectLimit);
@@ -1704,6 +1709,7 @@ Write the advice now:`;
                 .select(baseSelect)
                 .eq('category', 'mcq')
                 .eq('status', 'approved')
+                .not('quality_grade', 'in', '(D,F)')
                 .in('topic', textScopes);
               if (safeExcludeIds.length > 0) qByTopicText = qByTopicText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
               const rByTopicText = await qByTopicText.limit(subjectLimit);
@@ -1715,6 +1721,7 @@ Write the advice now:`;
                 .select(baseSelect)
                 .eq('category', 'mcq')
                 .eq('status', 'approved')
+                .not('quality_grade', 'in', '(D,F)')
                 .in('subject', textScopes);
               if (safeExcludeIds.length > 0) qBySubjectText = qBySubjectText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
               const rBySubjectText = await qBySubjectText.limit(subjectLimit);
@@ -1729,6 +1736,7 @@ Write the advice now:`;
               .select(baseSelect)
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .ilike('topic', `%${resolvedSubjectName}%`);
             if (safeExcludeIds.length > 0) qBySubjectLabel = qBySubjectLabel.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const rBySubjectLabel = await qBySubjectLabel.limit(subjectLimit);
@@ -1745,6 +1753,7 @@ Write the advice now:`;
             .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
             .eq('category', 'mcq')
             .eq('status', 'approved')
+            .not('quality_grade', 'in', '(D,F)')
             .or(searchConditions);
           if (safeExcludeIds.length > 0) {
             cacheQuery = cacheQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);
