@@ -218,6 +218,33 @@ async function syncQuestionsToSession(
   } catch (sessionErr) {
     console.error('Failed to sync questions to session:', sessionErr);
   }
+
+  // Freshness rotation: record usage for served DB-origin questions (real UUID ids).
+  // Fire-and-forget; never blocks the serving path.
+  await recordServedUsage(supabase, questions);
+}
+
+// Phase 5 freshness rotation — bump usage_count/last_used_at for any served
+// question that originated from content_items (has a UUID id). Generated-but-
+// not-yet-persisted questions have no id and are skipped.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function recordServedUsage(supabase: any, questions: any[]): Promise<void> {
+  try {
+    const ids = Array.from(new Set(
+      (questions || [])
+        .map((q) => (typeof q?.id === 'string' ? q.id : null))
+        .filter((id): id is string => !!id && UUID_RE.test(id))
+    ));
+    if (ids.length === 0) return;
+    const { error } = await supabase.rpc('record_question_usage', { question_ids: ids });
+    if (error) {
+      console.warn('record_question_usage failed (non-fatal):', error.message);
+      return;
+    }
+    console.log(`🔄 Freshness: recorded usage for ${ids.length} served questions`);
+  } catch (e) {
+    console.warn('recordServedUsage error (non-fatal):', (e as any)?.message);
+  }
 }
 
 // Map job tests to their core syllabus subjects for cross-question reuse
