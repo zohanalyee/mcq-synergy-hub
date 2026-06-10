@@ -218,6 +218,33 @@ async function syncQuestionsToSession(
   } catch (sessionErr) {
     console.error('Failed to sync questions to session:', sessionErr);
   }
+
+  // Freshness rotation: record usage for served DB-origin questions (real UUID ids).
+  // Fire-and-forget; never blocks the serving path.
+  await recordServedUsage(supabase, questions);
+}
+
+// Phase 5 freshness rotation — bump usage_count/last_used_at for any served
+// question that originated from content_items (has a UUID id). Generated-but-
+// not-yet-persisted questions have no id and are skipped.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function recordServedUsage(supabase: any, questions: any[]): Promise<void> {
+  try {
+    const ids = Array.from(new Set(
+      (questions || [])
+        .map((q) => (typeof q?.id === 'string' ? q.id : null))
+        .filter((id): id is string => !!id && UUID_RE.test(id))
+    ));
+    if (ids.length === 0) return;
+    const { error } = await supabase.rpc('record_question_usage', { question_ids: ids });
+    if (error) {
+      console.warn('record_question_usage failed (non-fatal):', error.message);
+      return;
+    }
+    console.log(`🔄 Freshness: recorded usage for ${ids.length} served questions`);
+  } catch (e) {
+    console.warn('recordServedUsage error (non-fatal):', (e as any)?.message);
+  }
 }
 
 // Map job tests to their core syllabus subjects for cross-question reuse
@@ -1619,6 +1646,7 @@ Write the advice now:`;
             .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
             .eq('category', 'mcq')
             .eq('status', 'approved')
+            .not('quality_grade', 'in', '(D,F)')
             .eq('topic_id', resolvedTopicIdForLink as string);
           if (safeExcludeIds.length > 0) q = q.not('id', 'in', `(${safeExcludeIds.join(',')})`);
           const r = await q.limit(qc * 3);
@@ -1633,6 +1661,7 @@ Write the advice now:`;
               .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .eq('canonical_topic_name', resolvedCanonicalTopicName as string);
             if (safeExcludeIds.length > 0) q2 = q2.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const r2 = await q2.limit(qc * 3);
@@ -1648,6 +1677,7 @@ Write the advice now:`;
               .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .eq('subject', resolvedSubjectName)
               .or(searchConditions);
             if (safeExcludeIds.length > 0) q3 = q3.not('id', 'in', `(${safeExcludeIds.join(',')})`);
@@ -1676,6 +1706,7 @@ Write the advice now:`;
               .select(baseSelect)
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .in('topic_id', resolvedSubjectTopicIds);
             if (safeExcludeIds.length > 0) qByTopicId = qByTopicId.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const rByTopicId = await qByTopicId.limit(subjectLimit);
@@ -1689,6 +1720,7 @@ Write the advice now:`;
               .select(baseSelect)
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .in('canonical_topic_name', resolvedSubjectCanonicalNames);
             if (safeExcludeIds.length > 0) qByCanonical = qByCanonical.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const rByCanonical = await qByCanonical.limit(subjectLimit);
@@ -1704,6 +1736,7 @@ Write the advice now:`;
                 .select(baseSelect)
                 .eq('category', 'mcq')
                 .eq('status', 'approved')
+                .not('quality_grade', 'in', '(D,F)')
                 .in('topic', textScopes);
               if (safeExcludeIds.length > 0) qByTopicText = qByTopicText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
               const rByTopicText = await qByTopicText.limit(subjectLimit);
@@ -1715,6 +1748,7 @@ Write the advice now:`;
                 .select(baseSelect)
                 .eq('category', 'mcq')
                 .eq('status', 'approved')
+                .not('quality_grade', 'in', '(D,F)')
                 .in('subject', textScopes);
               if (safeExcludeIds.length > 0) qBySubjectText = qBySubjectText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
               const rBySubjectText = await qBySubjectText.limit(subjectLimit);
@@ -1729,6 +1763,7 @@ Write the advice now:`;
               .select(baseSelect)
               .eq('category', 'mcq')
               .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)')
               .ilike('topic', `%${resolvedSubjectName}%`);
             if (safeExcludeIds.length > 0) qBySubjectLabel = qBySubjectLabel.not('id', 'in', `(${safeExcludeIds.join(',')})`);
             const rBySubjectLabel = await qBySubjectLabel.limit(subjectLimit);
@@ -1745,6 +1780,7 @@ Write the advice now:`;
             .select('id, title, options, correct_option, explanation, topic, subject, difficulty')
             .eq('category', 'mcq')
             .eq('status', 'approved')
+            .not('quality_grade', 'in', '(D,F)')
             .or(searchConditions);
           if (safeExcludeIds.length > 0) {
             cacheQuery = cacheQuery.not('id', 'in', `(${safeExcludeIds.join(',')})`);

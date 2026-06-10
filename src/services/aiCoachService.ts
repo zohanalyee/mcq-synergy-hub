@@ -258,6 +258,133 @@ export class AICoachService {
   }
 
   /**
+   * Phase: Learning Intelligence wiring.
+   * Builds a spaced-repetition reinforcement plan from raw user_attempt_history.
+   *
+   * Returns:
+   *  - reinforceIds: previously-WRONG / unmastered question ids that are now DUE
+   *    for retry (spaced intervals 1/3/7/14 days), capped at ~20% of the test.
+   *  - excludeIds: already-seen questions that are mastered OR not-yet-due, so the
+   *    same items are not served repeatedly (anti-repetition signal).
+   *  - weakTopics: topics to bias the new portion of the test toward.
+   */
+  static async getReinforcementPlan(
+    userId: string,
+    subject: string | undefined,
+    totalCount: number
+  ): Promise<{ reinforceIds: string[]; excludeIds: string[]; weakTopics: string[] }> {
+    const empty = { reinforceIds: [], excludeIds: [], weakTopics: [] };
+    if (!userId) return empty;
+    try {
+      const since = new Date(Date.now() - 120 * 24 * 60 * 60 * 1000).toISOString();
+      let q = supabase
+        .from("user_attempt_history")
+        .select("question_id, is_correct, attempted_at, topic")
+        .eq("user_id", userId)
+        .gte("attempted_at", since)
+        .order("attempted_at", { ascending: false })
+        .limit(4000);
+      if (subject) q = q.eq("subject", subject);
+      const { data, error } = await q;
+      if (error || !data || data.length === 0) {
+        const weak = await this.analyzeUserWeakness(userId, subject);
+        return { ...empty, weakTopics: weak.filter((w) => w.weaknessScore > 60).map((w) => w.topic).filter(Boolean).slice(0, 5) };
+      }
+
+      // Rows arrive newest-first. Build a per-question summary.
+      type Summary = { lastAt: number; lastCorrect: boolean; correctStreak: number; wrongCount: number; seen: number };
+      const byQ = new Map<string, Summary>();
+      for (const r of data as any[]) {
+        const id = r.question_id;
+        if (typeof id !== "string" || !UUID_RE.test(id)) continue;
+        const ts = new Date(r.attempted_at).getTime();
+        const s = byQ.get(id);
+        if (!s) {
+          byQ.set(id, {
+            lastAt: ts,
+            lastCorrect: !!r.is_correct,
+            correctStreak: r.is_correct ? 1 : 0,
+            wrongCount: r.is_correct ? 0 : 1,
+            seen: 1,
+          });
+        } else {
+          // Older row (rows are desc). Extend the trailing correct streak only
+          // while we have not yet hit a wrong answer working backwards.
+          if (s.correctStreak === s.seen && r.is_correct) s.correctStreak++;
+          if (!r.is_correct) s.wrongCount++;
+          s.seen++;
+        }
+      }
+
+      const now = Date.now();
+      const dayMs = 24 * 60 * 60 * 1000;
+      const reinforce: { id: string; overdue: number; wrongCount: number }[] = [];
+      const exclude: string[] = [];
+
+      for (const [id, s] of byQ.entries()) {
+        const mastered = s.lastCorrect && s.correctStreak >= 2;
+        if (mastered) {
+          exclude.push(id); // learned — don't repeat
+          continue;
+        }
+        // Unmastered: spaced interval based on consecutive correct answers.
+        const intervalIdx = Math.min(s.correctStreak, RETRY_INTERVALS_DAYS.length - 1);
+        const intervalMs = RETRY_INTERVALS_DAYS[intervalIdx] * dayMs;
+        const age = now - s.lastAt;
+        if (age >= intervalMs) {
+          reinforce.push({ id, overdue: age - intervalMs, wrongCount: s.wrongCount });
+        } else {
+          exclude.push(id); // seen recently, not yet due
+        }
+      }
+
+      // Prioritise most-wrong then most-overdue. Cap at ~20% of the test.
+      reinforce.sort((a, b) => b.wrongCount - a.wrongCount || b.overdue - a.overdue);
+      const cap = Math.max(1, Math.round(totalCount * 0.2));
+      const reinforceIds = reinforce.slice(0, cap).map((r) => r.id);
+
+      const weak = await this.analyzeUserWeakness(userId, subject);
+      const weakTopics = weak.filter((w) => w.weaknessScore > 60).map((w) => w.topic).filter(Boolean).slice(0, 5);
+
+      return { reinforceIds, excludeIds: exclude, weakTopics };
+    } catch (e) {
+      console.error("[AICoach] getReinforcementPlan error:", e);
+      return empty;
+    }
+  }
+
+  /** Fetch full content_items rows for a set of question ids (for reinforcement injection). */
+  static async getQuestionsByIds(ids: string[]): Promise<any[]> {
+    const safe = Array.from(new Set((ids || []).filter((id) => UUID_RE.test(id))));
+    if (safe.length === 0) return [];
+    try {
+      const { data, error } = await supabase
+        .from("content_items")
+        .select("id, title, description, options, correct_option, subject, topic, difficulty, explanation")
+        .in("id", safe)
+        .eq("category", "mcq")
+        .eq("status", "approved")
+        .not("quality_grade", "in", "(D,F)");
+      if (error || !data) return [];
+      return data.map((item: any) => ({
+        id: item.id,
+        question: item.title,
+        options: item.options,
+        correctOption: item.correct_option,
+        answer: item.correct_option,
+        subject: item.subject || "",
+        topic: item.topic || item.subject || "",
+        difficulty: item.difficulty,
+        explanation: item.explanation || item.description || "",
+        _reinforced: true,
+      }));
+    } catch (e) {
+      console.error("[AICoach] getQuestionsByIds error:", e);
+      return [];
+    }
+  }
+
+  /**
    * Recommend a difficulty band based on the subject's overall weakness.
    */
   static async recommendDifficulty(userId: string, subject: string): Promise<"easy" | "medium" | "hard"> {
