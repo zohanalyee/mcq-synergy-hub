@@ -9,7 +9,8 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
-import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
+import { getUserAnsweredQuestionIds, recordQuestionUsage } from "@/services/questionBankService";
+import { AICoachService } from "@/services/aiCoachService";
 import { useAuth } from "@/contexts/AuthContext";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 
