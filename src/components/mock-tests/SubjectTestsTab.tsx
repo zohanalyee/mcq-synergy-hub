@@ -61,15 +61,39 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
 
       const { data: { user } } = await supabase.auth.getUser();
       let excludeQuestionIds: string[] = [];
+      let reinforceQuestions: any[] = [];
+      let coachTopics: string[] = [];
       if (user) {
-        excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
+        // Learning Intelligence: spaced-repetition reinforcement plan.
+        // - reinforce DUE wrong/unmastered questions (capped ~20%)
+        // - exclude mastered / recently-seen questions (anti-repetition)
+        // - bias new questions toward weak topics
+        const plan = await AICoachService.getReinforcementPlan(user.id, test.title, settings.questionCount);
+        coachTopics = plan.weakTopics;
+        if (plan.reinforceIds.length > 0) {
+          reinforceQuestions = await AICoachService.getQuestionsByIds(plan.reinforceIds);
+        }
+        const answered = await getUserAnsweredQuestionIds(user.id);
+        // Exclude everything seen/mastered EXCEPT the ones we intentionally resurface.
+        const reinforceSet = new Set(plan.reinforceIds);
+        excludeQuestionIds = Array.from(new Set([...answered, ...plan.excludeIds])).filter(
+          (id) => !reinforceSet.has(id),
+        );
       }
+
+      // Weak topics first so the fresh portion targets weaknesses, then user-selected topics.
+      const mergedTopics = Array.from(new Set([...coachTopics, ...finalTopics]));
+
+      // Reserve room for reinforcement questions so the test stays the requested size.
+      const reinforceCount = Math.min(reinforceQuestions.length, Math.round(settings.questionCount * 0.2));
+      const usedReinforce = reinforceQuestions.slice(0, reinforceCount);
+      const bankTarget = Math.max(1, settings.questionCount - usedReinforce.length);
 
       const options: TestGenerationOptions = {
         subjects: [test.title],
-        topics: finalTopics,
+        topics: mergedTopics,
         difficulty: settings.difficulty.toLowerCase(),
-        questionCount: settings.questionCount,
+        questionCount: bankTarget,
         timeLimit: settings.duration,
         includeExplanations: true,
         shuffleQuestions: true,
@@ -77,10 +101,18 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         excludeQuestionIds: excludeQuestionIds.length > 0 ? excludeQuestionIds : undefined,
       };
 
-      // 1. Pull from question bank first
+      // 1. Pull from question bank first, then prepend the reinforcement questions.
       const generatedTest = await generateCustomTest(options);
-      let allQuestions: any[] = [...generatedTest.questions];
+      const seenIds = new Set(usedReinforce.map((q) => q.id));
+      const bankQuestions = generatedTest.questions.filter((q: any) => !seenIds.has(q.id));
+      let allQuestions: any[] = [...usedReinforce, ...bankQuestions];
+      if (usedReinforce.length > 0) {
+        // Record usage for resurfaced questions too (freshness rotation).
+        void recordQuestionUsage(usedReinforce);
+        console.log(`🔁 Reinforcement: injected ${usedReinforce.length} due wrong/weak questions`);
+      }
       const deficit = settings.questionCount - allQuestions.length;
+
 
       // 2. If deficit, only call AI for logged-in users. Guests stay DB-only.
       if (deficit > 0 && user) {
