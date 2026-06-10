@@ -140,6 +140,11 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         }
       }
 
+      // Keep the test at the requested size (reinforcement questions stay at the front).
+      if (allQuestions.length > settings.questionCount) {
+        allQuestions = allQuestions.slice(0, settings.questionCount);
+      }
+
       if (allQuestions.length === 0) {
         if (!user) {
           toast.info('No questions available yet for this topic.', { duration: 5000 });
