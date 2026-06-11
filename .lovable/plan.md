@@ -1,73 +1,78 @@
-## Goal
+# MCQSAI — SEO, Indexing & Technical Health Audit
 
-Two improvements to the Competitive Exam Practice area:
-1. Make each mock-test card fully clickable to its SEO detail page (stretched-link pattern) while keeping inner buttons working.
-2. Upgrade the detail page: a prominent top "Start Exam" button, plus textual subject-description editing in the custom syllabus (max 2 edits, "Customized" badges, AI sync, robust reset).
+This audit is read-only. Below are the **code-confirmed root causes** behind each GSC bucket, plus a ROI-ordered fix roadmap. The exact per-URL CSV (Section 1) is built once you upload the Search Console **Pages report → Export** CSVs (one per category). Everything else is reconstructed from the codebase + sitemaps.
 
-No new exams. No backend prompt rewrite. No DB schema change needed.
+## What I inspected
 
----
+- `src/App.tsx` (168 routes, no `<Navigate>` redirects in-app)
+- `index.html` static head, `GlobalCanonical.tsx`, `SEOHead.tsx`, `seoUrls.ts`
+- `public/robots.txt`, `public/sitemap.xml` (index) + 9 child sitemaps (~867 URLs; boards-1 = 635)
+- `ProgrammaticLandingPage` noindex gate, SEO landing pages, hosting/redirect model
 
-## Part 1 — Fully clickable card (stretched link)
+## Section-by-section root causes
 
-File: `src/components/mock-tests/JobTestCard.tsx`
+**Sec 2 — Redirects (435).** Highest-volume, mostly *expected but fixable noise*:
 
-- Add `position: relative` to the card container `<div>` (the one with `glass-card themed-card`).
-- Change the title `<Link to={detailHref}>` so it stretches over the whole card using `after:absolute after:inset-0 after:content-['']` (Tailwind stretched-link). Remove the `onClick stopPropagation` from the title link — instead, the inner interactive controls sit above it.
-- Keep the title text itself the SEO-friendly `<Link>` (no wrapping the whole card in an `<a>`).
-- Raise interactive controls above the stretched link with `relative z-10`:
-  - "Syllabus" button row container
-  - "Custom" button
-  - The bottom "Start Exam" footer section (the start button + arrow circle)
-  - The expanded syllabus panel and customization panel
-- The hover lift (`whileHover`) stays. When `detailHref` is absent, fall back to current behavior (no stretched link).
+- `www.mcqsai.com → mcqsai.com` 302s. Likely indexed `www` URLs from before apex consolidation. Canonicals already force apex (correct) — but 302 (temporary) instead of 301 dilutes signals.
+- Preview/published hosts (`*.lovable.app`) indexed historically and now redirecting.
+- Trailing-slash variants (`/path/` → `/path`).
+- No in-app `<Navigate>` chains found, so these are host-level, not React-Router loops.
+- Roadmap: confirm 301 (not 302) apex redirect; purge non-apex URLs from any old sitemaps; the GSC export will confirm exact offenders.
 
-Result: clicking anywhere on the card opens the detail page; the three controls keep their own actions.
+**Sec 3 — Canonical (321 alt + 28 dup + 2 chosen).** Architecture is mostly correct: single `GlobalCanonical` emits apex, query-stripped, trailing-slash-stripped canonical; `index.html` has **no** static `<link rel=canonical>` (good — no double-canonical). Causes of the buckets:
 
----
+- `?lang=ur/sd` and other query variants → all canonicalize to clean URL = "alternate page with proper canonical" (this is *working as intended*, not a defect).
+- 28 "duplicate without user-selected canonical" + 2 "Google chose different": pages where Googlebot may not execute JS before snapshotting (canonical is client-side via Helmet). On a CSR SPA, social/secondary crawlers never see the canonical. Prerender covers ~50 routes (`vite.config.ts`), but dynamic pages (boards/mock-tests/jobs/p) are CSR-only.
+- Root cause class: **CSR-injected canonical on non-prerendered dynamic routes.**
 
-## Part 2 — Detail page enhancements
+**Sec 4 — Noindex (15).** Code-confirmed intentional noindex: `/feedback`, `/signin`, `/analytics` (+ dashboard/profile via guards), `/404`, and low-quality `/p/:slug` (quality gate in `ProgrammaticLandingPage`). Verdict: **all should stay noindex** — they're auth/util/thin pages. The 15 ≈ these plus a few thin programmatic pages below the quality threshold. No action except confirming none are real content pages once the CSV lands.
 
-File: `src/pages/MockTestDetail.tsx`
+**Sec 5 — 5xx (2).** No SSR server in this stack (static SPA on Lovable hosting), so 5xx are almost certainly **edge-function-backed routes** — most likely the dynamically-served sitemap/older `generate-sitemap` function or a data fetch timing out during crawl. Need the 2 exact URLs from the export to pin the function; fix is timeout/error-guard in that edge function.
 
-### 2a. Prominent top Start button
-- Below the intro paragraph in the hero, add a large primary button "Start Exam" (with the existing generation flow). It triggers the same start logic the bottom `JobTestsTab` card uses. Implementation: lift a shared start handler — simplest approach is to render a primary button that calls into the existing `JobTestsTab` start flow. Since `JobTestsTab` encapsulates the generation, we will add an `autoStartRef`/callback or expose a lightweight `onStartTop` by reusing `handleStartJobTest`. Concretely: extract the start logic is overkill — instead add a prop to `JobTestsTab` (`renderTopCTA?: boolean`) is messy.
-  - Chosen approach: add an optional `startSlot` is also messy. We will instead add a button in the hero that scrolls to and clicks the existing start, OR better: pass a callback. Final decision: add an optional prop `onReady?: (start: () => void) => void` to `JobTestsTab` that hands the parent a bound `start` function for the single test, so the hero button can call it directly and show the same generating state.
-- The top button shows a loading state while generating.
+**Sec 6 — Discovered/Crawled not indexed (188 + 35).** Largest opportunity. Drivers:
 
-### 2b. Editable subject descriptions
-File: `src/components/mock-tests/CustomSyllabusEditor.tsx`
+- `boards-1.xml` = 635 URLs (board/class/subject/topic) — many thin/near-duplicate template pages → crawl-budget dilution = classic "discovered, not indexed."
+- Weak internal linking to deep board/mock-test pages (mostly reachable only via sitemap).
+- Roadmap: prune thin board URLs from sitemap, strengthen internal links, prioritize high-intent pages (mock-tests, exam landing pages).
 
-- Add an `originalSubject` to each section by capturing the official subject text per index (official sections already derived from `officialSyllabus`).
-- Replace the static subject `<span>` with an editable `<Input>` for logged-in users (guests keep read-only text with a hint to sign in). The input edits `sections[idx].subject`.
-- Weightage number input and enable/disable switch stay as-is.
+**Sec 7 — Meta descriptions (27 identical + 1 multiple).** Static SEO landing pages have **unique** descriptions (verified). The 27 duplicates come from **templated dynamic pages** that fall back to `SEOHead` default description (boards/topics/mock-tests/tools without a custom `description` prop). The "1 page with multiple descriptions" = a route rendering both `index.html`'s static description AND a Helmet description where dedupe fails (likely a prerendered route). Fix: generate per-page descriptions from dynamic fields (board/class/subject/topic name, post title, BPS grade).
 
-### 2c. Strict 2-change limit
-- A subject is "altered" when its current `subject` text differs (trimmed, case-sensitive) from its official original text.
-- Compute `alteredCount` from sections vs official.
-- When a user types in a subject input that is currently unaltered AND `alteredCount` already equals 2, block the edit: keep the input disabled for not-yet-altered rows once the limit is hit, and on attempted focus/typing show a toast: "Limit reached: You can only alter up to 2 subjects." Already-altered rows remain editable (so they can be refined or reverted).
+**Sec 8 — Internal linking.** Home → top categories is fine; deep board/topic and mock-test detail pages are **orphan-ish** (sitemap-only). Recommend hub pages + related-content link blocks on dynamic templates.
 
-### 2d. Visual cue
-- Next to any altered subject input, show a small `Badge` "Customized" (quote-style/secondary variant) so non-official items are obvious.
+**Sec 9 — IndexNow.** Feasible and low-effort: a single edge function pinging `api.indexnow.org` on content publish + a static key file in `/public`. High ROI for fast (re)indexing of jobs/scholarships/blog. Implementation deferred per your instruction.
 
-### 2e. AI integration sync
-- No generator change required: `getEffectiveSyllabus()` already maps `sections[].subject` → `topic`, and `JobTestsTab` sends `topic: item.subject` to the `generate-test` edge function, preserving weightage via the Largest Remainder quota and the existing "Simple Pakistani competitive-exam English" prompt rules. Saving the edited subject text is sufficient for the AI to read the new descriptions.
-- The saved `sections` jsonb already stores `subject` as free text, so edits persist with the existing `saveCustomSyllabus`.
+**Sec 10 — Priority ranking**
 
-### 2f. Robust reset
-- "Reset to official" already calls `deleteCustomSyllabus` and restores `official`. Confirm it also clears the textual edits and notes on the UI instantly (it resets `sections` to `official`, `notes` to "", and `hasSaved` to false). Ensure the altered count resets to 0 and badges disappear.
+- **CRITICAL:** 5xx (2) — crawl-blocking; 301 vs 302 apex redirect; remove non-apex/preview URLs from index.
+- **HIGH:** prerender/SSR canonical for dynamic routes (fixes dup-canonical + not-indexed); unique meta descriptions (27).
+- **MEDIUM:** prune thin board sitemap URLs; internal-linking hubs; IndexNow.
+- **LOW:** trailing-slash normalization; backlink profile (off-platform/ongoing).
 
----
+## Deliverables
 
-## Technical notes
+1. **In-chat report** (above, expanded per section after CSV merge).
+2. **CSV artifact** in `/mnt/documents/` — every affected URL with: URL, Status, Canonical, Indexable?, In-sitemap?, Internal-link count, Root cause, Group. Built by merging your GSC exports with route/sitemap/canonical data derived from the code.
 
-- No database migration: `job_test_custom_syllabus.sections` is `jsonb` and already holds the (editable) `subject` string; textual edits and weightage are stored within it.
-- `CustomSyllabusSection` type stays `{ subject, percentage, enabled }`; the "altered" status is derived at render time by comparing against the official sections (by index), not stored separately.
-- Stretched-link is pure CSS/Tailwind; no router or logic change beyond z-index layering.
+## What I need from you
 
-## Files touched
+Upload the Search Console **Pages report** exports (Export → CSV/XLSX) for these states so I can enumerate exact URLs:
+Page with redirect · Alternative page w/ canonical · Duplicate w/o canonical · Duplicate Google chose different · Excluded by noindex · Not found 404 · Server error 5xx · Discovered not indexed · Crawled not indexed · Redirect error.
+(A single full "Export" of the Pages report works too.)
 
-- `src/components/mock-tests/JobTestCard.tsx` — stretched link + z-index layering.
-- `src/pages/MockTestDetail.tsx` — top Start button wiring.
-- `src/components/mock-tests/JobTestsTab.tsx` — expose bound start callback for the top CTA.
-- `src/components/mock-tests/CustomSyllabusEditor.tsx` — editable subjects, 2-edit limit, badges, reset behavior.
+## After approval
+
+On build, I will: (1) ingest your CSVs, (2) generate the Section-1 CSV + finalized in-chat report, then (3) present the prioritized fix plan for separate approval — **no fixes applied until you approve them.**  
+
+&nbsp;
+
+Approved for Phase 1 only.
+
+Fix 1: Confirm apex redirect is 301 not 302 — check Cloudflare redirect rule.
+
+Fix 2: Find the 2 URLs returning 5xx errors — check edge function logs and fix timeout/error guard.
+
+Fix 3: Remove preview/[lovable.app](http://lovable.app) URLs from any sitemaps.
+
+Do not fix anything else yet. Export GSC CSV first for exact URL audit.
+
+Do not change auth, branding, dashboards, AI systems
