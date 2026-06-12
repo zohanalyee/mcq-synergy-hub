@@ -77,6 +77,9 @@ const SubjectContent = () => {
   
   // Get topic ID from URL query parameter (for deep linking from search)
   const topicIdFromUrl = searchParams.get('topic');
+  // Query-param runner variants (?topic=…&count=…&timed=true) are infinite
+  // duplicates of the clean subject URL. Keep only the bare URL indexable.
+  const isRunnerVariant = searchParams.toString().length > 0;
   
   // URL param (route is /subject/:id and /subject-content/:id)
   const { id: routeId } = useParams<{ id: string }>();
@@ -758,6 +761,7 @@ const SubjectContent = () => {
         title={title ? `${title} MCQs with Answers — Free Practice` : 'Subject Practice'}
         description={title ? `Free ${title} MCQs with answers and detailed explanations. AI-powered ${title} practice questions for MDCAT, ECAT, NTS, FPSC & board exams — MCQsAI Pakistan.` : undefined}
         keywords={title ? `${title} MCQs, ${title} MCQs with answers, ${title} past papers, ${title} quiz, ${title} practice questions Pakistan` : undefined}
+        noindex={isRunnerVariant}
       />
       {/* Generation Loader Overlay */}
       <TestGenerationLoader 
