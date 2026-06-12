@@ -14,4 +14,14 @@ Disallow: /verify-email*
 Disallow: /reset-password
 Disallow: /forgot-password
 
+# Block crawlable query-param permutations (infinite low-value duplicates of
+# the clean canonical URLs). Clean paths remain fully indexable.
+Disallow: /*?*count=
+Disallow: /*?*timed=
+Disallow: /*?*topic=
+Disallow: /*?*difficulty=
+Disallow: /*?*q=
+Disallow: /subjects?*
+Disallow: /*?*lang=
+
 Sitemap: https://mcqsai.com/sitemap.xml
