@@ -24,6 +24,7 @@ const PRERENDER_ROUTES = [
   "/contact",
   "/faq",
   "/reviews",
+  "/past-papers",
   "/tools",
   "/editorial-policy",
   "/blog",
