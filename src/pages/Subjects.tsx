@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from "@/components/PageBreadcrumb";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { Sparkles, Loader2, Wifi, BookOpen } from "lucide-react";
 import PageHeader from "@/components/ui/PageHeader";
@@ -17,6 +17,10 @@ import { syncAllSubjects } from "@/services/offlineSyncService";
 
 const Subjects = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  // Filtered/search permutations (?system=…&level=…&q=…) are infinite low-value
+  // duplicates of the clean /subjects hub. Only the bare URL stays indexable.
+  const hasQueryParams = searchParams.toString().length > 0;
   const [syncProgress, setSyncProgress] = useState<{ synced: number; total: number } | null>(null);
   const {
     systems,
@@ -126,6 +130,7 @@ const Subjects = () => {
         title="Practice MCQs by Subject"
         description="Practice Biology, Chemistry, Physics, English, Urdu, Mathematics MCQs for MDCAT, ECAT, and competitive exams in Pakistan."
         keywords="Biology MCQs, Chemistry MCQs, Physics MCQs, subject-wise practice, MDCAT subjects, ECAT subjects"
+        noindex={hasQueryParams}
       />
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-2 pb-24">
         <PageBreadcrumb items={[{ title: 'Subjects', href: '/subjects', isCurrent: true }]} showHomeButton={true} />
