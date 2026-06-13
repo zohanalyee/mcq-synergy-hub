@@ -242,22 +242,23 @@ async function buildBoards() {
   // low-value near-duplicates — they stay reachable for users but are kept out
   // of the sitemap and are noindex (see BoardTopicPage.tsx).
   const MIN_APPROVED_MCQS = 5;
-  const topicIds = (topics || []).map((t) => t.id);
   const approvedByTopic = new Map();
-  // Fetch approved MCQ counts in chunks to stay within URL/row limits.
-  for (let i = 0; i < topicIds.length; i += 200) {
-    const chunk = topicIds.slice(i, i + 200);
+  // Page through ALL approved MCQ rows (PostgREST caps each response at 1000
+  // rows, so we must use .range pagination to avoid under-counting).
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
     const { data: rows, error: cntErr } = await supabase
       .from("content_items")
       .select("topic_id")
       .eq("category", "mcq")
       .eq("status", "approved")
-      .in("topic_id", chunk);
+      .not("topic_id", "is", null)
+      .range(from, from + PAGE - 1);
     if (cntErr) throw cntErr;
     for (const r of rows || []) {
-      if (!r.topic_id) continue;
       approvedByTopic.set(r.topic_id, (approvedByTopic.get(r.topic_id) || 0) + 1);
     }
+    if (!rows || rows.length < PAGE) break;
   }
 
   const all = [];
