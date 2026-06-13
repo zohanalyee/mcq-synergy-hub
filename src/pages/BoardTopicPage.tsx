@@ -135,7 +135,11 @@ const BoardTopicPage = () => {
 
   const allMcqs = data?.mcqs || [];
   const unapprovedCount = allMcqs.filter((m: any) => m.status !== 'approved').length;
+  const approvedCount = allMcqs.filter((m: any) => m.status === 'approved').length;
   const mcqs = allMcqs;
+  // AdSense / SEO: thin pages with fewer than 5 approved MCQs are low-value
+  // near-duplicates. Keep them crawlable for users but out of the index.
+  const isThin = approvedCount < 5;
   const relatedTopics = data?.relatedTopics || [];
   const names = data?.resolvedNames || { board: boardName, subject: subjectName, topic: topicName };
   const debugInfo = data?.debug;
@@ -166,7 +170,7 @@ const BoardTopicPage = () => {
 
   return (
     <Header>
-      <SEOHead title={seoTitle} description={seoDesc} keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`} url={canonicalUrl} />
+      <SEOHead title={seoTitle} description={seoDesc} keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`} url={canonicalUrl} noindex={!isLoading && isThin} />
       {quizSchema && <Helmet><script type="application/ld+json">{JSON.stringify(quizSchema)}</script></Helmet>}
       <BreadcrumbSchema items={[
         { name: 'Home', path: '/' },

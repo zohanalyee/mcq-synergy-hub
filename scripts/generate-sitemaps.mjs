@@ -231,11 +231,43 @@ async function buildMockTests() {
 }
 
 async function buildBoards() {
-  const { data: topics, error } = await supabase
-    .from("topics")
-    .select(`id,name,subjects!inner(id,name,levels!inner(id,name,educational_systems!inner(id,name,is_active)))`)
-    .eq("subjects.levels.educational_systems.is_active", true);
-  if (error) throw error;
+  // Page through ALL board topics (PostgREST caps each response at 1000 rows).
+  const TPAGE = 1000;
+  const topics = [];
+  for (let from = 0; ; from += TPAGE) {
+    const { data: rows, error } = await supabase
+      .from("topics")
+      .select(`id,name,subjects!inner(id,name,levels!inner(id,name,educational_systems!inner(id,name,is_active)))`)
+      .eq("subjects.levels.educational_systems.is_active", true)
+      .range(from, from + TPAGE - 1);
+    if (error) throw error;
+    topics.push(...(rows || []));
+    if (!rows || rows.length < TPAGE) break;
+  }
+
+  // AdSense / crawl-budget: only emit board topic URLs that have enough
+  // approved MCQs to be genuinely useful. Thin pages (< 5 approved MCQs) are
+  // low-value near-duplicates — they stay reachable for users but are kept out
+  // of the sitemap and are noindex (see BoardTopicPage.tsx).
+  const MIN_APPROVED_MCQS = 5;
+  const approvedByTopic = new Map();
+  // Page through ALL approved MCQ rows (PostgREST caps each response at 1000
+  // rows, so we must use .range pagination to avoid under-counting).
+  const PAGE = 1000;
+  for (let from = 0; ; from += PAGE) {
+    const { data: rows, error: cntErr } = await supabase
+      .from("content_items")
+      .select("topic_id")
+      .eq("category", "mcq")
+      .eq("status", "approved")
+      .not("topic_id", "is", null)
+      .range(from, from + PAGE - 1);
+    if (cntErr) throw cntErr;
+    for (const r of rows || []) {
+      approvedByTopic.set(r.topic_id, (approvedByTopic.get(r.topic_id) || 0) + 1);
+    }
+    if (!rows || rows.length < PAGE) break;
+  }
 
   const all = [];
   for (const t of topics || []) {
@@ -243,11 +275,13 @@ async function buildBoards() {
     if (!s || !l || !sys) continue;
     const cls = extractClassNumber(l.name);
     if (!cls) continue;
+    if ((approvedByTopic.get(t.id) || 0) < MIN_APPROVED_MCQS) continue;
     all.push({
       loc: `${BASE_URL}/boards/${toSlug(sys.name)}/class-${cls}/${toSlug(s.name)}/${toSlug(t.name)}`,
       lastmod: today, freq: "weekly", priority: "0.7",
     });
   }
+  console.log(`[sitemap] boards: ${all.length} URLs kept (>= ${MIN_APPROVED_MCQS} approved MCQs)`);
   const pages = Math.max(1, Math.ceil(all.length / ITEMS_PER_SITEMAP));
   for (let i = 1; i <= pages; i++) {
     const slice = all.slice((i - 1) * ITEMS_PER_SITEMAP, i * ITEMS_PER_SITEMAP);

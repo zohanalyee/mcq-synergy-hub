@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
+import { Mail, Clock, MapPin, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { useSocialLinks } from '@/hooks/useSocialLinks';
@@ -161,11 +161,8 @@ const Footer = () => {
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <Phone className="w-4 h-4 text-white/80 mt-0.5 shrink-0" />
-                <div>
-                  <span className="text-white/80">+92 300 1234567</span>
-                  <p className="text-xs text-white/60">Mon-Fri, 9 AM - 6 PM (PKT)</p>
-                </div>
+                <Clock className="w-4 h-4 text-white/80 mt-0.5 shrink-0" />
+                <span className="text-white/80">Mon-Fri, 9 AM - 6 PM (PKT)</span>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 text-white/80 mt-0.5 shrink-0" />

@@ -1,78 +1,80 @@
-# MCQSAI — SEO, Indexing & Technical Health Audit
+# MCQsAI — AdSense Readiness Audit & Roadmap
 
-This audit is read-only. Below are the **code-confirmed root causes** behind each GSC bucket, plus a ROI-ordered fix roadmap. The exact per-URL CSV (Section 1) is built once you upload the Search Console **Pages report → Export** CSVs (one per category). Everything else is reconstructed from the codebase + sitemaps.
+Evidence-backed. **No code has been changed.** Approve to implement P0.
 
-## What I inspected
+## 1. Indexable board URLs by approved-MCQ depth (live DB)
 
-- `src/App.tsx` (168 routes, no `<Navigate>` redirects in-app)
-- `index.html` static head, `GlobalCanonical.tsx`, `SEOHead.tsx`, `seoUrls.ts`
-- `public/robots.txt`, `public/sitemap.xml` (index) + 9 child sitemaps (~867 URLs; boards-1 = 635)
-- `ProgrammaticLandingPage` noindex gate, SEO landing pages, hosting/redirect model
+Query: active educational systems, class-numbered levels, `content_items.status='approved' AND category='mcq'` joined by `topic_id`.
 
-## Section-by-section root causes
+| Approved MCQs | URLs | Share |
+|---|---|---|
+| **0** | **921** | 66.5% |
+| 1–4 | 9 | 0.6% |
+| 5–9 | 172 | 12.4% |
+| 10+ | 284 | 20.5% |
+| **Total** | **1,386** | 100% |
 
-**Sec 2 — Redirects (435).** Highest-volume, mostly *expected but fixable noise*:
+≥5 threshold keeps **456**, removes **930** (921 empty + 9 near-empty).
 
-- `www.mcqsai.com → mcqsai.com` 302s. Likely indexed `www` URLs from before apex consolidation. Canonicals already force apex (correct) — but 302 (temporary) instead of 301 dilutes signals.
-- Preview/published hosts (`*.lovable.app`) indexed historically and now redirecting.
-- Trailing-slash variants (`/path/` → `/path`).
-- No in-app `<Navigate>` chains found, so these are host-level, not React-Router loops.
-- Roadmap: confirm 301 (not 302) apex redirect; purge non-apex URLs from any old sitemaps; the GSC export will confirm exact offenders.
+## 2. Google quality-classification estimate
 
-**Sec 3 — Canonical (321 alt + 28 dup + 2 chosen).** Architecture is mostly correct: single `GlobalCanonical` emits apex, query-stripped, trailing-slash-stripped canonical; `index.html` has **no** static `<link rel=canonical>` (good — no double-canonical). Causes of the buckets:
+- **Thin content:** ~930 pages (0–4 MCQs). The 921 zero-MCQ pages render only an H1 + a templated "No MCQs available for X yet" paragraph + an AI-generate button — almost no unique body text.
+- **Low value content:** the same ~921 are the AdSense "Low Value Content" trigger. They are `index,follow` today (see finding 3a) and reachable via `RelatedTopics` internal links and the board hub even though they'd leave the sitemap.
+- **Near-duplicate:** the 921 empty pages are near-identical to each other (same boilerplate body, only the topic noun changes) → duplicate-cluster risk. The 172 (5–9) pages are acceptable but light.
 
-- `?lang=ur/sd` and other query variants → all canonicalize to clean URL = "alternate page with proper canonical" (this is *working as intended*, not a defect).
-- 28 "duplicate without user-selected canonical" + 2 "Google chose different": pages where Googlebot may not execute JS before snapshotting (canonical is client-side via Helmet). On a CSR SPA, social/secondary crawlers never see the canonical. Prerender covers ~50 routes (`vite.config.ts`), but dynamic pages (boards/mock-tests/jobs/p) are CSR-only.
-- Root cause class: **CSR-injected canonical on non-prerendered dynamic routes.**
+## 3. Critical root cause (highest impact)
 
-**Sec 4 — Noindex (15).** Code-confirmed intentional noindex: `/feedback`, `/signin`, `/analytics` (+ dashboard/profile via guards), `/404`, and low-quality `/p/:slug` (quality gate in `ProgrammaticLandingPage`). Verdict: **all should stay noindex** — they're auth/util/thin pages. The 15 ≈ these plus a few thin programmatic pages below the quality threshold. No action except confirming none are real content pages once the CSV lands.
+**`src/pages/BoardTopicPage.tsx` never sets `noindex`.** When `mcqs.length === 0` it still renders `<SEOHead>` with default `index,follow`. So the 921 empty pages are actively indexable regardless of the sitemap. **Sitemap filtering alone will NOT fix AdSense "Low Value Content"** — it only reduces discovery. The empty/thin pages must be `noindex` to clear the AdSense flag.
 
-**Sec 5 — 5xx (2).** No SSR server in this stack (static SPA on Lovable hosting), so 5xx are almost certainly **edge-function-backed routes** — most likely the dynamically-served sitemap/older `generate-sitemap` function or a data fetch timing out during crawl. Need the 2 exact URLs from the export to pin the function; fix is timeout/error-guard in that edge function.
+## 4. High-priority page audit (EEAT / trust / depth)
 
-**Sec 6 — Discovered/Crawled not indexed (188 + 35).** Largest opportunity. Drivers:
+| Page | Status | Notes |
+|---|---|---|
+| Homepage | OK | Strong, but verify above-the-fold has real text, not just CTAs |
+| Boards hub | OK | Indexable hub |
+| Jobs / Scholarships | OK | DB-driven, real content |
+| Mock tests | OK | Detail pages + schema |
+| Past papers | OK | Prerendered |
+| Reviews | OK | Prerendered, user content |
+| About | **Strong** | Founder Person schema (Zohaib Ali Channa), Organization, contact |
+| Contact | **Strong** | Real address (Karachi), email, working form |
+| Editorial Policy | **Strong** | Full EEAT: sourcing, authorship, corrections, AI disclosure |
+| Privacy Policy / Terms | Present | Confirm "last updated" date is current |
+| FAQ | OK | Add `FAQPage` schema if missing |
 
-- `boards-1.xml` = 635 URLs (board/class/subject/topic) — many thin/near-duplicate template pages → crawl-budget dilution = classic "discovered, not indexed."
-- Weak internal linking to deep board/mock-test pages (mostly reachable only via sitemap).
-- Roadmap: prune thin board URLs from sitemap, strengthen internal links, prioritize high-intent pages (mock-tests, exam landing pages).
+EEAT trust pages are in good shape — they are **not** the AdSense blocker. The blocker is the mass of thin board pages.
 
-**Sec 7 — Meta descriptions (27 identical + 1 multiple).** Static SEO landing pages have **unique** descriptions (verified). The 27 duplicates come from **templated dynamic pages** that fall back to `SEOHead` default description (boards/topics/mock-tests/tools without a custom `description` prop). The "1 page with multiple descriptions" = a route rendering both `index.html`'s static description AND a Helmet description where dedupe fails (likely a prerendered route). Fix: generate per-page descriptions from dynamic fields (board/class/subject/topic name, post title, BPS grade).
+### Found issues
+- **Fake/placeholder contact data:** About uses `+92-300-1234567` (dummy phone). Replace or remove — placeholder contact info hurts trust signals.
+- Confirm Privacy/Terms "last updated" dates are real.
 
-**Sec 8 — Internal linking.** Home → top categories is fine; deep board/topic and mock-test detail pages are **orphan-ish** (sitemap-only). Recommend hub pages + related-content link blocks on dynamic templates.
+## 5. Guest content visibility
 
-**Sec 9 — IndexNow.** Feasible and low-effort: a single edge function pinging `api.indexnow.org` on content publish + a static key file in `/public`. High ROI for fast (re)indexing of jobs/scholarships/blog. Implementation deferred per your instruction.
+`BoardTopicPage`, `Subjects`, `Boards`, `Jobs`, `Scholarships`, `Reviews`, `PastPapers` are **not** wrapped in `InstantAuthGuard` — guests and Googlebot see full MCQs, explanations, and listings without login. This is correct for AdSense (no login wall on indexable content). Only the test-runner variants (`?count=`, `?timed=`, `/test-session/*`) are gated/noindexed, which is appropriate.
 
-**Sec 10 — Priority ranking**
+**No change required** for guest visibility.
 
-- **CRITICAL:** 5xx (2) — crawl-blocking; 301 vs 302 apex redirect; remove non-apex/preview URLs from index.
-- **HIGH:** prerender/SSR canonical for dynamic routes (fixes dup-canonical + not-indexed); unique meta descriptions (27).
-- **MEDIUM:** prune thin board sitemap URLs; internal-linking hubs; IndexNow.
-- **LOW:** trailing-slash normalization; backlink profile (off-platform/ongoing).
+## 6. Is the ≥5 sitemap filter safe?
 
-## Deliverables
+- **SEO:** Safe. Removed pages have ≤4 MCQs; prior GSC cross-check showed every removed clicked page had 0 MCQs. No rankable content lost.
+- **AdSense:** Necessary but **insufficient alone** — must be paired with `noindex` on empty/thin pages (finding 3).
+- **Organic traffic:** Low risk. Pages auto-re-enter the sitemap once they cross 5 approved MCQs.
 
-1. **In-chat report** (above, expanded per section after CSV merge).
-2. **CSV artifact** in `/mnt/documents/` — every affected URL with: URL, Status, Canonical, Indexable?, In-sitemap?, Internal-link count, Root cause, Group. Built by merging your GSC exports with route/sitemap/canonical data derived from the code.
+## Prioritized Roadmap
 
-## What I need from you
+### P0 — before next AdSense review
+1. **Add `noindex` to thin/empty board topic pages.** In `BoardTopicPage.tsx`, when approved-MCQ count `< 5`, pass `noindex` to `<SEOHead>`. This directly clears the "Low Value Content" flag for all 930 thin pages.
+2. **Ship the ≥5 sitemap filter** in `scripts/generate-sitemaps.mjs` `buildBoards()` (1,386 → 456 URLs) to stop signaling thin pages for crawl.
+3. **Remove placeholder contact data** (`+92-300-1234567`) from About; use a real channel or drop the phone field.
 
-Upload the Search Console **Pages report** exports (Export → CSV/XLSX) for these states so I can enumerate exact URLs:
-Page with redirect · Alternative page w/ canonical · Duplicate w/o canonical · Duplicate Google chose different · Excluded by noindex · Not found 404 · Server error 5xx · Discovered not indexed · Crawled not indexed · Redirect error.
-(A single full "Export" of the Pages report works too.)
+### P1 — should do
+4. Add a real content block to the 5–9 MCQ pages (short intro paragraph + syllabus context) to lift them out of "thin", or hold them from the sitemap until ≥10.
+5. Confirm `FAQPage` JSON-LD on `/faq`; verify Privacy/Terms "last updated" dates.
+6. Reduce internal linking to empty topics (`RelatedTopics`) so crawl budget concentrates on real pages.
 
-## After approval
+### P2 — optional
+7. Auto-generate-and-approve a minimum MCQ set for high-traffic empty topics to convert them into real indexable pages.
+8. Add author bylines to long-form study guides for stronger EEAT.
+9. Periodic GSC cross-check after deindexing to confirm the empty pages drop out (2–4 weeks).
 
-On build, I will: (1) ingest your CSVs, (2) generate the Section-1 CSV + finalized in-chat report, then (3) present the prioritized fix plan for separate approval — **no fixes applied until you approve them.**  
-
-&nbsp;
-
-Approved for Phase 1 only.
-
-Fix 1: Confirm apex redirect is 301 not 302 — check Cloudflare redirect rule.
-
-Fix 2: Find the 2 URLs returning 5xx errors — check edge function logs and fix timeout/error guard.
-
-Fix 3: Remove preview/[lovable.app](http://lovable.app) URLs from any sitemaps.
-
-Do not fix anything else yet. Export GSC CSV first for exact URL audit.
-
-Do not change auth, branding, dashboards, AI systems
+**Awaiting approval to implement P0 (items 1–3).**

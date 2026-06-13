@@ -32,7 +32,6 @@ const aboutJsonLd = {
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'hello@mcqsai.com',
-      telephone: '+92-300-1234567',
       contactType: 'customer support',
       availableLanguage: ['English', 'Urdu', 'Sindhi'],
     },
@@ -119,7 +118,6 @@ const About = () => {
             <h2 className="text-xl font-semibold text-foreground mb-2">Contact Information</h2>
             <ul className="space-y-1.5 text-sm">
               <li>Email: <a href="mailto:hello@mcqsai.com" className="text-primary hover:underline">hello@mcqsai.com</a></li>
-              <li>Phone: +92 300 1234567</li>
               <li>Address: Karachi, Sindh, Pakistan</li>
               <li>Business Hours: Mon-Fri, 9 AM - 6 PM (PKT)</li>
             </ul>
