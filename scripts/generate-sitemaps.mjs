@@ -237,17 +237,42 @@ async function buildBoards() {
     .eq("subjects.levels.educational_systems.is_active", true);
   if (error) throw error;
 
+  // AdSense / crawl-budget: only emit board topic URLs that have enough
+  // approved MCQs to be genuinely useful. Thin pages (< 5 approved MCQs) are
+  // low-value near-duplicates — they stay reachable for users but are kept out
+  // of the sitemap and are noindex (see BoardTopicPage.tsx).
+  const MIN_APPROVED_MCQS = 5;
+  const topicIds = (topics || []).map((t) => t.id);
+  const approvedByTopic = new Map();
+  // Fetch approved MCQ counts in chunks to stay within URL/row limits.
+  for (let i = 0; i < topicIds.length; i += 200) {
+    const chunk = topicIds.slice(i, i + 200);
+    const { data: rows, error: cntErr } = await supabase
+      .from("content_items")
+      .select("topic_id")
+      .eq("category", "mcq")
+      .eq("status", "approved")
+      .in("topic_id", chunk);
+    if (cntErr) throw cntErr;
+    for (const r of rows || []) {
+      if (!r.topic_id) continue;
+      approvedByTopic.set(r.topic_id, (approvedByTopic.get(r.topic_id) || 0) + 1);
+    }
+  }
+
   const all = [];
   for (const t of topics || []) {
     const s = t.subjects, l = s?.levels, sys = l?.educational_systems;
     if (!s || !l || !sys) continue;
     const cls = extractClassNumber(l.name);
     if (!cls) continue;
+    if ((approvedByTopic.get(t.id) || 0) < MIN_APPROVED_MCQS) continue;
     all.push({
       loc: `${BASE_URL}/boards/${toSlug(sys.name)}/class-${cls}/${toSlug(s.name)}/${toSlug(t.name)}`,
       lastmod: today, freq: "weekly", priority: "0.7",
     });
   }
+  console.log(`[sitemap] boards: ${all.length} URLs kept (>= ${MIN_APPROVED_MCQS} approved MCQs)`);
   const pages = Math.max(1, Math.ceil(all.length / ITEMS_PER_SITEMAP));
   for (let i = 1; i <= pages; i++) {
     const slice = all.slice((i - 1) * ITEMS_PER_SITEMAP, i * ITEMS_PER_SITEMAP);
