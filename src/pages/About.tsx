@@ -118,7 +118,6 @@ const About = () => {
             <h2 className="text-xl font-semibold text-foreground mb-2">Contact Information</h2>
             <ul className="space-y-1.5 text-sm">
               <li>Email: <a href="mailto:hello@mcqsai.com" className="text-primary hover:underline">hello@mcqsai.com</a></li>
-              <li>Business Hours: Mon-Fri, 9 AM - 6 PM (PKT)</li>
               <li>Address: Karachi, Sindh, Pakistan</li>
               <li>Business Hours: Mon-Fri, 9 AM - 6 PM (PKT)</li>
             </ul>
