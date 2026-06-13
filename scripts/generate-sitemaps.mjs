@@ -231,11 +231,19 @@ async function buildMockTests() {
 }
 
 async function buildBoards() {
-  const { data: topics, error } = await supabase
-    .from("topics")
-    .select(`id,name,subjects!inner(id,name,levels!inner(id,name,educational_systems!inner(id,name,is_active)))`)
-    .eq("subjects.levels.educational_systems.is_active", true);
-  if (error) throw error;
+  // Page through ALL board topics (PostgREST caps each response at 1000 rows).
+  const TPAGE = 1000;
+  const topics = [];
+  for (let from = 0; ; from += TPAGE) {
+    const { data: rows, error } = await supabase
+      .from("topics")
+      .select(`id,name,subjects!inner(id,name,levels!inner(id,name,educational_systems!inner(id,name,is_active)))`)
+      .eq("subjects.levels.educational_systems.is_active", true)
+      .range(from, from + TPAGE - 1);
+    if (error) throw error;
+    topics.push(...(rows || []));
+    if (!rows || rows.length < TPAGE) break;
+  }
 
   // AdSense / crawl-budget: only emit board topic URLs that have enough
   // approved MCQs to be genuinely useful. Thin pages (< 5 approved MCQs) are
