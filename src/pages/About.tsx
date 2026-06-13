@@ -32,7 +32,6 @@ const aboutJsonLd = {
     contactPoint: {
       '@type': 'ContactPoint',
       email: 'hello@mcqsai.com',
-      telephone: '+92-300-1234567',
       contactType: 'customer support',
       availableLanguage: ['English', 'Urdu', 'Sindhi'],
     },
