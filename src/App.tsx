@@ -47,7 +47,7 @@ const MockTests = lazy(() => import("./pages/MockTests"));
 const MockTestDetail = lazy(() => import("./pages/MockTestDetail"));
 const Analytics = lazy(() => import("./pages/Analytics"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
-const PastPapers = lazy(() => import("./pages/PastPapers"));
+import PastPapers from "./pages/PastPapers";
 import Jobs from "./pages/Jobs";
 import Scholarships from "./pages/Scholarships";
 const CustomSyllabus = lazy(() => import("./pages/CustomSyllabus"));
