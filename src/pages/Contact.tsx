@@ -180,7 +180,7 @@ const Contact = () => {
           <div className="md:col-span-2 space-y-4">
             {[
               { icon: Mail, title: 'Email', lines: ['hello@mcqsai.com', 'support@mcqsai.com'] },
-              { icon: Phone, title: 'Phone', lines: ['+92 300 1234567', 'Mon-Fri, 9 AM - 6 PM (PKT)'] },
+              { icon: Clock, title: 'Support Hours', lines: ['Mon-Fri, 9 AM - 6 PM (PKT)', 'Email replies within 48 hours'] },
               { icon: MapPin, title: 'Address', lines: ['Karachi, Sindh', 'Pakistan'] },
             ].map(card => (
               <div key={card.title} className="rounded-xl border border-border bg-card p-5 flex items-start gap-4">
