@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -51,6 +51,7 @@ export const JobTestCard = ({
   isGenerating = false,
   detailHref,
 }: JobTestCardProps) => {
+  const navigate = useNavigate();
   const [customSettings, setCustomSettings] = useState<{ 
     difficulty: "easy" | "medium" | "hard";
     questionCount: number;
@@ -68,8 +69,11 @@ export const JobTestCard = ({
     handleStartJobTest(test, customSettings);
   };
 
-  const handleStartTest = () => {
-    handleStartJobTest(test);
+  // Whole-card click and the bottom CTA both lead users to the detail page
+  // first (review syllabus + question preview) instead of starting immediately.
+  const goToDetail = () => {
+    if (detailHref) navigate(detailHref);
+    else handleStartJobTest(test);
   };
 
   const isExpanded = expandedJobTest === test.id;
@@ -172,21 +176,19 @@ export const JobTestCard = ({
           {/* Bottom Action Row */}
           <div className="relative z-10 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
             <button
-              onClick={(e) => { e.stopPropagation(); handleStartTest(); }}
-              disabled={isGenerating}
+              onClick={(e) => { e.stopPropagation(); goToDetail(); }}
               className="flex items-center gap-1"
             >
               <span
                 className="text-[9px] font-bold uppercase tracking-wide"
                 style={{ color: theme.main }}
               >
-                {isGenerating ? "STARTING..." : "START MOCK TEST"}
+                VIEW MOCK TEST
               </span>
-              {isGenerating && <Loader2 className="h-2.5 w-2.5 animate-spin" style={{ color: theme.main }} />}
             </button>
             
             <motion.div
-              onClick={(e) => { e.stopPropagation(); handleStartTest(); }}
+              onClick={(e) => { e.stopPropagation(); goToDetail(); }}
               className="w-6 h-6 rounded-full flex items-center justify-center shadow-sm 
                          group-hover:shadow-md transition-shadow cursor-pointer"
               style={{ backgroundColor: theme.main }}
