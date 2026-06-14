@@ -188,7 +188,7 @@ export const JobTestCard = ({
             </button>
             
             <motion.div
-              onClick={(e) => { e.stopPropagation(); handleStartTest(); }}
+              onClick={(e) => { e.stopPropagation(); goToDetail(); }}
               className="w-6 h-6 rounded-full flex items-center justify-center shadow-sm 
                          group-hover:shadow-md transition-shadow cursor-pointer"
               style={{ backgroundColor: theme.main }}
