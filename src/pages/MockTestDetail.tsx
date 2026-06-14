@@ -14,6 +14,7 @@ import { CustomSyllabusEditor } from "@/components/mock-tests/CustomSyllabusEdit
 import { RelatedMockTests } from "@/components/mock-tests/RelatedMockTests";
 import { PeopleAlsoPrepareFor } from "@/components/mock-tests/PeopleAlsoPrepareFor";
 import { CustomSyllabusGuideModal } from "@/components/mock-tests/CustomSyllabusGuideModal";
+import { QuestionsPreview } from "@/components/mock-tests/QuestionsPreview";
 import { getJobTests, JobTest } from "@/services/jobTestService";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { resolveJobTestBySlug, toJobTestSlug } from "@/lib/jobTestSlug";
