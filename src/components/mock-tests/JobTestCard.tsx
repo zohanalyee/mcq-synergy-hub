@@ -51,6 +51,7 @@ export const JobTestCard = ({
   isGenerating = false,
   detailHref,
 }: JobTestCardProps) => {
+  const navigate = useNavigate();
   const [customSettings, setCustomSettings] = useState<{ 
     difficulty: "easy" | "medium" | "hard";
     questionCount: number;
@@ -68,8 +69,11 @@ export const JobTestCard = ({
     handleStartJobTest(test, customSettings);
   };
 
-  const handleStartTest = () => {
-    handleStartJobTest(test);
+  // Whole-card click and the bottom CTA both lead users to the detail page
+  // first (review syllabus + question preview) instead of starting immediately.
+  const goToDetail = () => {
+    if (detailHref) navigate(detailHref);
+    else handleStartJobTest(test);
   };
 
   const isExpanded = expandedJobTest === test.id;
