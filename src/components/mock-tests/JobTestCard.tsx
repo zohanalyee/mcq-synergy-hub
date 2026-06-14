@@ -176,17 +176,15 @@ export const JobTestCard = ({
           {/* Bottom Action Row */}
           <div className="relative z-10 flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
             <button
-              onClick={(e) => { e.stopPropagation(); handleStartTest(); }}
-              disabled={isGenerating}
+              onClick={(e) => { e.stopPropagation(); goToDetail(); }}
               className="flex items-center gap-1"
             >
               <span
                 className="text-[9px] font-bold uppercase tracking-wide"
                 style={{ color: theme.main }}
               >
-                {isGenerating ? "STARTING..." : "START MOCK TEST"}
+                VIEW MOCK TEST
               </span>
-              {isGenerating && <Loader2 className="h-2.5 w-2.5 animate-spin" style={{ color: theme.main }} />}
             </button>
             
             <motion.div
