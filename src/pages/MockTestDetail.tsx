@@ -237,6 +237,11 @@ const MockTestDetail = () => {
           <JobTestsTab jobTests={[test]} onReady={setTopStart} />
         </section>
 
+        {/* Questions preview — public MCQs with premium-locked answers */}
+        <QuestionsPreview title={test.title} />
+
+
+
         {/* People also prepare for — contextual internal linking */}
         <PeopleAlsoPrepareFor current={test} allTests={allTests} />
 
