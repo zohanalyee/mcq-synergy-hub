@@ -238,6 +238,111 @@ export const getApprovedQuestionsForDefinition = async (
   return (data || []) as JobTestQuestion[];
 };
 
+// ---------- Public Questions Preview (multi-source) ----------
+
+export interface PreviewQuestion {
+  id: string;
+  question: string;
+  options: string[] | Record<string, string>;
+  correct_answer?: string | null;
+  explanation?: string | null;
+  /** Where the question came from: a published definition or the main MCQ bank. */
+  source: "definition" | "bank";
+}
+
+const PREVIEW_STOPWORDS = new Set([
+  "with", "this", "that", "amp", "and", "the", "for", "basic", "general",
+  "reasoning", "thinking", "critical", "scenario", "puzzles", "shortcuts",
+  "deductions", "logical", "comprehension", "official", "syllabus", "pattern",
+  "guide", "test", "mock", "entry", "knowledge", "current", "affairs", "skills",
+  "based", "questions", "section", "part", "level", "years", "year", "etc",
+]);
+
+/** Pull meaningful keywords out of a test's syllabus topics for fuzzy bank matching. */
+const extractPreviewKeywords = (topics: string[]): string[] => {
+  const set = new Set<string>();
+  for (const t of topics) {
+    for (const w of (t || "").split(/[^a-zA-Z]+/)) {
+      const lw = w.toLowerCase();
+      if (lw.length >= 4 && !PREVIEW_STOPWORDS.has(lw)) set.add(lw);
+    }
+  }
+  return Array.from(set).slice(0, 12);
+};
+
+const shufflePreview = <T,>(arr: T[]): T[] =>
+  arr.map((v) => [Math.random(), v] as const).sort((a, b) => a[0] - b[0]).map(([, v]) => v);
+
+/**
+ * Returns public-facing preview questions for a mock test from ANY available
+ * source, without requiring an admin-approved definition:
+ *   1. Published job_test_definitions + approved job_test_questions (richest).
+ *   2. Fallback to the main approved MCQ bank (content_items) matched by the
+ *      test's own syllabus subjects/topics — these are the same questions the
+ *      live test generates from, so a preview always reflects real content.
+ * Statements + options are returned for public display; callers keep the
+ * correct answer and explanation Premium-locked.
+ */
+export const getMockTestPreviewQuestions = async (
+  title: string,
+  syllabus: SyllabusItem[],
+  limit = 5,
+): Promise<PreviewQuestion[]> => {
+  // 1) Isolated definition path (no admin_approved hard requirement beyond what exists)
+  try {
+    const definition = await findDefinitionByTitle(title);
+    if (definition) {
+      const approved = await getApprovedQuestionsForDefinition(definition.id);
+      if (approved.length > 0) {
+        return shufflePreview(approved)
+          .slice(0, limit)
+          .map((q) => ({
+            id: q.id,
+            question: q.question,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            explanation: q.explanation,
+            source: "definition" as const,
+          }));
+      }
+    }
+  } catch (e) {
+    console.warn("Preview: definition lookup failed", e);
+  }
+
+  // 2) Main MCQ bank fallback, matched by syllabus keywords
+  const keywords = extractPreviewKeywords((syllabus || []).map((s) => s.topic));
+  if (keywords.length === 0) return [];
+
+  const orFilter = keywords
+    .flatMap((k) => [`subject.ilike.%${k}%`, `topic.ilike.%${k}%`])
+    .join(",");
+
+  const { data, error } = await (supabase as any)
+    .from("content_items")
+    .select("id,title,options,correct_option,explanation,subject,topic")
+    .eq("category", "mcq")
+    .eq("status", "approved")
+    .or(orFilter)
+    .limit(limit * 6);
+
+  if (error || !data || data.length === 0) {
+    if (error) console.error("Preview: bank lookup failed", error);
+    return [];
+  }
+
+  return shufflePreview(data as any[])
+    .slice(0, limit)
+    .map((q: any) => ({
+      id: q.id,
+      question: q.title,
+      options: q.options,
+      correct_answer: q.correct_option,
+      explanation: q.explanation,
+      source: "bank" as const,
+    }));
+};
+
 export const getQuestionsForDefinition = async (
   jobTestId: string,
   options?: { subject?: string; approvedOnly?: boolean },
