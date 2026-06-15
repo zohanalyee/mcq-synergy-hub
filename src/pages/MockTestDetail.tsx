@@ -238,7 +238,7 @@ const MockTestDetail = () => {
         </section>
 
         {/* Questions preview — public MCQs with premium-locked answers */}
-        <QuestionsPreview title={test.title} />
+        <QuestionsPreview title={test.title} syllabus={test.syllabus} />
 
 
 
