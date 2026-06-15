@@ -8,7 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { 
   ChevronDown, 
-  ChevronUp, 
   Settings, 
   Play, 
   Clock, 
@@ -148,21 +147,22 @@ export const JobTestCard = ({
             </Badge>
           </div>
 
-          {/* Action Buttons Row */}
+          {/* Action Buttons Row — both navigate to the detail page where the
+              full syllabus and custom settings are shown. */}
           <div className="relative z-10 flex gap-1 mb-2">
             <Button 
-              onClick={(e) => { e.stopPropagation(); toggleExpandJobTest(test.id); }}
+              onClick={(e) => { e.stopPropagation(); goToDetail(); }}
               variant="ghost" 
               size="sm"
               className="flex-1 justify-center text-[9px] h-6 px-1.5 bg-white/50 dark:bg-slate-800/50 
                          hover:bg-white/80 dark:hover:bg-slate-700/50"
             >
-              {isExpanded ? <ChevronUp className="h-2.5 w-2.5 mr-0.5" /> : <ChevronDown className="h-2.5 w-2.5 mr-0.5" />}
+              <ChevronDown className="h-2.5 w-2.5 mr-0.5" />
               Syllabus
             </Button>
             
             <Button 
-              onClick={(e) => { e.stopPropagation(); toggleCustomizeJobTest(test.id, e); }}
+              onClick={(e) => { e.stopPropagation(); goToDetail(); }}
               variant="ghost" 
               size="sm"
               className="flex-1 justify-center text-[9px] h-6 px-1.5 bg-white/50 dark:bg-slate-800/50 

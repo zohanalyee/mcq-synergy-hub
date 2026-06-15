@@ -1,34 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
-import { Lock, FileQuestion, Loader2 } from "lucide-react";
+import { Lock, FileQuestion, Loader2, Info } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cleanQuestionText } from "@/lib/questionUtils";
 import {
-  findDefinitionByTitle,
-  getApprovedQuestionsForDefinition,
-  JobTestQuestion,
+  getMockTestPreviewQuestions,
+  PreviewQuestion,
+  SyllabusItem,
 } from "@/services/jobTestService";
 
 interface QuestionsPreviewProps {
   title: string;
+  /** The test's syllabus — used to match real questions from the MCQ bank. */
+  syllabus?: SyllabusItem[];
   /** How many questions to expose publicly. */
   limit?: number;
 }
 
-const normalizeOptions = (options: JobTestQuestion["options"]): string[] => {
-  if (Array.isArray(options)) return options as unknown as string[];
+const normalizeOptions = (options: PreviewQuestion["options"]): string[] => {
+  if (Array.isArray(options)) return options as string[];
   if (options && typeof options === "object") return Object.values(options);
   return [];
 };
 
-export const QuestionsPreview = ({ title, limit = 5 }: QuestionsPreviewProps) => {
+export const QuestionsPreview = ({ title, syllabus = [], limit = 5 }: QuestionsPreviewProps) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["job-test-questions-preview", title],
-    queryFn: async () => {
-      const definition = await findDefinitionByTitle(title);
-      if (!definition) return [] as JobTestQuestion[];
-      const approved = await getApprovedQuestionsForDefinition(definition.id);
-      return approved;
-    },
+    queryKey: ["mock-test-preview", title, syllabus.map((s) => s.topic).join("|")],
+    queryFn: () => getMockTestPreviewQuestions(title, syllabus, limit),
   });
 
   const questions = (data || []).slice(0, limit);
@@ -41,8 +38,24 @@ export const QuestionsPreview = ({ title, limit = 5 }: QuestionsPreviewProps) =>
     );
   }
 
+  // Fallback message only when absolutely no questions exist for this test.
   if (questions.length === 0) {
-    return null;
+    return (
+      <section aria-labelledby="preview-heading" className="space-y-3">
+        <div className="flex items-center gap-2">
+          <h2 id="preview-heading" className="text-lg font-semibold text-foreground">
+            Questions Preview
+          </h2>
+        </div>
+        <div className="flex items-start gap-2 rounded-xl border border-border bg-card/60 p-4 text-sm text-muted-foreground">
+          <Info className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>
+            Questions for this mock test are being prepared. Start the test to generate
+            fresh, exam-style questions from the official syllabus.
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (
