@@ -141,10 +141,37 @@ const StructuredData = () => {
     },
   };
 
+  // Single, merged FAQPage schema for the homepage. Keeping ALL FAQ
+  // questions in ONE block avoids Google Search Console's
+  // "Duplicate field FAQPage" error.
   const faqSchema = {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
     mainEntity: [
+      {
+        '@type': 'Question',
+        name: 'Which engineering universities are covered?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'MCQsAI covers entry tests for major engineering universities including NUST, GIKI, UET, FAST NUCES, Bahria, Air University, COMSATS, and other HEC-recognised institutions across Pakistan.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What subjects are tested?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'The tests cover Mathematics, Physics, Chemistry, Biology, English, and analytical reasoning, depending on the exam you are preparing for.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Are these MCQs free?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes, all MCQs on MCQsAI are completely free to practice. You can attempt unlimited questions without any charges.',
+        },
+      },
       {
         '@type': 'Question',
         name: 'How many MCQs are available on MCQsAI?',
