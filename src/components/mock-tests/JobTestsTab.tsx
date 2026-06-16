@@ -429,7 +429,7 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
   useEffect(() => {
     if (!onReady) return;
     onReady({
-      start: () => firstTest && handleStartJobTest(firstTest),
+      start: (settings) => firstTest && handleStartJobTest(firstTest, settings),
       isGenerating: !!firstTestId && generatingTestId === firstTestId,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
