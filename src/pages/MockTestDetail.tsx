@@ -32,10 +32,16 @@ const BASE = "https://mcqsai.com";
 
 const MockTestDetail = () => {
   const { slug = "" } = useParams();
-  const [topStart, setTopStart] = useState<{ start: () => void; isGenerating: boolean }>({
+  const [topStart, setTopStart] = useState<{
+    start: (settings?: { difficulty?: "easy" | "medium" | "hard"; questionCount?: number }) => void;
+    isGenerating: boolean;
+  }>({
     start: () => {},
     isGenerating: false,
   });
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
+  const [questionCount, setQuestionCount] = useState<number>(20);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data: dbJobTests = [], isLoading } = useQuery({
     queryKey: ["job-tests"],
