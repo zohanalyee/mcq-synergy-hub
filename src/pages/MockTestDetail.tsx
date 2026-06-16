@@ -2,9 +2,18 @@ import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck, Play } from "lucide-react";
+import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck, Play, Gauge } from "lucide-react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import SEOHead from "@/components/SEOHead";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
@@ -23,10 +32,16 @@ const BASE = "https://mcqsai.com";
 
 const MockTestDetail = () => {
   const { slug = "" } = useParams();
-  const [topStart, setTopStart] = useState<{ start: () => void; isGenerating: boolean }>({
+  const [topStart, setTopStart] = useState<{
+    start: (settings?: { difficulty?: "easy" | "medium" | "hard"; questionCount?: number }) => void;
+    isGenerating: boolean;
+  }>({
     start: () => {},
     isGenerating: false,
   });
+  const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
+  const [questionCount, setQuestionCount] = useState<number>(20);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data: dbJobTests = [], isLoading } = useQuery({
     queryKey: ["job-tests"],
@@ -139,10 +154,10 @@ const MockTestDetail = () => {
           {lastUpdated && (
             <p className="text-xs text-muted-foreground">Last updated: {lastUpdated}</p>
           )}
-          <div className="pt-1">
+          <div className="flex flex-wrap items-center gap-3 pt-1">
             <Button
               size="lg"
-              onClick={() => topStart.start()}
+              onClick={() => setConfirmOpen(true)}
               disabled={topStart.isGenerating}
               className="gap-2"
             >
@@ -153,7 +168,78 @@ const MockTestDetail = () => {
               )}
               {topStart.isGenerating ? "Starting…" : "Start Exam"}
             </Button>
+
+            {/* Inline question settings */}
+            <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-medium text-muted-foreground px-1">Difficulty</span>
+                <Select value={difficulty} onValueChange={(v: "easy" | "medium" | "hard") => setDifficulty(v)}>
+                  <SelectTrigger className="h-9 w-[110px] rounded-lg bg-muted/50 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="easy">Easy</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="hard">Hard</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-0.5">
+                <span className="text-[10px] font-medium text-muted-foreground px-1">Questions</span>
+                <Select value={String(questionCount)} onValueChange={(v) => setQuestionCount(parseInt(v))}>
+                  <SelectTrigger className="h-9 w-[90px] rounded-lg bg-muted/50 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {[10, 20, 50, 100].map((n) => (
+                      <SelectItem key={n} value={String(n)}>{n}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
+
+          {/* Confirmation modal */}
+          <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Ready to begin?</DialogTitle>
+                <DialogDescription>
+                  Confirm your settings before starting the {test.title} mock test.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid grid-cols-2 gap-3 py-2">
+                <div className="rounded-xl border border-border bg-muted/40 p-3">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <BookOpen className="h-3.5 w-3.5" /> Questions
+                  </div>
+                  <p className="text-lg font-semibold text-foreground">{questionCount}</p>
+                </div>
+                <div className="rounded-xl border border-border bg-muted/40 p-3">
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Gauge className="h-3.5 w-3.5" /> Difficulty
+                  </div>
+                  <p className="text-lg font-semibold text-foreground capitalize">{difficulty}</p>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+                  Cancel
+                </Button>
+                <Button
+                  className="gap-2"
+                  disabled={topStart.isGenerating}
+                  onClick={() => {
+                    setConfirmOpen(false);
+                    topStart.start({ difficulty, questionCount });
+                  }}
+                >
+                  <Play className="h-4 w-4" /> Confirm &amp; Start
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </motion.header>
 
         {/* Test pattern */}
