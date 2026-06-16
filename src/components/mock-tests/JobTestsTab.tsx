@@ -27,7 +27,7 @@ import { toJobTestSlug } from "@/lib/jobTestSlug";
 type JobTestsTabProps = {
   jobTests: JobTest[];
   /** When set, hands the parent a bound start fn + generating flag (used by detail-page top CTA). */
-  onReady?: (state: { start: () => void; isGenerating: boolean }) => void;
+  onReady?: (state: { start: (settings?: { difficulty?: "easy" | "medium" | "hard"; questionCount?: number }) => void; isGenerating: boolean }) => void;
 };
 
 export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
