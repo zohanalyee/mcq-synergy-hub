@@ -11,7 +11,7 @@ if (!existsSync(DIST)) {
 }
 
 const checks = [
-  { name: 'title',       re: /<title>[^<]+<\/title>/i },
+  { name: 'title',       re: /<title\b[^>]*>[^<]+<\/title>/i },
   { name: 'description', re: /<meta[^>]+name=["']description["'][^>]+content=["'][^"']{40,}/i },
   { name: 'canonical',   re: /<link[^>]+rel=["']canonical["']/i },
   { name: 'og:title',    re: /<meta[^>]+property=["']og:title["']/i },
@@ -97,7 +97,9 @@ for (const f of files) {
     if (count !== 1) issues.push(`${name} count=${count}`);
   }
   const ogImageTag = html.match(/<meta\b(?=[^>]*\bproperty=["']og:image["'])[^>]*>/i)?.[0] || '';
-  const ogImage = ogImageTag.match(/\bcontent=["']([^"']+)["']/i)?.[1] || '';
+  // Require whitespace before `content=` so the dev component-tagger's
+  // `data-component-content="..."` attribute is never mistaken for the real one.
+  const ogImage = ogImageTag.match(/(?:^|\s)content=["']([^"']+)["']/i)?.[1] || '';
   const expected = expectedOgImage(f);
   if (ogImage !== expected) issues.push(`og:image=${ogImage || 'missing'} expected=${expected}`);
   const titleCount = (html.match(/<title\b[^>]*>[\s\S]*?<\/title>/gi) || []).length;
