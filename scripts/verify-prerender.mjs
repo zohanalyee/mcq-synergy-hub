@@ -11,7 +11,7 @@ if (!existsSync(DIST)) {
 }
 
 const checks = [
-  { name: 'title',       re: /<title>[^<]+<\/title>/i },
+  { name: 'title',       re: /<title\b[^>]*>[^<]+<\/title>/i },
   { name: 'description', re: /<meta[^>]+name=["']description["'][^>]+content=["'][^"']{40,}/i },
   { name: 'canonical',   re: /<link[^>]+rel=["']canonical["']/i },
   { name: 'og:title',    re: /<meta[^>]+property=["']og:title["']/i },
