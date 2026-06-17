@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck, Play, Gauge } from "lucide-react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import {
   Dialog,
   DialogContent,
