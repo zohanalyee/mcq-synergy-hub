@@ -150,30 +150,6 @@ const StructuredData = () => {
     mainEntity: [
       {
         '@type': 'Question',
-        name: 'Which engineering universities are covered?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'MCQsAI covers entry tests for major engineering universities including NUST, GIKI, UET, FAST NUCES, Bahria, Air University, COMSATS, and other HEC-recognised institutions across Pakistan.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'What subjects are tested?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'The tests cover Mathematics, Physics, Chemistry, Biology, English, and analytical reasoning, depending on the exam you are preparing for.',
-        },
-      },
-      {
-        '@type': 'Question',
-        name: 'Are these MCQs free?',
-        acceptedAnswer: {
-          '@type': 'Answer',
-          text: 'Yes, all MCQs on MCQsAI are completely free to practice. You can attempt unlimited questions without any charges.',
-        },
-      },
-      {
-        '@type': 'Question',
         name: 'How many MCQs are available on MCQsAI?',
         acceptedAnswer: {
           '@type': 'Answer',
@@ -193,7 +169,31 @@ const StructuredData = () => {
         name: 'Does MCQsAI support Urdu language?',
         acceptedAnswer: {
           '@type': 'Answer',
-          text: 'Yes, MCQsAI fully supports Urdu and Sindhi languages in addition to English. You can switch languages anytime from the header menu.',
+          text: 'Yes, MCQsAI fully supports Urdu and Sindhi languages in addition to English.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Which engineering universities are covered?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'GIKI, LUMS, FAST NUCES, Bahria, Aga Khan, Air University, Islamia University and Hamdard University.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'What subjects are tested?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Mathematics, Physics, Chemistry, English and analytical reasoning.',
+        },
+      },
+      {
+        '@type': 'Question',
+        name: 'Are these MCQs free?',
+        acceptedAnswer: {
+          '@type': 'Answer',
+          text: 'Yes, all engineering university entry test MCQs on MCQsAI are completely free.',
         },
       },
     ],
