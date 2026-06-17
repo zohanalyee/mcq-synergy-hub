@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck, Play, Gauge } from "lucide-react";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 import {
   Dialog,
   DialogContent,
@@ -184,31 +184,29 @@ const MockTestDetail = () => {
                   <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
                     <Gauge className="h-3.5 w-3.5" /> Difficulty
                   </label>
-                  <Select value={difficulty} onValueChange={(v: "easy" | "medium" | "hard") => setDifficulty(v)}>
-                    <SelectTrigger className="h-10 rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="easy">Easy</SelectItem>
-                      <SelectItem value="medium">Medium</SelectItem>
-                      <SelectItem value="hard">Hard</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={difficulty}
+                    onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}
+                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
                 </div>
                 <div className="space-y-1.5">
                   <label className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
                     <BookOpen className="h-3.5 w-3.5" /> Number of Questions
                   </label>
-                  <Select value={String(questionCount)} onValueChange={(v) => setQuestionCount(parseInt(v))}>
-                    <SelectTrigger className="h-10 rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[10, 20, 50, 100].map((n) => (
-                        <SelectItem key={n} value={String(n)}>{n} questions</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={String(questionCount)}
+                    onChange={(e) => setQuestionCount(parseInt(e.target.value))}
+                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  >
+                    {[10, 20, 50, 100].map((n) => (
+                      <option key={n} value={String(n)}>{n} questions</option>
+                    ))}
+                  </select>
                 </div>
               </div>
               <DialogFooter>
