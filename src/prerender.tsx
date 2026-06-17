@@ -18,7 +18,14 @@ function parseHelmetHtml(html: string): Array<{ type: string; props: Record<stri
     let a: RegExpExecArray | null;
     while ((a = attrRe.exec(s)) !== null) {
       const name = a[1];
-      if (name === 'data-rh' || name === 'data-react-helmet') continue;
+      // Keep the data-rh / data-react-helmet markers so react-helmet-async
+      // recognizes prerendered tags on hydration and reconciles them in place
+      // instead of appending a second copy (which caused duplicate FAQPage
+      // and other JSON-LD scripts in the rendered DOM).
+      if (name === 'data-react-helmet') {
+        props['data-rh'] = 'true';
+        continue;
+      }
       props[name] = a[2] ?? a[3] ?? a[4] ?? '';
     }
     return props;
