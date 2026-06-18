@@ -759,7 +759,7 @@ const SubjectContent = () => {
     <Header>
       <SEOHead
         title={title ? `${title} MCQs with Answers — Free Practice` : 'Subject Practice'}
-        description={title ? `Free ${title} MCQs with answers and detailed explanations. AI-powered ${title} practice questions for MDCAT, ECAT, NTS, FPSC & board exams — MCQsAI Pakistan.` : undefined}
+        description={title ? `Free ${title} MCQs with answers and detailed explanations. AI-powered ${title} practice questions for MDCAT, ECAT, NTS, FPSC & board exams — MCQsAI Pakistan.` : (routeId ? `Practice free ${routeId.replace(/-/g, ' ')} MCQs with answers and detailed explanations. AI-powered subject practice for MDCAT, ECAT, NTS & board exams — MCQsAI.` : 'Practice free subject-wise MCQs with answers and detailed explanations. AI-powered question practice for MDCAT, ECAT, NTS & board exams in Pakistan — MCQsAI.')}
         keywords={title ? `${title} MCQs, ${title} MCQs with answers, ${title} past papers, ${title} quiz, ${title} practice questions Pakistan` : undefined}
         noindex={isRunnerVariant}
       />

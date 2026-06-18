@@ -128,7 +128,7 @@ const Subjects = () => {
     <Header>
       <SEOHead
         title="Practice MCQs by Subject"
-        description="Practice Biology, Chemistry, Physics, English, Urdu, Mathematics MCQs for MDCAT, ECAT, and competitive exams in Pakistan."
+        description="Browse all subjects on MCQsAI — read curriculum content and practice subject-wise MCQs in Read or Practice mode for MDCAT, ECAT & board exams in Pakistan."
         keywords="Biology MCQs, Chemistry MCQs, Physics MCQs, subject-wise practice, MDCAT subjects, ECAT subjects"
         noindex={hasQueryParams}
       />
