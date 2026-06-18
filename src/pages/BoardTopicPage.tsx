@@ -1,7 +1,7 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { fromSlug, toSlug, findBestMatch, findMatchingLevel, normalizeClassNumber } from '@/lib/slugUtils';
+import { fromSlug, toSlug, findBestMatch, findMatchingLevel, normalizeClassNumber, toClassSegment } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -24,6 +24,11 @@ import { useEffect } from 'react';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
+import indexableTopics from '@/generated/indexableTopics.json';
+
+// Build-time set of indexable board topic paths (topics with >= 5 approved
+// MCQs). Same source as the sitemap. Used for a deterministic SSR noindex.
+const INDEXABLE_TOPIC_PATHS = new Set(indexableTopics as string[]);
 
 interface MCQOption { key: string; text: string; }
 
@@ -40,7 +45,18 @@ const BoardTopicPage = () => {
     boardSlug: string; classNumber: string; subjectSlug: string; topicSlug: string;
   }>();
   const { isAdmin } = useUserRole();
+  const navigate = useNavigate();
   const resolvedClassNumber = normalizeClassNumber(classNumber || '');
+
+  // Consolidate the legacy numeric class variant (/boards/x/9/...) onto the
+  // canonical class-N form (/boards/x/class-9/...) so old indexed URLs redirect
+  // instead of serving duplicate content.
+  const canonicalClassSeg = toClassSegment(classNumber || '');
+  useEffect(() => {
+    if (classNumber && canonicalClassSeg && classNumber !== canonicalClassSeg) {
+      navigate(`/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}`, { replace: true });
+    }
+  }, [classNumber, canonicalClassSeg, boardSlug, subjectSlug, topicSlug, navigate]);
 
   const boardName = fromSlug(boardSlug || '');
   const subjectName = fromSlug(subjectSlug || '');
@@ -137,9 +153,13 @@ const BoardTopicPage = () => {
   const unapprovedCount = allMcqs.filter((m: any) => m.status !== 'approved').length;
   const approvedCount = allMcqs.filter((m: any) => m.status === 'approved').length;
   const mcqs = allMcqs;
-  // AdSense / SEO: thin pages with fewer than 5 approved MCQs are low-value
-  // near-duplicates. Keep them crawlable for users but out of the index.
-  const isThin = approvedCount < 5;
+  // AdSense / SEO: a page is indexable only if it's in the build-time manifest
+  // of topics with >= 5 approved MCQs (same source as the sitemap). This is
+  // synchronous and available during prerender, so thin/empty pages reliably
+  // ship a robots=noindex tag in the static HTML — unlike the old async
+  // `isLoading`/approvedCount check that never resolved at SSR time.
+  const canonicalPath = `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}`;
+  const isThin = !INDEXABLE_TOPIC_PATHS.has(canonicalPath);
   const relatedTopics = data?.relatedTopics || [];
   const names = data?.resolvedNames || { board: boardName, subject: subjectName, topic: topicName };
   const debugInfo = data?.debug;
@@ -147,7 +167,7 @@ const BoardTopicPage = () => {
 
   const seoTitle = `${names.topic} MCQs - ${names.subject} Class ${resolvedClassNumber || classNumber} | ${names.board}`;
   const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${resolvedClassNumber || classNumber} (${names.board}). Free online preparation with explanations.`;
-  const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${topicSlug}`;
+  const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}`;
 
   useEffect(() => {
     if (!isLoading && mcqs.length === 0 && names.topic) {
@@ -170,15 +190,15 @@ const BoardTopicPage = () => {
 
   return (
     <Header>
-      <SEOHead title={seoTitle} description={seoDesc} keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`} url={canonicalUrl} noindex={!isLoading && isThin} />
+      <SEOHead title={seoTitle} description={seoDesc} keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`} url={canonicalUrl} noindex={isThin} />
       {quizSchema && <Helmet><script type="application/ld+json">{JSON.stringify(quizSchema)}</script></Helmet>}
       <BreadcrumbSchema items={[
         { name: 'Home', path: '/' },
         { name: 'Boards', path: '/boards' },
         { name: names.board, path: `/boards/${boardSlug}` },
-        { name: `Class ${resolvedClassNumber || classNumber}`, path: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}` },
-        { name: names.subject, path: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}` },
-        { name: names.topic, path: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}/${topicSlug}` },
+        { name: `Class ${resolvedClassNumber || classNumber}`, path: `/boards/${boardSlug}/${canonicalClassSeg}` },
+        { name: names.subject, path: `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}` },
+        { name: names.topic, path: `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}` },
       ]} />
 
 

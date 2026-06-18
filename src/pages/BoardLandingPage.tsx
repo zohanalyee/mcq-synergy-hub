@@ -1,7 +1,7 @@
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { findBestMatch, toSlug } from '@/lib/slugUtils';
+import { findBestMatch, toSlug, toClassSegment } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -67,7 +67,7 @@ const BoardLandingPage = () => {
               const classNum = classMatch ? classMatch[1] : level.name;
               return (
                 <motion.div key={level.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-                   <Link to={`/boards/${boardSlug}/${classNum}`}>
+                   <Link to={`/boards/${boardSlug}/${toClassSegment(classNum)}`}>
                     <Card className="hover:shadow-lg transition-shadow text-center">
                       <CardHeader className="pb-2">
                         <GraduationCap className="h-8 w-8 mx-auto text-primary" />

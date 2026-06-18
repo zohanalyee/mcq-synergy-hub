@@ -73,6 +73,23 @@ export const normalizeClassNumber = (value: string): string => {
     .replace(/^-|-$/g, '');
 };
 
+/**
+ * Canonical URL segment for a class/level in a board path.
+ * Numeric classes always return the `class-N` form (e.g. "9" → "class-9",
+ * "Class 9" → "class-9", "class-9" → "class-9"). Non-numeric levels are
+ * returned as a plain slug and left un-prefixed.
+ * This is the single, consistent format used across internal links, canonical
+ * tags, and the sitemap so Google never sees two URL variants for one page.
+ */
+export const toClassSegment = (value: string): string => {
+  const normalized = normalizeClassNumber(value);
+  if (!normalized) return '';
+  // Already in class-N form? Don't double-prefix.
+  if (/^class-/.test(normalized)) return normalized;
+  // Bare number → class-N. Non-numeric slug → leave as-is.
+  return /^\d+$/.test(normalized) ? `class-${normalized}` : normalized;
+};
+
 export const findMatchingLevel = <T extends { name: string }>(
   items: T[],
   targetClass: string

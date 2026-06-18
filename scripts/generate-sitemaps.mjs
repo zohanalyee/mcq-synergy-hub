@@ -270,18 +270,32 @@ async function buildBoards() {
   }
 
   const all = [];
+  const indexablePaths = [];
   for (const t of topics || []) {
     const s = t.subjects, l = s?.levels, sys = l?.educational_systems;
     if (!s || !l || !sys) continue;
     const cls = extractClassNumber(l.name);
     if (!cls) continue;
     if ((approvedByTopic.get(t.id) || 0) < MIN_APPROVED_MCQS) continue;
-    all.push({
-      loc: `${BASE_URL}/boards/${toSlug(sys.name)}/class-${cls}/${toSlug(s.name)}/${toSlug(t.name)}`,
-      lastmod: today, freq: "weekly", priority: "0.7",
-    });
+    const path = `/boards/${toSlug(sys.name)}/class-${cls}/${toSlug(s.name)}/${toSlug(t.name)}`;
+    all.push({ loc: `${BASE_URL}${path}`, lastmod: today, freq: "weekly", priority: "0.7" });
+    indexablePaths.push(path);
   }
   console.log(`[sitemap] boards: ${all.length} URLs kept (>= ${MIN_APPROVED_MCQS} approved MCQs)`);
+
+  // Build-time manifest of indexable board topic paths (>= 5 approved MCQs).
+  // Consumed synchronously by BoardTopicPage.tsx so the noindex decision is
+  // deterministic in the prerendered (SSR) HTML — thin/empty pages ship a
+  // robots=noindex tag in static HTML, exactly matching what's in the sitemap.
+  // Written into src/ (not public/) so the bundler can import it at build time.
+  const GENERATED_DIR = resolve(ROOT, "src", "generated");
+  mkdirSync(GENERATED_DIR, { recursive: true });
+  writeFileSync(
+    resolve(GENERATED_DIR, "indexableTopics.json"),
+    JSON.stringify(indexablePaths)
+  );
+  console.log(`[sitemap] src/generated/indexableTopics.json written (${indexablePaths.length} paths)`);
+
   const pages = Math.max(1, Math.ceil(all.length / ITEMS_PER_SITEMAP));
   for (let i = 1; i <= pages; i++) {
     const slice = all.slice((i - 1) * ITEMS_PER_SITEMAP, i * ITEMS_PER_SITEMAP);

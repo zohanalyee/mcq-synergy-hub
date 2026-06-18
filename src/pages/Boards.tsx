@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
-import { toSlug } from '@/lib/slugUtils';
+import { toSlug, toClassSegment } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -99,7 +99,7 @@ const Boards = () => {
                           return (
                             <Link
                               key={level.id}
-                               to={`/boards/${toSlug(sys.name)}/${classNum}`}
+                               to={`/boards/${toSlug(sys.name)}/${toClassSegment(classNum)}`}
                               className="text-sm px-3 py-1.5 rounded-md bg-secondary/50 border border-border/40 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
                             >
                               {level.name}
