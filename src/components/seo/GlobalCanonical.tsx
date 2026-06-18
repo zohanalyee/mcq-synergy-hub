@@ -1,6 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 import { SITE_ORIGIN } from '@/lib/seoUrls';
+import { toClassSegment } from '@/lib/slugUtils';
 
 /**
  * GlobalCanonical — single source of truth for <link rel="canonical">.
@@ -17,6 +18,9 @@ import { SITE_ORIGIN } from '@/lib/seoUrls';
  *     keeps og:url === og:image host, so social previews resolve directly).
  *   - Strip query string entirely (incl. ?lang=)
  *   - Strip trailing slash (except root)
+ *   - Normalize the board class segment to the `class-N` form so the numeric
+ *     variant (/boards/<board>/9/...) and the slug variant
+ *     (/boards/<board>/class-9/...) share ONE canonical.
  *
  * No other component in the app should emit a <link rel="canonical">.
  */
@@ -25,6 +29,17 @@ const GlobalCanonical = () => {
 
   let p = pathname || '/';
   if (p.length > 1 && p.endsWith('/')) p = p.slice(0, -1);
+
+  // Normalize the class segment of board topic/subject/class paths:
+  //   /boards/<board>/<class>/...  →  class segment becomes class-N
+  const boardMatch = p.match(/^\/boards\/([^/]+)\/([^/]+)(\/.*)?$/);
+  if (boardMatch) {
+    const [, board, classSeg, rest = ''] = boardMatch;
+    const normalizedClass = toClassSegment(classSeg);
+    if (normalizedClass && normalizedClass !== classSeg) {
+      p = `/boards/${board}/${normalizedClass}${rest}`;
+    }
+  }
 
   const canonical = `${SITE_ORIGIN}${p}`;
 

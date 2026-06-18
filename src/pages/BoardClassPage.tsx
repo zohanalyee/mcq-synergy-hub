@@ -1,7 +1,8 @@
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { findBestMatch, findMatchingLevel, normalizeClassNumber, toSlug } from '@/lib/slugUtils';
+import { findBestMatch, findMatchingLevel, normalizeClassNumber, toSlug, toClassSegment } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -12,7 +13,15 @@ import { motion } from 'framer-motion';
 
 const BoardClassPage = () => {
   const { boardSlug, classNumber } = useParams<{ boardSlug: string; classNumber: string }>();
+  const navigate = useNavigate();
   const resolvedClassNumber = normalizeClassNumber(classNumber || '');
+
+  const canonicalClassSeg = toClassSegment(classNumber || '');
+  useEffect(() => {
+    if (classNumber && canonicalClassSeg && classNumber !== canonicalClassSeg) {
+      navigate(`/boards/${boardSlug}/${canonicalClassSeg}`, { replace: true });
+    }
+  }, [classNumber, canonicalClassSeg, boardSlug, navigate]);
 
   const { data, isLoading } = useQuery({
     queryKey: ['board-class', boardSlug, classNumber],
@@ -76,7 +85,7 @@ const BoardClassPage = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {data.subjects.map((subject, i) => (
               <motion.div key={subject.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                 <Link to={`/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${toSlug(subject.name)}`}>
+                 <Link to={`/boards/${boardSlug}/${toClassSegment(resolvedClassNumber || classNumber || '')}/${toSlug(subject.name)}`}>
                   <Card className="h-full hover:shadow-lg transition-shadow">
                     <CardHeader>
                       <div className="flex items-center gap-2">
