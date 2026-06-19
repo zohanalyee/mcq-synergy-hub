@@ -1,109 +1,100 @@
-# SEO Indexing Audit — Root Causes & Fix Plan
+# Secure `user_feedback` (Reviews) — Security Hardening Plan
 
-## What I checked
+## Audit findings
 
-- GSC connection (both `sc-domain:mcqsai.com` and `https://mcqsai.com/` properties verified).
-- Live redirect behavior, `public/robots.txt`, sitemap files, canonical/noindex code, board routing, and the database (topic ↔ approved-MCQ counts).
+**Public testimonials on the homepage** (`TestimonialsSection.tsx`) read from the `reviews` table — already secure: column-scoped select + `display_publicly = true`. **No change needed there.**
 
-> Note on method: GSC's per-category URL lists ("Page with redirect", etc.) are **not** exposed by any GSC API — only the UI export provides them, and the URL Inspection API is not routable through our connector gateway. So I root-caused each category from the code + DB + live HTTP behavior, which lines up cleanly with your screenshots. Please export the 4 CSVs from GSC if you want me to confirm exact URL samples per bucket.
+**The** `/reviews` **page and** `UserSatisfactionPopup` read from `user_feedback`, which is the problem.
 
-## Database reality (the thin-content core)
+`user_feedback` columns: `id, user_id, stars, category, message, created_at, updated_at, status, admin_notes, user_name, user_avatar_url, is_guest`.
 
-Of **1,847** board topics:
+Current policies include:
 
-- **1,321 have 0 approved MCQs**
-- **13 have 1–4**
-- only **513 have ≥5** (genuinely indexable)
+```
+"Public can view feedback reviews"  SELECT  roles: anon, authenticated  USING (true)
+```
 
-So ~72% of topic pages are empty shells. The sitemap is already correct — it emits only **456** board URLs (topics with ≥5 approved MCQs). The empty ones are NOT in the sitemap but ARE reachable via internal links and old crawls.
+Because Postgres RLS is **row-level, not column-level**, this single policy lets any anonymous visitor run `select *` and read **every column of every row** — including `user_id` (auth linkage), `status`, and `admin_notes`. This is the flagged exposure.
 
-## Root cause per GSC category
+There is **no** `approved`**/**`display_publicly` **column** on `user_feedback`, so today *every* feedback row is shown publicly.
 
-**1. Duplicate without user-selected canonical (114)** — Two URL formats render the same page:
+## Goal
 
-- Internal links emit numeric class: `/boards/<board>/9/<subject>/<topic>` (Boards.tsx, BoardLandingPage.tsx, BoardSubjectPage.tsx, BoardClassPage.tsx, RelatedTopics.tsx all use numeric `classNum`).
-- The sitemap emits slug class: `/boards/<board>/class-9/<subject>/<topic>`.
-- `GlobalCanonical` builds the canonical from the **raw pathname**, so each variant self-canonicalizes. Google sees two identical pages, neither defers → "duplicate without canonical." This is the single biggest fixable bug.
+- Public visitors: see only approved reviews, and only safe columns (no `user_id`, `status`, `admin_notes`).
+- Authenticated users: view/manage only their own feedback.
+- Admins: full access incl. controlling approval.
+- Existing visible reviews must stay visible after deploy.
 
-**2. Page with redirect (486)** — Host/variant URLs Google still has indexed that now redirect to apex: `www.mcqsai.com` (302→apex) and the old `mcq-synergy-hub.lovable.app` (confirmed live `302 → https://mcqsai.com/`). Consolidates once canonicals are consistent and Google re-crawls.
+## Database changes (migration)
 
-**3. Alternative page with proper canonical tag (350)** — Largely **expected/healthy**: query-param permutations (`?topic=`, `?count=`, `?difficulty=`) and the class-variant pages whose canonical Google *did* fold. robots.txt already disallows these param patterns and canonicals point to the clean URL. Mostly "validate & wait," shrinks further after fix #1.
+1. **Add moderation column**
+  - `ALTER TABLE public.user_feedback ADD COLUMN is_public boolean NOT NULL DEFAULT false;`
+2. **Migrate existing rows** so current `/reviews` content is preserved
+  - `UPDATE public.user_feedback SET is_public = true;` (backfill all current rows to visible)
+3. **Remove the over-permissive policy**
+  - `DROP POLICY "Public can view feedback reviews" ON public.user_feedback;`
+  - This removes all `anon` direct SELECT access to the table. Authenticated/admin/insert policies remain unchanged.
+4. **Expose only safe columns to the public via SECURITY DEFINER RPCs** (RLS cannot hide columns, so RPCs are the correct least-privilege mechanism):
+  - `get_public_feedback_reviews(filter_rating int, sort_by text)` → returns `id, user_name, user_avatar_url, stars, message, category, created_at, is_guest` **WHERE** `is_public = true`. Never returns `user_id`, `status`, or `admin_notes`.
+  - `get_public_feedback_stats()` → returns the aggregate star counts (`avg_rating`, `total_reviews`, `five_star`…`one_star`) over `is_public = true` rows.
+  - Both `SECURITY DEFINER`, `SET search_path = public`, `GRANT EXECUTE ... TO anon, authenticated`.
 
-**4. Excluded by noindex tag (19)** — `BoardTopicPage` sets `noindex={!isLoading && isThin}`, but **prerender is synchronous and never resolves react-query data** (`prerender.tsx` does one `renderToString` with no data await). At SSR `isLoading` is always true, so the static HTML Google fetches contains **no noindex and no MCQ content**. Pages flip to noindex only after client hydration → Google reports "excluded by noindex" on re-crawl. The noindex is firing on the wrong (sometimes right) pages non-deterministically.
+Resulting policy set on `user_feedback`:
 
-**5. Not found 404 (8)** — Small; almost certainly deleted/renamed topics or stale slugs. Needs the CSV to list exact URLs.
+- Admins view all (`is_admin()`) — kept
+- Admins update (incl. toggling `is_public`) — kept
+- Users view own (`auth.uid() = user_id`) — kept
+- Authenticated insert own / Guest insert — kept
+- **No** `anon` **direct SELECT** — public reads go through the RPCs only
 
-**6. Access forbidden 403 (325)** — Ignored per your instruction (Cloudflare, already fixed).
+## Frontend changes
 
-## Proposed fix
+- `src/pages/Reviews.tsx`
+  - Replace the direct `from('user_feedback').select('stars')` stats query with `supabase.rpc('get_public_feedback_stats')`.
+  - Replace the direct `from('user_feedback').select('id, user_name, …')` reviews query with `supabase.rpc('get_public_feedback_reviews', { filter_rating, sort_by })`.
+  - The realtime subscription on `user_feedback` will no longer fire for anon (no SELECT policy); the page still loads fine. Keep it for signed-in/admin sessions, or drop it — behavior of the page is unaffected. (No UI/markup changes.)
+- `src/pages/Feedback.tsx` — submission insert unchanged (still inserts own row; new rows default `is_public = false` pending admin approval). No UI change.
+- `src/components/UserSatisfactionPopup.tsx` — only reads the current user's own row (covered by "view own" policy) and inserts; unchanged.
+- `src/components/admin/feedback/AdminFeedbackPanel.tsx` — admin already has full access; optionally surface an "approve/publish" toggle that sets `is_public` (admin-only). This is the moderation control. No change required to fix security, but recommended so admins can publish new feedback.
 
-### Fix A — Standardize the board class segment on `class-N` (fixes #1, helps #2/#3)
+Note: new feedback now defaults to **not public** until an admin approves it. Existing reviews are backfilled to public so nothing currently visible disappears.
 
-- Update all internal links to emit `class-${classNum}` instead of numeric: `Boards.tsx`, `BoardLandingPage.tsx`, `BoardSubjectPage.tsx`, `BoardClassPage.tsx`, `RelatedTopics.tsx`.
-- Normalize the canonical in `GlobalCanonical.tsx`: for `/boards/:board/:class/...` paths, rewrite a bare-numeric class segment to `class-N` so **both** variants emit the identical `class-N` canonical. (Keeps sitemap, canonical, and internal links on one format.)
-- Add a client redirect (React Router `<Navigate replace>`) from numeric `/<n>/` board paths to the `class-N` form so previously-indexed numeric URLs consolidate instead of 200-ing as duplicates.
+## Verification
 
-### Fix B — Make thin/empty noindex deterministic in static HTML (fixes #4 + thin content/AdSense)
+- As `anon`: `select * from user_feedback` → permission denied; `rpc get_public_feedback_reviews` → only safe columns, only `is_public = true` rows.
+- `/reviews` page loads the same reviews as before (post-backfill).
+- Signed-in user sees only their own rows via direct query; admins see all.
 
-- Extend the existing sitemap generator (which already computes `approvedByTopic`) to also write a build-time manifest `public/indexable-topics.json` (or `src/generated/…`) containing the set of topic paths with ≥5 approved MCQs.
-- In `BoardTopicPage`, derive `noindex` from membership in that manifest (synchronous, available at SSR) instead of from async `isLoading`/`isThin`. Result: empty/thin pages ship `<meta name="robots" content="noindex">` in the prerendered HTML; only ≥5-MCQ pages are indexable — and this exactly matches what's in the sitemap.
-- Apply the same manifest-based noindex to `BoardSubjectPage`/`BoardClassPage` if they can render with zero downstream content.
+## Answer: www → apex redirect (301 vs 302)
 
-### Fix C — Host consolidation (fixes #2)
+This redirect is **not in the app code** — there is no client-side or React Router redirect handling `www → apex`. It happens at **Lovable's hosting/edge layer** (you have `mcqsai.com` + `www.mcqsai.com` both connected, with one set as Primary; non-primary redirects to Primary). Lovable's platform issues a **301 permanent** redirect for the non-primary → primary domain consolidation, served at the edge (good for SEO signal strength) — it is not something configurable in this codebase. The 486 "Page with redirect" entries in GSC are expected during consolidation and will resolve as Google recrawls; ensure `www.mcqsai.com` is set as the non-primary and `mcqsai.com` as Primary in Project Settings → Domains (or vice-versa, consistently). No code change is needed or possible for this from the app side.
 
-- Canonicals are already apex-only. After A/B ship, resubmit the sitemap and use GSC "Validate fix." Recommend (platform/Cloudflare side, outside the repo) switching `www` and `lovable.app` redirects from **302 → 301** so Google transfers signals faster. I'll flag this; it can't be changed from app code.
-
-### Fix D — 404s (#5)
-
-- After you export the GSC 404 CSV, I'll either restore/redirect the 8 paths or confirm they're correctly gone.
-
-### Optional enhancement (larger, separate)
-
-- Make `prerender.tsx` await react-query data (prefetch + dehydrate) so static HTML contains real MCQ content and accurate schema for every indexable page — strengthens content depth beyond just fixing noindex. Proposed as a follow-up, not part of this pass.
-
-## Out of scope / no change needed
-
-- robots.txt param blocking and apex canonical strategy are already correct.
-- The 350 "alternative page with proper canonical" bucket is mostly healthy crawler behavior and should shrink on its own after Fix A.
-
-## Validation after implementing
-
-- Re-run the sitemap generator; confirm manifest count ≈ 513 and sitemap ≈ unchanged.
-- Spot-check built HTML for a numeric vs `class-N` URL (same canonical) and for a 0-MCQ topic (noindex present in static HTML).
-- Resubmit sitemap + click "Validate fix" on each category in GSC.
-
-I want your sign-off on **Fix A's canonical format (`class-N`)** and **Fix B's build-time manifest approach** before I implement. If you'd rather standardize on the numeric `/9/` format instead, say so and I'll flip the direction.
+This plan is security-only; it does not alter review UI, SEO, indexing, or sitemap behavior beyond the required access changes.
 
 &nbsp;
 
 &nbsp;
 
-# **Approved — proceed with both fixes:**
+# **Confirmed mcqsai.com is set as Primary in** Project Settings → 
 
-Fix A: Standardize on "class-N" format (text-based, matching the 
+Domains. No action needed on the redirect side.
 
-sitemap) across all internal links. Update GlobalCanonical to 
+&nbsp;
 
-normalize numeric variants to class-N. Add redirect from old 
+Approved — proceed with the security hardening plan for 
 
-numeric URLs to class-N URLs.
+user_feedback. After deployment, confirm:
 
-Fix B: Implement the build-time indexable-topics manifest 
+&nbsp;
 
-(≥5 approved MCQs) and use it for deterministic noindex in 
+1. /reviews page still shows the same reviews as before
 
-BoardTopicPage (and BoardSubjectPage/BoardClassPage if applicable). 
+2. Anon verification test passes (direct select denied, RPC 
 
-Replace the async isLoading-based noindex logic.
+   returns only safe columns)
 
-After implementing both, run your validation checklist (manifest 
+3. New feedback submissions still work correctly
 
-count check, spot-check static HTML for both a numeric→class-N 
+&nbsp;
 
-redirect and a 0-MCQ noindex page). Report back with confirmation 
-
-before I resubmit the sitemap in GSC.
-
-Hold off on Fix C (Cloudflare 301 redirect) and Fix D (404s) — 
-
-I'll handle those separately.
+&nbsp;
