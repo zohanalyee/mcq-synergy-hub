@@ -219,6 +219,7 @@ const AdminFeedbackPanel = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Status</TableHead>
+                <TableHead className="text-xs">Public</TableHead>
                 <TableHead className="text-xs">Rating</TableHead>
                 <TableHead className="text-xs">Category</TableHead>
                 <TableHead className="text-xs">Message</TableHead>
@@ -230,6 +231,13 @@ const AdminFeedbackPanel = () => {
               {feedbackList.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{getStatusBadge(item.status)}</TableCell>
+                  <TableCell>
+                    {item.is_public ? (
+                      <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">Live</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Hidden</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{renderStars(item.stars)}</TableCell>
                   <TableCell>{getCategoryBadge(item.category)}</TableCell>
                   <TableCell className="max-w-[200px] truncate text-xs text-foreground">{item.message}</TableCell>
@@ -280,6 +288,15 @@ const AdminFeedbackPanel = () => {
                 <p className="text-sm text-foreground whitespace-pre-wrap">{selectedItem.message}</p>
               </div>
               <div className="flex gap-2">
+                <Button size="sm" variant={selectedItem.is_public ? 'outline' : 'default'} className="flex-1 text-xs"
+                  onClick={() => {
+                    togglePublicMutation.mutate({ id: selectedItem.id, is_public: !selectedItem.is_public });
+                    setSelectedItem({ ...selectedItem, is_public: !selectedItem.is_public });
+                  }}>
+                  {selectedItem.is_public
+                    ? (<><EyeOff className="w-3 h-3 mr-1" /> Hide</>)
+                    : (<><Globe className="w-3 h-3 mr-1" /> Publish</>)}
+                </Button>
                 <Button size="sm" variant="outline" className="flex-1 text-xs"
                   onClick={() => { updateStatusMutation.mutate({ id: selectedItem.id, status: 'addressed' }); setSelectedItem(null); }}>
                   <CheckCircle className="w-3 h-3 mr-1" /> Addressed
