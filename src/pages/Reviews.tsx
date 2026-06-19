@@ -41,22 +41,18 @@ const Reviews = () => {
   const { data: stats } = useQuery({
     queryKey: ['public-review-stats'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('user_feedback')
-        .select('stars');
+      const { data, error } = await supabase.rpc('get_public_feedback_stats');
       if (error) throw error;
-      const all = data || [];
-      const total = all.length;
-      if (total === 0) return null;
-      const avg = all.reduce((s, r) => s + r.stars, 0) / total;
+      const row = Array.isArray(data) ? data[0] : data;
+      if (!row || Number(row.total_reviews) === 0) return null;
       return {
-        avg_rating: Math.round(avg * 10) / 10,
-        total_reviews: total,
-        five_star: all.filter(r => r.stars === 5).length,
-        four_star: all.filter(r => r.stars === 4).length,
-        three_star: all.filter(r => r.stars === 3).length,
-        two_star: all.filter(r => r.stars === 2).length,
-        one_star: all.filter(r => r.stars === 1).length,
+        avg_rating: Number(row.avg_rating),
+        total_reviews: Number(row.total_reviews),
+        five_star: Number(row.five_star),
+        four_star: Number(row.four_star),
+        three_star: Number(row.three_star),
+        two_star: Number(row.two_star),
+        one_star: Number(row.one_star),
       };
     },
   });
@@ -64,21 +60,10 @@ const Reviews = () => {
   const { data: reviews, isLoading } = useQuery({
     queryKey: ['public-reviews', filterRating, sortBy],
     queryFn: async () => {
-      let query = supabase
-        .from('user_feedback')
-        .select('id, user_name, user_avatar_url, stars, message, category, created_at, is_guest');
-
-      if (filterRating !== 'all') {
-        query = query.eq('stars', parseInt(filterRating));
-      }
-
-      if (sortBy === 'recent') {
-        query = query.order('created_at', { ascending: false });
-      } else {
-        query = query.order('stars', { ascending: false });
-      }
-
-      const { data, error } = await query;
+      const { data, error } = await supabase.rpc('get_public_feedback_reviews', {
+        filter_rating: filterRating === 'all' ? null : parseInt(filterRating),
+        sort_by: sortBy === 'recent' ? 'recent' : 'rating',
+      });
       if (error) {
         console.error('Error fetching reviews:', error);
         return [];

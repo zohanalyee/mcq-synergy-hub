@@ -2990,6 +2990,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_guest: boolean | null
+          is_public: boolean
           message: string | null
           stars: number
           status: string | null
@@ -3004,6 +3005,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_guest?: boolean | null
+          is_public?: boolean
           message?: string | null
           stars: number
           status?: string | null
@@ -3018,6 +3020,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_guest?: boolean | null
+          is_public?: boolean
           message?: string | null
           stars?: number
           status?: string | null
@@ -3445,6 +3448,31 @@ export type Database = {
           total_time_spent: number
           user_id: string
           username: string
+        }[]
+      }
+      get_public_feedback_reviews: {
+        Args: { filter_rating?: number; sort_by?: string }
+        Returns: {
+          category: string
+          created_at: string
+          id: string
+          is_guest: boolean
+          message: string
+          stars: number
+          user_avatar_url: string
+          user_name: string
+        }[]
+      }
+      get_public_feedback_stats: {
+        Args: never
+        Returns: {
+          avg_rating: number
+          five_star: number
+          four_star: number
+          one_star: number
+          three_star: number
+          total_reviews: number
+          two_star: number
         }[]
       }
       get_recently_active_users: {

@@ -13,7 +13,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Star, MessageSquare, TrendingUp, RefreshCw, Eye, Archive, CheckCircle } from 'lucide-react';
+import { Star, MessageSquare, TrendingUp, RefreshCw, Eye, Archive, CheckCircle, Globe, EyeOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -28,6 +28,7 @@ interface FeedbackItem {
   status: string;
   created_at: string;
   admin_notes: string | null;
+  is_public: boolean;
 }
 
 const AdminFeedbackPanel = () => {
@@ -75,6 +76,20 @@ const AdminFeedbackPanel = () => {
       toast.success('Status updated');
     },
     onError: () => toast.error('Failed to update status'),
+  });
+
+  const togglePublicMutation = useMutation({
+    mutationFn: async ({ id, is_public }: { id: string; is_public: boolean }) => {
+      const { error } = await supabase.from('user_feedback').update({ is_public }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-feedback'] });
+      queryClient.invalidateQueries({ queryKey: ['public-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['public-review-stats'] });
+      toast.success(vars.is_public ? 'Published to reviews' : 'Hidden from reviews');
+    },
+    onError: () => toast.error('Failed to update visibility'),
   });
 
   const renderStars = (rating: number, size = 'w-3.5 h-3.5') => (
@@ -204,6 +219,7 @@ const AdminFeedbackPanel = () => {
             <TableHeader>
               <TableRow>
                 <TableHead className="text-xs">Status</TableHead>
+                <TableHead className="text-xs">Public</TableHead>
                 <TableHead className="text-xs">Rating</TableHead>
                 <TableHead className="text-xs">Category</TableHead>
                 <TableHead className="text-xs">Message</TableHead>
@@ -215,6 +231,13 @@ const AdminFeedbackPanel = () => {
               {feedbackList.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>{getStatusBadge(item.status)}</TableCell>
+                  <TableCell>
+                    {item.is_public ? (
+                      <Badge variant="outline" className="text-[10px] bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20">Live</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] text-muted-foreground">Hidden</Badge>
+                    )}
+                  </TableCell>
                   <TableCell>{renderStars(item.stars)}</TableCell>
                   <TableCell>{getCategoryBadge(item.category)}</TableCell>
                   <TableCell className="max-w-[200px] truncate text-xs text-foreground">{item.message}</TableCell>
@@ -265,6 +288,15 @@ const AdminFeedbackPanel = () => {
                 <p className="text-sm text-foreground whitespace-pre-wrap">{selectedItem.message}</p>
               </div>
               <div className="flex gap-2">
+                <Button size="sm" variant={selectedItem.is_public ? 'outline' : 'default'} className="flex-1 text-xs"
+                  onClick={() => {
+                    togglePublicMutation.mutate({ id: selectedItem.id, is_public: !selectedItem.is_public });
+                    setSelectedItem({ ...selectedItem, is_public: !selectedItem.is_public });
+                  }}>
+                  {selectedItem.is_public
+                    ? (<><EyeOff className="w-3 h-3 mr-1" /> Hide</>)
+                    : (<><Globe className="w-3 h-3 mr-1" /> Publish</>)}
+                </Button>
                 <Button size="sm" variant="outline" className="flex-1 text-xs"
                   onClick={() => { updateStatusMutation.mutate({ id: selectedItem.id, status: 'addressed' }); setSelectedItem(null); }}>
                   <CheckCircle className="w-3 h-3 mr-1" /> Addressed
