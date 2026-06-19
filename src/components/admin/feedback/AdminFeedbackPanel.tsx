@@ -13,7 +13,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
-import { Star, MessageSquare, TrendingUp, RefreshCw, Eye, Archive, CheckCircle } from 'lucide-react';
+import { Star, MessageSquare, TrendingUp, RefreshCw, Eye, Archive, CheckCircle, Globe, EyeOff } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { motion } from 'framer-motion';
@@ -28,6 +28,7 @@ interface FeedbackItem {
   status: string;
   created_at: string;
   admin_notes: string | null;
+  is_public: boolean;
 }
 
 const AdminFeedbackPanel = () => {
@@ -75,6 +76,20 @@ const AdminFeedbackPanel = () => {
       toast.success('Status updated');
     },
     onError: () => toast.error('Failed to update status'),
+  });
+
+  const togglePublicMutation = useMutation({
+    mutationFn: async ({ id, is_public }: { id: string; is_public: boolean }) => {
+      const { error } = await supabase.from('user_feedback').update({ is_public }).eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => {
+      queryClient.invalidateQueries({ queryKey: ['admin-feedback'] });
+      queryClient.invalidateQueries({ queryKey: ['public-reviews'] });
+      queryClient.invalidateQueries({ queryKey: ['public-review-stats'] });
+      toast.success(vars.is_public ? 'Published to reviews' : 'Hidden from reviews');
+    },
+    onError: () => toast.error('Failed to update visibility'),
   });
 
   const renderStars = (rating: number, size = 'w-3.5 h-3.5') => (
