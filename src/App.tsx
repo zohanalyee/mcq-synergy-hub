@@ -41,21 +41,40 @@ import Auth from "./pages/Auth";
 import GetStarted from "./pages/GetStarted";
 import NotFound from "./pages/NotFound";
 
+// Retry a lazy import once, then force a single full reload on stale-chunk errors
+function lazyWithReload<T extends { default: React.ComponentType<any> }>(
+  factory: () => Promise<T>
+) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (err) {
+      const key = "chunk-reloaded";
+      if (!sessionStorage.getItem(key)) {
+        sessionStorage.setItem(key, "1");
+        window.location.reload();
+        return await new Promise<T>(() => {});
+      }
+      throw err;
+    }
+  });
+}
+
 // Lazy: large feature pages (code-split for mobile performance)
-const Subjects = lazy(() => import("./pages/Subjects"));
-const MockTests = lazy(() => import("./pages/MockTests"));
-const MockTestDetail = lazy(() => import("./pages/MockTestDetail"));
-const Analytics = lazy(() => import("./pages/Analytics"));
-const Leaderboard = lazy(() => import("./pages/Leaderboard"));
+const Subjects = lazyWithReload(() => import("./pages/Subjects"));
+const MockTests = lazyWithReload(() => import("./pages/MockTests"));
+const MockTestDetail = lazyWithReload(() => import("./pages/MockTestDetail"));
+const Analytics = lazyWithReload(() => import("./pages/Analytics"));
+const Leaderboard = lazyWithReload(() => import("./pages/Leaderboard"));
 import PastPapers from "./pages/PastPapers";
 import Jobs from "./pages/Jobs";
 import Scholarships from "./pages/Scholarships";
-const CustomSyllabus = lazy(() => import("./pages/CustomSyllabus"));
-const SubjectContent = lazy(() => import("./pages/SubjectContent"));
-const CustomQuizzes = lazy(() => import("./pages/CustomQuizzes"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const ExternalCuration = lazy(() => import("./pages/admin/ExternalCuration"));
-const ReviewsManagement = lazy(() => import("./pages/admin/ReviewsManagement"));
+const CustomSyllabus = lazyWithReload(() => import("./pages/CustomSyllabus"));
+const SubjectContent = lazyWithReload(() => import("./pages/SubjectContent"));
+const CustomQuizzes = lazyWithReload(() => import("./pages/CustomQuizzes"));
+const AdminPanel = lazyWithReload(() => import("./pages/AdminPanel"));
+const ExternalCuration = lazyWithReload(() => import("./pages/admin/ExternalCuration"));
+const ReviewsManagement = lazyWithReload(() => import("./pages/admin/ReviewsManagement"));
 
 import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
