@@ -172,7 +172,7 @@ const MockTestDetail = () => {
 
           {/* Start exam modal — select settings, then confirm */}
           <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Ready to begin?</DialogTitle>
                 <DialogDescription>
@@ -187,7 +187,7 @@ const MockTestDetail = () => {
                   <select
                     value={difficulty}
                     onChange={(e) => setDifficulty(e.target.value as "easy" | "medium" | "hard")}
-                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="min-h-[44px] w-full rounded-xl border border-white/40 dark:border-white/10 bg-white/80 dark:bg-black/40 backdrop-blur-xl shadow-elegant px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     <option value="easy">Easy</option>
                     <option value="medium">Medium</option>
@@ -201,7 +201,7 @@ const MockTestDetail = () => {
                   <select
                     value={String(questionCount)}
                     onChange={(e) => setQuestionCount(parseInt(e.target.value))}
-                    className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                    className="min-h-[44px] w-full rounded-xl border border-white/40 dark:border-white/10 bg-white/80 dark:bg-black/40 backdrop-blur-xl shadow-elegant px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   >
                     {[10, 20, 50, 100].map((n) => (
                       <option key={n} value={String(n)}>{n} questions</option>
