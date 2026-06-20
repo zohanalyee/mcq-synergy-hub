@@ -10,7 +10,7 @@ const Router = ({ children }: { children: React.ReactNode }) =>
   (typeof window === 'undefined' || (globalThis as any).__PRERENDER__)
     ? <>{children}</>
     : <BrowserRouter>{children}</BrowserRouter>;
-import { useState, lazy, Suspense, useEffect } from "react";
+import { useState, lazy, Suspense, useEffect, type ComponentType } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
 import StructuredData from "./components/StructuredData";
@@ -42,7 +42,7 @@ import GetStarted from "./pages/GetStarted";
 import NotFound from "./pages/NotFound";
 
 // Retry a lazy import once, then force a single full reload on stale-chunk errors
-function lazyWithReload<T extends { default: React.ComponentType<any> }>(
+function lazyWithReload<T extends { default: ComponentType<any> }>(
   factory: () => Promise<T>
 ) {
   return lazy(async () => {
