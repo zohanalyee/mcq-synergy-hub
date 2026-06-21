@@ -62,6 +62,51 @@ export interface CustomTestSession {
 // Get questions from the question bank with filters
 export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<QuestionBankItem[]> => {
   try {
+    // GUEST PATH: anonymous users read approved questions via the SECURITY
+    // DEFINER `get_practice_questions` RPC, which omits correct answers and
+    // explanations so the answer key is never exposed through the public API.
+    // Correctness is resolved server-side at submission time.
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.user) {
+      const { data, error } = await supabase.rpc('get_practice_questions', {
+        p_subjects: filters.subjects?.length ? filters.subjects : null,
+        p_topics: filters.topics?.length ? filters.topics : null,
+        p_subtopics: filters.subtopics?.length ? filters.subtopics : null,
+        p_difficulties: filters.difficulties?.length ? filters.difficulties : null,
+        p_exclude_ids: filters.excludeIds?.length ? filters.excludeIds : null,
+        p_exam_category: filters.examCategory
+          ? filters.examCategory.replace(/[(),]/g, '')
+          : null,
+        p_is_featured: filters.is_featured ?? null,
+        p_limit: filters.limit ?? 60,
+      });
+      if (error) {
+        console.error('Error fetching practice questions (guest):', error);
+        return [];
+      }
+      return (data || []).map((item: any) => ({
+        id: item.id,
+        title: item.title,
+        question: item.description || '',
+        options: (typeof item.options === 'object' && item.options !== null)
+          ? item.options as { A: string; B: string; C: string; D: string; }
+          : { A: '', B: '', C: '', D: '' },
+        correctOption: '' as 'A' | 'B' | 'C' | 'D', // resolved server-side at submission
+        subject: item.subject || '',
+        topic: item.topic || '',
+        subtopic: item.subtopic || '',
+        difficulty: item.difficulty as 'Easy' | 'Medium' | 'Hard',
+        explanation: '',
+        reference_material: item.reference_material || '',
+        question_type: item.question_type || 'mcq',
+        tags: Array.isArray(item.tags) ? item.tags : [],
+        usage_count: item.usage_count || 0,
+        last_used_at: item.last_used_at,
+        is_featured: item.is_featured || false,
+        created_at: item.created_at,
+      }));
+    }
+
     let query = supabase
       .from('content_items')
       .select('*')
@@ -72,6 +117,7 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       // D/F (orphaned or structurally broken) are excluded from the reuse pool.
       // NULL grade is allowed so freshly-generated, not-yet-graded questions still surface.
       .or('quality_grade.in.(A,B,C),quality_grade.is.null');
+
 
     // Apply filters - only if arrays have items
     if (filters.subjects?.length && filters.subjects.length > 0) {

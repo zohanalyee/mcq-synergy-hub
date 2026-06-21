@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudyMode } from "./ModeToggle";
+import { scorePracticeAnswers, isDbQuestionId } from "@/services/practiceScoringService";
 
 interface MCQOption {
   key: string;
@@ -22,6 +23,12 @@ interface PracticeMCQCardProps {
   mode: StudyMode;
   index: number;
   onAnswered?: (id: string, isCorrect: boolean) => void;
+  /**
+   * When true, the correct answer is unknown in the browser and must be
+   * resolved server-side after the user picks (guest flow). Keeps the answer
+   * key out of the page until an answer is submitted.
+   */
+  serverScored?: boolean;
 }
 
 export const PracticeMCQCard = ({
@@ -35,21 +42,64 @@ export const PracticeMCQCard = ({
   mode,
   index,
   onAnswered,
+  serverScored,
 }: PracticeMCQCardProps) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  // Server-resolved data (guest flow): correct key + explanation arrive only
+  // after the user answers.
+  const [resolvedCorrect, setResolvedCorrect] = useState<string>(serverScored ? "" : correctOption);
+  const [resolvedExplanation, setResolvedExplanation] = useState<string | undefined>(
+    serverScored ? undefined : explanation,
+  );
 
-  const handleOptionClick = (optionKey: string) => {
+  const effectiveCorrect = serverScored ? resolvedCorrect : correctOption;
+  const effectiveExplanation = serverScored ? resolvedExplanation : explanation;
+
+  const handleOptionClick = async (optionKey: string) => {
     if (mode === "read") return; // In read mode, options are not clickable
     if (selectedOption) return; // Already answered
-    
+
     setSelectedOption(optionKey);
+
+    if (serverScored && isDbQuestionId(id)) {
+      // Resolve correctness server-side, then reveal. We send the option TEXT
+      // (the server returns the correct answer as text) and map the returned
+      // correct answer back to its option key for highlighting.
+      const selectedText = options.find((o) => o.key === optionKey)?.text ?? optionKey;
+      try {
+        const scored = await scorePracticeAnswers([{ id, answer: selectedText }]);
+        const s = scored[id];
+        if (s) {
+          const correctText = (s.correct_answer || "").trim().toLowerCase();
+          const matchedKey =
+            options.find((o) => o.text.trim().toLowerCase() === correctText)?.key ||
+            // fall back to a raw letter if the server returned one
+            (["A", "B", "C", "D"].includes((s.correct_option || "").toUpperCase())
+              ? (s.correct_option || "").toUpperCase()
+              : "");
+          setResolvedCorrect(matchedKey);
+          setResolvedExplanation(s.explanation || undefined);
+          setShowExplanation(true);
+          onAnswered?.(id, s.is_correct);
+          return;
+        }
+      } catch (e) {
+        console.warn("[PracticeMCQCard] server scoring failed:", e);
+      }
+      setShowExplanation(true);
+      onAnswered?.(id, false);
+      return;
+    }
+
+
     setShowExplanation(true);
     onAnswered?.(id, optionKey === correctOption);
   };
 
+
   const getOptionStyle = (optionKey: string) => {
-    const isCorrect = optionKey === correctOption;
+    const isCorrect = optionKey === effectiveCorrect;
     
     // Read Mode: Always show correct answer highlighted in green
     if (mode === "read") {
@@ -113,7 +163,7 @@ export const PracticeMCQCard = ({
           
           <div className="space-y-2">
             {options.map((option) => {
-              const isCorrect = option.key === correctOption;
+              const isCorrect = option.key === effectiveCorrect;
               const isSelected = option.key === selectedOption;
               
               return (
@@ -162,7 +212,7 @@ export const PracticeMCQCard = ({
           </div>
           
           {/* Explanation - Always visible in read mode, shown after answer in practice mode */}
-          {explanation && (mode === "read" || showExplanation) && (
+          {effectiveExplanation && (mode === "read" || showExplanation) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -176,7 +226,7 @@ export const PracticeMCQCard = ({
                     Explanation
                   </p>
                   <p className="text-sm text-amber-700 dark:text-amber-400">
-                    {explanation}
+                    {effectiveExplanation}
                   </p>
                 </div>
               </div>
@@ -190,12 +240,12 @@ export const PracticeMCQCard = ({
               animate={{ opacity: 1, scale: 1 }}
               className={cn(
                 "mt-2 p-3 rounded-lg text-center font-medium",
-                selectedOption === correctOption
+                selectedOption === effectiveCorrect
                   ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
                   : "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-300"
               )}
             >
-              {selectedOption === correctOption ? "✓ Correct!" : "✗ Incorrect"}
+              {selectedOption === effectiveCorrect ? "✓ Correct!" : "✗ Incorrect"}
             </motion.div>
           )}
         </CardContent>

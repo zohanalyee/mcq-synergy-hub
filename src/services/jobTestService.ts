@@ -226,6 +226,36 @@ export const upsertJobTestDefinition = async (
 export const getApprovedQuestionsForDefinition = async (
   jobTestId: string,
 ): Promise<JobTestQuestion[]> => {
+  // GUEST PATH: anonymous users get approved questions WITHOUT correct answers
+  // or explanations via the SECURITY DEFINER RPC. Correctness is resolved
+  // server-side at submission time.
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session?.user) {
+    const { data, error } = await (supabase as any).rpc("get_job_practice_questions", {
+      p_job_test_id: jobTestId,
+    });
+    if (error) {
+      console.error("Error loading approved questions (guest):", error);
+      return [];
+    }
+    return ((data || []) as any[]).map((q) => ({
+      id: q.id,
+      job_test_id: q.job_test_id,
+      subject: q.subject,
+      topic: q.topic,
+      question: q.question,
+      options: q.options,
+      correct_answer: "", // resolved server-side at submission
+      explanation: null,
+      difficulty: q.difficulty,
+      admin_approved: true,
+      generation_batch: null,
+      validation_score: null,
+      times_used: 0,
+      times_correct: 0,
+    })) as JobTestQuestion[];
+  }
+
   const { data, error } = await (supabase as any)
     .from("job_test_questions")
     .select("*")
@@ -310,21 +340,17 @@ export const getMockTestPreviewQuestions = async (
     console.warn("Preview: definition lookup failed", e);
   }
 
-  // 2) Main MCQ bank fallback, matched by syllabus keywords
+  // 2) Main MCQ bank fallback, matched by syllabus keywords.
+  // Uses the SECURITY DEFINER `get_preview_questions` RPC so the preview works
+  // for guests without exposing correct answers (the preview keeps the answer
+  // and explanation Premium-locked / blurred anyway).
   const keywords = extractPreviewKeywords((syllabus || []).map((s) => s.topic));
   if (keywords.length === 0) return [];
 
-  const orFilter = keywords
-    .flatMap((k) => [`subject.ilike.%${k}%`, `topic.ilike.%${k}%`])
-    .join(",");
-
-  const { data, error } = await (supabase as any)
-    .from("content_items")
-    .select("id,title,options,correct_option,explanation,subject,topic")
-    .eq("category", "mcq")
-    .eq("status", "approved")
-    .or(orFilter)
-    .limit(limit * 6);
+  const { data, error } = await (supabase as any).rpc("get_preview_questions", {
+    p_keywords: keywords,
+    p_limit: limit * 6,
+  });
 
   if (error || !data || data.length === 0) {
     if (error) console.error("Preview: bank lookup failed", error);
@@ -337,8 +363,8 @@ export const getMockTestPreviewQuestions = async (
       id: q.id,
       question: q.title,
       options: q.options,
-      correct_answer: q.correct_option,
-      explanation: q.explanation,
+      correct_answer: null,
+      explanation: null,
       source: "bank" as const,
     }));
 };

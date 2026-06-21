@@ -34,9 +34,6 @@ interface LoadResult {
   broadened: boolean;
 }
 
-const BASE_SELECT =
-  'id, title, options, correct_option, explanation, subject, topic, topic_id, difficulty';
-
 const normalizeOptions = (options: any): any[] => {
   if (!options) return [];
   if (typeof options === 'string') {
@@ -92,36 +89,30 @@ export const loadGuestQuestions = async (
     if (tier === ('empty' as GuestQuestionTier)) tier = t;
   };
 
+  // All tiers go through the SECURITY DEFINER `get_practice_questions` RPC,
+  // which returns approved questions WITHOUT correct answers/explanations so
+  // the answer key is never exposed to anonymous users via the public API.
+  const rpcFetch = async (args: Record<string, any>) => {
+    const { data, error } = await supabase.rpc('get_practice_questions', {
+      p_limit: fetchLimit,
+      ...args,
+    });
+    if (error) console.error('[guestQuestions] rpc error:', error.message);
+    return (data || []) as any[];
+  };
+
   // 1) Strict topic_id (single)
   if (params.topicId) {
-    const { data, error } = await supabase
-      .from('content_items')
-      .select(BASE_SELECT)
-      .eq('status', 'approved')
-      .eq('topic_id', params.topicId)
-      .not('title', 'is', null)
-      .limit(fetchLimit);
-    if (error) console.error('[guestQuestions] topic_id error:', error);
-    if (data && data.length > 0) setTier('topic_id');
+    const data = await rpcFetch({ p_topic_ids: [params.topicId] });
+    if (data.length > 0) setTier('topic_id');
     dedupePush(out, seen, data);
     console.log('[guestQ] after tier1:', out.length);
   }
 
   // 2) topic_id IN (...)
-  if (
-    out.length < fetchLimit &&
-    params.topicIds &&
-    params.topicIds.length > 0
-  ) {
-    const { data, error } = await supabase
-      .from('content_items')
-      .select(BASE_SELECT)
-      .eq('status', 'approved')
-      .in('topic_id', params.topicIds)
-      .not('title', 'is', null)
-      .limit(fetchLimit);
-    if (error) console.error('[guestQuestions] topic_ids error:', error);
-    if (data && data.length > 0) setTier('topic_ids');
+  if (out.length < fetchLimit && params.topicIds && params.topicIds.length > 0) {
+    const data = await rpcFetch({ p_topic_ids: params.topicIds });
+    if (data.length > 0) setTier('topic_ids');
     dedupePush(out, seen, data);
     console.log('[guestQ] after tier2:', out.length);
   }
@@ -144,28 +135,14 @@ export const loadGuestQuestions = async (
     );
 
     if (ids.length > 0) {
-      const { data, error } = await supabase
-        .from('content_items')
-        .select(BASE_SELECT)
-        .eq('status', 'approved')
-        .in('topic_id', ids)
-        .not('title', 'is', null)
-        .limit(fetchLimit);
-      if (error) console.error('[guestQuestions] subj.topic_id error:', error);
-      if (data && data.length > 0) setTier('subject_topics');
+      const data = await rpcFetch({ p_topic_ids: ids });
+      if (data.length > 0) setTier('subject_topics');
       dedupePush(out, seen, data);
     }
 
     if (out.length < fetchLimit && topicNames.length > 0) {
-      const { data, error } = await supabase
-        .from('content_items')
-        .select(BASE_SELECT)
-        .eq('status', 'approved')
-        .in('topic', topicNames as string[])
-        .not('title', 'is', null)
-        .limit(fetchLimit);
-      if (error) console.error('[guestQuestions] topic-name error:', error);
-      if (data && data.length > 0) setTier('subject_topics');
+      const data = await rpcFetch({ p_topics: topicNames as string[] });
+      if (data.length > 0) setTier('subject_topics');
       dedupePush(out, seen, data);
     }
     console.log('[guestQ] after tier3:', out.length);
@@ -173,18 +150,12 @@ export const loadGuestQuestions = async (
 
   // 4) Subject name fallback
   if (out.length < fetchLimit && params.subjectName) {
-    const { data, error } = await supabase
-      .from('content_items')
-      .select(BASE_SELECT)
-      .eq('status', 'approved')
-      .ilike('subject', `%${params.subjectName}%`)
-      .not('title', 'is', null)
-      .limit(fetchLimit);
-    if (error) console.error('[guestQuestions] subject ilike error:', error);
-    if (data && data.length > 0) setTier('subject_ilike');
+    const data = await rpcFetch({ p_subject_like: params.subjectName });
+    if (data.length > 0) setTier('subject_ilike');
     dedupePush(out, seen, data);
-    console.log('[guestQ] after tier4:', out.length, '| validate sample:', out.slice(0, 2).map((q: any) => ({ hasOptions: !!q.options, optLen: Array.isArray(q.options) ? q.options.length : typeof q.options, hasAnswer: !!q.correct_option })));
+    console.log('[guestQ] after tier4:', out.length);
   }
+
 
   const valid = out
     .map((q) => ({
