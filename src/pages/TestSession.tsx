@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/lib/questionUtils";
 import { resolveCorrectAnswer, checkUserAnswer, normalizeQuestion } from "@/lib/testEvaluation";
+import { scorePracticeAnswers, mergeScoredIntoQuestions, isDbQuestionId } from "@/services/practiceScoringService";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
 import { processTestCompletion } from "@/utils/gamification";
 import { AICoachService } from "@/services/aiCoachService";
