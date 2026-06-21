@@ -88,7 +88,7 @@ export const PracticeMCQCard = ({
 
 
   const getOptionStyle = (optionKey: string) => {
-    const isCorrect = optionKey === correctOption;
+    const isCorrect = optionKey === effectiveCorrect;
     
     // Read Mode: Always show correct answer highlighted in green
     if (mode === "read") {
@@ -152,7 +152,7 @@ export const PracticeMCQCard = ({
           
           <div className="space-y-2">
             {options.map((option) => {
-              const isCorrect = option.key === correctOption;
+              const isCorrect = option.key === effectiveCorrect;
               const isSelected = option.key === selectedOption;
               
               return (
@@ -201,7 +201,7 @@ export const PracticeMCQCard = ({
           </div>
           
           {/* Explanation - Always visible in read mode, shown after answer in practice mode */}
-          {explanation && (mode === "read" || showExplanation) && (
+          {effectiveExplanation && (mode === "read" || showExplanation) && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -215,7 +215,7 @@ export const PracticeMCQCard = ({
                     Explanation
                   </p>
                   <p className="text-sm text-amber-700 dark:text-amber-400">
-                    {explanation}
+                    {effectiveExplanation}
                   </p>
                 </div>
               </div>
@@ -229,12 +229,12 @@ export const PracticeMCQCard = ({
               animate={{ opacity: 1, scale: 1 }}
               className={cn(
                 "mt-2 p-3 rounded-lg text-center font-medium",
-                selectedOption === correctOption
+                selectedOption === effectiveCorrect
                   ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300"
                   : "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-300"
               )}
             >
-              {selectedOption === correctOption ? "✓ Correct!" : "✗ Incorrect"}
+              {selectedOption === effectiveCorrect ? "✓ Correct!" : "✗ Incorrect"}
             </motion.div>
           )}
         </CardContent>
