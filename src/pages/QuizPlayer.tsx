@@ -166,12 +166,40 @@ const QuizPlayer = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [revealed, isFinished, currentQ, currentIdx]);
 
-  const handleSelect = (optText: string) => {
+  const handleSelect = async (optText: string) => {
     if (revealed || !currentQ) return;
     setSelected(optText);
-    setRevealed(true);
-    const isCorrect = checkUserAnswer(currentQ, optText);
     setAnswers((a) => ({ ...a, [currentIdx]: optText }));
+
+    // SERVER-SIDE SCORING: guest questions arrive answer-free. Resolve the
+    // correct answer/explanation server-side only AFTER the user picks, then
+    // merge it into the question so the reveal + explanation render correctly.
+    let isCorrect: boolean;
+    if (!resolveCorrectAnswer(currentQ) && isDbQuestionId(currentQ?.id)) {
+      const scored = await scorePracticeAnswers([{ id: currentQ.id, answer: optText }]);
+      const s = scored[currentQ.id];
+      if (s) {
+        setTestData((prev: any) =>
+          prev
+            ? {
+                ...prev,
+                questions: prev.questions.map((x: any, i: number) =>
+                  i === currentIdx
+                    ? { ...x, answer: s.correct_answer, explanation: s.explanation }
+                    : x,
+                ),
+              }
+            : prev,
+        );
+        isCorrect = s.is_correct;
+      } else {
+        isCorrect = checkUserAnswer(currentQ, optText);
+      }
+    } else {
+      isCorrect = checkUserAnswer(currentQ, optText);
+    }
+    setRevealed(true);
+
 
     const elapsed = (Date.now() - questionStartRef.current) / 1000;
 
