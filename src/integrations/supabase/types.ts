@@ -3398,6 +3398,18 @@ export type Database = {
           user_count: number
         }[]
       }
+      get_job_practice_questions: {
+        Args: { p_job_test_id: string; p_limit?: number; p_subject?: string }
+        Returns: {
+          difficulty: string
+          id: string
+          job_test_id: string
+          options: Json
+          question: string
+          subject: string
+          topic: string
+        }[]
+      }
       get_lms_content_inventory: {
         Args: never
         Returns: {
@@ -3448,6 +3460,45 @@ export type Database = {
           total_time_spent: number
           user_id: string
           username: string
+        }[]
+      }
+      get_practice_questions: {
+        Args: {
+          p_difficulties?: string[]
+          p_exam_category?: string
+          p_exclude_ids?: string[]
+          p_is_featured?: boolean
+          p_limit?: number
+          p_subjects?: string[]
+          p_subtopics?: string[]
+          p_topics?: string[]
+        }
+        Returns: {
+          created_at: string
+          description: string
+          difficulty: string
+          id: string
+          is_featured: boolean
+          last_used_at: string
+          options: Json
+          question_type: string
+          reference_material: string
+          subject: string
+          subtopic: string
+          tags: Json
+          title: string
+          topic: string
+          usage_count: number
+        }[]
+      }
+      get_preview_questions: {
+        Args: { p_keywords: string[]; p_limit?: number }
+        Returns: {
+          id: string
+          options: Json
+          subject: string
+          title: string
+          topic: string
         }[]
       }
       get_public_feedback_reviews: {
@@ -3575,6 +3626,26 @@ export type Database = {
       record_question_usage: {
         Args: { question_ids: string[] }
         Returns: undefined
+      }
+      score_job_practice_answers: {
+        Args: { p_answers: Json }
+        Returns: {
+          correct_answer: string
+          correct_option: string
+          explanation: string
+          id: string
+          is_correct: boolean
+        }[]
+      }
+      score_practice_answers: {
+        Args: { p_answers: Json }
+        Returns: {
+          correct_answer: string
+          correct_option: string
+          explanation: string
+          id: string
+          is_correct: boolean
+        }[]
       }
       update_job_test_progress: {
         Args: {
