@@ -306,27 +306,45 @@ const TestSession = () => {
 
   const handleSubmit = async () => {
     console.log('=== TEST SUBMISSION DEBUG ===');
+
+    // SERVER-SIDE SCORING: questions loaded answer-free (guests) have no
+    // resolvable correct answer in the browser. Resolve correctness, correct
+    // answers and explanations server-side at submission via SECURITY DEFINER
+    // RPCs, then merge them in so the existing result UI works unchanged.
+    // Authenticated sessions keep their baked-in answers and skip this.
+    let graded: any[] = questions;
+    const needsServerScoring = questions.some(
+      (q: any) => isDbQuestionId(q?.id) && !resolveCorrectAnswer(q),
+    );
+    if (needsServerScoring) {
+      try {
+        const payload = questions
+          .filter((q: any) => isDbQuestionId(q?.id))
+          .map((q: any, i: number) => ({
+            id: q.id,
+            answer: answers[questions.indexOf(q)] ?? "",
+          }));
+        const scored = await scorePracticeAnswers(payload);
+        graded = mergeScoredIntoQuestions(questions, scored);
+        setTestData((prev: any) => (prev ? { ...prev, questions: graded } : prev));
+      } catch (e) {
+        console.warn("[TestSession] server scoring failed:", e);
+      }
+    }
+
     let correctAnswers = 0;
     const attemptRecords: { question: any; isCorrect: boolean }[] = [];
-    questions.forEach((question: any, index: number) => {
+    graded.forEach((question: any, index: number) => {
       const userAns = answers[index];
       const resolvedAns = resolveAnswer(question);
       const isCorrect = checkAnswer(question, userAns);
-
-      console.log(`Q${index + 1}:`, {
-        rawAnswer: question.answer,
-        resolvedAnswer: resolvedAns,
-        userAnswer: userAns,
-        optionsType: Array.isArray(question.options) ? 'array' : typeof question.options,
-        options: question.options,
-        isCorrect
-      });
 
       if (isCorrect) correctAnswers++;
       // Only track questions the user actually attempted
       if (userAns !== undefined) attemptRecords.push({ question, isCorrect });
     });
-    console.log(`=== RESULT: ${correctAnswers}/${questions.length} ===`);
+    console.log(`=== RESULT: ${correctAnswers}/${graded.length} ===`);
+
 
     setScore(correctAnswers);
     setIsSubmitted(true);
