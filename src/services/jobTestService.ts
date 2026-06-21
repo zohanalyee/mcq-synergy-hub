@@ -226,6 +226,36 @@ export const upsertJobTestDefinition = async (
 export const getApprovedQuestionsForDefinition = async (
   jobTestId: string,
 ): Promise<JobTestQuestion[]> => {
+  // GUEST PATH: anonymous users get approved questions WITHOUT correct answers
+  // or explanations via the SECURITY DEFINER RPC. Correctness is resolved
+  // server-side at submission time.
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session?.user) {
+    const { data, error } = await (supabase as any).rpc("get_job_practice_questions", {
+      p_job_test_id: jobTestId,
+    });
+    if (error) {
+      console.error("Error loading approved questions (guest):", error);
+      return [];
+    }
+    return ((data || []) as any[]).map((q) => ({
+      id: q.id,
+      job_test_id: q.job_test_id,
+      subject: q.subject,
+      topic: q.topic,
+      question: q.question,
+      options: q.options,
+      correct_answer: "", // resolved server-side at submission
+      explanation: null,
+      difficulty: q.difficulty,
+      admin_approved: true,
+      generation_batch: null,
+      validation_score: null,
+      times_used: 0,
+      times_correct: 0,
+    })) as JobTestQuestion[];
+  }
+
   const { data, error } = await (supabase as any)
     .from("job_test_questions")
     .select("*")
