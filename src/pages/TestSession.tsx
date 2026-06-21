@@ -437,7 +437,7 @@ const TestSession = () => {
 
       // Compute weak topics: subjects with <70% in this attempt
       const subjectStats = new Map<string, { correct: number; total: number }>();
-      questions.forEach((q: any, i: number) => {
+      graded.forEach((q: any, i: number) => {
         const subj = q.subject || q.topic || "General";
         const s = subjectStats.get(subj) || { correct: 0, total: 0 };
         s.total += 1;
