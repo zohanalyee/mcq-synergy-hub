@@ -319,11 +319,8 @@ const TestSession = () => {
     if (needsServerScoring) {
       try {
         const payload = questions
-          .filter((q: any) => isDbQuestionId(q?.id))
-          .map((q: any, i: number) => ({
-            id: q.id,
-            answer: answers[questions.indexOf(q)] ?? "",
-          }));
+          .map((q: any, i: number) => ({ id: q?.id, answer: answers[i] ?? "" }))
+          .filter((p: any) => isDbQuestionId(p.id));
         const scored = await scorePracticeAnswers(payload);
         graded = mergeScoredIntoQuestions(questions, scored);
         setTestData((prev: any) => (prev ? { ...prev, questions: graded } : prev));
