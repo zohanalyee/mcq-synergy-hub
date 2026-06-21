@@ -34,9 +34,6 @@ interface LoadResult {
   broadened: boolean;
 }
 
-const BASE_SELECT =
-  'id, title, options, correct_option, explanation, subject, topic, topic_id, difficulty';
-
 const normalizeOptions = (options: any): any[] => {
   if (!options) return [];
   if (typeof options === 'string') {

@@ -3469,8 +3469,10 @@ export type Database = {
           p_exclude_ids?: string[]
           p_is_featured?: boolean
           p_limit?: number
+          p_subject_like?: string
           p_subjects?: string[]
           p_subtopics?: string[]
+          p_topic_ids?: string[]
           p_topics?: string[]
         }
         Returns: {
@@ -3488,6 +3490,7 @@ export type Database = {
           tags: Json
           title: string
           topic: string
+          topic_id: string
           usage_count: number
         }[]
       }
