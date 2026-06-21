@@ -63,12 +63,22 @@ export const PracticeMCQCard = ({
     setSelectedOption(optionKey);
 
     if (serverScored && isDbQuestionId(id)) {
-      // Resolve correctness server-side, then reveal.
+      // Resolve correctness server-side, then reveal. We send the option TEXT
+      // (the server returns the correct answer as text) and map the returned
+      // correct answer back to its option key for highlighting.
+      const selectedText = options.find((o) => o.key === optionKey)?.text ?? optionKey;
       try {
-        const scored = await scorePracticeAnswers([{ id, answer: optionKey }]);
+        const scored = await scorePracticeAnswers([{ id, answer: selectedText }]);
         const s = scored[id];
         if (s) {
-          setResolvedCorrect(s.correct_option || "");
+          const correctText = (s.correct_answer || "").trim().toLowerCase();
+          const matchedKey =
+            options.find((o) => o.text.trim().toLowerCase() === correctText)?.key ||
+            // fall back to a raw letter if the server returned one
+            (["A", "B", "C", "D"].includes((s.correct_option || "").toUpperCase())
+              ? (s.correct_option || "").toUpperCase()
+              : "");
+          setResolvedCorrect(matchedKey);
           setResolvedExplanation(s.explanation || undefined);
           setShowExplanation(true);
           onAnswered?.(id, s.is_correct);
@@ -81,6 +91,7 @@ export const PracticeMCQCard = ({
       onAnswered?.(id, false);
       return;
     }
+
 
     setShowExplanation(true);
     onAnswered?.(id, optionKey === correctOption);
