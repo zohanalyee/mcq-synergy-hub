@@ -892,6 +892,7 @@ const SubjectContent = () => {
                   difficulty={mcq.difficulty}
                   mode={studyMode}
                   index={index}
+                  serverScored={!user}
                   onAnswered={user ? handleCardAnswered : undefined}
                 />
               ))}
