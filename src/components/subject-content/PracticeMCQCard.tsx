@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudyMode } from "./ModeToggle";
+import { scorePracticeAnswers, isDbQuestionId } from "@/services/practiceScoringService";
 
 interface MCQOption {
   key: string;
@@ -22,6 +23,12 @@ interface PracticeMCQCardProps {
   mode: StudyMode;
   index: number;
   onAnswered?: (id: string, isCorrect: boolean) => void;
+  /**
+   * When true, the correct answer is unknown in the browser and must be
+   * resolved server-side after the user picks (guest flow). Keeps the answer
+   * key out of the page until an answer is submitted.
+   */
+  serverScored?: boolean;
 }
 
 export const PracticeMCQCard = ({
@@ -35,18 +42,50 @@ export const PracticeMCQCard = ({
   mode,
   index,
   onAnswered,
+  serverScored,
 }: PracticeMCQCardProps) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
+  // Server-resolved data (guest flow): correct key + explanation arrive only
+  // after the user answers.
+  const [resolvedCorrect, setResolvedCorrect] = useState<string>(serverScored ? "" : correctOption);
+  const [resolvedExplanation, setResolvedExplanation] = useState<string | undefined>(
+    serverScored ? undefined : explanation,
+  );
 
-  const handleOptionClick = (optionKey: string) => {
+  const effectiveCorrect = serverScored ? resolvedCorrect : correctOption;
+  const effectiveExplanation = serverScored ? resolvedExplanation : explanation;
+
+  const handleOptionClick = async (optionKey: string) => {
     if (mode === "read") return; // In read mode, options are not clickable
     if (selectedOption) return; // Already answered
-    
+
     setSelectedOption(optionKey);
+
+    if (serverScored && isDbQuestionId(id)) {
+      // Resolve correctness server-side, then reveal.
+      try {
+        const scored = await scorePracticeAnswers([{ id, answer: optionKey }]);
+        const s = scored[id];
+        if (s) {
+          setResolvedCorrect(s.correct_option || "");
+          setResolvedExplanation(s.explanation || undefined);
+          setShowExplanation(true);
+          onAnswered?.(id, s.is_correct);
+          return;
+        }
+      } catch (e) {
+        console.warn("[PracticeMCQCard] server scoring failed:", e);
+      }
+      setShowExplanation(true);
+      onAnswered?.(id, false);
+      return;
+    }
+
     setShowExplanation(true);
     onAnswered?.(id, optionKey === correctOption);
   };
+
 
   const getOptionStyle = (optionKey: string) => {
     const isCorrect = optionKey === correctOption;
