@@ -21,6 +21,7 @@ import { getTopicsBySubject } from "@/services/supabaseTopicService";
 import { getCachedQuestions, setCachedQuestions } from "@/services/offlineSyncService";
 import { loadGuestQuestions } from "@/services/guestQuestionService";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
+import { prefetchPracticeAnswers, type ScoredAnswer } from "@/services/practiceScoringService";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -58,6 +59,8 @@ const SubjectContent = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
+  // Batch-prefetched answer keys for the guest flow (id -> ScoredAnswer).
+  const [prefetchedAnswers, setPrefetchedAnswers] = useState<Record<string, ScoredAnswer>>({});
   const [isLoadingMCQs, setIsLoadingMCQs] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
@@ -209,6 +212,15 @@ const SubjectContent = () => {
       // Render INSIDE the integrated player (no redirect)
       const transformed: MCQItem[] = questions.map((q: any, i: number) => transformBankQuestion(q, i));
       setMcqs(transformed);
+      // Batch-prefetch answer keys in ONE round-trip so each card reveals
+      // instantly on click (no per-question latency). Fire-and-forget.
+      setPrefetchedAnswers({});
+      const ids = transformed.map((q) => q.id).filter(Boolean);
+      if (ids.length > 0) {
+        prefetchPracticeAnswers(ids)
+          .then((map) => setPrefetchedAnswers(map))
+          .catch((e) => console.warn('[SubjectContent] answer prefetch failed:', e));
+      }
       setQuestionSource('cache');
       setCachedCount(transformed.length);
       setAiCount(0);
@@ -893,6 +905,7 @@ const SubjectContent = () => {
                   mode={studyMode}
                   index={index}
                   serverScored={!user}
+                  prefetched={!user ? prefetchedAnswers[mcq.id] : undefined}
                   onAnswered={user ? handleCardAnswered : undefined}
                 />
               ))}
