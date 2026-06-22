@@ -212,6 +212,15 @@ const SubjectContent = () => {
       // Render INSIDE the integrated player (no redirect)
       const transformed: MCQItem[] = questions.map((q: any, i: number) => transformBankQuestion(q, i));
       setMcqs(transformed);
+      // Batch-prefetch answer keys in ONE round-trip so each card reveals
+      // instantly on click (no per-question latency). Fire-and-forget.
+      setPrefetchedAnswers({});
+      const ids = transformed.map((q) => q.id).filter(Boolean);
+      if (ids.length > 0) {
+        prefetchPracticeAnswers(ids)
+          .then((map) => setPrefetchedAnswers(map))
+          .catch((e) => console.warn('[SubjectContent] answer prefetch failed:', e));
+      }
       setQuestionSource('cache');
       setCachedCount(transformed.length);
       setAiCount(0);
