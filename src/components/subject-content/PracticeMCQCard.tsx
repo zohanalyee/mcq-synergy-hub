@@ -48,6 +48,7 @@ export const PracticeMCQCard = ({
   index,
   onAnswered,
   serverScored,
+  prefetched,
 }: PracticeMCQCardProps) => {
   const [selectedOption, setSelectedOption] = useState<string | null>(null);
   const [showExplanation, setShowExplanation] = useState(false);
@@ -61,6 +62,23 @@ export const PracticeMCQCard = ({
   const effectiveCorrect = serverScored ? resolvedCorrect : correctOption;
   const effectiveExplanation = serverScored ? resolvedExplanation : explanation;
 
+  // Map a server-returned ScoredAnswer to a local option key and reveal it.
+  const revealFromScore = (s: ScoredAnswer, optionKey: string) => {
+    const correctText = (s.correct_answer || "").trim().toLowerCase();
+    const matchedKey =
+      options.find((o) => o.text.trim().toLowerCase() === correctText)?.key ||
+      // fall back to a raw letter if the server returned one
+      (["A", "B", "C", "D"].includes((s.correct_option || "").toUpperCase())
+        ? (s.correct_option || "").toUpperCase()
+        : "");
+    setResolvedCorrect(matchedKey);
+    setResolvedExplanation(s.explanation || undefined);
+    setShowExplanation(true);
+    // Recompute correctness against the actually-picked option (prefetched
+    // is_correct is meaningless because it was resolved with an empty answer).
+    onAnswered?.(id, matchedKey === optionKey);
+  };
+
   const handleOptionClick = async (optionKey: string) => {
     if (mode === "read") return; // In read mode, options are not clickable
     if (selectedOption) return; // Already answered
@@ -68,25 +86,20 @@ export const PracticeMCQCard = ({
     setSelectedOption(optionKey);
 
     if (serverScored && isDbQuestionId(id)) {
-      // Resolve correctness server-side, then reveal. We send the option TEXT
-      // (the server returns the correct answer as text) and map the returned
-      // correct answer back to its option key for highlighting.
+      // FAST PATH: answer key was batch-prefetched → reveal instantly, no I/O.
+      if (prefetched) {
+        revealFromScore(prefetched, optionKey);
+        return;
+      }
+      // Fallback: resolve correctness server-side per-question. We send the
+      // option TEXT (the server returns the correct answer as text) and map the
+      // returned correct answer back to its option key for highlighting.
       const selectedText = options.find((o) => o.key === optionKey)?.text ?? optionKey;
       try {
         const scored = await scorePracticeAnswers([{ id, answer: selectedText }]);
         const s = scored[id];
         if (s) {
-          const correctText = (s.correct_answer || "").trim().toLowerCase();
-          const matchedKey =
-            options.find((o) => o.text.trim().toLowerCase() === correctText)?.key ||
-            // fall back to a raw letter if the server returned one
-            (["A", "B", "C", "D"].includes((s.correct_option || "").toUpperCase())
-              ? (s.correct_option || "").toUpperCase()
-              : "");
-          setResolvedCorrect(matchedKey);
-          setResolvedExplanation(s.explanation || undefined);
-          setShowExplanation(true);
-          onAnswered?.(id, s.is_correct);
+          revealFromScore(s, optionKey);
           return;
         }
       } catch (e) {
@@ -101,6 +114,7 @@ export const PracticeMCQCard = ({
     setShowExplanation(true);
     onAnswered?.(id, optionKey === correctOption);
   };
+
 
 
   const getOptionStyle = (optionKey: string) => {
