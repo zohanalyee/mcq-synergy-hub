@@ -29,6 +29,11 @@ interface PracticeMCQCardProps {
    * key out of the page until an answer is submitted.
    */
   serverScored?: boolean;
+  /**
+   * Batch-prefetched server score for this question (guest flow). When present,
+   * the card reveals correctness instantly with NO per-question round-trip.
+   */
+  prefetched?: ScoredAnswer;
 }
 
 export const PracticeMCQCard = ({
