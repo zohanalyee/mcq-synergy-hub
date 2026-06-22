@@ -182,15 +182,62 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
       // LEGACY PATH (no isolated definition found): old generate-test
       // ============================================================
 
-      // Guests must NEVER hit the AI edge function. Fail safely with a
-      // clear sign-in CTA so we don't burn credits or block them silently.
+      // GUEST PATH (legacy, no isolated definition): guests must NEVER hit the
+      // AI edge function. Instead, build the test from the approved MCQ bank via
+      // the SECURITY DEFINER `get_practice_questions` RPC (used internally by
+      // generateCustomTest for anonymous users), so questions load answer-free
+      // and correctness is resolved server-side at submission.
       {
         const { data: { user: legacyUser } } = await supabase.auth.getUser();
         if (!legacyUser) {
-          toast.info(
-            `${test.title}: questions are being prepared. Please check back soon, or sign in free to generate with AI.`,
-            { duration: 6000 },
-          );
+          const guestSyllabus = test.syllabus
+            .filter((item) => item.topic && item.percentage && item.percentage > 0)
+            .map((item) => ({ topic: item.topic, percentage: item.percentage || 0 }));
+          const subjects = guestSyllabus.map((s) => s.topic);
+
+          const generated = await generateCustomTest({
+            subjects,
+            topics: subjects,
+            difficulty: settings.difficulty as TestGenerationOptions["difficulty"],
+            questionCount: settings.questionCount,
+            timeLimit: settings.duration,
+            includeExplanations: true,
+            shuffleQuestions: true,
+            shuffleOptions: false,
+            syllabusData: guestSyllabus.length > 0 ? guestSyllabus : undefined,
+          });
+
+          if (!generated.questions || generated.questions.length === 0) {
+            toast.info(
+              `${test.title}: questions are being prepared. Please check back soon, or sign in free to generate with AI.`,
+              { duration: 6000 },
+            );
+            setGeneratingTestId(null);
+            return;
+          }
+
+          const guestQuestions = generated.questions.map((q) => ({
+            id: q.id,
+            subject: q.subject,
+            topic: q.topic || q.subject,
+            question: q.question || q.title,
+            title: q.title || q.question,
+            options: q.options,
+            difficulty: q.difficulty,
+            // No baked-in answer/explanation — resolved server-side at submit.
+          }));
+
+          const session = buildGuestSession({
+            session_name: `Job Test: ${test.title}`,
+            questions: guestQuestions,
+            time_limit: settings.duration,
+            subjects,
+            topics: subjects,
+            difficulty_levels: [settings.difficulty],
+          });
+          saveGuestSession(session);
+          toast.success(`Test ready with ${guestQuestions.length} questions!`, { duration: 3500 });
+          navigate(`/test-session/${session.id}`, { state: { returnPath: "/mock-tests" } });
           setGeneratingTestId(null);
           return;
         }

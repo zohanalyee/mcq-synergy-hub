@@ -1,55 +1,110 @@
-# Glassy Dropdown Styling
+## Findings from the code
 
-Apply the brand's glassy/gradient aesthetic to dropdowns using only existing design tokens (no invented values), with zero layout jitter and mobile-safe sizing. No functionality, structure, or component-library changes.
+### Broken flow 1: Mock Test guest start
 
-## Brand tokens to reuse (already in `src/index.css`)
+- `src/components/mock-tests/JobTestsTab.tsx` has two paths:
+  - Published `job_test_definitions` path already uses `getApprovedQuestionsForDefinition()`, which calls `get_job_practice_questions` for guests and strips `correct_answer`/`explanation`.
+  - Legacy/no-definition path explicitly blocks guests before fetching questions: lines 185-197 show a guest sign-in/“questions are being prepared” stop instead of using the bank.
+- Fix: for guests in the legacy path, fetch DB-bank questions through `getQuestionBank()` / `generateCustomTest()` which now uses `get_practice_questions` for anonymous users, then create a guest `sessionStorage` session with answer-free questions.
 
-- `--radius: 0.75rem` → `rounded-xl`
-- `.glass`: `bg-white/80 backdrop-blur-xl border-white/40 shadow-glass` (dark: `bg-black/40 border-white/10`)
-- `--gradient-primary` (purple→blue, same as Start Exam button)
-- `--shadow-glass`, `--shadow-elegant`
+### Broken flow 2: Custom Syllabus Builder guest start
 
-## Scope (per user choices)
+- `src/components/syllabus-builder/SyllabusBuilder.tsx` guest path calls `getQuestionsWithFallbackInfo()`.
+- `src/services/syllabusRAGFallback.ts` still directly selects `content_items` and includes `correct_option`/`explanation` in rows at lines 140-225 and 342-363.
+- Fix: add a guest/anonymous branch in `getQuestionsWithFallbackInfo()` that uses the secure `get_practice_questions` RPC with topic IDs, topic names, difficulty fallback, and subject fallback. It will return no correct answer or explanation until server-side scoring.
 
-1. Modal native `<select>` triggers → glassy trigger only (keep native; OS-rendered option list stays native, avoids jitter/z-index issues per brand memory).
-2. Shared Radix `Select` (`src/components/ui/select.tsx`) → glassy trigger + glassy options list + gradient hover, applied globally so every Radix dropdown matches.
+## Current guest limitations found in code
 
-## Changes
+### Quiz (`/quizzes`)
 
-### 1. `src/pages/MockTestDetail.tsx` (the "Ready to begin?" modal)
+- **Questions per session:** guests can choose **10 or 20** only. Logged-in users can use 5-50 sliders.
+- **Daily cap:** no code-enforced guest daily cap found.
+- **Subjects/topics:** guests can select available LMS subjects and topics; no subject whitelist found beyond what the selectors expose.
+- **AI fill:** not available to guests. Guest path uses `loadGuestQuestions()` only; no `generate-test` edge function call.
+- **Progress/analytics:** not saved for guests. `processTestCompletion()` returns early when no user.
+- **Results:** `QuizPlayer` reveals correctness per question via `scorePracticeAnswers()` after selection, then shows `GuestResultGate` at the end.
 
-- Update the two `<select>` className (lines ~190 and ~204) from the plain `rounded-lg border border-input bg-background` to a glassy trigger:
-  - `rounded-xl`, glass background + `backdrop-blur-xl`, subtle border, `shadow-elegant`
-  - `min-h-[44px]` for mobile thumb targets (replacing `h-10`)
-  - Keep `w-full`, value state, and `onChange` handlers exactly as-is.
-- Ensure `DialogContent` is mobile-safe: add `max-h-[90vh] overflow-y-auto` and keep `sm:max-w-md` so it fits small viewports without horizontal scroll. Native option lists never shift modal layout, so no jitter.
+### Subject practice (`/subject...` / `SubjectContent.tsx`)
 
-### 2. `src/components/ui/select.tsx` (shared Radix Select, global)
+- **Questions per session:** guests are capped at **20**: `Math.min(parseInt(questionCount) || 10, 20)`.
+- **Subjects/topics:** first topic only is free through `GuestTopicsGate`; other topics open sign-in gate.
+- **Difficulty:** guest controls hide difficulty; `loadGuestQuestions()` does not pass difficulty.
+- **AI fill:** not available to guests. “Generate New” opens the sign-in gate.
+- **Progress/analytics:** not saved for guests; `handleCardAnswered()` returns immediately when no user.
+- **Correctness/explanation:** guest cards use secure server scoring and batch-prefetched answers after question load.
 
-- **SelectTrigger**: replace `rounded-md border-2 border-gray-300 ... bg-background shadow-sm` with `rounded-xl`, glass bg + `backdrop-blur-xl`, soft border, `shadow-elegant`, and `min-h-[44px]`. Keep `h-10` baseline via min-height so existing layouts don't shrink. Radix Select already portals the content, so the trigger box does not resize/shift on open.
-- **SelectContent**: add `rounded-xl`, glass bg + `backdrop-blur-xl`, `shadow-elegant`, glassy border. Keep existing `position="popper"`, portal, and animation classes (these prevent layout shift). Keep `max-h-[--radix-select-content-available-height]` behavior and viewport-aware sizing so the list never overflows off-screen on mobile.
-- **SelectItem**: add `rounded-lg`, `min-h-[44px]` touch target, and a subtle brand-gradient tint on hover/focus (`focus:bg-gradient-to-r from-primary/15 to-accent/15` style using tokens) replacing the current flat `focus:bg-accent`.
+### Mock Test (`/mock-tests`)
 
-## Anti-jitter / mobile guarantees
+- **Questions per session:** default guest start uses up to 20; detail modal exposes **10, 20, 50, 100**. Existing progressive unlock cap is fetched from `job-test-progress`, defaulting to **100 unlocked**.
+- **Progressive unlock:** guest job-test progress is tracked by IP in the `job-test-progress` edge function. Scores >=80% unlock +25, capped at 500.
+- **Subjects/topics:** governed by the selected mock test syllabus/definition.
+- **AI fill:** not available to guests in current code; legacy path currently blocks guests instead of AI-generating.
+- **Progress/analytics:** regular analytics/gamification require login, but job-test unlock progress is recorded for guests by IP.
+- **Results:** `TestSession` uses server-side scoring on submit for answer-free questions; guests then see `GuestResultGate`, not the full authenticated answer-review screen.
 
-- Triggers use `min-h` (not changing width) → no resize on open/close.
-- Radix `SelectContent` renders in a portal with `position="popper"` → opening never pushes sibling layout.
-- Native `<select>` option lists are OS-rendered → cannot affect modal layout.
-- `44px` min touch targets on triggers and items; `DialogContent` scrollable; popper content height is viewport-clamped.
+### Custom Syllabus Builder (`/custom-syllabus`)
 
-## Verification
+- **Questions per session:** UI slider allows **5-100** questions.
+- **Subjects/topics:** guests can select up to **10 subjects** (`MAX_SUBJECTS = 10`) and any exposed topics from the builder.
+- **Difficulty/time:** guests can currently set difficulty and **5-120 min** time limit in the floating action bar.
+- **AI fill:** not available to guests. Guest path only uses bank questions and does not call `generate-test`.
+- **Templates/bookmarks:** saving templates is disabled for guests with “Sign in to save your syllabus”.
+- **Progress/analytics:** session is stored only in `sessionStorage`; completion saving/gamification skips guests.
+- **Results:** `TestSession` server-scores answer-free questions on submit, then shows `GuestResultGate` for guests.
 
-- Build check.
-- Playwright at mobile (372px) and desktop: open the modal, open both selects, capture screenshots before/after open to confirm the trigger box and modal do not shift, and the modal fits without horizontal scroll. Open a Radix Select elsewhere to confirm glassy list + gradient hover.
+## Implementation plan
 
-## Out of scope
-
-No changes to dropdown logic, options, state, or any unrelated component/page. No new colors, fonts, or radius values beyond existing tokens.
+1. **Restore Mock Test guest legacy fallback**
+  - In `JobTestsTab.tsx`, keep the published-definition path unchanged.
+  - Replace the legacy guest hard-stop with a DB-bank fallback using the existing `generateCustomTest()` / `getQuestionBank()` path, which calls `get_practice_questions` for guests.
+  - Preserve the existing requested question count and `job-test-progress` unlocked cap.
+  - Store only answer-free questions in the guest session.
+2. **Secure Custom Syllabus guest fetching**
+  - In `syllabusRAGFallback.ts`, add an anonymous branch in `getQuestionsWithFallbackInfo()`.
+  - Fetch by selected `topic_id` through `get_practice_questions(p_topic_ids)`.
+  - Preserve current fallback behavior: retry without difficulty, then by topic name, then subject-wide fallback.
+  - Return `correctOption: null` and `explanation: null` for guest-loaded questions.
+3. **Ensure server-side scoring works for both flows**
+  - Keep using `scorePracticeAnswers()` in `TestSession`; it already tries `score_practice_answers` first, then `score_job_practice_answers` for job-test question IDs.
+  - Ensure generated guest sessions contain UUID question IDs and no baked-in answer fields, so `TestSession` triggers server-side scoring at submit.
+4. **Validate as anonymous/incognito**
+  - Run browser checks without restored auth session:
+    - Mock Test: open a test, start as guest, confirm questions load, answer, submit, and see result gate.
+    - Custom Syllabus: select topics, generate as guest, confirm questions load, answer, submit, and see result gate.
+  - Inspect network/API payload shape where practical to confirm no `correct_option`, `correct_answer`, or `explanation` is returned during fetch.
+5. **Publish after validation**
+  - After the fix is verified, publish the app as requested.
 
 &nbsp;
 
-Approved — proceed exactly as planned. The token reuse, native-select-for-modal decision, and anti-jitter guarantees all look correct.
+# **Approved — proceed with the implementation plan exactly as outlined:**
 
-&nbsp;
+1. Mock Test legacy guest fallback via getQuestionBank()/
 
-After implementing, please share the before/after screenshots from your Playwright verification (mobile + desktop) so I can visually confirm before considering this done.
+   generateCustomTest() — preserve existing question count and 
+
+   job-test-progress unlock cap
+
+2. Custom Syllabus anonymous branch in getQuestionsWithFallbackInfo() 
+
+   using get_practice_questions with the existing fallback chain 
+
+   (difficulty → topic name → subject-wide)
+
+3. Confirm server-side scoring works for both via scorePracticeAnswers()
+
+4. Validate as incognito — test both flows end-to-end, inspect 
+
+   network payloads to confirm no correct_option/explanation leaks
+
+5. Publish after validation
+
+This preserves all existing guest limitations (question caps, 
+
+subject restrictions, no AI-fill, no progress saving) exactly as 
+
+documented — just fixing the data-fetching mechanism to use the 
+
+secure RPCs.
+
+Please confirm once validated and published.

@@ -246,6 +246,135 @@ export async function getTopicQuestionCounts(topicIds: string[]): Promise<Record
   return countMap;
 }
 
+// GUEST-ONLY fetch path. Pulls approved questions via the SECURITY DEFINER
+// `get_practice_questions` RPC (no correct answers / explanations), preserving
+// the same fallback chain as the authenticated path:
+//   1) by selected topic_id
+//   2) retry without difficulty
+//   3) by topic name
+//   4) subject-wide fallback
+// Correctness + explanations are resolved server-side at submission time.
+async function getGuestQuestionsWithFallbackInfo(params: {
+  topicIds: string[];
+  requestedCount: number;
+  difficulty?: string;
+}): Promise<{
+  questions: SyllabusQuestion[];
+  hasEnough: boolean;
+  shortage: number;
+  ragAvailable: boolean;
+  ragDocumentCount: number;
+  usedDifficultyFallback: boolean;
+  usedSubjectFallback: boolean;
+}> {
+  const { topicIds, requestedCount, difficulty } = params;
+
+  const fetchLimit = Math.max(requestedCount * 3, 60);
+  const seen = new Set<string>();
+  const allQuestions: SyllabusQuestion[] = [];
+  let usedDifficultyFallback = false;
+  let usedSubjectFallback = false;
+
+  const titleCaseDifficulty =
+    difficulty && difficulty !== 'mixed'
+      ? [difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase()]
+      : undefined;
+
+  const mapRow = (q: any): SyllabusQuestion => ({
+    id: q.id,
+    title: q.title,
+    options: q.options,
+    correctOption: null, // resolved server-side at submission
+    explanation: null,   // resolved server-side at submission
+    difficulty: q.difficulty,
+    subject: q.subject,
+    topic: q.topic,
+    topic_id: q.topic_id ?? null,
+  });
+
+  const rpcFetch = async (args: Record<string, any>): Promise<any[]> => {
+    const { data, error } = await supabase.rpc('get_practice_questions', {
+      p_limit: fetchLimit,
+      ...args,
+    });
+    if (error) {
+      console.error('[guest syllabus] rpc error:', error.message);
+      return [];
+    }
+    return (data || []) as any[];
+  };
+
+  const collect = (rows: any[]) => {
+    for (const row of rows) {
+      if (!row?.id || seen.has(row.id)) continue;
+      seen.add(row.id);
+      allQuestions.push(mapRow(row));
+    }
+  };
+
+  // 1) Strict topic_id with difficulty filter
+  collect(
+    await rpcFetch({
+      p_topic_ids: topicIds,
+      ...(titleCaseDifficulty ? { p_difficulties: titleCaseDifficulty } : {}),
+    }),
+  );
+
+  // 2) Retry without difficulty filter
+  if (allQuestions.length < requestedCount && titleCaseDifficulty) {
+    const before = allQuestions.length;
+    collect(await rpcFetch({ p_topic_ids: topicIds }));
+    if (allQuestions.length > before) usedDifficultyFallback = true;
+  }
+
+  // 3) By topic name
+  if (allQuestions.length < requestedCount) {
+    const { data: topics } = await supabase
+      .from('topics')
+      .select('id, name, subject_id')
+      .in('id', topicIds);
+    const topicNames = Array.from(
+      new Set((topics || []).map((t: any) => t.name).filter(Boolean)),
+    ) as string[];
+    if (topicNames.length > 0) {
+      collect(await rpcFetch({ p_topics: topicNames }));
+    }
+
+    // 4) Subject-wide fallback
+    if (allQuestions.length === 0) {
+      const subjectIds = Array.from(
+        new Set((topics || []).map((t: any) => t.subject_id).filter(Boolean)),
+      );
+      if (subjectIds.length > 0) {
+        const { data: subjects } = await supabase
+          .from('subjects')
+          .select('id, name')
+          .in('id', subjectIds);
+        const subjectNames = (subjects || []).map((s: any) => s.name).filter(Boolean);
+        for (const subjectName of subjectNames) {
+          collect(await rpcFetch({ p_subject_like: subjectName }));
+        }
+        if (allQuestions.length > 0) usedSubjectFallback = true;
+      }
+    }
+  }
+
+  // Shuffle and cap
+  const shuffled = allQuestions.sort(() => Math.random() - 0.5);
+  const finalQuestions = shuffled.slice(0, requestedCount);
+
+  return {
+    questions: finalQuestions,
+    hasEnough: finalQuestions.length >= requestedCount,
+    shortage: Math.max(0, requestedCount - finalQuestions.length),
+    ragAvailable: false,
+    ragDocumentCount: 0,
+    usedDifficultyFallback,
+    usedSubjectFallback,
+  };
+}
+
+
 // Get MCQs with balanced distribution across topics + fallback info
 export async function getQuestionsWithFallbackInfo(params: {
   topicIds: string[];
@@ -265,6 +394,15 @@ export async function getQuestionsWithFallbackInfo(params: {
 
   if (topicIds.length === 0) {
     return { questions: [], hasEnough: false, shortage: requestedCount, ragAvailable: false, ragDocumentCount: 0, usedDifficultyFallback: false, usedSubjectFallback: false };
+  }
+
+  // GUEST PATH: anonymous users must read approved questions through the
+  // SECURITY DEFINER `get_practice_questions` RPC, which omits correct answers
+  // and explanations so the answer key is never exposed via the public API.
+  // Correctness is resolved server-side at submission time.
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData?.session?.user) {
+    return await getGuestQuestionsWithFallbackInfo({ topicIds, requestedCount, difficulty });
   }
 
   // Fetch attempted question IDs if userId provided
