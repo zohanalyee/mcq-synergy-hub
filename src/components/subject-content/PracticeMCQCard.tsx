@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, XCircle, Lightbulb } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { StudyMode } from "./ModeToggle";
-import { scorePracticeAnswers, isDbQuestionId } from "@/services/practiceScoringService";
+import { scorePracticeAnswers, isDbQuestionId, type ScoredAnswer } from "@/services/practiceScoringService";
 
 interface MCQOption {
   key: string;
