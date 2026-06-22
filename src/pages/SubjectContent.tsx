@@ -59,6 +59,8 @@ const SubjectContent = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
+  // Batch-prefetched answer keys for the guest flow (id -> ScoredAnswer).
+  const [prefetchedAnswers, setPrefetchedAnswers] = useState<Record<string, ScoredAnswer>>({});
   const [isLoadingMCQs, setIsLoadingMCQs] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>("all");
