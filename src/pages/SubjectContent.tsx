@@ -905,6 +905,7 @@ const SubjectContent = () => {
                   mode={studyMode}
                   index={index}
                   serverScored={!user}
+                  prefetched={!user ? prefetchedAnswers[mcq.id] : undefined}
                   onAnswered={user ? handleCardAnswered : undefined}
                 />
               ))}
