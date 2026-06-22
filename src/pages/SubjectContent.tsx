@@ -21,6 +21,7 @@ import { getTopicsBySubject } from "@/services/supabaseTopicService";
 import { getCachedQuestions, setCachedQuestions } from "@/services/offlineSyncService";
 import { loadGuestQuestions } from "@/services/guestQuestionService";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
+import { prefetchPracticeAnswers, type ScoredAnswer } from "@/services/practiceScoringService";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
