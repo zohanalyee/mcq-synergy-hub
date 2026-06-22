@@ -71,6 +71,20 @@ export const scorePracticeAnswers = async (
 };
 
 /**
+ * Batch-prefetch the answer keys + explanations for a set of questions in a
+ * SINGLE round-trip (instead of one RPC per card on every click). The scoring
+ * RPCs return the correct answer/explanation regardless of the submitted value,
+ * so we pass an empty answer purely to resolve the key. `is_correct` from this
+ * call is meaningless and must be recomputed client-side once the user picks.
+ *
+ * Returns a map of id -> ScoredAnswer. Safe to call after questions load.
+ */
+export const prefetchPracticeAnswers = async (
+  ids: string[],
+): Promise<Record<string, ScoredAnswer>> =>
+  scorePracticeAnswers((ids || []).map((id) => ({ id, answer: "" })));
+
+/**
  * Merge server-scored correct answers/explanations back into question objects
  * so the existing client-side result UI (which reads `answer`/`explanation`)
  * keeps working unchanged.
