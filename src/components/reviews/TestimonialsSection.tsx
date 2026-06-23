@@ -53,13 +53,10 @@ const TestimonialsSection = () => {
   const { data: reviews, isLoading } = useQuery<Review[]>({
     queryKey: ['featured-reviews'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('id, rating, comment, reviewer_name, reviewer_role, reviewer_initials, show_name, is_anonymous, is_verified, created_at')
-        .eq('display_publicly', true)
-        .gte('rating', 4)
-        .order('created_at', { ascending: false })
-        .limit(6);
+      const { data, error } = await supabase.rpc('get_public_reviews', {
+        p_min_rating: 4,
+        p_limit: 6,
+      });
       if (error) throw error;
       return (data || []) as Review[];
     },

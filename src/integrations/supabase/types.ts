@@ -3537,6 +3537,21 @@ export type Database = {
           two_star: number
         }[]
       }
+      get_public_reviews: {
+        Args: { p_limit?: number; p_min_rating?: number }
+        Returns: {
+          comment: string
+          created_at: string
+          id: string
+          is_anonymous: boolean
+          is_verified: boolean
+          rating: number
+          reviewer_initials: string
+          reviewer_name: string
+          reviewer_role: string
+          show_name: boolean
+        }[]
+      }
       get_recently_active_users: {
         Args: { minutes_ago?: number }
         Returns: number
