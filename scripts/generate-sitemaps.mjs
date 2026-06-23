@@ -231,54 +231,32 @@ async function buildMockTests() {
 }
 
 async function buildBoards() {
-  // Page through ALL board topics (PostgREST caps each response at 1000 rows).
-  const TPAGE = 1000;
-  const topics = [];
-  for (let from = 0; ; from += TPAGE) {
-    const { data: rows, error } = await supabase
-      .from("topics")
-      .select(`id,name,subjects!inner(id,name,levels!inner(id,name,educational_systems!inner(id,name,is_active)))`)
-      .eq("subjects.levels.educational_systems.is_active", true)
-      .range(from, from + TPAGE - 1);
-    if (error) throw error;
-    topics.push(...(rows || []));
-    if (!rows || rows.length < TPAGE) break;
-  }
-
   // AdSense / crawl-budget: only emit board topic URLs that have enough
   // approved MCQs to be genuinely useful. Thin pages (< 5 approved MCQs) are
   // low-value near-duplicates — they stay reachable for users but are kept out
   // of the sitemap and are noindex (see BoardTopicPage.tsx).
+  //
+  // IMPORTANT: anonymous clients can no longer read content_items directly
+  // (RLS hardening for the answer-leak fix). We therefore resolve the indexable
+  // board topic paths + approved-MCQ counts through a SECURITY DEFINER RPC that
+  // returns ONLY public URL paths and aggregate counts — never question content
+  // or answer keys.
   const MIN_APPROVED_MCQS = 5;
-  const approvedByTopic = new Map();
-  // Page through ALL approved MCQ rows (PostgREST caps each response at 1000
-  // rows, so we must use .range pagination to avoid under-counting).
-  const PAGE = 1000;
-  for (let from = 0; ; from += PAGE) {
-    const { data: rows, error: cntErr } = await supabase
-      .from("content_items")
-      .select("topic_id")
-      .eq("category", "mcq")
-      .eq("status", "approved")
-      .not("topic_id", "is", null)
-      .range(from, from + PAGE - 1);
-    if (cntErr) throw cntErr;
-    for (const r of rows || []) {
-      approvedByTopic.set(r.topic_id, (approvedByTopic.get(r.topic_id) || 0) + 1);
-    }
-    if (!rows || rows.length < PAGE) break;
-  }
+
+  const { data: rows, error } = await supabase.rpc("get_indexable_board_topic_paths", {
+    p_min_approved_mcqs: MIN_APPROVED_MCQS,
+  });
+  if (error) throw error;
 
   const all = [];
   const indexablePaths = [];
-  for (const t of topics || []) {
-    const s = t.subjects, l = s?.levels, sys = l?.educational_systems;
-    if (!s || !l || !sys) continue;
-    const cls = extractClassNumber(l.name);
-    if (!cls) continue;
-    if ((approvedByTopic.get(t.id) || 0) < MIN_APPROVED_MCQS) continue;
-    const path = `/boards/${toSlug(sys.name)}/class-${cls}/${toSlug(s.name)}/${toSlug(t.name)}`;
-    all.push({ loc: `${BASE_URL}${path}`, lastmod: today, freq: "weekly", priority: "0.7" });
+  const seen = new Set();
+  for (const r of rows || []) {
+    const path = r.path;
+    if (!path || seen.has(path)) continue;
+    seen.add(path);
+    const lastmod = (r.lastmod || "").toString().split("T")[0] || today;
+    all.push({ loc: `${BASE_URL}${path}`, lastmod, freq: "weekly", priority: "0.7" });
     indexablePaths.push(path);
   }
   console.log(`[sitemap] boards: ${all.length} URLs kept (>= ${MIN_APPROVED_MCQS} approved MCQs)`);

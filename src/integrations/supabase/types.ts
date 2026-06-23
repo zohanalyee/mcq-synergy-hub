@@ -3398,6 +3398,14 @@ export type Database = {
           user_count: number
         }[]
       }
+      get_indexable_board_topic_paths: {
+        Args: { p_min_approved_mcqs?: number }
+        Returns: {
+          approved_count: number
+          lastmod: string
+          path: string
+        }[]
+      }
       get_job_practice_questions: {
         Args: { p_job_test_id: string; p_limit?: number; p_subject?: string }
         Returns: {
