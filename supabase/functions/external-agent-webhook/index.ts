@@ -151,7 +151,7 @@ Deno.serve(async (req) => {
       const { error: insertError } = await supabase
         .from('external_opportunities')
         .insert({
-          title: opp.title.slice(0, 500), // Truncate long titles
+          title: cleanTitle.slice(0, 500), // Truncate long titles
           description: opp.description?.slice(0, 2000),
           apply_url: opp.apply_url,
           type: opp.type,
