@@ -97,12 +97,35 @@ Deno.serve(async (req) => {
     let errors = 0;
     const errorDetails: string[] = [];
 
+    // Detects an "Apply via" contact value (email / bare domain / URL) so it can
+    // never be stored as the title and leak into the page slug.
+    const isContactInfoTitle = (value: string): boolean => {
+      const v = (value || '').trim().toLowerCase();
+      if (!v) return false;
+      if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/.test(v)) return true;
+      if (/^(https?:\/\/|www\.)/.test(v)) return true;
+      if (!/\s/.test(v) && /\.[a-z]{2,}(\.[a-z]{2,})?(\/.*)?$/.test(v)) return true;
+      return false;
+    };
+
     for (const opp of body.opportunities) {
       // Validate required fields
       if (!opp.title || !opp.apply_url || !opp.type || !opp.source_name) {
         errors++;
         errorDetails.push(`Missing required fields for: ${opp.title || 'unknown'}`);
         continue;
+      }
+
+      // Safeguard: never accept contact info (email/portal URL) as the title.
+      // Prefer the organization name; otherwise fall back to a generic label.
+      let cleanTitle = opp.title.trim();
+      if (isContactInfoTitle(cleanTitle)) {
+        if (opp.organization && !isContactInfoTitle(opp.organization)) {
+          cleanTitle = opp.organization.trim();
+        } else {
+          cleanTitle = opp.type === 'scholarship' ? 'Scholarship Opportunity' : 'Job Opportunity';
+        }
+        console.log(`[External Webhook] Replaced contact-info title "${opp.title}" with "${cleanTitle}"`);
       }
 
       // Validate type
@@ -128,7 +151,7 @@ Deno.serve(async (req) => {
       const { error: insertError } = await supabase
         .from('external_opportunities')
         .insert({
-          title: opp.title.slice(0, 500), // Truncate long titles
+          title: cleanTitle.slice(0, 500), // Truncate long titles
           description: opp.description?.slice(0, 2000),
           apply_url: opp.apply_url,
           type: opp.type,

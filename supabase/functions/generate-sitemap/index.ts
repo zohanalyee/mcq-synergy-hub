@@ -27,7 +27,17 @@ function toSlug(name: string): string {
 }
 
 // Mirrors src/utils/slugify.ts so sitemap URLs match in-app /opportunity links exactly.
+function isContactInfoTitle(value: string): boolean {
+  const v = (value || "").trim().toLowerCase();
+  if (!v) return false;
+  if (/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/.test(v)) return true;
+  if (/^(https?:\/\/|www\.)/.test(v)) return true;
+  if (!/\s/.test(v) && /\.[a-z]{2,}(\.[a-z]{2,})?(\/.*)?$/.test(v)) return true;
+  return false;
+}
+
 function generateSlugUrl(title: string, id: string): string {
+  if (isContactInfoTitle(title)) return `job-opportunity-${id}`;
   const slug = (title || "")
     .toLowerCase()
     .trim()
@@ -37,7 +47,10 @@ function generateSlugUrl(title: string, id: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 60)
     .replace(/-+$/g, "");
-  return slug ? `${slug}-${id}` : id;
+  if (!slug || /^(www|hr|info|contact|admin)[a-z]*(pk|com|org|net|edu|gov)+$/.test(slug)) {
+    return `job-opportunity-${id}`;
+  }
+  return `${slug}-${id}`;
 }
 
 function extractClassNumber(levelName: string): string | null {
