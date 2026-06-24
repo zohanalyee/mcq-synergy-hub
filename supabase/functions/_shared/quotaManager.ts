@@ -138,6 +138,45 @@ export async function logQuotaUsage(
   }
 }
 
+// ============= LOG AI ATTEMPT OUTCOME (success OR failure) =============
+// Lightweight observability: records which provider/key was used and the
+// outcome of each terminal AI attempt so 429s are diagnosable from the DB.
+// Safe no-op if no supabase client is supplied. Never throws.
+export interface AIAttemptRecord {
+  provider: 'gemini' | 'lovable' | 'none';
+  key_index: number;        // 0/1 for gemini keys, -1 for gateway/none
+  outcome: string;          // success | rate_limited | credits_exhausted | auth_error | error | all_failed | bad_request
+  status: number;           // HTTP-ish status
+  source_type?: string;     // calling feature, e.g. generate-test
+}
+
+export async function recordAIAttempt(
+  supabaseClient: any,
+  record: AIAttemptRecord
+): Promise<void> {
+  if (!supabaseClient) return;
+  try {
+    await supabaseClient
+      .from('ai_usage_logs')
+      .insert({
+        source_type: record.source_type || 'ai_attempt',
+        questions_requested: 0,
+        questions_fetched: 0,
+        questions_saved: 0,
+        metadata: {
+          ai_attempt: true,
+          provider: record.provider,
+          key_index: record.key_index,
+          outcome: record.outcome,
+          status: record.status,
+        },
+      });
+  } catch (err) {
+    console.error('[QuotaManager] Failed to record AI attempt:', err);
+  }
+}
+
+
 // ============= QUOTA ERROR RESPONSE HELPER =============
 // Returns a standardized JSON response for quota exhaustion.
 export function quotaExhaustedResponse(corsHeaders: Record<string, string>): Response {

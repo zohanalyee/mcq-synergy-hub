@@ -18,7 +18,7 @@ async function callAIDirect(
     const { text, provider, cost } = await callAIWithAutoSwitch('', prompt, {
       temperature: 0.7,
       maxOutputTokens: 4096,
-    });
+    }, { supabaseClient: null, sourceType: 'fetch-external-jobs' });
     console.log(`✅ Success with ${provider} (cost: ${cost})`);
     return { success: true, text, provider, cost };
   } catch (err: any) {

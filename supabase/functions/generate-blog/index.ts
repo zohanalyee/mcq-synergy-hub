@@ -459,7 +459,7 @@ Populate highlights, FAQs, internal_links and prep_blocks relevant to the topic.
     const result = await callAIWithAutoSwitch(SYSTEM_PROMPT, userPrompt, {
       temperature: 0.7,
       maxOutputTokens: 6144,
-    });
+    }, { supabaseClient: null, sourceType: 'generate-blog' });
 
     let parsed: any;
     try {

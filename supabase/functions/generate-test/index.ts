@@ -82,11 +82,14 @@ async function callGeminiForBatch(
     const { text, provider, cost } = await callAIWithAutoSwitch('', promptText, {
       temperature: generationConfig?.temperature || 0.7,
       maxOutputTokens: generationConfig?.maxOutputTokens || 8000,
-    });
+    }, { supabaseClient: null, sourceType: 'generate-test' });
     console.log(`✅ Success with ${provider} (cost: ${cost})`);
     return { success: true, text, modelUsed: provider === 'gemini' ? 'gemini-2.0-flash' : 'lovable-gateway', provider, cost };
   } catch (err: any) {
     const msg = err.message || '';
+    if (msg.includes('CREDITS_EXHAUSTED') || msg.includes('402')) {
+      return { success: false, error: 'CREDITS_EXHAUSTED', status: 402 };
+    }
     if (msg.includes('RATE_LIMIT') || msg.includes('429') || msg.includes('quota')) {
       return { success: false, error: 'ALL_MODELS_FAILED', status: 429 };
     }
@@ -97,6 +100,7 @@ async function callGeminiForBatch(
     return { success: false, error: 'ALL_MODELS_FAILED', status: 500 };
   }
 }
+
 
 // Sanitize topic for flexible matching - removes brackets and extra whitespace
 function sanitizeTopic(topic: string): string {
