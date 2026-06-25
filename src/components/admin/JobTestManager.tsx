@@ -7,7 +7,7 @@ import { BulkJobTestImportDialog } from "./job-test/BulkJobTestImportDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileJson, Plus, Settings } from "lucide-react";
+import { FileJson, Plus, Settings, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   JobTestDefinition,
@@ -38,6 +38,9 @@ const JobTestManager = () => {
     handleSyllabusItemChange,
     handleAddJobTest,
     handleRemoveJobTest,
+    handleEnhanceJobTest,
+    handleEnhanceAll,
+    enhancingId,
     resetForm,
   } = useJobTestManagement();
 
@@ -140,6 +143,19 @@ const JobTestManager = () => {
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">Legacy Job Tests</h3>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleEnhanceAll}
+              disabled={!!enhancingId}
+              className="gap-2"
+            >
+              {enhancingId ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 text-primary" />
+              )}
+              Run AI Magic on All
+            </Button>
             <Button variant="outline" onClick={() => setIsBulkImportOpen(true)} className="gap-2">
               <FileJson className="h-4 w-4" />
               Bulk Import JSON
@@ -166,7 +182,12 @@ const JobTestManager = () => {
             />
           </div>
         </div>
-        <JobTestTable jobTests={jobTests} onRemove={handleRemoveJobTest} />
+        <JobTestTable
+          jobTests={jobTests}
+          onRemove={handleRemoveJobTest}
+          onEnhance={handleEnhanceJobTest}
+          enhancingId={enhancingId}
+        />
         <BulkJobTestImportDialog
           open={isBulkImportOpen}
           onOpenChange={setIsBulkImportOpen}
