@@ -38,6 +38,9 @@ const JobTestManager = () => {
     handleSyllabusItemChange,
     handleAddJobTest,
     handleRemoveJobTest,
+    handleEnhanceJobTest,
+    handleEnhanceAll,
+    enhancingId,
     resetForm,
   } = useJobTestManagement();
 
