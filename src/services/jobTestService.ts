@@ -15,6 +15,10 @@ export interface JobTest {
   syllabus: SyllabusItem[];
   created_at?: string;
   updated_at?: string;
+  seo_title?: string | null;
+  meta_description?: string | null;
+  keywords?: string[] | null;
+  seo_enhanced_at?: string | null;
 }
 
 // ---------- Legacy job_tests (kept for current admin UI compatibility) ----------
