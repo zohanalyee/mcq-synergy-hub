@@ -90,6 +90,81 @@ export const removeJobTest = async (id: string): Promise<boolean> => {
   return true;
 };
 
+// ---------- AI Magic: SEO refinement for mock tests ----------
+
+export interface JobTestSEOResult {
+  seo_title: string | null;
+  meta_description: string | null;
+  keywords: string[];
+  description: string | null;
+}
+
+/**
+ * Runs the shared `enhance-content` edge function (Gemini -> Lovable Gateway
+ * fallback) in `mock_test` mode to generate SEO metadata for a mock test,
+ * then persists the result to the `job_tests` row.
+ */
+export const enhanceJobTestSEO = async (test: JobTest): Promise<JobTestSEOResult | null> => {
+  const subjects = (test.syllabus || [])
+    .map((s) => `${s.topic} (${s.percentage}%)`)
+    .join(", ");
+
+  const rawText = [
+    `Mock Test Title: ${test.title}`,
+    `Organization / Exam Body: ${test.organization || "Competitive exam"}`,
+    `Number of Questions: ${test.questions}`,
+    `Duration: ${test.duration} minutes`,
+    `Syllabus / Subjects & Weightage: ${subjects || "General competitive exam syllabus"}`,
+  ].join("\n");
+
+  const { data, error } = await supabase.functions.invoke("enhance-content", {
+    body: {
+      rawText,
+      category: "mock_test",
+      organization: test.organization || undefined,
+    },
+  });
+
+  if (error || !data?.success || !data?.data) {
+    console.error("Error enhancing mock test SEO:", error || data);
+    return null;
+  }
+
+  const parsed = data.data as Record<string, any>;
+  const keywords: string[] = Array.isArray(parsed.keywords)
+    ? parsed.keywords.filter((k: any) => typeof k === "string" && k.trim()).slice(0, 8)
+    : [];
+
+  const updatePayload: Record<string, any> = {
+    seo_title: parsed.seo_title || null,
+    meta_description: parsed.meta_description || null,
+    keywords,
+    seo_enhanced_at: new Date().toISOString(),
+  };
+  // Only overwrite the display description if the AI returned a non-empty one.
+  if (parsed.description && typeof parsed.description === "string") {
+    updatePayload.description = parsed.description;
+  }
+
+  const { error: updateError } = await supabase
+    .from("job_tests")
+    .update(updatePayload)
+    .eq("id", test.id);
+
+  if (updateError) {
+    console.error("Error saving mock test SEO:", updateError);
+    return null;
+  }
+
+  return {
+    seo_title: updatePayload.seo_title,
+    meta_description: updatePayload.meta_description,
+    keywords,
+    description: updatePayload.description ?? test.description,
+  };
+};
+
+
 // ---------- Isolated Job Test System (new) ----------
 
 export interface JobSyllabusSection {
