@@ -86,10 +86,13 @@ const MockTestDetail = () => {
     ? new Date(test.updated_at).toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" })
     : null;
 
-  const metaTitle = `${test.title} Mock Test — Free Online Preparation`;
-  const metaDescription =
-    `Prepare for the ${test.title} test by ${test.organization} with free AI-powered mock tests. ` +
-    `Official syllabus, subject weightage, and ${test.questions} practice MCQs in simple Pakistani exam English.`;
+  const metaTitle = test.seo_title?.trim()
+    ? test.seo_title.trim()
+    : `${test.title} Mock Test — Free Online Preparation`;
+  const metaDescription = test.meta_description?.trim()
+    ? test.meta_description.trim()
+    : `Prepare for the ${test.title} test by ${test.organization} with free AI-powered mock tests. ` +
+      `Official syllabus, subject weightage, and ${test.questions} practice MCQs in simple Pakistani exam English.`;
 
   // Factual FAQs derived from the test's own data (no invented claims).
   const subjectsList = test.syllabus.map((s) => s.topic).join(", ");
