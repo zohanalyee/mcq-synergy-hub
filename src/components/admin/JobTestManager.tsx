@@ -7,7 +7,7 @@ import { BulkJobTestImportDialog } from "./job-test/BulkJobTestImportDialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { FileJson, Plus, Settings } from "lucide-react";
+import { FileJson, Plus, Settings, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   JobTestDefinition,
