@@ -67,9 +67,59 @@ export function useJobTestManagement() {
       setIsAddDialogOpen(false);
       resetForm();
       toast.success(`Job Test "${title}" added successfully`);
+      // Auto-trigger AI Magic SEO refinement on create (non-blocking).
+      toast.info("✨ Generating SEO with AI Magic…");
+      enhanceJobTestSEO(added)
+        .then((res) => {
+          if (res) {
+            queryClient.invalidateQueries({ queryKey: ["job-tests"] });
+            toast.success("✨ SEO metadata generated");
+          }
+        })
+        .catch(() => {/* non-blocking; manual re-run available */});
     } else {
       toast.error("Failed to add job test");
     }
+  };
+
+  const handleEnhanceJobTest = async (test: JobTest) => {
+    setEnhancingId(test.id);
+    try {
+      const res = await enhanceJobTestSEO(test);
+      if (res) {
+        queryClient.invalidateQueries({ queryKey: ["job-tests"] });
+        toast.success(`✨ SEO updated for "${test.title}"`);
+      } else {
+        toast.error("AI Magic failed. Please try again.");
+      }
+    } finally {
+      setEnhancingId(null);
+    }
+  };
+
+  const handleEnhanceAll = async () => {
+    if (jobTests.length === 0) {
+      toast.error("No mock tests to enhance");
+      return;
+    }
+    if (!window.confirm(`Run AI Magic SEO on all ${jobTests.length} mock tests? This runs one at a time and may take a while.`)) {
+      return;
+    }
+    let ok = 0;
+    let failed = 0;
+    for (const test of jobTests) {
+      setEnhancingId(test.id);
+      toast.info(`✨ Enhancing ${ok + failed + 1}/${jobTests.length}: ${test.title}`);
+      try {
+        const res = await enhanceJobTestSEO(test);
+        if (res) ok++; else failed++;
+      } catch {
+        failed++;
+      }
+    }
+    setEnhancingId(null);
+    queryClient.invalidateQueries({ queryKey: ["job-tests"] });
+    toast.success(`AI Magic complete: ${ok} succeeded${failed ? `, ${failed} failed` : ""}`);
   };
 
   const handleRemoveJobTest = async (id: string) => {
