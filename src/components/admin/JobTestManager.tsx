@@ -143,6 +143,19 @@ const JobTestManager = () => {
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-medium">Legacy Job Tests</h3>
           <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleEnhanceAll}
+              disabled={!!enhancingId}
+              className="gap-2"
+            >
+              {enhancingId ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Sparkles className="h-4 w-4 text-primary" />
+              )}
+              Run AI Magic on All
+            </Button>
             <Button variant="outline" onClick={() => setIsBulkImportOpen(true)} className="gap-2">
               <FileJson className="h-4 w-4" />
               Bulk Import JSON
