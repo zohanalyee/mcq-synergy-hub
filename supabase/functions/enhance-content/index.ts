@@ -66,6 +66,12 @@ const categoryPrompts: Record<string, string> = {
 - sector: "government"
 - region: One of: federal, sindh, punjab, kpk, balochistan
 - keywords: Array of 5-8 SEO keywords`,
+
+  mock_test: `You are refining the SEO metadata for an online MOCK TEST / practice exam page on a Pakistani exam-prep portal. Use the test title, organization, syllabus subjects/topics, question count, and duration provided to produce search-optimized metadata. Generate these fields:
+- seo_title: A compelling, search-friendly page title UNDER 60 characters. Include the exam/organization name and the words "Mock Test" or "MCQs" where natural (e.g., "FIA Sub-Inspector Mock Test 2026 - Free MCQs").
+- meta_description: A UNIQUE meta description between 150 and 160 characters describing this specific test - mention the organization, the key subjects covered, the question count, and that it is a free online practice test. Plain text, no markdown, no quotes.
+- keywords: Array of 5-8 SEO keywords targeting Pakistani exam search queries (e.g., "FIA Sub-Inspector test preparation", "FIA MCQs 2026", "FPSC mock test online"). Use the actual exam name and subjects.
+- description: A clean GitHub-Flavored Markdown string (2-4 short sections) describing what the test covers: a one-line "## Overview", a "## Topics Covered" bulleted list derived from the syllabus, and a short "## Exam Pattern" note mentioning the question count and duration. Keep prose paragraphs <= 3 sentences. Base everything on the provided data - do NOT invent facts.`,
 };
 
 async function callAI(systemPrompt: string, userPrompt: string): Promise<string> {

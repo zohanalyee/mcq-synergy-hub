@@ -1,69 +1,71 @@
-# Fix recurring "too many requests" (429) on AI generation
+## Mock Test "AI Magic" SEO Refinement
 
-## Problem (confirmed from code + data)
+Adds the same AI SEO-refinement capability that Jobs/Scholarships have (the `enhance-content` edge function) to the Mock Test admin section, reusing the existing Gemini → Lovable Gateway fallback infrastructure. No new AI function is created.
 
-The Gemini→Gateway fallback is wired correctly but still surfaces 429s because:
+### Confirmed field mapping (your answers)
 
-1. **Thundering herd.** The 4s spacer (`lastGeminiCallTime`) and the `providers.gemini.available` flag in `_shared/gemini.ts` are per-isolate in-memory globals. Concurrent invocations (bulk job/scholarship/blog imports) don't coordinate — they all hit Gemini at once, all 429, then all stampede the Lovable Gateway at once, which 429s on its own per-workspace limit.
-2. **Gateway leg has no retry.** A single transient Gateway 429/5xx kills the request — there's no backoff around the fallback call.
-3. **No observability.** Failed AI calls and which provider failed aren't logged; every exhaustion is mislabeled `ALL_MODELS_FAILED / source:google_gemini`, even when the Gateway was the thing that failed.
+For each mock test, AI Magic generates & stores: **SEO title**, **Meta description** (150–160 chars), **Keywords** (5–8), and a **refined display description**.
 
-## Fix plan (backend only, `supabase/functions/_shared/gemini.ts` + light per-function wiring)
+- Trigger for NEW tests: **Both** (auto on create + manual re-run button)
+- Retroactive: **Both** (per-row button + bulk "Run on All")
 
-### 1. Add a second Gemini key to the text path (rotation)
+### Good news from investigation
 
-`callAIWithAutoSwitch` currently uses only `GEMINI_API_KEY`. Add `EXTERNAL_JOBS_GEMINI_KEY` (already present, used by vision) to the text rotation: try key 1, on 429 try key 2, only then fall to the Gateway. This roughly doubles free-tier RPM headroom before paid credits are touched.
+- User-facing mock tests live in the `job_tests` table (powers `/mock-tests` and `MockTestDetail`).
+- That table **already has** the columns `seo_title`, `meta_description`, `keywords[]`, `seo_enhanced_at` — **no DB migration needed**.
 
-### 2. Add retry/backoff to the Gateway leg
+### Changes
 
-Wrap the `callLovableGateway` call in bounded exponential backoff (e.g. 2 retries: 2s, 6s) for 429/5xx only. 400/402 are terminal and must NOT be retried (402 = credits exhausted → surface immediately). This absorbs transient Gateway rate-limit blips that currently hard-fail.
+**1.** `supabase/functions/enhance-content/index.ts`
 
-### 3. Real backoff before declaring exhaustion
+- Add a `mock_test` category to `categoryPrompts` instructing the model to return `seo_title` (<60 chars), `meta_description` (150–160 chars), `keywords[]`, and a markdown `description` built from the test's title, organization, syllabus subjects/topics, question count, and duration. Strictly fact-based (no invention).
 
-When both Gemini keys 429, do one short backoff-and-retry of key 1 (Gemini per-minute limits clear in ~60s) before switching to the Gateway, instead of permanently flipping `providers.gemini.available=false` for the isolate lifetime. Keep the daily-reset logic.
+**2.** `src/services/jobTestService.ts`
 
-### 4. Distinct, honest error signaling
+- Extend the `JobTest` interface with optional `seo_title`, `meta_description`, `keywords`, `seo_enhanced_at`.
+- Update `getJobTests`/`addJobTest`/`updateJobTest` mappings to carry these fields.
+- Add `enhanceJobTestSEO(test)`: builds a `rawText` summary from the test data, calls `supabase.functions.invoke("enhance-content", { rawText, category: "mock_test", organization })`, then updates the `job_tests` row with the returned `seo_title`, `meta_description`, `keywords`, `description`, and `seo_enhanced_at = now()`.
 
-Return separate error types so the frontend and logs can tell them apart:
+**3.** `src/hooks/useJobTestManagement.tsx`
 
-- `GEMINI_RATE_LIMIT` (both Gemini keys 429)
-- `GATEWAY_RATE_LIMIT` (Gateway 429)
-- `CREDITS_EXHAUSTED` (Gateway 402)
-- `ALL_PROVIDERS_FAILED` (everything failed)
+- Add `enhancingId` state, `handleEnhanceJobTest(test)` (per-row, with toast + query invalidation), and `handleEnhanceAll()` (sequential loop over all tests with progress toast, respecting rate limits).
+- In `handleAddJobTest`, fire `enhanceJobTestSEO` after a successful insert (auto-on-create, non-blocking) so new tests get SEO treatment by default.
 
-Stop labeling Gateway failures as `source:google_gemini`.
+**4.** `src/components/admin/job-test/JobTestTable.tsx`
 
-### 5. Observability for failures
+- Add an "✨ AI Magic" button per row (brand styling, `Sparkles` icon, spinner while running) and a small "SEO ✓"/"Needs SEO" badge based on `seo_enhanced_at`. New props: `onEnhance`, `enhancingId`.
 
-Log every AI attempt outcome to `ai_usage_logs` metadata: `{ provider, key_index, outcome, status }` — including failures — so the next occurrence is diagnosable from the DB instead of guesswork. Currently only successful saves/cache hits are logged.
+**5.** `src/components/admin/JobTestManager.tsx`
 
-## Optional follow-up (not in this pass unless you want it)
+- In the "Legacy Job Tests" header, add a **"Run AI Magic on All"** button wired to `handleEnhanceAll`, and pass `onEnhance`/`enhancingId` down to `JobTestTable`.
 
-- **Request queueing / concurrency cap** for bulk imports (`fetch-external-jobs`, `scrape-*`, blog batch) so they serialize AI calls through a small concurrency limit rather than firing all at once. This attacks the herd at the source but is a larger change; items 1-3 already give substantial relief.
+**6.** `src/pages/MockTestDetail.tsx`
 
-## What this does NOT change
+- Prefer stored `test.seo_title` / `test.meta_description` for `<SEOHead>` and schema when present; fall back to the current dynamic strings otherwise. (Keeps unique meta descriptions either way.)
 
-- No frontend/UI behavior changes beyond the existing toasts already reading error messages (they'll now get more accurate ones).
-- No model swaps; keeps direct-Gemini-first / Gateway-as-paid-backup per project policy.
+### Notes
 
-## Verification
+- All styling uses existing brand tokens/button variants (Sparkles icon, gradient/primary) for consistency with the Jobs/Scholarships flow.
+- The retroactive bulk run is sequential to avoid 429 rate-limit bursts.
+- The existing **Sample Paper / Doc→MCQ** feature is unrelated to this and is left untouched (explained separately).
+  &nbsp;
 
-- Deploy and run `generate-test`, `generate-blog`, `fetch-external-jobs` via the edge-function test/curl tool; confirm success and inspect logged `provider`/`outcome`.
-- Simulate exhaustion by temporarily forcing key failure to confirm: key1 429 → key2 → Gateway-with-retry → correct distinct error type if all fail.
-- Confirm `ai_usage_logs` now records provider + outcome on both success and failure.
+Add reusable AI Magic SEO refinement (title, meta description, keywords, description) to Mock Test admin with per-row + bulk + auto-on-create, reusing the enhance-content edge function. No DB migration needed.
+
+# **Approved — this plan looks correct and** complete, matches all my 
+
+answers. Please proceed with implementation.
 
 &nbsp;
 
-# **Approved — proceed with the fix plan exactly as outlined (items 1-5).** 
+After implementing, please also answer my earlier separate question 
 
-Skip the optional queueing follow-up for now — items 1-3 should 
+about the EXISTING Sample Paper → AI question generation feature 
 
-give substantial relief as you noted.
+(how it currently works, what format it accepts, and whether 
 
-After implementing, please run the verification steps (test 
+existing mock tests without a sample paper can have one added 
 
-generate-test, generate-blog, fetch-external-jobs; confirm 
+retroactively) — you mentioned that's unrelated and explained 
 
-ai_usage_logs records provider + outcome on both success and 
-
-failure) and report back.
+separately, so please cover that next.
