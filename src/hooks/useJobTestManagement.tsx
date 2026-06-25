@@ -159,6 +159,9 @@ export function useJobTestManagement() {
     handleSyllabusItemChange,
     handleAddJobTest,
     handleRemoveJobTest,
+    handleEnhanceJobTest,
+    handleEnhanceAll,
+    enhancingId,
     resetForm
   };
 }
