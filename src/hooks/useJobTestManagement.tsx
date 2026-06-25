@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { JobTest, SyllabusItem, getJobTests, addJobTest, removeJobTest } from "@/services/jobTestService";
+import { JobTest, SyllabusItem, getJobTests, addJobTest, removeJobTest, enhanceJobTestSEO } from "@/services/jobTestService";
 import { toast } from "sonner";
 
 export function useJobTestManagement() {
