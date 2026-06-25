@@ -1649,8 +1649,12 @@ export type Database = {
           description: string | null
           duration: number | null
           id: string
+          keywords: string[]
+          meta_description: string | null
           organization: string
           questions: number | null
+          seo_enhanced_at: string | null
+          seo_title: string | null
           syllabus: Json
           title: string
           updated_at: string | null
@@ -1660,8 +1664,12 @@ export type Database = {
           description?: string | null
           duration?: number | null
           id?: string
+          keywords?: string[]
+          meta_description?: string | null
           organization: string
           questions?: number | null
+          seo_enhanced_at?: string | null
+          seo_title?: string | null
           syllabus?: Json
           title: string
           updated_at?: string | null
@@ -1671,8 +1679,12 @@ export type Database = {
           description?: string | null
           duration?: number | null
           id?: string
+          keywords?: string[]
+          meta_description?: string | null
           organization?: string
           questions?: number | null
+          seo_enhanced_at?: string | null
+          seo_title?: string | null
           syllabus?: Json
           title?: string
           updated_at?: string | null
