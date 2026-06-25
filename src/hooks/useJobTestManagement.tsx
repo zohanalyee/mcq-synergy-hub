@@ -12,6 +12,7 @@ export function useJobTestManagement() {
   });
 
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [enhancingId, setEnhancingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [organization, setOrganization] = useState('');
