@@ -1,71 +1,107 @@
-## Mock Test "AI Magic" SEO Refinement
+# Dynamic-Route SEO: Root Cause Report + Fix Plan
 
-Adds the same AI SEO-refinement capability that Jobs/Scholarships have (the `enhance-content` edge function) to the Mock Test admin section, reusing the existing Gemini → Lovable Gateway fallback infrastructure. No new AI function is created.
+## 1. What is actually happening (confirmed from code)
 
-### Confirmed field mapping (your answers)
+This is **not a regression and not a build failure** — it is a deliberate architectural limitation in `vite.config.ts`.
 
-For each mock test, AI Magic generates & stores: **SEO title**, **Meta description** (150–160 chars), **Keywords** (5–8), and a **refined display description**.
+- Prerendering is driven by a **hardcoded static list**, `PRERENDER_ROUTES` (~40 entries) in `vite.config.ts`. The plugin (`vite-prerender-plugin`) writes a real `dist/<route>/index.html` only for those exact paths.
+- The list contains **only static pages** (`/`, `/jobs`, `/scholarships`, `/tools`, `/boards`, SEO landing pages, etc.). The inline comment even states: *"Detail pages remain CSR + sitemap."*
+- For any path **not** in that list (every dynamic detail route), Lovable's SPA fallback serves the **root** `index.html` — which carries the homepage's `<title>`, description, canonical, and OG tags (`index.html` lines 16–40).
+- So a non-JS HTTP fetch of `/mock-tests/...` or `/subject-content/physics` returns the homepage shell. Exactly the symptom you observed.
 
-- Trigger for NEW tests: **Both** (auto on create + manual re-run button)
-- Retroactive: **Both** (per-row button + bulk "Run on All")
+## 2. Per page-type status
 
-### Good news from investigation
 
-- User-facing mock tests live in the `job_tests` table (powers `/mock-tests` and `MockTestDetail`).
-- That table **already has** the columns `seo_title`, `meta_description`, `keywords[]`, `seo_enhanced_at` — **no DB migration needed**.
+| Route pattern                                                                      | Prerendered own HTML? | Non-JS crawler sees |
+| ---------------------------------------------------------------------------------- | --------------------- | ------------------- |
+| `/`, `/jobs`, `/scholarships`, `/tools`, `/boards`, `/exams/*`, SEO landings (~40) | ✅ Yes                 | Correct             |
+| `/mock-tests/:slug`                                                                | ❌ No                  | Homepage shell      |
+| `/subject-content/:id`, `/subject/:id`                                             | ❌ No                  | Homepage shell      |
+| `/boards/:board/:class/:subject/:topic` (+ class/subject levels)                   | ❌ No                  | Homepage shell      |
+| `/jobs/:jobSlug`                                                                   | ❌ No                  | Homepage shell      |
+| `/scholarships/:scholarshipSlug`                                                   | ❌ No                  | Homepage shell      |
+| `/tools/:toolId` (detail)                                                          | ❌ No                  | Homepage shell      |
+| `/blog/:slug`                                                                      | ❌ No                  | Homepage shell      |
+| `/p/:slug` (programmatic)                                                          | ❌ No                  | Homepage shell      |
+| `/exams/:examSlug` (detail)                                                        | ❌ No                  | Homepage shell      |
 
-### Changes
 
-**1.** `supabase/functions/enhance-content/index.ts`
+**Every dynamic detail route across the entire site is affected** — this is site-wide, not mock-test-specific.
 
-- Add a `mock_test` category to `categoryPrompts` instructing the model to return `seo_title` (<60 chars), `meta_description` (150–160 chars), `keywords[]`, and a markdown `description` built from the test's title, organization, syllabus subjects/topics, question count, and duration. Strictly fact-based (no invention).
+## 3. Why the "40/40 build passing" check looked fine
 
-**2.** `src/services/jobTestService.ts`
+`scripts/verify-prerender.mjs` walks `dist/` and validates only the `index.html` files that exist. Since only the ~40 static routes are ever generated, it only ever checks those 40. It has no knowledge of the dynamic routes, so they can never make it fail. The check is correct for what it covers — its coverage is just limited to the static list.
 
-- Extend the `JobTest` interface with optional `seo_title`, `meta_description`, `keywords`, `seo_enhanced_at`.
-- Update `getJobTests`/`addJobTest`/`updateJobTest` mappings to carry these fields.
-- Add `enhanceJobTestSEO(test)`: builds a `rawText` summary from the test data, calls `supabase.functions.invoke("enhance-content", { rawText, category: "mock_test", organization })`, then updates the `job_tests` row with the returned `seo_title`, `meta_description`, `keywords`, `description`, and `seo_enhanced_at = now()`.
+## 4. Googlebot vs basic crawler (the key distinction)
 
-**3.** `src/hooks/useJobTestManagement.tsx`
+This is a **partial problem, not a total SEO blackout**:
 
-- Add `enhancingId` state, `handleEnhanceJobTest(test)` (per-row, with toast + query invalidation), and `handleEnhanceAll()` (sequential loop over all tests with progress toast, respecting rate limits).
-- In `handleAddJobTest`, fire `enhanceJobTestSEO` after a successful insert (auto-on-create, non-blocking) so new tests get SEO treatment by default.
+- **Googlebot / Bingbot (JS-executing):** load the SPA, React Router resolves the route, and `react-helmet-async` injects the correct per-page title/description/canonical/OG client-side. They **do** eventually see correct metadata — but with a render-budget delay and reduced reliability.
+- **Non-JS crawlers, social unfurlers (Facebook / WhatsApp / Twitter/X / LinkedIn / Slack), and many SEO tools:** read **raw HTML only**. They get the homepage title, description, canonical (`https://mcqsai.com/`), and default OG image for *every* dynamic page.
 
-**4.** `src/components/admin/job-test/JobTestTable.tsx`
+Concrete impact: wrong/duplicate social link previews for all shared detail URLs; self-referencing canonicals missing (every dynamic page's raw HTML points canonical at the homepage, which actively harms indexing/dedup); slower and less reliable Google indexing of detail pages.
 
-- Add an "✨ AI Magic" button per row (brand styling, `Sparkles` icon, spinner while running) and a small "SEO ✓"/"Needs SEO" badge based on `seo_enhanced_at`. New props: `onEnhance`, `enhancingId`.
+## 5. Proposed fix
 
-**5.** `src/components/admin/JobTestManager.tsx`
+Replace the static `PRERENDER_ROUTES` array with a **build-time enumeration** of real dynamic URLs, so each gets its own prerendered HTML with correct head tags. We already have all the data sources needed — the sitemap generator (`scripts/generate-sitemaps.mjs`) and `src/generated/indexableTopics.json` (477 topics) prove these URLs are enumerable at build.
 
-- In the "Legacy Job Tests" header, add a **"Run AI Magic on All"** button wired to `handleEnhanceAll`, and pass `onEnhance`/`enhancingId` down to `JobTestTable`.
+### Approach
 
-**6.** `src/pages/MockTestDetail.tsx`
+1. **Create** `scripts/collect-prerender-routes.mjs` that returns the full route list by reusing existing sources:
+  - Static routes (current `PRERENDER_ROUTES`).
+  - `/boards/...` topic paths from `src/generated/indexableTopics.json` (the indexable, ≥5-MCQ set — quality-gated, ~477).
+  - `/tools/:toolId` from `src/data/toolsData.ts` (finite).
+  - `/subject-content/:id` from `src/data/subjectsData`.
+  - `/mock-tests/:slug`, `/jobs/:jobSlug`, `/scholarships/:scholarshipSlug`, `/blog/:slug`, `/p/:slug`, `/exams/:examSlug` from Supabase (same queries/slug helpers `generate-sitemaps.mjs` already uses), so prerendered URLs and sitemap URLs stay identical.
+2. **Wire it into** `vite.config.ts`: import the collector and feed it to `additionalPrerenderRoutes` instead of the static array. Keep the production/`PRERENDER=true` gate unchanged.
+3. **Scope guardrail (build cost):** prerendering thousands of pages lengthens builds. To keep this safe and fast, gate the long-tail (jobs/scholarships/blog/programmatic) to **indexable, quality-passing rows only** (reusing existing noindex/quality filters from memory: board topics ≥5 MCQs, `/p/*` quality gate), and cap each category with an env-tunable limit. Finite sets (tools, subjects, indexable board topics, mock tests) are prerendered fully. Long-tail beyond the cap stays CSR (still in sitemap, still JS-crawlable) — strictly better than today.
+4. **Resilience:** if Supabase is unreachable at build (same risk `generate-sitemaps.mjs` already handles), fall back to the static list + on-disk generated JSON so the build never fails over a transient DB issue.
+5. **Extend** `scripts/verify-prerender.mjs` to spot-check one representative URL per dynamic page type (assert title/description/canonical differ from the homepage), so this regression is caught automatically going forward.
 
-- Prefer stored `test.seo_title` / `test.meta_description` for `<SEOHead>` and schema when present; fall back to the current dynamic strings otherwise. (Keeps unique meta descriptions either way.)
+### Out of scope
 
-### Notes
+No UI/component changes; all `SEOHead`/Helmet usage on detail pages already emits correct per-page tags — they simply weren't being executed at build time. This change only expands which routes are prerendered.
 
-- All styling uses existing brand tokens/button variants (Sparkles icon, gradient/primary) for consistency with the Jobs/Scholarships flow.
-- The retroactive bulk run is sequential to avoid 429 rate-limit bursts.
-- The existing **Sample Paper / Doc→MCQ** feature is unrelated to this and is left untouched (explained separately).
-  &nbsp;
+## Technical notes
 
-Add reusable AI Magic SEO refinement (title, meta description, keywords, description) to Mock Test admin with per-row + bulk + auto-on-create, reusing the enhance-content edge function. No DB migration needed.
-
-# **Approved — this plan looks correct and** complete, matches all my 
-
-answers. Please proceed with implementation.
+- Files touched: `vite.config.ts` (use collector), new `scripts/collect-prerender-routes.mjs`, `scripts/verify-prerender.mjs` (add dynamic spot-checks). Optionally refactor shared slug/query helpers out of `generate-sitemaps.mjs` for reuse.
+- Self-canonical correctness: because each route renders its own `SEOHead`, the prerendered HTML will carry the correct self-referencing `<link rel="canonical">` and per-page OG tags, fixing the social-unfurl and canonical issues.
+- Build-time tradeoff: total prerendered pages grow from ~40 to roughly 1k–2k depending on caps; expect a longer (but bounded) build. Caps are env-tunable.
 
 &nbsp;
 
-After implementing, please also answer my earlier separate question 
+&nbsp;
 
-about the EXISTING Sample Paper → AI question generation feature 
+**Approved — this is exactly the right fix and addresses the social-**
 
-(how it currently works, what format it accepts, and whether 
+preview and self-canonical issues directly, which likely contributes 
 
-existing mock tests without a sample paper can have one added 
+to our ongoing GSC canonical/duplicate issues too.
 
-retroactively) — you mentioned that's unrelated and explained 
+&nbsp;
 
-separately, so please cover that next.
+Please proceed with the implementation as described:
+
+1. Create collect-prerender-routes.mjs reusing existing data sources
+
+2. Wire into vite.config.ts
+
+3. Apply quality gates and caps for long-tail content (jobs/
+
+   scholarships/blog/programmatic)
+
+4. Add resilience fallback for build-time Supabase failures
+
+5. Extend verify-prerender.mjs with dynamic route spot-checks
+
+&nbsp;
+
+After implementing, please:
+
+- Report the final prerendered page count and build time impact
+
+- Confirm with a sample fetch (like I did) that /mock-tests/:slug 
+
+  and /subject-content/:id now return their own title/canonical/
+
+  meta-description instead of the homepage shell
