@@ -182,7 +182,12 @@ const JobTestManager = () => {
             />
           </div>
         </div>
-        <JobTestTable jobTests={jobTests} onRemove={handleRemoveJobTest} />
+        <JobTestTable
+          jobTests={jobTests}
+          onRemove={handleRemoveJobTest}
+          onEnhance={handleEnhanceJobTest}
+          enhancingId={enhancingId}
+        />
         <BulkJobTestImportDialog
           open={isBulkImportOpen}
           onOpenChange={setIsBulkImportOpen}
