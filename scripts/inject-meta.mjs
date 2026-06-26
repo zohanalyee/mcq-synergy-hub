@@ -280,10 +280,30 @@ function injectTools() {
   return TOOLS_WITHOUT_SEOHEAD.length;
 }
 
+function injectSubjectContent() {
+  // Backstop for static /subject-content/:id pages. They ARE prerendered, but a
+  // lazy-chunk Suspense miss on the first synchronous render can leave an empty
+  // <title>. Patch the existing prerendered HTML in place (body preserved) so the
+  // head always matches SubjectContent's SEOHead output.
+  for (const s of SUBJECT_CONTENT_META) {
+    patch({
+      path: s.path,
+      title: `${s.title} MCQs with Answers — Free Practice | MCQsAI`,
+      description: `Free ${s.title} MCQs with answers and detailed explanations. AI-powered ${s.title} practice questions for MDCAT, ECAT, NTS, FPSC & board exams — MCQsAI Pakistan.`,
+      keywords: `${s.title} MCQs, ${s.title} MCQs with answers, ${s.title} past papers, ${s.title} quiz, ${s.title} practice questions Pakistan`,
+      ogImage: OG_DEFAULT,
+      ogType: "article",
+      inPlace: true,
+    });
+  }
+  return SUBJECT_CONTENT_META.length;
+}
+
 // ---------- main ----------
 (async () => {
-  const tools = injectTools();
-  console.log(`[inject-meta] tools (no-SEOHead): ${tools}`);
+  console.log(`[inject-meta] tools (no-SEOHead): ${injectTools()}`);
+  console.log(`[inject-meta] subject-content (in-place): ${injectSubjectContent()}`);
+
 
   if (!supabase) {
     console.warn("[inject-meta] No Supabase credentials; skipped DB-driven pages.");
