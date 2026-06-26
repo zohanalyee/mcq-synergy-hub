@@ -57,6 +57,13 @@ function contentOf(html, attr, value) {
 
 function expectedOgImage(file) {
   const route = file.replace(DIST, '').replace(/\/index\.html$/, '') || '/';
+  // Job/scholarship detail pages live under /opportunity/* and may use either
+  // the jobs/scholarships banner (injected) or the default — accept all three.
+  if (route.startsWith('/opportunity')) return [
+    'https://mcqsai.com/og/jobs-og.jpg',
+    'https://mcqsai.com/og/scholarships-og.jpg',
+    'https://mcqsai.com/og/default-og.jpg',
+  ];
   if (route.startsWith('/jobs')) return 'https://mcqsai.com/og/jobs-og.jpg';
   if (route.startsWith('/scholarships')) return 'https://mcqsai.com/og/scholarships-og.jpg';
   if (route.startsWith('/blog')) return 'https://mcqsai.com/og/blog-og.jpg';
@@ -65,6 +72,7 @@ function expectedOgImage(file) {
   if (route.startsWith('/exams') || route.startsWith('/mdcat') || route.startsWith('/ecat') || route.startsWith('/css') || route.includes('entry-test') || route.includes('past-papers') || route.includes('-test') || route.startsWith('/forces-jobs-tests') || route.startsWith('/pst-sst')) return 'https://mcqsai.com/og/exams-og.jpg';
   return 'https://mcqsai.com/og/default-og.jpg';
 }
+
 
 function walk(dir) {
   const out = [];
