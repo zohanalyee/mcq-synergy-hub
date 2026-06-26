@@ -147,7 +147,7 @@ const OG_TOOLS = `${BASE_URL}/og/tools-og.jpg`;
 const OG_BOARDS = `${BASE_URL}/og/boards-og.jpg`;
 const OG_EXAMS = `${BASE_URL}/og/exams-og.jpg`;
 
-function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false }) {
+function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false, pageType = "other" }) {
   const url = `${BASE_URL}${path}`;
   const desc = clamp(description, 165);
   // For prerendered routes (inPlace) keep the real page body and only correct the
