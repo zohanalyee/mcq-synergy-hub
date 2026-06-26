@@ -46,8 +46,28 @@ function loadEnv() {
 }
 const env = { ...loadEnv(), ...process.env };
 const SUPABASE_URL = env.VITE_SUPABASE_URL || "https://pzhvipkcssxrsxxljbbz.supabase.co";
-const SUPABASE_KEY = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY;
+// Public anon/publishable key. Mirrors src/integrations/supabase/client.ts so that
+// DB-driven meta injection ALWAYS has credentials at build time, even when the
+// Lovable build environment does not expose VITE_*/.env vars. Without this the
+// client falls back to null, DB pages are silently skipped, and every dynamic
+// detail route ships the homepage shell — exactly the production bug we are fixing.
+const DEFAULT_PUBLISHABLE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6aHZpcGtjc3N4cnN4eGxqYmJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwMjAzODYsImV4cCI6MjA1OTU5NjM4Nn0.XILYqQfW-4sqxdLXIfklKHLJVHH_tY5Ci0xNk4Kxbyw";
+const SUPABASE_KEY =
+  env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || DEFAULT_PUBLISHABLE_KEY;
 const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+// Production builds must not silently ship the homepage shell for dynamic routes.
+const STRICT = process.env.NODE_ENV !== "development" && process.env.SEO_INJECT_STRICT !== "false";
+// SEO-critical routes that MUST exist with correct head after a production build.
+const REQUIRED_ROUTES = [
+  "/mock-tests/sindh-teaching-license-exam-secondary-school-teacher",
+  "/subject-content/physics",
+];
+
+// Manifest of every route we patch, written to dist/seo-injected-routes.json for
+// auditability (inspect the build output to confirm a route was generated).
+const MANIFEST = [];
 
 // ---------- slug helpers (mirror generate-sitemaps.mjs / jobTestSlug.ts) ----------
 function toSlug(name) {
