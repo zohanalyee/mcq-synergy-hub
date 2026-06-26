@@ -127,10 +127,13 @@ const OG_TOOLS = `${BASE_URL}/og/tools-og.jpg`;
 const OG_BOARDS = `${BASE_URL}/og/boards-og.jpg`;
 const OG_EXAMS = `${BASE_URL}/og/exams-og.jpg`;
 
-function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow" }) {
+function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false }) {
   const url = `${BASE_URL}${path}`;
   const desc = clamp(description, 165);
-  let html = SHELL;
+  // For prerendered routes (inPlace) keep the real page body and only correct the
+  // <head>; otherwise build a fresh shell from dist/index.html.
+  const existing = join(DIST, path.replace(/^\//, ""), "index.html");
+  let html = inPlace && existsSync(existing) ? readFileSync(existing, "utf8") : SHELL;
   html = setTitle(html, title);
   html = setName(html, "description", desc);
   if (keywords) html = setName(html, "keywords", keywords);
