@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 import { vitePrerenderPlugin } from "vite-prerender-plugin";
+// @ts-expect-error - plain .mjs data module without type declarations
 import { EXTRA_PRERENDER_ROUTES } from "./scripts/prerender-routes.mjs";
 
 // Static prerender is mandatory for production social previews: WhatsApp/FB/X
