@@ -20,7 +20,7 @@ import { createClient } from "@supabase/supabase-js";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { TOOLS_WITHOUT_SEOHEAD } from "./prerender-routes.mjs";
+import { TOOLS_WITHOUT_SEOHEAD, SUBJECT_CONTENT_META } from "./prerender-routes.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
