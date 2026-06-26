@@ -82,6 +82,14 @@ export const SUBJECT_CONTENT_PATHS = STATIC_SUBJECT_TITLES.map(
   (t) => `/subject-content/${t.toLowerCase().replace(/\s+/g, "-")}`,
 );
 
+// Path + display name for static subjects, used by inject-meta.mjs to guarantee
+// a correct <head> even if a lazy-chunk Suspense miss during prerender produced
+// an empty <title> for the first render of the SubjectContent chunk.
+export const SUBJECT_CONTENT_META = STATIC_SUBJECT_TITLES.map((t) => ({
+  path: `/subject-content/${t.toLowerCase().replace(/\s+/g, "-")}`,
+  title: t,
+}));
+
 // ---- Combined extra prerender routes --------------------------------------
 export const EXTRA_PRERENDER_ROUTES = [
   ...TOOL_PRERENDER_PATHS,
