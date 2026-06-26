@@ -57,6 +57,13 @@ function contentOf(html, attr, value) {
 
 function expectedOgImage(file) {
   const route = file.replace(DIST, '').replace(/\/index\.html$/, '') || '/';
+  // Job/scholarship detail pages live under /opportunity/* and may use either
+  // the jobs/scholarships banner (injected) or the default — accept all three.
+  if (route.startsWith('/opportunity')) return [
+    'https://mcqsai.com/og/jobs-og.jpg',
+    'https://mcqsai.com/og/scholarships-og.jpg',
+    'https://mcqsai.com/og/default-og.jpg',
+  ];
   if (route.startsWith('/jobs')) return 'https://mcqsai.com/og/jobs-og.jpg';
   if (route.startsWith('/scholarships')) return 'https://mcqsai.com/og/scholarships-og.jpg';
   if (route.startsWith('/blog')) return 'https://mcqsai.com/og/blog-og.jpg';
@@ -65,6 +72,7 @@ function expectedOgImage(file) {
   if (route.startsWith('/exams') || route.startsWith('/mdcat') || route.startsWith('/ecat') || route.startsWith('/css') || route.includes('entry-test') || route.includes('past-papers') || route.includes('-test') || route.startsWith('/forces-jobs-tests') || route.startsWith('/pst-sst')) return 'https://mcqsai.com/og/exams-og.jpg';
   return 'https://mcqsai.com/og/default-og.jpg';
 }
+
 
 function walk(dir) {
   const out = [];
@@ -101,7 +109,8 @@ for (const f of files) {
   // `data-component-content="..."` attribute is never mistaken for the real one.
   const ogImage = ogImageTag.match(/(?:^|\s)content=["']([^"']+)["']/i)?.[1] || '';
   const expected = expectedOgImage(f);
-  if (ogImage !== expected) issues.push(`og:image=${ogImage || 'missing'} expected=${expected}`);
+  const expectedList = Array.isArray(expected) ? expected : [expected];
+  if (!expectedList.includes(ogImage)) issues.push(`og:image=${ogImage || 'missing'} expected=${expectedList.join('|')}`);
   const titleCount = (html.match(/<title\b[^>]*>[\s\S]*?<\/title>/gi) || []).length;
   if (titleCount !== 1) issues.push(`title count=${titleCount}`);
   if (issues.length) {
@@ -111,5 +120,62 @@ for (const f of files) {
     console.log(`✅ ${f.replace(DIST, '')}`);
   }
 }
-console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK`);
-process.exit(failed ? 1 : 0);
+
+// ---- Per-page-type assertions -------------------------------------------
+// Guarantee each dynamic page type actually got prerendered/injected AND that
+// its <title> + canonical are UNIQUE (not the homepage shell). This is what
+// caught the original "every dynamic route returns the homepage" regression.
+function metaContent(html, attr, value) {
+  const re = new RegExp(`<meta\\b(?=[^>]*\\b${attr}=["']${escapeRegExp(value)}["'])[^>]*\\bcontent=["']([^"']+)["']`, 'i');
+  return html.match(re)?.[1] || '';
+}
+function titleOf(html) { return (html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1] || '').trim(); }
+function canonicalOf(html) { return html.match(/<link\b[^>]*\brel=["']canonical["'][^>]*\bhref=["']([^"']+)["']/i)?.[1] || ''; }
+
+const homeHtml = readFileSync(join(DIST, 'index.html'), 'utf8');
+const homeTitle = titleOf(homeHtml);
+const homeDesc = contentOf(homeHtml, 'name', 'description');
+
+const pageTypeChecks = [
+  { type: 'tools',           prefix: '/tools/' },
+  { type: 'programmatic /p', prefix: '/p/' },
+  { type: 'subject-content', prefix: '/subject-content/' },
+  { type: 'mock-tests',      prefix: '/mock-tests/' },
+  { type: 'opportunity',     prefix: '/opportunity/' },
+  { type: 'blog',            prefix: '/blog/', minExtraSegments: 1 },
+  { type: 'board topics',    prefix: '/boards/', minExtraSegments: 4 },
+];
+
+let typeFailed = 0;
+for (const { type, prefix, minExtraSegments = 1 } of pageTypeChecks) {
+  const matches = files.filter((f) => {
+    const route = f.replace(DIST, '').replace(/\/index\.html$/, '');
+    if (!route.startsWith(prefix)) return false;
+    return route.slice(prefix.length).split('/').filter(Boolean).length >= minExtraSegments;
+  });
+  if (matches.length === 0) {
+    console.warn(`❌ [type:${type}] no prerendered/injected pages found under ${prefix}`);
+    typeFailed++;
+    continue;
+  }
+  const sample = matches[0];
+  const html = readFileSync(sample, 'utf8');
+  const t = titleOf(html);
+  const canon = canonicalOf(html);
+  const desc = contentOf(html, 'name', 'description');
+  const route = sample.replace(DIST, '').replace(/\/index\.html$/, '');
+  const problems = [];
+  if (!t || t === homeTitle) problems.push(`title not unique ("${t}")`);
+  if (desc && desc === homeDesc) problems.push('description matches homepage');
+  if (!canon || !canon.endsWith(route)) problems.push(`canonical not self-referencing ("${canon}")`);
+  if (problems.length) {
+    console.warn(`❌ [type:${type}] ${route} — ${problems.join(', ')}`);
+    typeFailed++;
+  } else {
+    console.log(`✅ [type:${type}] ${matches.length} pages (sample ${route})`);
+  }
+}
+
+console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK`);
+process.exit(failed || typeFailed ? 1 : 0);
+

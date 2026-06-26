@@ -767,14 +767,26 @@ const SubjectContent = () => {
     setShowAdvice(true);
   };
   
+  // SEO subject name: prefer the resolved (DB/state) title; otherwise derive a
+  // readable name from the slug — but ONLY when the slug is a human slug, not a
+  // DB UUID. This guarantees unique, crawler-visible <title>/description even in
+  // the prerendered (SSR) HTML where `title` hasn't hydrated from the DB yet.
+  const isUuidRoute = !!routeId && /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(routeId);
+  const humanizedRouteId =
+    routeId && !isUuidRoute
+      ? routeId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+      : "";
+  const seoSubject = title || humanizedRouteId;
+
   return (
     <Header>
       <SEOHead
-        title={title ? `${title} MCQs with Answers — Free Practice` : 'Subject Practice'}
-        description={title ? `Free ${title} MCQs with answers and detailed explanations. AI-powered ${title} practice questions for MDCAT, ECAT, NTS, FPSC & board exams — MCQsAI Pakistan.` : (routeId ? `Practice free ${routeId.replace(/-/g, ' ')} MCQs with answers and detailed explanations. AI-powered subject practice for MDCAT, ECAT, NTS & board exams — MCQsAI.` : 'Practice free subject-wise MCQs with answers and detailed explanations. AI-powered question practice for MDCAT, ECAT, NTS & board exams in Pakistan — MCQsAI.')}
-        keywords={title ? `${title} MCQs, ${title} MCQs with answers, ${title} past papers, ${title} quiz, ${title} practice questions Pakistan` : undefined}
+        title={seoSubject ? `${seoSubject} MCQs with Answers — Free Practice` : 'Subject Practice'}
+        description={seoSubject ? `Free ${seoSubject} MCQs with answers and detailed explanations. AI-powered ${seoSubject} practice questions for MDCAT, ECAT, NTS, FPSC & board exams — MCQsAI Pakistan.` : 'Practice free subject-wise MCQs with answers and detailed explanations. AI-powered question practice for MDCAT, ECAT, NTS & board exams in Pakistan — MCQsAI.'}
+        keywords={seoSubject ? `${seoSubject} MCQs, ${seoSubject} MCQs with answers, ${seoSubject} past papers, ${seoSubject} quiz, ${seoSubject} practice questions Pakistan` : undefined}
         noindex={isRunnerVariant}
       />
+
       {/* Generation Loader Overlay */}
       <TestGenerationLoader 
         isVisible={isGenerating} 
