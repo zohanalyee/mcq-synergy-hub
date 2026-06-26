@@ -179,6 +179,7 @@ function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogTyp
   const outDir = join(DIST, path.replace(/^\//, ""));
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, "index.html"), html, "utf8");
+  MANIFEST.push({ path, type: pageType, title, canonical: url, generatedAt: new Date().toISOString() });
 }
 
 // ---------- generators ----------
