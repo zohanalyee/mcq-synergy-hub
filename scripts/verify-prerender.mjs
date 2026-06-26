@@ -176,6 +176,38 @@ for (const { type, prefix, minExtraSegments = 1 } of pageTypeChecks) {
   }
 }
 
-console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK`);
-process.exit(failed || typeFailed ? 1 : 0);
+// ---- Exact required dynamic routes ---------------------------------------
+// High-value SEO URLs that MUST ship their own (non-homepage) head in raw HTML.
+// This is the guard that catches "live URL returns the homepage shell".
+const BASE_URL = 'https://mcqsai.com';
+const requiredDynamicRoutes = [
+  '/mock-tests/sindh-teaching-license-exam-secondary-school-teacher',
+  '/subject-content/physics',
+];
+let requiredFailed = 0;
+for (const route of requiredDynamicRoutes) {
+  const file = join(DIST, route.replace(/^\//, ''), 'index.html');
+  if (!existsSync(file)) {
+    console.warn(`❌ [required] ${route} — file not generated (dist${route}/index.html missing)`);
+    requiredFailed++;
+    continue;
+  }
+  const html = readFileSync(file, 'utf8');
+  const t = titleOf(html);
+  const canon = canonicalOf(html);
+  const desc = contentOf(html, 'name', 'description');
+  const problems = [];
+  if (!t || t === homeTitle) problems.push(`title not unique ("${t}")`);
+  if (desc && desc === homeDesc) problems.push('description matches homepage');
+  if (canon !== `${BASE_URL}${route}`) problems.push(`canonical not self-referencing ("${canon}")`);
+  if (problems.length) {
+    console.warn(`❌ [required] ${route} — ${problems.join(', ')}`);
+    requiredFailed++;
+  } else {
+    console.log(`✅ [required] ${route}`);
+  }
+}
+
+console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK`);
+process.exit(failed || typeFailed || requiredFailed ? 1 : 0);
 

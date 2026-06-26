@@ -46,8 +46,28 @@ function loadEnv() {
 }
 const env = { ...loadEnv(), ...process.env };
 const SUPABASE_URL = env.VITE_SUPABASE_URL || "https://pzhvipkcssxrsxxljbbz.supabase.co";
-const SUPABASE_KEY = env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY;
+// Public anon/publishable key. Mirrors src/integrations/supabase/client.ts so that
+// DB-driven meta injection ALWAYS has credentials at build time, even when the
+// Lovable build environment does not expose VITE_*/.env vars. Without this the
+// client falls back to null, DB pages are silently skipped, and every dynamic
+// detail route ships the homepage shell — exactly the production bug we are fixing.
+const DEFAULT_PUBLISHABLE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB6aHZpcGtjc3N4cnN4eGxqYmJ6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDQwMjAzODYsImV4cCI6MjA1OTU5NjM4Nn0.XILYqQfW-4sqxdLXIfklKHLJVHH_tY5Ci0xNk4Kxbyw";
+const SUPABASE_KEY =
+  env.VITE_SUPABASE_PUBLISHABLE_KEY || env.SUPABASE_ANON_KEY || DEFAULT_PUBLISHABLE_KEY;
 const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+// Production builds must not silently ship the homepage shell for dynamic routes.
+const STRICT = process.env.NODE_ENV !== "development" && process.env.SEO_INJECT_STRICT !== "false";
+// SEO-critical routes that MUST exist with correct head after a production build.
+const REQUIRED_ROUTES = [
+  "/mock-tests/sindh-teaching-license-exam-secondary-school-teacher",
+  "/subject-content/physics",
+];
+
+// Manifest of every route we patch, written to dist/seo-injected-routes.json for
+// auditability (inspect the build output to confirm a route was generated).
+const MANIFEST = [];
 
 // ---------- slug helpers (mirror generate-sitemaps.mjs / jobTestSlug.ts) ----------
 function toSlug(name) {
@@ -127,7 +147,7 @@ const OG_TOOLS = `${BASE_URL}/og/tools-og.jpg`;
 const OG_BOARDS = `${BASE_URL}/og/boards-og.jpg`;
 const OG_EXAMS = `${BASE_URL}/og/exams-og.jpg`;
 
-function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false }) {
+function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false, pageType = "other" }) {
   const url = `${BASE_URL}${path}`;
   const desc = clamp(description, 165);
   // For prerendered routes (inPlace) keep the real page body and only correct the
@@ -159,6 +179,7 @@ function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogTyp
   const outDir = join(DIST, path.replace(/^\//, ""));
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, "index.html"), html, "utf8");
+  MANIFEST.push({ path, type: pageType, title, canonical: url, generatedAt: new Date().toISOString() });
 }
 
 // ---------- generators ----------
@@ -183,6 +204,7 @@ async function injectMockTests() {
       keywords: `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
       ogImage: OG_EXAMS,
       ogType: "article",
+      pageType: "mock-tests",
     });
   }
   return all.length;
@@ -213,6 +235,7 @@ async function injectOpportunities() {
         description: clamp(r.description || fallback, 160),
         ogImage: cfg.og,
         ogType: "article",
+        pageType: "opportunity",
       });
       count++;
     }
@@ -234,6 +257,7 @@ async function injectBlog() {
       description: p.meta_description || p.excerpt || `${t} — MCQsAI blog.`,
       ogImage: OG_BLOG,
       ogType: "article",
+      pageType: "blog",
     });
   }
   return all.length;
@@ -261,6 +285,7 @@ async function injectBoards() {
       keywords: `${topic} MCQs, ${subject} class ${classN}, ${board} preparation, Pakistan exam MCQs`,
       ogImage: OG_BOARDS,
       ogType: "article",
+      pageType: "board-topic",
     });
     count++;
   }
@@ -275,6 +300,7 @@ function injectTools() {
       title: `${t.title} | MCQsAI`,
       description: t.description,
       ogImage: OG_TOOLS,
+      pageType: "tools",
     });
   }
   return TOOLS_WITHOUT_SEOHEAD.length;
@@ -294,34 +320,87 @@ function injectSubjectContent() {
       ogImage: OG_DEFAULT,
       ogType: "article",
       inPlace: true,
+      pageType: "subject-content",
     });
   }
   return SUBJECT_CONTENT_META.length;
 }
 
 // ---------- main ----------
+function fail(msg) {
+  console.error(`[inject-meta] ${msg}`);
+  if (STRICT) process.exit(1);
+  process.exit(0);
+}
+
+function writeManifest() {
+  try {
+    writeFileSync(
+      join(DIST, "seo-injected-routes.json"),
+      JSON.stringify({ generatedAt: new Date().toISOString(), count: MANIFEST.length, routes: MANIFEST }, null, 2),
+      "utf8",
+    );
+    console.log(`[inject-meta] manifest written: dist/seo-injected-routes.json (${MANIFEST.length} routes)`);
+  } catch (e) {
+    console.warn(`[inject-meta] could not write manifest: ${e?.message || e}`);
+  }
+}
+
+function verifyRequiredRoutes() {
+  const missing = [];
+  for (const route of REQUIRED_ROUTES) {
+    const file = join(DIST, route.replace(/^\//, ""), "index.html");
+    if (!existsSync(file)) {
+      missing.push(`${route} (file not written)`);
+      continue;
+    }
+    const html = readFileSync(file, "utf8");
+    const canon = html.match(/<link\b[^>]*\brel=["']canonical["'][^>]*\bhref=["']([^"']+)["']/i)?.[1] || "";
+    if (canon !== `${BASE_URL}${route}`) missing.push(`${route} (canonical="${canon}")`);
+  }
+  if (missing.length) fail(`Required SEO routes missing/incorrect after injection:\n  - ${missing.join("\n  - ")}`);
+  else console.log(`[inject-meta] required routes OK: ${REQUIRED_ROUTES.join(", ")}`);
+}
+
 (async () => {
   console.log(`[inject-meta] tools (no-SEOHead): ${injectTools()}`);
   console.log(`[inject-meta] subject-content (in-place): ${injectSubjectContent()}`);
 
-
   if (!supabase) {
-    console.warn("[inject-meta] No Supabase credentials; skipped DB-driven pages.");
-    process.exit(0);
+    writeManifest();
+    return fail("No Supabase credentials; DB-driven pages (mock-tests/opportunities/blog/boards) were skipped.");
   }
 
   const results = await Promise.allSettled([
     injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(),
   ]);
   const labels = ["mock-tests", "opportunities", "blog", "boards"];
+  const counts = {};
   results.forEach((r, i) => {
-    if (r.status === "fulfilled") console.log(`[inject-meta] ${labels[i]}: ${r.value} pages`);
-    else console.warn(`[inject-meta] ${labels[i]} FAILED: ${r.reason?.message || r.reason}`);
+    if (r.status === "fulfilled") {
+      counts[labels[i]] = r.value;
+      console.log(`[inject-meta] ${labels[i]}: ${r.value} pages`);
+    } else {
+      counts[labels[i]] = -1;
+      console.warn(`[inject-meta] ${labels[i]} FAILED: ${r.reason?.message || r.reason}`);
+    }
   });
+
+  writeManifest();
+
+  // Mock tests are the SEO-critical category that originally regressed: if zero
+  // were generated (DB unreachable / RLS / query change), fail the build loudly
+  // instead of silently shipping the homepage shell for every mock-test URL.
+  if (!counts["mock-tests"] || counts["mock-tests"] < 1) {
+    return fail(`Mock-test meta injection produced ${counts["mock-tests"]} pages — refusing to ship homepage shell for /mock-tests/*.`);
+  }
+
+  verifyRequiredRoutes();
+
   console.log("[inject-meta] DONE");
   process.exit(0);
 })().catch((err) => {
   console.error("[inject-meta] FATAL:", err);
-  // Never fail the build over meta injection.
+  if (STRICT) process.exit(1);
   process.exit(0);
 });
