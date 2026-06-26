@@ -1,107 +1,148 @@
-# Dynamic-Route SEO: Root Cause Report + Fix Plan
+# Current findings
 
-## 1. What is actually happening (confirmed from code)
+## Live URL re-check
 
-This is **not a regression and not a build failure** — it is a deliberate architectural limitation in `vite.config.ts`.
+From my environment, `https://mcqsai.com/mock-tests/sindh-teaching-license-exam-secondary-school-teacher` still returns:
 
-- Prerendering is driven by a **hardcoded static list**, `PRERENDER_ROUTES` (~40 entries) in `vite.config.ts`. The plugin (`vite-prerender-plugin`) writes a real `dist/<route>/index.html` only for those exact paths.
-- The list contains **only static pages** (`/`, `/jobs`, `/scholarships`, `/tools`, `/boards`, SEO landing pages, etc.). The inline comment even states: *"Detail pages remain CSR + sitemap."*
-- For any path **not** in that list (every dynamic detail route), Lovable's SPA fallback serves the **root** `index.html` — which carries the homepage's `<title>`, description, canonical, and OG tags (`index.html` lines 16–40).
-- So a non-JS HTTP fetch of `/mock-tests/...` or `/subject-content/physics` returns the homepage shell. Exactly the symptom you observed.
+```text
+HTTP/2 403
+cf-mitigated: challenge
+server: cloudflare
+<title>Just a moment...</title>
+canonical: none
+```
 
-## 2. Per page-type status
+I tested multiple user agents (`curl`, normal browser UA, Facebook, Twitterbot, Googlebot) and all still hit the Cloudflare managed challenge. So I cannot yet personally observe the homepage shell you now see. Your location may be allowed while my data-center IP is still challenged.
 
+## Build wiring in source
 
-| Route pattern                                                                      | Prerendered own HTML? | Non-JS crawler sees |
-| ---------------------------------------------------------------------------------- | --------------------- | ------------------- |
-| `/`, `/jobs`, `/scholarships`, `/tools`, `/boards`, `/exams/*`, SEO landings (~40) | ✅ Yes                 | Correct             |
-| `/mock-tests/:slug`                                                                | ❌ No                  | Homepage shell      |
-| `/subject-content/:id`, `/subject/:id`                                             | ❌ No                  | Homepage shell      |
-| `/boards/:board/:class/:subject/:topic` (+ class/subject levels)                   | ❌ No                  | Homepage shell      |
-| `/jobs/:jobSlug`                                                                   | ❌ No                  | Homepage shell      |
-| `/scholarships/:scholarshipSlug`                                                   | ❌ No                  | Homepage shell      |
-| `/tools/:toolId` (detail)                                                          | ❌ No                  | Homepage shell      |
-| `/blog/:slug`                                                                      | ❌ No                  | Homepage shell      |
-| `/p/:slug` (programmatic)                                                          | ❌ No                  | Homepage shell      |
-| `/exams/:examSlug` (detail)                                                        | ❌ No                  | Homepage shell      |
+`package.json` does wire `inject-meta.mjs` into the normal `build` command:
 
+```text
+prebuild: node scripts/generate-sitemaps.mjs && node scripts/verify-sitemap.mjs pre
+build:    PRERENDER=true vite build && node scripts/dedupe-og.mjs && node scripts/inject-meta.mjs && node scripts/verify-prerender.mjs && node scripts/verify-sitemap.mjs post
+```
 
-**Every dynamic detail route across the entire site is affected** — this is site-wide, not mock-test-specific.
+So if Lovable publishing runs the project's `build` script exactly, `inject-meta.mjs` should run after Vite.
 
-## 3. Why the "40/40 build passing" check looked fine
+## Important limitation found
 
-`scripts/verify-prerender.mjs` walks `dist/` and validates only the `index.html` files that exist. Since only the ~40 static routes are ever generated, it only ever checks those 40. It has no knowledge of the dynamic routes, so they can never make it fail. The check is correct for what it covers — its coverage is just limited to the static list.
+The current `inject-meta.mjs` is **not production-proof**:
 
-## 4. Googlebot vs basic crawler (the key distinction)
+- It exits successfully even if Supabase credentials are missing.
+- It exits successfully even if DB-driven page injection fails.
+- It exits successfully on fatal errors.
+- `verify-prerender.mjs` checks that *some* `/mock-tests/` pages exist, but it does not require the exact critical route `/mock-tests/sindh-teaching-license-exam-secondary-school-teacher/index.html`.
 
-This is a **partial problem, not a total SEO blackout**:
+That means a production publish can appear successful while not deploying the specific generated route HTML.
 
-- **Googlebot / Bingbot (JS-executing):** load the SPA, React Router resolves the route, and `react-helmet-async` injects the correct per-page title/description/canonical/OG client-side. They **do** eventually see correct metadata — but with a render-budget delay and reduced reliability.
-- **Non-JS crawlers, social unfurlers (Facebook / WhatsApp / Twitter/X / LinkedIn / Slack), and many SEO tools:** read **raw HTML only**. They get the homepage title, description, canonical (`https://mcqsai.com/`), and default OG image for *every* dynamic page.
+## Routing/server behavior
 
-Concrete impact: wrong/duplicate social link previews for all shared detail URLs; self-referencing canonicals missing (every dynamic page's raw HTML points canonical at the homepage, which actively harms indexing/dedup); slower and less reliable Google indexing of detail pages.
+Lovable hosting should serve a real static file before SPA fallback. If the live URL serves the homepage shell after Cloudflare is bypassed, the most likely explanation is:
 
-## 5. Proposed fix
+```text
+dist/mock-tests/sindh-teaching-license-exam-secondary-school-teacher/index.html
+is missing from the deployed artifact
+```
 
-Replace the static `PRERENDER_ROUTES` array with a **build-time enumeration** of real dynamic URLs, so each gets its own prerendered HTML with correct head tags. We already have all the data sources needed — the sitemap generator (`scripts/generate-sitemaps.mjs`) and `src/generated/indexableTopics.json` (477 topics) prove these URLs are enumerable at build.
+Not that SPA fallback is incorrectly taking priority over an existing static file.
 
-### Approach
+# Proposed fix
 
-1. **Create** `scripts/collect-prerender-routes.mjs` that returns the full route list by reusing existing sources:
-  - Static routes (current `PRERENDER_ROUTES`).
-  - `/boards/...` topic paths from `src/generated/indexableTopics.json` (the indexable, ≥5-MCQ set — quality-gated, ~477).
-  - `/tools/:toolId` from `src/data/toolsData.ts` (finite).
-  - `/subject-content/:id` from `src/data/subjectsData`.
-  - `/mock-tests/:slug`, `/jobs/:jobSlug`, `/scholarships/:scholarshipSlug`, `/blog/:slug`, `/p/:slug`, `/exams/:examSlug` from Supabase (same queries/slug helpers `generate-sitemaps.mjs` already uses), so prerendered URLs and sitemap URLs stay identical.
-2. **Wire it into** `vite.config.ts`: import the collector and feed it to `additionalPrerenderRoutes` instead of the static array. Keep the production/`PRERENDER=true` gate unchanged.
-3. **Scope guardrail (build cost):** prerendering thousands of pages lengthens builds. To keep this safe and fast, gate the long-tail (jobs/scholarships/blog/programmatic) to **indexable, quality-passing rows only** (reusing existing noindex/quality filters from memory: board topics ≥5 MCQs, `/p/*` quality gate), and cap each category with an env-tunable limit. Finite sets (tools, subjects, indexable board topics, mock tests) are prerendered fully. Long-tail beyond the cap stays CSR (still in sitemap, still JS-crawlable) — strictly better than today.
-4. **Resilience:** if Supabase is unreachable at build (same risk `generate-sitemaps.mjs` already handles), fall back to the static list + on-disk generated JSON so the build never fails over a transient DB issue.
-5. **Extend** `scripts/verify-prerender.mjs` to spot-check one representative URL per dynamic page type (assert title/description/canonical differ from the homepage), so this regression is caught automatically going forward.
+## 1. Make dynamic meta injection mandatory for SEO-critical routes
 
-### Out of scope
+Update `scripts/inject-meta.mjs` so production builds fail if DB-driven route generation silently fails.
 
-No UI/component changes; all `SEOHead`/Helmet usage on detail pages already emits correct per-page tags — they simply weren't being executed at build time. This change only expands which routes are prerendered.
+Specifically:
 
-## Technical notes
+- Do not silently `process.exit(0)` when Supabase credentials are missing in production.
+- Track DB generation counts for `mock-tests`, `opportunities`, `blog`, and `boards`.
+- Fail the build if `mock-tests` generation returns zero pages.
+- Fail the build if the specific required URL is not written:
 
-- Files touched: `vite.config.ts` (use collector), new `scripts/collect-prerender-routes.mjs`, `scripts/verify-prerender.mjs` (add dynamic spot-checks). Optionally refactor shared slug/query helpers out of `generate-sitemaps.mjs` for reuse.
-- Self-canonical correctness: because each route renders its own `SEOHead`, the prerendered HTML will carry the correct self-referencing `<link rel="canonical">` and per-page OG tags, fixing the social-unfurl and canonical issues.
-- Build-time tradeoff: total prerendered pages grow from ~40 to roughly 1k–2k depending on caps; expect a longer (but bounded) build. Caps are env-tunable.
+```text
+dist/mock-tests/sindh-teaching-license-exam-secondary-school-teacher/index.html
+```
+
+This converts the current hidden production failure into a visible failed publish instead of deploying the homepage shell.
+
+## 2. Strengthen verification for exact production URLs
+
+Update `scripts/verify-prerender.mjs` to require exact route files for high-value SEO pages, including:
+
+```text
+/mock-tests/sindh-teaching-license-exam-secondary-school-teacher
+/subject-content/physics
+/blog/<first published or known public sample if stable>
+```
+
+For each required route:
+
+- File must exist in `dist/.../index.html`.
+- `<title>` must not equal homepage title.
+- canonical must equal the full route URL.
+- description must not equal homepage description.
+
+## 3. Add a generated manifest for auditability
+
+Have `inject-meta.mjs` write a manifest like:
+
+```text
+dist/seo-injected-routes.json
+```
+
+Containing:
+
+- route path
+- page type
+- title
+- canonical
+- generation timestamp
+
+This gives us a concrete artifact to inspect in build output and makes future debugging much easier.
+
+## 4. Avoid relying on `public/_headers`
+
+`public/_headers` is Netlify-style and Lovable hosting does not process it. I will not depend on it for this fix. Cache behavior must be handled at Cloudflare or Lovable infrastructure level; the code fix will focus on ensuring the static files actually exist in the artifact.
+
+## 5. Publish + live verification sequence
+
+After implementation:
+
+1. You publish/update the app.
+2. Purge Cloudflare for the exact route or purge everything.
+3. Ensure my environment is not challenged by Cloudflare, or temporarily allow verified bots / non-browser fetches.
+4. I fetch the exact live URL and report:
+
+```text
+status
+cf-cache-status / cf-mitigated
+<title>
+canonical
+meta description
+```
+
+If the deployed route still returns the homepage shell after the file is guaranteed in `dist`, then the next escalation is Lovable hosting static-file precedence. But source inspection suggests the current problem is missing generated route files in the deployed artifact, not routing precedence.
+
+# Expected outcome
+
+The next production publish either:
+
+- deploys with `dist/mock-tests/sindh-teaching-license-exam-secondary-school-teacher/index.html` present and page-specific metadata visible to raw HTTP fetches, or
+- fails the build loudly instead of silently shipping a broken SEO artifact.
 
 &nbsp;
 
-&nbsp;
+# **Final confirmation: I verified via WhatsApp link preview AND Google** 
 
-**Approved — this is exactly the right fix and addresses the social-**
+Search Console's "Test Live URL" tool — both show the correct 
 
-preview and self-canonical issues directly, which likely contributes 
+page-specific title, canonical, meta description, and OG image for 
 
-to our ongoing GSC canonical/duplicate issues too.
-
-&nbsp;
-
-Please proceed with the implementation as described:
-
-1. Create collect-prerender-routes.mjs reusing existing data sources
-
-2. Wire into vite.config.ts
-
-3. Apply quality gates and caps for long-tail content (jobs/
-
-   scholarships/blog/programmatic)
-
-4. Add resilience fallback for build-time Supabase failures
-
-5. Extend verify-prerender.mjs with dynamic route spot-checks
+the mock test page. The fix is working correctly in production.
 
 &nbsp;
 
-After implementing, please:
+No further action needed on this specific issue. Thank you for the 
 
-- Report the final prerendered page count and build time impact
-
-- Confirm with a sample fetch (like I did) that /mock-tests/:slug 
-
-  and /subject-content/:id now return their own title/canonical/
-
-  meta-description instead of the homepage shell
+thorough investigation — this is resolved and confirmed.
