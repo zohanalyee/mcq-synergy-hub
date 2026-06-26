@@ -327,28 +327,80 @@ function injectSubjectContent() {
 }
 
 // ---------- main ----------
+function fail(msg) {
+  console.error(`[inject-meta] ${msg}`);
+  if (STRICT) process.exit(1);
+  process.exit(0);
+}
+
+function writeManifest() {
+  try {
+    writeFileSync(
+      join(DIST, "seo-injected-routes.json"),
+      JSON.stringify({ generatedAt: new Date().toISOString(), count: MANIFEST.length, routes: MANIFEST }, null, 2),
+      "utf8",
+    );
+    console.log(`[inject-meta] manifest written: dist/seo-injected-routes.json (${MANIFEST.length} routes)`);
+  } catch (e) {
+    console.warn(`[inject-meta] could not write manifest: ${e?.message || e}`);
+  }
+}
+
+function verifyRequiredRoutes() {
+  const missing = [];
+  for (const route of REQUIRED_ROUTES) {
+    const file = join(DIST, route.replace(/^\//, ""), "index.html");
+    if (!existsSync(file)) {
+      missing.push(`${route} (file not written)`);
+      continue;
+    }
+    const html = readFileSync(file, "utf8");
+    const canon = html.match(/<link\b[^>]*\brel=["']canonical["'][^>]*\bhref=["']([^"']+)["']/i)?.[1] || "";
+    if (canon !== `${BASE_URL}${route}`) missing.push(`${route} (canonical="${canon}")`);
+  }
+  if (missing.length) fail(`Required SEO routes missing/incorrect after injection:\n  - ${missing.join("\n  - ")}`);
+  else console.log(`[inject-meta] required routes OK: ${REQUIRED_ROUTES.join(", ")}`);
+}
+
 (async () => {
   console.log(`[inject-meta] tools (no-SEOHead): ${injectTools()}`);
   console.log(`[inject-meta] subject-content (in-place): ${injectSubjectContent()}`);
 
-
   if (!supabase) {
-    console.warn("[inject-meta] No Supabase credentials; skipped DB-driven pages.");
-    process.exit(0);
+    writeManifest();
+    return fail("No Supabase credentials; DB-driven pages (mock-tests/opportunities/blog/boards) were skipped.");
   }
 
   const results = await Promise.allSettled([
     injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(),
   ]);
   const labels = ["mock-tests", "opportunities", "blog", "boards"];
+  const counts = {};
   results.forEach((r, i) => {
-    if (r.status === "fulfilled") console.log(`[inject-meta] ${labels[i]}: ${r.value} pages`);
-    else console.warn(`[inject-meta] ${labels[i]} FAILED: ${r.reason?.message || r.reason}`);
+    if (r.status === "fulfilled") {
+      counts[labels[i]] = r.value;
+      console.log(`[inject-meta] ${labels[i]}: ${r.value} pages`);
+    } else {
+      counts[labels[i]] = -1;
+      console.warn(`[inject-meta] ${labels[i]} FAILED: ${r.reason?.message || r.reason}`);
+    }
   });
+
+  writeManifest();
+
+  // Mock tests are the SEO-critical category that originally regressed: if zero
+  // were generated (DB unreachable / RLS / query change), fail the build loudly
+  // instead of silently shipping the homepage shell for every mock-test URL.
+  if (!counts["mock-tests"] || counts["mock-tests"] < 1) {
+    return fail(`Mock-test meta injection produced ${counts["mock-tests"]} pages — refusing to ship homepage shell for /mock-tests/*.`);
+  }
+
+  verifyRequiredRoutes();
+
   console.log("[inject-meta] DONE");
   process.exit(0);
 })().catch((err) => {
   console.error("[inject-meta] FATAL:", err);
-  // Never fail the build over meta injection.
+  if (STRICT) process.exit(1);
   process.exit(0);
 });
