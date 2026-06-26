@@ -204,6 +204,7 @@ async function injectMockTests() {
       keywords: `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
       ogImage: OG_EXAMS,
       ogType: "article",
+      pageType: "mock-tests",
     });
   }
   return all.length;
@@ -234,6 +235,7 @@ async function injectOpportunities() {
         description: clamp(r.description || fallback, 160),
         ogImage: cfg.og,
         ogType: "article",
+        pageType: "opportunity",
       });
       count++;
     }
@@ -255,6 +257,7 @@ async function injectBlog() {
       description: p.meta_description || p.excerpt || `${t} — MCQsAI blog.`,
       ogImage: OG_BLOG,
       ogType: "article",
+      pageType: "blog",
     });
   }
   return all.length;
@@ -282,6 +285,7 @@ async function injectBoards() {
       keywords: `${topic} MCQs, ${subject} class ${classN}, ${board} preparation, Pakistan exam MCQs`,
       ogImage: OG_BOARDS,
       ogType: "article",
+      pageType: "board-topic",
     });
     count++;
   }
@@ -296,6 +300,7 @@ function injectTools() {
       title: `${t.title} | MCQsAI`,
       description: t.description,
       ogImage: OG_TOOLS,
+      pageType: "tools",
     });
   }
   return TOOLS_WITHOUT_SEOHEAD.length;
@@ -315,6 +320,7 @@ function injectSubjectContent() {
       ogImage: OG_DEFAULT,
       ogType: "article",
       inPlace: true,
+      pageType: "subject-content",
     });
   }
   return SUBJECT_CONTENT_META.length;
