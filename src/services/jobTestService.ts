@@ -419,10 +419,11 @@ export const getMockTestPreviewQuestions = async (
   title: string,
   syllabus: SyllabusItem[],
   limit = 5,
+  definitionId?: string | null,
 ): Promise<PreviewQuestion[]> => {
   // 1) Isolated definition path (no admin_approved hard requirement beyond what exists)
   try {
-    const definition = await findDefinitionByTitle(title);
+    const definition = await findDefinitionForTest({ definition_id: definitionId, title });
     if (definition) {
       const approved = await getApprovedQuestionsForDefinition(definition.id);
       if (approved.length > 0) {
