@@ -50,6 +50,7 @@ export const addJobTest = async (jobTest: Omit<JobTest, "id">): Promise<JobTest 
       duration: jobTest.duration,
       questions: jobTest.questions,
       syllabus: jobTest.syllabus as any,
+      definition_id: jobTest.definition_id ?? null,
     })
     .select()
     .single();
@@ -71,6 +72,7 @@ export const updateJobTest = async (jobTest: JobTest): Promise<JobTest | null> =
       duration: jobTest.duration,
       questions: jobTest.questions,
       syllabus: jobTest.syllabus as any,
+      definition_id: jobTest.definition_id ?? null,
     })
     .eq("id", jobTest.id)
     .select()
