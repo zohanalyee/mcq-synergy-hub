@@ -201,7 +201,9 @@ async function injectMockTests() {
       path: `/mock-tests/${slug}`,
       title: `${metaTitle} | MCQsAI`,
       description: metaDescription,
-      keywords: `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
+      keywords: Array.isArray(t.keywords) && t.keywords.length
+        ? t.keywords.join(", ")
+        : `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
       ogImage: OG_EXAMS,
       ogType: "article",
       pageType: "mock-tests",
