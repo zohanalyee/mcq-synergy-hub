@@ -14,6 +14,8 @@ interface QuestionsPreviewProps {
   syllabus?: SyllabusItem[];
   /** How many questions to expose publicly. */
   limit?: number;
+  /** Optional explicit link to a Job Test Definition pool. */
+  definitionId?: string | null;
 }
 
 const normalizeOptions = (options: PreviewQuestion["options"]): string[] => {
