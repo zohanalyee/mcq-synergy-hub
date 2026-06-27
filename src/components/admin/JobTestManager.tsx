@@ -25,6 +25,7 @@ const JobTestManager = () => {
 
   const {
     jobTests,
+    definitions: linkableDefinitions,
     isAddDialogOpen,
     setIsAddDialogOpen,
     title, setTitle,
@@ -37,10 +38,14 @@ const JobTestManager = () => {
     handleRemoveSyllabusItem,
     handleSyllabusItemChange,
     handleAddJobTest,
+    handleStartEdit,
     handleRemoveJobTest,
     handleEnhanceJobTest,
     handleEnhanceAll,
     enhancingId,
+    editingId,
+    definitionMode, setDefinitionMode,
+    definitionId, setDefinitionId,
     resetForm,
   } = useJobTestManagement();
 
