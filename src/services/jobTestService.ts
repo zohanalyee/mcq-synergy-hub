@@ -19,6 +19,8 @@ export interface JobTest {
   meta_description?: string | null;
   keywords?: string[] | null;
   seo_enhanced_at?: string | null;
+  /** Optional link to a rich Job Test Definition (its official syllabus/question pool). */
+  definition_id?: string | null;
 }
 
 // ---------- Legacy job_tests (kept for current admin UI compatibility) ----------
