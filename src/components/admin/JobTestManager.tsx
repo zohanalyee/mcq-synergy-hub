@@ -197,7 +197,7 @@ const JobTestManager = () => {
           jobTests={jobTests}
           onRemove={handleRemoveJobTest}
           onEnhance={handleEnhanceJobTest}
-          onEdit={handleStartEdit}
+          onEdit={(t) => handleStartEdit(t as any)}
           enhancingId={enhancingId}
         />
         <BulkJobTestImportDialog
