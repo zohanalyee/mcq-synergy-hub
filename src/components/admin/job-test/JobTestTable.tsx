@@ -3,17 +3,18 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Sparkles, Loader2, Check } from "lucide-react";
+import { Trash, Sparkles, Loader2, Check, Pencil, Link2 } from "lucide-react";
 import { JobTest } from "@/data/jobTestsData";
 
 interface JobTestTableProps {
   jobTests: JobTest[];
   onRemove: (id: string) => void;
   onEnhance?: (test: JobTest) => void;
+  onEdit?: (test: JobTest) => void;
   enhancingId?: string | null;
 }
 
-const JobTestTable = ({ jobTests, onRemove, onEnhance, enhancingId }: JobTestTableProps) => {
+const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: JobTestTableProps) => {
   if (jobTests.length === 0) {
     return (
       <div className="text-center p-10 border rounded-md bg-muted/10">
@@ -42,7 +43,14 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, enhancingId }: JobTestTab
             return (
               <TableRow key={test.id}>
                 <TableCell>
-                  <span className="font-medium">{test.title}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-medium">{test.title}</span>
+                    {(test as any).definition_id && (
+                      <Badge variant="secondary" className="gap-1">
+                        <Link2 className="h-3 w-3" /> Linked
+                      </Badge>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{test.organization}</TableCell>
                 <TableCell className="hidden md:table-cell">{test.duration} mins</TableCell>
@@ -72,6 +80,15 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, enhancingId }: JobTestTab
                           <Sparkles className="h-4 w-4 text-primary" />
                         )}
                         <span className="hidden sm:inline">{isEnhancing ? "Working…" : "AI Magic"}</span>
+                      </Button>
+                    )}
+                    {onEdit && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onEdit(test as JobTest)}
+                      >
+                        <Pencil className="h-4 w-4" />
                       </Button>
                     )}
                     <Button

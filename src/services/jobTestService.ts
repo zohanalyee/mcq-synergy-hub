@@ -19,6 +19,8 @@ export interface JobTest {
   meta_description?: string | null;
   keywords?: string[] | null;
   seo_enhanced_at?: string | null;
+  /** Optional link to a rich Job Test Definition (its official syllabus/question pool). */
+  definition_id?: string | null;
 }
 
 // ---------- Legacy job_tests (kept for current admin UI compatibility) ----------
@@ -48,6 +50,7 @@ export const addJobTest = async (jobTest: Omit<JobTest, "id">): Promise<JobTest 
       duration: jobTest.duration,
       questions: jobTest.questions,
       syllabus: jobTest.syllabus as any,
+      definition_id: jobTest.definition_id ?? null,
     })
     .select()
     .single();
@@ -69,6 +72,7 @@ export const updateJobTest = async (jobTest: JobTest): Promise<JobTest | null> =
       duration: jobTest.duration,
       questions: jobTest.questions,
       syllabus: jobTest.syllabus as any,
+      definition_id: jobTest.definition_id ?? null,
     })
     .eq("id", jobTest.id)
     .select()
@@ -272,6 +276,25 @@ export const findDefinitionByTitle = async (title: string): Promise<JobTestDefin
   return (data as JobTestDefinition) || null;
 };
 
+/**
+ * Resolve the rich Definition backing a mock test. Prefers the explicit
+ * `definition_id` link (set in admin), falling back to title-matching a
+ * published definition for legacy tests that haven't been linked yet.
+ */
+export const findDefinitionForTest = async (opts: {
+  definition_id?: string | null;
+  title: string;
+}): Promise<JobTestDefinition | null> => {
+  if (opts.definition_id) {
+    const byId = await getJobTestDefinition(opts.definition_id);
+    if (byId && byId.status === "published") return byId;
+    if (byId) return byId;
+  }
+  return findDefinitionByTitle(opts.title);
+};
+
+
+
 export const upsertJobTestDefinition = async (
   def: Partial<JobTestDefinition> & { job_title: string },
 ): Promise<JobTestDefinition | null> => {
@@ -396,10 +419,11 @@ export const getMockTestPreviewQuestions = async (
   title: string,
   syllabus: SyllabusItem[],
   limit = 5,
+  definitionId?: string | null,
 ): Promise<PreviewQuestion[]> => {
   // 1) Isolated definition path (no admin_approved hard requirement beyond what exists)
   try {
-    const definition = await findDefinitionByTitle(title);
+    const definition = await findDefinitionForTest({ definition_id: definitionId, title });
     if (definition) {
       const approved = await getApprovedQuestionsForDefinition(definition.id);
       if (approved.length > 0) {

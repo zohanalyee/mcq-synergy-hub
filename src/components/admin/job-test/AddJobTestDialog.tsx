@@ -7,6 +7,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Plus } from "lucide-react";
 import { SyllabusItem } from "@/data/jobTestsData";
 import SyllabusItemForm from "./SyllabusItemForm";
+import DefinitionLinkField, { DefinitionMode } from "./DefinitionLinkField";
+import { JobTestDefinition } from "@/services/jobTestService";
 
 interface AddJobTestDialogProps {
   isOpen: boolean;
@@ -27,6 +29,14 @@ interface AddJobTestDialogProps {
   onSyllabusItemChange: (index: number, field: keyof SyllabusItem, value: string | number) => void;
   onAddJobTest: () => void;
   onReset: () => void;
+  // Definition linking
+  definitions: JobTestDefinition[];
+  definitionMode: DefinitionMode;
+  setDefinitionMode: (m: DefinitionMode) => void;
+  definitionId: string | null;
+  setDefinitionId: (id: string | null) => void;
+  // Edit mode
+  isEditing?: boolean;
 }
 
 const AddJobTestDialog = ({
@@ -47,23 +57,33 @@ const AddJobTestDialog = ({
   onRemoveSyllabusItem,
   onSyllabusItemChange,
   onAddJobTest,
-  onReset
+  onReset,
+  definitions,
+  definitionMode,
+  setDefinitionMode,
+  definitionId,
+  setDefinitionId,
+  isEditing = false,
 }: AddJobTestDialogProps) => {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" /> Add Job Test
-        </Button>
-      </DialogTrigger>
+      {!isEditing && (
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="mr-2 h-4 w-4" /> Add Mock Test
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Job Test</DialogTitle>
+          <DialogTitle>{isEditing ? "Edit Mock Test" : "Add New Mock Test"}</DialogTitle>
           <DialogDescription>
-            Create a new job test with syllabus details.
+            {isEditing
+              ? "Update this mock test and optionally link it to a Job Test Definition."
+              : "Create a new mock test with syllabus details."}
           </DialogDescription>
         </DialogHeader>
-        
+
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
             <label htmlFor="title" className="text-sm font-medium">Title</label>
@@ -74,7 +94,7 @@ const AddJobTestDialog = ({
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
-          
+
           <div className="grid gap-2">
             <label htmlFor="description" className="text-sm font-medium">Description</label>
             <Textarea
@@ -84,7 +104,7 @@ const AddJobTestDialog = ({
               onChange={(e) => setDescription(e.target.value)}
             />
           </div>
-          
+
           <div className="grid gap-2">
             <label htmlFor="organization" className="text-sm font-medium">Organization</label>
             <Input
@@ -94,7 +114,7 @@ const AddJobTestDialog = ({
               onChange={(e) => setOrganization(e.target.value)}
             />
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <label htmlFor="duration" className="text-sm font-medium">Duration (minutes)</label>
@@ -107,7 +127,7 @@ const AddJobTestDialog = ({
                 onChange={(e) => setDuration(Number(e.target.value))}
               />
             </div>
-            
+
             <div className="grid gap-2">
               <label htmlFor="questions" className="text-sm font-medium">Number of Questions</label>
               <Input
@@ -120,15 +140,23 @@ const AddJobTestDialog = ({
               />
             </div>
           </div>
-          
-          <SyllabusItemForm 
+
+          <SyllabusItemForm
             syllabusItems={syllabusItems}
             onAdd={onAddSyllabusItem}
             onRemove={onRemoveSyllabusItem}
             onChange={onSyllabusItemChange}
           />
+
+          <DefinitionLinkField
+            definitions={definitions}
+            mode={definitionMode}
+            setMode={setDefinitionMode}
+            definitionId={definitionId}
+            setDefinitionId={setDefinitionId}
+          />
         </div>
-        
+
         <DialogFooter>
           <Button variant="outline" onClick={() => {
             onOpenChange(false);
@@ -137,7 +165,7 @@ const AddJobTestDialog = ({
             Cancel
           </Button>
           <Button onClick={onAddJobTest}>
-            Add Job Test
+            {isEditing ? "Save Changes" : "Add Mock Test"}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -1646,6 +1646,7 @@ export type Database = {
       job_tests: {
         Row: {
           created_at: string | null
+          definition_id: string | null
           description: string | null
           duration: number | null
           id: string
@@ -1661,6 +1662,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          definition_id?: string | null
           description?: string | null
           duration?: number | null
           id?: string
@@ -1676,6 +1678,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          definition_id?: string | null
           description?: string | null
           duration?: number | null
           id?: string
@@ -1689,7 +1692,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "job_tests_definition_id_fkey"
+            columns: ["definition_id"]
+            isOneToOne: false
+            referencedRelation: "job_test_definitions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       levels: {
         Row: {

@@ -25,6 +25,7 @@ const JobTestManager = () => {
 
   const {
     jobTests,
+    definitions: linkableDefinitions,
     isAddDialogOpen,
     setIsAddDialogOpen,
     title, setTitle,
@@ -37,10 +38,14 @@ const JobTestManager = () => {
     handleRemoveSyllabusItem,
     handleSyllabusItemChange,
     handleAddJobTest,
+    handleStartEdit,
     handleRemoveJobTest,
     handleEnhanceJobTest,
     handleEnhanceAll,
     enhancingId,
+    editingId,
+    definitionMode, setDefinitionMode,
+    definitionId, setDefinitionId,
     resetForm,
   } = useJobTestManagement();
 
@@ -179,6 +184,12 @@ const JobTestManager = () => {
               onSyllabusItemChange={handleSyllabusItemChange}
               onAddJobTest={handleAddJobTest}
               onReset={resetForm}
+              definitions={linkableDefinitions}
+              definitionMode={definitionMode}
+              setDefinitionMode={setDefinitionMode}
+              definitionId={definitionId}
+              setDefinitionId={setDefinitionId}
+              isEditing={!!editingId}
             />
           </div>
         </div>
@@ -186,6 +197,7 @@ const JobTestManager = () => {
           jobTests={jobTests}
           onRemove={handleRemoveJobTest}
           onEnhance={handleEnhanceJobTest}
+          onEdit={(t) => handleStartEdit(t as any)}
           enhancingId={enhancingId}
         />
         <BulkJobTestImportDialog

@@ -12,7 +12,7 @@ import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
 import { AICoachService } from "@/services/aiCoachService";
 import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
 import {
-  findDefinitionByTitle,
+  findDefinitionForTest,
   getApprovedQuestionsForDefinition,
   getEffectiveSyllabus,
 } from "@/services/jobTestService";
@@ -72,7 +72,7 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
       // build the session straight from job_test_questions and skip
       // the legacy generate-test path entirely.
       // ============================================================
-      const definition = await findDefinitionByTitle(test.title);
+      const definition = await findDefinitionForTest({ definition_id: (test as any).definition_id, title: test.title });
       if (definition) {
         const approved = await getApprovedQuestionsForDefinition(definition.id);
         const targetCount = settings.questionCount;

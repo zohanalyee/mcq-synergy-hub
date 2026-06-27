@@ -14,6 +14,8 @@ interface QuestionsPreviewProps {
   syllabus?: SyllabusItem[];
   /** How many questions to expose publicly. */
   limit?: number;
+  /** Optional explicit link to a Job Test Definition pool. */
+  definitionId?: string | null;
 }
 
 const normalizeOptions = (options: PreviewQuestion["options"]): string[] => {
@@ -22,10 +24,10 @@ const normalizeOptions = (options: PreviewQuestion["options"]): string[] => {
   return [];
 };
 
-export const QuestionsPreview = ({ title, syllabus = [], limit = 5 }: QuestionsPreviewProps) => {
+export const QuestionsPreview = ({ title, syllabus = [], limit = 5, definitionId }: QuestionsPreviewProps) => {
   const { data, isLoading } = useQuery({
-    queryKey: ["mock-test-preview", title, syllabus.map((s) => s.topic).join("|")],
-    queryFn: () => getMockTestPreviewQuestions(title, syllabus, limit),
+    queryKey: ["mock-test-preview", title, definitionId ?? "", syllabus.map((s) => s.topic).join("|")],
+    queryFn: () => getMockTestPreviewQuestions(title, syllabus, limit, definitionId),
   });
 
   const questions = (data || []).slice(0, limit);
