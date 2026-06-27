@@ -47,6 +47,31 @@ export function useJobTestManagement() {
     setSyllabusItems(newItems);
   };
 
+  // Resolve the definition_id to persist based on the chosen mode.
+  const resolveDefinitionId = async (): Promise<string | null | undefined> => {
+    if (definitionMode === "skip") return null;
+    if (definitionMode === "link") {
+      if (!definitionId) {
+        toast.error("Please select a definition to link, or choose Skip.");
+        return undefined; // signal validation failure
+      }
+      return definitionId;
+    }
+    // create new
+    const created = await upsertJobTestDefinition({
+      job_title: title,
+      status: "draft",
+      syllabus: { sections: [] },
+      sample_questions: {},
+    } as any);
+    if (!created) {
+      toast.error("Failed to create linked definition.");
+      return undefined;
+    }
+    queryClient.invalidateQueries({ queryKey: ["job-test-definitions"] });
+    return created.id;
+  };
+
   const handleAddJobTest = async () => {
     if (!title || !description || !organization || !duration || !questions) {
       toast.error("Please fill out all required fields");
@@ -63,6 +88,32 @@ export function useJobTestManagement() {
       return;
     }
 
+    const resolvedDefId = await resolveDefinitionId();
+    if (resolvedDefId === undefined) return; // validation failed
+
+    // EDIT MODE
+    if (editingId) {
+      const updated = await updateJobTest({
+        id: editingId,
+        title,
+        description,
+        organization,
+        duration,
+        questions,
+        syllabus: validSyllabusItems,
+        definition_id: resolvedDefId,
+      });
+      if (updated) {
+        queryClient.invalidateQueries({ queryKey: ["job-tests"] });
+        setIsAddDialogOpen(false);
+        resetForm();
+        toast.success(`Mock test "${title}" updated`);
+      } else {
+        toast.error("Failed to update mock test");
+      }
+      return;
+    }
+
     const added = await addJobTest({
       title,
       description,
@@ -70,6 +121,7 @@ export function useJobTestManagement() {
       duration,
       questions,
       syllabus: validSyllabusItems,
+      definition_id: resolvedDefId,
     });
 
     if (added) {
@@ -91,6 +143,27 @@ export function useJobTestManagement() {
       toast.error("Failed to add job test");
     }
   };
+
+  const handleStartEdit = (test: JobTest) => {
+    setEditingId(test.id);
+    setTitle(test.title);
+    setDescription(test.description || "");
+    setOrganization(test.organization || "");
+    setDuration(test.duration || 90);
+    setQuestions(test.questions || 100);
+    setSyllabusItems(
+      test.syllabus && test.syllabus.length ? test.syllabus : [{ topic: "", percentage: 0 }],
+    );
+    if (test.definition_id) {
+      setDefinitionMode("link");
+      setDefinitionId(test.definition_id);
+    } else {
+      setDefinitionMode("skip");
+      setDefinitionId(null);
+    }
+    setIsAddDialogOpen(true);
+  };
+
 
   const handleEnhanceJobTest = async (test: JobTest) => {
     setEnhancingId(test.id);
