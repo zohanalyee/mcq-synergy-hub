@@ -12,7 +12,7 @@ import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
 import { AICoachService } from "@/services/aiCoachService";
 import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
 import {
-  findDefinitionByTitle,
+  findDefinitionForTest,
   getApprovedQuestionsForDefinition,
   getEffectiveSyllabus,
 } from "@/services/jobTestService";
