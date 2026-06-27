@@ -3,17 +3,18 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Sparkles, Loader2, Check } from "lucide-react";
+import { Trash, Sparkles, Loader2, Check, Pencil, Link2 } from "lucide-react";
 import { JobTest } from "@/data/jobTestsData";
 
 interface JobTestTableProps {
   jobTests: JobTest[];
   onRemove: (id: string) => void;
   onEnhance?: (test: JobTest) => void;
+  onEdit?: (test: JobTest) => void;
   enhancingId?: string | null;
 }
 
-const JobTestTable = ({ jobTests, onRemove, onEnhance, enhancingId }: JobTestTableProps) => {
+const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: JobTestTableProps) => {
   if (jobTests.length === 0) {
     return (
       <div className="text-center p-10 border rounded-md bg-muted/10">
