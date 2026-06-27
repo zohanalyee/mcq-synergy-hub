@@ -186,7 +186,7 @@ function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogTyp
 async function injectMockTests() {
   const { data } = await supabase
     .from("job_tests")
-    .select("id,title,organization,questions,seo_title,meta_description");
+    .select("id,title,organization,questions,seo_title,meta_description,keywords");
   const all = data || [];
   for (const t of all) {
     const slug = jobTestSlug(t, all);
@@ -201,7 +201,9 @@ async function injectMockTests() {
       path: `/mock-tests/${slug}`,
       title: `${metaTitle} | MCQsAI`,
       description: metaDescription,
-      keywords: `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
+      keywords: Array.isArray(t.keywords) && t.keywords.length
+        ? t.keywords.join(", ")
+        : `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
       ogImage: OG_EXAMS,
       ogType: "article",
       pageType: "mock-tests",
