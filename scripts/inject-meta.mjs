@@ -186,7 +186,7 @@ function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogTyp
 async function injectMockTests() {
   const { data } = await supabase
     .from("job_tests")
-    .select("id,title,organization,questions,seo_title,meta_description");
+    .select("id,title,organization,questions,seo_title,meta_description,keywords");
   const all = data || [];
   for (const t of all) {
     const slug = jobTestSlug(t, all);
