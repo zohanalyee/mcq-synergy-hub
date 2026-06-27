@@ -224,10 +224,14 @@ export function useJobTestManagement() {
     setDuration(90);
     setQuestions(100);
     setSyllabusItems([{ topic: '', percentage: 0 }]);
+    setDefinitionMode("skip");
+    setDefinitionId(null);
+    setEditingId(null);
   };
 
   return {
     jobTests,
+    definitions,
     isLoading,
     isAddDialogOpen,
     setIsAddDialogOpen,
@@ -241,10 +245,15 @@ export function useJobTestManagement() {
     handleRemoveSyllabusItem,
     handleSyllabusItemChange,
     handleAddJobTest,
+    handleStartEdit,
     handleRemoveJobTest,
     handleEnhanceJobTest,
     handleEnhanceAll,
     enhancingId,
+    editingId,
+    definitionMode, setDefinitionMode,
+    definitionId, setDefinitionId,
     resetForm
   };
 }
+
