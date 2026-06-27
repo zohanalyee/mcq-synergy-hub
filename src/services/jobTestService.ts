@@ -276,6 +276,25 @@ export const findDefinitionByTitle = async (title: string): Promise<JobTestDefin
   return (data as JobTestDefinition) || null;
 };
 
+/**
+ * Resolve the rich Definition backing a mock test. Prefers the explicit
+ * `definition_id` link (set in admin), falling back to title-matching a
+ * published definition for legacy tests that haven't been linked yet.
+ */
+export const findDefinitionForTest = async (opts: {
+  definition_id?: string | null;
+  title: string;
+}): Promise<JobTestDefinition | null> => {
+  if (opts.definition_id) {
+    const byId = await getJobTestDefinition(opts.definition_id);
+    if (byId && byId.status === "published") return byId;
+    if (byId) return byId;
+  }
+  return findDefinitionByTitle(opts.title);
+};
+
+
+
 export const upsertJobTestDefinition = async (
   def: Partial<JobTestDefinition> & { job_title: string },
 ): Promise<JobTestDefinition | null> => {
