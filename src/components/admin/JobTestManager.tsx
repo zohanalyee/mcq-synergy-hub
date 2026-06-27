@@ -184,6 +184,12 @@ const JobTestManager = () => {
               onSyllabusItemChange={handleSyllabusItemChange}
               onAddJobTest={handleAddJobTest}
               onReset={resetForm}
+              definitions={linkableDefinitions}
+              definitionMode={definitionMode}
+              setDefinitionMode={setDefinitionMode}
+              definitionId={definitionId}
+              setDefinitionId={setDefinitionId}
+              isEditing={!!editingId}
             />
           </div>
         </div>
