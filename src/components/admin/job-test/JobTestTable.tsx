@@ -78,8 +78,14 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
                           <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
                           <Sparkles className="h-4 w-4 text-primary" />
-                        )}
-                        <span className="hidden sm:inline">{isEnhancing ? "Working…" : "AI Magic"}</span>
+                    )}
+                    {onEdit && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => onEdit(test as JobTest)}
+                      >
+                        <Pencil className="h-4 w-4" />
                       </Button>
                     )}
                     <Button
