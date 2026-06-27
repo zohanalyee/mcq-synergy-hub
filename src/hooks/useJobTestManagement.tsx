@@ -12,8 +12,14 @@ export function useJobTestManagement() {
     queryFn: getJobTests,
   });
 
+  const { data: definitions = [] } = useQuery({
+    queryKey: ["job-test-definitions"],
+    queryFn: getJobTestDefinitions,
+  });
+
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [enhancingId, setEnhancingId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [organization, setOrganization] = useState('');
@@ -22,6 +28,9 @@ export function useJobTestManagement() {
   const [syllabusItems, setSyllabusItems] = useState<SyllabusItem[]>([
     { topic: '', percentage: 0 }
   ]);
+  const [definitionMode, setDefinitionMode] = useState<DefinitionMode>("skip");
+  const [definitionId, setDefinitionId] = useState<string | null>(null);
+
 
   const handleAddSyllabusItem = () => {
     setSyllabusItems([...syllabusItems, { topic: '', percentage: 0 }]);
