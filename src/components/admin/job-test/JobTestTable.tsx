@@ -43,14 +43,7 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
             return (
               <TableRow key={test.id}>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{test.title}</span>
-                    {(test as any).definition_id && (
-                      <Badge variant="secondary" className="gap-1">
-                        <Link2 className="h-3 w-3" /> Linked
-                      </Badge>
-                    )}
-                  </div>
+                  <span className="font-medium">{test.title}</span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{test.organization}</TableCell>
                 <TableCell className="hidden md:table-cell">{test.duration} mins</TableCell>
