@@ -158,6 +158,8 @@ const AddJobTestDialog = ({
             setMode={setDefinitionMode}
             definitionId={definitionId}
             setDefinitionId={setDefinitionId}
+            newDefinitionTitle={newDefinitionTitle}
+            setNewDefinitionTitle={setNewDefinitionTitle}
           />
         </div>
 
