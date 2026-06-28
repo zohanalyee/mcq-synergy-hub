@@ -1,128 +1,194 @@
-# Mock Tests: System Integration + SEO Keywords
+# Unify Mock Tests + Definitions into One Editor
 
-## Investigation findings (what's true today)
+## Goal
 
-**Two tables, two roles:**
+There will be exactly ONE place to create/edit a mock test. Opening a mock test for edit shows everything in tabs — Basic Info, Syllabus, Samples, Questions, Logs — with no separate "Job Test Definitions" panel and no "link/create" indirection.
 
-- `job_tests` (Legacy) — the ONLY source for the public `/mock-tests` list (`MockTests.tsx` → `getJobTests`) and the detail page (`MockTestDetail.tsx` → `resolveJobTestBySlug`). Holds title, organization, duration, questions, syllabus, plus SEO fields (`seo_title`, `meta_description`, `keywords`).
-- `job_test_definitions` (Definitions) — richer admin authoring: per-subject syllabus sections, sample questions, difficulty distribution. Feeds `job_test_questions` (the AI-generated, admin-approved question pool).
+## Current state (confirmed)
 
-**How they connect today:** only by **matching `title**`. When a user starts a test, `JobTestsTab.tsx` calls `findDefinitionByTitle(test.title)`; the questions preview (`getMockTestPreviewQuestions`) does the same. So a Definition's curated questions only reach the public flow if a `job_tests` row with the *same title* exists.
+- The admin "Mock Tests" tab (`AdminTabs.tsx` → `JobTestManager`) currently shows TWO sections: an "Isolated System" list of `job_test_definitions` (editable via `JobTestDefinitionEditor` with the 5 tabs) and a "Legacy Job Tests" table of `job_tests` (edited via the basic `AddJobTestDialog`).
+- `job_tests.definition_id` already exists as the link column, but only 1 of 30 tests is linked.
+- The rich data lives in `job_test_definitions` + `job_test_questions` (questions are keyed by `job_test_id = definition.id`).
+- Two real definitions exist:
+  - **Junior Clerk (BPS-11)** — `ef50cfc9…` — 4 syllabus sections, 90 questions, published.
+  - **Teaching License Test** — `e6d6b6a3…` — 5 sections, 100 questions, published.
+  - Plus 3 empty "New Job Test" drafts and 1 "Secondary School Teachers (SST)" draft (already linked, empty).
 
-**Answers to your questions:**
+## Target design
 
-1. Can Definitions become the single creation path while still appearing on `/mock-tests`? — Yes, but only if publishing a Definition also creates/updates a matching `job_tests` row. Today it does not.
-2. Does a published Definition show on `/mock-tests`? — **No.** The public list reads `job_tests` exclusively. A Definition with no matching `job_tests` row is invisible to users.
-3. "Junior Clerk (BPS-11)" in both lists — means there is already a `job_tests` row AND a `job_test_definitions` row sharing the same title; they're linked implicitly by title. No data loss, but the link is fragile (a title edit breaks it).
+Every `job_tests` row is backed by exactly one `job_test_definitions` row (1:1 via `definition_id`). The mock test editor becomes a single tabbed surface:
 
-**SEO keywords status:** AI Magic *does* generate and store keywords in `job_tests.keywords` (`enhanceJobTestSEO`). BUT `MockTestDetail.tsx` (line 121) calls `<SEOHead title=... description=... />` **without** passing `keywords`, so every mock test page falls back to the generic site-wide keyword string. Jobs (`JobDetailPage.tsx:95`) and Scholarships (`OpportunityDetail.tsx:206`) *do* pass keywords. **So keywords are NOT currently in mock test page heads** — this needs a one-line wiring fix, plus the bulk AI run you asked for.
+```text
+Edit Mock Test: "Junior Clerk (BPS-11)"
+┌───────────────────────────────────────────────┐
+│ [Basic Info] [Syllabus] [Samples] [Questions] [Logs] │
+├───────────────────────────────────────────────┤
+│ Basic Info: title, description, organization,   │
+│   duration, # questions, weighted syllabus list │
+│ Syllabus/Samples/Questions/Logs: the existing   │
+│   JobTestDefinitionEditor tab content, inline    │
+└───────────────────────────────────────────────┘
+```
 
----
+When an admin opens (or creates) a mock test:
 
-## Plan
+1. If the test has no `definition_id`, one is auto-created on first save (or lazily on open) and linked — invisible to the admin; no "skip/link/create" choice.
+2. The same dialog renders Basic Info plus the embedded definition tabs, both saving to their respective tables on Save.
 
-### Part A — SEO keywords (low-risk, quick win)
+## Implementation
 
-1. In `MockTestDetail.tsx`, pass the test's keywords to `SEOHead`:
-  - `keywords={test.keywords?.length ? test.keywords.join(', ') : undefined}` so each test emits its own `<meta name="keywords">` (falls back to the site default when not yet enhanced).
-2. Add keywords to the crawler-facing prerender: in `scripts/inject-meta.mjs`, include `job_tests.keywords` in the `<meta name="keywords">` for each mock test HTML file so non-JS crawlers see them too.
-3. Run "Run AI Magic on All" (the existing `handleEnhanceAll`) on Legacy tests still marked "Needs SEO" — this populates `keywords`/`seo_title`/`meta_description` for any unfinished rows. (I'll trigger it from the admin flow after the wiring lands; bulk run is already built.)
+### 1. New unified editor component
 
-Result: every published mock test (Legacy and, after Part B, Definition-backed) ships unique AI-generated meta keywords in `<head>`, exactly like Jobs/Scholarships.
+Create `src/components/admin/job-test/MockTestEditor.tsx` that replaces `AddJobTestDialog` + `DefinitionLinkField`. It hosts a `Tabs` with:
 
-### Part B — One integrated workflow
+- **Basic Info** tab: the existing fields from `AddJobTestDialog` (title/description/organization/duration/questions + `SyllabusItemForm`), saving to `job_tests`.
+- **Syllabus / Samples / Questions / Logs** tabs: reuse the existing tab bodies extracted from `JobTestDefinitionEditor` (syllabus section editor, `SampleQuestionsEditor`, `GeneratedQuestionsTable`, `GenerationLogsTable`), operating on the backing definition.
 
-Goal: admins use **one process** — author rich Definitions — and publishing makes them appear on `/mock-tests` automatically, while keeping the public read path (`job_tests`) unchanged for stability.
+To avoid duplicating logic, refactor `JobTestDefinitionEditor` so its tab bodies can be reused (export the inner editor or split into `DefinitionTabs` that takes a `definition` + `onChange`). The unified editor manages one `definition` object and one `job_tests` object together.
 
-1. **Publish = sync to `job_tests`.** When a Definition's status becomes `published` (in `JobTestDefinitionEditor` / `upsertJobTestDefinition`), upsert a matching `job_tests` row:
-  - Derive `title` (= `job_title`), `organization` (= `department`), `questions` (sum of section `question_count`), `duration` (sensible default or a new field), and `syllabus` (map sections → `{topic, percentage}`).
-  - Store the Definition id on the `job_tests` row via a new `definition_id` column (a real FK link instead of fragile title-matching), so future title edits don't break the connection.
-  - Archiving/unpublishing a Definition removes or hides its `job_tests` row.
-2. **Make `definition_id` the primary join key.** Update `findDefinitionByTitle` usage to prefer `definition_id` when present, falling back to title for older rows.
-3. **Unify the admin UI.** In `JobTestManager.tsx`, present a single "Mock Tests" list. The legacy "Add Job Test" form becomes a thin shortcut that creates a Definition (draft) instead of a bare `job_tests` row, so all new tests flow through the richer workflow. Existing Legacy-only tests remain editable and clearly labeled until migrated.
-4. **Migrate "Junior Clerk (BPS-11)" and any other dual rows.** Backfill `job_tests.definition_id` by matching existing titles to Definitions (one-time data update via migration/insert tool), confirming exactly one Definition per public test. Report any titles that don't match for manual review.
+Save behavior: "Save" persists both — `updateJobTest`/`addJobTest` for the row and `upsertJobTestDefinition` for the definition — and ensures `definition_id` is set. Creating a brand-new mock test auto-creates the definition (titled from the test title) and links it in the same flow.
 
-### Technical notes
+### 2. Simplify `JobTestManager`
 
-- New column: `job_tests.definition_id uuid references job_test_definitions(id)` (nullable; GRANTs unchanged). Schema change via migration tool.
-- No change to the public read path shape — `/mock-tests` and the detail page still query `job_tests`, so SEO prerendering, sitemaps, and slugs are unaffected.
-- AI Magic SEO continues to run against the `job_tests` row (it already persists there), so Definition-backed tests get keywords the same way Legacy ones do.
+- Remove the entire "Job Test Definitions (Isolated System)" section and the `editing`/`createBlank`/`loadDefinitions` definition-list state.
+- Keep one section: the mock tests table (`JobTestTable`) + "Add Mock Test" + bulk import + "Run AI Magic on All".
+- "Add" and the table's Edit action both open the new `MockTestEditor`.
 
-### Sequencing
+### 3. Simplify the hook
 
-- Part A first (independent, low-risk, gives immediate SEO benefit + bulk run).
-- Part B second (schema + sync + migration), verified by confirming a freshly published Definition appears on `/mock-tests` and serves its curated questions.
+In `useJobTestManagement.tsx`, remove the `definitionMode`/`definitionId`/`newDefinitionTitle`/`resolveDefinitionId` link-mode machinery. On edit, load the linked definition (via `findDefinitionForTest`); on save, upsert the definition and persist `definition_id`. On create, auto-create + link the definition.
 
-I'll implement Part A immediately on approval, then Part B. Migration data changes ("Junior Clerk" linking) will be surfaced for your confirmation before running.
+### 4. Remove now-dead pieces
+
+- Delete `src/components/admin/job-test/DefinitionLinkField.tsx`.
+- Drop the "Linked" badge from `JobTestTable` (every test is backed by a definition now; the badge is meaningless) — optionally replace with a "Questions: N" count.
+- `JobTestDefinitionEditor.tsx` stays only if reused for its tab bodies; otherwise its standalone shell is removed.
+
+### 5. Data migration (no data loss — relocate/link only)
+
+Backfill `job_tests.definition_id` so the rich data surfaces in the unified editor:
+
+- Link **Junior Clerk (BPS-11)** definition → the canonical "Junior Clerk (BPS-11)" `job_tests` row (two rows share this title; link the primary and leave the duplicate unlinked or flag for cleanup — see Open Question).
+- Link **Teaching License Test** definition → the matching Sindh Teaching License Exam row (see Open Question for Elementary vs Secondary).
+- For every other `job_tests` row with no `definition_id`, create a minimal backing definition (carrying over the row's weighted syllabus items into `syllabus.sections`) and link it, so the unified tabs are populated and ready for sample/question authoring.
+- Clean up the 3 empty "New Job Test" drafts.
+
+This is done via a one-time SQL migration/data update; existing `job_test_questions` stay attached to their definition IDs and now appear under the linked test's Questions tab.
+
+### 6. Public side unchanged
+
+`/mock-tests` keeps reading `job_tests`; `getMockTestPreviewQuestions`/`findDefinitionForTest` already resolve questions through `definition_id`, so linking makes the rich question pools flow to the public pages automatically.
+
+## Open questions to confirm before migration
+
+1. **Teaching License Test** (5 sections, 100 Qs) — link it to the **Elementary** or **Secondary** School Teacher mock test? (The Secondary row is currently linked to a separate empty "SST" draft — I'd repoint it.)
+2. **Junior Clerk (BPS-11)** appears as two `job_tests` rows — keep both (link one, leave/delete the duplicate) or merge into one?
+
+## Files touched
+
+- Add: `src/components/admin/job-test/MockTestEditor.tsx` (+ possibly `DefinitionTabs.tsx`)
+- Edit: `JobTestManager.tsx`, `useJobTestManagement.tsx`, `JobTestDefinitionEditor.tsx` (refactor for reuse), `JobTestTable.tsx`
+- Delete: `DefinitionLinkField.tsx`, `AddJobTestDialog.tsx` (superseded)
+- Migration: backfill `definition_id`, create backing definitions, cleanup empty drafts
 
 &nbsp;
 
-Please proceed part A.
+&nbsp;
 
-#  **here is part B to make into one Mock test+defination**  
+# **Updated decisions for the migration:**
 
-GOAL: When creating OR editing a mock test (Legacy job_tests), 
+&nbsp;
 
-the SAME form should let me also set up/link its Definition — so 
+1. Teaching License Test definition → link to the "Sindh Teaching 
 
-posting a test and its official syllabus/definition happens together 
+   License Exam (Secondary School Teacher)" mock test.
 
-in one place, instead of two separate disconnected systems.
+&nbsp;
 
-Requirements:
+2. Junior Clerk duplicates: Don't try to figure out which is 
 
-1. NEW MOCK TEST CREATION: When I create a new mock test, the form 
+   "correct" — instead, DELETE both existing Junior Clerk Definitions 
 
-   should include an optional "Definition" section/dropdown:
+   AND don't worry about linking them. I will re-upload a fresh 
 
-   - Option A: "Link to existing Definition" — pick from already-
+   Junior Clerk definition via JSON bulk import myself afterward, 
 
-     created Job Test Definitions
+   through the new unified editor.
 
-   - Option B: "Create new Definition now" — inline fields to set 
+&nbsp;
 
-     up syllabus sections right there in the same form, which 
+3. GENERAL APPROACH for migration: Rather than trying to carefully 
 
-     creates a new Definition behind the scenes and links it 
+   preserve/link the 2 existing definitions, please:
 
-     automatically
+   - Delete the existing job_test_definitions entirely (Junior Clerk, 
 
-   - Option C: "Skip — no Definition" — posts the test exactly as 
+     Teaching License Test, and the empty drafts) — I will re-create 
 
-     it works today, no syllabus/samples/questions workflow attached
+     them fresh via JSON upload in the new unified editor once it's 
 
-2. EXISTING MOCK TESTS (retroactive): When I EDIT any of my 31 
+     built.
 
-   existing Legacy tests, the same Definition section/dropdown 
+   - For the "duplicate" Junior Clerk job_tests rows, please tell 
 
-   should appear there too — so I can:
+     me which one to keep/delete based on which has more complete/
 
-   - Link it to a Definition I've since created separately, OR
+     correct data (organization, syllabus) — show me both so I can 
 
-   - Fill in Definition fields (syllabus sections, samples) directly 
+     make the final call before deletion.
 
-     in the edit form to build one for that existing test, without 
+   - Proceed with building the unified MockTestEditor as planned 
 
-     leaving the page
+     (Basic Info + Syllabus + Samples + Questions + Logs in one 
 
-3. LINKING MECHANISM: Use a definition_id column on job_tests as 
+     place), with auto-create-definition-on-save for any test that 
 
-   the link (not manual codes) — set automatically when I pick/
+     doesn't have one.
 
-   create a Definition in the form.
+&nbsp;
 
-4. SAFETY: Confirm linking a Definition to an ALREADY PUBLISHED, 
+This simplifies the migration — less manual linking, I'll repopulate 
 
-   live test is safe and doesn't disrupt users mid-test or cause 
+the rich data fresh via JSON once the new unified editor exists.
 
-   downtime — clarify if the question source switches immediately 
+ADDITIONAL REQUIREMENT for the unified editor:
 
-   or only for new test attempts going forward.
+Currently, I had to upload TWO separate JSON files — one for the 
 
-5. Keep the SEO Magic (Part A, keywords fix) working independently 
+mock test (Basic Info) and one for the Definition (syllabus/samples/
 
-   of this — that's already approved and should proceed regardless.
+questions). 
 
-Please propose the exact form/UI changes (which fields go where) 
+In the new unified MockTestEditor, I want ONE combined JSON bulk 
 
-before implementing, so I can confirm the layout makes sense.
+import that handles everything together — basic info (title, 
+
+organization, duration, questions count) AND syllabus sections/
+
+samples/questions all in a single JSON file/structure.
+
+Please:
+
+1. Design a single unified JSON schema that combines both the 
+
+   Basic Info fields and the Definition fields (syllabus sections, 
+
+   samples, questions) into one structure
+
+2. The "Bulk Import JSON" button on the unified editor should accept 
+
+   this single combined file and populate ALL tabs (Basic Info, 
+
+   Syllabus, Samples, Questions) from it in one upload
+
+3. Also update "Export JSON" to export this same combined structure, 
+
+   so I can use an exported test as a template for new ones
+
+4. Show me the expected JSON structure/schema before implementing, 
+
+   so I know exactly what format to prepare my data in going forward
+
+This removes the need for two separate uploads — one JSON file per 
+
+mock test, covering everything.

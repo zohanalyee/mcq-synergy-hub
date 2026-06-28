@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Sparkles, Loader2, Check, Pencil, Link2 } from "lucide-react";
+import { Trash, Sparkles, Loader2, Check, Pencil } from "lucide-react";
 import { JobTest } from "@/data/jobTestsData";
 
 interface JobTestTableProps {
@@ -43,14 +43,7 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
             return (
               <TableRow key={test.id}>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium">{test.title}</span>
-                    {(test as any).definition_id && (
-                      <Badge variant="secondary" className="gap-1">
-                        <Link2 className="h-3 w-3" /> Linked
-                      </Badge>
-                    )}
-                  </div>
+                  <span className="font-medium">{test.title}</span>
                 </TableCell>
                 <TableCell className="hidden md:table-cell">{test.organization}</TableCell>
                 <TableCell className="hidden md:table-cell">{test.duration} mins</TableCell>
