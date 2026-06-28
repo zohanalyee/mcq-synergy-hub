@@ -35,6 +35,8 @@ interface AddJobTestDialogProps {
   setDefinitionMode: (m: DefinitionMode) => void;
   definitionId: string | null;
   setDefinitionId: (id: string | null) => void;
+  newDefinitionTitle: string;
+  setNewDefinitionTitle: (t: string) => void;
   // Edit mode
   isEditing?: boolean;
 }
