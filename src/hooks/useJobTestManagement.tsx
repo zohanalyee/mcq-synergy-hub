@@ -232,6 +232,7 @@ export function useJobTestManagement() {
     setSyllabusItems([{ topic: '', percentage: 0 }]);
     setDefinitionMode("skip");
     setDefinitionId(null);
+    setNewDefinitionTitle('');
     setEditingId(null);
   };
 
