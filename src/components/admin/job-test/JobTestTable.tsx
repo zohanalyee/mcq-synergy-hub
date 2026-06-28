@@ -3,7 +3,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Sparkles, Loader2, Check, Pencil, Link2 } from "lucide-react";
+import { Trash, Sparkles, Loader2, Check, Pencil } from "lucide-react";
 import { JobTest } from "@/data/jobTestsData";
 
 interface JobTestTableProps {
