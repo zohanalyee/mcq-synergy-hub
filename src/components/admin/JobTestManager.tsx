@@ -190,6 +190,8 @@ const JobTestManager = () => {
               setDefinitionMode={setDefinitionMode}
               definitionId={definitionId}
               setDefinitionId={setDefinitionId}
+              newDefinitionTitle={newDefinitionTitle}
+              setNewDefinitionTitle={setNewDefinitionTitle}
               isEditing={!!editingId}
             />
           </div>
