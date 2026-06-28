@@ -260,6 +260,7 @@ export function useJobTestManagement() {
     editingId,
     definitionMode, setDefinitionMode,
     definitionId, setDefinitionId,
+    newDefinitionTitle, setNewDefinitionTitle,
     resetForm
   };
 }
