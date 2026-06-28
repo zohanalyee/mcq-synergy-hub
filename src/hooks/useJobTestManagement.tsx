@@ -30,6 +30,7 @@ export function useJobTestManagement() {
   ]);
   const [definitionMode, setDefinitionMode] = useState<DefinitionMode>("skip");
   const [definitionId, setDefinitionId] = useState<string | null>(null);
+  const [newDefinitionTitle, setNewDefinitionTitle] = useState('');
 
 
   const handleAddSyllabusItem = () => {
