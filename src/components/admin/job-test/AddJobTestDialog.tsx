@@ -65,6 +65,8 @@ const AddJobTestDialog = ({
   setDefinitionMode,
   definitionId,
   setDefinitionId,
+  newDefinitionTitle,
+  setNewDefinitionTitle,
   isEditing = false,
 }: AddJobTestDialogProps) => {
   return (
