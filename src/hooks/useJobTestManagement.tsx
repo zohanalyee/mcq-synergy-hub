@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { JobTest, SyllabusItem, getJobTests, addJobTest, updateJobTest, removeJobTest, enhanceJobTestSEO, getJobTestDefinitions, upsertJobTestDefinition, JobTestDefinition } from "@/services/jobTestService";
-import { DefinitionMode } from "@/components/admin/job-test/DefinitionLinkField";
+import { JobTest, getJobTests, removeJobTest, enhanceJobTestSEO } from "@/services/jobTestService";
 import { toast } from "sonner";
 
 export function useJobTestManagement() {
@@ -12,164 +11,7 @@ export function useJobTestManagement() {
     queryFn: getJobTests,
   });
 
-  const { data: definitions = [] } = useQuery({
-    queryKey: ["job-test-definitions"],
-    queryFn: getJobTestDefinitions,
-  });
-
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [enhancingId, setEnhancingId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [organization, setOrganization] = useState('');
-  const [duration, setDuration] = useState(90);
-  const [questions, setQuestions] = useState(100);
-  const [syllabusItems, setSyllabusItems] = useState<SyllabusItem[]>([
-    { topic: '', percentage: 0 }
-  ]);
-  const [definitionMode, setDefinitionMode] = useState<DefinitionMode>("skip");
-  const [definitionId, setDefinitionId] = useState<string | null>(null);
-  const [newDefinitionTitle, setNewDefinitionTitle] = useState('');
-
-
-  const handleAddSyllabusItem = () => {
-    setSyllabusItems([...syllabusItems, { topic: '', percentage: 0 }]);
-  };
-
-  const handleRemoveSyllabusItem = (index: number) => {
-    setSyllabusItems(syllabusItems.filter((_, i) => i !== index));
-  };
-
-  const handleSyllabusItemChange = (index: number, field: keyof SyllabusItem, value: string | number) => {
-    const newItems = [...syllabusItems];
-    if (field === 'topic') newItems[index].topic = value as string;
-    else if (field === 'percentage') newItems[index].percentage = value as number;
-    setSyllabusItems(newItems);
-  };
-
-  // Resolve the definition_id to persist based on the chosen mode.
-  const resolveDefinitionId = async (): Promise<string | null | undefined> => {
-    if (definitionMode === "skip") return null;
-    if (definitionMode === "link") {
-      if (!definitionId) {
-        toast.error("Please select a definition to link, or choose Skip.");
-        return undefined; // signal validation failure
-      }
-      return definitionId;
-    }
-    // create new
-    const defTitle = (newDefinitionTitle || title || "").trim();
-    if (!defTitle) {
-      toast.error("Please enter a title for the new definition.");
-      return undefined;
-    }
-    const created = await upsertJobTestDefinition({
-      job_title: defTitle,
-      status: "draft",
-      syllabus: { sections: [] },
-      sample_questions: {},
-    } as any);
-    if (!created) {
-      toast.error("Failed to create linked definition.");
-      return undefined;
-    }
-    queryClient.invalidateQueries({ queryKey: ["job-test-definitions"] });
-    return created.id;
-  };
-
-  const handleAddJobTest = async () => {
-    if (!title || !description || !organization || !duration || !questions) {
-      toast.error("Please fill out all required fields");
-      return;
-    }
-    const validSyllabusItems = syllabusItems.filter(item => item.topic && item.percentage > 0);
-    if (validSyllabusItems.length === 0) {
-      toast.error("Please add at least one valid syllabus item");
-      return;
-    }
-    const totalPercentage = validSyllabusItems.reduce((sum, item) => sum + item.percentage, 0);
-    if (totalPercentage < 90 || totalPercentage > 110) {
-      toast.error(`Total syllabus percentage (${totalPercentage}%) should be approximately 100%`);
-      return;
-    }
-
-    const resolvedDefId = await resolveDefinitionId();
-    if (resolvedDefId === undefined) return; // validation failed
-
-    // EDIT MODE
-    if (editingId) {
-      const updated = await updateJobTest({
-        id: editingId,
-        title,
-        description,
-        organization,
-        duration,
-        questions,
-        syllabus: validSyllabusItems,
-        definition_id: resolvedDefId,
-      });
-      if (updated) {
-        queryClient.invalidateQueries({ queryKey: ["job-tests"] });
-        setIsAddDialogOpen(false);
-        resetForm();
-        toast.success(`Mock test "${title}" updated`);
-      } else {
-        toast.error("Failed to update mock test");
-      }
-      return;
-    }
-
-    const added = await addJobTest({
-      title,
-      description,
-      organization,
-      duration,
-      questions,
-      syllabus: validSyllabusItems,
-      definition_id: resolvedDefId,
-    });
-
-    if (added) {
-      queryClient.invalidateQueries({ queryKey: ["job-tests"] });
-      setIsAddDialogOpen(false);
-      resetForm();
-      toast.success(`Job Test "${title}" added successfully`);
-      // Auto-trigger AI Magic SEO refinement on create (non-blocking).
-      toast.info("✨ Generating SEO with AI Magic…");
-      enhanceJobTestSEO(added)
-        .then((res) => {
-          if (res) {
-            queryClient.invalidateQueries({ queryKey: ["job-tests"] });
-            toast.success("✨ SEO metadata generated");
-          }
-        })
-        .catch(() => {/* non-blocking; manual re-run available */});
-    } else {
-      toast.error("Failed to add job test");
-    }
-  };
-
-  const handleStartEdit = (test: JobTest) => {
-    setEditingId(test.id);
-    setTitle(test.title);
-    setDescription(test.description || "");
-    setOrganization(test.organization || "");
-    setDuration(test.duration || 90);
-    setQuestions(test.questions || 100);
-    setSyllabusItems(
-      test.syllabus && test.syllabus.length ? test.syllabus : [{ topic: "", percentage: 0 }],
-    );
-    if (test.definition_id) {
-      setDefinitionMode("link");
-      setDefinitionId(test.definition_id);
-    } else {
-      setDefinitionMode("skip");
-      setDefinitionId(null);
-    }
-    setIsAddDialogOpen(true);
-  };
-
 
   const handleEnhanceJobTest = async (test: JobTest) => {
     setEnhancingId(test.id);
@@ -212,56 +54,23 @@ export function useJobTestManagement() {
   };
 
   const handleRemoveJobTest = async (id: string) => {
-    if (window.confirm(`Are you sure you want to delete this job test?`)) {
+    if (window.confirm(`Are you sure you want to delete this mock test?`)) {
       const removed = await removeJobTest(id);
       if (removed) {
         queryClient.invalidateQueries({ queryKey: ["job-tests"] });
-        toast.success("Job test removed successfully");
+        toast.success("Mock test removed successfully");
       } else {
-        toast.error("Failed to remove job test");
+        toast.error("Failed to remove mock test");
       }
     }
   };
 
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setOrganization('');
-    setDuration(90);
-    setQuestions(100);
-    setSyllabusItems([{ topic: '', percentage: 0 }]);
-    setDefinitionMode("skip");
-    setDefinitionId(null);
-    setNewDefinitionTitle('');
-    setEditingId(null);
-  };
-
   return {
     jobTests,
-    definitions,
     isLoading,
-    isAddDialogOpen,
-    setIsAddDialogOpen,
-    title, setTitle,
-    description, setDescription,
-    organization, setOrganization,
-    duration, setDuration,
-    questions, setQuestions,
-    syllabusItems,
-    handleAddSyllabusItem,
-    handleRemoveSyllabusItem,
-    handleSyllabusItemChange,
-    handleAddJobTest,
-    handleStartEdit,
     handleRemoveJobTest,
     handleEnhanceJobTest,
     handleEnhanceAll,
     enhancingId,
-    editingId,
-    definitionMode, setDefinitionMode,
-    definitionId, setDefinitionId,
-    newDefinitionTitle, setNewDefinitionTitle,
-    resetForm
   };
 }
-
