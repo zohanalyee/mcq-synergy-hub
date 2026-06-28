@@ -1,12 +1,6 @@
 import React from "react";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { Link2, Plus, Ban } from "lucide-react";
 import { JobTestDefinition } from "@/services/jobTestService";
 
@@ -18,6 +12,9 @@ interface DefinitionLinkFieldProps {
   setMode: (m: DefinitionMode) => void;
   definitionId: string | null;
   setDefinitionId: (id: string | null) => void;
+  /** Title to prefill a newly-created definition (the mock test's title). */
+  newDefinitionTitle: string;
+  setNewDefinitionTitle: (t: string) => void;
 }
 
 /**
@@ -25,6 +22,10 @@ interface DefinitionLinkFieldProps {
  *  - Skip:   keep this as a standalone legacy test (no linked pool).
  *  - Link:   point at an existing Definition (its syllabus/sample/question pool).
  *  - Create: a fresh draft Definition is created and linked on save.
+ *
+ * NOTE: This lives inside a Radix Dialog, so we use a NATIVE <select> here.
+ * The Radix Select component has known pointer-event / z-index conflicts
+ * inside Dialogs (see project memory: "Dialog Form Select Constraints").
  */
 const DefinitionLinkField = ({
   definitions,
@@ -32,6 +33,8 @@ const DefinitionLinkField = ({
   setMode,
   definitionId,
   setDefinitionId,
+  newDefinitionTitle,
+  setNewDefinitionTitle,
 }: DefinitionLinkFieldProps) => {
   const options: { value: DefinitionMode; label: string; icon: React.ReactNode }[] = [
     { value: "skip", label: "Skip", icon: <Ban className="h-4 w-4" /> },
@@ -73,34 +76,49 @@ const DefinitionLinkField = ({
       </div>
 
       {mode === "link" && (
-        <Select
-          value={definitionId ?? undefined}
-          onValueChange={(v) => setDefinitionId(v)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select a definition to link…" />
-          </SelectTrigger>
-          <SelectContent>
+        <div className="grid gap-1">
+          <select
+            value={definitionId ?? ""}
+            onChange={(e) => setDefinitionId(e.target.value || null)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          >
+            <option value="">Select a definition to link…</option>
             {definitions.length === 0 ? (
-              <SelectItem value="__none__" disabled>
+              <option value="" disabled>
                 No definitions available
-              </SelectItem>
+              </option>
             ) : (
               definitions.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.job_title} ({d.status})
-                </SelectItem>
+                <option key={d.id} value={d.id}>
+                  {d.job_title}
+                  {d.department ? ` · ${d.department}` : ""} ({d.status})
+                </option>
               ))
             )}
-          </SelectContent>
-        </Select>
+          </select>
+          <p className="text-xs text-muted-foreground">
+            {definitions.length} definition{definitions.length === 1 ? "" : "s"} available.
+          </p>
+        </div>
       )}
 
       {mode === "create" && (
-        <p className="text-xs text-muted-foreground">
-          A new draft Definition named after this test's title will be created and linked. You can
-          curate its syllabus, samples and questions afterwards in the Definitions section.
-        </p>
+        <div className="grid gap-2">
+          <Label htmlFor="new-def-title" className="text-xs font-medium">
+            New definition title
+          </Label>
+          <Input
+            id="new-def-title"
+            value={newDefinitionTitle}
+            onChange={(e) => setNewDefinitionTitle(e.target.value)}
+            placeholder="Name for the new Job Test Definition"
+          />
+          <p className="text-xs text-muted-foreground">
+            A new <span className="font-medium">draft</span> Definition with this title will be
+            created and linked on save. Curate its syllabus, samples and questions afterwards in the
+            Definitions section.
+          </p>
+        </div>
       )}
     </div>
   );
