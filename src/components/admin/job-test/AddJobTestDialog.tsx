@@ -35,6 +35,8 @@ interface AddJobTestDialogProps {
   setDefinitionMode: (m: DefinitionMode) => void;
   definitionId: string | null;
   setDefinitionId: (id: string | null) => void;
+  newDefinitionTitle: string;
+  setNewDefinitionTitle: (t: string) => void;
   // Edit mode
   isEditing?: boolean;
 }
@@ -63,6 +65,8 @@ const AddJobTestDialog = ({
   setDefinitionMode,
   definitionId,
   setDefinitionId,
+  newDefinitionTitle,
+  setNewDefinitionTitle,
   isEditing = false,
 }: AddJobTestDialogProps) => {
   return (
@@ -154,6 +158,8 @@ const AddJobTestDialog = ({
             setMode={setDefinitionMode}
             definitionId={definitionId}
             setDefinitionId={setDefinitionId}
+            newDefinitionTitle={newDefinitionTitle}
+            setNewDefinitionTitle={setNewDefinitionTitle}
           />
         </div>
 
