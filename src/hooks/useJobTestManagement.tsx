@@ -59,8 +59,13 @@ export function useJobTestManagement() {
       return definitionId;
     }
     // create new
+    const defTitle = (newDefinitionTitle || title || "").trim();
+    if (!defTitle) {
+      toast.error("Please enter a title for the new definition.");
+      return undefined;
+    }
     const created = await upsertJobTestDefinition({
-      job_title: title,
+      job_title: defTitle,
       status: "draft",
       syllabus: { sections: [] },
       sample_questions: {},
