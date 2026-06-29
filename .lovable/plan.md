@@ -1,185 +1,156 @@
-# Notification / Alert UI Audit (audit-only — no code changed)
+# Mock Test Generation Speed Audit (findings only)
 
-## Component Inventory
+This is an investigation report. No code has been changed. Fixes at the bottom are proposals awaiting your approval.
 
-### 1. Toasts — TWO systems run at once
+## 1. USER path — what runs when a user starts a mock test
 
+Entry: `src/components/mock-tests/JobTestsTab.tsx` → `handleStartJobTest`.
 
-| File                                                                                              | Mounted | Library         | Position                                                                 | z-index                     | Styling / Tokens                                                                                                                                                                                                           |
-| ------------------------------------------------------------------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/components/ui/sonner.tsx` (`<Sonner>` in `src/App.tsx:257`)                                  | Global  | **sonner**      | `top-right`, `expand`, `visibleToasts=5`, `duration=3000`, `closeButton` | sonner internal (very high) | Wrapper uses tokens (`bg-background`, `text-foreground`, `border-border`) **BUT `richColors={true}**` forces sonner's own green/red/blue success/error/info colors — bypasses brand. ~73 files call `toast` from `sonner`. |
-| `src/components/ui/toast.tsx` + `toaster.tsx` + `use-toast.ts` (`<Toaster>` in `src/App.tsx:256`) | Global  | **Radix toast** | `fixed top-0` mobile, `sm:bottom-0 sm:right-0` desktop (bottom-right)    | `z-[100]`                   | Uses tokens. `TOAST_LIMIT=1`, `TOAST_REMOVE_DELAY=1000000` (~16 min → effectively never auto-dismisses). ~28 files use `@/hooks/use-toast`.                                                                                |
+There are three sub-paths:
 
+- **Isolated/definition path (fast, DB-only):** if `findDefinitionForTest` finds a published definition, it loads `getApprovedQuestionsForDefinition`, does Largest-Remainder quota math, samples questions, inserts a `custom_test_sessions` row, and navigates. No AI. This is the intended fast path.
+- **Guest legacy path (DB-only):** `generateCustomTest` → `getQuestionBank` via the `get_practice_questions` RPC.
+- **Authenticated legacy path (SLOW, AI):** when no definition exists, it runs a **sequential per-subject loop** that calls the `generate-test` edge function once per syllabus subject.
 
-Triggers: success/error/info across services, forms, admin actions, quiz/test flows.
+The slow authenticated loop (`JobTestsTab.tsx` ~lines 288–360) does, per subject, **before** even calling AI:
 
-### 2. Popups / Modals
+- `AICoachService.getExcludedQuestionIds(...)`
+- `Promise.all([getAdaptiveDifficulty, getWeaknessFocusedTopics])`
 
+then `await supabase.functions.invoke("generate-test", ...)` — **serially, one subject at a time**. Before the loop it also awaits `fetchJobTestProgress`, `findDefinitionForTest`, `getEffectiveSyllabus`, and `getUserAnsweredQuestionIds`.
 
-| File                                                                                                    | Trigger                                      | Position                                                          | z-index                              | Library                | Branding                                                                                                     |
-| ------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
-| `src/components/ui/dialog.tsx`                                                                          | shared base                                  | center                                                            | overlay `z-[105]`, content `z-[110]` | Radix Dialog           | tokens                                                                                                       |
-| `src/components/ui/alert-dialog.tsx`                                                                    | confirmations                                | center                                                            | overlay `z-50`, content `z-50`       | Radix AlertDialog      | tokens — **note: far below dialog/toast**                                                                    |
-| `src/components/AIWelcome.tsx`                                                                          | mounted globally (`App.tsx`), shows greeting | `fixed inset-0` center, `bg-black/50 backdrop-blur`               | `z-50`                               | custom + framer-motion | primary/accent gradient, tokens (good)                                                                       |
-| `src/components/NoticeBoard.tsx`                                                                        | welcome/feedback card                        | `fixed inset-0` center                                            | `z-50`                               | custom + framer-motion | tokens, but **hardcoded `text-yellow-500`/`text-gray-300**` stars. Appears **not rendered anywhere** (dead). |
-| `src/components/credits/CreditExhaustedDialog.tsx` (via `GlobalCreditExhaustedListener`, `App.tsx:275`) | AI daily limit event                         | center (Dialog)                                                   | `z-[110]`                            | Radix Dialog           | **hardcoded `green-500/green-50/green-900**` — not brand                                                     |
-| `src/components/auth/GuestChoiceModal.tsx`                                                              | guest vs sign-in choice                      | center (Dialog)                                                   | `z-[110]`                            | Radix Dialog           | tokens (good)                                                                                                |
-| `src/components/reviews/ReviewPopup.tsx`                                                                | —                                            | center (Dialog)                                                   | `z-[110]`                            | Radix Dialog           | **hardcoded `yellow-400**` stars. **Not rendered/imported anywhere (dead component).**                       |
-| `src/components/FloatingFeedbackButton.tsx`                                                             | floating FAB → modal                         | button `fixed bottom-20 right-4 z-40`; modal `fixed inset-0 z-50` | 40 / 50                              | custom                 | tokens. **Imported in `App.tsx:79` but never rendered (dead).**                                              |
+Inside `supabase/functions/generate-test/index.ts` (2,600 lines), each call performs:
 
+- `checkQuota` — a COUNT query on `ai_usage_logs` (`_shared/quotaManager.ts`).
+- A large cache-lookup cascade against `content_items` (exact match, fuzzy match, legacy subject/topic variants, recent-questions) — roughly 10+ `content_items` queries (lines ~1029–1783, 1903).
+- AI generation wrapped in `retryWithBackoff` (`maxRetries`, backoff **5s → 15s → 45s** on any 429/quota/rate-limit).
+- `deduct_credits` RPC + `content_items` inserts + `ai_usage_logs` insert.
 
-### 3. Streak / Gamification alerts
+Net: user cost ≈ `N_subjects × (pre-invoke coach queries + full heavy edge-function run)`, fully serial.
 
+## 2. ADMIN path — what runs when an admin generates questions
 
-| File                                                           | Trigger                                       | Position                     | Styling                                                                 |
-| -------------------------------------------------------------- | --------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------- |
-| `src/components/gamification/StreakCounter.tsx`                | header badge                                  | inline (header, not overlay) | **hardcoded `orange-500`/`red-500` gradient, `orange-600**` — not brand |
-| `src/utils/gamification.ts` (`canvas-confetti`)                | `processTestCompletion`, badge earn           | full-screen canvas           | library default; very high implicit z                                   |
-| `src/components/admin/AIContentFactory.tsx`                    | admin generation success                      | full-screen confetti         | library default                                                         |
-| `src/services/notificationService.ts` → `NotificationBell.tsx` | badge/streak/result events → DB notifications | popover from header bell     | bell **hardcoded `amber-500**`, badge `bg-destructive`                  |
+Entry: `src/components/admin/job-test/GeneratedQuestionsTable.tsx` → `handleGenerate` → `generateForSubject` (`jobTestService.ts`) → edge function `generate-job-test`.
 
+`supabase/functions/generate-job-test/index.ts` (585 lines) is much leaner:
 
-### 4. Other floating / banners / overlays
+- Reads `job_test_definitions` once, generates in batches (`BATCH_SIZE=10`, `MAX_BATCHES=5`, 2s between batches), inserts into `job_test_questions`.
+- **No** `content_items` cache cascade, **no** `checkQuota`, **no** `deduct_credits`, **no** per-subject AI-Coach queries.
+- Admin generates **one subject per click** as a deliberate action — never an N-subject blocking chain.
 
+Both paths ultimately call the same `callAIWithAutoSwitch` (Gemini → Lovable Gateway). Raw model speed is essentially equal; the gap is orchestration around it.
 
-| File                                                                 | Position                                                | z-index                                  | Branding                                                                                                          |
-| -------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `src/components/UserSatisfactionPopup.tsx` (mounted `Index.tsx:551`) | `fixed bottom-6 right-6` card, timed via `localStorage` | `z-50`                                   | **hardcoded `bg-gradient blue-600→indigo-600 text-white`, `yellow-400` stars** — not brand (brand is violet/cyan) |
-| `src/components/MobileBottomNav.tsx`                                 | `fixed bottom-0` nav; sheet overlay                     | nav `z-50`, overlay `z-40`               | tokens                                                                                                            |
-| `src/components/TopProgressBar.tsx`                                  | top route loader                                        | `z-[9998]` / `z-[9999]` (highest in app) | brand-gradient, tokens (good)                                                                                     |
-| `src/components/NotificationBell.tsx`                                | header popover                                          | popover default                          | amber hardcoded                                                                                                   |
+## 3. Comparison — what the user path has that admin doesn't
 
 
-## Positioning Inconsistencies
+| Overhead                      | User (`generate-test`) | Admin (`generate-job-test`) |
+| ----------------------------- | ---------------------- | --------------------------- |
+| Calls per test                | N subjects, **serial** | 1 per click                 |
+| Pre-AI coach DB queries       | 3 × N subjects         | none                        |
+| `content_items` cache cascade | ~10+ queries/call      | none                        |
+| `checkQuota` COUNT            | yes/call               | no                          |
+| `deduct_credits` RPC          | yes/call               | no                          |
+| Backoff on 429                | 5/15/45s sleeps        | none (direct)               |
+| Pre-loop awaits               | 4 sequential           | 1                           |
 
-- **Toasts split across two corners**: sonner = top-right; Radix toast = bottom-right (desktop) / top (mobile). No single rule; a sonner success and a Radix toast can appear in opposite corners simultaneously.
-- **Popups have no consistent anchor**: Radix dialogs + AIWelcome + NoticeBoard are centered, while `UserSatisfactionPopup` sits bottom-right and `FloatingFeedbackButton` modal is centered with its FAB bottom-right.
-- **Mobile vs desktop drift** for Radix toast (top on mobile, bottom-right on desktop) differs from sonner (always top-right).
 
-## Branding Gaps (look like default/unstyled or off-brand)
+## 4. DB-based (non-AI) loading review
 
-- **sonner `richColors**` → default green/red/blue, not brand tokens.
-- `**UserSatisfactionPopup**` → blue/indigo gradient + `text-white` (off-brand vs violet/cyan).
-- `**CreditExhaustedDialog**` → hardcoded greens.
-- `**StreakCounter**` → hardcoded orange/red.
-- `**NotificationBell**` → hardcoded amber.
-- `**ReviewPopup` / `NoticeBoard**` → hardcoded yellow stars.
-- No app logo/typography lockup in any alert/popup header.
+- `testGenerationService.fetchSubjectQuota` is awaited **inside a sequential `for…of` loop** over subjects (no `Promise.all`) — sequential round trips, effectively N+1 by subject. It also issues a second fallback query when the first returns 0.
+- `getQuestionBank` (authenticated) uses `content_items.select('*')` — fetches **all columns** including large text fields, then slices client-side (`limit * 3`). The `excludeIds` becomes a potentially huge `.not('id','in','(...)')` list, which is slow to parse/plan.
+- Definition path's `getApprovedQuestionsForDefinition` loads the full approved pool and filters/shuffles client-side rather than sampling in SQL.
 
-## Overlap / Conflict Issues
+## 5. Estimate — how much slower, and biggest factor
 
-- **Bottom-right pile-up**: `UserSatisfactionPopup` (`bottom-6 right-6 z-50`), Radix toast (desktop bottom-right `z-[100]`), and `MobileBottomNav` (`bottom-0 z-50`) all occupy the bottom-right/bottom edge. On mobile the satisfaction card can sit on top of the bottom nav; toasts can cover the card.
-- **z-index scale is inconsistent and partly inverted**:
-  - TopProgressBar `9998/9999` (top) → Radix toast `100` → Dialog `105/110` → **AlertDialog only `50**` (same level as AIWelcome/NoticeBoard/UserSatisfactionPopup/MobileBottomNav). An AlertDialog opened over a Dialog would render **behind** it.
-  - sonner toaster uses its own high internal z and can render above dialogs unpredictably.
-- **Two welcome-class modals** (`AIWelcome` + `NoticeBoard`, both centered `z-50`) could theoretically both display; no coordination/queue.
-- **Dead components still imported/defined**: `FloatingFeedbackButton` (imported, never rendered), `ReviewPopup` (defined, never used), `NoticeBoard` (no render site found) — dead weight and a source of confusion in the alert system.
+For a 5-subject authenticated mock test (no definition), user latency ≈ `5 × (≈3 coach queries + quota COUNT + ~10 content_items queries + AI batch + credit deduct)`, all serial, versus admin's single lean call. Rough ballpark: **5–10× slower**, and dramatically worse (tens of seconds) whenever a 429 triggers the 5/15/45s backoff.
 
-## Recommendations (for your approval before any code changes)
+**Biggest contributing factor:** serial per-subject invocation of the heavy 2,600-line `generate-test` function, compounded by its `content_items` cache cascade and the multiplied AI-Coach pre-queries. The `retryWithBackoff` sleeps are the worst single latency spike under load.
 
-1. **Consolidate to ONE toast system** (recommend sonner) and remove the Radix `Toaster` + `use-toast`, OR keep Radix only — migrate the 28/73 call sites accordingly. Pick one corner (recommend `top-right`) sitewide.
-2. **Replace `richColors` with brand-token toast variants** (success/error/info using design tokens / brand violet–cyan) so toasts stop looking like a default library.
-3. **Define a single z-index scale** (e.g. tokens: nav 30, popovers 40, dialogs 100, alert-dialog 110, toasts 120, top-progress 9999) and apply consistently — fix `alert-dialog z-50` being below dialogs.
-4. **Standardize off-brand colors** in `UserSatisfactionPopup`, `CreditExhaustedDialog`, `StreakCounter`, `NotificationBell`, star ratings → design tokens / brand gradient.
-5. **Resolve bottom-right pile-up**: give floating cards an offset above `MobileBottomNav` and ensure toasts/cards don't share the same anchor (or queue them).
-6. **Remove dead components** (`FloatingFeedbackButton` import, `ReviewPopup`, `NoticeBoard`) or wire them in intentionally.
-7. **Fix Radix toast auto-dismiss** (`TOAST_REMOVE_DELAY=1000000`) if that system is kept.
-8. Optional: add brand logo/typography lockup to global modals (AIWelcome, GuestChoice, CreditExhausted) for consistency.
+## Proposed fixes (for your approval — not yet implemented)
 
-This is the audit only. Tell me which recommendations to implement and I'll produce a build plan.
+1. **Parallelize per-subject generation** in `JobTestsTab` (bounded `Promise.all`) instead of the serial loop.
+2. **Batch the AI-Coach pre-queries** once per test (or fetch all subjects' exclusions/difficulty in one round) rather than 3 queries × N subjects.
+3. **Slim the `generate-test` cache cascade** — collapse the exact/fuzzy/legacy `content_items` lookups into one indexed query; select only needed columns instead of `*`.
+4. **Tune `retryWithBackoff**` for user-interactive calls (shorter/fewer sleeps, fail fast to DB fallback) while keeping long backoff for background/admin jobs.
+5. **Push sampling into SQL** for the definition and `getQuestionBank` paths (server-side limit/random, fewer columns) to cut payload and client filtering.
+6. **Parallelize `fetchSubjectQuota**` across subjects.
+
+Tell me which of these to implement and I'll switch to build mode with a focused change set.
 
 &nbsp;
 
-Based on the previous audit, implement the following fixes to my notification/alert UI system. Do this in order, and confirm each step works before moving to the next.
+# **Approved — implement fixes #1, #2, and #3 only:**
 
-## STEP 1: Remove dead components
+1. Parallelize per-subject generation in JobTestsTab (replace the 
 
-Delete these files completely, and remove their imports/references:
+   serial for-loop with bounded Promise.all)
 
-- src/components/FloatingFeedbackButton.tsx (and its import in App.tsx)
+2. Batch the AI-Coach pre-queries once per test instead of 3 
 
-- src/components/reviews/ReviewPopup.tsx
+   queries × N subjects
 
-- src/components/NoticeBoard.tsx
+3. Slim the generate-test cache cascade — collapse the exact/
 
-Confirm no other file references them after deletion.
+   fuzzy/legacy content_items lookups into one indexed query, 
 
-## STEP 2: Consolidate to ONE toast system — keep sonner, remove Radix toast
+   select only needed columns instead of *
 
-- Keep src/components/ui/sonner.tsx as the only toast system.
+IMPORTANT CONCERN — Bounded parallelization, not unbounded:
 
-- Migrate all ~28 files currently using `@/hooks/use-toast` (the `toast()` calls from use-toast) to use sonner's `toast` from "sonner" instead, preserving the same message content and success/error/info intent for each call.
+Mock tests can have anywhere from 3 to 10+ subjects. Please confirm 
 
-- After migration, delete src/components/ui/toast.tsx, src/components/ui/toaster.tsx, src/hooks/use-toast.ts, and remove the `<Toaster>` mount from App.tsx.
+the parallelization in #1 uses a CONCURRENCY LIMIT (e.g., process 
 
-- Set sonner's position to `top-right` sitewide (already set — keep it) and keep `duration=3000`.
+3-4 subjects at a time in batches), NOT firing all N subjects' AI 
 
-## STEP 3: Fix toast branding — replace richColors with brand tokens
+calls simultaneously. Firing too many AI calls at once risks 
 
-- Turn OFF sonner's `richColors` prop.
+triggering MORE 429 rate-limit errors, which would be counter-
 
-- Create custom toast style variants (success / error / info / warning) using the app's existing design tokens (the same violet–cyan brand palette already used elsewhere, e.g. AIWelcome.tsx and TopProgressBar.tsx) instead of sonner's default green/red/blue.
+productive — the goal is speed without increasing failure risk.
 
-- Success = brand primary/green-accent if one exists in tokens, Error = destructive token, Info = brand accent/cyan, Warning = brand amber-equivalent IF one exists in tokens (do not invent a new hardcoded color — check tailwind.config / index.css for existing CSS variables first).
+Please tell me the exact concurrency limit you'll use and the 
 
-## STEP 4: Establish ONE z-index scale and apply it everywhere
+reasoning behind that number (e.g., based on Gemini's per-minute 
 
-Define these z-index levels as a comment block at the top of src/index.css (or tailwind.config) and apply them consistently across every alert/popup/overlay component:
+RPM limit) before implementing.
 
-- Base content: 0–10
+DO NOT touch #4 (retry/backoff timing — the 5s/15s/45s sleeps). 
 
-- Sticky nav / bottom nav: 30
+This backoff is an intentional safety net that keeps the system 
 
-- Floating buttons/FABs: 40
+gracefully retrying instead of hard-failing when rate limits are 
 
-- Popovers/dropdowns/notification bell: 50
+hit. We are not changing this until we add multiple Gemini API 
 
-- Dialog/Modal overlay + content: 100
+key rotation (separate pending work, not yet implemented). Reducing 
 
-- AlertDialog overlay + content: 110 (must render ABOVE regular Dialog since confirmations are usually more urgent — fix the current bug where it's at z-50, same as Dialog)
+backoff now would make rate-limit failures more frequent and more 
 
-- Toasts (sonner): 120
+visible to users, not less.
 
-- Top progress bar / route loader: 9999 (stays highest, unchanged)
+Hold off on #5 and #6 (SQL-side sampling changes) for now — let's 
 
-Update every component listed in the audit (dialog.tsx, alert-dialog.tsx, AIWelcome.tsx, CreditExhaustedDialog.tsx, GuestChoiceModal.tsx, UserSatisfactionPopup.tsx, MobileBottomNav.tsx, NotificationBell.tsx) to use this scale via consistent Tailwind z-index classes — no arbitrary one-off values left behind.
+measure the impact of 1-3 first before going further.
 
-## STEP 5: Fix off-brand hardcoded colors
+After implementing, please:
 
-Replace all hardcoded Tailwind color classes with brand design tokens (check tailwind.config / index.css for the existing violet-cyan brand tokens and reuse them — do not invent new colors):
+1. Confirm the concurrency limit chosen and why
 
-- src/components/credits/CreditExhaustedDialog.tsx — replace hardcoded green-500/green-50/green-900
+2. Confirm the existing 429 retry/backoff behavior is fully 
 
-- src/components/gamification/StreakCounter.tsx — replace hardcoded orange-500/red-500/orange-600
+   unchanged and still triggers correctly
 
-- src/components/NotificationBell.tsx — replace hardcoded amber-500
+3. Provide before/after timing estimates for a typical 5-subject 
 
-- src/components/UserSatisfactionPopup.tsx — replace hardcoded blue-600/indigo-600/text-white gradient AND yellow-400 stars
+   and a 10-subject test, if possible
 
-Keep the same layout/behavior — only swap colors to match brand tokens.
+4. Test that test generation still works correctly end-to-end 
 
-## STEP 6: Fix positioning conflicts (bottom-right pile-up)
+   (not just faster, but still produces correct, complete question 
 
-- src/components/UserSatisfactionPopup.tsx currently sits at `fixed bottom-6 right-6`, same zone as MobileBottomNav `fixed bottom-0`) and desktop toasts. On mobile, add bottom offset so it sits ABOVE the bottom nav bar (not overlapping it) — use a responsive class like `bottom-20` on mobile, `bottom-6` on desktop where there's no bottom nav.
+   sets)
 
-- Ensure toasts (top-right) and UserSatisfactionPopup (bottom-right) don't visually compete since they're now in different corners — confirm this is the case after Step 2.
+&nbsp;
 
-## STEP 7: Fix Radix toast leftover bug (only if any Radix toast usage remains after Step 2 migration)
-
-N/A if Step 2 fully removes Radix toast — confirm full removal instead.
-
-## STEP 8: Add brand identity to major modals
-
-Add the app logo (small, top-left or centered above title) and use brand typography/heading style already used elsewhere in the app to:
-
-- AIWelcome.tsx
-
-- GuestChoiceModal.tsx
-
-- CreditExhaustedDialog.tsx
-
-Keep this lightweight — don't redesign the modals, just add the logo lockup consistent with the rest of the app.
-
-After all steps, give me a summary of every file changed and confirm: (1) no dead components remain, (2) only one toast system is active, (3) z-index scale is consistent app-wide, (4) no hardcoded off-brand colors remain in the listed components, (5) UserSatisfactionPopup no longer overlaps MobileBottomNav on mobile.
-
-Do not change any unrelated functionality, quiz logic, or business logic — this is UI/UX/branding only.
+I want concrete before/after numbers, not just "it will be faster" — please estimate based on the actual query/AI-call timings you found in the audit.
