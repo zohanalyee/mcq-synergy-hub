@@ -84,9 +84,9 @@ const StreakCounter = () => {
   }
 
   return (
-    <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-gradient-to-r from-orange-500/10 to-red-500/10 border border-orange-500/20">
-      <Flame className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${streak > 0 ? 'text-orange-500' : 'text-muted-foreground'}`} />
-      <span className={`text-xs sm:text-sm font-medium ${streak > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-muted-foreground'}`}>
+    <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1 sm:py-1.5 rounded-full bg-brand-gradient-soft border border-primary/20">
+      <Flame className={`h-3.5 w-3.5 sm:h-4 sm:w-4 ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`} />
+      <span className={`text-xs sm:text-sm font-medium ${streak > 0 ? 'text-primary' : 'text-muted-foreground'}`}>
         {streak}<span className="hidden sm:inline"> Day{streak !== 1 ? 's' : ''}</span>
       </span>
     </div>
