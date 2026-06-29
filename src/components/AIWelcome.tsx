@@ -48,6 +48,9 @@ const AIWelcome = () => {
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
 
+                <BrandMark className="mb-4" />
+
+
                 <div className="flex items-start gap-4 mb-4">
                   <div className="relative">
                     <motion.div
