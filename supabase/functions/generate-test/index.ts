@@ -1704,79 +1704,47 @@ Write the advice now:`;
           };
           const baseSelect = 'id, title, options, correct_option, explanation, topic, subject, difficulty';
 
+          // Perf: these subject-scope lookups are independent (they all merge into
+          // mergedById by id). Run them in ONE parallel wave instead of awaiting each
+          // sequentially. Selects already request only the needed columns (no select('*')).
+          const textScopes = [...new Set([resolvedSubjectName, ...resolvedSubjectTopicNames].filter(Boolean))];
+
+          const buildScoped = () => {
+            let base = supabase
+              .from('content_items')
+              .select(baseSelect)
+              .eq('category', 'mcq')
+              .eq('status', 'approved')
+              .not('quality_grade', 'in', '(D,F)');
+            if (safeExcludeIds.length > 0) base = base.not('id', 'in', `(${safeExcludeIds.join(',')})`);
+            return base;
+          };
+
+          const scopedQueries: Promise<{ data: any[] | null; error: any }>[] = [];
+
           if (resolvedSubjectTopicIds.length > 0) {
-            let qByTopicId = supabase
-              .from('content_items')
-              .select(baseSelect)
-              .eq('category', 'mcq')
-              .eq('status', 'approved')
-              .not('quality_grade', 'in', '(D,F)')
-              .in('topic_id', resolvedSubjectTopicIds);
-            if (safeExcludeIds.length > 0) qByTopicId = qByTopicId.not('id', 'in', `(${safeExcludeIds.join(',')})`);
-            const rByTopicId = await qByTopicId.limit(subjectLimit);
-            if (rByTopicId.error) dbError = rByTopicId.error;
-            mergeRows(rByTopicId.data);
+            scopedQueries.push(buildScoped().in('topic_id', resolvedSubjectTopicIds).limit(subjectLimit));
+          }
+          if (resolvedSubjectCanonicalNames.length > 0) {
+            scopedQueries.push(buildScoped().in('canonical_topic_name', resolvedSubjectCanonicalNames).limit(subjectLimit));
+          }
+          if (textScopes.length > 0) {
+            scopedQueries.push(buildScoped().in('topic', textScopes).limit(subjectLimit));
+            scopedQueries.push(buildScoped().in('subject', textScopes).limit(subjectLimit));
+          }
+          if (resolvedSubjectName) {
+            scopedQueries.push(buildScoped().ilike('topic', `%${resolvedSubjectName}%`).limit(subjectLimit));
           }
 
-          if (!dbError && resolvedSubjectCanonicalNames.length > 0) {
-            let qByCanonical = supabase
-              .from('content_items')
-              .select(baseSelect)
-              .eq('category', 'mcq')
-              .eq('status', 'approved')
-              .not('quality_grade', 'in', '(D,F)')
-              .in('canonical_topic_name', resolvedSubjectCanonicalNames);
-            if (safeExcludeIds.length > 0) qByCanonical = qByCanonical.not('id', 'in', `(${safeExcludeIds.join(',')})`);
-            const rByCanonical = await qByCanonical.limit(subjectLimit);
-            if (rByCanonical.error) dbError = rByCanonical.error;
-            mergeRows(rByCanonical.data);
-          }
-
-          if (!dbError) {
-            const textScopes = [...new Set([resolvedSubjectName, ...resolvedSubjectTopicNames].filter(Boolean))];
-            if (textScopes.length > 0) {
-              let qByTopicText = supabase
-                .from('content_items')
-                .select(baseSelect)
-                .eq('category', 'mcq')
-                .eq('status', 'approved')
-                .not('quality_grade', 'in', '(D,F)')
-                .in('topic', textScopes);
-              if (safeExcludeIds.length > 0) qByTopicText = qByTopicText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
-              const rByTopicText = await qByTopicText.limit(subjectLimit);
-              if (rByTopicText.error) dbError = rByTopicText.error;
-              mergeRows(rByTopicText.data);
-
-              let qBySubjectText = supabase
-                .from('content_items')
-                .select(baseSelect)
-                .eq('category', 'mcq')
-                .eq('status', 'approved')
-                .not('quality_grade', 'in', '(D,F)')
-                .in('subject', textScopes);
-              if (safeExcludeIds.length > 0) qBySubjectText = qBySubjectText.not('id', 'in', `(${safeExcludeIds.join(',')})`);
-              const rBySubjectText = await qBySubjectText.limit(subjectLimit);
-              if (rBySubjectText.error) dbError = rBySubjectText.error;
-              mergeRows(rBySubjectText.data);
-            }
-          }
-
-          if (!dbError) {
-            let qBySubjectLabel = supabase
-              .from('content_items')
-              .select(baseSelect)
-              .eq('category', 'mcq')
-              .eq('status', 'approved')
-              .not('quality_grade', 'in', '(D,F)')
-              .ilike('topic', `%${resolvedSubjectName}%`);
-            if (safeExcludeIds.length > 0) qBySubjectLabel = qBySubjectLabel.not('id', 'in', `(${safeExcludeIds.join(',')})`);
-            const rBySubjectLabel = await qBySubjectLabel.limit(subjectLimit);
-            if (rBySubjectLabel.error) dbError = rBySubjectLabel.error;
-            mergeRows(rBySubjectLabel.data);
+          const scopedResults = await Promise.all(scopedQueries);
+          for (const r of scopedResults) {
+            if (r.error) dbError = r.error;
+            mergeRows(r.data);
           }
 
           existingQuestions = Array.from(mergedById.values());
           console.log(`🔒 STRICT subject="${resolvedSubjectName}" topics=${resolvedSubjectTopicIds.length} → ${existingQuestions?.length ?? 0} rows`);
+
         } else {
           // Legacy callers: original behavior
           let cacheQuery = supabase
