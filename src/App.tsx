@@ -252,11 +252,9 @@ const App = () => {
                     <PageLoader />
                     <AIWelcome />
                     <NavigationLoader />
-                    <Toaster />
                     <Sonner 
                       position="top-right"
                       expand={true}
-                      richColors={true}
                       closeButton={true}
                       toastOptions={{
                         duration: 3000,
