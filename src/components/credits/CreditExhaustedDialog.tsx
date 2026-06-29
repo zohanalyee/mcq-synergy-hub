@@ -1,6 +1,7 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { CheckCircle } from 'lucide-react';
+import BrandMark from '@/components/BrandMark';
 
 interface Props {
   open: boolean;
