@@ -28,6 +28,7 @@ const GuestChoiceModal = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
+          <BrandMark className="justify-center mb-1" />
           <DialogTitle className="text-center text-lg">
             How would you like to continue?
           </DialogTitle>
