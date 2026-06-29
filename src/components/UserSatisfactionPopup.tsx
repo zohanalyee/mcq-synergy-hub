@@ -167,7 +167,7 @@ const UserSatisfactionPopup = () => {
                   size={28}
                   className={`transition-colors ${
                     star <= (hoveredStar || rating)
-                      ? "fill-yellow-400 text-yellow-400"
+                      ? "fill-primary text-primary"
                       : "text-muted-foreground/30"
                   }`}
                 />
