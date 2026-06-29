@@ -178,7 +178,7 @@ const UserSatisfactionPopup = () => {
           <Button
             onClick={handleSubmit}
             disabled={rating === 0 || submitting}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg text-white"
+            className="w-full bg-brand-gradient text-white hover:shadow-brand"
             size="sm"
           >
             {submitting ? "Submitting..." : "Submit Rating"}
