@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedGreeting } from '@/lib/greetings';
+import BrandMark from '@/components/BrandMark';
 
 const AIWelcome = () => {
   const { user, profile } = useAuth();
