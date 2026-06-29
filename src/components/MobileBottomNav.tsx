@@ -145,7 +145,7 @@ const MobileBottomNav = () => {
     <>
       <nav
         className={cn(
-          "fixed bottom-0 left-0 right-0 z-50 safe-area-pb transition-transform duration-300 ease-out",
+          "fixed bottom-0 left-0 right-0 z-30 safe-area-pb transition-transform duration-300 ease-out",
           hidden ? "translate-y-full" : "translate-y-0",
         )}
       >
