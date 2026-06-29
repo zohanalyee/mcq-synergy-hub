@@ -75,7 +75,7 @@ const AdminPanel = lazyWithReload(() => import("./pages/AdminPanel"));
 const ExternalCuration = lazyWithReload(() => import("./pages/admin/ExternalCuration"));
 const ReviewsManagement = lazyWithReload(() => import("./pages/admin/ReviewsManagement"));
 
-import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
+
 import MobileBottomNav from "@/components/MobileBottomNav";
 
 const Profile = lazy(() => import("./pages/Profile"));
