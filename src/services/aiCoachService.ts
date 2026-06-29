@@ -531,6 +531,91 @@ export class AICoachService {
   }
 
   /**
+   * Perf: batched coach pre-queries for a multi-subject test.
+   *
+   * Replaces the previous pattern of 3 separate user_performance queries PER
+   * subject (getExcludedQuestionIds + getAdaptiveDifficulty + getWeaknessFocusedTopics)
+   * with a SINGLE user_performance read for the whole user, then computes the
+   * per-subject excluded ids / adaptive difficulty / weak topics entirely in memory.
+   *
+   * Returns a Map keyed by subject. Subjects with no history fall back to the
+   * same defaults the per-subject methods used (medium difficulty, empty lists).
+   */
+  static async getBatchCoachData(
+    userId: string,
+    subjects: string[],
+    weakTopicCount = 5
+  ): Promise<Map<string, { excludeIds: string[]; difficulty: AdaptiveDifficulty; weakTopics: string[] }>> {
+    const result = new Map<string, { excludeIds: string[]; difficulty: AdaptiveDifficulty; weakTopics: string[] }>();
+    const uniqueSubjects = Array.from(new Set(subjects.filter(Boolean)));
+    for (const s of uniqueSubjects) result.set(s, { excludeIds: [], difficulty: "medium", weakTopics: [] });
+    if (!userId || uniqueSubjects.length === 0) return result;
+
+    try {
+      const { data, error } = await supabase
+        .from("user_performance")
+        .select("subject, topic, weakness_score, total_attempts, correct_attempts, question_ids")
+        .eq("user_id", userId)
+        .in("subject", uniqueSubjects);
+
+      if (error || !data) return result;
+
+      // Group rows by subject.
+      const bySubject = new Map<string, any[]>();
+      for (const row of data as any[]) {
+        const subj = row.subject;
+        if (!subj) continue;
+        if (!bySubject.has(subj)) bySubject.set(subj, []);
+        bySubject.get(subj)!.push(row);
+      }
+
+      for (const subject of uniqueSubjects) {
+        const rows = bySubject.get(subject) ?? [];
+
+        // 1) Excluded ids (mirrors getExcludedQuestions id aggregation).
+        const ids = new Set<string>();
+        for (const row of rows) {
+          for (const id of row.question_ids ?? []) if (UUID_RE.test(id)) ids.add(id);
+        }
+
+        // 2) Adaptive difficulty (mirrors getAdaptiveDifficulty), respecting cooldown.
+        let difficulty: AdaptiveDifficulty = readDiffCooldown(userId, subject) ?? "medium";
+        if (!readDiffCooldown(userId, subject)) {
+          const totals = rows.reduce(
+            (acc, r) => {
+              acc.t += r.total_attempts ?? 0;
+              acc.c += r.correct_attempts ?? 0;
+              return acc;
+            },
+            { t: 0, c: 0 }
+          );
+          if (totals.t < 5) difficulty = "medium";
+          else {
+            const rate = totals.c / totals.t;
+            difficulty = rate > 0.8 ? "hard" : rate < 0.5 ? "easy" : "medium";
+          }
+          writeDiffCooldown(userId, subject, difficulty);
+        }
+
+        // 3) Weak topics (mirrors getWeaknessFocusedTopics ordering).
+        const weakTopics = rows
+          .filter((r) => r.topic && (r.total_attempts ?? 0) > 0)
+          .sort((a, b) => (b.weakness_score ?? 50) - (a.weakness_score ?? 50))
+          .slice(0, weakTopicCount)
+          .map((r) => r.topic as string);
+
+        result.set(subject, { excludeIds: Array.from(ids), difficulty, weakTopics });
+      }
+
+      return result;
+    } catch (e) {
+      console.error("[AICoach] getBatchCoachData error:", e);
+      return result;
+    }
+  }
+
+
+  /**
    * Spaced repetition: should this topic be retested now?
    * Interval grows with the number of "wrong-dominant" past attempts (capped at 14d).
    */
