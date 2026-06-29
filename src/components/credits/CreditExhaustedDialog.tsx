@@ -11,6 +11,7 @@ const CreditExhaustedDialog = ({ open, onClose }: Props) => {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-md">
+        <BrandMark className="justify-center mb-1" />
         <div className="text-center">
           <CheckCircle className="w-16 h-16 mx-auto text-primary" />
           <h2 className="text-xl font-bold mt-4">Daily AI Limit Reached</h2>
