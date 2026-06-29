@@ -6,6 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { UserX, UserCheck, Check, X } from 'lucide-react';
+import BrandMark from '@/components/BrandMark';
 
 interface GuestChoiceModalProps {
   open: boolean;
