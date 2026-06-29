@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Link, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { getLocalizedGreeting } from '@/lib/greetings';
+import BrandMark from '@/components/BrandMark';
 
 const AIWelcome = () => {
   const { user, profile } = useAuth();
@@ -32,7 +33,7 @@ const AIWelcome = () => {
   return (
     <AnimatePresence>
       {show && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -47,6 +48,9 @@ const AIWelcome = () => {
                 >
                   <X className="w-4 h-4 text-muted-foreground" />
                 </button>
+
+                <BrandMark className="mb-4" />
+
 
                 <div className="flex items-start gap-4 mb-4">
                   <div className="relative">

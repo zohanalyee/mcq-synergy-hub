@@ -1,4 +1,3 @@
-import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -76,7 +75,7 @@ const AdminPanel = lazyWithReload(() => import("./pages/AdminPanel"));
 const ExternalCuration = lazyWithReload(() => import("./pages/admin/ExternalCuration"));
 const ReviewsManagement = lazyWithReload(() => import("./pages/admin/ReviewsManagement"));
 
-import FloatingFeedbackButton from "@/components/FloatingFeedbackButton";
+
 import MobileBottomNav from "@/components/MobileBottomNav";
 
 const Profile = lazy(() => import("./pages/Profile"));
@@ -253,11 +252,9 @@ const App = () => {
                     <PageLoader />
                     <AIWelcome />
                     <NavigationLoader />
-                    <Toaster />
                     <Sonner 
                       position="top-right"
                       expand={true}
-                      richColors={true}
                       closeButton={true}
                       toastOptions={{
                         duration: 3000,

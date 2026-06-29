@@ -1,194 +1,185 @@
-# Unify Mock Tests + Definitions into One Editor
+# Notification / Alert UI Audit (audit-only — no code changed)
 
-## Goal
+## Component Inventory
 
-There will be exactly ONE place to create/edit a mock test. Opening a mock test for edit shows everything in tabs — Basic Info, Syllabus, Samples, Questions, Logs — with no separate "Job Test Definitions" panel and no "link/create" indirection.
+### 1. Toasts — TWO systems run at once
 
-## Current state (confirmed)
 
-- The admin "Mock Tests" tab (`AdminTabs.tsx` → `JobTestManager`) currently shows TWO sections: an "Isolated System" list of `job_test_definitions` (editable via `JobTestDefinitionEditor` with the 5 tabs) and a "Legacy Job Tests" table of `job_tests` (edited via the basic `AddJobTestDialog`).
-- `job_tests.definition_id` already exists as the link column, but only 1 of 30 tests is linked.
-- The rich data lives in `job_test_definitions` + `job_test_questions` (questions are keyed by `job_test_id = definition.id`).
-- Two real definitions exist:
-  - **Junior Clerk (BPS-11)** — `ef50cfc9…` — 4 syllabus sections, 90 questions, published.
-  - **Teaching License Test** — `e6d6b6a3…` — 5 sections, 100 questions, published.
-  - Plus 3 empty "New Job Test" drafts and 1 "Secondary School Teachers (SST)" draft (already linked, empty).
+| File                                                                                              | Mounted | Library         | Position                                                                 | z-index                     | Styling / Tokens                                                                                                                                                                                                           |
+| ------------------------------------------------------------------------------------------------- | ------- | --------------- | ------------------------------------------------------------------------ | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/components/ui/sonner.tsx` (`<Sonner>` in `src/App.tsx:257`)                                  | Global  | **sonner**      | `top-right`, `expand`, `visibleToasts=5`, `duration=3000`, `closeButton` | sonner internal (very high) | Wrapper uses tokens (`bg-background`, `text-foreground`, `border-border`) **BUT `richColors={true}**` forces sonner's own green/red/blue success/error/info colors — bypasses brand. ~73 files call `toast` from `sonner`. |
+| `src/components/ui/toast.tsx` + `toaster.tsx` + `use-toast.ts` (`<Toaster>` in `src/App.tsx:256`) | Global  | **Radix toast** | `fixed top-0` mobile, `sm:bottom-0 sm:right-0` desktop (bottom-right)    | `z-[100]`                   | Uses tokens. `TOAST_LIMIT=1`, `TOAST_REMOVE_DELAY=1000000` (~16 min → effectively never auto-dismisses). ~28 files use `@/hooks/use-toast`.                                                                                |
 
-## Target design
 
-Every `job_tests` row is backed by exactly one `job_test_definitions` row (1:1 via `definition_id`). The mock test editor becomes a single tabbed surface:
+Triggers: success/error/info across services, forms, admin actions, quiz/test flows.
 
-```text
-Edit Mock Test: "Junior Clerk (BPS-11)"
-┌───────────────────────────────────────────────┐
-│ [Basic Info] [Syllabus] [Samples] [Questions] [Logs] │
-├───────────────────────────────────────────────┤
-│ Basic Info: title, description, organization,   │
-│   duration, # questions, weighted syllabus list │
-│ Syllabus/Samples/Questions/Logs: the existing   │
-│   JobTestDefinitionEditor tab content, inline    │
-└───────────────────────────────────────────────┘
-```
+### 2. Popups / Modals
 
-When an admin opens (or creates) a mock test:
 
-1. If the test has no `definition_id`, one is auto-created on first save (or lazily on open) and linked — invisible to the admin; no "skip/link/create" choice.
-2. The same dialog renders Basic Info plus the embedded definition tabs, both saving to their respective tables on Save.
+| File                                                                                                    | Trigger                                      | Position                                                          | z-index                              | Library                | Branding                                                                                                     |
+| ------------------------------------------------------------------------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------- | ------------------------------------ | ---------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/components/ui/dialog.tsx`                                                                          | shared base                                  | center                                                            | overlay `z-[105]`, content `z-[110]` | Radix Dialog           | tokens                                                                                                       |
+| `src/components/ui/alert-dialog.tsx`                                                                    | confirmations                                | center                                                            | overlay `z-50`, content `z-50`       | Radix AlertDialog      | tokens — **note: far below dialog/toast**                                                                    |
+| `src/components/AIWelcome.tsx`                                                                          | mounted globally (`App.tsx`), shows greeting | `fixed inset-0` center, `bg-black/50 backdrop-blur`               | `z-50`                               | custom + framer-motion | primary/accent gradient, tokens (good)                                                                       |
+| `src/components/NoticeBoard.tsx`                                                                        | welcome/feedback card                        | `fixed inset-0` center                                            | `z-50`                               | custom + framer-motion | tokens, but **hardcoded `text-yellow-500`/`text-gray-300**` stars. Appears **not rendered anywhere** (dead). |
+| `src/components/credits/CreditExhaustedDialog.tsx` (via `GlobalCreditExhaustedListener`, `App.tsx:275`) | AI daily limit event                         | center (Dialog)                                                   | `z-[110]`                            | Radix Dialog           | **hardcoded `green-500/green-50/green-900**` — not brand                                                     |
+| `src/components/auth/GuestChoiceModal.tsx`                                                              | guest vs sign-in choice                      | center (Dialog)                                                   | `z-[110]`                            | Radix Dialog           | tokens (good)                                                                                                |
+| `src/components/reviews/ReviewPopup.tsx`                                                                | —                                            | center (Dialog)                                                   | `z-[110]`                            | Radix Dialog           | **hardcoded `yellow-400**` stars. **Not rendered/imported anywhere (dead component).**                       |
+| `src/components/FloatingFeedbackButton.tsx`                                                             | floating FAB → modal                         | button `fixed bottom-20 right-4 z-40`; modal `fixed inset-0 z-50` | 40 / 50                              | custom                 | tokens. **Imported in `App.tsx:79` but never rendered (dead).**                                              |
 
-## Implementation
 
-### 1. New unified editor component
+### 3. Streak / Gamification alerts
 
-Create `src/components/admin/job-test/MockTestEditor.tsx` that replaces `AddJobTestDialog` + `DefinitionLinkField`. It hosts a `Tabs` with:
 
-- **Basic Info** tab: the existing fields from `AddJobTestDialog` (title/description/organization/duration/questions + `SyllabusItemForm`), saving to `job_tests`.
-- **Syllabus / Samples / Questions / Logs** tabs: reuse the existing tab bodies extracted from `JobTestDefinitionEditor` (syllabus section editor, `SampleQuestionsEditor`, `GeneratedQuestionsTable`, `GenerationLogsTable`), operating on the backing definition.
+| File                                                           | Trigger                                       | Position                     | Styling                                                                 |
+| -------------------------------------------------------------- | --------------------------------------------- | ---------------------------- | ----------------------------------------------------------------------- |
+| `src/components/gamification/StreakCounter.tsx`                | header badge                                  | inline (header, not overlay) | **hardcoded `orange-500`/`red-500` gradient, `orange-600**` — not brand |
+| `src/utils/gamification.ts` (`canvas-confetti`)                | `processTestCompletion`, badge earn           | full-screen canvas           | library default; very high implicit z                                   |
+| `src/components/admin/AIContentFactory.tsx`                    | admin generation success                      | full-screen confetti         | library default                                                         |
+| `src/services/notificationService.ts` → `NotificationBell.tsx` | badge/streak/result events → DB notifications | popover from header bell     | bell **hardcoded `amber-500**`, badge `bg-destructive`                  |
 
-To avoid duplicating logic, refactor `JobTestDefinitionEditor` so its tab bodies can be reused (export the inner editor or split into `DefinitionTabs` that takes a `definition` + `onChange`). The unified editor manages one `definition` object and one `job_tests` object together.
 
-Save behavior: "Save" persists both — `updateJobTest`/`addJobTest` for the row and `upsertJobTestDefinition` for the definition — and ensures `definition_id` is set. Creating a brand-new mock test auto-creates the definition (titled from the test title) and links it in the same flow.
+### 4. Other floating / banners / overlays
 
-### 2. Simplify `JobTestManager`
 
-- Remove the entire "Job Test Definitions (Isolated System)" section and the `editing`/`createBlank`/`loadDefinitions` definition-list state.
-- Keep one section: the mock tests table (`JobTestTable`) + "Add Mock Test" + bulk import + "Run AI Magic on All".
-- "Add" and the table's Edit action both open the new `MockTestEditor`.
+| File                                                                 | Position                                                | z-index                                  | Branding                                                                                                          |
+| -------------------------------------------------------------------- | ------------------------------------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `src/components/UserSatisfactionPopup.tsx` (mounted `Index.tsx:551`) | `fixed bottom-6 right-6` card, timed via `localStorage` | `z-50`                                   | **hardcoded `bg-gradient blue-600→indigo-600 text-white`, `yellow-400` stars** — not brand (brand is violet/cyan) |
+| `src/components/MobileBottomNav.tsx`                                 | `fixed bottom-0` nav; sheet overlay                     | nav `z-50`, overlay `z-40`               | tokens                                                                                                            |
+| `src/components/TopProgressBar.tsx`                                  | top route loader                                        | `z-[9998]` / `z-[9999]` (highest in app) | brand-gradient, tokens (good)                                                                                     |
+| `src/components/NotificationBell.tsx`                                | header popover                                          | popover default                          | amber hardcoded                                                                                                   |
 
-### 3. Simplify the hook
 
-In `useJobTestManagement.tsx`, remove the `definitionMode`/`definitionId`/`newDefinitionTitle`/`resolveDefinitionId` link-mode machinery. On edit, load the linked definition (via `findDefinitionForTest`); on save, upsert the definition and persist `definition_id`. On create, auto-create + link the definition.
+## Positioning Inconsistencies
 
-### 4. Remove now-dead pieces
+- **Toasts split across two corners**: sonner = top-right; Radix toast = bottom-right (desktop) / top (mobile). No single rule; a sonner success and a Radix toast can appear in opposite corners simultaneously.
+- **Popups have no consistent anchor**: Radix dialogs + AIWelcome + NoticeBoard are centered, while `UserSatisfactionPopup` sits bottom-right and `FloatingFeedbackButton` modal is centered with its FAB bottom-right.
+- **Mobile vs desktop drift** for Radix toast (top on mobile, bottom-right on desktop) differs from sonner (always top-right).
 
-- Delete `src/components/admin/job-test/DefinitionLinkField.tsx`.
-- Drop the "Linked" badge from `JobTestTable` (every test is backed by a definition now; the badge is meaningless) — optionally replace with a "Questions: N" count.
-- `JobTestDefinitionEditor.tsx` stays only if reused for its tab bodies; otherwise its standalone shell is removed.
+## Branding Gaps (look like default/unstyled or off-brand)
 
-### 5. Data migration (no data loss — relocate/link only)
+- **sonner `richColors**` → default green/red/blue, not brand tokens.
+- `**UserSatisfactionPopup**` → blue/indigo gradient + `text-white` (off-brand vs violet/cyan).
+- `**CreditExhaustedDialog**` → hardcoded greens.
+- `**StreakCounter**` → hardcoded orange/red.
+- `**NotificationBell**` → hardcoded amber.
+- `**ReviewPopup` / `NoticeBoard**` → hardcoded yellow stars.
+- No app logo/typography lockup in any alert/popup header.
 
-Backfill `job_tests.definition_id` so the rich data surfaces in the unified editor:
+## Overlap / Conflict Issues
 
-- Link **Junior Clerk (BPS-11)** definition → the canonical "Junior Clerk (BPS-11)" `job_tests` row (two rows share this title; link the primary and leave the duplicate unlinked or flag for cleanup — see Open Question).
-- Link **Teaching License Test** definition → the matching Sindh Teaching License Exam row (see Open Question for Elementary vs Secondary).
-- For every other `job_tests` row with no `definition_id`, create a minimal backing definition (carrying over the row's weighted syllabus items into `syllabus.sections`) and link it, so the unified tabs are populated and ready for sample/question authoring.
-- Clean up the 3 empty "New Job Test" drafts.
+- **Bottom-right pile-up**: `UserSatisfactionPopup` (`bottom-6 right-6 z-50`), Radix toast (desktop bottom-right `z-[100]`), and `MobileBottomNav` (`bottom-0 z-50`) all occupy the bottom-right/bottom edge. On mobile the satisfaction card can sit on top of the bottom nav; toasts can cover the card.
+- **z-index scale is inconsistent and partly inverted**:
+  - TopProgressBar `9998/9999` (top) → Radix toast `100` → Dialog `105/110` → **AlertDialog only `50**` (same level as AIWelcome/NoticeBoard/UserSatisfactionPopup/MobileBottomNav). An AlertDialog opened over a Dialog would render **behind** it.
+  - sonner toaster uses its own high internal z and can render above dialogs unpredictably.
+- **Two welcome-class modals** (`AIWelcome` + `NoticeBoard`, both centered `z-50`) could theoretically both display; no coordination/queue.
+- **Dead components still imported/defined**: `FloatingFeedbackButton` (imported, never rendered), `ReviewPopup` (defined, never used), `NoticeBoard` (no render site found) — dead weight and a source of confusion in the alert system.
 
-This is done via a one-time SQL migration/data update; existing `job_test_questions` stay attached to their definition IDs and now appear under the linked test's Questions tab.
+## Recommendations (for your approval before any code changes)
 
-### 6. Public side unchanged
+1. **Consolidate to ONE toast system** (recommend sonner) and remove the Radix `Toaster` + `use-toast`, OR keep Radix only — migrate the 28/73 call sites accordingly. Pick one corner (recommend `top-right`) sitewide.
+2. **Replace `richColors` with brand-token toast variants** (success/error/info using design tokens / brand violet–cyan) so toasts stop looking like a default library.
+3. **Define a single z-index scale** (e.g. tokens: nav 30, popovers 40, dialogs 100, alert-dialog 110, toasts 120, top-progress 9999) and apply consistently — fix `alert-dialog z-50` being below dialogs.
+4. **Standardize off-brand colors** in `UserSatisfactionPopup`, `CreditExhaustedDialog`, `StreakCounter`, `NotificationBell`, star ratings → design tokens / brand gradient.
+5. **Resolve bottom-right pile-up**: give floating cards an offset above `MobileBottomNav` and ensure toasts/cards don't share the same anchor (or queue them).
+6. **Remove dead components** (`FloatingFeedbackButton` import, `ReviewPopup`, `NoticeBoard`) or wire them in intentionally.
+7. **Fix Radix toast auto-dismiss** (`TOAST_REMOVE_DELAY=1000000`) if that system is kept.
+8. Optional: add brand logo/typography lockup to global modals (AIWelcome, GuestChoice, CreditExhausted) for consistency.
 
-`/mock-tests` keeps reading `job_tests`; `getMockTestPreviewQuestions`/`findDefinitionForTest` already resolve questions through `definition_id`, so linking makes the rich question pools flow to the public pages automatically.
-
-## Open questions to confirm before migration
-
-1. **Teaching License Test** (5 sections, 100 Qs) — link it to the **Elementary** or **Secondary** School Teacher mock test? (The Secondary row is currently linked to a separate empty "SST" draft — I'd repoint it.)
-2. **Junior Clerk (BPS-11)** appears as two `job_tests` rows — keep both (link one, leave/delete the duplicate) or merge into one?
-
-## Files touched
-
-- Add: `src/components/admin/job-test/MockTestEditor.tsx` (+ possibly `DefinitionTabs.tsx`)
-- Edit: `JobTestManager.tsx`, `useJobTestManagement.tsx`, `JobTestDefinitionEditor.tsx` (refactor for reuse), `JobTestTable.tsx`
-- Delete: `DefinitionLinkField.tsx`, `AddJobTestDialog.tsx` (superseded)
-- Migration: backfill `definition_id`, create backing definitions, cleanup empty drafts
+This is the audit only. Tell me which recommendations to implement and I'll produce a build plan.
 
 &nbsp;
 
-&nbsp;
+Based on the previous audit, implement the following fixes to my notification/alert UI system. Do this in order, and confirm each step works before moving to the next.
 
-# **Updated decisions for the migration:**
+## STEP 1: Remove dead components
 
-&nbsp;
+Delete these files completely, and remove their imports/references:
 
-1. Teaching License Test definition → link to the "Sindh Teaching 
+- src/components/FloatingFeedbackButton.tsx (and its import in App.tsx)
 
-   License Exam (Secondary School Teacher)" mock test.
+- src/components/reviews/ReviewPopup.tsx
 
-&nbsp;
+- src/components/NoticeBoard.tsx
 
-2. Junior Clerk duplicates: Don't try to figure out which is 
+Confirm no other file references them after deletion.
 
-   "correct" — instead, DELETE both existing Junior Clerk Definitions 
+## STEP 2: Consolidate to ONE toast system — keep sonner, remove Radix toast
 
-   AND don't worry about linking them. I will re-upload a fresh 
+- Keep src/components/ui/sonner.tsx as the only toast system.
 
-   Junior Clerk definition via JSON bulk import myself afterward, 
+- Migrate all ~28 files currently using `@/hooks/use-toast` (the `toast()` calls from use-toast) to use sonner's `toast` from "sonner" instead, preserving the same message content and success/error/info intent for each call.
 
-   through the new unified editor.
+- After migration, delete src/components/ui/toast.tsx, src/components/ui/toaster.tsx, src/hooks/use-toast.ts, and remove the `<Toaster>` mount from App.tsx.
 
-&nbsp;
+- Set sonner's position to `top-right` sitewide (already set — keep it) and keep `duration=3000`.
 
-3. GENERAL APPROACH for migration: Rather than trying to carefully 
+## STEP 3: Fix toast branding — replace richColors with brand tokens
 
-   preserve/link the 2 existing definitions, please:
+- Turn OFF sonner's `richColors` prop.
 
-   - Delete the existing job_test_definitions entirely (Junior Clerk, 
+- Create custom toast style variants (success / error / info / warning) using the app's existing design tokens (the same violet–cyan brand palette already used elsewhere, e.g. AIWelcome.tsx and TopProgressBar.tsx) instead of sonner's default green/red/blue.
 
-     Teaching License Test, and the empty drafts) — I will re-create 
+- Success = brand primary/green-accent if one exists in tokens, Error = destructive token, Info = brand accent/cyan, Warning = brand amber-equivalent IF one exists in tokens (do not invent a new hardcoded color — check tailwind.config / index.css for existing CSS variables first).
 
-     them fresh via JSON upload in the new unified editor once it's 
+## STEP 4: Establish ONE z-index scale and apply it everywhere
 
-     built.
+Define these z-index levels as a comment block at the top of src/index.css (or tailwind.config) and apply them consistently across every alert/popup/overlay component:
 
-   - For the "duplicate" Junior Clerk job_tests rows, please tell 
+- Base content: 0–10
 
-     me which one to keep/delete based on which has more complete/
+- Sticky nav / bottom nav: 30
 
-     correct data (organization, syllabus) — show me both so I can 
+- Floating buttons/FABs: 40
 
-     make the final call before deletion.
+- Popovers/dropdowns/notification bell: 50
 
-   - Proceed with building the unified MockTestEditor as planned 
+- Dialog/Modal overlay + content: 100
 
-     (Basic Info + Syllabus + Samples + Questions + Logs in one 
+- AlertDialog overlay + content: 110 (must render ABOVE regular Dialog since confirmations are usually more urgent — fix the current bug where it's at z-50, same as Dialog)
 
-     place), with auto-create-definition-on-save for any test that 
+- Toasts (sonner): 120
 
-     doesn't have one.
+- Top progress bar / route loader: 9999 (stays highest, unchanged)
 
-&nbsp;
+Update every component listed in the audit (dialog.tsx, alert-dialog.tsx, AIWelcome.tsx, CreditExhaustedDialog.tsx, GuestChoiceModal.tsx, UserSatisfactionPopup.tsx, MobileBottomNav.tsx, NotificationBell.tsx) to use this scale via consistent Tailwind z-index classes — no arbitrary one-off values left behind.
 
-This simplifies the migration — less manual linking, I'll repopulate 
+## STEP 5: Fix off-brand hardcoded colors
 
-the rich data fresh via JSON once the new unified editor exists.
+Replace all hardcoded Tailwind color classes with brand design tokens (check tailwind.config / index.css for the existing violet-cyan brand tokens and reuse them — do not invent new colors):
 
-ADDITIONAL REQUIREMENT for the unified editor:
+- src/components/credits/CreditExhaustedDialog.tsx — replace hardcoded green-500/green-50/green-900
 
-Currently, I had to upload TWO separate JSON files — one for the 
+- src/components/gamification/StreakCounter.tsx — replace hardcoded orange-500/red-500/orange-600
 
-mock test (Basic Info) and one for the Definition (syllabus/samples/
+- src/components/NotificationBell.tsx — replace hardcoded amber-500
 
-questions). 
+- src/components/UserSatisfactionPopup.tsx — replace hardcoded blue-600/indigo-600/text-white gradient AND yellow-400 stars
 
-In the new unified MockTestEditor, I want ONE combined JSON bulk 
+Keep the same layout/behavior — only swap colors to match brand tokens.
 
-import that handles everything together — basic info (title, 
+## STEP 6: Fix positioning conflicts (bottom-right pile-up)
 
-organization, duration, questions count) AND syllabus sections/
+- src/components/UserSatisfactionPopup.tsx currently sits at `fixed bottom-6 right-6`, same zone as MobileBottomNav `fixed bottom-0`) and desktop toasts. On mobile, add bottom offset so it sits ABOVE the bottom nav bar (not overlapping it) — use a responsive class like `bottom-20` on mobile, `bottom-6` on desktop where there's no bottom nav.
 
-samples/questions all in a single JSON file/structure.
+- Ensure toasts (top-right) and UserSatisfactionPopup (bottom-right) don't visually compete since they're now in different corners — confirm this is the case after Step 2.
 
-Please:
+## STEP 7: Fix Radix toast leftover bug (only if any Radix toast usage remains after Step 2 migration)
 
-1. Design a single unified JSON schema that combines both the 
+N/A if Step 2 fully removes Radix toast — confirm full removal instead.
 
-   Basic Info fields and the Definition fields (syllabus sections, 
+## STEP 8: Add brand identity to major modals
 
-   samples, questions) into one structure
+Add the app logo (small, top-left or centered above title) and use brand typography/heading style already used elsewhere in the app to:
 
-2. The "Bulk Import JSON" button on the unified editor should accept 
+- AIWelcome.tsx
 
-   this single combined file and populate ALL tabs (Basic Info, 
+- GuestChoiceModal.tsx
 
-   Syllabus, Samples, Questions) from it in one upload
+- CreditExhaustedDialog.tsx
 
-3. Also update "Export JSON" to export this same combined structure, 
+Keep this lightweight — don't redesign the modals, just add the logo lockup consistent with the rest of the app.
 
-   so I can use an exported test as a template for new ones
+After all steps, give me a summary of every file changed and confirm: (1) no dead components remain, (2) only one toast system is active, (3) z-index scale is consistent app-wide, (4) no hardcoded off-brand colors remain in the listed components, (5) UserSatisfactionPopup no longer overlaps MobileBottomNav on mobile.
 
-4. Show me the expected JSON structure/schema before implementing, 
-
-   so I know exactly what format to prepare my data in going forward
-
-This removes the need for two separate uploads — one JSON file per 
-
-mock test, covering everything.
+Do not change any unrelated functionality, quiz logic, or business logic — this is UI/UX/branding only.

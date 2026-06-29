@@ -6,6 +6,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { UserX, UserCheck, Check, X } from 'lucide-react';
+import BrandMark from '@/components/BrandMark';
 
 interface GuestChoiceModalProps {
   open: boolean;
@@ -28,6 +29,7 @@ const GuestChoiceModal = ({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
+          <BrandMark className="justify-center mb-1" />
           <DialogTitle className="text-center text-lg">
             How would you like to continue?
           </DialogTitle>

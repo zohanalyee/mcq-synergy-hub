@@ -140,7 +140,7 @@ const UserSatisfactionPopup = () => {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 40, scale: 0.95 }}
           transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          className="fixed bottom-6 right-6 z-50 w-[320px] rounded-2xl border bg-card text-card-foreground shadow-xl p-5"
+          className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-50 w-[320px] max-w-[calc(100vw-2rem)] rounded-2xl border bg-card text-card-foreground shadow-brand p-5"
         >
           <button
             onClick={dismiss}
@@ -167,7 +167,7 @@ const UserSatisfactionPopup = () => {
                   size={28}
                   className={`transition-colors ${
                     star <= (hoveredStar || rating)
-                      ? "fill-yellow-400 text-yellow-400"
+                      ? "fill-primary text-primary"
                       : "text-muted-foreground/30"
                   }`}
                 />
@@ -178,7 +178,7 @@ const UserSatisfactionPopup = () => {
           <Button
             onClick={handleSubmit}
             disabled={rating === 0 || submitting}
-            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:shadow-lg text-white"
+            className="w-full bg-brand-gradient text-white hover:shadow-brand"
             size="sm"
           >
             {submitting ? "Submitting..." : "Submit Rating"}

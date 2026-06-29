@@ -142,6 +142,25 @@ button,
   box-shadow: var(--shadow-brand);
 }
 
+/* ============================================================
+   GLOBAL Z-INDEX SCALE — single source of truth for layering.
+   Keep every overlay/alert component on these tiers:
+     base content ............ 0–10
+     sticky / bottom nav ...... z-30
+     floating buttons / FABs .. z-40
+     popovers / dropdowns /
+       notification bell ...... z-50
+     dialog overlay + content . z-[100]
+     alert-dialog (urgent,
+       sits above dialog) ..... z-[110]
+     toasts (sonner) .......... z-[120]
+     top progress / route
+       loader (always top) .... z-[9999]
+   ============================================================ */
+[data-sonner-toaster] {
+  z-index: 120 !important;
+}
+
 /* === Aurora animated background — slow, subtle drifting mesh === */
 @keyframes aurora-drift-1 {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
