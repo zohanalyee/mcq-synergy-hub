@@ -292,14 +292,22 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
         excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
       }
 
-      // Sequential generation: call generate-test for each subject
+      // Perf: batch ALL AI-Coach pre-queries into a single user_performance read
+      // (instead of 3 queries × N subjects). Computed once for the whole test.
+      const coachData = user
+        ? await AICoachService.getBatchCoachData(
+            user.id,
+            progressItems.map((p) => p.subject),
+            5
+          )
+        : new Map<string, { excludeIds: string[]; difficulty: "easy" | "medium" | "hard"; weakTopics: string[] }>();
+
       const allQuestions: any[] = [];
       let hasErrors = false;
       const focusTopicsAll: string[] = [];
 
-      for (let i = 0; i < progressItems.length; i++) {
-        const item = progressItems[i];
-
+      // Per-subject generation unit. Pure async — no shared-loop index.
+      const generateForItem = async (item: GenerationProgress, i: number) => {
         // Update status: generating
         setGenerationProgress((prev) =>
           prev.map((p, idx) => (idx === i ? { ...p, status: "generating" as const } : p))
@@ -309,27 +317,16 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 60000);
 
-          // AI Coach: global per-user exclusion of previously attempted questions
-          const coachExcludeIds = user
-            ? await AICoachService.getExcludedQuestionIds(user.id, item.subject)
-            : [];
-          const mergedExclude = Array.from(new Set([...excludeQuestionIds, ...coachExcludeIds]));
+          // AI Coach data (from the single batched read above)
+          const coach = coachData.get(item.subject) ?? { excludeIds: [], difficulty: "medium" as const, weakTopics: [] };
+          const mergedExclude = Array.from(new Set([...excludeQuestionIds, ...coach.excludeIds]));
 
-          // AI Coach Phase 2: adaptive difficulty + weak topic focus
-          const [adaptive, weak] = user
-            ? await Promise.all([
-                AICoachService.getAdaptiveDifficulty(user.id, item.subject),
-                AICoachService.getWeaknessFocusedTopics(user.id, item.subject, 5),
-              ])
-            : ["medium" as const, [] as Awaited<ReturnType<typeof AICoachService.getWeaknessFocusedTopics>>];
-
-          const weakTopicNames = weak.map((w) => w.topic);
           // Phase 4: fold in this job-test's persisted weak topics
-          const mergedWeak = Array.from(new Set([...weakTopicNames, ...persistedWeak]));
+          const mergedWeak = Array.from(new Set([...coach.weakTopics, ...persistedWeak]));
           focusTopicsAll.push(...mergedWeak);
 
           const baseDifficulty = settings.difficulty === "mixed" ? "Medium" : settings.difficulty;
-          const finalDifficulty = settings.difficulty === "mixed" && user ? adaptive : baseDifficulty;
+          const finalDifficulty = settings.difficulty === "mixed" && user ? coach.difficulty : baseDifficulty;
 
           const { data, error } = await supabase.functions.invoke("generate-test", {
             body: {
@@ -385,9 +382,19 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
               idx === i ? { ...p, status: "error" as const, error: err.message || "Generation failed" } : p
             )
           );
-          continue;
         }
+      };
+
+      // Bounded parallelism: process subjects in waves of CONCURRENCY at a time.
+      // 3 keeps simultaneous in-flight AI requests modest (each generate-test call
+      // can itself fan out into multiple batches) so we cut wall-clock time without
+      // tripping Gemini's per-minute rate limits / 429s.
+      const CONCURRENCY = 3;
+      for (let start = 0; start < progressItems.length; start += CONCURRENCY) {
+        const wave = progressItems.slice(start, start + CONCURRENCY);
+        await Promise.all(wave.map((item, offset) => generateForItem(item, start + offset)));
       }
+
 
       // Aggregated AI Coach focus toast
       const uniqueFocus = Array.from(new Set(focusTopicsAll)).slice(0, 3);
