@@ -502,3 +502,109 @@ export const generateQuizOfTheDay = async (subject?: string): Promise<GeneratedT
     return null;
   }
 };
+
+// ============================================================
+// Smart Repetition — composed test for a RETURNING, signed-in user.
+// ============================================================
+
+export interface SmartTestResult {
+  questions: any[];
+  /** Everything the user has seen (ids) — pass to AI fill so it stays fresh. */
+  freshExcludeIds: string[];
+  /** Text-twin fingerprints to avoid (cross-subject duplicate guard). */
+  freshExcludeFingerprints: string[];
+  /** Shortfall vs requested count → caller may AI-fill. */
+  deficit: number;
+  /** Diagnostic breakdown of the achieved mix. */
+  mix: { wrong: number; fresh: number; correct: number; window: number };
+}
+
+/**
+ * Build a single-subject/topic test for a returning user using the
+ * wrong / fresh / correct composition (30 / 55 / 15, rebalanced to availability):
+ *  - WRONG (oldest-first) — spaced repetition on mistakes.
+ *  - FRESH — never-seen questions (id + fingerprint excluded), confidence + novelty.
+ *  - CORRECT (oldest, outside rolling window) — low-frequency revision.
+ *
+ * Rebalancing: a short WRONG pool redirects its slack to FRESH (no forced repeats);
+ * a short FRESH pool backfills from CORRECT, then leaves a `deficit` for AI fill.
+ * Never throws — returns whatever it could assemble.
+ */
+export const composeSmartTest = async (
+  userId: string,
+  subject: string,
+  topic: string | undefined,
+  questionCount: number,
+  baseOptions: Partial<TestGenerationOptions> = {}
+): Promise<SmartTestResult> => {
+  const Q = Math.max(1, Math.round(questionCount || 0));
+  const plan = await AICoachService.getSelectionPlan(userId, subject, topic, Q);
+
+  const wrongTake = Math.min(plan.wrongIds.length, plan.targets.wrong);
+  const correctTake = Math.min(plan.correctIds.length, plan.targets.correct);
+  // Slack from a short WRONG pool flows to FRESH (never forced repeats).
+  const freshTarget = Math.max(0, Q - wrongTake - correctTake);
+
+  const wrongQs = wrongTake > 0
+    ? await AICoachService.getQuestionsByIds(plan.wrongIds.slice(0, wrongTake))
+    : [];
+
+  // FRESH via the bank, excluding all seen ids + text-twin fingerprints.
+  const freshTest = await generateCustomTest({
+    subjects: [subject],
+    topics: topic ? [topic] : [],
+    difficulty: (baseOptions.difficulty as any) || 'mixed',
+    questionCount: Math.max(1, freshTarget),
+    timeLimit: baseOptions.timeLimit || 30,
+    includeExplanations: true,
+    shuffleQuestions: true,
+    shuffleOptions: false,
+    excludeQuestionIds: plan.freshExcludeIds.length ? plan.freshExcludeIds : undefined,
+    excludeFingerprints: plan.freshExcludeFingerprints.length ? plan.freshExcludeFingerprints : undefined,
+    examCategory: baseOptions.examCategory,
+  });
+  const freshQs = freshTarget > 0 ? freshTest.questions : [];
+
+  // If FRESH ran short (small pool), backfill from CORRECT (oldest-first).
+  const freshShort = Math.max(0, freshTarget - freshQs.length);
+  const correctNeed = correctTake + freshShort;
+  const correctQs = correctNeed > 0
+    ? await AICoachService.getQuestionsByIds(plan.correctIds.slice(0, correctNeed))
+    : [];
+
+  // Assemble: wrong first, then fresh, then correct. Dedup by id AND fingerprint.
+  const seenIds = new Set<string>();
+  const seenFp = new Set<string>();
+  const out: any[] = [];
+  const pushUnique = (arr: any[]) => {
+    for (const q of arr) {
+      if (out.length >= Q) break;
+      const id = q?.id;
+      if (id && seenIds.has(id)) continue;
+      const fp = q?.content_fingerprint;
+      if (fp && seenFp.has(fp)) continue;
+      if (id) seenIds.add(id);
+      if (fp) seenFp.add(fp);
+      out.push(q);
+    }
+  };
+  pushUnique(wrongQs);
+  pushUnique(freshQs);
+  pushUnique(correctQs);
+
+  const deficit = Math.max(0, Q - out.length);
+
+  console.log(
+    `🧮 Smart mix [${subject}${topic ? '/' + topic : ''}] N=${plan.window} → ` +
+    `wrong ${wrongQs.length}, fresh ${freshQs.length}, correct ${correctQs.length}, deficit ${deficit}`
+  );
+
+  return {
+    questions: out,
+    freshExcludeIds: plan.freshExcludeIds,
+    freshExcludeFingerprints: plan.freshExcludeFingerprints,
+    deficit,
+    mix: { wrong: wrongQs.length, fresh: freshQs.length, correct: correctQs.length, window: plan.window },
+  };
+};
+
