@@ -8,7 +8,7 @@ import { JobTest } from "@/data/jobTestsData";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
-import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
+
 import { AICoachService } from "@/services/aiCoachService";
 import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
 import {
