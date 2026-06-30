@@ -243,7 +243,6 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
       limit: options.questionCount * 3,
       excludeIds: options.excludeQuestionIds,
       excludeFingerprints: options.excludeFingerprints,
-    excludeFingerprints: options.excludeFingerprints,
       examCategory: options.examCategory,
     };
 
