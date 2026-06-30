@@ -1,156 +1,213 @@
-# Mock Test Generation Speed Audit (findings only)
+# Question Duplication — Audit + Smart Repetition Design
 
-This is an investigation report. No code has been changed. Fixes at the bottom are proposals awaiting your approval.
+Audit-only. Findings first (with file/function names + DB measurements), then the proposed mechanism and exact selection algorithm. No code is changed until you approve.
 
-## 1. USER path — what runs when a user starts a mock test
+## PART A — Audit Findings
 
-Entry: `src/components/mock-tests/JobTestsTab.tsx` → `handleStartJobTest`.
+### 1. AI generation DOES check for duplicates — but only against text, and only at insert time
 
-There are three sub-paths:
+`supabase/functions/generate-test/index.ts`:
 
-- **Isolated/definition path (fast, DB-only):** if `findDefinitionForTest` finds a published definition, it loads `getApprovedQuestionsForDefinition`, does Largest-Remainder quota math, samples questions, inserts a `custom_test_sessions` row, and navigates. No AI. This is the intended fast path.
-- **Guest legacy path (DB-only):** `generateCustomTest` → `getQuestionBank` via the `get_practice_questions` RPC.
-- **Authenticated legacy path (SLOW, AI):** when no definition exists, it runs a **sequential per-subject loop** that calls the `generate-test` edge function once per syllabus subject.
+- `generateQuestionFingerprint()` (line 131) builds an order-independent **top-8 keyword** fingerprint; `isDuplicateByFingerprint()` (145) blocks near-dupes **within the same generation run** (cross-batch memory via `fingerprints` Set, pre-seeded from existing questions at ~711).
+- `checkDuplicate()` (~1026) checks the DB for an **exact title match** and a **first-50-char prefix** match. On hit it does NOT discard — it inserts the row with `status='flagged_duplicate'` and a `[POTENTIAL DUPLICATE]` title prefix (Human-in-the-Loop, "zero data loss").
 
-The slow authenticated loop (`JobTestsTab.tsx` ~lines 288–360) does, per subject, **before** even calling AI:
+Gaps:
 
-- `AICoachService.getExcludedQuestionIds(...)`
-- `Promise.all([getAdaptiveDifficulty, getWeaknessFocusedTopics])`
+- The prompt only tells the AI to avoid existing questions for the **current topic/subject scope** (avoid-list at ~736). Generic prompts like "English vocabulary" reliably steer the model to obvious words ("Diligent", "Meticulous"), so two independent calls for **different subjects** (IQ vs Vocabulary vs English) produce the same item — and each is a *different* subject scope, so neither sees the other's avoid-list.
+- Detection is **lexical only** (keyword overlap / prefix), no semantic/embedding comparison. "Synonym of Diligent" vs "Antonym of Diligent" are different items but feel duplicative to users.
 
-then `await supabase.functions.invoke("generate-test", ...)` — **serially, one subject at a time**. Before the loop it also awaits `fetchJobTestProgress`, `findDefinitionForTest`, `getEffectiveSyllabus`, and `getUserAnsweredQuestionIds`.
+### 2. Duplicates survive as separate rows across subjects
 
-Inside `supabase/functions/generate-test/index.ts` (2,600 lines), each call performs:
+Confirmed in the DB for the exact example you gave:
 
-- `checkQuota` — a COUNT query on `ai_usage_logs` (`_shared/quotaManager.ts`).
-- A large cache-lookup cascade against `content_items` (exact match, fuzzy match, legacy subject/topic variants, recent-questions) — roughly 10+ `content_items` queries (lines ~1029–1783, 1903).
-- AI generation wrapped in `retryWithBackoff` (`maxRetries`, backoff **5s → 15s → 45s** on any 429/quota/rate-limit).
-- `deduct_credits` RPC + `content_items` inserts + `ai_usage_logs` insert.
+```
+"What is the synonym of 'Diligent'?"          subject=IQ          exam=CSS   [flagged]
+"What is the synonym of 'Diligent'?"          subject=Vocabulary  exam=CSS
+"What is the antonym of the word 'Diligent'?" subject=English     exam=NULL
+"...Junior Clerk's diligent maintenance..."   subject=Junior Clerk exam=FPSC
+```
 
-Net: user cost ≈ `N_subjects × (pre-invoke coach queries + full heavy edge-function run)`, fully serial.
+So the same/near text lives under **multiple ids, subjects and exam_categories**. Anti-repetition is keyed on **question id** (see #3), so excluding one id does nothing for its text-twins under other subjects.
 
-## 2. ADMIN path — what runs when an admin generates questions
+### 3. DB-bank anti-repetition is id-based and leaks/under-covers
 
-Entry: `src/components/admin/job-test/GeneratedQuestionsTable.tsx` → `handleGenerate` → `generateForSubject` (`jobTestService.ts`) → edge function `generate-job-test`.
+- `questionBankService.getQuestionBank()` excludes via `.not('id','in',(...))` using `filters.excludeIds` only.
+- `getUserAnsweredQuestionIds()` reads the user's **last 50 `custom_test_sessions**` and unions every question id — a permanent, ever-growing exclusion (not a rolling window), which slowly **depletes small pools**.
+- `AICoachService.getExcludedQuestions()` returns both ids AND `question_fingerprints`, but callers pass **only ids** into the query; the fingerprints are never used to block text-twins. So cross-row duplicates evade exclusion entirely.
+- Exclusion is effectively cross-subject (the 50-session union isn't scoped per-subject in `getUserAnsweredQuestionIds`), so it both over-excludes globally and under-excludes per text.
 
-`supabase/functions/generate-job-test/index.ts` (585 lines) is much leaner:
+### 4. Tracking is wired correctly, and is the right foundation
 
-- Reads `job_test_definitions` once, generates in batches (`BATCH_SIZE=10`, `MAX_BATCHES=5`, 2s between batches), inserts into `job_test_questions`.
-- **No** `content_items` cache cascade, **no** `checkQuota`, **no** `deduct_credits`, **no** per-subject AI-Coach queries.
-- Admin generates **one subject per click** as a deliberate action — never an N-subject blocking chain.
+- `TestSession.tsx` (~374) calls `AICoachService.trackAttemptDetailed(...)` per question → writes `user_attempt_history` rows with `question_id`, `question_fingerprint`, `subject`, `topic`, `difficulty`, `is_correct`, `attempted_at`, `session_id`. **This is exactly the per-question correctness+timestamp history the new algorithm needs.**
+- `getReinforcementPlan()` (~271) already does spaced repetition off `user_attempt_history`, but caps reinforcement at ~20% and is only consumed on the SubjectTests path, not uniformly.
+- `gamification.processTestCompletion()` separately upserts `user_question_attempts` (id only, no correctness) — redundant with the richer history table.
 
-Both paths ultimately call the same `callAIWithAutoSwitch` (Gemini → Lovable Gateway). Raw model speed is essentially equal; the gap is orchestration around it.
+DB row counts: `content_items` mcq = **8168**, `user_attempt_history` = **4951**, `user_performance` = **822**, `user_question_attempts` = **959**.
 
-## 3. Comparison — what the user path has that admin doesn't
+### 5. Small pools + subject fragmentation are a major root cause (not just a bug)
 
+Subjects are stored as long descriptive strings, fragmenting the pool into tiny buckets:
 
-| Overhead                      | User (`generate-test`) | Admin (`generate-job-test`) |
-| ----------------------------- | ---------------------- | --------------------------- |
-| Calls per test                | N subjects, **serial** | 1 per click                 |
-| Pre-AI coach DB queries       | 3 × N subjects         | none                        |
-| `content_items` cache cascade | ~10+ queries/call      | none                        |
-| `checkQuota` COUNT            | yes/call               | no                          |
-| `deduct_credits` RPC          | yes/call               | no                          |
-| Backoff on 429                | 5/15/45s sleeps        | none (direct)               |
-| Pre-loop awaits               | 4 sequential           | 1                           |
+```
+"English Language: Grammar, vocabulary, synonyms, antonyms..."  → 3 rows
+"General Knowledge & Everyday Science"                          → 1 row
+"Vocabulary (English)" / "IQ (English & Reasoning)"            → handful
+```
 
+`fetchSubjectQuota()` filters `topic = subjectName` (exact) then falls back to `subject = subjectName` (exact). With 1–4 matching rows, **the same few questions are drawn every attempt regardless of exclusion** — statistically guaranteed repeats for vocabulary/GK.
 
-## 4. DB-based (non-AI) loading review
+### 6. Quantified duplication
 
-- `testGenerationService.fetchSubjectQuota` is awaited **inside a sequential `for…of` loop** over subjects (no `Promise.all`) — sequential round trips, effectively N+1 by subject. It also issues a second fallback query when the first returns 0.
-- `getQuestionBank` (authenticated) uses `content_items.select('*')` — fetches **all columns** including large text fields, then slices client-side (`limit * 3`). The `excludeIds` becomes a potentially huge `.not('id','in','(...)')` list, which is slow to parse/plan.
-- Definition path's `getApprovedQuestionsForDefinition` loads the full approved pool and filters/shuffles client-side rather than sampling in SQL.
+- **Exact normalized-text duplicates:** 16 redundant rows (~0.2%) — small.
+- **Near-duplicate keyword-fingerprint groups:** ~**222 rows / 8168 (≈2.7%)** sit in groups sharing the same significant-keyword set — concentrated in English (vocab/synonym/antonym), IQ/Reasoning, and Everyday Science/GK.
+- Biggest contributor to the *felt* repetition is **#5 (tiny fragmented pools)** combined with **#3 (id-only exclusion that can't see text-twins)** — not the raw duplicate percentage.
 
-## 5. Estimate — how much slower, and biggest factor
+## PART B — Proposed Smart Repetition System (design, not yet built)
 
-For a 5-subject authenticated mock test (no definition), user latency ≈ `5 × (≈3 coach queries + quota COUNT + ~10 content_items queries + AI batch + credit deduct)`, all serial, versus admin's single lean call. Rough ballpark: **5–10× slower**, and dramatically worse (tens of seconds) whenever a 429 triggers the 5/15/45s backoff.
+### B1. Rolling-window "recently seen" (replace permanent exclusion)
 
-**Biggest contributing factor:** serial per-subject invocation of the heavy 2,600-line `generate-test` function, compounded by its `content_items` cache cascade and the multiplied AI-Coach pre-queries. The `retryWithBackoff` sleeps are the worst single latency spike under load.
+Stop using the 50-session union. Derive a per-user, **per-subject** rolling window from `user_attempt_history`:
 
-## Proposed fixes (for your approval — not yet implemented)
+- Define a window of the user's **last N=3 attempts** (distinct `session_id`s) within that subject.
+- Exclude a question id (and its **fingerprint twins**) only if it appears in those last 3 sessions.
+- After 3 newer attempts pass, it becomes eligible again → no permanent depletion.
 
-1. **Parallelize per-subject generation** in `JobTestsTab` (bounded `Promise.all`) instead of the serial loop.
-2. **Batch the AI-Coach pre-queries** once per test (or fetch all subjects' exclusions/difficulty in one round) rather than 3 queries × N subjects.
-3. **Slim the `generate-test` cache cascade** — collapse the exact/fuzzy/legacy `content_items` lookups into one indexed query; select only needed columns instead of `*`.
-4. **Tune `retryWithBackoff**` for user-interactive calls (shorter/fewer sleeps, fail fast to DB fallback) while keeping long backoff for background/admin jobs.
-5. **Push sampling into SQL** for the definition and `getQuestionBank` paths (server-side limit/random, fewer columns) to cut payload and client filtering.
-6. **Parallelize `fetchSubjectQuota**` across subjects.
+Implementation choice (no schema change needed): compute the window with a windowed query over `user_attempt_history` (rank distinct `session_id` by max `attempted_at` per subject, keep top 3, collect their `question_id` + `question_fingerprint`). Optionally add a `last_seen_attempt_no` helper later if we want O(1) lookups, but the query approach reuses existing data.
 
-Tell me which of these to implement and I'll switch to build mode with a focused change set.
+### B2. Correctness weighting (spaced repetition)
+
+- **Correct** answers: deprioritized strongly — excluded for the full 3-attempt window, then return at lowest frequency, oldest-correct-first.
+- **Wrong** answers: shorter cooldown (eligible after ~1 attempt) and boosted priority — they can resurface sooner. Reuse the existing `RETRY_INTERVALS_DAYS` spacing as a secondary signal.
+
+### B3. Fingerprint-aware exclusion (kills cross-subject text-twins)
+
+Extend exclusion to fingerprints, not just ids:
+
+- Carry `question_fingerprint` (already stored on every `user_attempt_history` row and `content_items` can be fingerprinted) into selection.
+- A candidate is rejected if its id **or** normalized fingerprint matches a recently-seen one — so "Synonym of Diligent" under a different subject id is correctly skipped.
+- Requires either a `content_fingerprint` column on `content_items` (preferred, indexed, backfilled once) or computing it in the RPC. I recommend the **column + backfill migration** so the exclusion is cheap and the duplicate-flagging in `generate-test` can also dedupe across subjects.
+
+### B4. Grow small pools instead of starving them
+
+When, after applying the rolling window, the eligible pool for a subject/topic is below the requested count (the existing `deficit`), trigger the existing `generate-test` fill — but pass the recently-seen **avoid-list across the whole subject** (not just current scope) so AI produces genuinely new items rather than re-deriving "Diligent". This directly addresses the finite-vocabulary topics.
+
+### B5. Target composition algorithm (per returning user, per subject/topic)
+
+For each new test of size `Q`, build three buckets from `user_attempt_history` (scoped to subject/topic):
+
+```text
+WRONG  pool: questions last answered incorrectly, outside the wrong-cooldown,
+             ordered OLDEST-wrong-first (oldest attempted_at first)
+FRESH  pool: content_items the user has NEVER seen (id+fingerprint not in history)
+CORRECT pool: questions last answered correctly, OUTSIDE the 3-attempt window,
+             ordered oldest-correct-first
+```
+
+Target mix (then normalize to availability):
+
+```text
+wantWrong   = round(Q * 0.35)
+wantCorrect = round(Q * 0.12)
+wantFresh   = Q - wantWrong - wantCorrect      // ~0.53 nominal, absorbs slack
+```
+
+Proportional rebalancing rules:
+
+1. If `WRONG` has fewer than `wantWrong`, take all available wrong; **redirect the shortfall to FRESH** (no artificial repeats).
+2. If `FRESH` runs short (small pool), take the FRESH deficit from `CORRECT` (oldest-first); if still short, trigger B4 AI fill for the remainder.
+3. If the user has many wrong answers (e.g. 10+ tests), `WRONG` is capped at `wantWrong` but ordered oldest-first so nothing stays permanently unrevisited.
+4. `CORRECT` never exceeds `wantCorrect` and is always the lowest-priority filler.
+
+All three queries filter by the same subject/topic and apply the B1 window + B3 fingerprint exclusion, so buckets never cross-contaminate unrelated subjects.
+
+Scoring form (single weighted query alternative): rank candidates by
+`priority = w_wrong*isWrongDue + w_fresh*isUnseen + w_correct*isCorrectEligible`, tie-broken by `attempted_at ASC` (oldest first), `usage_count ASC` (existing freshness rotation), then random — selecting top `Q`.
+
+### B6. Where it plugs in
+
+- New method `AICoachService.getSelectionPlan(userId, subject, topic, Q)` returning `{ wrongIds, freshFilter, correctIds, avoidFingerprints }`.
+- `testGenerationService.generateCustomTest` / `fetchSubjectQuota` consume it: fetch FRESH via `getQuestionBank` (now fingerprint-excluding), prepend WRONG, backfill CORRECT, then AI-fill any residual deficit.
+- Applies on all returning-user paths: `JobTestsTab`, `SubjectTestsTab`, `useStartQuickTest`.
+
+### Technical notes / required changes (for the build phase)
+
+- Migration: add `content_items.content_fingerprint text` + index; backfill via normalized-keyword fingerprint; optionally a `get_practice_questions` RPC param `p_exclude_fingerprints text[]` so guests/auth share one exclusion path.
+- Reuse existing `user_attempt_history` (no new tracking table needed) — the rolling window and buckets are all derivable from it.
+- Consider a one-time cleanup pass to set `status='flagged_duplicate'` (or merge) on the ~222 near-dup rows so they leave the active reuse pool. (Optional, reversible — they are never hard-deleted, per project memory.)
+- Keep `retryWithBackoff` and quota logic untouched.
+
+Confirm the target percentages (35 / 53 / 12), the window size (N=3), and whether to add the `content_fingerprint` column, and I'll implement.
 
 &nbsp;
 
-# **Approved — implement fixes #1, #2, and #3 only:**
+# **Confirmed decisions on the Smart Repetition design:**
 
-1. Parallelize per-subject generation in JobTestsTab (replace the 
+1. TARGET PERCENTAGES (adjusted from your proposal, for better 
 
-   serial for-loop with bounded Promise.all)
+   user retention/motivation):
 
-2. Batch the AI-Coach pre-queries once per test instead of 3 
+   - Wrong: 30% (not 35%) — avoid making tests feel punitive
 
-   queries × N subjects
+   - Fresh: 55% (not 53%) — maximize the "this feels new" effect
 
-3. Slim the generate-test cache cascade — collapse the exact/
+   - Correct: 15% (not 12%) — occasional easy wins keep confidence up
 
-   fuzzy/legacy content_items lookups into one indexed query, 
+   
 
-   select only needed columns instead of *
+   Reasoning: too much "wrong repeat" weight risks discouraging 
 
-IMPORTANT CONCERN — Bounded parallelization, not unbounded:
+   struggling users into churning. This mix biases toward freshness 
 
-Mock tests can have anywhere from 3 to 10+ subjects. Please confirm 
+   and confidence-building while still reinforcing mistakes.
 
-the parallelization in #1 uses a CONCURRENCY LIMIT (e.g., process 
+2. ROLLING WINDOW — make it ADAPTIVE, not fixed N=3:
 
-3-4 subjects at a time in batches), NOT firing all N subjects' AI 
+   - For subjects/topics with LARGE pools (e.g., 1000+ questions): 
 
-calls simultaneously. Firing too many AI calls at once risks 
+     use a longer window (e.g., N=5)
 
-triggering MORE 429 rate-limit errors, which would be counter-
+   - For subjects/topics with SMALL pools (e.g., under 20-30 
 
-productive — the goal is speed without increasing failure risk.
+     questions, like the fragmented vocabulary/GK ones you found): 
 
-Please tell me the exact concurrency limit you'll use and the 
+     use a shorter window (e.g., N=2)
 
-reasoning behind that number (e.g., based on Gemini's per-minute 
+   - This prevents the rolling window itself from starving small 
 
-RPM limit) before implementing.
+     pools while still maximizing freshness where there's enough 
 
-DO NOT touch #4 (retry/backoff timing — the 5s/15s/45s sleeps). 
+     content.
 
-This backoff is an intentional safety net that keeps the system 
+   - Please propose the exact threshold logic (what counts as 
 
-gracefully retrying instead of hard-failing when rate limits are 
+     "large" vs "small" pool) before implementing.
 
-hit. We are not changing this until we add multiple Gemini API 
+3. content_fingerprint column — YES, add it. This is needed to 
 
-key rotation (separate pending work, not yet implemented). Reducing 
+   catch cross-subject text-twins like the "Diligent" example, 
 
-backoff now would make rate-limit failures more frequent and more 
+   which is the actual root cause of the felt repetition you found 
 
-visible to users, not less.
+   in the audit (not just raw duplicate %).
 
-Hold off on #5 and #6 (SQL-side sampling changes) for now — let's 
+4. GUESTS — explicitly OUT OF SCOPE for this repetition system. 
 
-measure the impact of 1-3 first before going further.
+   Guests already have a different intentional strategy (smaller 
 
-After implementing, please:
+   question caps + sign-in prompts to encourage account creation) — 
 
-1. Confirm the concurrency limit chosen and why
+   adding repetition-control complexity for guests isn't worth it 
 
-2. Confirm the existing 429 retry/backoff behavior is fully 
+   given that existing design intent. Leave guest behavior exactly 
 
-   unchanged and still triggers correctly
+   as-is.
 
-3. Provide before/after timing estimates for a typical 5-subject 
+5. Also proceed with B4 (AI-fill for small pools) as proposed — 
 
-   and a 10-subject test, if possible
+   this is important for subjects like vocabulary/GK where the 
 
-4. Test that test generation still works correctly end-to-end 
+   pool is too small regardless of exclusion logic.
 
-   (not just faster, but still produces correct, complete question 
+Please propose the adaptive window thresholds, then proceed with 
 
-   sets)
-
-&nbsp;
-
-I want concrete before/after numbers, not just "it will be faster" — please estimate based on the actual query/AI-call timings you found in the audit.
+implementation once confirmed.
