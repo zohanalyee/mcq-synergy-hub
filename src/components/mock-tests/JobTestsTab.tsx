@@ -287,10 +287,9 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      let excludeQuestionIds: string[] = [];
-      if (user) {
-        excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
-      }
+      // Smart Repetition: we deliberately do NOT build a permanent "ever answered"
+      // exclusion list here (that depletes finite pools). Recency exclusion comes
+      // from the rolling-window coach data (last N sessions) computed below.
 
       // Perf: batch ALL AI-Coach pre-queries into a single user_performance read
       // (instead of 3 queries × N subjects). Computed once for the whole test.
