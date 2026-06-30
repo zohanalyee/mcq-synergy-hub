@@ -519,6 +519,7 @@ export type Database = {
           cadre: string | null
           canonical_topic_name: string | null
           category: string
+          content_fingerprint: string | null
           correct_option: string | null
           created_at: string
           created_by: string | null
@@ -569,6 +570,7 @@ export type Database = {
           cadre?: string | null
           canonical_topic_name?: string | null
           category: string
+          content_fingerprint?: string | null
           correct_option?: string | null
           created_at?: string
           created_by?: string | null
@@ -619,6 +621,7 @@ export type Database = {
           cadre?: string | null
           canonical_topic_name?: string | null
           category?: string
+          content_fingerprint?: string | null
           correct_option?: string | null
           created_at?: string
           created_by?: string | null
@@ -3347,6 +3350,7 @@ export type Database = {
           updated_count: number
         }[]
       }
+      compute_content_fingerprint: { Args: { p_text: string }; Returns: string }
       deduct_credits:
         | { Args: { p_amount: number; p_user_id: string }; Returns: Json }
         | {
