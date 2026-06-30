@@ -1132,4 +1132,161 @@ export class AICoachService {
       return defaults.map((d) => make({}, d));
     }
   }
+
+  /**
+   * Smart Repetition — build a per-user, per-subject/topic selection plan.
+   *
+   * Returns the building blocks the test generators use to assemble a fresh
+   * paper for a RETURNING user:
+   *  - wrongIds / correctIds: previously-seen questions eligible for resurfacing
+   *    (oldest-first), with correctness weighting + a rolling-window cooldown.
+   *  - freshExcludeIds / freshExcludeFingerprints: everything the user has ever
+   *    seen (id AND text-twin fingerprint) so the "fresh" portion is genuinely new
+   *    and cross-subject duplicates (e.g. "synonym of Diligent") cannot leak in.
+   *  - targets: nominal wrong/fresh/correct counts (30% / 55% / 15%), rebalanced
+   *    by the caller against actual availability.
+   *  - window: the adaptive rolling-window size used (for logging).
+   *
+   * Adaptive rolling window (prevents small pools from being starved):
+   *  - pool < 30 questions          → N = 2 (short window, finite vocab/GK)
+   *  - pool 30–300 questions        → N = 3 (default)
+   *  - pool > 300 questions         → N = 5 (large pool, maximize freshness)
+   *
+   * Cooldown rules:
+   *  - WRONG answers resurface sooner: eligible once they are NOT in the most
+   *    recent attempt (attemptsAgo >= 1) — spaced-repetition on mistakes.
+   *  - CORRECT answers are deprioritized: eligible only OUTSIDE the full N-window
+   *    (attemptsAgo >= N), lowest frequency.
+   *
+   * Safe-by-default: never throws; returns empty buckets on any error.
+   */
+  static async getSelectionPlan(
+    userId: string,
+    subject: string | undefined,
+    topic: string | undefined,
+    totalCount: number
+  ): Promise<{
+    wrongIds: string[];
+    correctIds: string[];
+    freshExcludeIds: string[];
+    freshExcludeFingerprints: string[];
+    targets: { wrong: number; fresh: number; correct: number };
+    window: number;
+  }> {
+    const Q = Math.max(1, Math.round(totalCount || 0));
+    const empty = {
+      wrongIds: [] as string[],
+      correctIds: [] as string[],
+      freshExcludeIds: [] as string[],
+      freshExcludeFingerprints: [] as string[],
+      targets: { wrong: 0, fresh: Q, correct: 0 },
+      window: 3,
+    };
+    if (!userId) return empty;
+
+    try {
+      // 1) Determine the underlying pool size to pick the adaptive window.
+      let poolSize = 0;
+      try {
+        let countQ = supabase
+          .from("content_items")
+          .select("id", { count: "exact", head: true })
+          .eq("category", "mcq")
+          .eq("status", "approved");
+        if (topic) countQ = countQ.eq("topic", topic);
+        else if (subject) countQ = countQ.eq("subject", subject);
+        const { count } = await countQ;
+        poolSize = count ?? 0;
+      } catch {
+        poolSize = 0;
+      }
+      const N = poolSize < 30 ? 2 : poolSize <= 300 ? 3 : 5;
+
+      // 2) Pull recent per-question history (subject/topic scoped).
+      const since = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000).toISOString();
+      let hq = supabase
+        .from("user_attempt_history")
+        .select("question_id, question_fingerprint, is_correct, attempted_at, session_id")
+        .eq("user_id", userId)
+        .gte("attempted_at", since)
+        .order("attempted_at", { ascending: false })
+        .limit(6000);
+      if (subject) hq = hq.eq("subject", subject);
+      if (topic) hq = hq.eq("topic", topic);
+      const { data, error } = await hq;
+      if (error || !data || data.length === 0) {
+        return { ...empty, window: N };
+      }
+
+      // 3) Rank distinct sessions by recency → attemptsAgo per session.
+      const sessionLastAt = new Map<string, number>();
+      for (const r of data as any[]) {
+        const sid = r.session_id || `__nosess__${r.attempted_at}`;
+        const ts = new Date(r.attempted_at).getTime();
+        if (!sessionLastAt.has(sid) || ts > (sessionLastAt.get(sid) as number)) {
+          sessionLastAt.set(sid, ts);
+        }
+      }
+      const orderedSessions = Array.from(sessionLastAt.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(([sid]) => sid);
+      const sessionRank = new Map<string, number>();
+      orderedSessions.forEach((sid, idx) => sessionRank.set(sid, idx));
+
+      // 4) Per-question summary: most recent outcome + how many attempts ago.
+      type QSum = { lastAt: number; lastCorrect: boolean; attemptsAgo: number; fp: string };
+      const byQ = new Map<string, QSum>();
+      const allFps = new Set<string>();
+      for (const r of data as any[]) {
+        const id = r.question_id;
+        if (r.question_fingerprint) allFps.add(r.question_fingerprint);
+        if (typeof id !== "string" || !UUID_RE.test(id)) continue;
+        const ts = new Date(r.attempted_at).getTime();
+        const sid = r.session_id || `__nosess__${r.attempted_at}`;
+        const existing = byQ.get(id);
+        if (!existing || ts > existing.lastAt) {
+          byQ.set(id, {
+            lastAt: ts,
+            lastCorrect: !!r.is_correct,
+            attemptsAgo: sessionRank.get(sid) ?? orderedSessions.length,
+            fp: r.question_fingerprint || existing?.fp || "",
+          });
+        }
+      }
+
+      // 5) Build buckets. Fresh excludes EVERYTHING ever seen (id + fingerprint).
+      const wrong: { id: string; lastAt: number }[] = [];
+      const correct: { id: string; lastAt: number }[] = [];
+      const freshExcludeIds: string[] = [];
+      for (const [id, s] of byQ.entries()) {
+        freshExcludeIds.push(id);
+        if (!s.lastCorrect && s.attemptsAgo >= 1) {
+          wrong.push({ id, lastAt: s.lastAt });
+        } else if (s.lastCorrect && s.attemptsAgo >= N) {
+          correct.push({ id, lastAt: s.lastAt });
+        }
+      }
+      // Oldest-first so nothing stays permanently unrevisited.
+      wrong.sort((a, b) => a.lastAt - b.lastAt);
+      correct.sort((a, b) => a.lastAt - b.lastAt);
+
+      // 6) Confidence-tuned target mix (30% wrong / 55% fresh / 15% correct).
+      const wantWrong = Math.round(Q * 0.3);
+      const wantCorrect = Math.round(Q * 0.15);
+      const wantFresh = Math.max(0, Q - wantWrong - wantCorrect);
+
+      return {
+        wrongIds: wrong.map((w) => w.id),
+        correctIds: correct.map((c) => c.id),
+        freshExcludeIds,
+        freshExcludeFingerprints: Array.from(allFps),
+        targets: { wrong: wantWrong, fresh: wantFresh, correct: wantCorrect },
+        window: N,
+      };
+    } catch (e) {
+      console.error("[AICoach] getSelectionPlan error:", e);
+      return empty;
+    }
+  }
 }
+
