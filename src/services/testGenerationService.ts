@@ -1,4 +1,5 @@
 import { getQuestionBank, recordQuestionUsage, QuestionFilters, QuestionBankItem } from './questionBankService';
+import { AICoachService } from './aiCoachService';
 
 // Fisher-Yates shuffle for true randomization
 const fisherYatesShuffle = <T,>(array: T[]): T[] => {
