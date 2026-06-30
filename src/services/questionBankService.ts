@@ -37,6 +37,9 @@ export interface QuestionFilters {
   limit?: number;
   offset?: number;
   excludeIds?: string[]; // IDs to exclude (anti-repetition)
+  // Smart Repetition — exclude by normalized-text fingerprint too, so cross-subject
+  // text-twins (same wording stored under different ids/subjects) are also skipped.
+  excludeFingerprints?: string[];
   // Phase 3 — DB Reuse Safety. When set, a question is only reused if its
   // exam_category matches the requested exam (or is uncategorised/NULL).
   // This stops cross-exam leakage (e.g. a Biology MCQ surfacing in an FIA
