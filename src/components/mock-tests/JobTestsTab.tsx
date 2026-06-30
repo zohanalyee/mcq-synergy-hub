@@ -318,7 +318,8 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
 
           // AI Coach data (from the single batched read above)
           const coach = coachData.get(item.subject) ?? { excludeIds: [], difficulty: "medium" as const, weakTopics: [] };
-          const mergedExclude = Array.from(new Set([...excludeQuestionIds, ...coach.excludeIds]));
+          // Rolling-window recency exclusion only (no permanent depletion).
+          const mergedExclude = Array.from(new Set([...coach.excludeIds]));
 
           // Phase 4: fold in this job-test's persisted weak topics
           const mergedWeak = Array.from(new Set([...coach.weakTopics, ...persistedWeak]));
