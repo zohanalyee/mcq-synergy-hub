@@ -8,7 +8,7 @@ import { JobTest } from "@/data/jobTestsData";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCustomTest, TestGenerationOptions } from "@/services/testGenerationService";
-import { getUserAnsweredQuestionIds } from "@/services/questionBankService";
+
 import { AICoachService } from "@/services/aiCoachService";
 import { GenerationProgressDialog, GenerationProgress } from "./GenerationProgressDialog";
 import {
@@ -287,10 +287,9 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      let excludeQuestionIds: string[] = [];
-      if (user) {
-        excludeQuestionIds = await getUserAnsweredQuestionIds(user.id);
-      }
+      // Smart Repetition: we deliberately do NOT build a permanent "ever answered"
+      // exclusion list here (that depletes finite pools). Recency exclusion comes
+      // from the rolling-window coach data (last N sessions) computed below.
 
       // Perf: batch ALL AI-Coach pre-queries into a single user_performance read
       // (instead of 3 queries × N subjects). Computed once for the whole test.
@@ -319,7 +318,8 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
 
           // AI Coach data (from the single batched read above)
           const coach = coachData.get(item.subject) ?? { excludeIds: [], difficulty: "medium" as const, weakTopics: [] };
-          const mergedExclude = Array.from(new Set([...excludeQuestionIds, ...coach.excludeIds]));
+          // Rolling-window recency exclusion only (no permanent depletion).
+          const mergedExclude = Array.from(new Set([...coach.excludeIds]));
 
           // Phase 4: fold in this job-test's persisted weak topics
           const mergedWeak = Array.from(new Set([...coach.weakTopics, ...persistedWeak]));

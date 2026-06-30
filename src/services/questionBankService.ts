@@ -37,6 +37,9 @@ export interface QuestionFilters {
   limit?: number;
   offset?: number;
   excludeIds?: string[]; // IDs to exclude (anti-repetition)
+  // Smart Repetition — exclude by normalized-text fingerprint too, so cross-subject
+  // text-twins (same wording stored under different ids/subjects) are also skipped.
+  excludeFingerprints?: string[];
   // Phase 3 — DB Reuse Safety. When set, a question is only reused if its
   // exam_category matches the requested exam (or is uncategorised/NULL).
   // This stops cross-exam leakage (e.g. a Biology MCQ surfacing in an FIA
@@ -156,7 +159,13 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
       console.log(`🚫 Excluding ${filters.excludeIds.length} previously answered questions`);
     }
 
-    // Apply pagination
+    // Smart Repetition: exclude by normalized-text fingerprint (cross-subject
+    // text-twins). Fingerprints are sha256 hex, safe to inline in the IN list.
+    if (filters.excludeFingerprints?.length && filters.excludeFingerprints.length > 0) {
+      const fpList = `(${filters.excludeFingerprints.join(',')})`;
+      query = query.not('content_fingerprint', 'in', fpList);
+      console.log(`🚫 Excluding ${filters.excludeFingerprints.length} fingerprints (text-twins)`);
+    }
     if (filters.limit) {
       query = query.limit(filters.limit);
     }
