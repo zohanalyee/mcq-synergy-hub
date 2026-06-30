@@ -108,7 +108,6 @@ const fetchSubjectQuota = async (
       limit: quota * 3,
       excludeIds: options.excludeQuestionIds,
       excludeFingerprints: options.excludeFingerprints,
-    excludeFingerprints: options.excludeFingerprints,
       examCategory: options.examCategory,
     };
     if (options.difficulty !== 'mixed') {
