@@ -92,6 +92,7 @@ const fetchSubjectQuota = async (
     topics: [subjectName],
     limit: quota * 3,
     excludeIds: options.excludeQuestionIds,
+    excludeFingerprints: options.excludeFingerprints,
     examCategory: options.examCategory,
   };
   if (options.difficulty !== 'mixed') {
@@ -106,6 +107,8 @@ const fetchSubjectQuota = async (
       subjects: [subjectName],
       limit: quota * 3,
       excludeIds: options.excludeQuestionIds,
+      excludeFingerprints: options.excludeFingerprints,
+    excludeFingerprints: options.excludeFingerprints,
       examCategory: options.examCategory,
     };
     if (options.difficulty !== 'mixed') {
@@ -240,6 +243,8 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
       subtopics: options.subtopics,
       limit: options.questionCount * 3,
       excludeIds: options.excludeQuestionIds,
+      excludeFingerprints: options.excludeFingerprints,
+    excludeFingerprints: options.excludeFingerprints,
       examCategory: options.examCategory,
     };
 
@@ -269,6 +274,9 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
         topics: options.topics,
         limit: options.questionCount * 3,
         excludeIds: options.excludeQuestionIds,
+        excludeFingerprints: options.excludeFingerprints,
+      excludeFingerprints: options.excludeFingerprints,
+    excludeFingerprints: options.excludeFingerprints,
         examCategory: options.examCategory,
       };
       const crossQuestions = await getQuestionBank(topicOnlyFilters);
@@ -284,6 +292,9 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
         subjects: options.subjects,
         limit: options.questionCount * 3,
         excludeIds: options.excludeQuestionIds,
+        excludeFingerprints: options.excludeFingerprints,
+      excludeFingerprints: options.excludeFingerprints,
+    excludeFingerprints: options.excludeFingerprints,
         examCategory: options.examCategory,
       };
       const subjectQuestions = await getQuestionBank(subjectOnlyFilters);
