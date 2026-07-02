@@ -352,37 +352,9 @@ const AgentDashboard = () => {
           </Card>
         </TabsContent>
 
-        {/* Content Gaps Tab */}
-        <TabsContent value="gaps">
-          <EmptyTopicAnalytics />
-        </TabsContent>
-
         {/* AI Usage Tab */}
         <TabsContent value="quota">
           <QuotaMonitor />
-        </TabsContent>
-
-        {/* Sources Tab */}
-        <TabsContent value="sources">
-          <ScrapingSourcesManager />
-        </TabsContent>
-
-        {/* Review Tab — Scraped content review */}
-        <TabsContent value="review" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-semibold">Scraped Content Review</h3>
-            <ManualOpportunityCreator onSuccess={() => queryClient.invalidateQueries({ queryKey: ["pending-opportunities"] })} />
-          </div>
-          <OpportunityReviewQueue />
-
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold mb-3">Published Content Management</h3>
-            <PublishedOpportunitiesManager />
-          </div>
-
-          <div className="mt-6">
-            <CorruptedDataCleaner />
-          </div>
         </TabsContent>
       </Tabs>
 
