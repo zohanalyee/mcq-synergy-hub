@@ -273,9 +273,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="analytics"><AdminAnalyticsDashboard /></TabsContent>
       <TabsContent value="inventory"><ContentInventory /></TabsContent>
       <TabsContent value="documents"><DocumentLibrary /></TabsContent>
-      <TabsContent value="generate-mcqs"><AIContentFactory /></TabsContent>
-      <TabsContent value="smart-generation"><AutoFillDashboard /></TabsContent>
-      <TabsContent value="doc-to-mcq"><DocumentMCQConverter /></TabsContent>
+      <TabsContent value="add-content"><AddContentHub /></TabsContent>
+      <TabsContent value="opportunity-review"><OpportunityReviewHub /></TabsContent>
       <TabsContent value="jobs"><JobsManager /></TabsContent>
       <TabsContent value="scholarships"><ScholarshipsManager /></TabsContent>
       <TabsContent value="review-duplicates"><DuplicateReviewQueue /></TabsContent>
