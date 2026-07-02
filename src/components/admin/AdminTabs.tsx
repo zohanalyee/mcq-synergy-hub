@@ -96,9 +96,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       iconColorClass: "text-violet-400",
       glowColor: "from-violet-500/20",
       items: [
-        { value: "generate-mcqs", label: "Generate MCQs", icon: Sparkles },
-        { value: "smart-generation", label: "Smart Generation", icon: Zap },
-        { value: "doc-to-mcq", label: "Doc → MCQ", icon: Cpu },
+        { value: "add-content", label: "Add Content", icon: Sparkles },
         { value: "documents", label: "Documents", icon: Library },
       ],
     },
