@@ -107,7 +107,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       iconColorClass: "text-fuchsia-400",
       glowColor: "from-fuchsia-500/20",
       items: [
-        { value: "agent", label: "Agent Dashboard", icon: Brain },
+        { value: "agent", label: "Agent Queue", icon: Brain },
+        { value: "opportunity-review", label: "Opportunity Review", icon: Inbox },
       ],
     },
     {
