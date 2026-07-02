@@ -13,17 +13,16 @@ import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
 import DocumentLibrary from "./documents/DocumentLibrary";
 import LMSApprovalDashboard from "./LMSApprovalDashboard";
-import AIContentFactory from "./AIContentFactory";
+import AddContentHub from "./AddContentHub";
 import {
   Database, BarChart3, LayoutDashboard, FileText, Upload, BookOpen,
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
-  PenSquare, HelpCircle, TrendingUp,
+  PenSquare, HelpCircle, TrendingUp, Inbox,
 } from "lucide-react";
 import { Share2 } from "lucide-react";
-import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
-import DocumentMCQConverter from "./DocumentMCQConverter";
+import OpportunityReviewHub from "./OpportunityReviewHub";
 import NavigationManager from "./NavigationManager";
 import BlogManager from "./BlogManager";
 import FAQManager from "./FAQManager";
@@ -97,9 +96,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       iconColorClass: "text-violet-400",
       glowColor: "from-violet-500/20",
       items: [
-        { value: "generate-mcqs", label: "Generate MCQs", icon: Sparkles },
-        { value: "smart-generation", label: "Smart Generation", icon: Zap },
-        { value: "doc-to-mcq", label: "Doc → MCQ", icon: Cpu },
+        { value: "add-content", label: "Add Content", icon: Sparkles },
         { value: "documents", label: "Documents", icon: Library },
       ],
     },
@@ -110,7 +107,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       iconColorClass: "text-fuchsia-400",
       glowColor: "from-fuchsia-500/20",
       items: [
-        { value: "agent", label: "Agent Dashboard", icon: Brain },
+        { value: "agent", label: "Agent Queue", icon: Brain },
+        { value: "opportunity-review", label: "Opportunity Review", icon: Inbox },
       ],
     },
     {
@@ -123,14 +121,6 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "jobs", label: "Jobs", icon: BriefcaseBusiness },
         { value: "scholarships", label: "Scholarships", icon: GraduationCap },
       ],
-      extra: (
-        <Link to="/admin/curation">
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-amber-400/70 hover:bg-amber-500/10 hover:text-amber-300">
-            <Globe className="h-3.5 w-3.5" />
-            External Curation
-          </button>
-        </Link>
-      ),
     },
     {
       label: "Structure",
@@ -211,7 +201,20 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Dashboard Tab */}
       <TabsContent value="dashboard">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <AIContentFactory />
+          <Card className="border-violet-500/10 bg-gradient-to-br from-card to-violet-500/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="h-5 w-5 text-violet-400" />
+                Add Content
+              </CardTitle>
+              <CardDescription className="text-xs">Generate, batch-fill & convert MCQs</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => setActiveTab("add-content")} className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 border-0" size="sm">
+                Open Add Content
+              </Button>
+            </CardContent>
+          </Card>
           <Card className="border-cyan-500/10 bg-gradient-to-br from-card to-cyan-500/5">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
@@ -270,9 +273,8 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="analytics"><AdminAnalyticsDashboard /></TabsContent>
       <TabsContent value="inventory"><ContentInventory /></TabsContent>
       <TabsContent value="documents"><DocumentLibrary /></TabsContent>
-      <TabsContent value="generate-mcqs"><AIContentFactory /></TabsContent>
-      <TabsContent value="smart-generation"><AutoFillDashboard /></TabsContent>
-      <TabsContent value="doc-to-mcq"><DocumentMCQConverter /></TabsContent>
+      <TabsContent value="add-content"><AddContentHub /></TabsContent>
+      <TabsContent value="opportunity-review"><OpportunityReviewHub /></TabsContent>
       <TabsContent value="jobs"><JobsManager /></TabsContent>
       <TabsContent value="scholarships"><ScholarshipsManager /></TabsContent>
       <TabsContent value="review-duplicates"><DuplicateReviewQueue /></TabsContent>

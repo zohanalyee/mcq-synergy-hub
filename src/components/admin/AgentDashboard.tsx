@@ -25,13 +25,7 @@ import {
   type AgentTask, type AgentTaskType, type AgentTaskStatus, type TaskStats,
 } from "@/lib/agentQueue";
 import QuotaMonitor from "./QuotaMonitor";
-import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
-import { supabase } from "@/integrations/supabase/client";
-import ScrapingSourcesManager from "./ScrapingSourcesManager";
-import ManualOpportunityCreator from "./ManualOpportunityCreator";
-import OpportunityReviewQueue from "./OpportunityReviewQueue";
-import PublishedOpportunitiesManager from "./PublishedOpportunitiesManager";
-import CorruptedDataCleaner from "./CorruptedDataCleaner";
+
 
 const typeIcons: Record<AgentTaskType, React.ElementType> = {
   blog: FileText,
@@ -80,18 +74,6 @@ const AgentDashboard = () => {
     refetchInterval: 10000,
   });
 
-  const { data: pendingOpportunityCount = 0 } = useQuery({
-    queryKey: ["pending-opportunities-count"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("external_opportunities")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
-      if (error) throw error;
-      return count || 0;
-    },
-    refetchInterval: 15000,
-  });
 
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ["agent-task"] });
@@ -185,10 +167,7 @@ const AgentDashboard = () => {
         <TabsList className="bg-muted/30 border border-border/30">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="queue">Task Queue</TabsTrigger>
-          <TabsTrigger value="gaps">Content Gaps</TabsTrigger>
           <TabsTrigger value="quota">AI Usage</TabsTrigger>
-          <TabsTrigger value="sources">Sources</TabsTrigger>
-          <TabsTrigger value="review">Review ({pendingOpportunityCount})</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -355,37 +334,9 @@ const AgentDashboard = () => {
           </Card>
         </TabsContent>
 
-        {/* Content Gaps Tab */}
-        <TabsContent value="gaps">
-          <EmptyTopicAnalytics />
-        </TabsContent>
-
         {/* AI Usage Tab */}
         <TabsContent value="quota">
           <QuotaMonitor />
-        </TabsContent>
-
-        {/* Sources Tab */}
-        <TabsContent value="sources">
-          <ScrapingSourcesManager />
-        </TabsContent>
-
-        {/* Review Tab — Scraped content review */}
-        <TabsContent value="review" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-sm font-semibold">Scraped Content Review</h3>
-            <ManualOpportunityCreator onSuccess={() => queryClient.invalidateQueries({ queryKey: ["pending-opportunities"] })} />
-          </div>
-          <OpportunityReviewQueue />
-
-          <div className="mt-6">
-            <h3 className="text-sm font-semibold mb-3">Published Content Management</h3>
-            <PublishedOpportunitiesManager />
-          </div>
-
-          <div className="mt-6">
-            <CorruptedDataCleaner />
-          </div>
         </TabsContent>
       </Tabs>
 
