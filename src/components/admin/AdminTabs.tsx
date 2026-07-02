@@ -22,8 +22,7 @@ import {
   PenSquare, HelpCircle, TrendingUp,
 } from "lucide-react";
 import { Share2 } from "lucide-react";
-import AutoFillDashboard from "./auto-fill/AutoFillDashboard";
-import DocumentMCQConverter from "./DocumentMCQConverter";
+import OpportunityReviewHub from "./OpportunityReviewHub";
 import NavigationManager from "./NavigationManager";
 import BlogManager from "./BlogManager";
 import FAQManager from "./FAQManager";
