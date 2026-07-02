@@ -80,18 +80,6 @@ const AgentDashboard = () => {
     refetchInterval: 10000,
   });
 
-  const { data: pendingOpportunityCount = 0 } = useQuery({
-    queryKey: ["pending-opportunities-count"],
-    queryFn: async () => {
-      const { count, error } = await supabase
-        .from("external_opportunities")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "pending");
-      if (error) throw error;
-      return count || 0;
-    },
-    refetchInterval: 15000,
-  });
 
   const refreshAll = () => {
     queryClient.invalidateQueries({ queryKey: ["agent-task"] });
