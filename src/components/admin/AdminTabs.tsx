@@ -121,14 +121,6 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "jobs", label: "Jobs", icon: BriefcaseBusiness },
         { value: "scholarships", label: "Scholarships", icon: GraduationCap },
       ],
-      extra: (
-        <Link to="/admin/curation">
-          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all text-amber-400/70 hover:bg-amber-500/10 hover:text-amber-300">
-            <Globe className="h-3.5 w-3.5" />
-            External Curation
-          </button>
-        </Link>
-      ),
     },
     {
       label: "Structure",
