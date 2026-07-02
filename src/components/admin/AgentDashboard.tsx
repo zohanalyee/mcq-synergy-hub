@@ -25,7 +25,7 @@ import {
   type AgentTask, type AgentTaskType, type AgentTaskStatus, type TaskStats,
 } from "@/lib/agentQueue";
 import QuotaMonitor from "./QuotaMonitor";
-import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
+
 import { supabase } from "@/integrations/supabase/client";
 import ScrapingSourcesManager from "./ScrapingSourcesManager";
 import ManualOpportunityCreator from "./ManualOpportunityCreator";
