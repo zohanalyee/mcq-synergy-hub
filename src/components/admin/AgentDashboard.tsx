@@ -26,12 +26,6 @@ import {
 } from "@/lib/agentQueue";
 import QuotaMonitor from "./QuotaMonitor";
 
-import { supabase } from "@/integrations/supabase/client";
-import ScrapingSourcesManager from "./ScrapingSourcesManager";
-import ManualOpportunityCreator from "./ManualOpportunityCreator";
-import OpportunityReviewQueue from "./OpportunityReviewQueue";
-import PublishedOpportunitiesManager from "./PublishedOpportunitiesManager";
-import CorruptedDataCleaner from "./CorruptedDataCleaner";
 
 const typeIcons: Record<AgentTaskType, React.ElementType> = {
   blog: FileText,
