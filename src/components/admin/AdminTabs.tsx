@@ -201,7 +201,20 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       {/* Dashboard Tab */}
       <TabsContent value="dashboard">
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-          <AIContentFactory />
+          <Card className="border-violet-500/10 bg-gradient-to-br from-card to-violet-500/5">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Sparkles className="h-5 w-5 text-violet-400" />
+                Add Content
+              </CardTitle>
+              <CardDescription className="text-xs">Generate, batch-fill & convert MCQs</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => setActiveTab("add-content")} className="w-full bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-500 hover:to-purple-500 border-0" size="sm">
+                Open Add Content
+              </Button>
+            </CardContent>
+          </Card>
           <Card className="border-cyan-500/10 bg-gradient-to-br from-card to-cyan-500/5">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center gap-2 text-base">
