@@ -13,7 +13,7 @@ import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
 import DocumentLibrary from "./documents/DocumentLibrary";
 import LMSApprovalDashboard from "./LMSApprovalDashboard";
-import AIContentFactory from "./AIContentFactory";
+import AddContentHub from "./AddContentHub";
 import {
   Database, BarChart3, LayoutDashboard, FileText, Upload, BookOpen,
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
