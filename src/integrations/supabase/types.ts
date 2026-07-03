@@ -3385,6 +3385,30 @@ export type Database = {
           topic_name: string
         }[]
       }
+      get_content_fill_progress: {
+        Args: never
+        Returns: {
+          filled_this_month: number
+          filled_this_week: number
+          week_count: number
+          week_start: string
+        }[]
+      }
+      get_content_health: {
+        Args: never
+        Returns: {
+          approved_count: number
+          board_name: string
+          class_number: string
+          last_content_at: string
+          path: string
+          status: string
+          subject_name: string
+          topic_id: string
+          topic_name: string
+          view_count: number
+        }[]
+      }
       get_content_inventory_stats: {
         Args: never
         Returns: {
