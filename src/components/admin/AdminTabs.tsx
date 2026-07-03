@@ -19,7 +19,7 @@ import {
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
   BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
-  PenSquare, HelpCircle, TrendingUp, Inbox,
+  PenSquare, HelpCircle, TrendingUp, Inbox, Activity,
 } from "lucide-react";
 import { Share2 } from "lucide-react";
 import OpportunityReviewHub from "./OpportunityReviewHub";
