@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.job-test-progress]
 verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
