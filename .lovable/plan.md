@@ -1,109 +1,172 @@
-# Phase 3 — Telegram Remote Intake for Jobs/Scholarships
+# Phase 3.1 — Telegram Intake: Full Field Extraction Parity
 
-## Confirmed findings (from investigation)
+## Problem
 
-- `external_opportunities` already has every field needed (`title`, `organization`, `deadline_date`, `apply_url`, `type`, `description`, `location`, `eligibility`, `sector`, `region`, `scholarship_scope`, `status`, `source_name`, `metadata`). `apply_url` and `source_name` are `NOT NULL` → we default them.
-- **Approve/Reject logic** exists as a frontend service; the webhook will replicate the same DB update server-side (service-role client). Items appear in the same `OpportunityReviewHub` automatically.
-- **No Telegram connector** is linked → use the **direct Telegram Bot API** with a bot-token secret.
-- **Gemini is ready**: reuse `callVisionWithAutoSwitch` (photo OCR) and `callAIWithAutoSwitch` (structured extraction) from `_shared/gemini.ts`.
-- **No new tables** — per your choice, source/audit info is stored in `external_opportunities.metadata`; failed-auth and all intake attempts go to edge-function console logs.
+The `telegram-webhook` edge function extracts only ~11 fields, so the Opportunity Review modal shows empty `organization`, `qualification`, `salary`, `experience`, `positions`, `department`, `image_url`, etc. The `external_opportunities` table actually has columns for all of these — the webhook just isn't populating them. The "Enhance with AI Magic" button (`enhance-content`) already extracts the full set; we'll bring the Telegram path to parity.
 
-## Design decisions (from your answers)
+## Confirmed findings
 
-- Audit: store source in `metadata` + console logs (no new table).
-- APPROVE sets `status='approved'` → goes live on public Jobs/Scholarships pages.
-- Setup guide will include how to find your numeric `chat_id`.
+- `external_opportunities` has these extra columns not currently mapped by the webhook: `image_url`, `qualification`, `salary`, `experience`, `positions` (int), `department`, `amount`, `field_of_study`, `education_level`, `tender_number`, `tender_value`, `tender_category`, `document_url`.
+- `enhance-content` uses per-category prompts (job / scholarship / tender) that already define all these fields — we mirror those.
+- `apply_url` currently only accepts `https://`; emails (e.g. `healthrecruitmentjobs93@gmail.com`) are dropped. Shared helper `mailtoForApplyUrl` in `supabase/functions/_shared/sanitize.ts` already converts a bare email to `mailto:`.
+- Photos: `tgGetFileBase64` downloads bytes for OCR but discards them. Telegram's public file URL embeds the bot token and expires — unsafe to persist. We'll upload the poster to Supabase Storage instead.
 
----
+## Design decisions
 
-## Step 1 — Secrets (requested before deploy)
+- **Description**: prompt returns a detailed GitHub-flavored Markdown breakdown (Overview / Eligibility / How to Apply / Important Dates, plus a posts table when multiple positions appear) — same style as AI Content Studio. Raw text is still kept in `metadata.raw_text`.
+- **Image storage**: create a **public** Storage bucket `opportunity-images`; upload the largest Telegram photo there and save the public URL to `image_url`. (Chosen over persisting the token-bearing Telegram URL for security + permanence.)
+- **Apply URL**: accept `https?://` as-is; convert a bare email to `mailto:`; otherwise fall back to the existing internal placeholder. Dedupe still keyed on a real apply URL.
 
-Add three secrets:
+## Steps
 
-- `TELEGRAM_BOT_TOKEN` — bot token from @BotFather.
-- `TELEGRAM_SECRET_TOKEN` — random string (I'll generate) used as Telegram's `X-Telegram-Bot-Api-Secret-Token` header for request verification.
-- `TELEGRAM_ADMIN_CHAT_IDS` — comma-separated whitelist of allowed numeric chat_ids (you'll paste yours).
+### 1. Create public Storage bucket `opportunity-images`
 
-## Step 2 — New edge function `supabase/functions/telegram-webhook/index.ts`
+Via the storage tool (public, image mime types). If the workspace blocks public buckets, surface that and keep it private with a note.
 
-Register `[functions.telegram-webhook] verify_jwt = false` in `supabase/config.toml` (Telegram sends no Supabase JWT).
+### 2. Rewrite the extraction prompt in `telegram-webhook/index.ts`
 
-Request flow:
+Replace `EXTRACTION_SYSTEM` with a schema-complete instruction returning JSON with EXACTLY these keys (null when absent):  
+`title, type ("job"|"scholarship"|"tender"), organization, description (Markdown), deadline_date (YYYY-MM-DD), apply_url, location, sector, region, qualification, salary, experience, positions (int|null), department, eligibility, amount, field_of_study, education_level, scholarship_scope, tender_number, tender_value, tender_category`.  
+Rules mirror `enhance-content`: clean OCR artifacts, convert Urdu/Pakistani dates, never invent data, description is a single Markdown string with headings/bullets/tables, title is never an email/URL.
 
-1. **Security gate**
-  - Compare `X-Telegram-Bot-Api-Secret-Token` header to `TELEGRAM_SECRET_TOKEN` (constant-time compare). Reject 401 on mismatch.
-  - Extract `message.chat.id`; reject if not in `TELEGRAM_ADMIN_CHAT_IDS`. Log every accepted/rejected attempt (`chat_id`, type, outcome) to console.
-  - Always return HTTP 200 to Telegram after handling (so it doesn't retry), even on logical rejects — the reject is communicated by replying to the user.
-2. **Command detection** — if message text starts with `APPROVE` / `REJECT` (case-insensitive):
-  - Parse optional id: `APPROVE <uuid>` / `APPROVE <short-code>`. With no id → act on the **most recent** `pending` **item from this chat** (found via `metadata->>telegram_chat_id` + `status='pending'`, newest first).
-  - Update `status` to `approved`/`rejected`, set `reviewed_at`. Reply `✅ Approved: <title>` / `❌ Rejected: <title>` (or a "nothing pending" message).
-3. **Intake (text)** — non-command text:
-  - Call `callAIWithAutoSwitch` with an extraction prompt → strict JSON `{title, organization, deadline_date, apply_url, type, description, location, eligibility, sector, region, scholarship_scope}`.
-  - Reuse the `isContactInfoTitle` guard (copied from `external-agent-webhook`) so a contact/URL never becomes the title.
-4. **Intake (photo)**:
-  - Take the largest `message.photo` size, call Telegram `getFile` + download file via bot token, base64-encode.
-  - `callVisionWithAutoSwitch` to OCR → extracted text → same extraction step as text.
-5. **Insert** into `external_opportunities`:
-  - `status='pending'`, `source_name='Telegram'`, `apply_url` = extracted URL or a placeholder (`https://mcqsai.com/telegram-intake/<uuid>`), dedupe by `apply_url` when a real URL exists.
-  - `metadata`: `{ source: 'telegram', telegram_chat_id, telegram_message_id, received_at, raw_text }`.
-  - Reply to admin: extracted summary (title, org, type, deadline, location) + short id + `Reply APPROVE or REJECT`.
-6. **Error handling** — Gemini quota (429) / parse failure → reply a friendly "couldn't read that, try again / paste as text" message; log details. Never throw an unhandled 500 back to Telegram.
+### 3. Refactor photo handling for upload + OCR
 
-## Step 3 — Deploy & verify
+- Change `tgGetFileBase64` (or add a sibling) to return `{ bytes, base64, mime, ext }` so the same download feeds both OCR and the storage upload.
+- After OCR, upload `bytes` to `opportunity-images/telegram/<uuid>.<ext>` with the service-role client, get the public URL, and set `image_url`.
+- On upload failure, log and continue (item still saved without image).
 
-- Deploy `telegram-webhook`; confirm it responds to a signed test POST (secret check, whitelist check, sample text extraction) via curl and inspect logs.
+### 4. Map every field into the insert
 
-## Step 4 — Setup guide (delivered in chat after implementation)
+Expand the `external_opportunities` insert to include `image_url`, and all type-specific columns (`qualification, salary, experience, positions, department, amount, field_of_study, education_level, tender_number, tender_value, tender_category`) with the same validation/whitelisting already used for `sector`/`region`/`scholarship_scope`. `positions` parsed to int or null.
 
-1. Create bot via **@BotFather** → get `TELEGRAM_BOT_TOKEN`.
-2. Find your `chat_id`: message **@userinfobot** (or hit `getUpdates`), paste into `TELEGRAM_ADMIN_CHAT_IDS`.
-3. Register webhook (one curl command I'll provide):
-  `https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://pzhvipkcssxrsxxljbbz.supabase.co/functions/v1/telegram-webhook&secret_token=<TELEGRAM_SECRET_TOKEN>&allowed_updates=["message"]`
-4. Verify with `getWebhookInfo`; send a test text/photo.
+### 5. Apply-URL normalization
 
-## Technical notes
+Import `mailtoForApplyUrl` from `_shared/sanitize.ts`. Compute `applyUrl` = valid http(s) → as-is; else if extracted value/text contains an email → `mailto:`; else null → internal placeholder. Keep dedupe on real (non-placeholder) URLs.
 
-- **No new tables**; reuses `external_opportunities` + existing `OpportunityReviewHub` queue.
-- Human-in-the-loop preserved: nothing is `approved` without an explicit APPROVE reply.
-- Files touched: new `supabase/functions/telegram-webhook/index.ts`, `supabase/config.toml` (one entry). No frontend changes required — Telegram items surface in the existing admin queue.
+### 6. Enrich the Telegram confirmation summary
+
+Add Qualification / Salary / Deadline / Apply / "🖼 image attached" lines when present so you can sanity-check extraction before APPROVE/REJECT.
+
+### 7. Deploy & verify
+
+Deploy `telegram-webhook`, then send a text ad and a photo ad; confirm in logs and the Opportunity Review modal that organization, qualification, salary, experience, positions, department, image_url and apply_url are populated.
 
 ## Out of scope
 
-- WhatsApp intake (Telegram only for this phase).
-- Editing extracted fields via Telegram (edits happen in the admin panel).
+- No schema/migration changes (all columns already exist).
+- No changes to the review UI or `enhance-content`.
+- WhatsApp / editing fields via Telegram.
+
+## Technical notes
+
+- Bucket upload uses the existing service-role `supabase` client already created in the handler.
+- `.ext`/mime derived from Telegram `file_path` (jpg/png/webp), default `image/jpeg`.
+- `description` capped (raise current 2000-char limit to ~6000 to fit the richer Markdown).
 
 &nbsp;
 
-# **Approved — proceed with Phase 3** implementation exactly as planned.
+# **Approved — proceed with Phase 3.1 exactly as planned.**
 
 &nbsp;
 
-Before deploying, please:
+One confirmation needed before implementing: for the 
 
-1. Generate a secure random TELEGRAM_SECRET_TOKEN and show it 
+opportunity-images Storage bucket — please create it as PUBLIC 
 
-   to me (I'll add it to Supabase secrets along with the bot 
+(so image_url can be served directly to users in the Opportunity 
 
-   token and chat_id)
+Review modal and public pages). If Lovable's workspace blocks 
 
-2. Implement the telegram-webhook edge function
+public buckets, let me know and we'll keep it private with 
 
-3. Add the config.toml entry
-
-4. Provide the complete setup guide (BotFather steps + webhook 
-
-   registration curl command) after implementation
+signed URLs instead.
 
 &nbsp;
 
-One clarification: for the "most recent pending item" APPROVE 
+After implementing, I'll test by sending:
 
-(when no UUID given), please also make sure it only looks at 
+1. A text job ad with email apply link
 
-items submitted via THIS Telegram chat (metadata->telegram_chat_id 
+2. A photo of a job ad
 
-matching), not any pending item from other sources — so I don't 
+&nbsp;
 
-accidentally approve a manually-entered item when I type APPROVE 
+Please confirm both show fully populated fields in the 
 
-in Telegram.
+Opportunity Review modal (organization, qualification, salary, 
+
+experience, positions, image_url all filled).
+
+&nbsp;
+
+ADDITIONAL REQUIREMENT — Multi-image and long image support:
+
+&nbsp;
+
+Currently when an admin sends:
+
+1. A long/tall job ad image (single image with lots of text) — 
+
+   OCR misses content at the bottom or reads it incorrectly
+
+2. Multiple images for ONE job ad (e.g., page 1 + page 2 of 
+
+   same ad) — only the first image is processed, rest are ignored
+
+&nbsp;
+
+Please fix both cases:
+
+&nbsp;
+
+1. LONG IMAGE: When OCR'ing a tall/long image, ensure the full 
+
+   image is processed — not just the top portion. If Gemini 
+
+   Vision has a limitation with very tall images, consider 
+
+   splitting the image into overlapping vertical chunks before 
+
+   sending to OCR, then merging the extracted text.
+
+&nbsp;
+
+2. MULTI-IMAGE (album/media group): Telegram sends multiple 
+
+   photos as a "media group" (same media_group_id). Currently 
+
+   each photo triggers a separate webhook call. Please handle 
+
+   this by:
+
+   - Detecting media_group_id on incoming messages
+
+   - Buffering/collecting images with the same media_group_id 
+
+     for a short window (e.g., 3-5 seconds)
+
+   - Processing ALL collected images together as one job ad 
+
+     (OCR all pages, concatenate text, then single extraction)
+
+   - Sending ONE confirmation reply (not one per image)
+
+&nbsp;
+
+3. For multi-image, store all uploaded images — save the first 
+
+   as image_url (primary), and store the rest as additional_images 
+
+   in metadata (array of URLs) so they're accessible for review.
+
+&nbsp;
+
+After implementing, please test with:
+
+- A long/tall single image ad
+
+- A 2-page ad sent as 2 separate photos in sequence
+
+&nbsp;
+
+Confirm both work correctly before reporting back.
