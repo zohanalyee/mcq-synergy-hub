@@ -2706,6 +2706,57 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_media_buffer: {
+        Row: {
+          caption: string | null
+          chat_id: string
+          created_at: string
+          file_id: string
+          id: string
+          media_group_id: string
+          message_id: number | null
+        }
+        Insert: {
+          caption?: string | null
+          chat_id: string
+          created_at?: string
+          file_id: string
+          id?: string
+          media_group_id: string
+          message_id?: number | null
+        }
+        Update: {
+          caption?: string | null
+          chat_id?: string
+          created_at?: string
+          file_id?: string
+          id?: string
+          media_group_id?: string
+          message_id?: number | null
+        }
+        Relationships: []
+      }
+      telegram_media_groups: {
+        Row: {
+          chat_id: string
+          created_at: string
+          media_group_id: string
+          processing_started: string | null
+        }
+        Insert: {
+          chat_id: string
+          created_at?: string
+          media_group_id: string
+          processing_started?: string | null
+        }
+        Update: {
+          chat_id?: string
+          created_at?: string
+          media_group_id?: string
+          processing_started?: string | null
+        }
+        Relationships: []
+      }
       test_attempts: {
         Row: {
           answers: Json | null
