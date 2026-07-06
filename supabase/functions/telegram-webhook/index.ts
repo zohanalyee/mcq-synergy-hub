@@ -445,6 +445,8 @@ async function runIntake(
     normalizeDate(extracted.deadline_date) ? `<b>Deadline:</b> ${normalizeDate(extracted.deadline_date)}` : null,
     applyUrl ? `<b>Apply:</b> ${applyUrl}` : null,
     imageUrls.length ? `🖼 ${imageUrls.length} image${imageUrls.length > 1 ? 's' : ''} attached` : null,
+    documentUrl ? '📄 PDF document attached' : null,
+    processedNote ? `\n${processedNote}` : null,
     '',
     `<b>ID:</b> <code>${shortId(newId)}</code>`,
     'Reply <b>APPROVE</b> or <b>REJECT</b> (optionally with the ID).',
