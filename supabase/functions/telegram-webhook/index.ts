@@ -76,7 +76,7 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
   // Split into overlapping vertical chunks and OCR each, then concatenate.
   const CHUNK_HEIGHT = 1500;
   const OVERLAP = 250;
-  const MAX_CHUNKS = 6;
+  const MAX_CHUNKS = 12;
 
   let img: any = null;
   try {
@@ -88,7 +88,9 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
   // Small/undecodable images: OCR the whole thing in one call.
   if (!img || img.height <= CHUNK_HEIGHT * 1.3) {
     const res = await callVisionWithAutoSwitch(OCR_PROMPT, bytesToBase64(bytes), mime, { temperature: 0.1 });
-    return res.text || '';
+    const text = res.text || '';
+    console.log(`[OCR] Single-pass image (${img ? `${img.width}x${img.height}` : 'undecoded'}): ${text.length} chars`);
+    return text;
   }
 
   const parts: string[] = [];
@@ -100,7 +102,10 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
       const slice = img.clone().crop(0, y, img.width, h);
       const jpeg = await slice.encodeJPEG(90);
       const res = await callVisionWithAutoSwitch(OCR_PROMPT, bytesToBase64(jpeg), 'image/jpeg', { temperature: 0.1 });
-      if (res.text) parts.push(res.text.trim());
+      if (res.text) {
+        parts.push(res.text.trim());
+        console.log(`[OCR] chunk #${count + 1} at y=${y} (h=${h}): ${res.text.trim().length} chars`);
+      }
     } catch (e) {
       console.error(`[OCR] chunk at y=${y} failed:`, (e as Error).message);
     }
@@ -108,9 +113,11 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
     y += CHUNK_HEIGHT - OVERLAP;
     count++;
   }
-  console.log(`[OCR] Long image (${img.width}x${img.height}) processed in ${parts.length} chunk(s)`);
-  return parts.join('\n');
+  const joined = parts.join('\n');
+  console.log(`[OCR] Long image (${img.width}x${img.height}) → ${parts.length} chunk(s), ${joined.length} total chars`);
+  return joined;
 }
+
 
 // Upload image bytes to the private bucket and return a long-lived signed URL.
 async function uploadOpportunityImage(
