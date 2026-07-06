@@ -388,6 +388,7 @@ async function runIntake(
     location: pickStr(extracted.location),
     deadline_date: normalizeDate(extracted.deadline_date),
     image_url: primaryImage,
+    document_url: documentUrl,
     sector: ['government', 'private'].includes(extracted.sector) ? extracted.sector : null,
     region: ['sindh', 'punjab', 'kpk', 'balochistan', 'federal', 'international', 'other'].includes(extracted.region)
       ? extracted.region
