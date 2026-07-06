@@ -695,12 +695,15 @@ Deno.serve(async (req) => {
       }
 
       const sourceText = [text, ocrText].filter(Boolean).join('\n\n').trim();
+      console.log(`[Telegram Webhook] Single image OCR: ${ocrText.length} chars + ${text.length} caption chars → ${sourceText.length} total`);
       if (!sourceText) {
         await tgSendMessage(botToken, chatId, '⚠️ Could not read the image. Please resend or paste the text.');
         return ok();
       }
 
-      await runIntake(supabase, botToken, chatId, messageId, sourceText, imageUrls);
+      await runIntake(supabase, botToken, chatId, messageId, sourceText, imageUrls, {
+        processedNote: '✅ Image processed',
+      });
       return ok();
     }
 
@@ -714,6 +717,62 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    // 6a) TEXT that contains a direct image URL or PDF URL — download & process it.
+    {
+      const urls = findUrls(text);
+      const imageUrl = urls.find((u) => classifyUrl(u) === 'image') || null;
+      const pdfUrl = urls.find((u) => classifyUrl(u) === 'pdf') || null;
+
+      if (imageUrl) {
+        await tgSendMessage(botToken, chatId, '🔎 Downloading & reading the image URL…');
+        const fetched = await fetchUrlBytes(imageUrl);
+        if (!fetched) {
+          await tgSendMessage(botToken, chatId, '⚠️ Could not download that image URL. Processing the text only…');
+          await runIntake(supabase, botToken, chatId, messageId, text, []);
+          return ok();
+        }
+        const { mime, ext } = extToMime(imageUrl, fetched.contentType);
+        const imageUrls: string[] = [];
+        const stored = await uploadOpportunityImage(supabase, fetched.bytes, ext, mime);
+        if (stored) imageUrls.push(stored);
+        let ocrText = '';
+        try {
+          ocrText = await ocrImageBytes(fetched.bytes, mime);
+        } catch (e) {
+          console.error('[Telegram Webhook] image-URL OCR failed:', (e as Error).message);
+        }
+        const sourceText = [text, ocrText].filter(Boolean).join('\n\n').trim();
+        console.log(`[Telegram Webhook] Image URL: OCR ${ocrText.length} chars + ${text.length} text → ${sourceText.length} total`);
+        await runIntake(supabase, botToken, chatId, messageId, sourceText, imageUrls, {
+          processedNote: '✅ Text + Image URL processed',
+        });
+        return ok();
+      }
+
+      if (pdfUrl) {
+        await tgSendMessage(botToken, chatId, '🔎 Downloading & reading the PDF…');
+        const fetched = await fetchUrlBytes(pdfUrl);
+        if (!fetched) {
+          await tgSendMessage(botToken, chatId, '⚠️ Could not download that PDF. Processing the text only…');
+          await runIntake(supabase, botToken, chatId, messageId, text, []);
+          return ok();
+        }
+        const { text: pdfText, pages } = await extractPdfText(fetched.bytes);
+        const sourceText = [text, pdfText].filter(Boolean).join('\n\n').trim();
+        console.log(`[Telegram Webhook] PDF URL: ${pages} page(s), ${pdfText.length} chars + ${text.length} text → ${sourceText.length} total`);
+        if (!sourceText) {
+          await tgSendMessage(botToken, chatId, '⚠️ Could not extract text from that PDF. Please paste the ad as text.');
+          return ok();
+        }
+        await runIntake(supabase, botToken, chatId, messageId, sourceText, [], {
+          documentUrl: pdfUrl,
+          processedNote: `✅ Text + PDF processed (${pages} page${pages === 1 ? '' : 's'})`,
+        });
+        return ok();
+      }
+    }
+
+    // Plain text (web-page URLs, if any, are left for the AI to use as apply_url).
     await runIntake(supabase, botToken, chatId, messageId, text, []);
     return ok();
   } catch (e) {
