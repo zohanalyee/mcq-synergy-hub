@@ -630,10 +630,12 @@ Deno.serve(async (req) => {
       const rows = bufferRows ?? [];
       if (rows.length === 0) return ok();
 
+      console.log(`[Telegram Webhook] Media group ${mediaGroupId}: buffered ${rows.length} photo(s)`);
       await tgSendMessage(botToken, chatId, `🔎 Reading ${rows.length} image(s)…`);
 
       const imageUrls: string[] = [];
       const ocrParts: string[] = [];
+      let ocrChunks = 0;
       for (const row of rows) {
         if (row.caption) ocrParts.push(String(row.caption));
         const file = await tgGetFileBytes(botToken, row.file_id);
@@ -642,13 +644,17 @@ Deno.serve(async (req) => {
         if (url) imageUrls.push(url);
         try {
           const ocr = await ocrImageBytes(file.bytes, file.mime);
-          if (ocr) ocrParts.push(ocr);
+          if (ocr) {
+            ocrParts.push(ocr);
+            ocrChunks++;
+          }
         } catch (e) {
           console.error('[Telegram Webhook] group OCR failed:', (e as Error).message);
         }
       }
 
       const sourceText = ocrParts.filter(Boolean).join('\n\n').trim();
+      console.log(`[Telegram Webhook] Album OCR: ${ocrChunks}/${rows.length} image(s) read, concatenated ${sourceText.length} chars → extraction`);
       if (!sourceText) {
         await tgSendMessage(botToken, chatId, '⚠️ Could not read the images. Please resend or paste the text.');
         // cleanup
@@ -656,7 +662,9 @@ Deno.serve(async (req) => {
         return ok();
       }
 
-      await runIntake(supabase, botToken, chatId, rows[0]?.message_id ?? messageId, sourceText, imageUrls);
+      await runIntake(supabase, botToken, chatId, rows[0]?.message_id ?? messageId, sourceText, imageUrls, {
+        processedNote: `✅ Album (${rows.length} images) processed`,
+      });
 
       // Cleanup buffer rows (keep the group row as a processed marker briefly)
       await supabase.from('telegram_media_buffer').delete().eq('media_group_id', mediaGroupId);
