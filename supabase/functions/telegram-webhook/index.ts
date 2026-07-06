@@ -167,7 +167,7 @@ From the given advertisement text, extract clean, professional, structured data 
   "sector": "government"|"private"|null,
   "region": "sindh"|"punjab"|"kpk"|"balochistan"|"federal"|"international"|"other"|null,
   "qualification": string|null, // required education (jobs)
-  "salary": string|null,        // pay scale / salary range e.g. "BPS-17 (Rs. 57,000-115,000)"
+  "salary": string|null,        // COMPENSATION. Priority: (1) BPS pay scale/grade if stated e.g. "BPS-01 to BPS-04" or "BPS-17 (Rs. 57,000-115,000)"; (2) else stipend/allowance amount if stated e.g. "Monthly stipend of Rs. 25,000"; (3) else any explicit salary range; (4) else null. NEVER invent a figure.
   "experience": string|null,    // required experience
   "positions": number|null,     // number of vacancies as an integer
   "department": string|null,    // department name (jobs/tenders)
