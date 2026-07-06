@@ -305,7 +305,11 @@ async function runIntake(
   messageId: number | null,
   sourceText: string,
   imageUrls: string[],
+  opts?: { documentUrl?: string | null; processedNote?: string | null },
 ) {
+  const documentUrl = opts?.documentUrl ?? null;
+  const processedNote = opts?.processedNote ?? null;
+  console.log(`[Telegram Webhook] runIntake: sourceText=${sourceText.length} chars, images=${imageUrls.length}, documentUrl=${documentUrl ? 'yes' : 'no'}`);
   let extracted: any = null;
   try {
     const res = await callAIWithAutoSwitch(EXTRACTION_SYSTEM, sourceText, { temperature: 0.1 }, {
