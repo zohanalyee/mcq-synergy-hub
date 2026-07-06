@@ -230,6 +230,73 @@ function pickStr(v: any): string | null {
   return s ? s : null;
 }
 
+// ---------- URL detection & fetching (image / PDF / webpage) ----------
+const URL_RE = /https?:\/\/[^\s<>"'()]+/gi;
+
+function findUrls(text: string): string[] {
+  const matches = (text || '').match(URL_RE) || [];
+  // Strip common trailing punctuation.
+  return matches.map((u) => u.replace(/[).,;!?]+$/, ''));
+}
+
+function classifyUrl(url: string): 'image' | 'pdf' | 'web' {
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  if (/\.(jpe?g|png|webp|gif|bmp)$/.test(clean)) return 'image';
+  if (/\.pdf$/.test(clean)) return 'pdf';
+  return 'web';
+}
+
+// Download arbitrary URL bytes with a content-type sniff.
+async function fetchUrlBytes(url: string): Promise<{ bytes: Uint8Array; contentType: string } | null> {
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) {
+      console.error(`[URL] fetch failed ${res.status} for ${url}`);
+      return null;
+    }
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    return { bytes, contentType };
+  } catch (e) {
+    console.error('[URL] fetch error:', (e as Error).message);
+    return null;
+  }
+}
+
+function extToMime(url: string, contentType: string): { mime: string; ext: string } {
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  if (contentType.includes('png') || clean.endsWith('.png')) return { mime: 'image/png', ext: 'png' };
+  if (contentType.includes('webp') || clean.endsWith('.webp')) return { mime: 'image/webp', ext: 'webp' };
+  if (contentType.includes('gif') || clean.endsWith('.gif')) return { mime: 'image/gif', ext: 'gif' };
+  return { mime: 'image/jpeg', ext: 'jpg' };
+}
+
+// Extract text from a PDF (text layer via unpdf; falls back to first-page OCR).
+async function extractPdfText(bytes: Uint8Array): Promise<{ text: string; pages: number }> {
+  try {
+    const { extractText, getDocumentProxy } = await import('https://esm.sh/unpdf@0.11.0');
+    const pdf = await getDocumentProxy(bytes);
+    const { text, totalPages } = await extractText(pdf, { mergePages: true });
+    const merged = Array.isArray(text) ? text.join('\n') : String(text || '');
+    console.log(`[PDF] unpdf extracted ${merged.length} chars from ${totalPages} page(s)`);
+    if (merged.trim().length >= 40) {
+      return { text: merged.trim(), pages: totalPages || 1 };
+    }
+  } catch (e) {
+    console.warn('[PDF] unpdf failed, will try OCR fallback:', (e as Error).message);
+  }
+  // Fallback: OCR the raw bytes (scanned PDF). Gemini Vision can read PDFs directly.
+  try {
+    const res = await callVisionWithAutoSwitch(OCR_PROMPT, bytesToBase64(bytes), 'application/pdf', { temperature: 0.1 });
+    console.log(`[PDF] OCR fallback extracted ${(res.text || '').length} chars`);
+    return { text: (res.text || '').trim(), pages: 1 };
+  } catch (e) {
+    console.error('[PDF] OCR fallback failed:', (e as Error).message);
+    return { text: '', pages: 0 };
+  }
+}
+
+
 // ---------- Shared intake: extract → insert → confirm ----------
 async function runIntake(
   supabase: any,
