@@ -76,7 +76,7 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
   // Split into overlapping vertical chunks and OCR each, then concatenate.
   const CHUNK_HEIGHT = 1500;
   const OVERLAP = 250;
-  const MAX_CHUNKS = 6;
+  const MAX_CHUNKS = 12;
 
   let img: any = null;
   try {
@@ -88,7 +88,9 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
   // Small/undecodable images: OCR the whole thing in one call.
   if (!img || img.height <= CHUNK_HEIGHT * 1.3) {
     const res = await callVisionWithAutoSwitch(OCR_PROMPT, bytesToBase64(bytes), mime, { temperature: 0.1 });
-    return res.text || '';
+    const text = res.text || '';
+    console.log(`[OCR] Single-pass image (${img ? `${img.width}x${img.height}` : 'undecoded'}): ${text.length} chars`);
+    return text;
   }
 
   const parts: string[] = [];
@@ -100,7 +102,10 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
       const slice = img.clone().crop(0, y, img.width, h);
       const jpeg = await slice.encodeJPEG(90);
       const res = await callVisionWithAutoSwitch(OCR_PROMPT, bytesToBase64(jpeg), 'image/jpeg', { temperature: 0.1 });
-      if (res.text) parts.push(res.text.trim());
+      if (res.text) {
+        parts.push(res.text.trim());
+        console.log(`[OCR] chunk #${count + 1} at y=${y} (h=${h}): ${res.text.trim().length} chars`);
+      }
     } catch (e) {
       console.error(`[OCR] chunk at y=${y} failed:`, (e as Error).message);
     }
@@ -108,9 +113,11 @@ async function ocrImageBytes(bytes: Uint8Array, mime: string): Promise<string> {
     y += CHUNK_HEIGHT - OVERLAP;
     count++;
   }
-  console.log(`[OCR] Long image (${img.width}x${img.height}) processed in ${parts.length} chunk(s)`);
-  return parts.join('\n');
+  const joined = parts.join('\n');
+  console.log(`[OCR] Long image (${img.width}x${img.height}) → ${parts.length} chunk(s), ${joined.length} total chars`);
+  return joined;
 }
+
 
 // Upload image bytes to the private bucket and return a long-lived signed URL.
 async function uploadOpportunityImage(
@@ -167,7 +174,7 @@ From the given advertisement text, extract clean, professional, structured data 
   "sector": "government"|"private"|null,
   "region": "sindh"|"punjab"|"kpk"|"balochistan"|"federal"|"international"|"other"|null,
   "qualification": string|null, // required education (jobs)
-  "salary": string|null,        // pay scale / salary range e.g. "BPS-17 (Rs. 57,000-115,000)"
+  "salary": string|null,        // COMPENSATION. Priority: (1) BPS pay scale/grade if stated e.g. "BPS-01 to BPS-04" or "BPS-17 (Rs. 57,000-115,000)"; (2) else stipend/allowance amount if stated e.g. "Monthly stipend of Rs. 25,000"; (3) else any explicit salary range; (4) else null. NEVER invent a figure.
   "experience": string|null,    // required experience
   "positions": number|null,     // number of vacancies as an integer
   "department": string|null,    // department name (jobs/tenders)
@@ -184,8 +191,9 @@ RULES:
 1. Use null for anything not clearly stated. Never invent URLs, dates, salaries or numbers.
 2. Clean up OCR artifacts, broken lines and extra spaces.
 3. Extract EVERY field that is present — do not leave qualification/salary/experience/positions/department empty if the text mentions them.
-4. The "description" VALUE is a single Markdown string with headings, bullets and tables — keep it detailed but well-structured.
-5. Return raw JSON only.`;
+4. SALARY: if a BPS grade/range is mentioned (e.g. "BPS-01 to BPS-04"), put it in "salary". If instead a stipend/allowance is mentioned (e.g. "stipend of Rs. 25,000"), put that. Only use null when NO compensation of any kind is mentioned.
+5. The "description" VALUE is a single Markdown string with headings, bullets and tables — keep it detailed but well-structured.
+6. Return raw JSON only.`;
 
 function safeParseJson(raw: string): any | null {
   if (!raw) return null;
@@ -222,6 +230,73 @@ function pickStr(v: any): string | null {
   return s ? s : null;
 }
 
+// ---------- URL detection & fetching (image / PDF / webpage) ----------
+const URL_RE = /https?:\/\/[^\s<>"'()]+/gi;
+
+function findUrls(text: string): string[] {
+  const matches = (text || '').match(URL_RE) || [];
+  // Strip common trailing punctuation.
+  return matches.map((u) => u.replace(/[).,;!?]+$/, ''));
+}
+
+function classifyUrl(url: string): 'image' | 'pdf' | 'web' {
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  if (/\.(jpe?g|png|webp|gif|bmp)$/.test(clean)) return 'image';
+  if (/\.pdf$/.test(clean)) return 'pdf';
+  return 'web';
+}
+
+// Download arbitrary URL bytes with a content-type sniff.
+async function fetchUrlBytes(url: string): Promise<{ bytes: Uint8Array; contentType: string } | null> {
+  try {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (!res.ok) {
+      console.error(`[URL] fetch failed ${res.status} for ${url}`);
+      return null;
+    }
+    const contentType = (res.headers.get('content-type') || '').toLowerCase();
+    const bytes = new Uint8Array(await res.arrayBuffer());
+    return { bytes, contentType };
+  } catch (e) {
+    console.error('[URL] fetch error:', (e as Error).message);
+    return null;
+  }
+}
+
+function extToMime(url: string, contentType: string): { mime: string; ext: string } {
+  const clean = url.split('?')[0].split('#')[0].toLowerCase();
+  if (contentType.includes('png') || clean.endsWith('.png')) return { mime: 'image/png', ext: 'png' };
+  if (contentType.includes('webp') || clean.endsWith('.webp')) return { mime: 'image/webp', ext: 'webp' };
+  if (contentType.includes('gif') || clean.endsWith('.gif')) return { mime: 'image/gif', ext: 'gif' };
+  return { mime: 'image/jpeg', ext: 'jpg' };
+}
+
+// Extract text from a PDF (text layer via unpdf; falls back to first-page OCR).
+async function extractPdfText(bytes: Uint8Array): Promise<{ text: string; pages: number }> {
+  try {
+    const { extractText, getDocumentProxy } = await import('https://esm.sh/unpdf@0.11.0');
+    const pdf = await getDocumentProxy(bytes);
+    const { text, totalPages } = await extractText(pdf, { mergePages: true });
+    const merged = Array.isArray(text) ? text.join('\n') : String(text || '');
+    console.log(`[PDF] unpdf extracted ${merged.length} chars from ${totalPages} page(s)`);
+    if (merged.trim().length >= 40) {
+      return { text: merged.trim(), pages: totalPages || 1 };
+    }
+  } catch (e) {
+    console.warn('[PDF] unpdf failed, will try OCR fallback:', (e as Error).message);
+  }
+  // Fallback: OCR the raw bytes (scanned PDF). Gemini Vision can read PDFs directly.
+  try {
+    const res = await callVisionWithAutoSwitch(OCR_PROMPT, bytesToBase64(bytes), 'application/pdf', { temperature: 0.1 });
+    console.log(`[PDF] OCR fallback extracted ${(res.text || '').length} chars`);
+    return { text: (res.text || '').trim(), pages: 1 };
+  } catch (e) {
+    console.error('[PDF] OCR fallback failed:', (e as Error).message);
+    return { text: '', pages: 0 };
+  }
+}
+
+
 // ---------- Shared intake: extract → insert → confirm ----------
 async function runIntake(
   supabase: any,
@@ -230,7 +305,11 @@ async function runIntake(
   messageId: number | null,
   sourceText: string,
   imageUrls: string[],
+  opts?: { documentUrl?: string | null; processedNote?: string | null },
 ) {
+  const documentUrl = opts?.documentUrl ?? null;
+  const processedNote = opts?.processedNote ?? null;
+  console.log(`[Telegram Webhook] runIntake: sourceText=${sourceText.length} chars, images=${imageUrls.length}, documentUrl=${documentUrl ? 'yes' : 'no'}`);
   let extracted: any = null;
   try {
     const res = await callAIWithAutoSwitch(EXTRACTION_SYSTEM, sourceText, { temperature: 0.1 }, {
@@ -309,6 +388,7 @@ async function runIntake(
     location: pickStr(extracted.location),
     deadline_date: normalizeDate(extracted.deadline_date),
     image_url: primaryImage,
+    document_url: documentUrl,
     sector: ['government', 'private'].includes(extracted.sector) ? extracted.sector : null,
     region: ['sindh', 'punjab', 'kpk', 'balochistan', 'federal', 'international', 'other'].includes(extracted.region)
       ? extracted.region
@@ -365,6 +445,8 @@ async function runIntake(
     normalizeDate(extracted.deadline_date) ? `<b>Deadline:</b> ${normalizeDate(extracted.deadline_date)}` : null,
     applyUrl ? `<b>Apply:</b> ${applyUrl}` : null,
     imageUrls.length ? `🖼 ${imageUrls.length} image${imageUrls.length > 1 ? 's' : ''} attached` : null,
+    documentUrl ? '📄 PDF document attached' : null,
+    processedNote ? `\n${processedNote}` : null,
     '',
     `<b>ID:</b> <code>${shortId(newId)}</code>`,
     'Reply <b>APPROVE</b> or <b>REJECT</b> (optionally with the ID).',
@@ -548,10 +630,12 @@ Deno.serve(async (req) => {
       const rows = bufferRows ?? [];
       if (rows.length === 0) return ok();
 
+      console.log(`[Telegram Webhook] Media group ${mediaGroupId}: buffered ${rows.length} photo(s)`);
       await tgSendMessage(botToken, chatId, `🔎 Reading ${rows.length} image(s)…`);
 
       const imageUrls: string[] = [];
       const ocrParts: string[] = [];
+      let ocrChunks = 0;
       for (const row of rows) {
         if (row.caption) ocrParts.push(String(row.caption));
         const file = await tgGetFileBytes(botToken, row.file_id);
@@ -560,13 +644,17 @@ Deno.serve(async (req) => {
         if (url) imageUrls.push(url);
         try {
           const ocr = await ocrImageBytes(file.bytes, file.mime);
-          if (ocr) ocrParts.push(ocr);
+          if (ocr) {
+            ocrParts.push(ocr);
+            ocrChunks++;
+          }
         } catch (e) {
           console.error('[Telegram Webhook] group OCR failed:', (e as Error).message);
         }
       }
 
       const sourceText = ocrParts.filter(Boolean).join('\n\n').trim();
+      console.log(`[Telegram Webhook] Album OCR: ${ocrChunks}/${rows.length} image(s) read, concatenated ${sourceText.length} chars → extraction`);
       if (!sourceText) {
         await tgSendMessage(botToken, chatId, '⚠️ Could not read the images. Please resend or paste the text.');
         // cleanup
@@ -574,7 +662,9 @@ Deno.serve(async (req) => {
         return ok();
       }
 
-      await runIntake(supabase, botToken, chatId, rows[0]?.message_id ?? messageId, sourceText, imageUrls);
+      await runIntake(supabase, botToken, chatId, rows[0]?.message_id ?? messageId, sourceText, imageUrls, {
+        processedNote: `✅ Album (${rows.length} images) processed`,
+      });
 
       // Cleanup buffer rows (keep the group row as a processed marker briefly)
       await supabase.from('telegram_media_buffer').delete().eq('media_group_id', mediaGroupId);
@@ -605,12 +695,15 @@ Deno.serve(async (req) => {
       }
 
       const sourceText = [text, ocrText].filter(Boolean).join('\n\n').trim();
+      console.log(`[Telegram Webhook] Single image OCR: ${ocrText.length} chars + ${text.length} caption chars → ${sourceText.length} total`);
       if (!sourceText) {
         await tgSendMessage(botToken, chatId, '⚠️ Could not read the image. Please resend or paste the text.');
         return ok();
       }
 
-      await runIntake(supabase, botToken, chatId, messageId, sourceText, imageUrls);
+      await runIntake(supabase, botToken, chatId, messageId, sourceText, imageUrls, {
+        processedNote: '✅ Image processed',
+      });
       return ok();
     }
 
@@ -624,6 +717,62 @@ Deno.serve(async (req) => {
       return ok();
     }
 
+    // 6a) TEXT that contains a direct image URL or PDF URL — download & process it.
+    {
+      const urls = findUrls(text);
+      const imageUrl = urls.find((u) => classifyUrl(u) === 'image') || null;
+      const pdfUrl = urls.find((u) => classifyUrl(u) === 'pdf') || null;
+
+      if (imageUrl) {
+        await tgSendMessage(botToken, chatId, '🔎 Downloading & reading the image URL…');
+        const fetched = await fetchUrlBytes(imageUrl);
+        if (!fetched) {
+          await tgSendMessage(botToken, chatId, '⚠️ Could not download that image URL. Processing the text only…');
+          await runIntake(supabase, botToken, chatId, messageId, text, []);
+          return ok();
+        }
+        const { mime, ext } = extToMime(imageUrl, fetched.contentType);
+        const imageUrls: string[] = [];
+        const stored = await uploadOpportunityImage(supabase, fetched.bytes, ext, mime);
+        if (stored) imageUrls.push(stored);
+        let ocrText = '';
+        try {
+          ocrText = await ocrImageBytes(fetched.bytes, mime);
+        } catch (e) {
+          console.error('[Telegram Webhook] image-URL OCR failed:', (e as Error).message);
+        }
+        const sourceText = [text, ocrText].filter(Boolean).join('\n\n').trim();
+        console.log(`[Telegram Webhook] Image URL: OCR ${ocrText.length} chars + ${text.length} text → ${sourceText.length} total`);
+        await runIntake(supabase, botToken, chatId, messageId, sourceText, imageUrls, {
+          processedNote: '✅ Text + Image URL processed',
+        });
+        return ok();
+      }
+
+      if (pdfUrl) {
+        await tgSendMessage(botToken, chatId, '🔎 Downloading & reading the PDF…');
+        const fetched = await fetchUrlBytes(pdfUrl);
+        if (!fetched) {
+          await tgSendMessage(botToken, chatId, '⚠️ Could not download that PDF. Processing the text only…');
+          await runIntake(supabase, botToken, chatId, messageId, text, []);
+          return ok();
+        }
+        const { text: pdfText, pages } = await extractPdfText(fetched.bytes);
+        const sourceText = [text, pdfText].filter(Boolean).join('\n\n').trim();
+        console.log(`[Telegram Webhook] PDF URL: ${pages} page(s), ${pdfText.length} chars + ${text.length} text → ${sourceText.length} total`);
+        if (!sourceText) {
+          await tgSendMessage(botToken, chatId, '⚠️ Could not extract text from that PDF. Please paste the ad as text.');
+          return ok();
+        }
+        await runIntake(supabase, botToken, chatId, messageId, sourceText, [], {
+          documentUrl: pdfUrl,
+          processedNote: `✅ Text + PDF processed (${pages} page${pages === 1 ? '' : 's'})`,
+        });
+        return ok();
+      }
+    }
+
+    // Plain text (web-page URLs, if any, are left for the AI to use as apply_url).
     await runIntake(supabase, botToken, chatId, messageId, text, []);
     return ok();
   } catch (e) {
