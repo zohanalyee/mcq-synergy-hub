@@ -184,8 +184,9 @@ RULES:
 1. Use null for anything not clearly stated. Never invent URLs, dates, salaries or numbers.
 2. Clean up OCR artifacts, broken lines and extra spaces.
 3. Extract EVERY field that is present — do not leave qualification/salary/experience/positions/department empty if the text mentions them.
-4. The "description" VALUE is a single Markdown string with headings, bullets and tables — keep it detailed but well-structured.
-5. Return raw JSON only.`;
+4. SALARY: if a BPS grade/range is mentioned (e.g. "BPS-01 to BPS-04"), put it in "salary". If instead a stipend/allowance is mentioned (e.g. "stipend of Rs. 25,000"), put that. Only use null when NO compensation of any kind is mentioned.
+5. The "description" VALUE is a single Markdown string with headings, bullets and tables — keep it detailed but well-structured.
+6. Return raw JSON only.`;
 
 function safeParseJson(raw: string): any | null {
   if (!raw) return null;
