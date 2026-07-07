@@ -1944,7 +1944,7 @@ Write the advice now:`;
       let failedCount = 0;
 
       // Helper function to force-save a question (ALWAYS succeeds)
-      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged'> => {
+      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged' | 'failed'> => {
         const maxRetries = 3;
         const shortId = crypto.randomUUID().slice(0, 8);
         
