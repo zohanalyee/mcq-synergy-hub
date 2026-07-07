@@ -2046,20 +2046,24 @@ Write the advice now:`;
           const result = await forceSaveQuestion(q);
           if (result === 'approved') {
             savedCount++;
-          } else {
+          } else if (result === 'flagged') {
             flaggedCount++;
             console.log(`🚩 Saved as flagged: "${q.question.slice(0, 40)}..."`);
+          } else {
+            failedCount++;
+            console.log(`❌ Not saved (insert failed): "${q.question.slice(0, 40)}..."`);
           }
         } catch (err) {
           console.error('Unexpected save error:', err);
-          flaggedCount++; // Count anyway for zero-loss logging
+          failedCount++;
         }
       }
 
+      // Only rows that actually made it into content_items count as saved.
       const totalSaved = savedCount + flaggedCount;
-      console.log(`🏭 ZERO LOSS Complete: ${totalSaved}/${newQuestions.length} saved (${savedCount} approved, ${flaggedCount} flagged)`);
+      console.log(`🏭 Save complete: ${totalSaved}/${newQuestions.length} stored (${savedCount} approved, ${flaggedCount} flagged, ${failedCount} failed)`);
 
-      // Log AI usage - totalSaved should now ALWAYS equal newQuestions.length
+      // Log AI usage - reflects rows truly written to the DB
       await logAIUsage(supabase, {
         triggered_by_user_id: user_id,
         source_type: 'admin_bulk_generator',
@@ -2069,7 +2073,7 @@ Write the advice now:`;
         questions_requested: qc,
         questions_fetched: newQuestions.length,
         questions_saved: totalSaved,
-        metadata: { approved: savedCount, flagged_duplicates: flaggedCount, zero_loss: totalSaved === newQuestions.length }
+        metadata: { approved: savedCount, flagged_duplicates: flaggedCount, failed: failedCount, zero_loss: totalSaved === newQuestions.length }
       });
 
       return new Response(
@@ -2081,12 +2085,14 @@ Write the advice now:`;
           questions_saved: totalSaved,
           questions_approved: savedCount,
           duplicates_flagged: flaggedCount,
+          questions_failed: failedCount,
           topic: topic,
           difficulty: difficulty
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
+
 
     // IMMEDIATE RETURN: FULL CACHE
     if (!forceNew && dbQuestions.length >= qc) {
