@@ -2451,7 +2451,7 @@ Write the advice now:`;
               subject: subject_name || sanitizedTopic,
               topic: topic,
               ...lmsLinkageFields,
-              difficulty: (difficulty || 'medium').toLowerCase(),
+              difficulty: toValidDifficulty(difficulty, (q as any).difficulty),
               options: q.options,
               correct_option: q.answer,
               explanation: q.explanation || '',
