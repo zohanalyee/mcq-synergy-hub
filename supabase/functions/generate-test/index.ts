@@ -2028,7 +2028,7 @@ Write the advice now:`;
           
           if (emergencyError) {
             console.error(`EMERGENCY SAVE FAILED:`, emergencyError.message);
-            return 'flagged'; // Count as flagged even if failed
+            return 'failed'; // Nothing was actually stored — do not count as saved
           }
           
           return 'flagged';
