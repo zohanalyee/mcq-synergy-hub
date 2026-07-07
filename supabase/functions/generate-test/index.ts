@@ -1132,7 +1132,7 @@ async function saveQuestionsInBackground(
           topic: topic,
           canonical_topic_name: canonicalTopicName,
           ...lmsLinkageFields, // overrides topic_id / canonical_topic_name when caller provided LMS UUIDs
-          difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+          difficulty: toValidDifficulty(difficulty, (q as any).difficulty),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
