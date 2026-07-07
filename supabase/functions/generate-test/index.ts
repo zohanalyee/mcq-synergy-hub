@@ -1941,6 +1941,7 @@ Write the advice now:`;
       const batchInsertedTitles = new Set<string>();
       let savedCount = 0;
       let flaggedCount = 0;
+      let failedCount = 0;
 
       // Helper function to force-save a question (ALWAYS succeeds)
       const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged'> => {
