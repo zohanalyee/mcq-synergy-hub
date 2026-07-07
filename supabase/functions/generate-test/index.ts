@@ -1973,7 +1973,7 @@ Write the advice now:`;
           topic: topic,
           ...lmsLinkageFields, // topic_id + canonical_topic_name (overrides legacy topic_id below)
           topic_id: topic_id || (topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null),
-          difficulty: ((difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase()),
+          difficulty: toValidDifficulty(difficulty, (q as any).difficulty),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
