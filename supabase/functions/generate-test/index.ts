@@ -159,6 +159,26 @@ function normalizeQuestionText(text: string): string {
     .trim();
 }
 
+// The content_items.difficulty CHECK constraint only allows 'Easy' | 'Medium' | 'Hard'.
+// The request difficulty can be 'mixed' (Content Health / bulk fills) or arbitrary text,
+// which would violate the constraint and silently fail every insert. Normalize to a
+// valid value: prefer the request difficulty, then the generated question's own
+// difficulty, otherwise default to 'Medium'.
+function toValidDifficulty(
+  requestDifficulty?: string | null,
+  questionDifficulty?: string | null,
+): 'Easy' | 'Medium' | 'Hard' {
+  const coerce = (v?: string | null): 'Easy' | 'Medium' | 'Hard' | null => {
+    if (!v) return null;
+    const norm = v.trim().toLowerCase();
+    if (norm === 'easy') return 'Easy';
+    if (norm === 'medium') return 'Medium';
+    if (norm === 'hard') return 'Hard';
+    return null; // 'mixed' and anything else is invalid for the constraint
+  };
+  return coerce(requestDifficulty) || coerce(questionDifficulty) || 'Medium';
+}
+
 function enrichQuestionsForSession(
   questions: Question[],
   topic: string,
