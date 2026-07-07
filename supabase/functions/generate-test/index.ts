@@ -159,6 +159,26 @@ function normalizeQuestionText(text: string): string {
     .trim();
 }
 
+// The content_items.difficulty CHECK constraint only allows 'Easy' | 'Medium' | 'Hard'.
+// The request difficulty can be 'mixed' (Content Health / bulk fills) or arbitrary text,
+// which would violate the constraint and silently fail every insert. Normalize to a
+// valid value: prefer the request difficulty, then the generated question's own
+// difficulty, otherwise default to 'Medium'.
+function toValidDifficulty(
+  requestDifficulty?: string | null,
+  questionDifficulty?: string | null,
+): 'Easy' | 'Medium' | 'Hard' {
+  const coerce = (v?: string | null): 'Easy' | 'Medium' | 'Hard' | null => {
+    if (!v) return null;
+    const norm = v.trim().toLowerCase();
+    if (norm === 'easy') return 'Easy';
+    if (norm === 'medium') return 'Medium';
+    if (norm === 'hard') return 'Hard';
+    return null; // 'mixed' and anything else is invalid for the constraint
+  };
+  return coerce(requestDifficulty) || coerce(questionDifficulty) || 'Medium';
+}
+
 function enrichQuestionsForSession(
   questions: Question[],
   topic: string,
@@ -1112,7 +1132,7 @@ async function saveQuestionsInBackground(
           topic: topic,
           canonical_topic_name: canonicalTopicName,
           ...lmsLinkageFields, // overrides topic_id / canonical_topic_name when caller provided LMS UUIDs
-          difficulty: difficulty.charAt(0).toUpperCase() + difficulty.slice(1).toLowerCase(),
+          difficulty: toValidDifficulty(difficulty, (q as any).difficulty),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
@@ -1921,9 +1941,10 @@ Write the advice now:`;
       const batchInsertedTitles = new Set<string>();
       let savedCount = 0;
       let flaggedCount = 0;
+      let failedCount = 0;
 
       // Helper function to force-save a question (ALWAYS succeeds)
-      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged'> => {
+      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged' | 'failed'> => {
         const maxRetries = 3;
         const shortId = crypto.randomUUID().slice(0, 8);
         
@@ -1952,7 +1973,7 @@ Write the advice now:`;
           topic: topic,
           ...lmsLinkageFields, // topic_id + canonical_topic_name (overrides legacy topic_id below)
           topic_id: topic_id || (topic_ids && Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null),
-          difficulty: ((difficulty || 'Medium').charAt(0).toUpperCase() + (difficulty || 'Medium').slice(1).toLowerCase()),
+          difficulty: toValidDifficulty(difficulty, (q as any).difficulty),
           options: q.options,
           correct_option: q.answer,
           explanation: q.explanation || '',
@@ -2007,7 +2028,7 @@ Write the advice now:`;
           
           if (emergencyError) {
             console.error(`EMERGENCY SAVE FAILED:`, emergencyError.message);
-            return 'flagged'; // Count as flagged even if failed
+            return 'failed'; // Nothing was actually stored — do not count as saved
           }
           
           return 'flagged';
@@ -2025,20 +2046,24 @@ Write the advice now:`;
           const result = await forceSaveQuestion(q);
           if (result === 'approved') {
             savedCount++;
-          } else {
+          } else if (result === 'flagged') {
             flaggedCount++;
             console.log(`🚩 Saved as flagged: "${q.question.slice(0, 40)}..."`);
+          } else {
+            failedCount++;
+            console.log(`❌ Not saved (insert failed): "${q.question.slice(0, 40)}..."`);
           }
         } catch (err) {
           console.error('Unexpected save error:', err);
-          flaggedCount++; // Count anyway for zero-loss logging
+          failedCount++;
         }
       }
 
+      // Only rows that actually made it into content_items count as saved.
       const totalSaved = savedCount + flaggedCount;
-      console.log(`🏭 ZERO LOSS Complete: ${totalSaved}/${newQuestions.length} saved (${savedCount} approved, ${flaggedCount} flagged)`);
+      console.log(`🏭 Save complete: ${totalSaved}/${newQuestions.length} stored (${savedCount} approved, ${flaggedCount} flagged, ${failedCount} failed)`);
 
-      // Log AI usage - totalSaved should now ALWAYS equal newQuestions.length
+      // Log AI usage - reflects rows truly written to the DB
       await logAIUsage(supabase, {
         triggered_by_user_id: user_id,
         source_type: 'admin_bulk_generator',
@@ -2048,7 +2073,7 @@ Write the advice now:`;
         questions_requested: qc,
         questions_fetched: newQuestions.length,
         questions_saved: totalSaved,
-        metadata: { approved: savedCount, flagged_duplicates: flaggedCount, zero_loss: totalSaved === newQuestions.length }
+        metadata: { approved: savedCount, flagged_duplicates: flaggedCount, failed: failedCount, zero_loss: totalSaved === newQuestions.length }
       });
 
       return new Response(
@@ -2060,12 +2085,14 @@ Write the advice now:`;
           questions_saved: totalSaved,
           questions_approved: savedCount,
           duplicates_flagged: flaggedCount,
+          questions_failed: failedCount,
           topic: topic,
           difficulty: difficulty
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
     }
+
 
     // IMMEDIATE RETURN: FULL CACHE
     if (!forceNew && dbQuestions.length >= qc) {
@@ -2424,7 +2451,7 @@ Write the advice now:`;
               subject: subject_name || sanitizedTopic,
               topic: topic,
               ...lmsLinkageFields,
-              difficulty: (difficulty || 'medium').toLowerCase(),
+              difficulty: toValidDifficulty(difficulty, (q as any).difficulty),
               options: q.options,
               correct_option: q.answer,
               explanation: q.explanation || '',

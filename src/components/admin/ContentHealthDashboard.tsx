@@ -111,11 +111,21 @@ const ContentHealthDashboard = () => {
       });
       if (response.error) throw new Error(response.error.message);
       const result = response.data;
-      const saved = result?.savedCount ?? result?.saved ?? result?.questions_saved ?? 0;
+      const approved = result?.questions_approved ?? result?.savedCount ?? result?.saved ?? result?.questions_saved ?? 0;
+      const failed = result?.questions_failed ?? 0;
+      const flagged = result?.duplicates_flagged ?? 0;
       setCompleted((prev) => new Set(prev).add(row.topic_id));
-      toast.success(`Generated ${saved} MCQs for "${row.topic_name}"`, {
-        description: `${row.subject_name} · ${row.board_name}`,
-      });
+      if (approved > 0) {
+        toast.success(`Generated ${approved} MCQs for "${row.topic_name}"`, {
+          description: `${row.subject_name} · ${row.board_name}`,
+        });
+      } else {
+        toast.warning(`No new MCQs saved for "${row.topic_name}"`, {
+          description: failed > 0
+            ? `${failed} failed to save — check function logs.`
+            : `${flagged} flagged as duplicates. Nothing new to add.`,
+        });
+      }
       return true;
     } catch (err: any) {
       toast.error(`Failed to fill "${row.topic_name}"`, {
