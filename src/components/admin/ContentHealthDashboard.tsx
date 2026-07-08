@@ -94,14 +94,17 @@ const ContentHealthDashboard = () => {
   const fillTopic = async (row: HealthRow): Promise<boolean> => {
     setGenerating((prev) => new Set(prev).add(row.topic_id));
     try {
+      const slugPart = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+      const canonical = `${slugPart(row.subject_name)}-${slugPart(row.topic_name)}`;
       const response = await supabase.functions.invoke("generate-test", {
         body: {
           mode: "bank_only",
           topic_id: row.topic_id,
-          topic: `${row.topic_name} (${row.subject_name})`,
+          topic: row.topic_name,
           topic_name: row.topic_name,
           subject: row.subject_name,
           subject_name: row.subject_name,
+          canonical_topic_name: canonical,
           count: FILL_COUNT,
           question_count: FILL_COUNT,
           difficulty: "mixed",
