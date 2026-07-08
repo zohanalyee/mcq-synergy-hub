@@ -276,6 +276,7 @@ const App = () => {
                     <Suspense fallback={<TopProgressBar />}>
                     <Routes>
                       <Route path="/" element={<Index />} />
+                      <Route path="/larkana" element={<Index />} />
 
                       {/* Programmatic SEO — curated /p hub + /p/:slug landing pages */}
                       <Route path="/p" element={<ProgrammaticIndex />} />
