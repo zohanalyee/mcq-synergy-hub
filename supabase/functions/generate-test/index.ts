@@ -1505,13 +1505,21 @@ Write the advice now:`;
     // correct topic in the LMS / Question Bank inventory.
     const resolvedTopicIdForLink: string | null =
       topic_id || (Array.isArray(topic_ids) && topic_ids.length > 0 ? topic_ids[0] : null);
+    // Unified canonical key = slug(subject)-slug(topic) so the same subject+topic
+    // is shared across every board (reader, writer, and health RPC use this format).
+    const slugifyPart = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
     const resolvedCanonicalTopicName: string | null = (
       client_canonical_topic_name ||
-      (topic ? topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') : null)
+      (topic
+        ? (subject_name && slugifyPart(subject_name) && slugifyPart(subject_name) !== slugifyPart(topic)
+            ? `${slugifyPart(subject_name)}-${slugifyPart(topic)}`
+            : slugifyPart(topic))
+        : null)
     ) || null;
     const lmsLinkageFields: Record<string, any> = {
       ...(resolvedTopicIdForLink ? { topic_id: resolvedTopicIdForLink } : {}),
       ...(resolvedCanonicalTopicName ? { canonical_topic_name: resolvedCanonicalTopicName } : {}),
+      ...(subject_name ? { subject: subject_name } : {}),
     };
 
     // ──────────────────────────────────────────────────────────────────
