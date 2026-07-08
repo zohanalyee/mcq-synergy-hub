@@ -27,6 +27,7 @@ import { DeviceCapabilityProvider } from "./contexts/DeviceCapabilityContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import PageLoader from "./components/PageLoader";
 import AIWelcome from "./components/AIWelcome";
+import LibraryWelcome from "./components/LibraryWelcome";
 import NavigationLoader from "./components/NavigationLoader";
 import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
@@ -251,6 +252,7 @@ const App = () => {
                     <TooltipProvider>
                     <PageLoader />
                     <AIWelcome />
+                    <LibraryWelcome />
                     <NavigationLoader />
                     <Sonner 
                       position="top-right"
