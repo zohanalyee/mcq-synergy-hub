@@ -201,7 +201,7 @@ const LibraryWelcome = () => {
 
                   <button
                     onClick={handleClose}
-                    className="mt-3 block w-full text-center text-xs text-slate-400 transition-colors hover:text-slate-200"
+                    className="mt-3 block w-full text-center text-xs text-slate-500 transition-colors hover:text-slate-800"
                   >
                     Maybe later
                   </button>
