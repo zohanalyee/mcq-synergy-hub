@@ -91,16 +91,16 @@ const LibraryWelcome = () => {
     }, 450);
   }, []);
 
-  useEffect(() => {
+  // Fire the celebration synchronously before paint when the modal is shown,
+  // and re-check on client-side route changes into /larkana.
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    try {
+      if (sessionStorage.getItem(STORAGE_KEY)) return;
+    } catch {}
     if (!isLibraryVisit(location.pathname, window.location.search)) return;
-
-    const timer = setTimeout(() => {
-      setShow(true);
-      fireCelebration();
-    }, 400);
-    return () => clearTimeout(timer);
+    setShow(true);
+    fireCelebration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
