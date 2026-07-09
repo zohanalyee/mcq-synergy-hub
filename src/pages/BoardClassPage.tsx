@@ -56,12 +56,15 @@ const BoardClassPage = () => {
 
   const boardName = data?.system?.name || boardSlug || '';
   const levelName = data?.level?.name || `Class ${resolvedClassNumber || classNumber}`;
+  const HUBS = new Set(indexableHubs as string[]);
+  const isThin = !HUBS.has(`/boards/${boardSlug}/${canonicalClassSeg}`);
 
   return (
     <Header>
       <SEOHead
         title={`${levelName} – ${boardName} Subjects`}
         description={`Browse ${boardName} ${levelName} subjects. Practice MCQs for all subjects.`}
+        noindex={isThin}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <PageBreadcrumb items={[
