@@ -198,6 +198,16 @@ const OpportunityDetail = () => {
     ],
   };
 
+  // Thin-content gate — must match OPPORTUNITY_MIN_WORDS in the sitemap/
+  // inject-meta scripts (25 words). Kept low because jobs/scholarships are
+  // time-sensitive; only near-empty listings are excluded from indexing.
+  const oppWordCount = String(opportunity.description || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#*_>`~\-!\[\]()]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const isThinOpp = oppWordCount < 25;
+
   return (
     <>
       <SEOHead
@@ -205,6 +215,7 @@ const OpportunityDetail = () => {
         description={opportunity.description?.substring(0, 160) || `${opportunity.type} opportunity from ${opportunity.organization || opportunity.source_name}`}
         keywords={keywords?.join(', ') || undefined}
         image={opportunity.image_url || undefined}
+        noindex={isThinOpp}
       />
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
