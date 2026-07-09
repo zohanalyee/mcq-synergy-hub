@@ -242,6 +242,7 @@ async function injectOpportunities() {
       if (seen.has(slug)) continue;
       seen.add(slug);
       const fallback = `${cfg.type} opportunity from ${r.organization || r.source_name || "MCQsAI"}`;
+      const thin = wordCount(r.description) < OPPORTUNITY_MIN_WORDS;
       patch({
         path: `/opportunity/${slug}`,
         // Mirror OpportunityDetail.tsx SEOHead title (it passes "<title> | MCQSAI",
@@ -250,6 +251,7 @@ async function injectOpportunities() {
         description: clamp(r.description || fallback, 160),
         ogImage: cfg.og,
         ogType: "article",
+        robots: thin ? "noindex,follow" : "index,follow",
         pageType: "opportunity",
       });
       count++;
