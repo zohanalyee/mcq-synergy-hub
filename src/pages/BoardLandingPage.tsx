@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { findBestMatch, toSlug, toClassSegment } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
+import indexableHubs from '@/generated/indexableHubs.json';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
