@@ -147,6 +147,19 @@ const OG_TOOLS = `${BASE_URL}/og/tools-og.jpg`;
 const OG_BOARDS = `${BASE_URL}/og/boards-og.jpg`;
 const OG_EXAMS = `${BASE_URL}/og/exams-og.jpg`;
 
+// Thin-content thresholds — MUST match scripts/generate-sitemaps.mjs and the
+// page components so the static robots tag, the sitemap, and the client-side
+// SEOHead all agree on which pages are indexable.
+const OPPORTUNITY_MIN_WORDS = 25;
+const BLOG_MIN_WORDS = 80;
+function wordCount(s) {
+  return String(s || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#*_>`~\-!\[\]()]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
 function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false, pageType = "other" }) {
   const url = `${BASE_URL}${path}`;
   const desc = clamp(description, 165);
