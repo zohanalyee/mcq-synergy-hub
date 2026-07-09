@@ -186,7 +186,7 @@ const LibraryWelcome = () => {
                   <Link
                     to="/mock-tests"
                     onClick={handleClose}
-                    className="mt-6 block rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 px-5 py-3 text-center text-sm sm:text-base font-extrabold uppercase tracking-wide text-black shadow-[0_0_25px_rgba(250,204,21,0.5)] transition-all hover:shadow-[0_0_40px_rgba(250,204,21,0.8)] hover:brightness-110"
+                    className="mt-5 block rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 px-5 py-3 text-center text-sm sm:text-base font-extrabold uppercase tracking-wide text-black shadow-[0_0_25px_rgba(250,204,21,0.5)] transition-all hover:shadow-[0_0_40px_rgba(250,204,21,0.8)] hover:brightness-110"
                   >
                     Start Practicing MCQs Now 🚀
                   </Link>
