@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { findBestMatch, toSlug, toClassSegment } from '@/lib/slugUtils';
 import SEOHead from '@/components/SEOHead';
+import indexableHubs from '@/generated/indexableHubs.json';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -36,6 +37,11 @@ const BoardLandingPage = () => {
   });
 
   const boardName = data?.system?.name || boardSlug || '';
+  // Thin-hub gate: a board landing page is indexable only when it has at least
+  // one topic with >= 5 approved MCQs beneath it (build-time manifest, same
+  // source as the sitemap). Otherwise ship robots=noindex.
+  const HUBS = new Set(indexableHubs as string[]);
+  const isThin = !HUBS.has(`/boards/${boardSlug}`);
 
   return (
     <Header>
@@ -43,6 +49,7 @@ const BoardLandingPage = () => {
         title={`${boardName} MCQs 2026 — All Classes & Subjects`}
         description={`Free ${boardName} MCQs with answers for all classes and subjects. AI-powered practice with instant feedback — MCQsAI Pakistan.`}
         keywords={`${boardName} MCQs, ${boardName} past papers, ${boardName} class 9, ${boardName} class 10, ${boardName} class 11, ${boardName} class 12, Pakistan board MCQs`}
+        noindex={isThin}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <PageBreadcrumb items={[

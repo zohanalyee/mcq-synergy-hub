@@ -147,6 +147,19 @@ const OG_TOOLS = `${BASE_URL}/og/tools-og.jpg`;
 const OG_BOARDS = `${BASE_URL}/og/boards-og.jpg`;
 const OG_EXAMS = `${BASE_URL}/og/exams-og.jpg`;
 
+// Thin-content thresholds — MUST match scripts/generate-sitemaps.mjs and the
+// page components so the static robots tag, the sitemap, and the client-side
+// SEOHead all agree on which pages are indexable.
+const OPPORTUNITY_MIN_WORDS = 25;
+const BLOG_MIN_WORDS = 80;
+function wordCount(s) {
+  return String(s || "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#*_>`~\-!\[\]()]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
 function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false, pageType = "other" }) {
   const url = `${BASE_URL}${path}`;
   const desc = clamp(description, 165);
@@ -229,6 +242,7 @@ async function injectOpportunities() {
       if (seen.has(slug)) continue;
       seen.add(slug);
       const fallback = `${cfg.type} opportunity from ${r.organization || r.source_name || "MCQsAI"}`;
+      const thin = wordCount(r.description) < OPPORTUNITY_MIN_WORDS;
       patch({
         path: `/opportunity/${slug}`,
         // Mirror OpportunityDetail.tsx SEOHead title (it passes "<title> | MCQSAI",
@@ -237,6 +251,7 @@ async function injectOpportunities() {
         description: clamp(r.description || fallback, 160),
         ogImage: cfg.og,
         ogType: "article",
+        robots: thin ? "noindex,follow" : "index,follow",
         pageType: "opportunity",
       });
       count++;
@@ -248,17 +263,19 @@ async function injectOpportunities() {
 async function injectBlog() {
   const { data } = await supabase
     .from("blog_posts")
-    .select("slug,title,excerpt,meta_title,meta_description")
+    .select("slug,title,content,excerpt,meta_title,meta_description")
     .eq("status", "published");
   const all = data || [];
   for (const p of all) {
     const t = (p.meta_title || p.title || "").trim();
+    const thin = wordCount(p.content) < BLOG_MIN_WORDS;
     patch({
       path: `/blog/${p.slug}`,
       title: `${t} | MCQsAI`,
       description: p.meta_description || p.excerpt || `${t} — MCQsAI blog.`,
       ogImage: OG_BLOG,
       ogType: "article",
+      robots: thin ? "noindex,follow" : "index,follow",
       pageType: "blog",
     });
   }

@@ -109,12 +109,22 @@ const BlogPost = () => {
 
   const articleUrl = `https://mcqsai.com/blog/${post.slug}`;
 
+  // Thin-content gate — must match BLOG_MIN_WORDS in the sitemap/inject-meta
+  // scripts (80 words). Near-empty posts ship robots=noindex.
+  const blogWordCount = rawContent
+    .replace(/<[^>]+>/g, " ")
+    .replace(/[#*_>`~\-!\[\]()]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean).length;
+  const isThinBlog = blogWordCount < 80;
+
   return (
     <>
       <SEOHead
         title={post.meta_title || post.title}
         description={post.meta_description || post.excerpt || undefined}
         type="article"
+        noindex={isThinBlog}
       />
       {/* OG / Twitter overrides */}
       <BreadcrumbSchema items={[

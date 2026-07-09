@@ -1,84 +1,59 @@
-# SEO Recovery Plan — post-Cloudflare-403 fix
+# Section D — SEO/AEO Enhancements (Proposed Order)
 
-## ✅ Section 0 — Crawler access verification (DONE, no code)
+Sections A–C mukammal aur live-verified hain. Section D ke 4 hisson ka **recommended order** neeche hai — impact vs. effort, aur de-indexing recovery ke context ke hisaab se. Har section alag approval ke saath implement hoga.
 
-Confirmed live at the edge with crawler user-agents:
+## Recommended Order & Rationale
 
+### D1 — Thin-Content Check & Noindex Gate (PEHLE)
 
-| URL                                           | Googlebot | GPTBot |
-| --------------------------------------------- | --------- | ------ |
-| `/`                                           | 200       | 200    |
-| `/mock-tests/sindh-teaching-license-exam-...` | 200       | 200    |
-| `/subject-content/physics`                    | 200       | 200    |
-| `/exams/mdcat`                                | 200       | 200    |
+**Kyun pehle:** De-indexing ke baad Google dobara crawl kar raha hai. Agar thin/empty pages index hoti hain to "crawl budget waste" + quality signal girta hai. Isko pehle lock karna baaki sab ko boost deta hai.
 
+- Board/topic pages: `<5 approved MCQs` wale already noindex hone chahiye — audit + confirm karna.
+- Opportunity/blog pages jinme minimal body content ho, unke liye consistent noindex threshold.
+- `inject-meta.mjs` + component-level `robots` meta dono ka alignment verify.
+- Sitemap se thin URLs exclude hain ya nahi (≥5 threshold) — cross-check.
 
-The 403 block is gone. **GSC URL Inspection still reports `ACCESS_FORBIDDEN**` because it returns the *last crawl* state (June 12–28, pre-fix). The API cannot do a real-time live fetch, so this clears only when Google re-crawls — nothing to change in code.
+### D2 — Schema / JSON-LD Audit & Expansion (DOOSRE)
 
----
+**Kyun doosre:** Content quality set hone ke baad structured data AEO/rich-results ka sabse bada lever hai.
 
-## Manual steps only you can do (no API path exists)
+- Har page type par current JSON-LD audit (Organization, WebSite, Course, Article, BreadcrumbList).
+- **MCQ leaf pages par `FAQPage` schema** add — AEO/answer-engine citations ke liye (audit report ki recommendation).
+- Mock-test pages: `Quiz` / `LearningResource` schema evaluate.
+- `@id` linking + `BreadcrumbList` consistency har template par.
+- Single-FAQPage-per-page rule enforce (duplicate schema se bachna).
 
-- **"Validate Fix" for the 1,427 blocked URLs** — Google Search Console exposes **no API** to trigger this. Do it in the GSC UI: *Indexing → Pages → "Blocked due to access forbidden (403)" → Validate Fix*. This tells Google to re-crawl the batch. I'll re-run URL-Inspection checks afterward to confirm recovery.
-- **www → apex 301** (Section A below) is an **edge/Cloudflare redirect setting**, not a codebase change — I cannot flip it from here.
+### D3 — Internal Linking Structure (TEESRE)
 
----
+**Kyun teesre:** Schema + content solid hone ke baad link-equity distribution se ranking consolidate hoti hai.
 
-## Section-by-section fixes (each needs your go-ahead before I build)
+- Board hub → class → subject → topic silo linking mazboot karna.
+- Related-topics / related-mock-tests contextual link blocks.
+- Orphan pages (jo kisi internal link se reachable nahi) identify + fix.
+- Breadcrumb navigation har template par (D2 breadcrumb schema ke saath tie).
 
-### A. www → apex: 302 → 301  *(Cloudflare action, I only verify)*
+### D4 — Hreflang / Language Targeting (AAKHIR MEIN)
 
-Currently `https://www.mcqsai.com/` → `https://mcqsai.com/` is **302**. Convert to **301 permanent** in Cloudflare (Bulk Redirects or a Redirect Rule, status 301). After you set it, I'll `curl` to confirm `301` and that the chain is a single hop. **No repo change.**
+**Kyun aakhir:** Site English + Urdu/Sindhi translations rakhti hai, lekin routes single-URL hain (client-side language switch). Hreflang tabhi sahi hai jab per-language URLs hon — is liye pehle decide karna hoga:
 
-### B. Per-page unique meta descriptions for board hub pages  *(code)*
+- Kya alag `?lang=` / `/ur/` URLs banane hain, ya `en-PK` single-locale target rakhna hai?
+- Agar single-locale: sirf `<html lang>` + `content-language` correctly set karna (chhota fix).
+- Agar multi-URL: bara architecture change — alag scope.
 
-**Root cause:** board *topic leaf* pages already get unique descriptions via `inject-meta.mjs`, but board **hub** pages — `/boards/<board>` (landing), `/boards/<board>/class-N` (class), `/boards/<board>/class-N/<subject>` (subject) — are **not** in the injection allow-list, so a raw crawler fetch gets the homepage shell's generic fallback description. That's the "39 identical descriptions" in GSC.
+## Execution Notes
 
-**Fix:** extend `scripts/inject-meta.mjs` with a new generator that:
+- Har section ke start par: current state audit → change → live re-verify (Googlebot UA curl).
+- Koi bhi Cloudflare/WAF change is scope mein nahi — sirf codebase + edge/build-time.
+- Har section alag se approve karayenge; D1 sabse quick win + safety hai.
 
-- Derives every hub path (board / class / subject) from the same `get_indexable_board_topic_paths` RPC already used for topics (dedupe parent paths).
-- Emits the exact unique templated description each page's `SEOHead` already renders client-side, e.g.:
-  - Landing: `Free {board} MCQs with answers for all classes and subjects…`
-  - Class: `Browse {board} {class} subjects. Practice MCQs for all subjects.`
-  - Subject: `Browse {subject} topics for {class} ({board}). Practice MCQs topic by topic.`
-- Writes self-referencing canonical / og:url / twitter:url + category OG image, same as the existing `patch()` helper.
+## Suggested Kickoff
 
-No component/logic changes — build-time static-HTML meta only.
-
-### C. IndexNow protocol  *(code)*
-
-Nothing exists in the repo today. Add:
-
-- A static key file `public/{indexnow-key}.txt` at site root (32-char key).
-- A Supabase edge function `indexnow-ping` that POSTs changed URLs to `https://api.indexnow.org/indexnow` (Bing/Yandex).
-- Wire it to fire on content publish/update (mock tests, blog, opportunities) — reusing existing publish paths. I'll confirm the exact trigger points with you before wiring.
-
-### D. Remaining audit sections (lower priority, separate approvals)
-
-- **Schema/JSON-LD:** add `FAQPage` to board topic leaf pages for AEO citation.
-- **Internal linking:** hub→leaf and cross-topic link improvements.
-- **Thin-content check:** re-audit against the existing ≥5-approved-MCQ noindex gate.
-- **hreflang** for en/ur/sd (noted in audit as missing).
-
----
-
-## Suggested order
-
-1. You trigger **Validate Fix** in GSC + set **301** in Cloudflare (A).
-2. I build **B (board hub meta)** on your approval.
-3. I build **C (IndexNow)** on your approval.
-4. We tackle **D** section by section.
-
-I'll pause for your confirmation before each coded section (B, C, D).
+**D1 (Thin-Content) se shuru karein** — sabse kam risk, foran quality signal improve, aur baaki teeno ke liye clean foundation. Aap chahein to order badal bhi sakte hain (e.g. agar AEO/rich-results priority hai to D2 pehle).
 
 &nbsp;
 
-# **Dono manual steps confirm ho chuke hain:**
+# **Order approved — D1 se shuru karein.**
 
-1. GSC "Blocked due to access forbidden (403)" validation "Started" status mein hai, 1.43k pages Google gradually re-crawl kar raha hai
+D1 (Thin-Content Check): 5-se-kam-MCQ wale board/topic pages, aur minimal-content wale opportunity/blog pages ka noindex audit + fix karein. inject-meta.mjs aur component-level robots meta ka alignment bhi verify karein, aur sitemap se thin URLs exclude hain ya nahi cross-check karein.
 
-2. [www.mcqsai.com](http://www.mcqsai.com) → [mcqsai.com](http://mcqsai.com) redirect ab verified 301 hai (PowerShell se test kiya, StatusCode 301 confirm hua)
-
-Please ab Section B par kaam shuru kar dein — board hub pages (landing/class/subject level) k liye unique meta descriptions generate karna, jaisa aap ne propose kiya tha (get_indexable_board_topic_paths RPC se hub paths derive karke, templated unique descriptions + canonical/og:url emit karna).
-
-Build ho jaye to bata dein, review kar k approve kar dun ga.
+Complete hone k baad live Googlebot-UA curl se re-verify karein, phir mujhe bata dein — approve karne k baad D2 (schema/JSON-LD) shuru kar dein.

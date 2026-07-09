@@ -172,16 +172,32 @@ function writeProgSeo() {
   write("programmatic.xml", urlSet(entries));
 }
 
+// ---------- thin-content thresholds (must match the page components) ----------
+// Opportunities are time-sensitive (jobs/scholarships) so the bar is low — only
+// near-empty listings are excluded. Blog posts need real body copy to index.
+const OPPORTUNITY_MIN_WORDS = 25;
+const BLOG_MIN_WORDS = 80;
+function wordCount(s) {
+  return String(s || "")
+    .replace(/<[^>]+>/g, " ")        // strip HTML tags
+    .replace(/[#*_>`~\-!\[\]()]/g, " ") // strip common markdown punctuation
+    .split(/\s+/)
+    .filter(Boolean).length;
+}
+
 // ---------- DB-backed sitemaps ----------
 async function buildOpportunitySitemap(category, type, fileName) {
   const [{ data: ci }, { data: eo }] = await Promise.all([
-    supabase.from("content_items").select("id,title,updated_at").eq("category", category).eq("status", "approved"),
-    supabase.from("external_opportunities").select("id,title,updated_at").eq("type", type).eq("status", "approved"),
+    supabase.from("content_items").select("id,title,description,updated_at").eq("category", category).eq("status", "approved"),
+    supabase.from("external_opportunities").select("id,title,description,updated_at").eq("type", type).eq("status", "approved"),
   ]);
   const seen = new Set();
+  let dropped = 0;
   const items = [...(ci || []), ...(eo || [])]
+    .filter(r => { if (wordCount(r.description) >= OPPORTUNITY_MIN_WORDS) return true; dropped++; return false; })
     .map(r => ({ slug: generateSlugUrl(r.title, r.id), lastmod: (r.updated_at || "").split("T")[0] || today }))
     .filter(i => { if (seen.has(i.slug)) return false; seen.add(i.slug); return true; });
+  if (dropped) console.log(`[sitemap] ${fileName}: dropped ${dropped} thin opportunity URLs (< ${OPPORTUNITY_MIN_WORDS} words)`);
   write(fileName, urlSet(items.map(i => ({
     loc: `${BASE_URL}/opportunity/${i.slug}`, lastmod: i.lastmod, freq: "weekly", priority: "0.6",
   }))));
@@ -189,8 +205,14 @@ async function buildOpportunitySitemap(category, type, fileName) {
 
 async function buildBlog() {
   const { data: posts } = await supabase
-    .from("blog_posts").select("slug,updated_at").eq("status", "published");
-  write("blog.xml", urlSet((posts || []).map(p => ({
+    .from("blog_posts").select("slug,content,excerpt,updated_at").eq("status", "published");
+  let dropped = 0;
+  const kept = (posts || []).filter(p => {
+    if (wordCount(p.content) >= BLOG_MIN_WORDS) return true;
+    dropped++; return false;
+  });
+  if (dropped) console.log(`[sitemap] blog.xml: dropped ${dropped} thin blog URLs (< ${BLOG_MIN_WORDS} words)`);
+  write("blog.xml", urlSet(kept.map(p => ({
     loc: `${BASE_URL}/blog/${p.slug}`,
     lastmod: (p.updated_at || "").split("T")[0] || today,
     freq: "weekly", priority: "0.7",
@@ -273,6 +295,26 @@ async function buildBoards() {
     JSON.stringify(indexablePaths)
   );
   console.log(`[sitemap] src/generated/indexableTopics.json written (${indexablePaths.length} paths)`);
+
+  // Build-time manifest of indexable board HUB paths (landing / class / subject).
+  // A hub is indexable iff it has at least one indexable topic (>= 5 approved
+  // MCQs) beneath it. Consumed synchronously by the hub page components so thin
+  // hubs (no real content underneath) ship robots=noindex in static HTML —
+  // matching the topic-level gate and keeping thin hubs out of the index.
+  const hubSet = new Set();
+  for (const path of indexablePaths) {
+    const parts = path.split("/").filter(Boolean); // boards, board, class-N, subject, topic
+    if (parts.length < 5) continue;
+    const [, board, classSeg, subject] = parts;
+    hubSet.add(`/boards/${board}`);
+    hubSet.add(`/boards/${board}/${classSeg}`);
+    hubSet.add(`/boards/${board}/${classSeg}/${subject}`);
+  }
+  writeFileSync(
+    resolve(GENERATED_DIR, "indexableHubs.json"),
+    JSON.stringify([...hubSet])
+  );
+  console.log(`[sitemap] src/generated/indexableHubs.json written (${hubSet.size} paths)`);
 
   const pages = Math.max(1, Math.ceil(all.length / ITEMS_PER_SITEMAP));
   for (let i = 1; i <= pages; i++) {
