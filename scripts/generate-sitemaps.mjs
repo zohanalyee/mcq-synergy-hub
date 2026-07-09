@@ -274,6 +274,26 @@ async function buildBoards() {
   );
   console.log(`[sitemap] src/generated/indexableTopics.json written (${indexablePaths.length} paths)`);
 
+  // Build-time manifest of indexable board HUB paths (landing / class / subject).
+  // A hub is indexable iff it has at least one indexable topic (>= 5 approved
+  // MCQs) beneath it. Consumed synchronously by the hub page components so thin
+  // hubs (no real content underneath) ship robots=noindex in static HTML —
+  // matching the topic-level gate and keeping thin hubs out of the index.
+  const hubSet = new Set();
+  for (const path of indexablePaths) {
+    const parts = path.split("/").filter(Boolean); // boards, board, class-N, subject, topic
+    if (parts.length < 5) continue;
+    const [, board, classSeg, subject] = parts;
+    hubSet.add(`/boards/${board}`);
+    hubSet.add(`/boards/${board}/${classSeg}`);
+    hubSet.add(`/boards/${board}/${classSeg}/${subject}`);
+  }
+  writeFileSync(
+    resolve(GENERATED_DIR, "indexableHubs.json"),
+    JSON.stringify([...hubSet])
+  );
+  console.log(`[sitemap] src/generated/indexableHubs.json written (${hubSet.size} paths)`);
+
   const pages = Math.max(1, Math.ceil(all.length / ITEMS_PER_SITEMAP));
   for (let i = 1; i <= pages; i++) {
     const slice = all.slice((i - 1) * ITEMS_PER_SITEMAP, i * ITEMS_PER_SITEMAP);
