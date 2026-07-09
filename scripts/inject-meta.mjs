@@ -294,6 +294,125 @@ async function injectBoards() {
   return count;
 }
 
+// Mirror src/lib/slugUtils.ts toSlug so DB display names map back to the exact
+// URL segments the board pages resolve via findBestMatch.
+function pageToSlug(name) {
+  return String(name || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .trim();
+}
+// Mirror src/lib/slugUtils.ts toClassSegment (numeric → class-N).
+function pageClassSeg(name) {
+  const digits = String(name || "").toLowerCase().match(/\d+/)?.[0];
+  if (digits) return `class-${digits}`;
+  return pageToSlug(String(name || "").replace(/^class[-\s]*/i, ""));
+}
+
+// Board HUB pages (landing / class / subject). These are NOT prerendered and
+// were shipping the homepage shell's generic description → the "39 identical
+// descriptions" GSC flagged. We derive the hub paths from the SAME indexable
+// topic RPC used for leaves (so only hubs with real content get patched) and
+// resolve real display names from the DB so the static description EXACTLY
+// matches each page's client-side SEOHead output.
+async function injectBoardHubs() {
+  const { data: topicRows, error } = await supabase.rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: 5 });
+  if (error) throw error;
+
+  // Build display-name lookups keyed by URL segment.
+  const [{ data: systems }, { data: levels }, { data: subjects }] = await Promise.all([
+    supabase.from("educational_systems").select("id,name").eq("is_active", true),
+    supabase.from("levels").select("id,name,system_id"),
+    supabase.from("subjects").select("id,name,level_id"),
+  ]);
+  const boardName = new Map();       // boardSlug -> name
+  const boardSlugById = new Map();   // system_id -> boardSlug
+  for (const s of systems || []) {
+    const slug = pageToSlug(s.name);
+    boardName.set(slug, s.name);
+    boardSlugById.set(s.id, slug);
+  }
+  const levelName = new Map();       // `${boardSlug}::${classSeg}` -> name
+  const levelKeyById = new Map();    // level_id -> `${boardSlug}::${classSeg}`
+  for (const l of levels || []) {
+    const bSlug = boardSlugById.get(l.system_id);
+    if (!bSlug) continue;
+    const key = `${bSlug}::${pageClassSeg(l.name)}`;
+    levelName.set(key, l.name);
+    levelKeyById.set(l.id, key);
+  }
+  const subjectName = new Map();     // `${boardSlug}::${classSeg}::${subjectSlug}` -> name
+  for (const sub of subjects || []) {
+    const lKey = levelKeyById.get(sub.level_id);
+    if (!lKey) continue;
+    subjectName.set(`${lKey}::${pageToSlug(sub.name)}`, sub.name);
+  }
+
+  // Collect unique hub paths (landing / class / subject) from indexable topics.
+  const landing = new Set();
+  const classHub = new Set();
+  const subjectHub = new Set();
+  for (const r of topicRows || []) {
+    const parts = String(r.path || "").split("/").filter(Boolean); // boards, board, class-N, subject, topic
+    if (parts.length < 5) continue;
+    const [, board, classSeg, subject] = parts;
+    landing.add(board);
+    classHub.add(`${board}/${classSeg}`);
+    subjectHub.add(`${board}/${classSeg}/${subject}`);
+  }
+
+  let count = 0;
+  const classNumOf = (seg) => (String(seg).match(/\d+/) || [""])[0];
+
+  for (const board of landing) {
+    const bName = boardName.get(board) || humanize(board);
+    patch({
+      path: `/boards/${board}`,
+      title: `${bName} MCQs 2026 — All Classes & Subjects | MCQsAI`,
+      description: `Free ${bName} MCQs with answers for all classes and subjects. AI-powered practice with instant feedback — MCQsAI Pakistan.`,
+      keywords: `${bName} MCQs, ${bName} past papers, ${bName} class 9, ${bName} class 10, ${bName} class 11, ${bName} class 12, Pakistan board MCQs`,
+      ogImage: OG_BOARDS,
+      ogType: "website",
+      pageType: "board-landing",
+    });
+    count++;
+  }
+  for (const p of classHub) {
+    const [board, classSeg] = p.split("/");
+    const bName = boardName.get(board) || humanize(board);
+    const lName = levelName.get(`${board}::${classSeg}`) || `Class ${classNumOf(classSeg)}`;
+    patch({
+      path: `/boards/${board}/${classSeg}`,
+      title: `${lName} – ${bName} Subjects | MCQsAI`,
+      description: `Browse ${bName} ${lName} subjects. Practice MCQs for all subjects.`,
+      keywords: `${bName} ${lName} MCQs, ${bName} ${lName} subjects, Pakistan board MCQs`,
+      ogImage: OG_BOARDS,
+      ogType: "website",
+      pageType: "board-class",
+    });
+    count++;
+  }
+  for (const p of subjectHub) {
+    const [board, classSeg, subject] = p.split("/");
+    const bName = boardName.get(board) || humanize(board);
+    const lName = levelName.get(`${board}::${classSeg}`) || `Class ${classNumOf(classSeg)}`;
+    const sName = subjectName.get(`${board}::${classSeg}::${subject}`) || humanize(subject);
+    patch({
+      path: `/boards/${board}/${classSeg}/${subject}`,
+      title: `${sName} Topics – ${lName} ${bName} | MCQsAI`,
+      description: `Browse ${sName} topics for ${lName} (${bName}). Practice MCQs topic by topic.`,
+      keywords: `${sName} MCQs, ${sName} ${lName}, ${bName} ${sName}, Pakistan board MCQs`,
+      ogImage: OG_BOARDS,
+      ogType: "website",
+      pageType: "board-subject",
+    });
+    count++;
+  }
+  return count;
+}
+
 function injectTools() {
   // Tool pages without <SEOHead> (not prerendered) — give them unique heads.
   for (const t of TOOLS_WITHOUT_SEOHEAD) {
@@ -374,9 +493,9 @@ function verifyRequiredRoutes() {
   }
 
   const results = await Promise.allSettled([
-    injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(),
+    injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(), injectBoardHubs(),
   ]);
-  const labels = ["mock-tests", "opportunities", "blog", "boards"];
+  const labels = ["mock-tests", "opportunities", "blog", "boards", "board-hubs"];
   const counts = {};
   results.forEach((r, i) => {
     if (r.status === "fulfilled") {
