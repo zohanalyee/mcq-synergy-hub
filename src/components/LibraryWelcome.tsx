@@ -131,13 +131,16 @@ const LibraryWelcome = () => {
   return (
     <AnimatePresence>
       {show && (
-        <div className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-3 sm:p-4">
+        <div
+          className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto bg-black/75 p-3 sm:p-4 sm:backdrop-blur-sm"
+          style={{ willChange: 'transform, opacity' }}
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 20, stiffness: 260 }}
-            className="relative my-auto w-[92%] max-w-md md:max-w-2xl"
+            className="relative my-auto w-[92%] max-w-md md:max-w-2xl [will-change:transform]"
           >
             {/* Glowing gold border */}
             <motion.div
