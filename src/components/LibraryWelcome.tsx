@@ -180,12 +180,12 @@ const LibraryWelcome = () => {
                         initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.15 + i * 0.08 }}
-                        className="flex items-center gap-3 rounded-xl border border-amber-400/20 bg-white/5 px-3 py-2"
+                        className="flex items-center gap-3 rounded-xl border border-amber-200 bg-white px-3 py-2 transition-colors hover:bg-amber-100"
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400/25 to-yellow-500/25 text-lg">
                           {b.emoji}
                         </span>
-                        <span className="text-sm font-medium text-slate-100">{b.label}</span>
+                        <span className="text-sm font-semibold text-slate-800">{b.label}</span>
                       </motion.div>
                     ))}
                   </div>
