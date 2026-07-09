@@ -1,87 +1,75 @@
-## Report: Board-topic indexing investigation
+# MCQsAI.com — SEO + AEO Audit (Plan)
 
-### Robots.txt (confirmed, no change)
+Audit-only. Deliverable is **one markdown file** written to the repo. No code, Cloudflare, WAF, DNS, robots, sitemap, or schema changes in this step — findings are flagged and prioritized only, execution happens after your section-by-section approval.
 
-No legitimate pages are blocked. The 324 "Blocked by robots.txt" are intentional query-param duplicates (`?count=`, `?timed=`, `?topic=`, `?difficulty=`, `?q=`, `?lang=`, `/subjects?*`). Board topic paths, sitemap URLs, and all clean canonical routes are reachable — verified via GSC URL Inspection. Leaving as-is per your decision.
+## Deliverable
 
-### Root cause of the indexing gap
+`docs/seo-aeo-audit-2026-07-09.md` containing:
 
-The cross-board sharing fix updated the **writer** (`generate-test`), the **reader** (`BoardTopicPage`), and `get_content_health` to the unified canonical key `slug(subject)-slug(topic)`. But the RPC that drives the sitemap **and** the SSR noindex manifest — `get_indexable_board_topic_paths` — was **never updated**. It still:
+- Executive summary (5–8 plain-language bullets)
+- Master issue table: `Issue | Severity | Pages Affected | Root Cause | Recommended Fix`
+- All 10 sections you specified, each with findings + prioritized fixes
+- A prioritized master fix list (Critical → High → Moderate → Low)
 
-1. Uses the OLD canonical key `slug(topic)` (no subject prefix), so it never matches the newly stored `slug(subject)-slug(topic)` values.
-2. Restricts canonical matching to `ci.topic_id IS NULL`, so shared-bank rows that have a `topic_id` are invisible to sibling boards.
+## Key evidence already gathered (live, not assumed)
 
-This is the identical bug already fixed in `get_content_health`. Result: pages filled via the shared bank stay marked thin → `<meta robots=noindex>` in SSR HTML AND excluded from the sitemap.
+**🔴 CRITICAL — the Cloudflare block is NOT fixed.** Google's URL Inspection API (queried just now against your verified GSC property) reports the homepage `https://mcqsai.com/`:
 
-### Answers to your 4 questions (live DB data)
+- `coverageState: "Blocked due to access forbidden (403)"`
+- `pageFetchState: "ACCESS_FORBIDDEN"`
+- `lastCrawlTime: 2026-06-28` (Googlebot has not successfully fetched a page in ~11 days)
+- `robotsTxtState: ALLOWED` (so robots.txt is fine — the 403 is at the edge/WAF layer)
 
-1. **The "Discovered – currently not indexed" pages are NOT the 0-question noindex ones.** Noindex pages report as "Excluded by noindex tag". "Discovered – currently not indexed" means Google found the URL (via sitemap) but hasn't prioritized crawling it. I confirmed this by inspecting an in-manifest, genuinely-indexable topic (`.../biology/biotechnology`) — it shows exactly this state. It's a crawl-priority/site-authority signal, made worse by the sitemap under-listing good pages.
-2. **Indexable board topics with 5+ questions:**
-  - Currently shipped manifest: **477 paths**
-  - Old RPC logic: **494**
-  - Corrected shared-canonical logic: **729**  → **254 newly indexable** via the shared bank that the current RPC/manifest wrongly excludes.
-3. **Crawl budget is NOT being wasted by thin pages.** Distribution: 653 zero-question + 8 thin (1–4 Qs) = 661 thin topics, all correctly `noindex` and excluded from the sitemap. The real problem is the inverse — **254 good pages are wrongly hidden** from Google, not a thin-page flood.
-4. **The manifest (`indexableTopics.json`) is stale/incorrect.** It holds 477 paths vs 729 truly indexable. Root cause is the un-updated RPC above; it's regenerated at build time (`prebuild` → `generate-sitemaps.mjs`) from that RPC, so fixing the RPC + rebuilding fixes both the sitemap and the SSR noindex tags.
+Independent crawl test confirms: `mcqsai.com` and `www.mcqsai.com` return **403 for Googlebot, GPTBot, and a normal Chrome UA alike**, while `/robots.txt` returns 200 (edge-cached). This points to a Cloudflare edge rule (WAF / Bot Fight Mode / Super Bot Fight Mode / security level) blocking HTML page fetches. **Every other SEO issue is secondary until this is lifted** — 1,427 "access forbidden (403)" pages in GSC trace to this single root cause.
 
----
+**Domain / canonical:** GSC shows two properties (`https://mcqsai.com/` URL-prefix + `sc-domain:mcqsai.com`). `www.mcqsai.com` 302-redirects to apex (should be 301). `GlobalCanonical.tsx` already correctly emits a single apex canonical, strips query strings/trailing slash, and normalizes `class-N` segments — so the "multiple canonical tags" GSC flag is likely stale/pre-fix on 2 pages; will verify in built output.
 
-## Proposed fix
+**Metadata:** `index.html` static title is `MCQSAI | AI-Powered Exam Prep`; `SEOHead.tsx` appends `| MCQsAI`. The 39 identical meta descriptions map to board leaf pages falling back to the default description (confirmed in your FailingUrls CSV — same "Prepare smarter…" / "Free AI MCQ practice…" strings repeat). Root cause: board/class/subject/topic templates don't generate per-page descriptions. 2 "title too long" + 2 "multiple descriptions" are localized template issues.
 
-### 1. Migration — update `get_indexable_board_topic_paths`
+**Sitemaps:** valid sitemap index with 9 children (boards-1=729 locs, tools=62, jobs=103, etc.), same-origin, build-time generated + verified. Healthy. Will cross-check for any noindex/404 URLs leaking in.
 
-Bring it in line with `get_content_health`:
+**AEO:** `llms.txt` exists and is well-structured. Prerendering is active (`PRERENDER=true` + inject-meta + verify scripts). Will audit JSON-LD (FAQPage/Course/Quiz/BreadcrumbList) coverage on leaf MCQ pages for citation-readiness. IndexNow is absent (confirmed) — flagged High.
 
-- Change the canonical match from `ci.canonical_topic_name = slug(topic_name)` to `ci.canonical_topic_name = slug(subject_name) || '-' || slug(topic_name)`.
-- Drop the `ci.topic_id IS NULL AND` guard so shared-bank rows with a `topic_id` count on every sibling board.
-- Keep the `>= 5 approved MCQs` threshold and the SECURITY DEFINER / path-only output unchanged.
+## Audit method for the remaining sections
 
-### 2. Regenerate the manifest + sitemap
+- Section 1/10 (crawl/security): document the confirmed 403 via GSC + curl matrix; enumerate robots.txt Disallow rules (already read — all intentional: admin/auth/query-param permutations); recommend WAF allowlist verification + change-alert control. **No Cloudflare changes made.**
+- Section 2/3: parse your `FailingUrls` CSV to list exact URLs sharing descriptions; inspect built HTML for canonical/description uniqueness per template.
+- Section 4: grep JSON-LD emitters (`StructuredData.tsx`, `BlogStructured.tsx`, board-topic components); list schema present vs missing.
+- Section 5: map route hierarchy from `App.tsx`; check breadcrumb + internal linking on hub/leaf pages; confirm `/jobs` separation.
+- Section 6: sample thin board-topic pages (<5 MCQ noindex gate already in memory) vs indexable ones.
+- Section 7: Lighthouse/PSI note — cannot fully run while origin 403s; will assess bundle/image/lazy-load patterns from code and flag CWV items to re-measure post-unblock.
+- Section 8/9: bilingual (`en/ur/sd`) + hreflang check; off-page backlink recommendations for PK edtech.
 
-Run `node scripts/generate-sitemaps.mjs` so `src/generated/indexableTopics.json` grows from 477 → ~729 paths and the board sitemaps refresh. This flips SSR `noindex` off for the 254 newly-qualifying topics and adds them to the sitemap.
+## Out of scope (this step)
 
-### 3. Verify
-
-- Re-run the corrected count query to confirm 729 indexable.
-- Spot-check that a previously-thin, now-shared topic no longer carries `noindex` and appears in `boards-*.xml`.
-
-### Expected outcome
-
-~254 legitimate board-topic pages stop emitting `noindex` and enter the sitemap, so Google can index the content that already exists via the shared bank. No robots.txt change; no schema change.
+No fixes applied. After you approve the report, we'll tackle fixes section-by-section starting with the Cloudflare 403 (which you'll execute on Cloudflare side, since I must not touch WAF/DNS).
 
 &nbsp;
 
-&nbsp;
+# **Great work — yeh audit-plan aur live findings bilkul sahi direction mein hain. Approved, please continue.**
 
-# **Approved — please implement the proposed fix immediately:**
+Confirm kar raha hon:
 
-1. Migration: Update get_indexable_board_topic_paths RPC to 
+1. Cloudflare/WAF 403 issue — main isay khud Cloudflare dashboard mein directly check/fix kar raha hon (aap sahi keh rahay hain, yeh aap k access mein nahi aata). Aap iska wait mat karein, apna baqi audit parallel mein continue karein. Jaise hi Cloudflare side se fix ho jaye, main aap ko bata don ga taake aap re-verify kar sakein k Googlebot ab successfully fetch kar pa raha hai.
 
-   use the unified slug(subject)-slug(topic) canonical key 
+2. Baqi sab sections (2 se 9 tak) jaisa aap ne plan kiya hai — same order mein continue karein:
 
-   and drop the topic_id IS NULL restriction — exactly as 
+   - Duplicate meta descriptions (39 pages) — exact URLs list karke unique per-template descriptions ka fix propose karein
 
-   you've described, mirroring the fix already applied to 
+   - www → apex redirect ko 302 se 301 mein convert karne ka fix bhi note kar lein
 
-   get_content_health.
+   - JSON-LD/schema audit (Section 4)
 
-2. After migration: Run node scripts/generate-sitemaps.mjs 
+   - Route hierarchy + internal linking (Section 5)
 
-   to regenerate indexableTopics.json (477 → ~729 paths) 
+   - Thin content sample check (Section 6)
 
-   and refresh the board sitemaps.
+   - CWV/performance code-level review (Section 7) — origin 403 hone ki wajah se abhi live test nahi ho sakta, jaisa aap ne kaha, wahi theek hai
 
-3. Verify: Confirm count reaches ~729 indexable topics, and 
+   - Bilingual/hreflang + backlink recommendations (Section 8/9)
 
-   spot-check that a previously-excluded shared-bank topic 
+3. Deliverable same rahega: docs/[seo-aeo-audit-2026-07-09.md](http://seo-aeo-audit-2026-07-09.md) — executive summary, master issue table, sab 10 sections, aur prioritized fix list.
 
-   no longer has noindex in SSR HTML and appears in 
+4. Abhi bhi koi code/Cloudflare/DNS/robots/sitemap change NA karein — sirf audit report complete karein. Jab report mujhe mil jaye, main section-by-section approval dun ga fixes k lae.
 
-   boards-*.xml.
-
-This is high priority — 254 legitimate pages with real 
-
-content are currently invisible to Google solely because 
-
-of a missed RPC update. Fixing this is the single highest-
-
-impact action for our indexing recovery right now.
+Shabash, continue karein.
