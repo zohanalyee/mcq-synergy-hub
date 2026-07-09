@@ -1,4 +1,4 @@
-import { useState, useLayoutEffect, useCallback } from 'react';
+import { useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Stethoscope, Landmark, Scale, FileText, GraduationCap, Sparkles } from 'lucide-react';
@@ -45,51 +45,51 @@ const LibraryWelcome = () => {
     return isLibraryVisit(window.location.pathname, window.location.search);
   });
 
-  // Continuous multi-color party-popper crackers from both edges for 3s.
-  const fireCelebration = useCallback(() => {
-    const duration = 3000;
-    const end = Date.now() + duration;
-    const colors = ['#facc15', '#f59e0b', '#6366f1', '#a855f7', '#22d3ee', '#ec4899', '#10b981'];
+  // Holds the id of the continuous celebration interval so we can stop it on action.
+  const celebrationInterval = useRef<number | null>(null);
 
-    (function frame() {
-      // Left edge popper
-      confetti({
-        particleCount: 8,
-        angle: 60,
-        spread: 75,
-        startVelocity: 55,
-        origin: { x: 0, y: 0.85 },
-        colors,
-      });
-      // Right edge popper
-      confetti({
-        particleCount: 8,
-        angle: 120,
-        spread: 75,
-        startVelocity: 55,
-        origin: { x: 1, y: 0.85 },
-        colors,
-      });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    })();
-
-    // Periodic aerial bursts for a firework feel.
-    const interval = window.setInterval(() => {
-      if (Date.now() > end) {
-        window.clearInterval(interval);
-        return;
-      }
-      confetti({
-        particleCount: 70,
-        spread: 360,
-        startVelocity: 30,
-        gravity: 0.9,
-        ticks: 200,
-        origin: { x: Math.random(), y: Math.random() * 0.5 },
-        colors,
-      });
-    }, 450);
+  const stopCelebration = useCallback(() => {
+    if (celebrationInterval.current !== null) {
+      window.clearInterval(celebrationInterval.current);
+      celebrationInterval.current = null;
+    }
+    // Instantly clear any confetti already on screen.
+    confetti.reset();
   }, []);
+
+  // Light multi-color party-popper burst rendered ON TOP of the modal (zIndex 99999).
+  const fireBurst = useCallback(() => {
+    const colors = ['#facc15', '#f59e0b', '#6366f1', '#a855f7', '#22d3ee', '#ec4899', '#10b981'];
+    // Left edge popper
+    confetti({
+      particleCount: 18,
+      angle: 60,
+      spread: 75,
+      startVelocity: 55,
+      origin: { x: 0, y: 0.85 },
+      colors,
+      zIndex: 99999,
+    });
+    // Right edge popper
+    confetti({
+      particleCount: 18,
+      angle: 120,
+      spread: 75,
+      startVelocity: 55,
+      origin: { x: 1, y: 0.85 },
+      colors,
+      zIndex: 99999,
+    });
+  }, []);
+
+  // Continuous celebration: burst now, then a fresh light burst every 3.5s until action.
+  const fireCelebration = useCallback(() => {
+    if (celebrationInterval.current !== null) return; // already running
+    fireBurst();
+    celebrationInterval.current = window.setInterval(() => {
+      fireBurst();
+    }, 3500);
+  }, [fireBurst]);
 
   // Fire the celebration synchronously before paint when the modal is shown,
   // and re-check on client-side route changes into /larkana.
@@ -104,23 +104,43 @@ const LibraryWelcome = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
+  // Lock body scroll immediately (0ms) while the modal is visible to stop mobile flash.
+  useLayoutEffect(() => {
+    if (typeof document === 'undefined') return;
+    if (show) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+  }, [show]);
+
+  // Ensure the interval is cleared if the component unmounts mid-celebration.
+  useEffect(() => stopCelebration, [stopCelebration]);
+
   const handleClose = () => {
+    stopCelebration();
     setShow(false);
     try {
       sessionStorage.setItem(STORAGE_KEY, 'true');
     } catch {}
   };
 
+
   return (
     <AnimatePresence>
       {show && (
-        <div className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-3 sm:p-4">
+        <div
+          className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto bg-black/75 p-3 sm:p-4 sm:backdrop-blur-sm"
+          style={{ willChange: 'transform, opacity' }}
+        >
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 20, stiffness: 260 }}
-            className="relative my-auto w-[92%] max-w-md md:max-w-2xl"
+            className="relative my-auto w-[92%] max-w-md md:max-w-2xl [will-change:transform]"
           >
             {/* Glowing gold border */}
             <motion.div
