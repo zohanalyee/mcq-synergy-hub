@@ -162,14 +162,14 @@ const LibraryWelcome = () => {
                     <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-black" />
                   </motion.div>
 
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight text-amber-300 drop-shadow-[0_0_12px_rgba(250,204,21,0.4)]">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight text-amber-950">
                     CONGRATULATIONS ASPIRANTS OF SHAHNAWAZ BHUTTO LIBRARY, LARKANA! 🌟
                   </h2>
-                  <p className="mt-2.5 text-sm md:text-base font-medium text-slate-200">
+                  <p className="mt-2.5 text-sm md:text-base font-medium text-slate-800">
                     Your Gateway to Exam Success. MDCAT, SPSC, FPSC, STS &amp; NTS Mock Tests &amp;
                     Practice MCQs.
                   </p>
-                  <p className="mt-1 text-xs sm:text-sm text-amber-200/80">
+                  <p className="mt-1 text-xs sm:text-sm font-semibold text-amber-700">
                     Scan to Access Free Online Test Portal
                   </p>
 
