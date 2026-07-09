@@ -493,9 +493,9 @@ function verifyRequiredRoutes() {
   }
 
   const results = await Promise.allSettled([
-    injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(),
+    injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(), injectBoardHubs(),
   ]);
-  const labels = ["mock-tests", "opportunities", "blog", "boards"];
+  const labels = ["mock-tests", "opportunities", "blog", "boards", "board-hubs"];
   const counts = {};
   results.forEach((r, i) => {
     if (r.status === "fulfilled") {
