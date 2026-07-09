@@ -263,17 +263,19 @@ async function injectOpportunities() {
 async function injectBlog() {
   const { data } = await supabase
     .from("blog_posts")
-    .select("slug,title,excerpt,meta_title,meta_description")
+    .select("slug,title,content,excerpt,meta_title,meta_description")
     .eq("status", "published");
   const all = data || [];
   for (const p of all) {
     const t = (p.meta_title || p.title || "").trim();
+    const thin = wordCount(p.content) < BLOG_MIN_WORDS;
     patch({
       path: `/blog/${p.slug}`,
       title: `${t} | MCQsAI`,
       description: p.meta_description || p.excerpt || `${t} — MCQsAI blog.`,
       ogImage: OG_BLOG,
       ogType: "article",
+      robots: thin ? "noindex,follow" : "index,follow",
       pageType: "blog",
     });
   }
