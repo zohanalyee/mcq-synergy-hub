@@ -35,7 +35,15 @@ const badges = [
 
 const LibraryWelcome = () => {
   const location = useLocation();
-  const [show, setShow] = useState(false);
+  // Compute visibility synchronously on first render so the backdrop overlay
+  // paints on the very first frame — no post-hydration flash of base content.
+  const [show, setShow] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      if (sessionStorage.getItem(STORAGE_KEY)) return false;
+    } catch {}
+    return isLibraryVisit(window.location.pathname, window.location.search);
+  });
 
   // Continuous multi-color party-popper crackers from both edges for 3s.
   const fireCelebration = useCallback(() => {
