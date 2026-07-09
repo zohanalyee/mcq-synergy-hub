@@ -106,13 +106,13 @@ const LibraryWelcome = () => {
   return (
     <AnimatePresence>
       {show && (
-        <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+        <div className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto bg-black/70 backdrop-blur-sm p-3 sm:p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: 'spring', damping: 20, stiffness: 260 }}
-            className="relative w-full max-w-lg"
+            className="relative my-auto w-[92%] max-w-md md:max-w-2xl"
           >
             {/* Glowing gold border */}
             <motion.div
@@ -140,7 +140,7 @@ const LibraryWelcome = () => {
                 />
 
                 <div className="relative">
-                  <div className="mb-5 flex items-center justify-between">
+                  <div className="mb-4 flex items-center justify-between">
                     <BrandMark />
                     <span className="text-2xl" aria-hidden="true">🎆</span>
                   </div>
@@ -149,23 +149,23 @@ const LibraryWelcome = () => {
                     initial={{ rotate: -8, scale: 0.8 }}
                     animate={{ rotate: [0, -6, 6, 0], scale: 1 }}
                     transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1 }}
-                    className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 shadow-lg"
+                    className="mb-3 inline-flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 shadow-lg"
                   >
-                    <Sparkles className="h-7 w-7 text-black" />
+                    <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-black" />
                   </motion.div>
 
-                  <h2 className="text-xl sm:text-2xl font-extrabold leading-tight text-amber-300 drop-shadow-[0_0_12px_rgba(250,204,21,0.4)]">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight text-amber-300 drop-shadow-[0_0_12px_rgba(250,204,21,0.4)]">
                     CONGRATULATIONS ASPIRANTS OF SHAHNAWAZ BHUTTO LIBRARY, LARKANA! 🌟
                   </h2>
-                  <p className="mt-3 text-sm sm:text-base font-medium text-slate-200">
+                  <p className="mt-2.5 text-sm md:text-base font-medium text-slate-200">
                     Your Gateway to Exam Success. MDCAT, SPSC, FPSC, STS &amp; NTS Mock Tests &amp;
                     Practice MCQs.
                   </p>
-                  <p className="mt-1.5 text-xs sm:text-sm text-amber-200/80">
+                  <p className="mt-1 text-xs sm:text-sm text-amber-200/80">
                     Scan to Access Free Online Test Portal
                   </p>
 
-                  <div className="mt-5 grid gap-2">
+                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
                     {badges.map((b, i) => (
                       <motion.div
                         key={b.label}
@@ -182,10 +182,11 @@ const LibraryWelcome = () => {
                     ))}
                   </div>
 
+
                   <Link
                     to="/mock-tests"
                     onClick={handleClose}
-                    className="mt-6 block rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 px-5 py-3 text-center text-sm sm:text-base font-extrabold uppercase tracking-wide text-black shadow-[0_0_25px_rgba(250,204,21,0.5)] transition-all hover:shadow-[0_0_40px_rgba(250,204,21,0.8)] hover:brightness-110"
+                    className="mt-5 block rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 px-5 py-3 text-center text-sm sm:text-base font-extrabold uppercase tracking-wide text-black shadow-[0_0_25px_rgba(250,204,21,0.5)] transition-all hover:shadow-[0_0_40px_rgba(250,204,21,0.8)] hover:brightness-110"
                   >
                     Start Practicing MCQs Now 🚀
                   </Link>
