@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useLayoutEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
 import { Stethoscope, Landmark, Scale, FileText, GraduationCap, Sparkles } from 'lucide-react';
@@ -35,7 +35,15 @@ const badges = [
 
 const LibraryWelcome = () => {
   const location = useLocation();
-  const [show, setShow] = useState(false);
+  // Compute visibility synchronously on first render so the backdrop overlay
+  // paints on the very first frame — no post-hydration flash of base content.
+  const [show, setShow] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      if (sessionStorage.getItem(STORAGE_KEY)) return false;
+    } catch {}
+    return isLibraryVisit(window.location.pathname, window.location.search);
+  });
 
   // Continuous multi-color party-popper crackers from both edges for 3s.
   const fireCelebration = useCallback(() => {
@@ -83,16 +91,16 @@ const LibraryWelcome = () => {
     }, 450);
   }, []);
 
-  useEffect(() => {
+  // Fire the celebration synchronously before paint when the modal is shown,
+  // and re-check on client-side route changes into /larkana.
+  useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-    if (sessionStorage.getItem(STORAGE_KEY)) return;
+    try {
+      if (sessionStorage.getItem(STORAGE_KEY)) return;
+    } catch {}
     if (!isLibraryVisit(location.pathname, window.location.search)) return;
-
-    const timer = setTimeout(() => {
-      setShow(true);
-      fireCelebration();
-    }, 400);
-    return () => clearTimeout(timer);
+    setShow(true);
+    fireCelebration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
@@ -126,15 +134,15 @@ const LibraryWelcome = () => {
               }}
               transition={{ duration: 2.4, repeat: Infinity }}
             >
-              <div className="relative overflow-hidden rounded-3xl bg-[#0b0b14] p-6 sm:p-8">
+              <div className="relative overflow-hidden rounded-3xl border border-amber-400/50 bg-amber-50/95 p-6 sm:p-8">
                 {/* Animated glow blobs */}
                 <motion.div
-                  className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-amber-500/25 blur-3xl"
+                  className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-amber-300/40 blur-3xl"
                   animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.2, 1] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
                 <motion.div
-                  className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-yellow-400/25 blur-3xl"
+                  className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-yellow-300/40 blur-3xl"
                   animate={{ opacity: [0.3, 0.6, 0.3], scale: [1.1, 1, 1.1] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
@@ -154,14 +162,14 @@ const LibraryWelcome = () => {
                     <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-black" />
                   </motion.div>
 
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight text-amber-300 drop-shadow-[0_0_12px_rgba(250,204,21,0.4)]">
+                  <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight text-amber-950">
                     CONGRATULATIONS ASPIRANTS OF SHAHNAWAZ BHUTTO LIBRARY, LARKANA! 🌟
                   </h2>
-                  <p className="mt-2.5 text-sm md:text-base font-medium text-slate-200">
+                  <p className="mt-2.5 text-sm md:text-base font-medium text-slate-800">
                     Your Gateway to Exam Success. MDCAT, SPSC, FPSC, STS &amp; NTS Mock Tests &amp;
                     Practice MCQs.
                   </p>
-                  <p className="mt-1 text-xs sm:text-sm text-amber-200/80">
+                  <p className="mt-1 text-xs sm:text-sm font-semibold text-amber-700">
                     Scan to Access Free Online Test Portal
                   </p>
 
@@ -172,12 +180,12 @@ const LibraryWelcome = () => {
                         initial={{ opacity: 0, x: -12 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.15 + i * 0.08 }}
-                        className="flex items-center gap-3 rounded-xl border border-amber-400/20 bg-white/5 px-3 py-2"
+                        className="flex items-center gap-3 rounded-xl border border-amber-200 bg-white px-3 py-2 transition-colors hover:bg-amber-100"
                       >
                         <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400/25 to-yellow-500/25 text-lg">
                           {b.emoji}
                         </span>
-                        <span className="text-sm font-medium text-slate-100">{b.label}</span>
+                        <span className="text-sm font-semibold text-slate-800">{b.label}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -193,7 +201,7 @@ const LibraryWelcome = () => {
 
                   <button
                     onClick={handleClose}
-                    className="mt-3 block w-full text-center text-xs text-slate-400 transition-colors hover:text-slate-200"
+                    className="mt-3 block w-full text-center text-xs text-slate-500 transition-colors hover:text-slate-800"
                   >
                     Maybe later
                   </button>
