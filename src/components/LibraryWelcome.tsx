@@ -134,15 +134,15 @@ const LibraryWelcome = () => {
               }}
               transition={{ duration: 2.4, repeat: Infinity }}
             >
-              <div className="relative overflow-hidden rounded-3xl bg-[#0b0b14] p-6 sm:p-8">
+              <div className="relative overflow-hidden rounded-3xl border border-amber-400/50 bg-amber-50/95 p-6 sm:p-8">
                 {/* Animated glow blobs */}
                 <motion.div
-                  className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-amber-500/25 blur-3xl"
+                  className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-amber-300/40 blur-3xl"
                   animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.2, 1] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
                 <motion.div
-                  className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-yellow-400/25 blur-3xl"
+                  className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-yellow-300/40 blur-3xl"
                   animate={{ opacity: [0.3, 0.6, 0.3], scale: [1.1, 1, 1.1] }}
                   transition={{ duration: 3, repeat: Infinity }}
                 />
