@@ -312,6 +312,162 @@ async function injectBoards() {
   return count;
 }
 
+// ---- Static topic CONTENT injection (D2c/D3.5) --------------------------------
+// After injectBoards() has written each topic page's correct <head>, inject the
+// actual MCQ content + Quiz/FAQPage JSON-LD into the raw HTML so non-JS AI
+// crawlers can read and cite it. Reads/writes the file IN PLACE (head preserved),
+// replaces the homepage-shell #root body with real topic content, and swaps the
+// homepage FAQPage JSON-LD for the topic-specific one (single FAQPage per page).
+
+// Run an async mapper over items with bounded concurrency.
+async function mapLimit(items, limit, fn) {
+  const results = [];
+  let i = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (i < items.length) {
+      const idx = i++;
+      results[idx] = await fn(items[idx], idx);
+    }
+  });
+  await Promise.all(workers);
+  return results;
+}
+
+// Remove any existing FAQPage JSON-LD (e.g. the global homepage FAQ carried by
+// the shell) while keeping Organization/WebSite/etc. Leaf pages emit exactly one
+// FAQPage (the topic one), matching the client-side single-FAQPage rule.
+function stripFaqJsonLd(html) {
+  return html.replace(
+    /<script[^>]*type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
+    (m) => (/"FAQPage"/.test(m) ? "" : m),
+  );
+}
+
+function injectContentIntoHtml(html, contentHtml, schemas) {
+  const scriptTags = (schemas || [])
+    .filter(Boolean)
+    .map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</script>`)
+    .join("\n    ");
+  let out = stripFaqJsonLd(html);
+  if (scriptTags) out = out.replace("</head>", `    ${scriptTags}\n  </head>`);
+  // Lazy match stops at the FIRST </div> followed by the module script — that is
+  // #root's own closing tag (nested </div>s are not followed by <script module>).
+  const rootRe = /<div id="root">[\s\S]*?<\/div>(\s*<script type="module")/;
+  if (rootRe.test(out)) {
+    out = out.replace(rootRe, `<div id="root">${contentHtml}</div>$1`);
+  } else {
+    // Fallback: empty-root shell.
+    out = out.replace(/<div id="root">\s*<\/div>/, `<div id="root">${contentHtml}</div>`);
+  }
+  return out;
+}
+
+async function injectBoardTopicContent() {
+  const { data: topicRows, error } = await supabase.rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: 5 });
+  if (error) throw error;
+  const rows = (topicRows || []).filter((r) => r.path);
+
+  // Build path -> topic_id map so content linked by topic_id (not just
+  // canonical_topic_name) is also fetched — mirrors BoardTopicPage which passes
+  // BOTH p_topic_id and p_canonical_slug.
+  const [{ data: systems }, { data: levels }, { data: subjects }, { data: topics }] = await Promise.all([
+    supabase.from("educational_systems").select("id,name").eq("is_active", true),
+    supabase.from("levels").select("id,name,system_id"),
+    supabase.from("subjects").select("id,name,level_id"),
+    supabase.from("topics").select("id,name,subject_id"),
+  ]);
+  const sysById = new Map((systems || []).map((s) => [s.id, s.name]));
+  const levelById = new Map((levels || []).map((l) => [l.id, l]));
+  const subjectById = new Map((subjects || []).map((s) => [s.id, s]));
+  const pathToTopicId = new Map();
+  for (const t of topics || []) {
+    const sub = subjectById.get(t.subject_id);
+    if (!sub) continue;
+    const lvl = levelById.get(sub.level_id);
+    if (!lvl) continue;
+    const sysName = sysById.get(lvl.system_id);
+    if (!sysName) continue;
+    const classN = (String(lvl.name).match(/\d+/) || [""])[0];
+    if (!classN) continue;
+    // toSlug here matches the SQL slug (regexp_replace [^a-z0-9]+ -> '-').
+    const p = `/boards/${toSlug(sysName)}/class-${classN}/${toSlug(sub.name)}/${toSlug(t.name)}`;
+    pathToTopicId.set(p, t.id);
+  }
+
+  // Sibling-topic map (subjectHubKey -> [{name, path}]) for crawlable link equity.
+  const siblings = new Map();
+  for (const r of rows) {
+    const parts = r.path.split("/").filter(Boolean);
+    if (parts.length < 5) continue;
+    const key = `${parts[1]}/${parts[2]}/${parts[3]}`;
+    if (!siblings.has(key)) siblings.set(key, []);
+    siblings.get(key).push({ name: humanize(parts[4]), path: r.path });
+  }
+
+  let injected = 0, skipped = 0;
+  await mapLimit(rows, 8, async (r) => {
+    const path = r.path;
+    const parts = path.split("/").filter(Boolean); // boards, board, class-N, subject, topic
+    if (parts.length < 5) { skipped++; return; }
+    const file = join(DIST, path.replace(/^\//, ""), "index.html");
+    if (!existsSync(file)) { skipped++; return; }
+
+    const boardSlug = parts[1], classSeg = parts[2], subjectSlug = parts[3], topicSlug = parts[4];
+    const classN = (String(classSeg).match(/\d+/) || [""])[0];
+    const boardName = humanize(boardSlug);
+    const subjectName = humanize(subjectSlug);
+    const topicName = humanize(topicSlug);
+    const canonicalSlug = `${subjectSlug}-${topicSlug}`;
+    const topicId = pathToTopicId.get(path) || null;
+
+    let mcqs = [];
+    try {
+      const { data } = await supabase.rpc("get_board_topic_mcqs", {
+        p_topic_id: topicId,
+        p_canonical_slug: canonicalSlug,
+        p_limit: 50,
+      });
+      mcqs = data || [];
+    } catch (e) {
+      console.warn(`[inject-meta] topic-content fetch failed ${path}: ${e?.message || e}`);
+      skipped++;
+      return;
+    }
+    // Only inject full content for pages that meet the indexable threshold.
+    if (mcqs.length < 5) { skipped++; return; }
+
+    const seoTitle = `${topicName} MCQs - ${subjectName} Class ${classN} | ${boardName}`;
+    const quizSchema = buildQuizSchema({ seoTitle, topicName, classN, count: mcqs.length });
+    const faqSchema = buildFaqSchema(mcqs);
+
+    // Crawlable links: sibling topics (up to 8) + parents (subject/class/board).
+    const sibs = (siblings.get(`${boardSlug}/${classSeg}/${subjectSlug}`) || [])
+      .filter((s) => s.path !== path).slice(0, 8)
+      .map((s) => ({ href: s.path, label: `${s.name} MCQs` }));
+    const links = [
+      ...sibs,
+      { href: `/boards/${boardSlug}/${classSeg}/${subjectSlug}`, label: `All ${subjectName} topics` },
+      { href: `/boards/${boardSlug}/${classSeg}`, label: `Class ${classN} subjects` },
+      { href: `/boards/${boardSlug}`, label: `${boardName} home` },
+      { href: `/boards`, label: "Browse all boards" },
+    ];
+
+    const contentHtml = buildTopicContentHtml({ topicName, subjectName, classN, boardName, mcqs, links });
+    try {
+      const html = readFileSync(file, "utf8");
+      writeFileSync(file, injectContentIntoHtml(html, contentHtml, [quizSchema, faqSchema]), "utf8");
+      injected++;
+    } catch (e) {
+      console.warn(`[inject-meta] topic-content write failed ${path}: ${e?.message || e}`);
+      skipped++;
+    }
+  });
+
+  console.log(`[inject-meta] topic-content: ${injected} injected, ${skipped} skipped (of ${rows.length})`);
+  return injected;
+}
+
+
 // Mirror src/lib/slugUtils.ts toSlug so DB display names map back to the exact
 // URL segments the board pages resolve via findBestMatch.
 function pageToSlug(name) {
