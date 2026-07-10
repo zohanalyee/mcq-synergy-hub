@@ -288,6 +288,12 @@ const BoardTopicPage = () => {
                 </CollapsibleContent>
               </Collapsible>
             )}
+
+            <div className="text-left">
+              <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
+              <ExploreMore boardName={names.board} subjectName={names.subject} classNumber={resolvedClassNumber || classNumber || ''} boardSlug={boardSlug || ''} classSeg={canonicalClassSeg} subjectSlug={subjectSlug || ''} />
+              <RelatedExamsTools subjectName={names.subject} />
+            </div>
           </motion.div>
         ) : (
           <>
