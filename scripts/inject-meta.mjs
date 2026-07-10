@@ -21,6 +21,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TOOLS_WITHOUT_SEOHEAD, SUBJECT_CONTENT_META } from "./prerender-routes.mjs";
+import { buildQuizSchema, buildFaqSchema, buildTopicContentHtml } from "./topic-content.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
