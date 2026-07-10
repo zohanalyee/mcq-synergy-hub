@@ -120,6 +120,8 @@ const BoardSubjectPage = () => {
         {data?.topics && data.topics.length > 0 && (
           <p className="text-xs text-muted-foreground mt-6">{data.topics.length} topic{data.topics.length !== 1 ? 's' : ''} available</p>
         )}
+
+        {data?.subject && <RelatedExamsTools subjectName={subjectName} />}
       </div>
       <Footer />
     </Header>
