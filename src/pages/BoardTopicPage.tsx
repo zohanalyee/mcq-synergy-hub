@@ -189,6 +189,30 @@ const BoardTopicPage = () => {
     numberOfQuestions: mcqs.length, provider: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
   } : null;
 
+  // FAQPage schema built ONLY from on-page, approved MCQs (question + the
+  // visibly-rendered correct answer & explanation). Single FAQPage block per
+  // page — leaf pages never emit the global homepage FAQ, so no duplication.
+  const faqEntities = (mcqs as any[])
+    .filter((m) => m.status === 'approved' && m.title && m.correct_option)
+    .slice(0, 10)
+    .map((m) => {
+      const opts: any[] = Array.isArray(m.options) ? m.options : [];
+      const correct = opts.find((o) => (o.key || '') === m.correct_option);
+      const answerText = [
+        correct?.text ? `Correct answer: ${correct.text}.` : `Correct answer: ${m.correct_option}.`,
+        m.explanation ? String(m.explanation).trim() : '',
+      ].filter(Boolean).join(' ');
+      return {
+        '@type': 'Question',
+        name: cleanQuestionText(m.title),
+        acceptedAnswer: { '@type': 'Answer', text: answerText },
+      };
+    });
+  const faqSchema = faqEntities.length >= 3 ? {
+    '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faqEntities,
+  } : null;
+
+
   return (
     <Header>
       <SEOHead title={seoTitle} description={seoDesc} keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`} url={canonicalUrl} noindex={isThin} />
