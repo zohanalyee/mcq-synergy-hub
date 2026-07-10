@@ -246,8 +246,8 @@ const BoardTopicPage = () => {
         <PageBreadcrumb items={[
           { title: 'Home', href: '/' }, { title: 'Boards', href: '/boards' },
           { title: names.board, href: `/boards/${boardSlug}` },
-          { title: `Class ${resolvedClassNumber || classNumber}`, href: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}` },
-          { title: names.subject, href: `/boards/${boardSlug}/${resolvedClassNumber || classNumber}/${subjectSlug}` },
+          { title: `Class ${resolvedClassNumber || classNumber}`, href: `/boards/${boardSlug}/${canonicalClassSeg}` },
+          { title: names.subject, href: `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}` },
           { title: names.topic, href: '#', isCurrent: true },
         ]} />
 
