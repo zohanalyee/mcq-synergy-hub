@@ -3436,6 +3436,21 @@ export type Database = {
           topic_name: string
         }[]
       }
+      get_board_topic_mcqs: {
+        Args: {
+          p_canonical_slug?: string
+          p_limit?: number
+          p_topic_id?: string
+        }
+        Returns: {
+          correct_option: string
+          difficulty: string
+          explanation: string
+          id: string
+          options: Json
+          title: string
+        }[]
+      }
       get_content_fill_progress: {
         Args: never
         Returns: {
