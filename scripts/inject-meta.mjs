@@ -350,10 +350,15 @@ function injectContentIntoHtml(html, contentHtml, schemas) {
     .join("\n    ");
   let out = stripFaqJsonLd(html);
   if (scriptTags) out = out.replace("</head>", `    ${scriptTags}\n  </head>`);
+  // Prerendered pages wrap React output as `<div id="root"><!--$-->...<!--/$--></div>`.
+  // Replace the whole prerendered payload with our static crawlable content.
+  const prerenderRe = /<div id="root">[\s\S]*?<!--\/\$--><\/div>/;
   // Lazy match stops at the FIRST </div> followed by the module script — that is
   // #root's own closing tag (nested </div>s are not followed by <script module>).
   const rootRe = /<div id="root">[\s\S]*?<\/div>(\s*<script type="module")/;
-  if (rootRe.test(out)) {
+  if (prerenderRe.test(out)) {
+    out = out.replace(prerenderRe, `<div id="root">${contentHtml}</div>`);
+  } else if (rootRe.test(out)) {
     out = out.replace(rootRe, `<div id="root">${contentHtml}</div>$1`);
   } else {
     // Fallback: empty-root shell.
