@@ -10,6 +10,8 @@ import PracticeMCQCard from '@/components/subject-content/PracticeMCQCard';
 import TopicStatsBar from '@/components/board-topic/TopicStatsBar';
 import PracticeModeButtons from '@/components/board-topic/PracticeModeButtons';
 import RelatedTopics from '@/components/board-topic/RelatedTopics';
+import ExploreMore from '@/components/board-topic/ExploreMore';
+import RelatedExamsTools from '@/components/board-topic/RelatedExamsTools';
 import TopicProgressCard from '@/components/board-topic/TopicProgressCard';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
