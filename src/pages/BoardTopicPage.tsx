@@ -10,6 +10,8 @@ import PracticeMCQCard from '@/components/subject-content/PracticeMCQCard';
 import TopicStatsBar from '@/components/board-topic/TopicStatsBar';
 import PracticeModeButtons from '@/components/board-topic/PracticeModeButtons';
 import RelatedTopics from '@/components/board-topic/RelatedTopics';
+import ExploreMore from '@/components/board-topic/ExploreMore';
+import RelatedExamsTools from '@/components/board-topic/RelatedExamsTools';
 import TopicProgressCard from '@/components/board-topic/TopicProgressCard';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -286,6 +288,12 @@ const BoardTopicPage = () => {
                 </CollapsibleContent>
               </Collapsible>
             )}
+
+            <div className="text-left">
+              <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
+              <ExploreMore boardName={names.board} subjectName={names.subject} classNumber={resolvedClassNumber || classNumber || ''} boardSlug={boardSlug || ''} classSeg={canonicalClassSeg} subjectSlug={subjectSlug || ''} />
+              <RelatedExamsTools subjectName={names.subject} />
+            </div>
           </motion.div>
         ) : (
           <>
@@ -320,6 +328,8 @@ const BoardTopicPage = () => {
               })}
             </div>
             <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
+            <ExploreMore boardName={names.board} subjectName={names.subject} classNumber={resolvedClassNumber || classNumber || ''} boardSlug={boardSlug || ''} classSeg={canonicalClassSeg} subjectSlug={subjectSlug || ''} />
+            <RelatedExamsTools subjectName={names.subject} />
           </>
         )}
       </div>

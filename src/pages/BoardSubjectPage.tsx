@@ -9,6 +9,7 @@ import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { Card, CardContent } from '@/components/ui/card';
+import RelatedExamsTools from '@/components/board-topic/RelatedExamsTools';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, FileText } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -119,6 +120,8 @@ const BoardSubjectPage = () => {
         {data?.topics && data.topics.length > 0 && (
           <p className="text-xs text-muted-foreground mt-6">{data.topics.length} topic{data.topics.length !== 1 ? 's' : ''} available</p>
         )}
+
+        {data?.subject && <RelatedExamsTools subjectName={subjectName} />}
       </div>
       <Footer />
     </Header>
