@@ -681,6 +681,17 @@ function verifyRequiredRoutes() {
     }
   });
 
+  // D2c/D3.5: inject real MCQ + Quiz/FAQPage content into each topic page's raw
+  // HTML (after injectBoards wrote the correct head). Fail-safe: never breaks the
+  // build over a transient DB/network issue — head-only pages still ship.
+  try {
+    const injectedContent = await injectBoardTopicContent();
+    counts["board-topic-content"] = injectedContent;
+  } catch (e) {
+    counts["board-topic-content"] = -1;
+    console.warn(`[inject-meta] board-topic-content FAILED: ${e?.message || e}`);
+  }
+
   writeManifest();
 
   // Mock tests are the SEO-critical category that originally regressed: if zero
