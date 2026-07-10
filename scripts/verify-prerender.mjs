@@ -208,6 +208,32 @@ for (const route of requiredDynamicRoutes) {
   }
 }
 
-console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK`);
-process.exit(failed || typeFailed || requiredFailed ? 1 : 0);
+// ---- Topic CONTENT assertion (D2c/D3.5) ---------------------------------
+// At least one indexable /boards/.../topic page must ship, in RAW HTML, real
+// MCQ content + Quiz + FAQPage JSON-LD (not just a corrected head). This guards
+// the non-JS AI-crawler visibility goal. Non-fatal if NO topic pages exist at
+// all (e.g. empty DB in a dev build), but fatal if topic pages exist yet none
+// carry content — that means the content-injection step silently regressed.
+let contentFailed = 0;
+const topicFiles = files.filter((f) => {
+  const route = f.replace(DIST, '').replace(/\/index\.html$/, '');
+  return route.startsWith('/boards/') && route.slice('/boards/'.length).split('/').filter(Boolean).length >= 4;
+});
+if (topicFiles.length > 0) {
+  const withContent = topicFiles.filter((f) => {
+    const html = readFileSync(f, 'utf8');
+    return /"@type":"Quiz"/.test(html) && /"@type":"FAQPage"/.test(html) &&
+      /<article>[\s\S]*?<h3>Q1\./.test(html);
+  });
+  if (withContent.length === 0) {
+    console.warn(`❌ [topic-content] ${topicFiles.length} topic pages found but NONE carry raw MCQ + Quiz + FAQPage content`);
+    contentFailed++;
+  } else {
+    const sample = withContent[0].replace(DIST, '').replace(/\/index\.html$/, '');
+    console.log(`✅ [topic-content] ${withContent.length}/${topicFiles.length} topic pages ship raw MCQ + Quiz + FAQPage content (sample ${sample})`);
+  }
+}
+
+console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK; topic-content ${contentFailed ? 'FAILED' : 'OK'}`);
+process.exit(failed || typeFailed || requiredFailed || contentFailed ? 1 : 0);
 
