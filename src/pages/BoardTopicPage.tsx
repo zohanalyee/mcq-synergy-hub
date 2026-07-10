@@ -123,29 +123,40 @@ const BoardTopicPage = () => {
         topic: topic?.name || topicName, subjectId: subject.id,
       };
 
-      // 6. Fetch MCQs
-      let mcqQuery = supabase
-        .from('content_items')
-        .select('id, title, options, correct_option, explanation, difficulty, status')
-        .eq('category', 'mcq').limit(50);
-
-      if (!isAdmin) {
-        mcqQuery = mcqQuery.eq('status', 'approved');
-      }
-
       // Unified canonical key = slug(subject)-slug(topic), shared across all boards.
       const canonicalSlug = `${toSlug(subject.name)}-${toSlug(topicName)}`;
-      if (topic) {
-        // Surface MCQs linked by topic_id OR by shared subject+topic canonical.
-        mcqQuery = mcqQuery.or(`topic_id.eq.${topic.id},canonical_topic_name.eq.${canonicalSlug}`);
-      } else {
-        mcqQuery = mcqQuery.eq('canonical_topic_name', canonicalSlug);
-      }
 
-      const { data: mcqs } = await mcqQuery;
+      // 6. Fetch MCQs.
+      // Non-admins (incl. logged-out visitors & crawlers) use a SECURITY DEFINER
+      // RPC so approved practice content is readable without auth — the same
+      // question/answer/explanation shown on-page (no cloaking). Admins keep the
+      // direct query to also see unapproved content for moderation.
+      let mcqs: any[] | null = null;
+      if (isAdmin) {
+        let mcqQuery = supabase
+          .from('content_items')
+          .select('id, title, options, correct_option, explanation, difficulty, status')
+          .eq('category', 'mcq').limit(50);
+        if (topic) {
+          mcqQuery = mcqQuery.or(`topic_id.eq.${topic.id},canonical_topic_name.eq.${canonicalSlug}`);
+        } else {
+          mcqQuery = mcqQuery.eq('canonical_topic_name', canonicalSlug);
+        }
+        const { data } = await mcqQuery;
+        mcqs = data || [];
+      } else {
+        const { data } = await supabase.rpc('get_board_topic_mcqs', {
+          p_topic_id: topic?.id ?? null,
+          p_canonical_slug: canonicalSlug,
+          p_limit: 50,
+        });
+        // RPC returns only approved rows; tag status so downstream filters match.
+        mcqs = (data || []).map((m: any) => ({ ...m, status: 'approved' }));
+      }
       debug.mcqCount = mcqs?.length || 0;
 
       return { mcqs: mcqs || [], relatedTopics, resolvedNames, debug };
+
     },
     staleTime: 5 * 60 * 1000,
   });
