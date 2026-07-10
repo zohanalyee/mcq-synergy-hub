@@ -1,51 +1,46 @@
-# D2b — Make Board/Topic Practice Content Visible to Crawlers
+## D3 — Internal Linking (crawlable, human-useful cross-links)
 
-## Problem (verified live)
+**Goal:** Give crawlers and learners dense, contextual internal links between board/topic pages, subject pages, class pages, and exam/hub landing pages — so link equity flows to the 729 indexable topic pages and related content is discoverable. All links are plain `<Link>`/`<a>` (crawlable in raw + JS HTML), reusing existing brand tokens, Header/Footer, and card styles. No new colors, fonts, or layout patterns.
 
-Board/topic practice pages (e.g. `/boards/.../class-11/chemistry/stoichiometry`, which has **100 approved MCQs**) render **zero MCQ content and zero Quiz/FAQPage schema** to logged-out visitors and crawlers. Traced root cause:
+### Live verification (already done, for context)
 
-- `content_items` RLS has a SELECT policy for the `authenticated` role only — **no `anon` policy**. A direct anonymous REST read of approved MCQs returns `[]` (HTTP 200).
-- `BoardTopicPage` queries `content_items` directly, so for anon/Googlebot `mcqs.length === 0` → the page shows no questions, and neither `quizSchema` nor `faqSchema` is emitted.
-- These pages are **not prerendered** (DB-driven), so nothing fills the gap in static HTML.
+- Googlebot JS-render: topic `h1`, `Quiz` + topic-specific `FAQPage`, `BreadcrumbList`, and MCQs all present. No cloaking (UA-agnostic rendering).
+- Known gap (→ D2c/D3.5): raw non-JS HTML still serves the generic prerender shell.
 
-Net effect: the FAQPage schema is code-correct but **absent** for crawlers, and the "indexable" leaf pages look empty to Google. No cloaking exists today — logged-out humans see the same empty page — but that is the wrong side of the mismatch to fix.
+### Scope of D3
 
-## Scope (strict)
+1. **Sibling topic links (strengthen existing `RelatedTopics`)**
+  - `RelatedTopics` already lists up to 8 sibling topics on each board/topic page. Keep it, but also surface it when the page has 0 MCQs (currently only rendered in the populated branch) so thin/empty pages still pass link equity to populated siblings and aren't dead-ends.
+2. **Upward + lateral links on topic pages**
+  - Add a compact "Explore more" block linking to: the parent subject page (`/boards/{board}/{class}/{subject}`), the parent class page (`/boards/{board}/{class}`), and the board landing (`/boards/{board}`). Breadcrumb already covers hierarchy; this adds card-style contextual links matching the existing `RelatedTopics` card design.
+3. **Subject ⇄ Exam bridging via `semanticGraph**`
+  - Reuse the hand-curated `src/data/semanticGraph.ts` to add a "Related exams & tools" section on subject/class pages (e.g., Chemistry Class 10 → MDCAT/ECAT prep, relevant tools). Only render curated relations that exist — no runtime AI, no auto-generation.
+4. **Class page → subject grid, Subject page → topic grid**
+  - Ensure `BoardClassPage` links to every subject, and `BoardSubjectPage` links to every topic (crawlable anchor grid). Verify these already exist; fill any gaps so the crawl path Home → Boards → Board → Class → Subject → Topic is fully linked both directions.
+5. **Contextual in-content links (light touch)**
+  - On exam/hub SEO pages, add a small curated "Practice by board/class" cluster linking into representative indexable board/topic pages, driven by `semanticGraph` + `seoLmsMapping`. Keeps hubs pointing at leaf content.
 
-- **In scope:** Only BOARD/TOPIC practice pages (`BoardTopicPage`). These are meant to be free/public — question + correct answer + explanation are already rendered on-page via `PracticeMCQCard`.
-- **Out of scope (do NOT touch):** Mock Tests and Job Tests scoring/submission/answer-reveal flow. Those use separate tables/RPCs (`job_test_questions`, `score_job_practice_answers`, `get_job_practice_questions`) and their cheating-prevention stays exactly as-is.
-- **Also protected:** Custom syllabus / practice tests use `get_practice_questions`, a SECURITY DEFINER RPC that **deliberately omits `correct_option`** to prevent answer leakage. We must NOT undermine that — so we will **not** add a blanket `anon` SELECT on `content_items` (that would expose `correct_option` to anyone via REST and enable cheating in custom tests). Instead we use a narrow, purpose-built RPC.
-- **Deferred (separate audit, per user):** rate-limiting and content-scraping protection — not included here.
+### Technical notes
 
-## Cloaking safety
+- New/edited files: `src/components/board-topic/RelatedTopics.tsx` (render-when-empty), a new `ExploreMore` cross-link component (topic/subject/class), and wiring in `BoardTopicPage.tsx`, `BoardSubjectPage.tsx`, `BoardClassPage.tsx`. Reuse `semanticGraph`, `seoLmsMapping`, `slugUtils` (`toSlug`/`toClassSegment`), and existing card classes.
+- All anchors use canonical `class-N` slug form (per SEO memory) to avoid duplicate-URL redirects.
+- No schema changes, no DB changes, no business-logic changes — presentation/linking only.
+- Descriptive anchor text (topic/subject names), not "click here", for AEO relevance.
 
-Google's cloaking policy requires crawlers and humans to receive identical content. Every change below serves the **same** MCQ content (question + answer + explanation) to anon crawlers AND anon humans. No conditional bot-only rendering.
+### Acceptance
 
-## Technical plan
+- Every board/topic page (populated or empty) links to siblings + parents + curated exams/tools.
+- Class↔subject↔topic links are bidirectional and crawlable.
+- Build + typecheck clean; brand consistency preserved (Header/Footer/logo/tokens untouched).
 
-### 1. New SECURITY DEFINER RPC (DB migration)
-Add `get_board_topic_mcqs(p_topic_id uuid, p_canonical_slug text, p_limit int default 50)`:
-- `LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public`.
-- Returns approved MCQ fields the practice page already displays: `id, title, options, correct_option, explanation, difficulty`.
-- Filter: `category = 'mcq' AND status = 'approved'` AND (`topic_id = p_topic_id` OR `canonical_topic_name = p_canonical_slug`).
-- `GRANT EXECUTE ... TO anon, authenticated;`
-- This mirrors the existing `get_public_reviews` / `get_preview_questions` pattern and exposes answers **only** for board/topic practice content — `content_items` RLS is left unchanged, so custom-test and job-test integrity are untouched.
+### Queued next: D2c / D3.5 — Prerendering for non-JS AI crawlers
 
-### 2. `BoardTopicPage.tsx`
-- Replace the direct `supabase.from('content_items')...` query with `supabase.rpc('get_board_topic_mcqs', {...})`.
-- Keep the existing admin path (admins still see unapproved via the current authenticated query) — branch: admins use the current direct query, everyone else uses the RPC.
-- No UI changes; `quizSchema` and `faqSchema` now populate because `mcqs` is non-empty for anon.
+Immediately after D3: build-time data-fetch + React Query cache hydration pipeline to emit static HTML (topic content + `Quiz` + topic `FAQPage` JSON-LD) for all 729 indexable topics, so ChatGPT/Claude/Perplexity (non-JS) can read and cite MCQ/FAQ content. Dedicated pass, build-stability-sensitive; scheduled right after D3 lands.
 
-### 3. Prerender indexable topic pages (bina-JS crawler + Rich Results reliability)
-- 729 indexable topic paths exist (`src/generated/indexableTopics.json`).
-- Add these paths to the prerender route list (`scripts/prerender-routes.mjs`) and ensure `prerender.tsx` can hydrate topic data at build time by calling the new RPC with the anon key (build-time fetch keyed by the manifest, so only real/indexable pages are prerendered).
-- Result: static HTML ships with MCQ content + Quiz + FAQPage JSON-LD, so non-JS crawlers and the Rich Results Test both see valid schema.
-- Tradeoff: adds ~729 build-time fetches; will batch and cache to keep build time reasonable. If build time becomes a problem, fall back to the RPC-only fix (JS-executing Googlebot still gets the schema) and prerender in a later pass.
+&nbsp;
 
-## Verification (after publish)
-1. Anonymous REST call to the new RPC returns approved MCQs (not `[]`).
-2. Googlebot-UA fetch of a rich topic page (`chemistry/stoichiometry`) shows MCQ content + `Quiz` + `FAQPage` JSON-LD in both raw HTML (prerendered) and JS-rendered DOM.
-3. Confirm human logged-out view is identical (no cloaking).
-4. Spot-check a thin/`noindex` topic still has no schema and stays excluded.
+# **D3 plan approved** — jaisa likha hai waisa hi implement kar dein. Scope clear hai: sibling links, upward/parent links, semanticGraph-based exam bridging, class-subject-topic grid completeness, aur hub-to-leaf contextual links. Koi naya design/schema/DB change nahi — yeh confirm hai.
 
-Once verified, proceed to **D3 (internal linking)** — I'll send that plan next.
+Build + typecheck clean hone k baad bata dein, main review kar k publish approve kar doon ga.
+
+Uske baad D2c/D3.5 (prerendering) shuru kar dein jaisa queue mein hai — yeh careful/dedicated pass rakhein jaisa aap ne khud note kiya hai.
