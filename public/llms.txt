@@ -9,6 +9,7 @@ MCQsAI helps Pakistani students prepare for competitive and board exams with ada
 - [Home](/): Overview of MCQsAI features and exam prep tools.
 - [Boards](/boards): Pakistani education boards (BISE, FBISE) with class, subject, and topic-level MCQs.
 - [Exams](/exams): Competitive exam landing pages — MDCAT, ECAT, CSS, PPSC, NTS, FPSC.
+- [AI Study Coach](/features/ai-coach): Free AI-powered study coach — conversational guidance, weak-area detection, personalized recommendations, and spaced-repetition revisions for Pakistan exams.
 - [Subjects](/subjects): Subject-wise MCQ practice across medical, engineering, sciences, and social sciences.
 - [Past Papers](/past-papers): Past paper MCQs for board and competitive exams.
 - [Mock Tests](/mock-tests): Full-length timed mock tests.
