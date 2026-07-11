@@ -35,6 +35,7 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
             <TableHead className="hidden md:table-cell">Organization</TableHead>
             <TableHead className="hidden md:table-cell">Duration</TableHead>
             <TableHead className="hidden md:table-cell">Questions</TableHead>
+            <TableHead>Readiness</TableHead>
             <TableHead className="hidden md:table-cell">SEO</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
