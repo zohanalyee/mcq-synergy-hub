@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromSlug, toSlug, findBestMatch, findMatchingLevel, normalizeClassNumber, toClassSegment } from '@/lib/slugUtils';
+import { buildTopicTitleBase } from '@/lib/topicTitle';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
@@ -179,7 +180,7 @@ const BoardTopicPage = () => {
   const debugInfo = data?.debug;
   const subjectId = (names as any).subjectId;
 
-  const seoTitle = `${names.topic} MCQs - ${names.subject} Class ${resolvedClassNumber || classNumber} | ${names.board}`;
+  const seoTitle = buildTopicTitleBase(names.topic, names.subject, resolvedClassNumber || classNumber);
   const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${resolvedClassNumber || classNumber} (${names.board}). Free online preparation with explanations.`;
   const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}`;
 

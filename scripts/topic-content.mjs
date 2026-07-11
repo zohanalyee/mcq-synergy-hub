@@ -107,3 +107,20 @@ export function buildTopicContentHtml({ topicName, subjectName, classN, boardNam
     `</main>`
   );
 }
+
+// Build the topic <title> BASE (without the " | MCQsAI" suffix). Board name is
+// intentionally excluded to keep the final title <= 60 chars (board stays in the
+// description, H1 context, breadcrumb, and canonical). A truncation safeguard
+// trims the topic portion for long topic/subject names. Keep this identical to
+// src/lib/topicTitle.ts (buildTopicTitleBase) to avoid raw vs rendered cloaking.
+export function buildTopicTitleBase(topic, subject, classN) {
+  const MAX = 51; // 51 + " | MCQsAI" (9) = 60
+  const tail = ` MCQs - Class ${classN} ${subject}`;
+  let base = `${topic}${tail}`;
+  if (base.length > MAX) {
+    const available = MAX - tail.length;
+    const t = available > 1 ? `${topic.slice(0, available - 1).trimEnd()}…` : '';
+    base = `${t}${tail}`.slice(0, MAX);
+  }
+  return base;
+}
