@@ -29,7 +29,7 @@ export interface ProgSeoEntry {
 export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
   'mdcat-karachi': {
     slug: 'mdcat-karachi',
-    title: 'MDCAT Karachi 2026 — Test Centres, Universities & Free MCQ Practice',
+    title: 'MDCAT Karachi 2026 — Centres, Merit & Free MCQs',
     metaDescription: 'MDCAT 2026 Karachi guide: STS test centres, DUHS/SMBBMU/JSMU admission, Sindh domicile rules, merit cutoffs & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Karachi, MDCAT 2026 Karachi, DUHS MDCAT, SMBBMU admission, JSMU merit, Sindh MDCAT centres',
     intro:
@@ -73,7 +73,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'mdcat-sindh': {
     slug: 'mdcat-sindh',
-    title: 'MDCAT Sindh 2026 — STS Test Date, Universities & Prep Plan',
+    title: 'MDCAT Sindh 2026 — STS Date, Merit & Free MCQs',
     metaDescription: 'Complete MDCAT Sindh 2026 guide: STS test on Aug 16, all Sindh medical universities, merit lists, domicile rules & free practice — MCQsAI.',
     keywords: 'MDCAT Sindh, MDCAT Sindh 2026, STS MDCAT, Sindh medical universities, Sindh MDCAT merit',
     intro:
@@ -118,7 +118,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'mdcat-islamabad': {
     slug: 'mdcat-islamabad',
-    title: 'MDCAT Islamabad 2026 — Federal Centres, Universities & Merit',
+    title: 'MDCAT Islamabad 2026 — Centres, Merit & MCQs',
     metaDescription: 'MDCAT 2026 Islamabad: federal test centres, SZABMU/AIMC merit, federal quota rules, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Islamabad, MDCAT 2026 Islamabad, SZABMU MBBS, federal MDCAT, AIMC Islamabad',
     intro:
@@ -158,7 +158,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'nts-karachi': {
     slug: 'nts-karachi',
-    title: 'NTS Test Karachi 2026 — Schedule, Centres & Free MCQ Prep',
+    title: 'NTS Karachi 2026 — Schedule, Centres & MCQs',
     metaDescription: 'NTS GAT, NAT, recruitment tests in Karachi 2026: schedule, test centres, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'NTS Karachi, NTS test centres Karachi, GAT general Karachi, NAT Karachi, NTS preparation',
     intro:
@@ -194,7 +194,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'nts-lahore': {
     slug: 'nts-lahore',
-    title: 'NTS Test Lahore 2026 — Schedule, Centres & Free Prep MCQs',
+    title: 'NTS Lahore 2026 — Schedule, Centres & MCQs',
     metaDescription: 'NTS GAT, NAT, recruitment tests in Lahore 2026: schedule, test centres, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'NTS Lahore, NTS test centres Lahore, GAT general Lahore, NTS preparation Punjab',
     intro:
@@ -230,7 +230,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'css-islamabad': {
     slug: 'css-islamabad',
-    title: 'CSS Exam Islamabad 2026 — FPSC Centre, Schedule & Prep Plan',
+    title: 'CSS Islamabad 2026 — FPSC Centre & Prep Plan',
     metaDescription: 'CSS exam in Islamabad: FPSC headquarters, written test schedule, interview venues, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'CSS Islamabad, CSS exam centre Islamabad, FPSC headquarters, CSS interview Islamabad, CSS preparation',
     intro:
@@ -261,7 +261,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'fpsc-islamabad': {
     slug: 'fpsc-islamabad',
-    title: 'FPSC Jobs Islamabad 2026 — Tests, Schedule & Prep Resources',
+    title: 'FPSC Jobs Islamabad 2026 — Tests & Prep',
     metaDescription: 'FPSC jobs and tests in Islamabad: headquarters location, federal recruitment cycles, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'FPSC Islamabad, FPSC headquarters, FPSC federal jobs, FPSC test centre Islamabad',
     intro:
@@ -293,7 +293,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'ppsc-lahore': {
     slug: 'ppsc-lahore',
-    title: 'PPSC Jobs Lahore 2026 — Headquarters, Tests & Prep Guide',
+    title: 'PPSC Jobs Lahore 2026 — Tests & Prep Guide',
     metaDescription: 'PPSC jobs and tests in Lahore: headquarters at Aiwan-e-Iqbal, Punjab recruitment schedule, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'PPSC Lahore, PPSC headquarters, PPSC test centre Lahore, Punjab government jobs, PPSC preparation',
     intro:
@@ -326,7 +326,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'ecat-punjab': {
     slug: 'ecat-punjab',
-    title: 'ECAT Punjab 2026 — UET Test, Universities & Free Prep MCQs',
+    title: 'ECAT Punjab 2026 — UET Test & Free MCQs',
     metaDescription: 'ECAT 2026 Punjab: UET-conducted entry test, engineering universities, merit, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'ECAT Punjab, ECAT UET, UET Lahore ECAT, Punjab engineering universities, ECAT 2026',
     intro:
@@ -369,7 +369,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'biology-mcqs-class-12': {
     slug: 'biology-mcqs-class-12',
-    title: 'Biology MCQs Class 12 — FSc Part 2 Chapter-Wise Practice',
+    title: 'Biology MCQs Class 12 — FSc Part 2 Practice',
     metaDescription: 'Class 12 Biology MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Biology MCQs class 12, FSc Part 2 Biology, class 12 Biology chapter wise MCQs, intermediate biology Pakistan',
     intro:
@@ -409,7 +409,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'mdcat-lahore': {
     slug: 'mdcat-lahore',
-    title: 'MDCAT Lahore 2026 — Test Centres, Universities & Free MCQ Practice',
+    title: 'MDCAT Lahore 2026 — Centres, Merit & Free MCQs',
     metaDescription: 'MDCAT 2026 Lahore guide: UHS test centres, KEMU/AIMC/FJMU merit, Punjab domicile rules, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Lahore, MDCAT 2026 Lahore, KEMU MDCAT, AIMC merit, UHS MDCAT, Punjab MDCAT centres',
     intro:
@@ -453,7 +453,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'mdcat-punjab': {
     slug: 'mdcat-punjab',
-    title: 'MDCAT Punjab 2026 — UHS Test Date, Universities & Merit',
+    title: 'MDCAT Punjab 2026 — UHS Date, Merit & MCQs',
     metaDescription: 'MDCAT Punjab 2026 by UHS: test schedule, all Punjab medical universities, merit lists, domicile & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Punjab, MDCAT Punjab 2026, UHS MDCAT, Punjab medical universities, KEMU AIMC FJMU merit',
     intro:
@@ -500,7 +500,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'nts-islamabad': {
     slug: 'nts-islamabad',
-    title: 'NTS Test Islamabad 2026 — Schedule, Centres & Free MCQ Prep',
+    title: 'NTS Islamabad 2026 — Schedule, Centres & MCQs',
     metaDescription: 'NTS GAT, NAT, recruitment tests in Islamabad 2026: schedule, test centres at QAU/COMSATS/NUST, syllabus & free practice — MCQsAI.',
     keywords: 'NTS Islamabad, NTS test centres Islamabad, GAT Islamabad, NAT Islamabad, NTS preparation federal',
     intro:
@@ -537,7 +537,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'ecat-lahore': {
     slug: 'ecat-lahore',
-    title: 'ECAT Lahore 2026 — UET Test Centres, Universities & Free Prep',
+    title: 'ECAT Lahore 2026 — UET Centres & Free Prep',
     metaDescription: 'ECAT 2026 Lahore: UET-Lahore conducted test, Punjab engineering universities, merit, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'ECAT Lahore, ECAT UET Lahore, UET Lahore admission, Lahore engineering universities, ECAT 2026',
     intro:
@@ -585,7 +585,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'css-karachi': {
     slug: 'css-karachi',
-    title: 'CSS Exam Karachi 2026 — FPSC Centre, Schedule & Prep Plan',
+    title: 'CSS Karachi 2026 — FPSC Centre & Prep Plan',
     metaDescription: 'CSS exam in Karachi: FPSC regional centre, written test schedule, syllabus, allocation quotas & free MCQ practice — MCQsAI.',
     keywords: 'CSS Karachi, CSS exam Karachi, FPSC Karachi, CSS Sindh quota, CSS preparation',
     intro:
@@ -620,7 +620,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'ppsc-punjab': {
     slug: 'ppsc-punjab',
-    title: 'PPSC Jobs Punjab 2026 — Headquarters, Test Schedule & Prep',
+    title: 'PPSC Jobs Punjab 2026 — Tests & Prep Guide',
     metaDescription: 'PPSC Punjab jobs and recruitment 2026: HQ Lahore, all test centres, common posts, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'PPSC Punjab, PPSC jobs 2026, Punjab Public Service Commission, PPSC test centres, PPSC preparation',
     intro:
@@ -658,7 +658,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'fpsc-karachi': {
     slug: 'fpsc-karachi',
-    title: 'FPSC Jobs Karachi 2026 — Regional Office, Tests & Prep',
+    title: 'FPSC Jobs Karachi 2026 — Tests & Prep',
     metaDescription: 'FPSC jobs and federal tests in Karachi: regional office, recruitment cycles, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'FPSC Karachi, FPSC regional office Karachi, FPSC federal jobs Sindh, FPSC test centre Karachi',
     intro:
@@ -693,7 +693,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'chemistry-mcqs-class-12': {
     slug: 'chemistry-mcqs-class-12',
-    title: 'Chemistry MCQs Class 12 — FSc Part 2 Chapter-Wise Practice',
+    title: 'Chemistry MCQs Class 12 — FSc Part 2 Practice',
     metaDescription: 'Class 12 Chemistry MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT/ECAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Chemistry MCQs class 12, FSc Part 2 Chemistry, class 12 Chemistry chapter wise MCQs, intermediate chemistry Pakistan',
     intro:
@@ -736,7 +736,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'physics-mcqs-class-12': {
     slug: 'physics-mcqs-class-12',
-    title: 'Physics MCQs Class 12 — FSc Part 2 Chapter-Wise Practice',
+    title: 'Physics MCQs Class 12 — FSc Part 2 Practice',
     metaDescription: 'Class 12 Physics MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT/ECAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Physics MCQs class 12, FSc Part 2 Physics, class 12 Physics chapter wise MCQs, intermediate physics Pakistan',
     intro:
@@ -773,7 +773,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
 
   'biology-mcqs-class-11': {
     slug: 'biology-mcqs-class-11',
-    title: 'Biology MCQs Class 11 — FSc Part 1 Chapter-Wise Practice',
+    title: 'Biology MCQs Class 11 — FSc Part 1 Practice',
     metaDescription: 'Class 11 Biology MCQs chapter-wise: FSc Part 1 syllabus, board + MDCAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Biology MCQs class 11, FSc Part 1 Biology, class 11 Biology chapter wise MCQs, intermediate biology Pakistan',
     intro:
