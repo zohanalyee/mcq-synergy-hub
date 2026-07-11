@@ -16,6 +16,8 @@ interface JobTestTableProps {
 }
 
 const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: JobTestTableProps) => {
+  const readiness = useJobTestReadiness(jobTests);
+
   if (jobTests.length === 0) {
     return (
       <div className="text-center p-10 border rounded-md bg-muted/10">
