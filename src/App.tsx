@@ -39,6 +39,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Auth from "./pages/Auth";
 import GetStarted from "./pages/GetStarted";
+import AICoachLanding from "./pages/AICoachLanding";
 import NotFound from "./pages/NotFound";
 
 // Retry a lazy import once, then force a single full reload on stale-chunk errors
@@ -310,6 +311,7 @@ const App = () => {
                       <Route path="/dashboard" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
                       <Route path="/profile" element={<InstantAuthGuard title="Your Profile" description="Sign in to access your profile" actionName="Profile"><Profile /></InstantAuthGuard>} />
                       <Route path="/analytics" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
+                      <Route path="/features/ai-coach" element={<AICoachLanding />} />
                       <Route path="/ai-coach" element={<InstantAuthGuard title="AI Coach Dashboard" description="Sign in to view your personalized AI coach insights" actionName="AI Coach"><Analytics /></InstantAuthGuard>} />
                       {/* Job/recruitment tests are public — guests use DB-only approved questions; no AI generation, no auth gate. */}
                       <Route path="/mock-tests" element={<MockTests />} />

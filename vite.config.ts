@@ -36,6 +36,7 @@ const PRERENDER_ROUTES = [
   "/p",
   // SEO landing pages
   "/mdcat-syllabus",
+  "/features/ai-coach",
   "/mdcat-past-papers",
   "/ppsc-past-papers",
   "/fpsc-past-papers",
