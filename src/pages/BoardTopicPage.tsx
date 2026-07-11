@@ -2,6 +2,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { fromSlug, toSlug, findBestMatch, findMatchingLevel, normalizeClassNumber, toClassSegment } from '@/lib/slugUtils';
+import { buildTopicTitleBase } from '@/lib/topicTitle';
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
