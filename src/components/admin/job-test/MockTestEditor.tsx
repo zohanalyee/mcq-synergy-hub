@@ -30,6 +30,7 @@ import SyllabusItemForm from "./SyllabusItemForm";
 import SampleQuestionsEditor from "./SampleQuestionsEditor";
 import GeneratedQuestionsTable from "./GeneratedQuestionsTable";
 import GenerationLogsTable from "./GenerationLogsTable";
+import SectionCoverageDashboard from "./SectionCoverageDashboard";
 
 interface Props {
   isOpen: boolean;
