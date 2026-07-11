@@ -44,6 +44,7 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
           {jobTests.map((test) => {
             const isEnhancing = enhancingId === test.id;
             const enhanced = !!(test as JobTest).seo_enhanced_at;
+            const r = readiness[test.id];
             return (
               <TableRow key={test.id}>
                 <TableCell>
@@ -52,6 +53,21 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
                 <TableCell className="hidden md:table-cell">{test.organization}</TableCell>
                 <TableCell className="hidden md:table-cell">{test.duration} mins</TableCell>
                 <TableCell className="hidden md:table-cell">{test.questions}</TableCell>
+                <TableCell>
+                  {!r ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                  ) : r.state === "ready" ? (
+                    <Badge variant="outline" className="gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/40">
+                      <CheckCircle2 className="h-3 w-3" /> Ready
+                    </Badge>
+                  ) : r.state === "incomplete" ? (
+                    <Badge variant="outline" className="gap-1 text-amber-600 dark:text-amber-400 border-amber-500/40">
+                      <AlertTriangle className="h-3 w-3" /> {r.approved}/{r.target}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">No AI setup</Badge>
+                  )}
+                </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {enhanced ? (
                     <Badge variant="secondary" className="gap-1">
