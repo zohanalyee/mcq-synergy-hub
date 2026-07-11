@@ -30,6 +30,7 @@ import SyllabusItemForm from "./SyllabusItemForm";
 import SampleQuestionsEditor from "./SampleQuestionsEditor";
 import GeneratedQuestionsTable from "./GeneratedQuestionsTable";
 import GenerationLogsTable from "./GenerationLogsTable";
+import SectionCoverageDashboard from "./SectionCoverageDashboard";
 
 interface Props {
   isOpen: boolean;
@@ -79,6 +80,7 @@ const MockTestEditor: React.FC<Props> = ({ isOpen, onOpenChange, test, onSaved }
 
   const [bulkJsonOpen, setBulkJsonOpen] = useState(false);
   const [bulkJsonText, setBulkJsonText] = useState("");
+  const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
 
   // Load state whenever the dialog opens for a (new) test.
   useEffect(() => {
@@ -457,9 +459,20 @@ const MockTestEditor: React.FC<Props> = ({ isOpen, onOpenChange, test, onSaved }
             </TabsContent>
 
             {/* QUESTIONS */}
-            <TabsContent value="questions" className="pt-4">
+            <TabsContent value="questions" className="pt-4 space-y-4">
               {def.id ? (
-                <GeneratedQuestionsTable jobTestId={def.id} sections={sections} />
+                <>
+                  <SectionCoverageDashboard
+                    jobTestId={def.id}
+                    sections={sections}
+                    onGenerated={() => setQuestionsRefreshKey((k) => k + 1)}
+                  />
+                  <GeneratedQuestionsTable
+                    key={questionsRefreshKey}
+                    jobTestId={def.id}
+                    sections={sections}
+                  />
+                </>
               ) : (
                 <div className="text-center text-sm text-muted-foreground py-10 border rounded-md bg-muted/10">
                   Save the mock test once to enable AI question generation.

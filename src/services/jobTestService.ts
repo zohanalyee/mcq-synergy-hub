@@ -647,3 +647,106 @@ export const getEffectiveSyllabus = async (
     .map((s) => ({ topic: s.subject, percentage: s.percentage }));
   return enabled.length > 0 ? enabled : officialSyllabus;
 };
+
+// ---------- Phase 1: Section coverage dashboard ----------
+
+export interface SectionCoverage {
+  subject: string;
+  /** Target question count from the syllabus section. */
+  target: number;
+  /** Admin-approved (player-ready) questions. */
+  approved: number;
+  /** Generated but awaiting admin approval. */
+  pending: number;
+  /** How many approved questions are still missing to hit the target. */
+  deficit: number;
+  /** True when approved >= target (and target > 0). */
+  complete: boolean;
+}
+
+export interface TestCoverage {
+  sections: SectionCoverage[];
+  totalTarget: number;
+  totalApproved: number;
+  totalPending: number;
+  totalDeficit: number;
+  /** True only when every weighted section has met its target. */
+  ready: boolean;
+  /** 0-100 approved / target across all sections. */
+  percent: number;
+}
+
+/**
+ * Computes per-section coverage (target vs approved vs pending vs deficit)
+ * for a mock test definition. Everything is pre-generated + admin-approved;
+ * nothing is generated at test-start, so this dashboard is the source of
+ * truth for whether a test is player-ready.
+ */
+export const getSectionCoverage = async (
+  jobTestId: string,
+  sections: JobSyllabusSection[],
+): Promise<TestCoverage> => {
+  const questions = await getQuestionsForDefinition(jobTestId);
+
+  const bySubject = new Map<string, { approved: number; pending: number }>();
+  for (const q of questions) {
+    const entry = bySubject.get(q.subject) || { approved: 0, pending: 0 };
+    if (q.admin_approved) entry.approved += 1;
+    else entry.pending += 1;
+    bySubject.set(q.subject, entry);
+  }
+
+  const sectionCoverage: SectionCoverage[] = sections.map((s) => {
+    const counts = bySubject.get(s.subject) || { approved: 0, pending: 0 };
+    const target = s.question_count || 0;
+    const deficit = Math.max(0, target - counts.approved);
+    return {
+      subject: s.subject,
+      target,
+      approved: counts.approved,
+      pending: counts.pending,
+      deficit,
+      complete: target > 0 && counts.approved >= target,
+    };
+  });
+
+  const totalTarget = sectionCoverage.reduce((a, s) => a + s.target, 0);
+  const totalApproved = sectionCoverage.reduce((a, s) => a + s.approved, 0);
+  const totalPending = sectionCoverage.reduce((a, s) => a + s.pending, 0);
+  const totalDeficit = sectionCoverage.reduce((a, s) => a + s.deficit, 0);
+  const ready = sectionCoverage.length > 0 && sectionCoverage.every((s) => s.complete);
+  const percent = totalTarget > 0 ? Math.min(100, Math.round((totalApproved / totalTarget) * 100)) : 0;
+
+  return {
+    sections: sectionCoverage,
+    totalTarget,
+    totalApproved,
+    totalPending,
+    totalDeficit,
+    ready,
+    percent,
+  };
+};
+
+/**
+ * Triggers deficit-only AI generation across ALL syllabus sections at once
+ * (admin-controlled — never auto-run). Generated questions land as
+ * admin_approved=false and must be reviewed before players can see them.
+ */
+export const generateAllSections = async (
+  jobTestId: string,
+): Promise<{ success: boolean; message: string; results?: any[]; total_accepted?: number; total_reused?: number }> => {
+  const { data, error } = await supabase.functions.invoke("generate-job-test", {
+    body: { job_test_id: jobTestId },
+  });
+  if (error) {
+    return { success: false, message: error.message };
+  }
+  return {
+    success: true,
+    message: "Generation complete",
+    results: data?.results,
+    total_accepted: data?.total_accepted,
+    total_reused: data?.total_reused,
+  };
+};

@@ -3,8 +3,9 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Trash, Sparkles, Loader2, Check, Pencil } from "lucide-react";
+import { Trash, Sparkles, Loader2, Check, Pencil, CheckCircle2, AlertTriangle } from "lucide-react";
 import { JobTest } from "@/data/jobTestsData";
+import { useJobTestReadiness } from "@/hooks/useJobTestReadiness";
 
 interface JobTestTableProps {
   jobTests: JobTest[];
@@ -15,6 +16,8 @@ interface JobTestTableProps {
 }
 
 const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: JobTestTableProps) => {
+  const readiness = useJobTestReadiness(jobTests);
+
   if (jobTests.length === 0) {
     return (
       <div className="text-center p-10 border rounded-md bg-muted/10">
@@ -32,6 +35,7 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
             <TableHead className="hidden md:table-cell">Organization</TableHead>
             <TableHead className="hidden md:table-cell">Duration</TableHead>
             <TableHead className="hidden md:table-cell">Questions</TableHead>
+            <TableHead>Readiness</TableHead>
             <TableHead className="hidden md:table-cell">SEO</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -40,6 +44,7 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
           {jobTests.map((test) => {
             const isEnhancing = enhancingId === test.id;
             const enhanced = !!(test as JobTest).seo_enhanced_at;
+            const r = readiness[test.id];
             return (
               <TableRow key={test.id}>
                 <TableCell>
@@ -48,6 +53,21 @@ const JobTestTable = ({ jobTests, onRemove, onEnhance, onEdit, enhancingId }: Jo
                 <TableCell className="hidden md:table-cell">{test.organization}</TableCell>
                 <TableCell className="hidden md:table-cell">{test.duration} mins</TableCell>
                 <TableCell className="hidden md:table-cell">{test.questions}</TableCell>
+                <TableCell>
+                  {!r ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                  ) : r.state === "ready" ? (
+                    <Badge variant="outline" className="gap-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/40">
+                      <CheckCircle2 className="h-3 w-3" /> Ready
+                    </Badge>
+                  ) : r.state === "incomplete" ? (
+                    <Badge variant="outline" className="gap-1 text-amber-600 dark:text-amber-400 border-amber-500/40">
+                      <AlertTriangle className="h-3 w-3" /> {r.approved}/{r.target}
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="text-muted-foreground">No AI setup</Badge>
+                  )}
+                </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {enhanced ? (
                     <Badge variant="secondary" className="gap-1">
