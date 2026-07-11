@@ -21,7 +21,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TOOLS_WITHOUT_SEOHEAD, SUBJECT_CONTENT_META } from "./prerender-routes.mjs";
-import { buildQuizSchema, buildFaqSchema, buildTopicContentHtml } from "./topic-content.mjs";
+import { buildQuizSchema, buildFaqSchema, buildTopicContentHtml, buildTopicTitleBase } from "./topic-content.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -300,7 +300,7 @@ async function injectBoards() {
     const topic = humanize(parts[4]);
     patch({
       path,
-      title: `${topic} MCQs - ${subject} Class ${classN} | ${board} | MCQsAI`,
+      title: `${buildTopicTitleBase(topic, subject, classN)} | MCQsAI`,
       description: `Practice ${topic} MCQs for ${subject} Class ${classN} (${board}). Free online preparation with explanations — MCQsAI.`,
       keywords: `${topic} MCQs, ${subject} class ${classN}, ${board} preparation, Pakistan exam MCQs`,
       ogImage: OG_BOARDS,
@@ -441,7 +441,7 @@ async function injectBoardTopicContent() {
     // Only inject full content for pages that meet the indexable threshold.
     if (mcqs.length < 5) { skipped++; return; }
 
-    const seoTitle = `${topicName} MCQs - ${subjectName} Class ${classN} | ${boardName}`;
+    const seoTitle = buildTopicTitleBase(topicName, subjectName, classN);
     const quizSchema = buildQuizSchema({ seoTitle, topicName, classN, count: mcqs.length });
     const faqSchema = buildFaqSchema(mcqs);
 
