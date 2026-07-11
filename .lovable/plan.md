@@ -1,94 +1,70 @@
-# Audit Report + Fix Plan — /exams, /p & AI Coach discoverability
+## Diagnosis (from live Bingbot fetch)
 
-## Part A — Live audit findings
+Fetched the exact URL's raw HTML with a Bingbot UA:
 
-I fetched the published pages with a Bingbot user-agent and inspected the raw head.
+```
+<title> tags:          1
+<meta name=description>: 1
+<link rel=canonical>:    1
+```
 
-### 1. Duplicate meta-description / canonical (Bing report)
+**Conclusion:**
 
-**Status: already resolved in the current deploy — Bing data is stale.**
+- **"More than one Meta Description (2 instances)" = STALE Bing data.** The live page has exactly one of each tag. `dedupe-og.mjs` already collapses duplicates at build time, and `topic-content.mjs` does NOT re-write meta tags over `inject-meta.mjs` (it only injects body content into `#root` + JSON-LD). No duplicate-tag bug exists on topic pages. This clears on Bing recrawl — no code change.
+- **"Title too long" = REAL.** The live topic title is ~96 chars:  
+`Forces And Machines MCQs - General Science Class 5 | Punjab Curriculum And Textbook Board | MCQsAI`  
+The full board name blows past 60. This affects all 729 topic pages whose board/topic/subject names are long.
 
-Live raw HTML today shows exactly ONE of each:
+Also verified alongside: `/exams/*`, `/p/*`, `/features/ai-coach` titles are within range, single meta/canonical each; `/features/ai-coach` is live with `SoftwareApplication` + `FAQPage` schema.
 
+## The fix: shorten the topic title template
 
-| URL            | `<title>` | `description` | `canonical` |
-| -------------- | --------- | ------------- | ----------- |
-| /exams/nts     | 1         | 1             | 1           |
-| /exams/mdcat   | 1         | 1             | 1           |
-| /p/css-karachi | 1         | 1             | 1           |
+The title is generated in **two places that must stay identical** (raw HTML === JS-rendered, no cloaking):
 
+- `scripts/inject-meta.mjs` line 303 (raw prerendered HTML)
+- `src/pages/BoardTopicPage.tsx` line 182 (`seoTitle`, React/Helmet) — `SEOHead` appends  `| MCQsAI`
 
-Reason: `scripts/dedupe-og.mjs` (runs in `build`) already collapses duplicate `title`, `description`, `canonical`, `og:*`, `twitter:*` on every prerendered file. The static defaults in `index.html` + Helmet's appended tags no longer both survive. The Bing "2 instances" warning predates this fix and will clear on the next Bing recrawl. No code change needed — I'll note it for you.
+Current: `${topic} MCQs - ${subject} Class ${classN} | ${board} | MCQsAI`
 
-### 2. Title too long — REAL, widespread issue ❌
+Change to drop the board name from the `<title>` (board stays in the description, H1 context, breadcrumb, and canonical, so no ranking signal lost):
 
-SEOHead appends `" | MCQsAI"` (9 chars) to every page title. Combined lengths exceed the ~60-char limit Bing/Google flag:
+New: `${topic} MCQs - Class ${classN} ${subject} | MCQsAI`
 
-- `/exams/mdcat` → **62** ("MDCAT Preparation 2025 – Free MCQs, Past Papers & Tips | MCQsAI")
-- `/exams/css` → **67** ("CSS Exam Preparation 2025 – MCQs, Past Papers & Study Guide | MCQsAI")
-- `/p/mdcat-karachi` → **75** ("MDCAT Karachi 2026 — Test Centres, Universities & Free MCQ Practice | MCQsAI")
-- Many other `/p/*` titles land in the 66–75 range.
+Example result: `Forces And Machines MCQs - Class 5 General Science | MCQsAI` (~58 chars).
 
-Root cause: `metaTitle` in `src/data/examData.ts` and `title` in `src/data/programmaticSeo.ts` are authored at/above 55–66 chars before the suffix is added.
+Add a safety truncation for the still-long tail cases: if the composed title (before  `| MCQsAI`) exceeds 51 chars, trim the leading `${topic} MCQs` portion cleanly so the final title stays ≤60. Apply the identical helper in both files so raw and rendered titles match exactly.
 
-### 3. AI Coach discoverability — REAL gap ❌
+### Files to change
 
-- The only route is `/ai-coach` in `App.tsx`, wrapped in `InstantAuthGuard` and rendering the private `Analytics` dashboard. It is **login-gated → not crawlable/indexable** by Google or AI answer engines.
-- Not present in any sitemap (`public/sitemaps/*.xml`); only mentioned in prose inside `llms.txt`.
-- No `SoftwareApplication`/`Service` schema anywhere for the feature.
-- Result: ChatGPT/Google have nothing public to index → the flagship differentiator is invisible.
+1. `scripts/inject-meta.mjs` — update line 303 title template + add the shared truncation logic. Leave line 444 `seoTitle` (Quiz schema `name`) as-is or match it — schema name length is not a title-tag concern; I'll keep it consistent with the visible title for cleanliness.
+2. `src/pages/BoardTopicPage.tsx` — update line 182 `seoTitle` with the same template + truncation so Helmet output matches the injected raw HTML.
 
----
+### Verification
 
-## Part B — Proposed fixes (build phase, after your approval)
+- Run `inject-meta` + `verify-prerender` and confirm the sample topic title is ≤60 and unchanged tag counts (1 title / 1 desc / 1 canonical).
+- Spot-check 2-3 long-board topic pages' prerendered `<title>`.
+- Confirm raw title === JS-rendered title (no cloaking) on one URL.
 
-### Fix 1 — Shorten titles on /exams and /p (≤60 incl. suffix)
+## No change needed
 
-- `src/data/examData.ts`: rewrite each `metaTitle` to ≤50 chars so the final title stays ≤60. e.g. `CSS Exam Preparation 2025 – MCQs & Past Papers` (→ 55 w/ suffix).
-- `src/data/programmaticSeo.ts`: trim each `title` (used as both `<h1>` and `<title>`) to ≤50 chars. Keep city + exam + year keywords; drop the long tail ("Test Centres, Universities & Free MCQ Practice" → "Centres, Merit & Free MCQs").
-- No change to `SEOHead` suffix logic; only source data is trimmed.
-- Verify with a length check across all exam slugs + all indexable `/p` slugs.
+- Duplicate meta description: stale Bing data; recrawl clears it.
+- `/exams/*`, `/p/*`, `/features/ai-coach`: already correct in the current deploy.
+  &nbsp;
 
-### Fix 2 — New PUBLIC AI Coach landing page (flagship SEO/AEO page)
-
-- Create `src/pages/AICoachLanding.tsx` — a public, **no-auth** marketing/description page explaining the AI Coach & Dashboard: what it does (conversational guidance, recommendations, weak-area detection, spaced repetition), how it helps, and CTAs ("Try the AI Coach" → `/ai-coach` for signed-in flow, "Start free" → sign-up).
-- Route it at a public path. Since `/ai-coach` is already the auth-gated app route, use `/features/ai-coach` for the public page (keeps the app route intact and avoids a redirect collision).
-- Head/SEO via `SEOHead`: unique ≤60 title (e.g. "AI Study Coach for Pakistan Exams | MCQsAI"), unique meta description, `type="website"`.
-- JSON-LD: `SoftwareApplication` (or `Service`) schema — name "MCQsAI AI Study Coach", `applicationCategory: EducationalApplication`, `offers` free, `featureList`, `provider` Organization — so AI answer engines can cite it.
-- Add `BreadcrumbSchema` (Home → Features → AI Study Coach) and internal links to `/ai-coach`, `/boards`, `/mock-tests`.
-
-### Fix 3 — Make it crawlable + indexable
-
-- Add `/features/ai-coach` to the sitemap: new `public/sitemaps/static.xml` entry (or the appropriate static sitemap) + include in `generate-sitemaps.mjs` so it regenerates.
-- Ensure it renders `robots=index,follow` (SEOHead default) and is prerendered: add `/features/ai-coach` to `PRERENDER_ROUTES` in `vite.config.ts` (it renders SEOHead synchronously, so static prerender works).
-- Add a one-line entry/link to `public/llms.txt` pointing at the new URL.
-
-### Fix 4 — Verify
-
-- Run the build locally (`inject-meta` + `verify-prerender` + `verify-sitemap`) to confirm: new page prerenders with correct head, titles are all ≤60, sitemap includes the new URL, single canonical/description everywhere.
-
----
-
-## Technical notes
-
-- Title suffix is centralized in `SEOHead` (`${title} | MCQsAI`); trimming happens only in the two data files.
-- The public AI Coach page is presentation-only — no business-logic/backend changes; it reuses existing `Header`/`Footer`/`SEOHead`/`BreadcrumbSchema`.
-- Duplicate-tag warning needs no code change; recommend requesting a Bing recrawl after redeploy.
-
-No further steps beyond the above are expected. Approve to proceed to build.
+**Diagnosis approved. Fix karein:**
 
 &nbsp;
 
-# **Audit approved**. Sab 3 fixes k liye proceed karein:
+**1. Topic-page title template se board name hata dein (chhota title k liye), description/H1/breadcrumb/**canonical mein board name waisa hi rahne dein — koi SEO signal khona nahi chahiye
+
+2. Safety truncation add karein (agar 51 chars se zyada compose ho to trim ho)
+
+3. inject-meta.mjs aur BoardTopicPage.tsx dono mein identical fix karein taake raw aur JS-rendered title match karein (no cloaking)
 
 &nbsp;
 
-1. Duplicate meta/canonical — koi action nahi chahiye, sirf note kar liya hai
-
-2. Title-length fix — /exams aur /p data files mein titles ≤50 chars tak trim karein (suffix logic na chhuyen)
-
-3. AI Coach public landing page (/features/ai-coach) banayen — SEOHead + SoftwareApplication schema + sitemap + prerender + llms.txt entry, jaisa propose kiya hai. Asal /ai-coach app-route ko bilkul na chheden.
+Build + verify (inject-meta, verify-prerender) k baad, 2-3 lambe-board-naam wale sample topics ka title check kar k confirm karein ≤60 characters hai, aur raw==rendered match confirm karein.
 
 &nbsp;
 
-Build/verify k baad (inject-meta + verify-prerender + verify-sitemap) mujhe bata dein review k liye.
+Approve ho jaye to publish kar dein.
