@@ -80,6 +80,7 @@ const MockTestEditor: React.FC<Props> = ({ isOpen, onOpenChange, test, onSaved }
 
   const [bulkJsonOpen, setBulkJsonOpen] = useState(false);
   const [bulkJsonText, setBulkJsonText] = useState("");
+  const [questionsRefreshKey, setQuestionsRefreshKey] = useState(0);
 
   // Load state whenever the dialog opens for a (new) test.
   useEffect(() => {
