@@ -179,7 +179,7 @@ const BoardTopicPage = () => {
   const debugInfo = data?.debug;
   const subjectId = (names as any).subjectId;
 
-  const seoTitle = `${names.topic} MCQs - ${names.subject} Class ${resolvedClassNumber || classNumber} | ${names.board}`;
+  const seoTitle = buildTopicTitleBase(names.topic, names.subject, resolvedClassNumber || classNumber);
   const seoDesc = `Practice ${names.topic} MCQs for ${names.subject} Class ${resolvedClassNumber || classNumber} (${names.board}). Free online preparation with explanations.`;
   const canonicalUrl = `https://mcqsai.com/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}`;
 
