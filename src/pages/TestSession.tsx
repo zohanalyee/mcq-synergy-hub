@@ -742,10 +742,10 @@ const TestSession = () => {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-4 gap-2">
                   {[
-                    { icon: CheckCircle, label: 'Correct', value: correctCount, cls: 'text-green-500' },
-                    { icon: XCircle, label: 'Wrong', value: wrongCount, cls: 'text-red-500' },
-                    { icon: SkipForward, label: 'Skipped', value: skippedCount, cls: 'text-amber-500' },
-                    { icon: Clock, label: 'Time', value: `${minutes}m ${seconds}s`, cls: 'text-blue-500' },
+                    { icon: CheckCircle, label: 'Correct', value: correctCount, cls: 'text-success' },
+                    { icon: XCircle, label: 'Wrong', value: wrongCount, cls: 'text-destructive' },
+                    { icon: SkipForward, label: 'Skipped', value: skippedCount, cls: 'text-warning' },
+                    { icon: Clock, label: 'Time', value: `${minutes}m ${seconds}s`, cls: 'text-info' },
                   ].map((s, i) => (
                     <Card key={i}>
                       <CardContent className="py-3 text-center px-1">
