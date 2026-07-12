@@ -786,12 +786,12 @@ const TestSession = () => {
                     const correctText = resolveAnswer(question);
                     const explanation = question.explanation;
                     return (
-                      <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
+                      <Alert key={index} className={isCorrect ? "border-success" : "border-destructive"}>
                         <div className="flex items-start gap-2">
                           {isCorrect ? (
-                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                            <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+                            <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
                           )}
                           <div className="flex-1 min-w-0">
                             <Badge variant="outline" className="mb-1 text-[10px]">
@@ -803,12 +803,12 @@ const TestSession = () => {
                             <p className="text-xs">
                               <span className="font-medium">Your answer:</span> {userAnswer || "Not answered"}
                             </p>
-                            <p className="text-xs text-green-600">
+                            <p className="text-xs text-success">
                               <span className="font-medium">Correct:</span> {correctText}
                             </p>
                             {explanation && (
-                              <div className={`mt-2 p-2.5 rounded-md text-xs ${isCorrect ? "bg-blue-500/10 border border-blue-500/20" : "bg-amber-500/10 border border-amber-500/20"}`}>
-                                <p className={`font-semibold mb-0.5 flex items-center gap-1 ${isCorrect ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"}`}>
+                              <div className={`mt-2 p-2.5 rounded-md text-xs ${isCorrect ? "bg-info/10 border border-info/20" : "bg-warning/10 border border-warning/20"}`}>
+                                <p className={`font-semibold mb-0.5 flex items-center gap-1 ${isCorrect ? "text-info" : "text-warning"}`}>
                                   <BookOpen className="h-3 w-3" />
                                   {isCorrect ? "Why this is correct:" : "Explanation:"}
                                 </p>
