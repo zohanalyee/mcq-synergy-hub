@@ -74,7 +74,7 @@ const QuestionCard = ({
               className={cn(
                 "h-7 w-7 p-0 shrink-0 rounded-lg",
                 isFlagged
-                  ? "text-orange-500 bg-orange-500/10"
+                  ? "text-warning bg-warning/10"
                   : "text-muted-foreground"
               )}
               onClick={() => onToggleFlag(questionIndex)}
