@@ -698,6 +698,22 @@ const TestSession = () => {
             const minutes = Math.floor(timeTaken / 60);
             const seconds = timeTaken % 60;
 
+            // Per-section accuracy breakdown (presentation only — reuses the
+            // already-graded questions/answers, no new scoring logic).
+            const sectionStats = new Map<string, { correct: number; total: number }>();
+            questions.forEach((q: any, i: number) => {
+              const section = q.subject || q.topic || "General";
+              const st = sectionStats.get(section) || { correct: 0, total: 0 };
+              st.total += 1;
+              if (checkAnswer(q, answers[i])) st.correct += 1;
+              sectionStats.set(section, st);
+            });
+            const sectionBreakdown = Array.from(sectionStats.entries())
+              .map(([name, s]) => ({ name, ...s, pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0 }))
+              .sort((a, b) => a.pct - b.pct);
+            const hasMultipleSections = sectionBreakdown.length > 1;
+            const weakestSections = sectionBreakdown.filter((s) => s.pct < 70);
+
             // Guests get a single bilingual sign-in gate instead of the full
             // premium results screen / analytics / answer review.
             if (!user) {
