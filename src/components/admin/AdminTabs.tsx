@@ -2,6 +2,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
 import JobTestManager from "./JobTestManager";
+import MockTestAnalyticsDashboard from "./job-test/MockTestAnalyticsDashboard";
 import QuestionBankManager from "./QuestionBankManager";
 import AdminContentSubmission from "./AdminContentSubmission";
 import { DataMigrationUtility } from "./DataMigrationUtility";
@@ -136,6 +137,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "subjects", label: "Subjects", icon: BookOpen },
         { value: "topics", label: "Topics", icon: FolderTree },
         { value: "job-tests", label: "Job Tests", icon: Briefcase },
+        { value: "mock-test-analytics", label: "Mock Analytics", icon: Activity },
         { value: "navigation", label: "Navigation", icon: Navigation },
         { value: "study-sounds", label: "Study Sounds", icon: Music },
         { value: "messages", label: "Messages", icon: Mail },
@@ -287,6 +289,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="subjects"><SubjectManager /></TabsContent>
       <TabsContent value="topics"><TopicManager /></TabsContent>
       <TabsContent value="job-tests"><JobTestManager /></TabsContent>
+      <TabsContent value="mock-test-analytics"><MockTestAnalyticsDashboard /></TabsContent>
       <TabsContent value="navigation"><NavigationManager /></TabsContent>
       <TabsContent value="study-sounds"><StudySoundsManager /></TabsContent>
       <TabsContent value="messages"><AdminMessagesPanel /></TabsContent>

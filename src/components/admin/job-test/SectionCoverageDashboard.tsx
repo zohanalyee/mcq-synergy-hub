@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, AlertTriangle, Loader2, Sparkles, RefreshCw } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Loader2, Sparkles, RefreshCw, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -12,6 +12,8 @@ import {
   TestCoverage,
   getSectionCoverage,
   generateAllSections,
+  enqueueGeneration,
+  getQueueForTest,
 } from "@/services/jobTestService";
 
 interface Props {
@@ -31,12 +33,16 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
   const [coverage, setCoverage] = useState<TestCoverage | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [queueActive, setQueueActive] = useState(0);
+  const [enqueuing, setEnqueuing] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
       const c = await getSectionCoverage(jobTestId, sections);
       setCoverage(c);
+      const queue = await getQueueForTest(jobTestId);
+      setQueueActive(queue.filter((q) => q.status === "pending" || q.status === "processing").length);
     } finally {
       setLoading(false);
     }
@@ -46,6 +52,50 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobTestId, sections.length]);
+
+  // While a background queue is active, poll so progress shows up automatically.
+  useEffect(() => {
+    if (queueActive <= 0) return;
+    const t = setInterval(() => {
+      load();
+    }, 8000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queueActive, jobTestId]);
+
+  const handleGenerateBackground = async () => {
+    if (!coverage || coverage.totalDeficit === 0) {
+      toast.info("Nothing to generate — every section already meets its target.");
+      return;
+    }
+    setEnqueuing(true);
+    try {
+      const r = await enqueueGeneration(
+        jobTestId,
+        coverage.sections.map((s) => ({
+          subject: s.subject,
+          target_count: s.target,
+          deficit: s.deficit,
+        })),
+      );
+      if (r.success) {
+        if (r.queued > 0) {
+          toast.success(
+            `Queued ${r.queued} section${r.queued === 1 ? "" : "s"} for background generation. Drafts will trickle in — check back later.`,
+            { duration: 6000 },
+          );
+        } else {
+          toast.info("Those sections are already queued.");
+        }
+        await load();
+      } else {
+        toast.error("Failed to queue background generation.");
+      }
+    } finally {
+      setEnqueuing(false);
+    }
+  };
+
 
   const handleGenerateAll = async () => {
     if (sections.length === 0) {
@@ -101,16 +151,40 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
             Everything is pre-generated &amp; admin-approved — no questions are generated at test start.
           </span>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="ghost" size="sm" onClick={load} disabled={loading || generating} className="gap-1.5">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="ghost" size="sm" onClick={load} disabled={loading} className="gap-1.5">
             <RefreshCw className={cn("h-3.5 w-3.5", loading && "animate-spin")} /> Refresh
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleGenerateBackground}
+            disabled={enqueuing || loading}
+            className="gap-1.5"
+            title="Queue generation to run gradually in the background — no waiting"
+          >
+            {enqueuing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
+            Generate in Background
           </Button>
           <Button size="sm" onClick={handleGenerateAll} disabled={generating || loading} className="gap-1.5">
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Generate All Sections
+            Generate Now
           </Button>
         </div>
       </div>
+
+      {queueActive > 0 && (
+        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+          <span className="font-medium">
+            {queueActive} section{queueActive === 1 ? "" : "s"} generating in the background…
+          </span>
+          <span className="text-muted-foreground">
+            Drafts appear below as they finish — approval stays manual.
+          </span>
+        </div>
+      )}
+
 
       {/* Overall progress */}
       {coverage && (
