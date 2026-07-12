@@ -289,6 +289,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="subjects"><SubjectManager /></TabsContent>
       <TabsContent value="topics"><TopicManager /></TabsContent>
       <TabsContent value="job-tests"><JobTestManager /></TabsContent>
+      <TabsContent value="mock-test-analytics"><MockTestAnalyticsDashboard /></TabsContent>
       <TabsContent value="navigation"><NavigationManager /></TabsContent>
       <TabsContent value="study-sounds"><StudySoundsManager /></TabsContent>
       <TabsContent value="messages"><AdminMessagesPanel /></TabsContent>
