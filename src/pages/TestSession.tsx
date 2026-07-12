@@ -486,6 +486,33 @@ const TestSession = () => {
     navigate(lastUsedContext.returnPath || "/custom-syllabus");
   };
 
+  const handleShareScore = async (
+    pct: number,
+    correct: number,
+    total: number,
+    testName: string,
+  ) => {
+    const shareText = `I scored ${pct}% (${correct}/${total}) on "${testName}" at MCQSAI! 🎯`;
+    const shareUrl = "https://mcqsai.com";
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "My MCQSAI Score", text: shareText, url: shareUrl });
+        return;
+      }
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      toast.success("Score copied to clipboard!", { description: "Paste it anywhere to share." });
+    } catch (err: any) {
+      if (err?.name === "AbortError") return; // user dismissed the share sheet
+      try {
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        toast.success("Score copied to clipboard!");
+      } catch {
+        toast.error("Couldn't share your score. Please try again.");
+      }
+    }
+  };
+
+
   const progress = ((currentQuestion + 1) / displayTotal) * 100;
   const answeredCount = Object.keys(answers).length;
   const canSubmit = true; // Session is always complete when created
