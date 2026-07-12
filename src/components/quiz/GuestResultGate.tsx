@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { saveIntentRaw } from '@/hooks/useAuthIntent';
+import BrandMark from '@/components/BrandMark';
 
 interface GuestResultGateProps {
   open: boolean;
