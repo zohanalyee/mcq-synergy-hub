@@ -32,8 +32,10 @@ const PaletteGrid = ({
             key={index}
             variant="ghost"
             size="sm"
+            aria-label={`Question ${index + 1}${isAnswered ? ", answered" : ", unanswered"}${isFlagged ? ", flagged for review" : ""}${isCurrent ? ", current" : ""}`}
+            aria-current={isCurrent ? "true" : undefined}
             className={cn(
-              "relative h-8 w-8 p-0 text-xs font-medium rounded-lg transition-all",
+              "relative h-10 w-10 sm:h-9 sm:w-9 p-0 text-xs font-medium rounded-lg transition-all",
               isCurrent && "ring-2 ring-info",
               isFlagged && !isCurrent && "bg-warning text-warning-foreground hover:bg-warning/90",
               isAnswered && !isFlagged && !isCurrent && "bg-success text-success-foreground hover:bg-success/90",
