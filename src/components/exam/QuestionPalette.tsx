@@ -34,10 +34,10 @@ const PaletteGrid = ({
             size="sm"
             className={cn(
               "relative h-8 w-8 p-0 text-xs font-medium rounded-lg transition-all",
-              isCurrent && "ring-2 ring-blue-500",
-              isFlagged && !isCurrent && "bg-orange-500 text-white hover:bg-orange-600",
-              isAnswered && !isFlagged && !isCurrent && "bg-emerald-500 text-white hover:bg-emerald-600",
-              !isAnswered && !isFlagged && !isCurrent && "bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30"
+              isCurrent && "ring-2 ring-info",
+              isFlagged && !isCurrent && "bg-warning text-warning-foreground hover:bg-warning/90",
+              isAnswered && !isFlagged && !isCurrent && "bg-success text-success-foreground hover:bg-success/90",
+              !isAnswered && !isFlagged && !isCurrent && "bg-destructive/20 text-destructive border border-destructive/30 hover:bg-destructive/30"
             )}
             onClick={() => onNavigate(index)}
           >
