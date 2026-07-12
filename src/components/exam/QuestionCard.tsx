@@ -71,20 +71,22 @@ const QuestionCard = ({
             <Button
               variant="ghost"
               size="sm"
+              aria-label={isFlagged ? "Remove flag from this question" : "Flag this question for review"}
+              aria-pressed={isFlagged}
               className={cn(
-                "h-7 w-7 p-0 shrink-0 rounded-lg",
+                "h-9 w-9 sm:h-8 sm:w-8 p-0 shrink-0 rounded-lg",
                 isFlagged
-                  ? "text-orange-500 bg-orange-500/10"
+                  ? "text-warning bg-warning/10"
                   : "text-muted-foreground"
               )}
               onClick={() => onToggleFlag(questionIndex)}
             >
-              <Flag className="h-3.5 w-3.5" />
+              <Flag className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Option cards */}
-          <div className="space-y-2">
+          <div className="space-y-2" role="radiogroup" aria-label="Answer options">
             {(Array.isArray(question.options)
               ? question.options
               : question.options && typeof question.options === 'object'
@@ -93,14 +95,18 @@ const QuestionCard = ({
             ).map((option: string, idx: number) => {
               const isSelected = selectedAnswer === option;
               return (
-                <div
+                <button
+                  type="button"
                   key={idx}
+                  role="radio"
+                  aria-checked={isSelected}
                   onClick={() => onSelectAnswer(questionIndex, option)}
                   className={cn(
-                    "glass-card rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all duration-200",
+                    "w-full text-left glass-card rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all duration-200 min-h-11",
                     "border hover:border-primary/30 hover:shadow-md",
+                    "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     isSelected
-                      ? "ring-2 ring-blue-500 bg-blue-500/10 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+                      ? "ring-2 ring-info bg-info/10 border-info/50 shadow-[0_0_15px_hsl(var(--info)/0.15)]"
                       : "border-border/50"
                   )}
                 >
@@ -109,7 +115,7 @@ const QuestionCard = ({
                       variant={isSelected ? "default" : "secondary"}
                       className={cn(
                         "h-7 w-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold",
-                        isSelected && "bg-blue-500 text-white"
+                        isSelected && "bg-info text-info-foreground"
                       )}
                     >
                       {String.fromCharCode(65 + idx)}
@@ -118,7 +124,7 @@ const QuestionCard = ({
                       {option}
                     </span>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>

@@ -1,76 +1,65 @@
-# Part A Follow-up — Bulk Approve + Background Generation + Global Analytics
+# Part B — Test Player UI/UX + Branding Roadmap
 
-Three additions to the Mock Test admin system. All keep the core guardrail intact: **generation can run in the background, but no question ever reaches the player without your manual approval.**
+Implements the audit's Top-5 improvements for the Mock/Job Test player experience. **Presentation & UX only — no scoring or business-logic changes.** Built phase-by-phase; after each phase I'll report back before continuing.
 
-## 1. Bulk Approve (Approval Queue)
+## Guardrails
 
-File: `src/components/admin/job-test/GeneratedQuestionsTable.tsx` + a helper in `jobTestService.ts`.
+- Zero changes to answer-checking, scoring, quota, or submission logic (`checkAnswer`, `scorePracticeAnswers`, `processTestCompletion`, `recordJobTestProgress` untouched).
+- Existing behavior/flows stay identical; only styling, tokens, markup, and result presentation change.
+- Reuse existing brand tokens (`--brand-*`, `bg-brand-gradient`, `shadow-brand`) and shadcn primitives.
 
-- Add a per-question checkbox and a "Select all (filtered)" checkbox in the header row. Selection respects the active filter (pending/approved/subject), so "select all" only picks what's visible.
-- Add a sticky action bar when ≥1 selected: **"Approve Selected (N)"** and **"Unapprove Selected"** + a clear button.
-- Add a one-click **"Approve ALL pending for this test"** button (with a confirm dialog) for when you trust every draft.
-- New service helpers:
-  - `bulkSetQuestionApproval(ids: string[], approved: boolean)` — single `.update().in('id', ids)`.
-  - `approveAllPendingForTest(jobTestId: string)` — `.update({admin_approved:true}).eq('job_test_id',id).eq('admin_approved',false)`.
-- After any bulk action: update local state + `toast.success`.
+---
 
-## 2. Background / Gradual Generation (trigger-and-forget)
+## Phase 1 — Semantic status tokens (color tokenization)
 
-Modeled on the board-topic nightly autofill (`scheduled-autofill` + `pg_cron`).
+The player currently hardcodes `bg-blue-500`, `emerald-500`, `orange-500`, `text-white`, `red-500` etc. in `TestSession.tsx`, `QuestionCard.tsx`, `QuestionPalette.tsx`, `ExamHeader.tsx`, `ExamNavBar.tsx`.
 
-**New table** `job_test_generation_queue`:
+- Add status tokens in `src/index.css` (light + dark): `--success`, `--success-foreground`, `--warning`, `--warning-foreground`, `--info`, `--info-foreground` (destructive already exists). Map to existing green/amber/blue hues so visuals are unchanged.
+- Register them in `tailwind.config.ts` (`success`, `warning`, `info` color families).
+- Replace hardcoded utilities in the exam components with the new tokens (e.g. selected option → `ring-info`/`bg-info/10`, answered → `bg-success`, review → `bg-warning`, correct/wrong review alerts → `border-success`/`border-destructive`).
+- Result: full dark-mode correctness and one source of truth for player colors.
 
-```
-id, job_test_id, subject, target_count, status ('pending'|'processing'|'done'|'failed'|'skipped'),
-attempts (int, default 0), accepted_count, error_message, created_at, updated_at, processed_at
-```
+## Phase 2 — Brand mark in player + results
 
-- GRANTs (authenticated read/insert for admins via RLS, service_role all) + RLS using `is_admin()` + realtime enabled so the dashboard live-updates.
+- Add `BrandMark` (icon-only where space is tight) into `ExamHeader` and into the results header so the exam and result screens carry MCQSAI identity (currently generic).
+- Add `BrandMark` to `GuestResultGate` header for brand consistency on the sign-in gate.
+- Small brand-gradient accent on the results score number using existing `text-brand-gradient`.
 
-**New edge function** `process-jobtest-queue` (cron-driven, service-role or `x-admin-trigger`):
+## Phase 3 — Accessibility & touch targets
 
-- Picks the oldest 1–2 `pending` rows, marks `processing`, calls the existing per-subject `generate-job-test` (deficit-only, credit-safe), records `accepted_count`, marks `done`/`failed`. Small batch per run = "dheere dheere" gradual fill. Respects existing daily quota.
+- Add `aria-label`s to icon-only buttons in the player (music toggle, flag, palette trigger, exit).
+- Ensure interactive option cards in `QuestionCard` are real buttons / keyboard-operable with `focus-visible` rings (currently clickable `div`s with `onClick` only).
+- Bump tap targets to min 44×44 on mobile for palette cells, nav buttons, and flag/music controls.
+- Add `aria-live` to the timer/answered-count region and ensure a single `<main>`/heading order on the result screen.
 
-**pg_cron job** (every ~5 min) → `net.http_post` to `process-jobtest-queue` (inserted via the insert tool, not migration, since it embeds the project URL + anon key).
+## Phase 4 — Celebration + weak-area breakdown (results)
 
-**Enqueue instead of wait:** `SectionCoverageDashboard` "Generate All Sections" gets a companion **"Generate in Background"** button that calls a new `enqueueGeneration(jobTestId, subjects?)` service (inserts deficit sections as `pending` queue rows, deduping rows already pending/processing). The synchronous button stays for admins who want to watch it run. Dashboard shows a small "In queue: N sections · last run …" status line, polling coverage every few seconds while queue rows are active.
+- Add a one-shot confetti/celebration animation on pass (reuse the existing gamification confetti util already used in `processTestCompletion`; purely visual trigger on the result view).
+- Add a **"Focus Areas"** card on the result screen: compute per-subject/section accuracy from the already-graded `questions` + `answers` (no new scoring — just grouping what's shown) and list weakest sections with progress bars, styled with the new tokens. This surfaces the weak-area data inline instead of only in the AI Coach / keep-going dialog.
 
-## 3. Global Mock-Test Analytics Dashboard
+## Phase 5 — Share my score
 
-New admin section (a new tab in `AdminContent`), file `src/components/admin/job-test/MockTestAnalyticsDashboard.tsx`, styled like the boards Content Health dashboard (same tokens/cards, brand-consistent).
+- Add a **"Share my score"** button on the result screen: uses the Web Share API when available (`navigator.share`) with a graceful clipboard-copy fallback + toast.
+- Share text: score %, test name, and the site URL — brand-consistent, no PII beyond the display name the user already sees.
+- Optional lightweight shareable summary text ("I scored X% on &nbsp; at MCQSAI") — no image generation, no backend.
 
-- One table of ALL mock tests: **Test name | Overall coverage % (progress bar) | Per-subject deficit chips | Pending-approval count | Ready/Incomplete badge**.
-- Data: reuse `useJobTestReadiness` pattern but expanded to also return per-section deficit + pending. Add `getAllTestsCoverage()` in `jobTestService.ts` that resolves each test's definition + `getSectionCoverage` (batched with `Promise.all`).
-- Row actions **without opening the test**:
-  - **"Generate in Background"** (enqueues all deficit sections for that test).
-  - Expand row → per-subject deficit list with an individual **"Queue"** button per subject.
-  - **"Review queue →"** links into that test's editor Questions tab.
-- Sort by largest deficit first (worklist feel), matching the boards dashboard.
+---
 
-## Guardrail summary
+## Files touched (by phase)
 
-- Queue only performs GENERATION. Every generated question stays `admin_approved=false`.
-- Publishing/approval remains 100% manual (now faster via bulk approve).
-- Deficit-only generation everywhere → credit-safe, respects existing quota manager.
+- **P1:** `src/index.css`, `tailwind.config.ts`, `src/components/exam/QuestionCard.tsx`, `QuestionPalette.tsx`, `ExamHeader.tsx`, `ExamNavBar.tsx`, `src/pages/TestSession.tsx`
+- **P2:** `ExamHeader.tsx`, `TestSession.tsx`, `src/components/quiz/GuestResultGate.tsx`
+- **P3:** exam components above + `TestSession.tsx`
+- **P4:** `TestSession.tsx` (+ reuse `src/utils/gamification.ts` confetti)
+- **P5:** `TestSession.tsx` (small inline share helper)
 
-## Technical notes
+## Verification per phase
 
-- No business/scoring-logic changes to the player.
-- One migration (queue table + GRANTs + RLS + realtime). One insert-tool call for the cron schedule. One new edge function. Service + two React components edited/created.
-  &nbsp;
+- Typecheck + build after each phase.
+- Playwright screenshot of the player and result screen (light + dark) to confirm visuals unchanged where intended and improved where added.
 
-Plan: bulk-approve UI, background queued generation (new table + cron edge function), and a global mock-test coverage/analytics dashboard — all keeping approval 100% manual.
-
-&nbsp;
-
-Plan approved — teeno parts implement karein:
-
-1. Bulk approve (checkboxes + approve-selected + approve-all-pending)
-
-2. Background/gradual generation (queue table + cron + "Generate in Background" button)
-
-3. Global Mock-Test Analytics Dashboard (ek hi jagah sab tests ki coverage)
+I'll implement Phase 1, report back, then continue through Phase 5 one at a time.
 
 &nbsp;
 
-Build/verify hone k baad batayen, review kar k publish karunga.
+**Approve B** — jaisa propose kiya hai, Phase 1 se shuru karein. Har phase k baad build/typecheck/screenshot confirm karke report karein, phir agle phase pe barhein.

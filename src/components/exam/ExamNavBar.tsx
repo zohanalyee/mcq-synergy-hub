@@ -38,9 +38,10 @@ const ExamNavBar = ({
           size="sm"
           onClick={onPrevious}
           disabled={currentQuestion === 0}
-          className="h-9"
+          aria-label="Previous question"
+          className="h-11 sm:h-9"
         >
-          <ArrowLeft className="h-3.5 w-3.5 mr-1" />
+          <ArrowLeft className="h-4 w-4 mr-1" />
           <span className="hidden xs:inline">Prev</span>
         </Button>
 
@@ -50,12 +51,14 @@ const ExamNavBar = ({
             variant="outline"
             size="sm"
             onClick={onToggleFlag}
+            aria-label={isFlagged ? "Remove flag from this question" : "Flag this question for review"}
+            aria-pressed={isFlagged}
             className={cn(
-              "h-9",
-              isFlagged && "border-orange-500/50 text-orange-500 bg-orange-500/10"
+              "h-11 sm:h-9",
+              isFlagged && "border-warning/50 text-warning bg-warning/10"
             )}
           >
-            <Flag className="h-3.5 w-3.5 mr-1" />
+            <Flag className="h-4 w-4 mr-1" />
             <span className="hidden xs:inline">Review</span>
           </Button>
 
@@ -73,16 +76,17 @@ const ExamNavBar = ({
             size="sm"
             onClick={onSubmit}
             disabled={!canSubmit}
+            aria-label="Submit test"
             title={!canSubmit ? `Waiting for ${remainingCount} more questions to load...` : undefined}
-            className="h-9"
+            className="h-11 sm:h-9"
           >
-            {!canSubmit && <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />}
+            {!canSubmit && <Loader2 className="h-4 w-4 mr-1 animate-spin" />}
             {canSubmit ? "Submit" : "Loading..."}
           </Button>
         ) : (
-          <Button size="sm" onClick={onNext} className="h-9">
+          <Button size="sm" onClick={onNext} aria-label="Next question" className="h-11 sm:h-9">
             <span className="hidden xs:inline">Next</span>
-            <ArrowRight className="h-3.5 w-3.5 ml-1" />
+            <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
         )}
       </div>

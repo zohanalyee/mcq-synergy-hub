@@ -32,12 +32,14 @@ const PaletteGrid = ({
             key={index}
             variant="ghost"
             size="sm"
+            aria-label={`Question ${index + 1}${isAnswered ? ", answered" : ", unanswered"}${isFlagged ? ", flagged for review" : ""}${isCurrent ? ", current" : ""}`}
+            aria-current={isCurrent ? "true" : undefined}
             className={cn(
-              "relative h-8 w-8 p-0 text-xs font-medium rounded-lg transition-all",
-              isCurrent && "ring-2 ring-blue-500",
-              isFlagged && !isCurrent && "bg-orange-500 text-white hover:bg-orange-600",
-              isAnswered && !isFlagged && !isCurrent && "bg-emerald-500 text-white hover:bg-emerald-600",
-              !isAnswered && !isFlagged && !isCurrent && "bg-red-500/20 text-red-500 border border-red-500/30 hover:bg-red-500/30"
+              "relative h-10 w-10 sm:h-9 sm:w-9 p-0 text-xs font-medium rounded-lg transition-all",
+              isCurrent && "ring-2 ring-info",
+              isFlagged && !isCurrent && "bg-warning text-warning-foreground hover:bg-warning/90",
+              isAnswered && !isFlagged && !isCurrent && "bg-success text-success-foreground hover:bg-success/90",
+              !isAnswered && !isFlagged && !isCurrent && "bg-destructive/20 text-destructive border border-destructive/30 hover:bg-destructive/30"
             )}
             onClick={() => onNavigate(index)}
           >
@@ -53,19 +55,19 @@ const PaletteGrid = ({
     {/* Legend */}
     <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-2 border-t border-border/50">
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-emerald-500" />
+        <div className="h-3 w-3 rounded bg-success" />
         <span>Answered</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-red-500/20 border border-red-500/30" />
+        <div className="h-3 w-3 rounded bg-destructive/20 border border-destructive/30" />
         <span>Unanswered</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-orange-500" />
+        <div className="h-3 w-3 rounded bg-warning" />
         <span>Review</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded ring-2 ring-blue-500" />
+        <div className="h-3 w-3 rounded ring-2 ring-info" />
         <span>Current</span>
       </div>
     </div>
@@ -97,7 +99,8 @@ const QuestionPalette = (props: QuestionPaletteProps) => {
         <Button
           size="icon-sm"
           variant="outline"
-          className="h-9 w-9 rounded-full glass-card border-border/50"
+          aria-label="Open question palette"
+          className="h-11 w-11 rounded-full glass-card border-border/50"
         >
           <Grid3X3 className="h-4 w-4" />
         </Button>

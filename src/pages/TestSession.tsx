@@ -7,14 +7,14 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward, BookOpen } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward, BookOpen, Share2, Target } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/lib/questionUtils";
 import { resolveCorrectAnswer, checkUserAnswer, normalizeQuestion } from "@/lib/testEvaluation";
 import { scorePracticeAnswers, mergeScoredIntoQuestions, isDbQuestionId } from "@/services/practiceScoringService";
 import SmartFeedbackCard from "@/components/feedback/SmartFeedbackCard";
-import { processTestCompletion } from "@/utils/gamification";
+import { processTestCompletion, triggerBigConfetti } from "@/utils/gamification";
 import { AICoachService } from "@/services/aiCoachService";
 import ExamHeader from "@/components/exam/ExamHeader";
 import QuestionCard from "@/components/exam/QuestionCard";
@@ -31,6 +31,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { loadGuestSession } from "@/lib/guestSession";
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
+import BrandMark from "@/components/BrandMark";
 
 type LastUsedTestContext = {
   subject?: string;
@@ -420,6 +421,12 @@ const TestSession = () => {
       questionIds,
     });
 
+    // Celebration: one-shot confetti when the learner passes (presentation only).
+    const scorePctForCelebration = questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0;
+    if (scorePctForCelebration >= 50) {
+      triggerBigConfetti();
+    }
+
     if (result.newBadges.length > 0) {
       toast.success(`🏆 New Badge: ${result.newBadges[0].name}!`, { description: result.newBadges[0].description });
     } else {
@@ -478,6 +485,33 @@ const TestSession = () => {
   const handleCreateAnother = () => {
     navigate(lastUsedContext.returnPath || "/custom-syllabus");
   };
+
+  const handleShareScore = async (
+    pct: number,
+    correct: number,
+    total: number,
+    testName: string,
+  ) => {
+    const shareText = `I scored ${pct}% (${correct}/${total}) on "${testName}" at MCQSAI! 🎯`;
+    const shareUrl = "https://mcqsai.com";
+    try {
+      if (typeof navigator !== "undefined" && navigator.share) {
+        await navigator.share({ title: "My MCQSAI Score", text: shareText, url: shareUrl });
+        return;
+      }
+      await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      toast.success("Score copied to clipboard!", { description: "Paste it anywhere to share." });
+    } catch (err: any) {
+      if (err?.name === "AbortError") return; // user dismissed the share sheet
+      try {
+        await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        toast.success("Score copied to clipboard!");
+      } catch {
+        toast.error("Couldn't share your score. Please try again.");
+      }
+    }
+  };
+
 
   const progress = ((currentQuestion + 1) / displayTotal) * 100;
   const answeredCount = Object.keys(answers).length;
@@ -691,6 +725,22 @@ const TestSession = () => {
             const minutes = Math.floor(timeTaken / 60);
             const seconds = timeTaken % 60;
 
+            // Per-section accuracy breakdown (presentation only — reuses the
+            // already-graded questions/answers, no new scoring logic).
+            const sectionStats = new Map<string, { correct: number; total: number }>();
+            questions.forEach((q: any, i: number) => {
+              const section = q.subject || q.topic || "General";
+              const st = sectionStats.get(section) || { correct: 0, total: 0 };
+              st.total += 1;
+              if (checkAnswer(q, answers[i])) st.correct += 1;
+              sectionStats.set(section, st);
+            });
+            const sectionBreakdown = Array.from(sectionStats.entries())
+              .map(([name, s]) => ({ name, ...s, pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0 }))
+              .sort((a, b) => a.pct - b.pct);
+            const hasMultipleSections = sectionBreakdown.length > 1;
+            const weakestSections = sectionBreakdown.filter((s) => s.pct < 70);
+
             // Guests get a single bilingual sign-in gate instead of the full
             // premium results screen / analytics / answer review.
             if (!user) {
@@ -709,19 +759,19 @@ const TestSession = () => {
             return (
               <div className="space-y-4">
                 {/* Pass/Fail Banner */}
-                <Card className={`border-2 ${isPassed ? 'border-green-500/50 bg-green-500/5' : 'border-red-500/50 bg-red-500/5'}`}>
+                <Card className={`border-2 ${isPassed ? 'border-success/50 bg-success/5' : 'border-destructive/50 bg-destructive/5'}`}>
                   <CardContent className="py-6 text-center">
                     {isPassed ? (
                       <>
-                        <Award className="h-14 w-14 text-green-500 mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">Congratulations! 🎉</h1>
-                        <p className="text-green-600/80 dark:text-green-400/80">You passed the test!</p>
+                        <Award className="h-14 w-14 text-success mx-auto mb-3" />
+                        <h1 className="text-2xl font-bold text-success mb-1">Congratulations! 🎉</h1>
+                        <p className="text-success/80">You passed the test!</p>
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="h-14 w-14 text-red-500 mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">Keep Trying! 💪</h1>
-                        <p className="text-red-600/80 dark:text-red-400/80">You need {passingPercent}% to pass. Review and try again!</p>
+                        <AlertCircle className="h-14 w-14 text-destructive mx-auto mb-3" />
+                        <h1 className="text-2xl font-bold text-destructive mb-1">Keep Trying! 💪</h1>
+                        <p className="text-destructive/80">You need {passingPercent}% to pass. Review and try again!</p>
                       </>
                     )}
                   </CardContent>
@@ -730,8 +780,9 @@ const TestSession = () => {
                 {/* Score + Stats */}
                 <Card>
                   <CardContent className="py-5 text-center">
+                    <BrandMark className="justify-center mb-3" />
                     <h2 className="text-lg font-semibold mb-1">{testData.session_name || 'Test'}</h2>
-                    <div className="text-5xl font-bold text-primary my-2">{percentage}%</div>
+                    <div className="text-5xl font-bold text-brand-gradient my-2">{percentage}%</div>
                     <p className="text-muted-foreground text-sm">{correctCount} / {totalQ} correct</p>
                     <Badge variant={isPassed ? "default" : "destructive"} className="mt-2">
                       {isPassed ? "PASSED" : "FAILED"}
@@ -739,13 +790,14 @@ const TestSession = () => {
                   </CardContent>
                 </Card>
 
+
                 {/* Stats Grid */}
                 <div className="grid grid-cols-4 gap-2">
                   {[
-                    { icon: CheckCircle, label: 'Correct', value: correctCount, cls: 'text-green-500' },
-                    { icon: XCircle, label: 'Wrong', value: wrongCount, cls: 'text-red-500' },
-                    { icon: SkipForward, label: 'Skipped', value: skippedCount, cls: 'text-amber-500' },
-                    { icon: Clock, label: 'Time', value: `${minutes}m ${seconds}s`, cls: 'text-blue-500' },
+                    { icon: CheckCircle, label: 'Correct', value: correctCount, cls: 'text-success' },
+                    { icon: XCircle, label: 'Wrong', value: wrongCount, cls: 'text-destructive' },
+                    { icon: SkipForward, label: 'Skipped', value: skippedCount, cls: 'text-warning' },
+                    { icon: Clock, label: 'Time', value: `${minutes}m ${seconds}s`, cls: 'text-info' },
                   ].map((s, i) => (
                     <Card key={i}>
                       <CardContent className="py-3 text-center px-1">
@@ -756,6 +808,43 @@ const TestSession = () => {
                     </Card>
                   ))}
                 </div>
+
+                {/* Focus Areas — per-section accuracy breakdown */}
+                {hasMultipleSections && (
+                  <Card>
+                    <CardContent className="py-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Target className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-semibold">Focus Areas</h3>
+                      </div>
+                      {weakestSections.length > 0 && (
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Spend more time on {weakestSections.length === 1 ? "this section" : "these sections"} to boost your score.
+                        </p>
+                      )}
+                      <div className="space-y-2.5">
+                        {sectionBreakdown.map((s) => {
+                          const barCls = s.pct >= 70 ? "bg-success" : s.pct >= 50 ? "bg-warning" : "bg-destructive";
+                          return (
+                            <div key={s.name}>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="text-xs font-medium truncate">{s.name}</span>
+                                <span className="text-[11px] text-muted-foreground shrink-0">
+                                  {s.correct}/{s.total} · {s.pct}%
+                                </span>
+                              </div>
+                              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                <div className={`h-full rounded-full ${barCls}`} style={{ width: `${s.pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+
 
                 <ResultAdviceCard
                   name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
@@ -786,12 +875,12 @@ const TestSession = () => {
                     const correctText = resolveAnswer(question);
                     const explanation = question.explanation;
                     return (
-                      <Alert key={index} className={isCorrect ? "border-green-500" : "border-red-500"}>
+                      <Alert key={index} className={isCorrect ? "border-success" : "border-destructive"}>
                         <div className="flex items-start gap-2">
                           {isCorrect ? (
-                            <CheckCircle className="h-4 w-4 text-green-600 mt-0.5 shrink-0" />
+                            <CheckCircle className="h-4 w-4 text-success mt-0.5 shrink-0" />
                           ) : (
-                            <XCircle className="h-4 w-4 text-red-600 mt-0.5 shrink-0" />
+                            <XCircle className="h-4 w-4 text-destructive mt-0.5 shrink-0" />
                           )}
                           <div className="flex-1 min-w-0">
                             <Badge variant="outline" className="mb-1 text-[10px]">
@@ -803,12 +892,12 @@ const TestSession = () => {
                             <p className="text-xs">
                               <span className="font-medium">Your answer:</span> {userAnswer || "Not answered"}
                             </p>
-                            <p className="text-xs text-green-600">
+                            <p className="text-xs text-success">
                               <span className="font-medium">Correct:</span> {correctText}
                             </p>
                             {explanation && (
-                              <div className={`mt-2 p-2.5 rounded-md text-xs ${isCorrect ? "bg-blue-500/10 border border-blue-500/20" : "bg-amber-500/10 border border-amber-500/20"}`}>
-                                <p className={`font-semibold mb-0.5 flex items-center gap-1 ${isCorrect ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400"}`}>
+                              <div className={`mt-2 p-2.5 rounded-md text-xs ${isCorrect ? "bg-info/10 border border-info/20" : "bg-warning/10 border border-warning/20"}`}>
+                                <p className={`font-semibold mb-0.5 flex items-center gap-1 ${isCorrect ? "text-info" : "text-warning"}`}>
                                   <BookOpen className="h-3 w-3" />
                                   {isCorrect ? "Why this is correct:" : "Explanation:"}
                                 </p>
@@ -824,9 +913,17 @@ const TestSession = () => {
 
                 <div className="flex gap-3 justify-center flex-wrap">
                   <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleShareScore(percentage, correctCount, totalQ, testData.session_name || 'Test')}
+                  >
+                    <Share2 className="h-3.5 w-3.5 mr-1.5" />
+                    Share my score
+                  </Button>
                   <button
                     onClick={() => navigate('/analytics')}
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 rounded-full text-sm font-medium"
+                    className="bg-brand-gradient text-white shadow-brand px-6 py-2 rounded-full text-sm font-medium"
                   >
                     📊 AI Coach — View Full Analysis
                   </button>
