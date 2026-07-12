@@ -421,6 +421,12 @@ const TestSession = () => {
       questionIds,
     });
 
+    // Celebration: one-shot confetti when the learner passes (presentation only).
+    const scorePctForCelebration = questions.length > 0 ? Math.round((correctAnswers / questions.length) * 100) : 0;
+    if (scorePctForCelebration >= 50) {
+      triggerBigConfetti();
+    }
+
     if (result.newBadges.length > 0) {
       toast.success(`🏆 New Badge: ${result.newBadges[0].name}!`, { description: result.newBadges[0].description });
     } else {
