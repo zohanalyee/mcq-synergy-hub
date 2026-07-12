@@ -782,6 +782,43 @@ const TestSession = () => {
                   ))}
                 </div>
 
+                {/* Focus Areas — per-section accuracy breakdown */}
+                {hasMultipleSections && (
+                  <Card>
+                    <CardContent className="py-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Target className="h-4 w-4 text-primary" />
+                        <h3 className="text-sm font-semibold">Focus Areas</h3>
+                      </div>
+                      {weakestSections.length > 0 && (
+                        <p className="text-xs text-muted-foreground mb-3">
+                          Spend more time on {weakestSections.length === 1 ? "this section" : "these sections"} to boost your score.
+                        </p>
+                      )}
+                      <div className="space-y-2.5">
+                        {sectionBreakdown.map((s) => {
+                          const barCls = s.pct >= 70 ? "bg-success" : s.pct >= 50 ? "bg-warning" : "bg-destructive";
+                          return (
+                            <div key={s.name}>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <span className="text-xs font-medium truncate">{s.name}</span>
+                                <span className="text-[11px] text-muted-foreground shrink-0">
+                                  {s.correct}/{s.total} · {s.pct}%
+                                </span>
+                              </div>
+                              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                                <div className={`h-full rounded-full ${barCls}`} style={{ width: `${s.pct}%` }} />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+
+
+
                 <ResultAdviceCard
                   name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
                   score={percentage}
