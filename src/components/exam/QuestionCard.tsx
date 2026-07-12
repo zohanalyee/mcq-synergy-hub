@@ -100,7 +100,7 @@ const QuestionCard = ({
                     "glass-card rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all duration-200",
                     "border hover:border-primary/30 hover:shadow-md",
                     isSelected
-                      ? "ring-2 ring-blue-500 bg-blue-500/10 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.15)]"
+                      ? "ring-2 ring-info bg-info/10 border-info/50 shadow-[0_0_15px_hsl(var(--info)/0.15)]"
                       : "border-border/50"
                   )}
                 >
