@@ -66,19 +66,21 @@ const ExamHeader = ({
           <Button
             variant="ghost"
             size="icon-sm"
+            aria-label={isMusicOpen ? "Close focus music" : "Open focus music"}
+            aria-pressed={isMusicOpen}
             className={cn(
-              "h-7 w-7 shrink-0",
+              "h-9 w-9 sm:h-8 sm:w-8 shrink-0",
               isMusicOpen && "text-primary bg-primary/10"
             )}
             onClick={onToggleMusic}
           >
-            <Music className="h-3.5 w-3.5" />
+            <Music className="h-4 w-4" />
           </Button>
         </div>
       </div>
 
       {/* Info row */}
-      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+      <div className="flex items-center gap-1.5 mb-1.5 flex-wrap" aria-live="polite">
         <span className="text-[10px] sm:text-xs text-muted-foreground">
           Q {currentQuestion + 1}/{totalQuestions}
         </span>
