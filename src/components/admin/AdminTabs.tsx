@@ -136,6 +136,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "subjects", label: "Subjects", icon: BookOpen },
         { value: "topics", label: "Topics", icon: FolderTree },
         { value: "job-tests", label: "Job Tests", icon: Briefcase },
+        { value: "mock-test-analytics", label: "Mock Analytics", icon: Activity },
         { value: "navigation", label: "Navigation", icon: Navigation },
         { value: "study-sounds", label: "Study Sounds", icon: Music },
         { value: "messages", label: "Messages", icon: Mail },
