@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, AlertTriangle, Loader2, Sparkles, RefreshCw } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Loader2, Sparkles, RefreshCw, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
@@ -12,6 +12,8 @@ import {
   TestCoverage,
   getSectionCoverage,
   generateAllSections,
+  enqueueGeneration,
+  getQueueForTest,
 } from "@/services/jobTestService";
 
 interface Props {
