@@ -2,6 +2,7 @@ import { Tabs, TabsContent } from "@/components/ui/tabs";
 import SubjectManager from "./SubjectManager";
 import TopicManager from "./TopicManager";
 import JobTestManager from "./JobTestManager";
+import MockTestAnalyticsDashboard from "./job-test/MockTestAnalyticsDashboard";
 import QuestionBankManager from "./QuestionBankManager";
 import AdminContentSubmission from "./AdminContentSubmission";
 import { DataMigrationUtility } from "./DataMigrationUtility";
