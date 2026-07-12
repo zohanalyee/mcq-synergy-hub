@@ -109,7 +109,7 @@ const QuestionCard = ({
                       variant={isSelected ? "default" : "secondary"}
                       className={cn(
                         "h-7 w-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold",
-                        isSelected && "bg-blue-500 text-white"
+                        isSelected && "bg-info text-info-foreground"
                       )}
                     >
                       {String.fromCharCode(65 + idx)}
