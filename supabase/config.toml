@@ -78,3 +78,6 @@ verify_jwt = false
 [functions.indexnow-submit-recent]
 verify_jwt = false
 
+
+[functions.process-jobtest-queue]
+verify_jwt = false
