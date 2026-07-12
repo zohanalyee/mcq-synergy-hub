@@ -731,14 +731,16 @@ const TestSession = () => {
                 {/* Score + Stats */}
                 <Card>
                   <CardContent className="py-5 text-center">
+                    <BrandMark className="justify-center mb-3" />
                     <h2 className="text-lg font-semibold mb-1">{testData.session_name || 'Test'}</h2>
-                    <div className="text-5xl font-bold text-primary my-2">{percentage}%</div>
+                    <div className="text-5xl font-bold text-brand-gradient my-2">{percentage}%</div>
                     <p className="text-muted-foreground text-sm">{correctCount} / {totalQ} correct</p>
                     <Badge variant={isPassed ? "default" : "destructive"} className="mt-2">
                       {isPassed ? "PASSED" : "FAILED"}
                     </Badge>
                   </CardContent>
                 </Card>
+
 
                 {/* Stats Grid */}
                 <div className="grid grid-cols-4 gap-2">
