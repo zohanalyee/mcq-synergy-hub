@@ -58,7 +58,8 @@ export const GuestResultGate = ({
     <Dialog open={open} onOpenChange={(v) => !v && handleTryAgain()}>
       <DialogContent className="max-w-md p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="bg-gradient-to-br from-primary/10 via-violet-500/10 to-cyan-500/10 px-5 pt-4 pb-3 text-center border-b border-border">
+        <div className="bg-brand-gradient-soft px-5 pt-4 pb-3 text-center border-b border-border">
+          <BrandMark className="justify-center mb-2" />
           <div className="mx-auto w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center mb-1.5 shadow-lg">
             <Trophy className="h-5 w-5 text-primary-foreground" />
           </div>
