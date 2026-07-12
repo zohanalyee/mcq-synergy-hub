@@ -709,19 +709,19 @@ const TestSession = () => {
             return (
               <div className="space-y-4">
                 {/* Pass/Fail Banner */}
-                <Card className={`border-2 ${isPassed ? 'border-green-500/50 bg-green-500/5' : 'border-red-500/50 bg-red-500/5'}`}>
+                <Card className={`border-2 ${isPassed ? 'border-success/50 bg-success/5' : 'border-destructive/50 bg-destructive/5'}`}>
                   <CardContent className="py-6 text-center">
                     {isPassed ? (
                       <>
-                        <Award className="h-14 w-14 text-green-500 mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-green-600 dark:text-green-400 mb-1">Congratulations! 🎉</h1>
-                        <p className="text-green-600/80 dark:text-green-400/80">You passed the test!</p>
+                        <Award className="h-14 w-14 text-success mx-auto mb-3" />
+                        <h1 className="text-2xl font-bold text-success mb-1">Congratulations! 🎉</h1>
+                        <p className="text-success/80">You passed the test!</p>
                       </>
                     ) : (
                       <>
-                        <AlertCircle className="h-14 w-14 text-red-500 mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-1">Keep Trying! 💪</h1>
-                        <p className="text-red-600/80 dark:text-red-400/80">You need {passingPercent}% to pass. Review and try again!</p>
+                        <AlertCircle className="h-14 w-14 text-destructive mx-auto mb-3" />
+                        <h1 className="text-2xl font-bold text-destructive mb-1">Keep Trying! 💪</h1>
+                        <p className="text-destructive/80">You need {passingPercent}% to pass. Review and try again!</p>
                       </>
                     )}
                   </CardContent>
