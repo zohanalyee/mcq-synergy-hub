@@ -260,6 +260,14 @@ button,
     --gradient-brand: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-via)), hsl(var(--brand-to)));
     --gradient-brand-soft: linear-gradient(135deg, hsl(var(--brand-from) / 0.12), hsl(var(--brand-to) / 0.12));
     --shadow-brand: 0 8px 24px -8px hsl(var(--brand-from) / 0.45);
+
+    /* Semantic status tokens — single source of truth for player/result states */
+    --success: 142 71% 45%;          /* emerald-500 */
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;           /* amber-500 */
+    --warning-foreground: 0 0% 100%;
+    --info: 217 91% 60%;             /* blue-500 */
+    --info-foreground: 0 0% 100%;
   }
 
   .dark {
