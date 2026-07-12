@@ -99,7 +99,8 @@ const QuestionPalette = (props: QuestionPaletteProps) => {
         <Button
           size="icon-sm"
           variant="outline"
-          className="h-9 w-9 rounded-full glass-card border-border/50"
+          aria-label="Open question palette"
+          className="h-11 w-11 rounded-full glass-card border-border/50"
         >
           <Grid3X3 className="h-4 w-4" />
         </Button>
