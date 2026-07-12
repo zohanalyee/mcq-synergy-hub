@@ -33,12 +33,16 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
   const [coverage, setCoverage] = useState<TestCoverage | null>(null);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [queueActive, setQueueActive] = useState(0);
+  const [enqueuing, setEnqueuing] = useState(false);
 
   const load = async () => {
     setLoading(true);
     try {
       const c = await getSectionCoverage(jobTestId, sections);
       setCoverage(c);
+      const queue = await getQueueForTest(jobTestId);
+      setQueueActive(queue.filter((q) => q.status === "pending" || q.status === "processing").length);
     } finally {
       setLoading(false);
     }
@@ -48,6 +52,50 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobTestId, sections.length]);
+
+  // While a background queue is active, poll so progress shows up automatically.
+  useEffect(() => {
+    if (queueActive <= 0) return;
+    const t = setInterval(() => {
+      load();
+    }, 8000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [queueActive, jobTestId]);
+
+  const handleGenerateBackground = async () => {
+    if (!coverage || coverage.totalDeficit === 0) {
+      toast.info("Nothing to generate — every section already meets its target.");
+      return;
+    }
+    setEnqueuing(true);
+    try {
+      const r = await enqueueGeneration(
+        jobTestId,
+        coverage.sections.map((s) => ({
+          subject: s.subject,
+          target_count: s.target,
+          deficit: s.deficit,
+        })),
+      );
+      if (r.success) {
+        if (r.queued > 0) {
+          toast.success(
+            `Queued ${r.queued} section${r.queued === 1 ? "" : "s"} for background generation. Drafts will trickle in — check back later.`,
+            { duration: 6000 },
+          );
+        } else {
+          toast.info("Those sections are already queued.");
+        }
+        await load();
+      } else {
+        toast.error("Failed to queue background generation.");
+      }
+    } finally {
+      setEnqueuing(false);
+    }
+  };
+
 
   const handleGenerateAll = async () => {
     if (sections.length === 0) {
