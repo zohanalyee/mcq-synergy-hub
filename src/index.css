@@ -330,6 +330,14 @@ button,
     --gradient-brand: linear-gradient(135deg, hsl(var(--brand-from)), hsl(var(--brand-via)), hsl(var(--brand-to)));
     --gradient-brand-soft: linear-gradient(135deg, hsl(var(--brand-from) / 0.18), hsl(var(--brand-to) / 0.18));
     --shadow-brand: 0 8px 24px -8px hsl(var(--brand-from) / 0.55);
+
+    /* Semantic status tokens — brighter stops for dark mode legibility */
+    --success: 142 69% 58%;
+    --success-foreground: 224 71% 4%;
+    --warning: 38 95% 62%;
+    --warning-foreground: 224 71% 4%;
+    --info: 213 94% 68%;
+    --info-foreground: 224 71% 4%;
   }
 }
 
