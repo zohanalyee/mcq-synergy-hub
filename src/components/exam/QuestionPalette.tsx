@@ -53,19 +53,19 @@ const PaletteGrid = ({
     {/* Legend */}
     <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-2 border-t border-border/50">
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-emerald-500" />
+        <div className="h-3 w-3 rounded bg-success" />
         <span>Answered</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-red-500/20 border border-red-500/30" />
+        <div className="h-3 w-3 rounded bg-destructive/20 border border-destructive/30" />
         <span>Unanswered</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-orange-500" />
+        <div className="h-3 w-3 rounded bg-warning" />
         <span>Review</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded ring-2 ring-blue-500" />
+        <div className="h-3 w-3 rounded ring-2 ring-info" />
         <span>Current</span>
       </div>
     </div>
