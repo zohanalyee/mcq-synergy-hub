@@ -52,7 +52,7 @@ const ExamNavBar = ({
             onClick={onToggleFlag}
             className={cn(
               "h-9",
-              isFlagged && "border-orange-500/50 text-orange-500 bg-orange-500/10"
+              isFlagged && "border-warning/50 text-warning bg-warning/10"
             )}
           >
             <Flag className="h-3.5 w-3.5 mr-1" />
