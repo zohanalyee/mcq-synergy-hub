@@ -44,9 +44,12 @@ const ExamHeader = ({
     <div className="sticky top-0 z-20 glass-card backdrop-blur-xl border-b border-border/50 px-3 py-2 sm:px-4 sm:py-2.5 mb-2">
       {/* Top row: name, timer, music */}
       <div className="flex items-center justify-between gap-2 mb-1.5">
-        <h1 className="text-sm sm:text-base font-bold text-foreground truncate flex-1">
-          {sessionName}
-        </h1>
+        <div className="flex items-center gap-2 min-w-0 flex-1">
+          <BrandMark iconOnly className="shrink-0" />
+          <h1 className="text-sm sm:text-base font-bold text-foreground truncate">
+            {sessionName}
+          </h1>
+        </div>
 
         <div className="flex items-center gap-1.5">
           <Badge
