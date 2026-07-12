@@ -60,12 +60,12 @@ export const GuestResultGate = ({
         {/* Header */}
         <div className="bg-brand-gradient-soft px-5 pt-4 pb-3 text-center border-b border-border">
           <BrandMark className="justify-center mb-2" />
-          <div className="mx-auto w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center mb-1.5 shadow-lg">
-            <Trophy className="h-5 w-5 text-primary-foreground" />
+          <div className="mx-auto w-10 h-10 rounded-xl bg-brand-gradient flex items-center justify-center mb-1.5 shadow-brand">
+            <Trophy className="h-5 w-5 text-white" />
           </div>
           <h2 className="text-base font-bold leading-tight">Great Job! 🎉</h2>
           <p className="text-xs text-muted-foreground leading-tight" dir="rtl">بہترین کارکردگی!</p>
-          <div className="mt-1.5 text-3xl font-bold leading-none bg-gradient-to-r from-primary to-violet-500 bg-clip-text text-transparent">
+          <div className="mt-1.5 text-3xl font-bold leading-none text-brand-gradient">
             {percentage}%
           </div>
           <p className="text-xs font-medium mt-1">{correctCount} / {total} correct</p>
