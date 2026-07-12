@@ -52,7 +52,7 @@ const ExamHeader = ({
             variant="outline"
             className={cn(
               "flex items-center gap-1 text-[10px] sm:text-xs shrink-0 py-0.5 px-1.5 font-mono",
-              isLowTime && "text-red-500 border-red-500/50 animate-pulse"
+              isLowTime && "text-destructive border-destructive/50 animate-pulse"
             )}
           >
             <Clock className="h-3 w-3" />
