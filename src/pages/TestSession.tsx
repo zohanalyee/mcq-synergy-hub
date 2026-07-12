@@ -826,7 +826,7 @@ const TestSession = () => {
                   <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
                   <button
                     onClick={() => navigate('/analytics')}
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 text-white px-6 py-2 rounded-full text-sm font-medium"
+                    className="bg-brand-gradient text-white shadow-brand px-6 py-2 rounded-full text-sm font-medium"
                   >
                     📊 AI Coach — View Full Analysis
                   </button>
