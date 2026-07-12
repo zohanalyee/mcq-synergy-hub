@@ -750,3 +750,165 @@ export const generateAllSections = async (
     total_reused: data?.total_reused,
   };
 };
+
+// ---------- Background generation queue (trigger-and-forget) ----------
+
+export interface JobTestQueueItem {
+  id: string;
+  job_test_id: string;
+  subject: string;
+  target_count: number;
+  status: "pending" | "processing" | "done" | "failed" | "skipped";
+  attempts: number;
+  accepted_count: number;
+  error_message: string | null;
+  created_at: string;
+  updated_at: string;
+  processed_at: string | null;
+}
+
+/** Approve/unapprove many questions in one round-trip. */
+export const bulkSetQuestionApproval = async (
+  ids: string[],
+  approved: boolean,
+): Promise<boolean> => {
+  if (ids.length === 0) return true;
+  const { error } = await (supabase as any)
+    .from("job_test_questions")
+    .update({ admin_approved: approved })
+    .in("id", ids);
+  if (error) console.error("Error bulk-updating approval:", error);
+  return !error;
+};
+
+/** One-click: approve every pending (unapproved) question for a test. */
+export const approveAllPendingForTest = async (
+  jobTestId: string,
+): Promise<{ success: boolean; count: number }> => {
+  const { data, error } = await (supabase as any)
+    .from("job_test_questions")
+    .update({ admin_approved: true })
+    .eq("job_test_id", jobTestId)
+    .eq("admin_approved", false)
+    .select("id");
+  if (error) {
+    console.error("Error approving all pending:", error);
+    return { success: false, count: 0 };
+  }
+  return { success: true, count: (data || []).length };
+};
+
+/**
+ * Enqueue deficit sections for background (gradual) generation. Dedupes against
+ * rows already pending/processing for the same test+subject so repeated clicks
+ * don't stack. Only GENERATION is queued — approval stays 100% manual.
+ */
+export const enqueueGeneration = async (
+  jobTestId: string,
+  sections: { subject: string; target_count: number; deficit: number }[],
+): Promise<{ success: boolean; queued: number }> => {
+  const deficitSections = sections.filter((s) => s.deficit > 0 && s.subject);
+  if (deficitSections.length === 0) return { success: true, queued: 0 };
+
+  // Skip subjects that already have an active queue row.
+  const { data: existing } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .select("subject")
+    .eq("job_test_id", jobTestId)
+    .in("status", ["pending", "processing"]);
+  const activeSubjects = new Set((existing || []).map((r: any) => r.subject));
+
+  const rows = deficitSections
+    .filter((s) => !activeSubjects.has(s.subject))
+    .map((s) => ({
+      job_test_id: jobTestId,
+      subject: s.subject,
+      target_count: s.target_count,
+      status: "pending",
+    }));
+
+  if (rows.length === 0) return { success: true, queued: 0 };
+
+  const { error } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .insert(rows);
+  if (error) {
+    console.error("Error enqueuing generation:", error);
+    return { success: false, queued: 0 };
+  }
+
+  // Best-effort kick so it starts without waiting for the next cron tick.
+  supabase.functions.invoke("process-jobtest-queue", {
+    headers: { "x-admin-trigger": "true" },
+  }).catch(() => {});
+
+  return { success: true, queued: rows.length };
+};
+
+/** Active (pending/processing) queue rows for a specific test. */
+export const getQueueForTest = async (
+  jobTestId: string,
+): Promise<JobTestQueueItem[]> => {
+  const { data, error } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .select("*")
+    .eq("job_test_id", jobTestId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) {
+    console.error("Error loading queue:", error);
+    return [];
+  }
+  return (data || []) as JobTestQueueItem[];
+};
+
+/** Count of active queue rows grouped by job_test_id (for the global dashboard). */
+export const getActiveQueueCounts = async (): Promise<Record<string, number>> => {
+  const { data, error } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .select("job_test_id, status")
+    .in("status", ["pending", "processing"]);
+  if (error) {
+    console.error("Error loading queue counts:", error);
+    return {};
+  }
+  const out: Record<string, number> = {};
+  for (const r of (data || []) as any[]) {
+    out[r.job_test_id] = (out[r.job_test_id] || 0) + 1;
+  }
+  return out;
+};
+
+// ---------- Global coverage (all tests) ----------
+
+export interface TestCoverageSummary {
+  test: JobTest;
+  hasDefinition: boolean;
+  coverage: TestCoverage | null;
+}
+
+/**
+ * Resolves per-test coverage for ALL mock tests at once, for the global
+ * analytics dashboard. Batched with Promise.all. Tests without a linked
+ * definition report hasDefinition=false.
+ */
+export const getAllTestsCoverage = async (): Promise<TestCoverageSummary[]> => {
+  const tests = await getJobTests();
+  const results = await Promise.all(
+    tests.map(async (t) => {
+      try {
+        const def = await findDefinitionForTest({
+          definition_id: (t as any).definition_id,
+          title: t.title,
+        });
+        if (!def) return { test: t, hasDefinition: false, coverage: null };
+        const sections = def.syllabus?.sections || [];
+        const coverage = await getSectionCoverage(def.id, sections);
+        return { test: t, hasDefinition: true, coverage };
+      } catch {
+        return { test: t, hasDefinition: false, coverage: null };
+      }
+    }),
+  );
+  return results;
+};
