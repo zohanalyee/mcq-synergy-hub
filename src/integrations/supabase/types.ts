@@ -1542,6 +1542,48 @@ export type Database = {
           },
         ]
       }
+      job_test_generation_queue: {
+        Row: {
+          accepted_count: number
+          attempts: number
+          created_at: string
+          error_message: string | null
+          id: string
+          job_test_id: string
+          processed_at: string | null
+          status: string
+          subject: string
+          target_count: number
+          updated_at: string
+        }
+        Insert: {
+          accepted_count?: number
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_test_id: string
+          processed_at?: string | null
+          status?: string
+          subject: string
+          target_count?: number
+          updated_at?: string
+        }
+        Update: {
+          accepted_count?: number
+          attempts?: number
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_test_id?: string
+          processed_at?: string | null
+          status?: string
+          subject?: string
+          target_count?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       job_test_progress: {
         Row: {
           best_score: number
