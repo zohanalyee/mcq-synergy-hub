@@ -257,13 +257,18 @@ const MockTestAnalyticsDashboard: React.FC = () => {
         <div className="space-y-2">
           {rows.map((r) => {
             const cov = r.coverage;
-            const active = queueCounts[(r.test as any).definition_id || ""] || 0;
+            const queueKey = (r.test as any).definition_id || r.test.id;
+            const active = queueCounts[queueKey] || 0;
             const isOpen = expanded.has(r.test.id);
+            const queueItems = queues[queueKey] || [];
+            const activeQueueItems = queueItems.filter(
+              (q) => q.status === "pending" || q.status === "processing",
+            );
             return (
               <Card key={r.test.id} className="p-0 overflow-hidden">
                 <div className="flex flex-wrap items-center gap-3 p-3">
                   <button
-                    onClick={() => cov && toggle(r.test.id)}
+                    onClick={() => cov && toggle(r.test.id, queueKey)}
                     className="shrink-0 text-muted-foreground hover:text-foreground"
                     aria-label="Toggle details"
                   >
