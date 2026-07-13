@@ -141,7 +141,11 @@ const MockTestAnalyticsDashboard: React.FC = () => {
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else {
+        next.add(id);
+        // Lazy-load queue rows when a test is expanded.
+        loadQueue(id);
+      }
       return next;
     });
   };
