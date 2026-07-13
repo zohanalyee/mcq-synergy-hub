@@ -12,17 +12,26 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
+  X,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   TestCoverageSummary,
   SectionCoverage,
+  JobTestQueueItem,
   getAllTestsCoverage,
   getActiveQueueCounts,
+  getQueueForTest,
   enqueueGeneration,
+  removeQueueItem,
+  clearQueueForTest,
   findDefinitionForTest,
 } from "@/services/jobTestService";
+
+/** A processing row older than this (ms) is treated as stuck. */
+const STUCK_MS = 10 * 60 * 1000;
 
 /**
  * Global Mock-Test Analytics Dashboard.
