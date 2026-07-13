@@ -46,6 +46,58 @@ const MockTestAnalyticsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [queues, setQueues] = useState<Record<string, JobTestQueueItem[]>>({});
+  const [queueLoading, setQueueLoading] = useState<Set<string>>(new Set());
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const loadQueue = async (jobTestId: string) => {
+    setQueueLoading((prev) => new Set(prev).add(jobTestId));
+    try {
+      const items = await getQueueForTest(jobTestId);
+      setQueues((prev) => ({ ...prev, [jobTestId]: items }));
+    } finally {
+      setQueueLoading((prev) => {
+        const next = new Set(prev);
+        next.delete(jobTestId);
+        return next;
+      });
+    }
+  };
+
+  const handleRemoveQueueItem = async (jobTestId: string, itemId: string) => {
+    setRemovingId(itemId);
+    try {
+      const ok = await removeQueueItem(itemId);
+      if (ok) {
+        toast.success("Removed from queue.");
+        await Promise.all([loadQueue(jobTestId), refreshCounts()]);
+      } else {
+        toast.error("Failed to remove queue item.");
+      }
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const handleClearQueue = async (jobTestId: string) => {
+    setRemovingId("all-" + jobTestId);
+    try {
+      const ok = await clearQueueForTest(jobTestId);
+      if (ok) {
+        toast.success("Cleared all queued items.");
+        await Promise.all([loadQueue(jobTestId), refreshCounts()]);
+      } else {
+        toast.error("Failed to clear queue.");
+      }
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const refreshCounts = async () => {
+    const counts = await getActiveQueueCounts();
+    setQueueCounts(counts);
+  };
 
   const load = async () => {
     setLoading(true);
