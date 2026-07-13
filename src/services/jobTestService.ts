@@ -862,6 +862,33 @@ export const getQueueForTest = async (
   return (data || []) as JobTestQueueItem[];
 };
 
+/** Remove a single queue row (admin cancel / clear stuck item). */
+export const removeQueueItem = async (id: string): Promise<boolean> => {
+  const { error } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .delete()
+    .eq("id", id);
+  if (error) {
+    console.error("Error removing queue item:", error);
+    return false;
+  }
+  return true;
+};
+
+/** Remove ALL active (pending/processing) queue rows for a test. */
+export const clearQueueForTest = async (jobTestId: string): Promise<boolean> => {
+  const { error } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .delete()
+    .eq("job_test_id", jobTestId)
+    .in("status", ["pending", "processing"]);
+  if (error) {
+    console.error("Error clearing queue:", error);
+    return false;
+  }
+  return true;
+};
+
 /** Count of active queue rows grouped by job_test_id (for the global dashboard). */
 export const getActiveQueueCounts = async (): Promise<Record<string, number>> => {
   const { data, error } = await (supabase as any)

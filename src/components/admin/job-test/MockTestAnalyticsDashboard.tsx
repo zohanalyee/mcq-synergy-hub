@@ -12,17 +12,26 @@ import {
   ChevronDown,
   ChevronRight,
   ClipboardList,
+  X,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import {
   TestCoverageSummary,
   SectionCoverage,
+  JobTestQueueItem,
   getAllTestsCoverage,
   getActiveQueueCounts,
+  getQueueForTest,
   enqueueGeneration,
+  removeQueueItem,
+  clearQueueForTest,
   findDefinitionForTest,
 } from "@/services/jobTestService";
+
+/** A processing row older than this (ms) is treated as stuck. */
+const STUCK_MS = 10 * 60 * 1000;
 
 /**
  * Global Mock-Test Analytics Dashboard.
@@ -37,6 +46,58 @@ const MockTestAnalyticsDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [queues, setQueues] = useState<Record<string, JobTestQueueItem[]>>({});
+  const [queueLoading, setQueueLoading] = useState<Set<string>>(new Set());
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const loadQueue = async (jobTestId: string) => {
+    setQueueLoading((prev) => new Set(prev).add(jobTestId));
+    try {
+      const items = await getQueueForTest(jobTestId);
+      setQueues((prev) => ({ ...prev, [jobTestId]: items }));
+    } finally {
+      setQueueLoading((prev) => {
+        const next = new Set(prev);
+        next.delete(jobTestId);
+        return next;
+      });
+    }
+  };
+
+  const handleRemoveQueueItem = async (jobTestId: string, itemId: string) => {
+    setRemovingId(itemId);
+    try {
+      const ok = await removeQueueItem(itemId);
+      if (ok) {
+        toast.success("Removed from queue.");
+        await Promise.all([loadQueue(jobTestId), refreshCounts()]);
+      } else {
+        toast.error("Failed to remove queue item.");
+      }
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const handleClearQueue = async (jobTestId: string) => {
+    setRemovingId("all-" + jobTestId);
+    try {
+      const ok = await clearQueueForTest(jobTestId);
+      if (ok) {
+        toast.success("Cleared all queued items.");
+        await Promise.all([loadQueue(jobTestId), refreshCounts()]);
+      } else {
+        toast.error("Failed to clear queue.");
+      }
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
+  const refreshCounts = async () => {
+    const counts = await getActiveQueueCounts();
+    setQueueCounts(counts);
+  };
 
   const load = async () => {
     setLoading(true);
@@ -76,11 +137,15 @@ const MockTestAnalyticsDashboard: React.FC = () => {
     return { ready, incomplete, pending, deficit };
   }, [rows]);
 
-  const toggle = (id: string) => {
+  const toggle = (id: string, queueKey: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else {
+        next.add(id);
+        // Lazy-load queue rows when a test is expanded.
+        if (queueKey) loadQueue(queueKey);
+      }
       return next;
     });
   };
@@ -192,13 +257,18 @@ const MockTestAnalyticsDashboard: React.FC = () => {
         <div className="space-y-2">
           {rows.map((r) => {
             const cov = r.coverage;
-            const active = queueCounts[(r.test as any).definition_id || ""] || 0;
+            const queueKey = (r.test as any).definition_id || r.test.id;
+            const active = queueCounts[queueKey] || 0;
             const isOpen = expanded.has(r.test.id);
+            const queueItems = queues[queueKey] || [];
+            const activeQueueItems = queueItems.filter(
+              (q) => q.status === "pending" || q.status === "processing",
+            );
             return (
               <Card key={r.test.id} className="p-0 overflow-hidden">
                 <div className="flex flex-wrap items-center gap-3 p-3">
                   <button
-                    onClick={() => cov && toggle(r.test.id)}
+                    onClick={() => cov && toggle(r.test.id, queueKey)}
                     className="shrink-0 text-muted-foreground hover:text-foreground"
                     aria-label="Toggle details"
                   >
@@ -325,6 +395,91 @@ const MockTestAnalyticsDashboard: React.FC = () => {
                         </div>
                       ))
                     )}
+
+                    {/* Active queue rows — cancel/remove individually or clear all */}
+                    <div className="pt-2 mt-1 border-t">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs font-medium flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5" /> In queue
+                          {activeQueueItems.length > 0 && (
+                            <span className="text-muted-foreground">
+                              ({activeQueueItems.length})
+                            </span>
+                          )}
+                        </span>
+                        {activeQueueItems.length > 0 && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 gap-1 text-destructive hover:text-destructive"
+                            disabled={removingId === "all-" + queueKey}
+                            onClick={() => handleClearQueue(queueKey)}
+                          >
+                            {removingId === "all-" + queueKey ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-3.5 w-3.5" />
+                            )}
+                            Clear all
+                          </Button>
+                        )}
+                      </div>
+
+                      {queueLoading.has(queueKey) ? (
+                        <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+                          <Loader2 className="h-3 w-3 animate-spin" /> Loading queue…
+                        </p>
+                      ) : activeQueueItems.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Nothing queued.</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {activeQueueItems.map((q) => {
+                            const isStuck =
+                              q.status === "processing" &&
+                              Date.now() - new Date(q.created_at).getTime() > STUCK_MS;
+                            return (
+                              <div
+                                key={q.id}
+                                className="flex items-center gap-2 text-sm rounded-md border bg-background px-2.5 py-1.5"
+                              >
+                                <div className="flex-1 min-w-0">
+                                  <div className="font-medium truncate">{q.subject}</div>
+                                  <div className="text-xs text-muted-foreground">
+                                    target {q.target_count}
+                                    {q.attempts > 0 && <> · {q.attempts} attempt{q.attempts === 1 ? "" : "s"}</>}
+                                  </div>
+                                </div>
+                                {isStuck ? (
+                                  <Badge variant="outline" className="shrink-0 gap-1 text-amber-600 dark:text-amber-400 border-amber-500/40">
+                                    <AlertTriangle className="h-3 w-3" /> stuck
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="shrink-0 text-muted-foreground capitalize">
+                                    {q.status}
+                                  </Badge>
+                                )}
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+                                  disabled={removingId === q.id}
+                                  aria-label={`Remove ${q.subject} from queue`}
+                                  title="Cancel / remove from queue"
+                                  onClick={() => handleRemoveQueueItem(queueKey, q.id)}
+                                >
+                                  {removingId === q.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <X className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
                     <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground pt-1">
                       <ClipboardList className="h-3 w-3" />
                       Open the test in the Job Tests tab to review &amp; approve drafts.
