@@ -94,6 +94,44 @@ Deno.serve(async (req) => {
         .update({ status: "processing", attempts: (row.attempts || 0) + 1 })
         .eq("id", row.id);
 
+      // ---- Genuine-deficit guard ----
+      // A row may have been enqueued while the subject was short, but the admin
+      // (or an earlier queue run) has since filled/approved enough questions.
+      // Re-check the LIVE approved count before spending any AI. If the target
+      // is already met, skip generation entirely — zero AI call, zero credits.
+      const target = row.target_count || 0;
+      if (target > 0) {
+        const { count: approvedCount, error: countErr } = await admin
+          .from("job_test_questions")
+          .select("*", { count: "exact", head: true })
+          .eq("job_test_id", row.job_test_id)
+          .eq("subject", row.subject)
+          .eq("admin_approved", true);
+
+        if (!countErr && (approvedCount || 0) >= target) {
+          await admin
+            .from("job_test_generation_queue")
+            .update({
+              status: "done",
+              accepted_count: 0,
+              error_message: "skipped: deficit already satisfied",
+              processed_at: new Date().toISOString(),
+            })
+            .eq("id", row.id);
+          results.push({
+            id: row.id,
+            subject: row.subject,
+            status: "skipped",
+            approved: approvedCount || 0,
+            target,
+          });
+          console.log(
+            `[jobtest-queue] ⏭️ ${row.subject} — skipped (approved ${approvedCount}/${target}, no deficit)`,
+          );
+          continue;
+        }
+      }
+
       try {
         const resp = await fetch(`${supabaseUrl}/functions/v1/generate-job-test`, {
           method: "POST",
