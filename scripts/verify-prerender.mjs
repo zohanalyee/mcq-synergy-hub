@@ -181,7 +181,7 @@ for (const { type, prefix, minExtraSegments = 1 } of pageTypeChecks) {
 // This is the guard that catches "live URL returns the homepage shell".
 const BASE_URL = 'https://mcqsai.com';
 const requiredDynamicRoutes = [
-  '/mock-tests/sindh-teaching-license-exam-secondary-school-teacher',
+  '/mock-tests/sindh-teaching-license-exam-secondary-school-teacher-sst',
   '/subject-content/physics',
 ];
 let requiredFailed = 0;
