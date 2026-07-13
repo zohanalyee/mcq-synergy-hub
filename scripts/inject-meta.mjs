@@ -62,7 +62,7 @@ const supabase = SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
 const STRICT = process.env.NODE_ENV !== "development" && process.env.SEO_INJECT_STRICT !== "false";
 // SEO-critical routes that MUST exist with correct head after a production build.
 const REQUIRED_ROUTES = [
-  "/mock-tests/sindh-teaching-license-exam-secondary-school-teacher",
+  "/mock-tests/sindh-teaching-license-exam-secondary-school-teacher-sst",
   "/subject-content/physics",
 ];
 
