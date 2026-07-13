@@ -1,65 +1,83 @@
-# Part B — Test Player UI/UX + Branding Roadmap
+## Goal
 
-Implements the audit's Top-5 improvements for the Mock/Job Test player experience. **Presentation & UX only — no scoring or business-logic changes.** Built phase-by-phase; after each phase I'll report back before continuing.
+Do teen cheezein, jaisa aapne approve kiya:
 
-## Guardrails
+1. **Root-cause guard** — background job-test generation sirf tab AI call kare jab genuine deficit ho; stale/already-filled rows par AI skip.
+2. **Spend-limit setup guidance** — workspace/project-level alert + block limits set karne ke exact steps.
+3. Cron frequency abhi unchanged (guard ke baad review karenge).
 
-- Zero changes to answer-checking, scoring, quota, or submission logic (`checkAnswer`, `scorePracticeAnswers`, `processTestCompletion`, `recordJobTestProgress` untouched).
-- Existing behavior/flows stay identical; only styling, tokens, markup, and result presentation change.
-- Reuse existing brand tokens (`--brand-*`, `bg-brand-gradient`, `shadow-brand`) and shadcn primitives.
+## Findings jinpe plan bana hai
 
----
+- `scheduled-autofill` (nightly 2 AM) **pehle se deficit-guarded** hai: "already ran today" skip, `get_autofill_queue` sirf below-threshold topics deta hai, aur direct `GEMINI_API_KEY` use karta hai — **Lovable credits consume nahi karta**. Yahan change ki zaroorat nahi.
+- `process-jobtest-queue` (har 5 min) sirf tab chalta hai jab queue mein `pending` row ho (admin enqueue karta hai). Lekin ye row process karte waqt **deficit re-check nahi karta** — agar enqueue ke baad woh subject already fill/approve ho gaya, tab bhi `generate-job-test` call ho jata hai (bekar AI call). **Yahi guard add karna hai.**
+- `indexnow-submit-recent` sirf search-engine ping hai — koi AI/credit nahi.
 
-## Phase 1 — Semantic status tokens (color tokenization)
+## Part 1 — Deficit guard in `process-jobtest-queue`
 
-The player currently hardcodes `bg-blue-500`, `emerald-500`, `orange-500`, `text-white`, `red-500` etc. in `TestSession.tsx`, `QuestionCard.tsx`, `QuestionPalette.tsx`, `ExamHeader.tsx`, `ExamNavBar.tsx`.
+File: `supabase/functions/process-jobtest-queue/index.ts`
 
-- Add status tokens in `src/index.css` (light + dark): `--success`, `--success-foreground`, `--warning`, `--warning-foreground`, `--info`, `--info-foreground` (destructive already exists). Map to existing green/amber/blue hues so visuals are unchanged.
-- Register them in `tailwind.config.ts` (`success`, `warning`, `info` color families).
-- Replace hardcoded utilities in the exam components with the new tokens (e.g. selected option → `ring-info`/`bg-info/10`, answered → `bg-success`, review → `bg-warning`, correct/wrong review alerts → `border-success`/`border-destructive`).
-- Result: full dark-mode correctness and one source of truth for player colors.
+Har queued row ko `generate-job-test` call karne se **pehle**:
 
-## Phase 2 — Brand mark in player + results
+1. Us row ke `job_test_id` + `subject` ke liye current **approved** question count query karo:
+  ```text
+   count(job_test_questions) where job_test_id = row.job_test_id
+                                 and subject   = row.subject
+                                 and admin_approved = true
+  ```
+2. Agar `approved_count >= row.target_count` (aur target_count > 0):
+  - AI call **skip** karo.
+  - Row ko `status='done'`, `accepted_count=0`, `error_message='skipped: deficit already satisfied'`, `processed_at=now()` set karo.
+  - `results` mein `status:'skipped'` push karo aur log karo.
+3. Warna existing behavior — `generate-job-test` call (jo khud bhi deficit-only generate karta hai per existing precheck).
 
-- Add `BrandMark` (icon-only where space is tight) into `ExamHeader` and into the results header so the exam and result screens carry MCQSAI identity (currently generic).
-- Add `BrandMark` to `GuestResultGate` header for brand consistency on the sign-in gate.
-- Small brand-gradient accent on the results score number using existing `text-brand-gradient`.
+Edge case: agar `target_count` null/0 ho to purana behavior rakho (skip-guard tabhi lage jab target defined ho), taake koi legitimate row block na ho.
 
-## Phase 3 — Accessibility & touch targets
+Iska asar: queue drain karte waqt jo rows already-satisfied ho chuki hain unpe **zero AI call** — bekar generation/credits khud ruk jayenge. Approval abhi bhi 100% manual rahega; sirf generation skip hoti hai.
 
-- Add `aria-label`s to icon-only buttons in the player (music toggle, flag, palette trigger, exit).
-- Ensure interactive option cards in `QuestionCard` are real buttons / keyboard-operable with `focus-visible` rings (currently clickable `div`s with `onClick` only).
-- Bump tap targets to min 44×44 on mobile for palette cells, nav buttons, and flag/music controls.
-- Add `aria-live` to the timer/answered-count region and ensure a single `<main>`/heading order on the result screen.
+Deploy: function auto-deploy ho jayega; ek smoke-invoke se 200 confirm karenge.
 
-## Phase 4 — Celebration + weak-area breakdown (results)
+## Part 2 — Spend-limit setup guidance (koi code change nahi)
 
-- Add a one-shot confetti/celebration animation on pass (reuse the existing gamification confetti util already used in `processTestCompletion`; purely visual trigger on the result view).
-- Add a **"Focus Areas"** card on the result screen: compute per-subject/section accuracy from the already-graded `questions` + `answers` (no new scoring — just grouping what's shown) and list weakest sections with progress bars, styled with the new tokens. This surfaces the weak-area data inline instead of only in the AI Coach / keep-going dialog.
+Aapko exact steps doonga (screenshots-style, UI-only):
 
-## Phase 5 — Share my score
+**A. Workspace/member credit limits**
 
-- Add a **"Share my score"** button on the result screen: uses the Web Share API when available (`navigator.share`) with a graceful clipboard-copy fallback + toast.
-- Share text: score %, test name, and the site URL — brand-consistent, no PII beyond the display name the user already sees.
-- Optional lightweight shareable summary text ("I scored X% on &nbsp; at MCQSAI") — no image generation, no backend.
+- Settings → Workspace → **Default monthly member credit limit** (sab members ke liye default cap).
+- Settings → People → kisi member par **Set credit limit** (per-person override, jaise apne account par).
 
----
+**B. Spend alerts / hard block (agar aapke role ke paas billing permission hai)**
 
-## Files touched (by phase)
+- Notification limit: jab usage kisi threshold se upar jaye to turant alert.
+- Block limit: threshold par pahunchte hi further build/AI spend rok do.
+- Recommended thresholds aapke current data ke hisaab se: monthly 100-credit billing grant hai; alert ~70 par, block ~95 par set karne ka suggest karoonga. Daily 5-credit allowance ke liye ~4 par alert.
 
-- **P1:** `src/index.css`, `tailwind.config.ts`, `src/components/exam/QuestionCard.tsx`, `QuestionPalette.tsx`, `ExamHeader.tsx`, `ExamNavBar.tsx`, `src/pages/TestSession.tsx`
-- **P2:** `ExamHeader.tsx`, `TestSession.tsx`, `src/components/quiz/GuestResultGate.tsx`
-- **P3:** exam components above + `TestSession.tsx`
-- **P4:** `TestSession.tsx` (+ reuse `src/utils/gamification.ts` confetti)
-- **P5:** `TestSession.tsx` (small inline share helper)
+**C. Silent background spend note**
 
-## Verification per phase
+- Is billing period mein **Project Monitoring ne ~9.9 credits** liye (automated scanner, bina prompt). Isko Lovable project settings se manage/disable karne ka rasta bataunga agar aap chahen.
 
-- Typecheck + build after each phase.
-- Playwright screenshot of the player and result screen (light + dark) to confirm visuals unchanged where intended and improved where added.
+## Out of scope (abhi nahi)
 
-I'll implement Phase 1, report back, then continue through Phase 5 one at a time.
+- Cron frequency change (5-min / 15-min) — guard ke baad agar spend high rahe tab.
+- `scheduled-autofill` / `indexnow` mein koi change — already safe.
+
+## Verification
+
+- `process-jobtest-queue` ko ek already-filled test ke queue row ke saath test karke confirm karenge ke woh `skipped` return kare, koi `generate-job-test` call na ho (edge logs se).
+- Typecheck pass.
+  &nbsp;
+
+Add a genuine-deficit guard to process-jobtest-queue (skip AI when approved_count >= target_count), plus give exact workspace/member spend-limit setup steps. scheduled-autofill/indexnow already safe; cron frequency unchanged for now.
 
 &nbsp;
 
-**Approve B** — jaisa propose kiya hai, Phase 1 se shuru karein. Har phase k baad build/typecheck/screenshot confirm karke report karein, phir agle phase pe barhein.
+**Bohat achi report hai** — "Project Monitoring" wala scanner hi asal wajah lagta hai (9.9 credits bina prompt ke). Please:
+
+1. Mujhe exact steps dein Project Monitoring ko DISABLE ya manage karne ke — main isay band karna chahta hoon agar yeh sirf ek generic background scanner hai jo meri actual SEO/mock-test kaam ke liye zaroori nahi.
+
+2. Deficit-guard (process-jobtest-queue) implement kar dein jaisa propose kiya hai, aur smoke-test se confirm kar dein 200/skipped response aa raha hai.
+
+3. Spend-limit setup steps bhi de dein (workspace default limit + alert ~70, block ~95 monthly; daily ~4) — main khud jaake set kar loonga.                                                  
+
+&nbsp;
+
+   Project Monitoring exactly kya karta hai (kya scan/check karta hai), aur yeh kis ne aur kab enable kiya tha mere project par — kya yeh Lovable ka default-on feature hai naye projects ke liye, ya maine/kisi ne isay enable kiya tha? Please exact detail dein, phir main decide karunga disable karna hai ya rakhna hai.
