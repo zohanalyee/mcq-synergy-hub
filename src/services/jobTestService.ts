@@ -758,7 +758,7 @@ export interface JobTestQueueItem {
   job_test_id: string;
   subject: string;
   target_count: number;
-  status: "pending" | "processing" | "done" | "failed" | "skipped";
+  status: "pending" | "processing" | "done" | "failed" | "skipped" | "cancelled";
   attempts: number;
   accepted_count: number;
   error_message: string | null;
@@ -860,6 +860,25 @@ export const getQueueForTest = async (
     return [];
   }
   return (data || []) as JobTestQueueItem[];
+};
+
+/** Stop queued background generation for a test by cancelling rows not yet processing. */
+export const cancelPendingQueueForTest = async (jobTestId: string): Promise<{ success: boolean; count: number }> => {
+  const { data, error } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .update({
+      status: "cancelled",
+      error_message: "cancelled by admin",
+      processed_at: new Date().toISOString(),
+    })
+    .eq("job_test_id", jobTestId)
+    .eq("status", "pending")
+    .select("id");
+  if (error) {
+    console.error("Error cancelling pending queue:", error);
+    return { success: false, count: 0 };
+  }
+  return { success: true, count: (data || []).length };
 };
 
 /** Remove a single queue row (admin cancel / clear stuck item). */
