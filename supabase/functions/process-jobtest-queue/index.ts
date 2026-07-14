@@ -12,9 +12,11 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Keep each run small so generation trickles in without long waits / big spend.
-const BATCH_PER_RUN = 2;
+// Keep each run to ONE row. One subject can take ~60-70s; processing more than
+// one row risks Edge Function shutdown before the final row commits done/failed.
+const BATCH_PER_RUN = 1;
 const MAX_ATTEMPTS = 3;
+const STALE_PROCESSING_MS = 8 * 60 * 1000;
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -68,7 +70,39 @@ Deno.serve(async (req) => {
 
     const admin = createClient(supabaseUrl, serviceKey);
 
-    // Grab the oldest pending rows.
+    const nowIso = new Date().toISOString();
+    const staleBeforeIso = new Date(Date.now() - STALE_PROCESSING_MS).toISOString();
+
+    // Recover rows left in processing after a timed-out/shutdown invocation.
+    const { data: staleRows, error: staleFetchErr } = await admin
+      .from("job_test_generation_queue")
+      .select("*")
+      .eq("status", "processing")
+      .lt("updated_at", staleBeforeIso)
+      .limit(20);
+
+    if (staleFetchErr) throw new Error(`Fetch stale queue failed: ${staleFetchErr.message}`);
+
+    for (const stale of staleRows || []) {
+      const exhausted = (stale.attempts || 0) >= MAX_ATTEMPTS;
+      await admin
+        .from("job_test_generation_queue")
+        .update({
+          status: exhausted ? "failed" : "pending",
+          error_message: exhausted
+            ? "failed: processing timed out after max attempts"
+            : "requeued: previous processing timed out",
+          processed_at: exhausted ? nowIso : null,
+          updated_at: nowIso,
+        })
+        .eq("id", stale.id)
+        .eq("status", "processing");
+      console.log(
+        `[jobtest-queue] ♻️ ${stale.subject} — ${exhausted ? "failed" : "requeued"} stale processing row`,
+      );
+    }
+
+    // Grab the oldest pending row only.
     const { data: rows, error: fetchErr } = await admin
       .from("job_test_generation_queue")
       .select("*")
@@ -87,11 +121,48 @@ Deno.serve(async (req) => {
 
     const results: any[] = [];
 
-    for (const row of rows) {
-      // Claim the row.
+    const row = rows[0];
+
+    // Claim the row conditionally so parallel cron/browser kicks do not process
+    // the same subject twice.
+    const attempts = (row.attempts || 0) + 1;
+    const { data: claimed, error: claimErr } = await admin
+      .from("job_test_generation_queue")
+      .update({
+        status: "processing",
+        attempts,
+        error_message: null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", row.id)
+      .eq("status", "pending")
+      .select("*")
+      .maybeSingle();
+
+    if (claimErr) throw new Error(`Claim queue failed: ${claimErr.message}`);
+
+    if (!claimed) {
+      return new Response(
+        JSON.stringify({ processed: 0, message: "Queue item already claimed" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    {
+      const row = claimed;
+
+      // A row could be cancelled between fetch and claim in future variants.
+      if (row.status === "cancelled") {
+        return new Response(
+          JSON.stringify({ processed: 0, message: "Queue item cancelled" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      // Record the processing heartbeat immediately for realtime UI.
       await admin
         .from("job_test_generation_queue")
-        .update({ status: "processing", attempts: (row.attempts || 0) + 1 })
+        .update({ updated_at: new Date().toISOString() })
         .eq("id", row.id);
 
       // ---- Genuine-deficit guard ----
@@ -116,6 +187,7 @@ Deno.serve(async (req) => {
               accepted_count: 0,
               error_message: "skipped: deficit already satisfied",
               processed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
             })
             .eq("id", row.id);
           results.push({
@@ -166,6 +238,7 @@ Deno.serve(async (req) => {
             accepted_count: accepted,
             error_message: null,
             processed_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
           })
           .eq("id", row.id);
 
@@ -173,7 +246,7 @@ Deno.serve(async (req) => {
         console.log(`[jobtest-queue] ✅ ${row.subject} — accepted ${accepted}`);
       } catch (e) {
         const msg = (e as Error).message;
-        const attempts = (row.attempts || 0) + 1;
+        const attempts = row.attempts || 1;
         const finalFail = attempts >= MAX_ATTEMPTS;
         await admin
           .from("job_test_generation_queue")
@@ -181,6 +254,7 @@ Deno.serve(async (req) => {
             status: finalFail ? "failed" : "pending",
             error_message: msg,
             processed_at: finalFail ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString(),
           })
           .eq("id", row.id);
         results.push({
@@ -191,7 +265,6 @@ Deno.serve(async (req) => {
         });
         console.error(`[jobtest-queue] ❌ ${row.subject}: ${msg}`);
       }
-    }
 
     return new Response(
       JSON.stringify({ processed: results.length, results }),
