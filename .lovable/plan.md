@@ -1,53 +1,54 @@
-# Queue Cancel/Remove + Stuck-Row Cleanup
+## Plan
 
-## Problem (confirmed)
+### 1. Add live progress in both admin views
 
-Test `aeaaeaf0-...` par "2 in queue" isliye dikh raha hai kyunki do rows — **Chemistry** aur **Logical Reasoning** — `status='processing'` mein atki hain (cron ne claim kiya lekin result commit nahi hua). Cron sirf `pending` rows process karta hai, isliye naya deficit-guard inhein auto-clear nahi karega. Manual clear chahiye.
+- In **Mock Test Analytics**, subscribe to `job_test_generation_queue` Realtime changes.
+- In the individual test **Section Coverage Dashboard**, subscribe to the same table filtered by the current `jobTestId`.
+- On every queue insert/update/delete, refresh:
+  - active queue list
+  - in-queue counts
+  - coverage totals
+- Show clearer row states: `pending`, `processing`, `done/skipped/failed`, plus accepted count / error when available.
+- Keep the existing polling as a fallback, but Realtime will drive the UI so refresh is not needed.
 
-## What I'll build
+### 2. Fix the systemic “last item stuck” root cause
 
-### 1. Service function — `removeQueueItem` (`src/services/jobTestService.ts`)
+- Update `process-jobtest-queue` so each invocation processes **one queue row only** instead of a batch of two.
+- Reason: logs show successful subject generation can take ~60–70s; processing multiple rows in one Edge Function run risks Supabase execution shutdown before the final status commit. The current logs also show shutdown right after processing, matching a timeout window.
+- Add a stale-processing recovery step at the start of each run:
+  - rows stuck in `processing` beyond a safe threshold get moved back to `pending` if attempts remain
+  - rows past max attempts become `failed`
+- Use conditional claim logic (`pending` → `processing`) to avoid two cron/browser kicks claiming the same row.
+- Ensure every path awaits the final status update before returning.
+- Keep the existing deficit guard so already-complete subjects are marked `skipped` without spending AI.
 
-- New export `removeQueueItem(id: string)` → `DELETE from job_test_generation_queue where id = <id>`.
-- RLS already allows admin (`is_admin()` ALL policy), so delete works for admins.
-- Returns `boolean` success.
-- (Optional helper) `removeStuckQueueForTest(jobTestId)` to delete all active rows for a test — powers a "Clear all queued" action.
+### 3. Add master stop/cancel for a test
 
-### 2. Analytics dashboard UI (`src/components/admin/job-test/MockTestAnalyticsDashboard.tsx`)
+- Add a service method that cancels all **pending** rows for one test.
+- Do not delete or cancel currently `processing` rows by default, because an Edge Function may already be running and deleting that row cannot stop the in-flight AI call reliably.
+- Add a **Stop background generation** button in:
+  - Mock Test Analytics expanded queue area
+  - individual Section Coverage Dashboard queue area
+- The button will immediately mark/delete all pending rows for that test, refresh live UI, and leave the current processing row to finish/fail safely.
 
-When a test row is expanded (jahan already per-subject deficits dikhte hain), ek naya **"In queue"** block add karunga jo active (`pending`/`processing`) rows list karega:
+### 4. Database / Realtime compatibility
 
-- Har row: subject naam + status chip (`pending` / `processing`; agar `processing` aur >10 min purani ho to **"stuck"** amber chip).
-- Har row k saamne ek **Cancel/Remove** button (X icon), confirm ke baad `removeQueueItem` call karega, phir `load()` se counts + coverage refresh.
-- Block ke top par **"Clear all queued"** button (jab 1+ active rows hon).
-- Rows lazily fetch: expand par `getQueueForTest(jobTestId)` call, local state mein store, remove/refresh par re-fetch.
-- Loading/empty states + `sonner` toast success/error (existing pattern ke mutabiq).
+- Realtime is already enabled for `job_test_generation_queue`, so no schema migration is needed unless existing RLS blocks the current admin update/delete operations.
+- I’ll keep changes inside frontend service/components and the existing Edge Function.
 
-### 3. Immediate cleanup of the 2 stuck rows
+### 5. Validation
 
-Deploy ke baad aap dashboard se X button daba kar clear kar sakte hain. Chahein to main abhi in dono rows ko ek `DELETE` se turant clear kar dun (`id` = Chemistry `aa13f250-...`, Logical Reasoning `c397d428-...`) taake "2 in queue" foran 0 ho jaye — build mode mein confirm karke.
+- Check current active queue rows and logs again after implementation.
+- Deploy/test the updated `process-jobtest-queue` function.
+- Verify that queue status transitions update in UI without manual refresh and that pending rows can be stopped in one click.
+  &nbsp;
 
-## Out of scope
+**Plan approved** — sab kuch implement karein jaisa propose kiya hai:
 
-- Cron frequency / generate-job-test logic unchanged.
-- Approval flow untouched (100% manual rehta hai).
-- Branding: existing tokens, Card/Badge/Button components, aur density (h-8, gap patterns) hi use honge — koi naya color/font nahi.
+1. Realtime live progress (dono dashboards mein)
 
-## Technical notes
+2. Root-cause fix: batch-size 1 kar dein, stale-processing recovery add karein
 
-- `getActiveQueueCounts` aur `getQueueForTest` already exist; sirf delete + UI add karna hai.
-- Brand consistency: amber "stuck" chip usi `amber-500/*` token scheme ka use karega jo dashboard mein pehle se hai.
+3. Master "Stop background generation" button (pending rows ke liye; processing wale ko safely finish hone dein)
 
-Plan approved. Please:
-
-&nbsp;
-
-1. Abhi turant un 2 stuck rows ko clear kar dein (Chemistry aa13f250... aur Logical Reasoning c397d428...) taake is test ka "2 in queue" foran 0 ho jaye.
-
-&nbsp;
-
-2. Phir UI build karein — removeQueueItem service, per-row Cancel/X button, "Clear all queued" button, aur "stuck" amber chip (>10 min processing wale items k liye).
-
-&nbsp;
-
-Build/typecheck clean hone k baad batayen, review kar k publish karunga.
+Implementation ke baad, purane atke hue rows dobara check kar lein aur function dobara deploy/test karein. Build/typecheck clean hone ke baad batayen, review kar ke publish karunga.
