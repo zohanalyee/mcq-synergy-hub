@@ -14,9 +14,11 @@ import {
   ClipboardList,
   X,
   Trash2,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
   TestCoverageSummary,
   SectionCoverage,
@@ -27,6 +29,7 @@ import {
   enqueueGeneration,
   removeQueueItem,
   clearQueueForTest,
+  cancelPendingQueueForTest,
   findDefinitionForTest,
 } from "@/services/jobTestService";
 
@@ -49,6 +52,7 @@ const MockTestAnalyticsDashboard: React.FC = () => {
   const [queues, setQueues] = useState<Record<string, JobTestQueueItem[]>>({});
   const [queueLoading, setQueueLoading] = useState<Set<string>>(new Set());
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [stoppingId, setStoppingId] = useState<string | null>(null);
 
   const loadQueue = async (jobTestId: string) => {
     setQueueLoading((prev) => new Set(prev).add(jobTestId));
@@ -94,6 +98,25 @@ const MockTestAnalyticsDashboard: React.FC = () => {
     }
   };
 
+  const handleStopBackground = async (jobTestId: string) => {
+    setStoppingId(jobTestId);
+    try {
+      const res = await cancelPendingQueueForTest(jobTestId);
+      if (res.success) {
+        toast.success(
+          res.count > 0
+            ? `Stopped ${res.count} pending queue item${res.count === 1 ? "" : "s"}. Current processing item will finish safely.`
+            : "No pending queue items to stop.",
+        );
+        await Promise.all([loadQueue(jobTestId), refreshCounts(), load()]);
+      } else {
+        toast.error("Failed to stop background generation.");
+      }
+    } finally {
+      setStoppingId(null);
+    }
+  };
+
   const refreshCounts = async () => {
     const counts = await getActiveQueueCounts();
     setQueueCounts(counts);
@@ -112,6 +135,17 @@ const MockTestAnalyticsDashboard: React.FC = () => {
       );
       setRows(data);
       setQueueCounts(counts);
+
+      const activeKeys = Object.keys(counts).filter((key) => counts[key] > 0).slice(0, 20);
+      if (activeKeys.length > 0) {
+        const activeQueues = await Promise.all(
+          activeKeys.map(async (key) => [key, await getQueueForTest(key)] as const),
+        );
+        setQueues((prev) => ({
+          ...prev,
+          ...Object.fromEntries(activeQueues),
+        }));
+      }
     } finally {
       setLoading(false);
     }
@@ -119,6 +153,28 @@ const MockTestAnalyticsDashboard: React.FC = () => {
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Realtime queue updates: dashboard counts and expanded rows update without refresh.
+  useEffect(() => {
+    const channel = supabase
+      .channel("jobtest-generation-queue-dashboard")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "job_test_generation_queue" },
+        (payload) => {
+          const changed = ((payload.new || payload.old) as any)?.job_test_id;
+          refreshCounts();
+          load();
+          if (changed) loadQueue(changed);
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -264,6 +320,8 @@ const MockTestAnalyticsDashboard: React.FC = () => {
             const activeQueueItems = queueItems.filter(
               (q) => q.status === "pending" || q.status === "processing",
             );
+            const processingQueueItem = activeQueueItems.find((q) => q.status === "processing");
+            const pendingQueueCount = activeQueueItems.filter((q) => q.status === "pending").length;
             return (
               <Card key={r.test.id} className="p-0 overflow-hidden">
                 <div className="flex flex-wrap items-center gap-3 p-3">
@@ -308,8 +366,27 @@ const MockTestAnalyticsDashboard: React.FC = () => {
 
                       {active > 0 && (
                         <Badge variant="outline" className="shrink-0 gap-1 text-primary border-primary/40">
-                          <Loader2 className="h-3 w-3 animate-spin" /> {active} in queue
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                          {processingQueueItem ? `Processing ${processingQueueItem.subject}` : `${active} in queue`}
                         </Badge>
+                      )}
+
+                      {active > 0 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="shrink-0 gap-1 text-destructive hover:text-destructive"
+                          disabled={stoppingId === queueKey}
+                          onClick={() => handleStopBackground(queueKey)}
+                          title="Cancel all pending background generation for this test"
+                        >
+                          {stoppingId === queueKey ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <XCircle className="h-3.5 w-3.5" />
+                          )}
+                          Stop
+                        </Button>
                       )}
 
                       {cov.ready ? (
@@ -433,6 +510,27 @@ const MockTestAnalyticsDashboard: React.FC = () => {
                         <p className="text-xs text-muted-foreground">Nothing queued.</p>
                       ) : (
                         <div className="space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2 rounded-md border border-primary/30 bg-primary/5 px-2.5 py-1.5 text-xs">
+                            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                            <span className="font-medium">
+                              {processingQueueItem ? `Processing ${processingQueueItem.subject}…` : `${activeQueueItems.length} queued…`}
+                            </span>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="ml-auto h-7 gap-1 text-destructive hover:text-destructive"
+                              disabled={stoppingId === queueKey || pendingQueueCount === 0}
+                              onClick={() => handleStopBackground(queueKey)}
+                              title="Cancel all pending background generation for this test"
+                            >
+                              {stoppingId === queueKey ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <XCircle className="h-3.5 w-3.5" />
+                              )}
+                              Stop background
+                            </Button>
+                          </div>
                           {activeQueueItems.map((q) => {
                             const isStuck =
                               q.status === "processing" &&
