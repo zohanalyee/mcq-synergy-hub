@@ -205,6 +205,41 @@ Deno.serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
+
+        // Idempotency guard: if a previous invocation inserted draft questions
+        // but timed out before committing queue status, do not spend AI again.
+        const { count: totalExistingCount, error: totalCountErr } = await admin
+          .from("job_test_questions")
+          .select("*", { count: "exact", head: true })
+          .eq("job_test_id", row.job_test_id)
+          .eq("subject", row.subject);
+
+        if (!totalCountErr && (totalExistingCount || 0) >= target) {
+          await admin
+            .from("job_test_generation_queue")
+            .update({
+              status: "done",
+              accepted_count: 0,
+              error_message: "skipped: generated drafts already cover target; review pending",
+              processed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", row.id);
+          results.push({
+            id: row.id,
+            subject: row.subject,
+            status: "skipped",
+            existing: totalExistingCount || 0,
+            target,
+          });
+          console.log(
+            `[jobtest-queue] ⏭️ ${row.subject} — skipped (existing drafts ${totalExistingCount}/${target}, no duplicate AI)`,
+          );
+          return new Response(
+            JSON.stringify({ processed: results.length, results }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
       }
 
       try {
