@@ -371,6 +371,24 @@ const MockTestAnalyticsDashboard: React.FC = () => {
                         </Badge>
                       )}
 
+                      {active > 0 && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="shrink-0 gap-1 text-destructive hover:text-destructive"
+                          disabled={stoppingId === queueKey}
+                          onClick={() => handleStopBackground(queueKey)}
+                          title="Cancel all pending background generation for this test"
+                        >
+                          {stoppingId === queueKey ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <XCircle className="h-3.5 w-3.5" />
+                          )}
+                          Stop
+                        </Button>
+                      )}
+
                       {cov.ready ? (
                         <Badge className="shrink-0 gap-1 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30" variant="outline">
                           <CheckCircle2 className="h-3.5 w-3.5" /> Ready
