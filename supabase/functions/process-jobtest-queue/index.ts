@@ -200,7 +200,10 @@ Deno.serve(async (req) => {
           console.log(
             `[jobtest-queue] ⏭️ ${row.subject} — skipped (approved ${approvedCount}/${target}, no deficit)`,
           );
-          continue;
+          return new Response(
+            JSON.stringify({ processed: results.length, results }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
         }
       }
 
@@ -265,6 +268,7 @@ Deno.serve(async (req) => {
         });
         console.error(`[jobtest-queue] ❌ ${row.subject}: ${msg}`);
       }
+    }
 
     return new Response(
       JSON.stringify({ processed: results.length, results }),
