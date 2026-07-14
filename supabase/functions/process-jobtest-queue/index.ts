@@ -18,6 +18,28 @@ const BATCH_PER_RUN = 1;
 const MAX_ATTEMPTS = 3;
 const STALE_PROCESSING_MS = 8 * 60 * 1000;
 
+async function kickNextIfPending(admin: any, supabaseUrl: string, serviceKey: string) {
+  const { count } = await admin
+    .from("job_test_generation_queue")
+    .select("id", { count: "exact", head: true })
+    .eq("status", "pending")
+    .limit(1);
+
+  if ((count || 0) <= 0) return;
+
+  // Fire-and-forget: the next invocation handles one row, keeping each run
+  // under the Edge Function execution window while still draining the queue.
+  fetch(`${supabaseUrl}/functions/v1/process-jobtest-queue`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${serviceKey}`,
+      "x-admin-trigger": "true",
+    },
+    body: JSON.stringify({ chained: true }),
+  }).catch((e) => console.error("[jobtest-queue] next-kick failed:", e?.message || e));
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -200,6 +222,7 @@ Deno.serve(async (req) => {
           console.log(
             `[jobtest-queue] ⏭️ ${row.subject} — skipped (approved ${approvedCount}/${target}, no deficit)`,
           );
+          await kickNextIfPending(admin, supabaseUrl, serviceKey);
           return new Response(
             JSON.stringify({ processed: results.length, results }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -235,6 +258,7 @@ Deno.serve(async (req) => {
           console.log(
             `[jobtest-queue] ⏭️ ${row.subject} — skipped (existing drafts ${totalExistingCount}/${target}, no duplicate AI)`,
           );
+          await kickNextIfPending(admin, supabaseUrl, serviceKey);
           return new Response(
             JSON.stringify({ processed: results.length, results }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -304,6 +328,8 @@ Deno.serve(async (req) => {
         console.error(`[jobtest-queue] ❌ ${row.subject}: ${msg}`);
       }
     }
+
+    await kickNextIfPending(admin, supabaseUrl, serviceKey);
 
     return new Response(
       JSON.stringify({ processed: results.length, results }),
