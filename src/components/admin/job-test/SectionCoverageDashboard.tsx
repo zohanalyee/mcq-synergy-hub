@@ -3,17 +3,20 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, AlertTriangle, Loader2, Sparkles, RefreshCw, Clock } from "lucide-react";
+import { CheckCircle2, AlertTriangle, Loader2, Sparkles, RefreshCw, Clock, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 import {
   JobSyllabusSection,
   SectionCoverage,
   TestCoverage,
+  JobTestQueueItem,
   getSectionCoverage,
   generateAllSections,
   enqueueGeneration,
   getQueueForTest,
+  cancelPendingQueueForTest,
 } from "@/services/jobTestService";
 
 interface Props {
@@ -34,7 +37,9 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [queueActive, setQueueActive] = useState(0);
+  const [queueItems, setQueueItems] = useState<JobTestQueueItem[]>([]);
   const [enqueuing, setEnqueuing] = useState(false);
+  const [stopping, setStopping] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -42,6 +47,7 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
       const c = await getSectionCoverage(jobTestId, sections);
       setCoverage(c);
       const queue = await getQueueForTest(jobTestId);
+      setQueueItems(queue);
       setQueueActive(queue.filter((q) => q.status === "pending" || q.status === "processing").length);
     } finally {
       setLoading(false);
@@ -50,6 +56,31 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
 
   useEffect(() => {
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jobTestId, sections.length]);
+
+  // Realtime queue updates: status changes appear without manual refresh.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`jobtest-queue-${jobTestId}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "job_test_generation_queue",
+          filter: `job_test_id=eq.${jobTestId}`,
+        },
+        () => {
+          load();
+          onGenerated?.();
+        },
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [jobTestId, sections.length]);
 
@@ -96,6 +127,25 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
     }
   };
 
+  const handleStopBackground = async () => {
+    setStopping(true);
+    try {
+      const r = await cancelPendingQueueForTest(jobTestId);
+      if (r.success) {
+        toast.success(
+          r.count > 0
+            ? `Stopped ${r.count} pending queue item${r.count === 1 ? "" : "s"}. Current processing item will finish safely.`
+            : "No pending queue items to stop.",
+        );
+        await load();
+      } else {
+        toast.error("Failed to stop background generation.");
+      }
+    } finally {
+      setStopping(false);
+    }
+  };
+
 
   const handleGenerateAll = async () => {
     if (sections.length === 0) {
@@ -131,6 +181,9 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
   };
 
   const incompleteCount = coverage?.sections.filter((s) => !s.complete).length ?? 0;
+  const activeQueueItems = queueItems.filter((q) => q.status === "pending" || q.status === "processing");
+  const pendingQueueCount = activeQueueItems.filter((q) => q.status === "pending").length;
+  const processingQueueItem = activeQueueItems.find((q) => q.status === "processing");
 
   return (
     <Card className="p-4 space-y-4 border-primary/20">
@@ -166,6 +219,19 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
             {enqueuing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
             Generate in Background
           </Button>
+          {queueActive > 0 && (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleStopBackground}
+              disabled={stopping || pendingQueueCount === 0}
+              className="gap-1.5 text-destructive hover:text-destructive"
+              title="Cancel all pending background generation for this test"
+            >
+              {stopping ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="h-4 w-4" />}
+              Stop Background
+            </Button>
+          )}
           <Button size="sm" onClick={handleGenerateAll} disabled={generating || loading} className="gap-1.5">
             {generating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
             Generate Now
@@ -174,14 +240,27 @@ export const SectionCoverageDashboard: React.FC<Props> = ({ jobTestId, sections,
       </div>
 
       {queueActive > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
-          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
-          <span className="font-medium">
-            {queueActive} section{queueActive === 1 ? "" : "s"} generating in the background…
-          </span>
-          <span className="text-muted-foreground">
-            Drafts appear below as they finish — approval stays manual.
-          </span>
+        <div className="space-y-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+            <span className="font-medium">
+              {processingQueueItem ? `Processing ${processingQueueItem.subject}…` : `${queueActive} section${queueActive === 1 ? "" : "s"} queued…`}
+            </span>
+            <span className="text-muted-foreground">
+              Drafts appear below as they finish — approval stays manual.
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {activeQueueItems.slice(0, 6).map((q) => (
+              <Badge key={q.id} variant="outline" className="gap-1 capitalize bg-background/60">
+                {q.status === "processing" && <Loader2 className="h-3 w-3 animate-spin" />}
+                {q.subject}: {q.status}
+              </Badge>
+            ))}
+            {activeQueueItems.length > 6 && (
+              <Badge variant="outline" className="bg-background/60">+{activeQueueItems.length - 6} more</Badge>
+            )}
+          </div>
         </div>
       )}
 
