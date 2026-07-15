@@ -15,6 +15,7 @@ import {
   findDefinitionForTest,
   getApprovedQuestionsForDefinition,
   getEffectiveSyllabus,
+  getUserSeenJobTestQuestionIds,
 } from "@/services/jobTestService";
 import {
   fetchJobTestProgress,
@@ -105,18 +106,39 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
           distributable--;
         }
 
-        // Sample approved questions per subject
+        // Phase 1 — Per-user repeat-attempt freshness.
+        // Fetch IDs already seen by this user in past attempts of THIS test
+        // (rolling last 20 sessions). Prefer unseen first, fall back to seen
+        // only when unseen pool cannot fulfil the per-subject quota.
+        const seenIds = await getUserSeenJobTestQuestionIds(test.title, 20);
+        const freshCount = approved.filter((q) => !seenIds.has(q.id)).length;
+        if (seenIds.size > 0) {
+          console.log(
+            `🔄 Repeat-attempt freshness: ${seenIds.size} seen, ${freshCount}/${approved.length} fresh candidates for "${test.title}"`,
+          );
+        }
+
+        // Sample approved questions per subject — fresh-first, then seen.
         const picked: any[] = [];
         const shuffle = <T,>(arr: T[]) => arr.map((v) => [Math.random(), v] as const).sort((a, b) => a[0] - b[0]).map(([, v]) => v);
         for (const [subj, count] of quotas.entries()) {
-          const pool = shuffle(approved.filter((q) => q.subject === subj));
-          picked.push(...pool.slice(0, count));
+          const subjectPool = approved.filter((q) => q.subject === subj);
+          const fresh = shuffle(subjectPool.filter((q) => !seenIds.has(q.id)));
+          const seen = shuffle(subjectPool.filter((q) => seenIds.has(q.id)));
+          picked.push(...fresh.slice(0, count));
+          const shortBy = count - Math.min(fresh.length, count);
+          if (shortBy > 0) picked.push(...seen.slice(0, shortBy));
         }
-        // Fill remaining from any approved if quotas under-delivered
+        // Fill remaining from any approved if quotas under-delivered (fresh-first)
         if (picked.length < targetCount) {
           const usedIds = new Set(picked.map((q) => q.id));
-          const fill = shuffle(approved.filter((q) => !usedIds.has(q.id)));
-          picked.push(...fill.slice(0, targetCount - picked.length));
+          const remainder = approved.filter((q) => !usedIds.has(q.id));
+          const fillFresh = shuffle(remainder.filter((q) => !seenIds.has(q.id)));
+          const fillSeen = shuffle(remainder.filter((q) => seenIds.has(q.id)));
+          picked.push(...fillFresh.slice(0, targetCount - picked.length));
+          if (picked.length < targetCount) {
+            picked.push(...fillSeen.slice(0, targetCount - picked.length));
+          }
         }
 
         const finalQuestions = picked.map((q) => ({
