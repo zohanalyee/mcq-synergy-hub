@@ -370,6 +370,44 @@ export const getApprovedQuestionsForDefinition = async (
   return (data || []) as JobTestQuestion[];
 };
 
+// ============================================================
+// Phase 1 — Per-user repeat-attempt freshness for Mock Tests.
+// Fetches the question-IDs a signed-in user has already seen in this
+// specific job test's past attempts (from custom_test_sessions), so
+// JobTestsTab can PREFER unseen questions on repeat attempts.
+// Rolling window: last N sessions for the same test title.
+// Returns [] for guests / on any error (non-fatal).
+// ============================================================
+export const getUserSeenJobTestQuestionIds = async (
+  testTitle: string,
+  windowSize = 20,
+): Promise<Set<string>> => {
+  const seen = new Set<string>();
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const uid = sessionData?.session?.user?.id;
+    if (!uid || !testTitle) return seen;
+    const { data, error } = await supabase
+      .from("custom_test_sessions")
+      .select("questions")
+      .eq("user_id", uid)
+      .eq("session_name", `Job Test: ${testTitle}`)
+      .order("created_at", { ascending: false })
+      .limit(Math.max(1, windowSize));
+    if (error || !data) return seen;
+    for (const row of data) {
+      const qs = (row as any).questions as any[];
+      if (Array.isArray(qs)) {
+        for (const q of qs) if (q?.id) seen.add(String(q.id));
+      }
+    }
+  } catch (e) {
+    console.warn("getUserSeenJobTestQuestionIds (non-fatal):", e);
+  }
+  return seen;
+};
+
+
 // ---------- Public Questions Preview (multi-source) ----------
 
 export interface PreviewQuestion {
