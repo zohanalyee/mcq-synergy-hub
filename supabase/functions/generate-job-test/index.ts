@@ -328,6 +328,186 @@ async function generateForSection(
       accepted: 0,
       inserted: 0,
       reused: existingApproved,
+      cross_reused: 0,
+      status: "reused",
+    };
+  }
+
+  // ===== PHASE 3 — Cross-source LINK-only reuse layer =====
+  // Before spending any AI credits, pull matching questions from:
+  //   (a) content_items (board bank) — subject match, approved MCQs
+  //   (b) job_test_questions — same subject, OTHER mock tests, admin-approved
+  // Rotation: usage_count ASC, last_used_at ASC NULLS FIRST (least-recently-used first).
+  // Session-level 1-per-concept-group so each test gets variety, not duplicates.
+  // Copies are inserted as NEW rows in this job_test's pool (LINK-only, no delete).
+  const seenGroups = new Set<string>();
+  let crossReused = 0;
+  const reuseInsertRows: any[] = [];
+  const ciSourceIdsToBump: string[] = [];
+  const jtqSourceIdsToBump: string[] = [];
+
+  const { data: existingRows } = await supabase
+    .from("job_test_questions")
+    .select("question, concept_group_id")
+    .eq("job_test_id", jobTestId)
+    .eq("subject", section.subject);
+  const existingQuestions = new Set(
+    (existingRows || []).map((r: any) => String(r.question || "").trim().toLowerCase()),
+  );
+  for (const r of existingRows || []) {
+    if (r.concept_group_id) seenGroups.add(r.concept_group_id);
+  }
+
+  const need = deficit;
+
+  // (a) content_items pool
+  try {
+    const { data: ciPool } = await supabase
+      .from("content_items")
+      .select("id, title, options, correct_option, explanation, difficulty, topic, concept_group_id")
+      .eq("category", "mcq")
+      .eq("status", "approved")
+      .eq("subject", section.subject)
+      .order("usage_count", { ascending: true, nullsFirst: true })
+      .order("last_used_at", { ascending: true, nullsFirst: true })
+      .limit(need * 4);
+
+    for (const row of ciPool || []) {
+      if (reuseInsertRows.length >= need) break;
+      const qtext = String(row.title || "").trim();
+      if (!qtext) continue;
+      if (existingQuestions.has(qtext.toLowerCase())) continue;
+      if (row.concept_group_id && seenGroups.has(row.concept_group_id)) continue;
+      const opts = row.options || {};
+      if (!opts.A || !opts.B || !opts.C || !opts.D) continue;
+      const correct = String(row.correct_option || "").toUpperCase();
+      if (!["A", "B", "C", "D"].includes(correct)) continue;
+      const diff = ["easy", "medium", "hard"].includes(String(row.difficulty || "").toLowerCase())
+        ? String(row.difficulty).toLowerCase()
+        : "medium";
+      reuseInsertRows.push({
+        job_test_id: jobTestId,
+        subject: section.subject,
+        topic: row.topic || null,
+        question: qtext,
+        options: opts,
+        correct_answer: correct,
+        explanation: row.explanation || "",
+        difficulty: diff,
+        generation_batch: batchNumber,
+        admin_approved: true,
+        concept_group_id: row.concept_group_id || null,
+        reused_from_content_item_id: row.id,
+      });
+      existingQuestions.add(qtext.toLowerCase());
+      if (row.concept_group_id) seenGroups.add(row.concept_group_id);
+      ciSourceIdsToBump.push(row.id);
+    }
+  } catch (e) {
+    console.warn(`[REUSE] CI pool query failed:`, (e as Error).message);
+  }
+
+  // (b) other-job-test JTQ pool
+  if (reuseInsertRows.length < need) {
+    try {
+      const { data: jtqPool } = await supabase
+        .from("job_test_questions")
+        .select("id, question, options, correct_answer, explanation, difficulty, topic, concept_group_id")
+        .eq("admin_approved", true)
+        .eq("subject", section.subject)
+        .neq("job_test_id", jobTestId)
+        .order("usage_count", { ascending: true, nullsFirst: true })
+        .order("last_used_at", { ascending: true, nullsFirst: true })
+        .limit(need * 4);
+
+      for (const row of jtqPool || []) {
+        if (reuseInsertRows.length >= need) break;
+        const qtext = String(row.question || "").trim();
+        if (!qtext) continue;
+        if (existingQuestions.has(qtext.toLowerCase())) continue;
+        if (row.concept_group_id && seenGroups.has(row.concept_group_id)) continue;
+        const opts = row.options || {};
+        if (!opts.A || !opts.B || !opts.C || !opts.D) continue;
+        const correct = String(row.correct_answer || "").toUpperCase();
+        if (!["A", "B", "C", "D"].includes(correct)) continue;
+        const diff = ["easy", "medium", "hard"].includes(String(row.difficulty || "").toLowerCase())
+          ? String(row.difficulty).toLowerCase()
+          : "medium";
+        reuseInsertRows.push({
+          job_test_id: jobTestId,
+          subject: section.subject,
+          topic: row.topic || null,
+          question: qtext,
+          options: opts,
+          correct_answer: correct,
+          explanation: row.explanation || "",
+          difficulty: diff,
+          generation_batch: batchNumber,
+          admin_approved: true,
+          concept_group_id: row.concept_group_id || null,
+          reused_from_content_item_id: null,
+        });
+        existingQuestions.add(qtext.toLowerCase());
+        if (row.concept_group_id) seenGroups.add(row.concept_group_id);
+        jtqSourceIdsToBump.push(row.id);
+      }
+    } catch (e) {
+      console.warn(`[REUSE] JTQ pool query failed:`, (e as Error).message);
+    }
+  }
+
+  if (reuseInsertRows.length > 0) {
+    const { error: reuseErr } = await supabase
+      .from("job_test_questions")
+      .insert(reuseInsertRows);
+    if (reuseErr) {
+      console.error(`[REUSE] insert failed:`, reuseErr.message);
+    } else {
+      crossReused = reuseInsertRows.length;
+      console.log(`[REUSE] ✅ ${section.subject}: linked ${crossReused} question(s) from cross-source pool`);
+      // Bump usage counters on CI source rows (best-effort).
+      if (ciSourceIdsToBump.length > 0) {
+        try {
+          await supabase.rpc("record_question_usage", { question_ids: ciSourceIdsToBump });
+        } catch (_e) { /* ignore */ }
+      }
+      // Bump last_used_at on JTQ source rows for LRU rotation.
+      if (jtqSourceIdsToBump.length > 0) {
+        try {
+          await supabase
+            .from("job_test_questions")
+            .update({ last_used_at: new Date().toISOString() })
+            .in("id", jtqSourceIdsToBump);
+        } catch (_e) { /* ignore */ }
+      }
+    }
+  }
+
+  const aiDeficit = Math.max(0, deficit - crossReused);
+  if (aiDeficit === 0) {
+    await supabase.from("job_test_generation_logs").insert({
+      job_test_id: jobTestId,
+      subject: section.subject,
+      requested_count: deficit,
+      difficulty: "mixed",
+      generated_count: 0,
+      accepted_count: 0,
+      rejected_count: 0,
+      rejection_reasons: { reused_from_db: existingApproved, cross_reused: crossReused },
+      api_calls_made: 0,
+      generation_time_seconds: 0,
+      status: "success",
+      error_message: null,
+    });
+    console.log(`[REUSE] ✅ ${section.subject}: full deficit covered by cross-source reuse, AI skipped`);
+    return {
+      subject: section.subject,
+      requested: target,
+      generated: 0,
+      accepted: 0,
+      inserted: crossReused,
+      reused: existingApproved,
+      cross_reused: crossReused,
       status: "reused",
     };
   }
