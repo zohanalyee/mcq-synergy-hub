@@ -518,8 +518,8 @@ async function generateForSection(
   let generated = 0;
   let stopEarly = false;
 
-  for (let batch = 0; batch < MAX_BATCHES && accepted.length < deficit && !stopEarly; batch++) {
-    const remaining = deficit - accepted.length;
+  for (let batch = 0; batch < MAX_BATCHES && accepted.length < aiDeficit && !stopEarly; batch++) {
+    const remaining = aiDeficit - accepted.length;
     const want = Math.min(BATCH_SIZE, remaining);
     const prompt = buildPrompt(section, samples, want, examLabel);
 
@@ -547,7 +547,7 @@ async function generateForSection(
     console.log(`[BATCH ${batch + 1}] Parsed ${parsed.length} questions from response`);
 
     for (const q of parsed) {
-      if (accepted.length >= deficit) break;
+      if (accepted.length >= aiDeficit) break;
       if (!isStructurallyValid(q)) {
         rejectionReasons["invalid_structure"] = (rejectionReasons["invalid_structure"] || 0) + 1;
         continue;
@@ -574,9 +574,9 @@ async function generateForSection(
       });
     }
 
-    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${deficit}`);
+    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${aiDeficit}`);
 
-    if (batch < MAX_BATCHES - 1 && accepted.length < deficit && !stopEarly) {
+    if (batch < MAX_BATCHES - 1 && accepted.length < aiDeficit && !stopEarly) {
       await new Promise((r) => setTimeout(r, DELAY_BETWEEN_BATCHES_MS));
     }
   }
@@ -597,9 +597,9 @@ async function generateForSection(
 
   const elapsed = Math.floor((Date.now() - startedAt) / 1000);
   const status =
-    accepted.length === 0
+    accepted.length === 0 && crossReused === 0
       ? "failed"
-      : accepted.length < deficit
+      : accepted.length < aiDeficit
         ? "partial"
         : "success";
 
@@ -611,7 +611,7 @@ async function generateForSection(
     generated_count: generated,
     accepted_count: accepted.length,
     rejected_count: generated - accepted.length,
-    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved },
+    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved, cross_reused: crossReused },
     api_calls_made: apiCalls,
     generation_time_seconds: elapsed,
     status,
@@ -620,7 +620,7 @@ async function generateForSection(
   });
 
   console.log(`\n[COMPLETE] ${section.subject}`);
-  console.log(`  status=${status} target=${target} reused=${existingApproved} deficit=${deficit} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
+  console.log(`  status=${status} target=${target} reused=${existingApproved} cross_reused=${crossReused} ai_deficit=${aiDeficit} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
   if (Object.keys(rejectionReasons).length > 0) {
     console.log(`  rejections=${JSON.stringify(rejectionReasons)}`);
   }
@@ -630,8 +630,9 @@ async function generateForSection(
     requested: target,
     generated,
     accepted: accepted.length,
-    inserted: inserted.length,
+    inserted: inserted.length + crossReused,
     reused: existingApproved,
+    cross_reused: crossReused,
     status,
   };
 }
