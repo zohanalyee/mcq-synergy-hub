@@ -741,8 +741,9 @@ Deno.serve(async (req) => {
 
     const totalAccepted = results.reduce((s, r) => s + r.accepted, 0);
     const totalReused = results.reduce((s, r) => s + (r.reused || 0), 0);
-    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} sections=${results.length}`);
-    console.log(`  per-section: ${JSON.stringify(results.map(r => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, st: r.status })))}`);
+    const totalCrossReused = results.reduce((s, r: any) => s + (r.cross_reused || 0), 0);
+    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} cross_reused=${totalCrossReused} sections=${results.length}`);
+    console.log(`  per-section: ${JSON.stringify(results.map((r: any) => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, cross: r.cross_reused || 0, st: r.status })))}`);
 
     return new Response(
       JSON.stringify({
@@ -752,6 +753,7 @@ Deno.serve(async (req) => {
         results,
         total_accepted: totalAccepted,
         total_reused: totalReused,
+        total_cross_reused: totalCrossReused,
         needs_review: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
