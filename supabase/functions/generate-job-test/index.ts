@@ -328,6 +328,186 @@ async function generateForSection(
       accepted: 0,
       inserted: 0,
       reused: existingApproved,
+      cross_reused: 0,
+      status: "reused",
+    };
+  }
+
+  // ===== PHASE 3 — Cross-source LINK-only reuse layer =====
+  // Before spending any AI credits, pull matching questions from:
+  //   (a) content_items (board bank) — subject match, approved MCQs
+  //   (b) job_test_questions — same subject, OTHER mock tests, admin-approved
+  // Rotation: usage_count ASC, last_used_at ASC NULLS FIRST (least-recently-used first).
+  // Session-level 1-per-concept-group so each test gets variety, not duplicates.
+  // Copies are inserted as NEW rows in this job_test's pool (LINK-only, no delete).
+  const seenGroups = new Set<string>();
+  let crossReused = 0;
+  const reuseInsertRows: any[] = [];
+  const ciSourceIdsToBump: string[] = [];
+  const jtqSourceIdsToBump: string[] = [];
+
+  const { data: existingRows } = await supabase
+    .from("job_test_questions")
+    .select("question, concept_group_id")
+    .eq("job_test_id", jobTestId)
+    .eq("subject", section.subject);
+  const existingQuestions = new Set(
+    (existingRows || []).map((r: any) => String(r.question || "").trim().toLowerCase()),
+  );
+  for (const r of existingRows || []) {
+    if (r.concept_group_id) seenGroups.add(r.concept_group_id);
+  }
+
+  const need = deficit;
+
+  // (a) content_items pool
+  try {
+    const { data: ciPool } = await supabase
+      .from("content_items")
+      .select("id, title, options, correct_option, explanation, difficulty, topic, concept_group_id")
+      .eq("category", "mcq")
+      .eq("status", "approved")
+      .eq("subject", section.subject)
+      .order("usage_count", { ascending: true, nullsFirst: true })
+      .order("last_used_at", { ascending: true, nullsFirst: true })
+      .limit(need * 4);
+
+    for (const row of ciPool || []) {
+      if (reuseInsertRows.length >= need) break;
+      const qtext = String(row.title || "").trim();
+      if (!qtext) continue;
+      if (existingQuestions.has(qtext.toLowerCase())) continue;
+      if (row.concept_group_id && seenGroups.has(row.concept_group_id)) continue;
+      const opts = row.options || {};
+      if (!opts.A || !opts.B || !opts.C || !opts.D) continue;
+      const correct = String(row.correct_option || "").toUpperCase();
+      if (!["A", "B", "C", "D"].includes(correct)) continue;
+      const diff = ["easy", "medium", "hard"].includes(String(row.difficulty || "").toLowerCase())
+        ? String(row.difficulty).toLowerCase()
+        : "medium";
+      reuseInsertRows.push({
+        job_test_id: jobTestId,
+        subject: section.subject,
+        topic: row.topic || null,
+        question: qtext,
+        options: opts,
+        correct_answer: correct,
+        explanation: row.explanation || "",
+        difficulty: diff,
+        generation_batch: batchNumber,
+        admin_approved: true,
+        concept_group_id: row.concept_group_id || null,
+        reused_from_content_item_id: row.id,
+      });
+      existingQuestions.add(qtext.toLowerCase());
+      if (row.concept_group_id) seenGroups.add(row.concept_group_id);
+      ciSourceIdsToBump.push(row.id);
+    }
+  } catch (e) {
+    console.warn(`[REUSE] CI pool query failed:`, (e as Error).message);
+  }
+
+  // (b) other-job-test JTQ pool
+  if (reuseInsertRows.length < need) {
+    try {
+      const { data: jtqPool } = await supabase
+        .from("job_test_questions")
+        .select("id, question, options, correct_answer, explanation, difficulty, topic, concept_group_id")
+        .eq("admin_approved", true)
+        .eq("subject", section.subject)
+        .neq("job_test_id", jobTestId)
+        .order("usage_count", { ascending: true, nullsFirst: true })
+        .order("last_used_at", { ascending: true, nullsFirst: true })
+        .limit(need * 4);
+
+      for (const row of jtqPool || []) {
+        if (reuseInsertRows.length >= need) break;
+        const qtext = String(row.question || "").trim();
+        if (!qtext) continue;
+        if (existingQuestions.has(qtext.toLowerCase())) continue;
+        if (row.concept_group_id && seenGroups.has(row.concept_group_id)) continue;
+        const opts = row.options || {};
+        if (!opts.A || !opts.B || !opts.C || !opts.D) continue;
+        const correct = String(row.correct_answer || "").toUpperCase();
+        if (!["A", "B", "C", "D"].includes(correct)) continue;
+        const diff = ["easy", "medium", "hard"].includes(String(row.difficulty || "").toLowerCase())
+          ? String(row.difficulty).toLowerCase()
+          : "medium";
+        reuseInsertRows.push({
+          job_test_id: jobTestId,
+          subject: section.subject,
+          topic: row.topic || null,
+          question: qtext,
+          options: opts,
+          correct_answer: correct,
+          explanation: row.explanation || "",
+          difficulty: diff,
+          generation_batch: batchNumber,
+          admin_approved: true,
+          concept_group_id: row.concept_group_id || null,
+          reused_from_content_item_id: null,
+        });
+        existingQuestions.add(qtext.toLowerCase());
+        if (row.concept_group_id) seenGroups.add(row.concept_group_id);
+        jtqSourceIdsToBump.push(row.id);
+      }
+    } catch (e) {
+      console.warn(`[REUSE] JTQ pool query failed:`, (e as Error).message);
+    }
+  }
+
+  if (reuseInsertRows.length > 0) {
+    const { error: reuseErr } = await supabase
+      .from("job_test_questions")
+      .insert(reuseInsertRows);
+    if (reuseErr) {
+      console.error(`[REUSE] insert failed:`, reuseErr.message);
+    } else {
+      crossReused = reuseInsertRows.length;
+      console.log(`[REUSE] ✅ ${section.subject}: linked ${crossReused} question(s) from cross-source pool`);
+      // Bump usage counters on CI source rows (best-effort).
+      if (ciSourceIdsToBump.length > 0) {
+        try {
+          await supabase.rpc("record_question_usage", { question_ids: ciSourceIdsToBump });
+        } catch (_e) { /* ignore */ }
+      }
+      // Bump last_used_at on JTQ source rows for LRU rotation.
+      if (jtqSourceIdsToBump.length > 0) {
+        try {
+          await supabase
+            .from("job_test_questions")
+            .update({ last_used_at: new Date().toISOString() })
+            .in("id", jtqSourceIdsToBump);
+        } catch (_e) { /* ignore */ }
+      }
+    }
+  }
+
+  const aiDeficit = Math.max(0, deficit - crossReused);
+  if (aiDeficit === 0) {
+    await supabase.from("job_test_generation_logs").insert({
+      job_test_id: jobTestId,
+      subject: section.subject,
+      requested_count: deficit,
+      difficulty: "mixed",
+      generated_count: 0,
+      accepted_count: 0,
+      rejected_count: 0,
+      rejection_reasons: { reused_from_db: existingApproved, cross_reused: crossReused },
+      api_calls_made: 0,
+      generation_time_seconds: 0,
+      status: "success",
+      error_message: null,
+    });
+    console.log(`[REUSE] ✅ ${section.subject}: full deficit covered by cross-source reuse, AI skipped`);
+    return {
+      subject: section.subject,
+      requested: target,
+      generated: 0,
+      accepted: 0,
+      inserted: crossReused,
+      reused: existingApproved,
+      cross_reused: crossReused,
       status: "reused",
     };
   }
@@ -338,8 +518,8 @@ async function generateForSection(
   let generated = 0;
   let stopEarly = false;
 
-  for (let batch = 0; batch < MAX_BATCHES && accepted.length < deficit && !stopEarly; batch++) {
-    const remaining = deficit - accepted.length;
+  for (let batch = 0; batch < MAX_BATCHES && accepted.length < aiDeficit && !stopEarly; batch++) {
+    const remaining = aiDeficit - accepted.length;
     const want = Math.min(BATCH_SIZE, remaining);
     const prompt = buildPrompt(section, samples, want, examLabel);
 
@@ -367,7 +547,7 @@ async function generateForSection(
     console.log(`[BATCH ${batch + 1}] Parsed ${parsed.length} questions from response`);
 
     for (const q of parsed) {
-      if (accepted.length >= deficit) break;
+      if (accepted.length >= aiDeficit) break;
       if (!isStructurallyValid(q)) {
         rejectionReasons["invalid_structure"] = (rejectionReasons["invalid_structure"] || 0) + 1;
         continue;
@@ -394,9 +574,9 @@ async function generateForSection(
       });
     }
 
-    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${deficit}`);
+    console.log(`[BATCH ${batch + 1}] Accepted so far: ${accepted.length}/${aiDeficit}`);
 
-    if (batch < MAX_BATCHES - 1 && accepted.length < deficit && !stopEarly) {
+    if (batch < MAX_BATCHES - 1 && accepted.length < aiDeficit && !stopEarly) {
       await new Promise((r) => setTimeout(r, DELAY_BETWEEN_BATCHES_MS));
     }
   }
@@ -417,9 +597,9 @@ async function generateForSection(
 
   const elapsed = Math.floor((Date.now() - startedAt) / 1000);
   const status =
-    accepted.length === 0
+    accepted.length === 0 && crossReused === 0
       ? "failed"
-      : accepted.length < deficit
+      : accepted.length < aiDeficit
         ? "partial"
         : "success";
 
@@ -431,7 +611,7 @@ async function generateForSection(
     generated_count: generated,
     accepted_count: accepted.length,
     rejected_count: generated - accepted.length,
-    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved },
+    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved, cross_reused: crossReused },
     api_calls_made: apiCalls,
     generation_time_seconds: elapsed,
     status,
@@ -440,7 +620,7 @@ async function generateForSection(
   });
 
   console.log(`\n[COMPLETE] ${section.subject}`);
-  console.log(`  status=${status} target=${target} reused=${existingApproved} deficit=${deficit} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
+  console.log(`  status=${status} target=${target} reused=${existingApproved} cross_reused=${crossReused} ai_deficit=${aiDeficit} generated=${generated} accepted=${accepted.length} api_calls=${apiCalls} time=${elapsed}s`);
   if (Object.keys(rejectionReasons).length > 0) {
     console.log(`  rejections=${JSON.stringify(rejectionReasons)}`);
   }
@@ -450,8 +630,9 @@ async function generateForSection(
     requested: target,
     generated,
     accepted: accepted.length,
-    inserted: inserted.length,
+    inserted: inserted.length + crossReused,
     reused: existingApproved,
+    cross_reused: crossReused,
     status,
   };
 }
@@ -560,8 +741,9 @@ Deno.serve(async (req) => {
 
     const totalAccepted = results.reduce((s, r) => s + r.accepted, 0);
     const totalReused = results.reduce((s, r) => s + (r.reused || 0), 0);
-    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} sections=${results.length}`);
-    console.log(`  per-section: ${JSON.stringify(results.map(r => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, st: r.status })))}`);
+    const totalCrossReused = results.reduce((s, r: any) => s + (r.cross_reused || 0), 0);
+    console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} cross_reused=${totalCrossReused} sections=${results.length}`);
+    console.log(`  per-section: ${JSON.stringify(results.map((r: any) => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, cross: r.cross_reused || 0, st: r.status })))}`);
 
     return new Response(
       JSON.stringify({
@@ -571,6 +753,7 @@ Deno.serve(async (req) => {
         results,
         total_accepted: totalAccepted,
         total_reused: totalReused,
+        total_cross_reused: totalCrossReused,
         needs_review: true,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },

@@ -519,6 +519,8 @@ export type Database = {
           cadre: string | null
           canonical_topic_name: string | null
           category: string
+          concept_group_id: string | null
+          concept_grouped_at: string | null
           content_fingerprint: string | null
           correct_option: string | null
           created_at: string
@@ -570,6 +572,8 @@ export type Database = {
           cadre?: string | null
           canonical_topic_name?: string | null
           category: string
+          concept_group_id?: string | null
+          concept_grouped_at?: string | null
           content_fingerprint?: string | null
           correct_option?: string | null
           created_at?: string
@@ -621,6 +625,8 @@ export type Database = {
           cadre?: string | null
           canonical_topic_name?: string | null
           category?: string
+          concept_group_id?: string | null
+          concept_grouped_at?: string | null
           content_fingerprint?: string | null
           correct_option?: string | null
           created_at?: string
@@ -1629,6 +1635,8 @@ export type Database = {
       job_test_questions: {
         Row: {
           admin_approved: boolean
+          concept_group_id: string | null
+          concept_grouped_at: string | null
           correct_answer: string
           created_at: string
           difficulty: string
@@ -1636,16 +1644,21 @@ export type Database = {
           generation_batch: number | null
           id: string
           job_test_id: string
+          last_used_at: string | null
           options: Json
           question: string
+          reused_from_content_item_id: string | null
           subject: string
           times_correct: number
           times_used: number
           topic: string | null
+          usage_count: number
           validation_score: number | null
         }
         Insert: {
           admin_approved?: boolean
+          concept_group_id?: string | null
+          concept_grouped_at?: string | null
           correct_answer: string
           created_at?: string
           difficulty?: string
@@ -1653,16 +1666,21 @@ export type Database = {
           generation_batch?: number | null
           id?: string
           job_test_id: string
+          last_used_at?: string | null
           options: Json
           question: string
+          reused_from_content_item_id?: string | null
           subject: string
           times_correct?: number
           times_used?: number
           topic?: string | null
+          usage_count?: number
           validation_score?: number | null
         }
         Update: {
           admin_approved?: boolean
+          concept_group_id?: string | null
+          concept_grouped_at?: string | null
           correct_answer?: string
           created_at?: string
           difficulty?: string
@@ -1670,12 +1688,15 @@ export type Database = {
           generation_batch?: number | null
           id?: string
           job_test_id?: string
+          last_used_at?: string | null
           options?: Json
           question?: string
+          reused_from_content_item_id?: string | null
           subject?: string
           times_correct?: number
           times_used?: number
           topic?: string | null
+          usage_count?: number
           validation_score?: number | null
         }
         Relationships: [
