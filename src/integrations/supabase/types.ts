@@ -1451,6 +1451,7 @@ export type Database = {
           job_title: string
           max_retries: number
           min_questions_per_topic: number
+          pool_multiplier: number
           sample_questions: Json | null
           status: string
           syllabus: Json
@@ -1465,6 +1466,7 @@ export type Database = {
           job_title: string
           max_retries?: number
           min_questions_per_topic?: number
+          pool_multiplier?: number
           sample_questions?: Json | null
           status?: string
           syllabus?: Json
@@ -1479,6 +1481,7 @@ export type Database = {
           job_title?: string
           max_retries?: number
           min_questions_per_topic?: number
+          pool_multiplier?: number
           sample_questions?: Json | null
           status?: string
           syllabus?: Json
