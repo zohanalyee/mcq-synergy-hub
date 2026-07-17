@@ -1,127 +1,199 @@
-# Audit & Proposal — Mock-Test Question Reuse, Freshness & Duplicate Detection
+# Phase 4 + Advanced Personalized-Freshness — Architecture Proposal
 
-Yeh sirf audit + architecture proposal hai. Koi code abhi nahi likha jayega — approval ke baad phased-wise chalenge.
-
----
-
-## PART 0 — Aap ke direct sawal ka jawab (repeat-attempt freshness)
-
-**Confirmed gap hai.** Jab authenticated user DOBARA wahi mock test attempt karta hai:
-
-- System `getApprovedQuestionsForDefinition()` se us test ke **saare** approved `job_test_questions` uthata hai, phir `shuffle()` + per-subject quota slice karta hai.
-- **Per-user attempted-exclusion bilkul nahi hai** (jaisa topic-pages/subject-tests mein `excludeIds` ke through hai).
-
-Iska matlab:
-
-1. Agar pool bara hai (target se zyada questions), to repeat par **random overlap** milega — thora farq, lekin "unseen questions" ki koi guarantee nahi. Same questions dobara aa saktay hain.
-2. Agar pool chhota hai (maslan test 100 mange aur bank mein bhi ~100 approved hain), to repeat par **bilkul wahi 100 questions** milenge, sirf order badla hua.
-
-Yeh Part 3 (shared-bank) aur Part 1 (per-user exclusion) se hal hota hai. Effort chhota hai — niche estimate diya hai.
+Yeh **sirf design proposal** hai. Koi code/migration abhi nahi. Approval ke baad phase-wise banayenge.
 
 ---
 
-## PART A — Current Architecture Summary (isolated vs shared)
+## 0. Aap ke 4 requirements — feasibility (short answers)
 
 
-| Cheez                        | Job Tests (`job_test_questions`)                              | Topic Pages / Subject Tests (`content_items`)                  |
-| ---------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------- |
-| Storage                      | **Per-test isolated** (`job_test_id` FK)                      | **Shared central bank**                                        |
-| Reuse tag                    | koi nahi                                                      | `canonical_topic_name`, `topic_id`, `subject/topic`            |
-| Dedup fingerprint            | **nahi**                                                      | `content_fingerprint` (sha256 of normalized text — sirf EXACT) |
-| Circulation tracking         | `times_used`, `times_correct` (per-question, jarurat par set) | `usage_count`, `last_used_at` (freshness rotation)             |
-| Generation reuse             | deficit-only, magar **sirf usi test ke rows** count karta hai | DB-first pool + deficit-only AI                                |
-| Per-user attempted-exclusion | **nahi**                                                      | haan (`excludeIds` + fingerprint exclusion)                    |
+| #   | Requirement                            | Feasible?                        | Naya schema?                                                                                                    |
+| --- | -------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| 1   | Reuse rotation ke liye (pool > target) | Haan                             | Nahi — sirf logic change                                                                                        |
+| 2   | Retake same test / naya test dono      | Haan (confirm karna hai UI mein) | Nahi                                                                                                            |
+| 3   | Performance-aware freshness (mastery)  | Haan                             | **1 naya table** (mastery cache). Raw data `user_attempt_history` (is_correct already maujood) mein already hai |
+| 4   | DB-exhaustion par per-user AI top-up   | Haan                             | Nahi (existing quota + `generate-job-test` reuse)                                                               |
 
 
-**DB facts (abhi):**
-
-- 1,632 approved job-test questions, 13 tests mein.
-- 8,643 approved MCQ shared bank (`content_items`) mein — job tests inhe kabhi use nahi karte.
-- **27 exact-duplicate question-texts already 1 se zyada tests mein maujood hain** (redundancy ka pukhta saboot). Near-duplicate/paraphrase count is se kaafi zyada hoga.
-
-**Nateeja:** Overlapping-syllabus tests (e.g. MDCAT variants) har baar apni alag AI-generation chalate hain, chahe same-concept question pehle se maujood ho. Yeh AI credits ka avoidable kharcha hai.
+**Bottom line:** Sab kuch existing schema ke upar sit karta hai. Sirf **ek mastery cache table** aur selection-logic upgrade chahiye. Koi destructive change nahi.
 
 ---
 
-## PART B — Duplicate / Redundancy Findings
+## 1. Requirement 1 — Rotation Pool (target × N)
 
-1. **Cross-test redundancy confirmed** — 27+ exact-text duplicates already multiple tests mein. Yeh sab alag AI calls se bane.
-2. **Cross-source silos** — `job_test_questions` aur `content_items` ke darmiyan koi dedup ya reuse link nahi. 8,643 shared MCQs completely untapped hain job tests ke liye.
-3. **Existing fingerprint scope** — `content_fingerprint` sirf `content_items` par, aur sirf **exact normalized-text** pakadta hai (sha256 of lowercased alphanumeric). Near-duplicate/paraphrase nahi pakadta, aur cross-source (job_test_questions) ko chhoota bhi nahi.
-4. **Freshness dilution** — job tests mein `usage_count`-style rotation ya per-user exclusion na hone se chhoti population par same questions baar-baar circulate hote hain.
+**Problem abhi:** Reuse sirf deficit fill karta hai. Agar test already 180 approved rakhta hai to reuse skip, aur wohi 180 baar-baar shuffle hote hain.
 
----
+**Design:**
 
-## PART C — Proposed Phased Plan
+- Har test ke liye ek **"effective pool"** banega runtime par = `test ke apne approved` **∪** `cross-source reuse candidates (same subject/topic, concept-group dedup)`.
+- Target `pool_multiplier` (default **2×**, admin-tunable per test): 180-target → 300–360 ka underlying pool.
+- Selection us pool se hoti hai (mastery + freshness ranking se — niche section 3).
+- Agar pool < target × multiplier → deficit calculate, phir Phase 3 wala reuse-pull → phir bhi kami ho to AI (requirement 4).
 
-Aap ne 3 alag threads uthaye (repeat-freshness, shared-bank, deep-dedup-scan). Inhe 4 phases mein tarteeb diya hai — chhote/high-value pehle, bara structural change baad mein.
-
-### Phase 1 — Per-user repeat-attempt freshness (chhota, high value)
-
-**Goal:** Repeat attempt par jitna mumkin ho fresh questions.
-
-- `JobTestsTab` selection ko `content_items` wale existing pattern par le aao: user ke pichle attempts ki question-IDs collect karke selection se exclude karo (rolling window, e.g. last N attempts), phir baaki se fill; agar pool khatam ho jaye to graceful fallback (oldest-seen pehle).
-- Reuse existing `usage_count`/`last_used_at`-style ordering idea, `job_test_questions` ke liye `times_used` bump karo har attempt par.
-- **Migration impact:** koi schema change zaroori nahi (attempt history `custom_test_sessions`/guest session mein already hai). Optional index for speed.
-- **Effort:** chhota (frontend service + ek helper). **AI-credit impact:** zero (sirf selection logic).
-
-### Phase 2 — Cross-source Deep-Duplicate SCAN (READ-ONLY report)
-
-**Goal:** Poore bank (dono sources) ka duplicate map — koi merge nahi, sirf report.
-
-- On-demand + optional nightly scan job (edge function): `job_test_questions` + `content_items` (mcq) dono fetch karo.
-- Har question ka **semantic fingerprint**:
-  - Tier 1 (sasta): existing normalized-text sha256 → exact duplicates instantly.
-  - Tier 2 (near-duplicate): keyword-shingle / token-set similarity (Jaccard on top keywords) — koi AI cost nahi. Threshold configurable (e.g. 85%).
-  - Tier 3 (optional, later): embedding-based cosine (pgvector already infra mein hai) sirf borderline pairs ke liye — cost-controlled.
-- Output: ek `duplicate_scan_report` (groups, similarity, source, kitna reuse/AI-save possible). **Koi data change nahi.**
-- **Migration impact:** ek naya report table. **Cost:** Tier1/2 zero AI; Tier3 optional aur borderline-only.
-- **Effort:** medium. Deliverable = report jise review karke Phase 3/4 approve karenge.
-
-### Phase 3 — Shared reuse layer for job-test generation
-
-**Goal:** Naya test sirf GENUINELY naye topics ke liye AI kharch kare.
-
-- `generate-job-test` precheck ko upgrade: deficit-check se **pehle** ek "cross-source reuse-check" — matching canonical-topic / subject-topic pool (`content_items` + already-approved `job_test_questions`) se pull.
-- Sirf residual deficit AI se generate ho.
-- **Per-test manual curation (sample_questions, style_guide, forbidden) intact rehti hai** — woh reused pool ke upar override/filter ki tarah kaam karegi (forbidden se reused questions bhi filter honge).
-- Depends on Phase 2 ke canonical links (Phase 4) ya direct canonical_topic_name matching se shuru ho sakta hai.
-- **Estimated AI saving:** overlapping-syllabus tests par bara — pehle se 27+ exact duplicates + hazaron untapped shared MCQs reuse honge; naye variants ka generation mostly zero ho sakta hai.
-
-### Phase 4 — Canonical link/merge + Admin lifecycle dashboard
-
-**Goal:** Duplicates ko canonical se link karo (delete nahi) + visibility.
-
-- `question_canonical_links` mapping table: `duplicate_id → canonical_id` (original data safe).
-- Reuse-application layer canonical pool se pull kare.
-- **Admin dashboard** (topic-pages `usage_count` pattern extend karke):
-  - Har question: kab bana (AI/manual), kin test(s)/topics mein use ho raha, total attempts, unique users, overused flag (dilution signal).
-  - Scan-level: kitne duplicate-groups, kitna AI-generation avoid hua.
-- **Migration impact:** naye tables only, koi destructive change nahi. Existing per-test isolation optional rehti hai (link layer non-breaking).
+**Naya schema:** kuch nahi. `job_test_definitions` mein optional `pool_multiplier NUMERIC DEFAULT 2.0` add ho sakta hai (nullable, backwards-safe).
 
 ---
 
-## PART D — Migration & Risk Notes
+## 2. Requirement 2 — Retake vs Naya Test (UI confirm)
 
-- Har phase **additive/non-destructive** hai — existing data delete nahi hoti, sirf reuse-relationships aur selection-logic add hoti hai.
-- Generation pipelines alag rehti hain (aap ki clarified requirement) — dedup **post-generation** layer hai.
-- Manual curation (sample/style/forbidden) preserved as per-test override.
-- Rollback-safe: Phase 1 & 3 pure logic; Phase 2 & 4 sirf naye tables.
+Exploration needed — `MockTestDetail.tsx` / `TestSession.tsx` mein already "Retake" aur "Pick another test" flows hain ya nahi, plan build-phase mein 1 file read se confirm karenge. Agar missing hua to chhota UI-only add (koi backend nahi). **Effort: 0–1 hour.**
 
 ---
 
-## Recommended sequencing
+## 3. Requirement 3 — Mastery-Aware Freshness (core naya feature)
 
-1. **Phase 1 abhi** (repeat-freshness fix — sabse turant user-facing benefit, chhota effort).
-2. **Phase 2** report (approve karne ke liye data).
-3. Phase 2 report review ke baad **Phase 3 + 4**.
+### Data source (already maujood)
 
-Bataye kaun se phase se shuru karun — mera mashwara Phase 1 pehle, phir Phase 2 report.
+`user_attempt_history` mein per-attempt row hai with:
+
+- `user_id`, `question_id`, `question_fingerprint`, `is_correct`, `attempted_at`
+
+Yani **raw mastery data pehle se collect ho rahi hai** — bas usko selection-time par efficiently query karna hai.
+
+### Problem
+
+Har question-selection par `user_attempt_history` ko aggregate karna (400+ questions × millions of rows) slow ho jayega. Isliye **cache table** chahiye.
+
+### Naya table: `user_question_mastery`
+
+```
+user_id            uuid
+question_id        uuid          -- content_items.id OR job_test_questions.id
+question_source    text          -- 'content_items' | 'job_test_questions'
+concept_group_id   uuid          -- Phase 3 wala, denormalized for fast grouping
+subject            text
+correct_count      int           -- kitni baar sahi
+incorrect_count    int           -- kitni baar galat
+last_result        boolean       -- akhri attempt sahi thi?
+last_attempted_at  timestamptz
+mastery_level      text          -- 'unseen' | 'learning' | 'review' | 'mastered'
+updated_at         timestamptz
+PRIMARY KEY (user_id, question_id)
+```
+
+**Mastery classification (tunable):**
+
+- `unseen` — kabhi attempt nahi kiya
+- `learning` — attempts hain lekin akhri wrong ya <2 consecutive correct
+- `review` — 2 consecutive correct, lekin 30 din se dobara nahi dekha (spaced repetition)
+- `mastered` — 3+ consecutive correct OR (last_result=true AND correct_count ≥ 3)
+
+**Update kaise hoga:**
+
+- Trigger on `user_attempt_history` INSERT → upsert into `user_question_mastery` (recompute counts + level).
+- Alternatively: post-test batch update from `processTestCompletion` (aap ka existing central hook). Trigger simpler + reliable.
+
+### Selection ranking (naya)
+
+Effective pool par yeh order:
+
+```
+1. unseen           (highest priority — variety)
+2. learning         (galat kiye — dobara chahiye)
+3. review           (repetition due — spaced)
+4. mastered         (last resort, sirf agar sab khatam)
+```
+
+Within each tier: `usage_count ASC, last_used_at ASC` (existing rotation).
+
+**Session-level:** 1-per-concept-group cap (Phase 3 se already hai) — mastered variation choose nahi hoga agar us group ka koi unseen/learning variation available hai.
+
+---
+
+## 4. Requirement 4 — Controlled Per-User AI Top-Up
+
+### Trigger condition
+
+Jab **is user ke liye is test/subject ka effective pool** ka `unseen + learning + review` count target-count se **kam** ho jaye (yani sab kuch mastered ya near-mastered), tab:
+
+```
+IF unmastered_available < target_count THEN
+  request AI generation (deficit = target - unmastered_available)
+END IF
+```
+
+### Guard-rails (AI-cost explosion se bachao)
+
+Aap ke existing `_shared/quotaManager.ts` (DAILY_QUOTA_LIMIT = 1400) already global cap hai. Uske upar **per-user** limits:
+
+1. **Per-user daily AI top-ups:** max **1 top-up / user / test / day** (config in `system_settings`).
+2. **Per-user monthly cap:** max e.g. **10 top-ups / user / month** — power-user identify karta hai.
+3. **Cooldown:** ek top-up ke baad **6 hours** wait, chahe wo bhi mastered kar le (bot/abuse prevention).
+4. **Global brake:** agar `DAILY_QUOTA_LIMIT` ka 80% consume ho chuka, top-ups pause (only manual test-generation continue).
+
+### Tracking table (chhoti)
+
+`user_ai_topup_log`:
+
+```
+user_id, test_id, subject, requested_at, questions_generated, quota_used_before
+```
+
+Reuse existing `generate-job-test` function (already reuse-first + quota-aware) — sirf ek naya invocation-mode `mode='user_topup'` add hoga jo `p_user_id` accept kare aur per-user guards check kare. **Naye questions `admin_approved=true` par save hon** (aap ke sample-review policy pe depend — safer default: `false` aur admin review, lekin aap ne "organic growth" chahi hai to `true` acceptable hai agar quality-grade filter pass ho).
+
+---
+
+## 5. Phase 4 (Lifecycle/Circulation Dashboard) integration
+
+Phase 4 dashboard ab **naturally** in mastery-stats ko expose karega. Ek unified admin view:
+
+**Per-question view:**
+
+- Bank origin (AI/manual/reuse), created-at, concept_group_id
+- Global: total attempts, unique users, correct%, overused flag
+- **Mastery distribution:** kitne users ne mastered / learning / unseen
+- Reused-in tests list
+
+**Per-test view:**
+
+- Effective pool size vs target
+- Mastery heatmap: average user progress
+- AI top-ups triggered (count + cost)
+- Cross-reuse savings
+
+**Per-user view (admin support tool):**
+
+- User ke top mastered subjects
+- Struggling topics (learning-tier heavy)
+- AI top-ups consumed
+
+**Sirf ek dashboard**, 3 tabs — do baar kaam nahi hoga.
+
+---
+
+## 6. Phased rollout (recommended)
+
+
+| Phase   | Scope                                                                             | Effort      | AI-cost impact      |
+| ------- | --------------------------------------------------------------------------------- | ----------- | ------------------- |
+| **3.5** | Pool-multiplier (req 1) + UI retake confirm (req 2)                               | ~2 hrs      | 0                   |
+| **4a**  | `user_question_mastery` table + trigger + mastery-aware selection ranking (req 3) | ~1 day      | 0                   |
+| **4b**  | Per-user AI top-up mode + guard-rails + log table (req 4)                         | ~1 day      | Controlled (capped) |
+| **4c**  | Admin Lifecycle Dashboard with mastery-stats (Phase 4 proper)                     | ~1–1.5 days | 0                   |
+
+
+Total: **~3–4 din ka focused work**, sab additive/non-destructive.
+
+---
+
+## 7. Kya samajhna zaroori hai (aap ke liye plain)
+
+- **Koi delete/hide nahi hoga.** Sab questions bank mein rehte hain — sirf ranking badalti hai per-user.
+- **Casual user** ko hamesha DB se hi mile ga → **AI-cost near-zero** unke liye.
+- **Power-user** jo sab mastered kar chuka ho → sirf usi ke liye AI top-up trigger (aur wo bhi capped) → naye questions permanently bank mein add → **DB organically barhta hai**.
+- Existing quota-system, existing Phase 3 reuse, existing Phase 1 freshness — sab reuse honge, koi rewrite nahi.
+
+---
+
+## 8. Aap se approval / clarifications chahiye
+
+1. **Mastery threshold:** "3 consecutive correct = mastered" theek hai, ya aap 2 ya 5 chahenge?
+2. **AI top-up ke naye questions:** direct `admin_approved=true` (fast growth) ya `false` (aap review karein pehle)? Safer default main `false` recommend karta hoon, lekin aap ki call.
+3. **Per-user monthly top-up cap:** 10 theek hai ya kam/zyada?
+4. **Rollout order:** 3.5 → 4a → 4b → 4c is order mein karein, ya aap koi aur tarteeb chahenge?
+
+Approval mile to Phase 3.5 se shuru karta hoon.
+
+Please initiate the rollout order 3.5 
 
 &nbsp;
-
-**Approved** — Phase 1 se shuru karein (repeat-attempt freshness fix). Chhota, koi AI-cost nahi, turant user-facing improvement.
-
-Phase 1 complete hone ke baad, Phase 2 (deep-duplicate scan, read-only report) chalayen — mujhe exact numbers dikhayen kitne duplicates/reuse-potential hai poore bank mein.
-
-Phase 2 report dekhne ke baad Phase 3 aur 4 par decide karunga.
