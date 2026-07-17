@@ -283,11 +283,24 @@ async function generateForSection(
   const startedAt = Date.now();
   const target = section.question_count || 10;
 
+  // ===== Phase 3.5 — Rotation-pool multiplier =====
+  // AI generation is still gated by `target` (aiDeficit = target - existing).
+  // Cross-source REUSE goes further: it enriches the underlying pool up to
+  // ceil(target * pool_multiplier) so repeat attempts have variety to rotate
+  // through, instead of drawing from the same fixed target-sized set.
+  let poolMultiplier = 2.0;
+  try {
+    const { data: defRow } = await supabase
+      .from("job_test_definitions")
+      .select("pool_multiplier")
+      .eq("id", jobTestId)
+      .maybeSingle();
+    const raw = Number(defRow?.pool_multiplier);
+    if (Number.isFinite(raw) && raw >= 1) poolMultiplier = raw;
+  } catch (_e) { /* fall back to 2.0 */ }
+  const poolTarget = Math.ceil(target * poolMultiplier);
+
   // ===== DB PRECHECK (reuse-first) =====
-  // Count approved, quality-graded, exam-compatible questions that already
-  // exist for this job test + subject. Reuse those before spending any AI
-  // credits — only the deficit is generated. Syllabus weightage is preserved
-  // because `target` still comes from the official section.question_count.
   let existingApproved = 0;
   try {
     const { count } = await supabase
@@ -301,45 +314,15 @@ async function generateForSection(
     console.warn(`[PRECHECK] count failed for ${section.subject}:`, (e as Error).message);
   }
 
-  const deficit = Math.max(0, target - existingApproved);
-  console.log(`[PRECHECK] ${section.subject}: existing_approved=${existingApproved} target=${target} deficit=${deficit}`);
-
-  if (deficit === 0) {
-    // Enough relevant questions already exist — reuse, skip AI entirely.
-    await supabase.from("job_test_generation_logs").insert({
-      job_test_id: jobTestId,
-      subject: section.subject,
-      requested_count: target,
-      difficulty: "mixed",
-      generated_count: 0,
-      accepted_count: 0,
-      rejected_count: 0,
-      rejection_reasons: { reused_from_db: existingApproved },
-      api_calls_made: 0,
-      generation_time_seconds: 0,
-      status: "success",
-      error_message: null,
-    });
-    console.log(`[PRECHECK] ✅ ${section.subject}: reusing ${existingApproved} DB questions, AI skipped`);
-    return {
-      subject: section.subject,
-      requested: target,
-      generated: 0,
-      accepted: 0,
-      inserted: 0,
-      reused: existingApproved,
-      cross_reused: 0,
-      status: "reused",
-    };
-  }
+  const deficit = Math.max(0, target - existingApproved);       // AI trigger
+  const reuseNeed = Math.max(0, poolTarget - existingApproved); // reuse enrichment
+  console.log(
+    `[PRECHECK] ${section.subject}: existing_approved=${existingApproved} target=${target} pool_target=${poolTarget} ai_deficit=${deficit} reuse_need=${reuseNeed}`,
+  );
 
   // ===== PHASE 3 — Cross-source LINK-only reuse layer =====
-  // Before spending any AI credits, pull matching questions from:
-  //   (a) content_items (board bank) — subject match, approved MCQs
-  //   (b) job_test_questions — same subject, OTHER mock tests, admin-approved
-  // Rotation: usage_count ASC, last_used_at ASC NULLS FIRST (least-recently-used first).
-  // Session-level 1-per-concept-group so each test gets variety, not duplicates.
-  // Copies are inserted as NEW rows in this job_test's pool (LINK-only, no delete).
+  // Runs whenever reuseNeed>0 (even when AI deficit=0), so the pool keeps
+  // growing beyond the target for rotation variety.
   const seenGroups = new Set<string>();
   let crossReused = 0;
   const reuseInsertRows: any[] = [];
@@ -358,7 +341,7 @@ async function generateForSection(
     if (r.concept_group_id) seenGroups.add(r.concept_group_id);
   }
 
-  const need = deficit;
+  const need = reuseNeed;
 
   // (a) content_items pool
   try {
