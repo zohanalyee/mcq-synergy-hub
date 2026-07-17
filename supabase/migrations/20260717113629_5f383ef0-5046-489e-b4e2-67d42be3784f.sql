@@ -1,0 +1,2 @@
+ALTER TABLE public.job_test_definitions ADD COLUMN IF NOT EXISTS pool_multiplier NUMERIC NOT NULL DEFAULT 2.0;
+COMMENT ON COLUMN public.job_test_definitions.pool_multiplier IS 'Phase 3.5: Effective reuse-pool target multiplier. Reuse layer enriches pool up to ceil(target*multiplier) even when target is met, so per-attempt selection has rotation variety. AI generation still gated by target only.';
