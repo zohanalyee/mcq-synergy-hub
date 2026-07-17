@@ -3372,6 +3372,51 @@ export type Database = {
         }
         Relationships: []
       }
+      user_question_mastery: {
+        Row: {
+          concept_group_id: string | null
+          consecutive_correct: number
+          correct_count: number
+          incorrect_count: number
+          last_attempted_at: string | null
+          last_result: boolean | null
+          mastery_level: string
+          question_id: string
+          question_source: string
+          subject: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          concept_group_id?: string | null
+          consecutive_correct?: number
+          correct_count?: number
+          incorrect_count?: number
+          last_attempted_at?: string | null
+          last_result?: boolean | null
+          mastery_level?: string
+          question_id: string
+          question_source: string
+          subject?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          concept_group_id?: string | null
+          consecutive_correct?: number
+          correct_count?: number
+          incorrect_count?: number
+          last_attempted_at?: string | null
+          last_result?: boolean | null
+          mastery_level?: string
+          question_id?: string
+          question_source?: string
+          subject?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_quiz_attempts: {
         Row: {
           answers: Json | null
@@ -3631,6 +3676,16 @@ export type Database = {
           credits_used_today: number
           last_reset_date: string
           total_credits_used: number
+        }[]
+      }
+      get_my_mastery_for_questions: {
+        Args: { p_question_ids: string[] }
+        Returns: {
+          concept_group_id: string
+          consecutive_correct: number
+          last_attempted_at: string
+          mastery_level: string
+          question_id: string
         }[]
       }
       get_platform_stats: {
