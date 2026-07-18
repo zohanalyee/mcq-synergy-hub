@@ -16,6 +16,9 @@ import {
   getApprovedQuestionsForDefinition,
   getEffectiveSyllabus,
   getUserSeenJobTestQuestionIds,
+  getMasteryForQuestionIds,
+  MASTERY_TIER,
+  type MasteryInfo,
 } from "@/services/jobTestService";
 import {
   fetchJobTestProgress,
