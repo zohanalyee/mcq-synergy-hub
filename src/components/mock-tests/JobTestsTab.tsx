@@ -16,6 +16,9 @@ import {
   getApprovedQuestionsForDefinition,
   getEffectiveSyllabus,
   getUserSeenJobTestQuestionIds,
+  getMasteryForQuestionIds,
+  MASTERY_TIER,
+  type MasteryInfo,
 } from "@/services/jobTestService";
 import {
   fetchJobTestProgress,
@@ -106,40 +109,52 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
           distributable--;
         }
 
-        // Phase 1 — Per-user repeat-attempt freshness.
-        // Fetch IDs already seen by this user in past attempts of THIS test
-        // (rolling last 20 sessions). Prefer unseen first, fall back to seen
-        // only when unseen pool cannot fulfil the per-subject quota.
+        // Phase 1 — rolling per-user "seen" ids (last 20 sessions of this test).
+        // Phase 4a — per-user MASTERY ranking (unseen → learning → review → mastered).
+        // Selection: for each subject quota, sort candidates by
+        //   (1) mastery tier ASC, then
+        //   (2) last_attempted_at ASC (older first — spaced repetition),
+        //   (3) random tiebreak within a tier bucket.
         const seenIds = await getUserSeenJobTestQuestionIds(test.title, 20);
-        const freshCount = approved.filter((q) => !seenIds.has(q.id)).length;
-        if (seenIds.size > 0) {
+        const masteryMap = await getMasteryForQuestionIds(approved.map((q) => q.id));
+        const infoFor = (id: string): MasteryInfo =>
+          masteryMap.get(id) || { level: "unseen", lastAt: 0 };
+
+        if (masteryMap.size > 0 || seenIds.size > 0) {
+          const learning = Array.from(masteryMap.values()).filter((m) => m.level === "learning").length;
+          const mastered = Array.from(masteryMap.values()).filter((m) => m.level === "mastered").length;
           console.log(
-            `🔄 Repeat-attempt freshness: ${seenIds.size} seen, ${freshCount}/${approved.length} fresh candidates for "${test.title}"`,
+            `🧠 Mastery ranking for "${test.title}": ${masteryMap.size} tracked ` +
+            `(learning=${learning}, mastered=${mastered}), ${seenIds.size} in rolling seen`,
           );
         }
 
-        // Sample approved questions per subject — fresh-first, then seen.
+        const rankSort = (pool: any[]) => {
+          const withRand = pool.map((q) => ({ q, r: Math.random(), info: infoFor(q.id) }));
+          withRand.sort((a, b) => {
+            const ta = MASTERY_TIER[a.info.level];
+            const tb = MASTERY_TIER[b.info.level];
+            if (ta !== tb) return ta - tb;
+            // Within same tier: older attempts first (unseen lastAt=0 sits at top naturally).
+            if (a.info.lastAt !== b.info.lastAt) return a.info.lastAt - b.info.lastAt;
+            return a.r - b.r;
+          });
+          return withRand.map((x) => x.q);
+        };
+
+        // Sample approved questions per subject with mastery ranking.
         const picked: any[] = [];
-        const shuffle = <T,>(arr: T[]) => arr.map((v) => [Math.random(), v] as const).sort((a, b) => a[0] - b[0]).map(([, v]) => v);
         for (const [subj, count] of quotas.entries()) {
           const subjectPool = approved.filter((q) => q.subject === subj);
-          const fresh = shuffle(subjectPool.filter((q) => !seenIds.has(q.id)));
-          const seen = shuffle(subjectPool.filter((q) => seenIds.has(q.id)));
-          picked.push(...fresh.slice(0, count));
-          const shortBy = count - Math.min(fresh.length, count);
-          if (shortBy > 0) picked.push(...seen.slice(0, shortBy));
+          picked.push(...rankSort(subjectPool).slice(0, count));
         }
-        // Fill remaining from any approved if quotas under-delivered (fresh-first)
+        // Fill remaining from any approved if quotas under-delivered.
         if (picked.length < targetCount) {
           const usedIds = new Set(picked.map((q) => q.id));
           const remainder = approved.filter((q) => !usedIds.has(q.id));
-          const fillFresh = shuffle(remainder.filter((q) => !seenIds.has(q.id)));
-          const fillSeen = shuffle(remainder.filter((q) => seenIds.has(q.id)));
-          picked.push(...fillFresh.slice(0, targetCount - picked.length));
-          if (picked.length < targetCount) {
-            picked.push(...fillSeen.slice(0, targetCount - picked.length));
-          }
+          picked.push(...rankSort(remainder).slice(0, targetCount - picked.length));
         }
+
 
         const finalQuestions = picked.map((q) => ({
           id: q.id,

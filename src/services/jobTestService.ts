@@ -408,6 +408,60 @@ export const getUserSeenJobTestQuestionIds = async (
 };
 
 
+// ============================================================
+// Phase 4a — Per-user MASTERY ranking for question selection.
+// Fetches mastery cache rows (unseen / learning / review / mastered)
+// via the SECURITY DEFINER `get_my_mastery_for_questions` RPC.
+// Returns a Map<questionId, { level, lastAt }>. Missing ids = unseen.
+// ============================================================
+export type MasteryLevel = "unseen" | "learning" | "review" | "mastered";
+export interface MasteryInfo {
+  level: MasteryLevel;
+  lastAt: number; // ms epoch; 0 for unseen
+}
+
+export const getMasteryForQuestionIds = async (
+  questionIds: string[],
+): Promise<Map<string, MasteryInfo>> => {
+  const map = new Map<string, MasteryInfo>();
+  try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData?.session?.user || questionIds.length === 0) return map;
+    const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const ids = Array.from(new Set(questionIds.filter((id) => uuidRe.test(String(id)))));
+    if (ids.length === 0) return map;
+    const { data, error } = await (supabase as any).rpc(
+      "get_my_mastery_for_questions",
+      { p_question_ids: ids },
+    );
+    if (error) {
+      console.warn("[mastery] rpc failed (non-fatal):", error.message);
+      return map;
+    }
+    for (const row of (data || []) as any[]) {
+      const lvl = String(row.mastery_level || "review") as MasteryLevel;
+      map.set(String(row.question_id), {
+        level: lvl,
+        lastAt: row.last_attempted_at ? new Date(row.last_attempted_at).getTime() : 0,
+      });
+    }
+  } catch (e) {
+    console.warn("[mastery] fetch (non-fatal):", e);
+  }
+  return map;
+};
+
+/** Ranking order for selection (lower = preferred). */
+export const MASTERY_TIER: Record<MasteryLevel, number> = {
+  unseen: 0,
+  learning: 1, // last attempt wrong → reinforce
+  review: 2,   // some correct, not yet mastered
+  mastered: 3, // 3+ consecutive correct → deprioritize
+};
+
+
+
+
 // ---------- Public Questions Preview (multi-source) ----------
 
 export interface PreviewQuestion {
