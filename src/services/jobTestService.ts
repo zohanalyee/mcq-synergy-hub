@@ -451,10 +451,13 @@ export const getMasteryForQuestionIds = async (
   return map;
 };
 
-/** Ranking order for selection (lower = preferred). */
+/** Ranking order for selection (lower = preferred).
+ *  Practice-first: wrong-answered questions must resurface before new unseen ones,
+ *  otherwise the enlarged Phase 3.5 pool drowns them out on retakes.
+ */
 export const MASTERY_TIER: Record<MasteryLevel, number> = {
-  unseen: 0,
-  learning: 1, // last attempt wrong → reinforce
+  learning: 0, // last attempt wrong → highest priority, reinforce immediately
+  unseen: 1,   // never seen → fills variety after learning is exhausted
   review: 2,   // some correct, not yet mastered
   mastered: 3, // 3+ consecutive correct → deprioritize
 };
