@@ -1959,15 +1959,9 @@ Write the advice now:`;
         const dupCheck = await checkDuplicate(supabase, q.question);
         const isDuplicate = isIntraBatchDuplicate || dupCheck.isDuplicate;
         
-        // Determine title - modify if duplicate to bypass unique constraint
-        let finalTitle = isDuplicate 
-          ? `[POTENTIAL DUPLICATE] ${q.question}`
-          : q.question;
-        
-        // On retries, add unique suffix to guarantee uniqueness
-        if (retryAttempt > 0) {
-          finalTitle = `[ERROR/DUPLICATE-${shortId}] ${q.question}`;
-        }
+        // Never mutate the learner-visible title with admin-only debug tags.
+        // Duplicate / retry state is tracked via `status` + `show_in_subjects` below.
+        const finalTitle = q.question;
         
         const questionData = {
           title: finalTitle,
