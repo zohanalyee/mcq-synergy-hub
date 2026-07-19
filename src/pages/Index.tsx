@@ -80,7 +80,7 @@ const Home = () => {
     ...(displayName ? [`${timeGreeting}, ${displayName}! 👋`] : []),
     'Ace your Board Exams 📚',
     'Crack Govt Job Tests 🏢',
-    'Generate Custom AI Tests 🤖',
+    'Practice with AI Tutor 🤖',
   ];
 
   useEffect(() => {
