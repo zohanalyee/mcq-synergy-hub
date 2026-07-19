@@ -1112,13 +1112,9 @@ async function saveQuestionsInBackground(
         const dupCheck = await checkDuplicate(supabase, q.question);
         const isDuplicate = isIntraBatchDuplicate || dupCheck.isDuplicate || retryAttempt > 0;
         
-        // Build title with unique suffix on retries
-        let finalTitle = q.question;
-        if (isDuplicate && retryAttempt === 0) {
-          finalTitle = `[POTENTIAL DUPLICATE] ${q.question}`;
-        } else if (retryAttempt > 0) {
-          finalTitle = `[ERROR/DUPLICATE-${shortId}] ${q.question}`;
-        }
+        // Never mutate the learner-visible title with admin-only debug tags.
+        // Duplicate/retry status is tracked via `status` + `show_in_subjects` below.
+        const finalTitle = q.question;
         
         const canonicalTopicName = topic 
           ? topic.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
