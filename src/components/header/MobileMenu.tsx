@@ -88,6 +88,23 @@ const MobileMenu = ({
             </div>
           )}
 
+          {/* AI Coach — prominent entry */}
+          <Link
+            to="/features/ai-coach"
+            onClick={onClose}
+            className={`flex items-center justify-between rounded-lg px-3 py-2.5 -mx-1 mb-1 border border-primary/30 bg-brand-gradient/10 hover:bg-brand-gradient/20 transition-colors ${
+              isActive('/features/ai-coach') ? 'ring-1 ring-primary' : ''
+            }`}
+          >
+            <span className="flex items-center gap-2 font-medium text-foreground">
+              <Sparkles className="h-4 w-4 text-primary" />
+              AI Coach
+            </span>
+            <Badge variant="secondary" className="h-5 px-2 text-[10px] font-semibold bg-brand-gradient text-white border-0">
+              New
+            </Badge>
+          </Link>
+
           {/* Navigation Items */}
           {navItems.map((item) => (
             <Link
