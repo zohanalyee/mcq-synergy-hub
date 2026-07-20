@@ -9,12 +9,14 @@ import {
   NavigationMenuTrigger,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { BookOpen, FileText, Users, Briefcase, Target, Timer, PenTool, GraduationCap } from 'lucide-react';
+import { BookOpen, FileText, Users, Briefcase, Target, Timer, PenTool, GraduationCap, Sparkles } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface NavItem {
   title: string;
   path: string;
   icon?: React.ReactNode;
+  isNew?: boolean;
 }
 
 interface DesktopNavigationProps {
@@ -26,8 +28,9 @@ interface DesktopNavigationProps {
 
 const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }: DesktopNavigationProps) => {
   // All navigation items in one place - no more dropdown
-  const allNavItems = [
+  const allNavItems: NavItem[] = [
     { title: 'Home', path: '/', icon: <BookOpen className="w-4 h-4" /> },
+    { title: 'AI Coach', path: '/features/ai-coach', icon: <Sparkles className="w-4 h-4" />, isNew: true },
     { title: 'Subjects', path: '/subjects', icon: <FileText className="w-4 h-4" /> },
     { title: 'MCQs', path: '/mcqs', icon: <PenTool className="w-4 h-4" /> },
     { title: 'Quizzes', path: '/quizzes', icon: <Target className="w-4 h-4" /> },
