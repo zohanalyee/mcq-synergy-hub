@@ -1,4 +1,5 @@
 import { X, BrainCircuit, Sparkles, Shield, Brain } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
