@@ -53,6 +53,11 @@ const DesktopNavigation = ({ navItems, secondaryNavItems, isActive, onNavigate }
               onClick={() => onNavigate(item.path)}
             >
               <span className="text-xs font-medium">{item.title}</span>
+              {item.isNew && (
+                <Badge variant="secondary" className="ml-1 h-4 px-1.5 text-[10px] font-semibold bg-brand-gradient text-white border-0">
+                  New
+                </Badge>
+              )}
             </NavigationMenuLink>
           </NavigationMenuItem>
         ))}
