@@ -642,18 +642,46 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { job_test_id, subject } = body as {
+    const { job_test_id, subject, triggering_user_id, topup_reason } = body as {
       job_test_id?: string;
       subject?: string;
+      triggering_user_id?: string;
+      topup_reason?: string;
     };
 
-    console.log(`\n[REQUEST] generate-job-test job_test_id=${job_test_id} subject=${subject || "(all)"}`);
+    console.log(`\n[REQUEST] generate-job-test job_test_id=${job_test_id} subject=${subject || "(all)"} topup=${topup_reason || "(none)"} user=${triggering_user_id || "(none)"}`);
 
     if (!job_test_id) {
       return new Response(
         JSON.stringify({ error: "job_test_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
+    }
+
+    // Phase 4b — per-user AI top-up guardrail
+    const isUserTopup = !!triggering_user_id && !!topup_reason;
+    if (isUserTopup) {
+      const { data: gate, error: gateErr } = await supabase.rpc("can_user_topup", {
+        p_user_id: triggering_user_id,
+        p_job_test_id: job_test_id,
+        p_subject: subject ?? null,
+      });
+      if (gateErr) {
+        console.warn("[topup] can_user_topup rpc error:", gateErr.message);
+      }
+      const allowed = (gate as any)?.allowed === true;
+      if (!allowed) {
+        console.log(`[topup] blocked user=${triggering_user_id} reason=${(gate as any)?.reason}`);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            skipped: true,
+            reason: "topup_blocked",
+            gate,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     // Daily cap check (ad-hoc, not a hardened rate limiter)
