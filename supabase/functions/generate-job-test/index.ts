@@ -642,18 +642,46 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { job_test_id, subject } = body as {
+    const { job_test_id, subject, triggering_user_id, topup_reason } = body as {
       job_test_id?: string;
       subject?: string;
+      triggering_user_id?: string;
+      topup_reason?: string;
     };
 
-    console.log(`\n[REQUEST] generate-job-test job_test_id=${job_test_id} subject=${subject || "(all)"}`);
+    console.log(`\n[REQUEST] generate-job-test job_test_id=${job_test_id} subject=${subject || "(all)"} topup=${topup_reason || "(none)"} user=${triggering_user_id || "(none)"}`);
 
     if (!job_test_id) {
       return new Response(
         JSON.stringify({ error: "job_test_id is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
+    }
+
+    // Phase 4b — per-user AI top-up guardrail
+    const isUserTopup = !!triggering_user_id && !!topup_reason;
+    if (isUserTopup) {
+      const { data: gate, error: gateErr } = await supabase.rpc("can_user_topup", {
+        p_user_id: triggering_user_id,
+        p_job_test_id: job_test_id,
+        p_subject: subject ?? null,
+      });
+      if (gateErr) {
+        console.warn("[topup] can_user_topup rpc error:", gateErr.message);
+      }
+      const allowed = (gate as any)?.allowed === true;
+      if (!allowed) {
+        console.log(`[topup] blocked user=${triggering_user_id} reason=${(gate as any)?.reason}`);
+        return new Response(
+          JSON.stringify({
+            success: false,
+            skipped: true,
+            reason: "topup_blocked",
+            gate,
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
     }
 
     // Daily cap check (ad-hoc, not a hardened rate limiter)
@@ -727,6 +755,27 @@ Deno.serve(async (req) => {
     const totalCrossReused = results.reduce((s, r: any) => s + (r.cross_reused || 0), 0);
     console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} cross_reused=${totalCrossReused} sections=${results.length}`);
     console.log(`  per-section: ${JSON.stringify(results.map((r: any) => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, cross: r.cross_reused || 0, st: r.status })))}`);
+
+    // Phase 4b — log this run against the triggering user's top-up ledger
+    if (isUserTopup) {
+      const totalRequested = results.reduce((s, r: any) => s + (r.requested || r.accepted || 0), 0);
+      await supabase.from("user_ai_topup_log").insert({
+        user_id: triggering_user_id!,
+        job_test_id,
+        subject: subject ?? null,
+        reason: topup_reason ?? "user_exhausted",
+        questions_requested: totalRequested,
+        questions_saved: totalAccepted,
+        success: totalAccepted > 0,
+        metadata: {
+          sections: results.length,
+          reused: totalReused,
+          cross_reused: totalCrossReused,
+        },
+      }).then(({ error }) => {
+        if (error) console.warn("[topup] log insert failed:", error.message);
+      });
+    }
 
     return new Response(
       JSON.stringify({

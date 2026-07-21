@@ -2926,6 +2926,48 @@ export type Database = {
           },
         ]
       }
+      user_ai_topup_log: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          job_test_id: string
+          metadata: Json
+          questions_requested: number
+          questions_saved: number
+          reason: string
+          subject: string | null
+          success: boolean
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_test_id: string
+          metadata?: Json
+          questions_requested?: number
+          questions_saved?: number
+          reason?: string
+          subject?: string | null
+          success?: boolean
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          job_test_id?: string
+          metadata?: Json
+          questions_requested?: number
+          questions_saved?: number
+          reason?: string
+          subject?: string | null
+          success?: boolean
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_appearance_settings: {
         Row: {
           id: string
@@ -3511,6 +3553,10 @@ export type Database = {
           matched_topics: string[]
           updated_count: number
         }[]
+      }
+      can_user_topup: {
+        Args: { p_job_test_id: string; p_subject: string; p_user_id: string }
+        Returns: Json
       }
       compute_content_fingerprint: { Args: { p_text: string }; Returns: string }
       deduct_credits:
