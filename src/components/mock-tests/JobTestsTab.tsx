@@ -129,6 +129,40 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
           );
         }
 
+        // Phase 4b — DB-exhaustion AI top-up (per-user, background, guardrailed).
+        // Fire-and-forget: only when the pool is largely mastered AND there are
+        // few unseen/learning/review candidates left for this user.
+        try {
+          const { data: { user: authUserForTopup } } = await supabase.auth.getUser();
+          if (authUserForTopup && definition?.id && approved.length > 0) {
+            const pool = approved.length;
+            const masteredCount = Array.from(masteryMap.values())
+              .filter((m) => m.level === "mastered").length;
+            const usable = pool - masteredCount;
+            const masteredRatio = masteredCount / pool;
+            const usableRatio = usable / Math.max(1, targetCount);
+            if (masteredRatio >= 0.7 && usableRatio < 0.5) {
+              console.log(
+                `🎯 Top-up trigger: pool=${pool} mastered=${masteredCount} usable=${usable} target=${targetCount}`,
+              );
+              // Fire-and-forget — do not await; guardrails run server-side.
+              void supabase.functions.invoke("generate-job-test", {
+                body: {
+                  job_test_id: definition.id,
+                  triggering_user_id: authUserForTopup.id,
+                  topup_reason: "user_exhausted",
+                },
+              }).then(({ data, error }) => {
+                if (error) console.warn("[topup] invoke error:", error.message);
+                else if ((data as any)?.skipped) console.log("[topup] server skipped:", (data as any)?.gate);
+                else console.log("[topup] queued:", data);
+              });
+            }
+          }
+        } catch (e) {
+          console.warn("[topup] pre-check failed:", (e as Error).message);
+        }
+
         const rankSort = (pool: any[]) => {
           const withRand = pool.map((q) => ({ q, r: Math.random(), info: infoFor(q.id) }));
           withRand.sort((a, b) => {
