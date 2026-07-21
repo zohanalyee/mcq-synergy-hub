@@ -756,6 +756,27 @@ Deno.serve(async (req) => {
     console.log(`\n[REQUEST DONE] total_accepted=${totalAccepted} total_reused=${totalReused} cross_reused=${totalCrossReused} sections=${results.length}`);
     console.log(`  per-section: ${JSON.stringify(results.map((r: any) => ({ s: r.subject, a: r.accepted, reused: r.reused || 0, cross: r.cross_reused || 0, st: r.status })))}`);
 
+    // Phase 4b — log this run against the triggering user's top-up ledger
+    if (isUserTopup) {
+      const totalRequested = results.reduce((s, r: any) => s + (r.requested || r.accepted || 0), 0);
+      await supabase.from("user_ai_topup_log").insert({
+        user_id: triggering_user_id!,
+        job_test_id,
+        subject: subject ?? null,
+        reason: topup_reason ?? "user_exhausted",
+        questions_requested: totalRequested,
+        questions_saved: totalAccepted,
+        success: totalAccepted > 0,
+        metadata: {
+          sections: results.length,
+          reused: totalReused,
+          cross_reused: totalCrossReused,
+        },
+      }).then(({ error }) => {
+        if (error) console.warn("[topup] log insert failed:", error.message);
+      });
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
