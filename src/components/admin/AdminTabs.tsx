@@ -39,6 +39,7 @@ import SocialLinksManager from "./SocialLinksManager";
 import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
 import AgentDashboard from "./AgentDashboard";
 import ContentHealthDashboard from "./ContentHealthDashboard";
+import LifecycleDashboard from "./LifecycleDashboard";
 
 type AdminTabsProps = {
   activeTab: string;
