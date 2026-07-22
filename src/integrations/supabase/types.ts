@@ -3692,6 +3692,22 @@ export type Database = {
           topic: string
         }[]
       }
+      get_lifecycle_circulation_stats: { Args: never; Returns: Json }
+      get_lifecycle_hot_and_stale: { Args: { p_limit?: number }; Returns: Json }
+      get_lifecycle_topup_log: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          id: string
+          job_test_id: string
+          questions_generated: number
+          reason: string
+          subject: string
+          success: boolean
+          user_id: string
+          username: string
+        }[]
+      }
       get_lms_content_inventory: {
         Args: never
         Returns: {
