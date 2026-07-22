@@ -39,6 +39,7 @@ import SocialLinksManager from "./SocialLinksManager";
 import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
 import AgentDashboard from "./AgentDashboard";
 import ContentHealthDashboard from "./ContentHealthDashboard";
+import LifecycleDashboard from "./LifecycleDashboard";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -74,6 +75,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "analytics", label: "Analytics", icon: BarChart3 },
         { value: "inventory", label: "Inventory", icon: Archive },
         { value: "content-health", label: "Content Health", icon: Activity },
+        { value: "lifecycle", label: "Lifecycle", icon: TrendingUp },
         { value: "empty-topics", label: "Content Gaps", icon: TrendingUp },
       ],
     },
@@ -298,6 +300,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="faq-manager"><FAQManager /></TabsContent>
       <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
       <TabsContent value="content-health"><ContentHealthDashboard /></TabsContent>
+      <TabsContent value="lifecycle"><LifecycleDashboard /></TabsContent>
       <TabsContent value="empty-topics"><EmptyTopicAnalytics /></TabsContent>
       <TabsContent value="agent"><AgentDashboard /></TabsContent>
     </Tabs>
