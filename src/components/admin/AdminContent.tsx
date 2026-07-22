@@ -24,7 +24,7 @@ const AdminContent = ({
 }: AdminContentProps) => {
   
   // Don't show table for submit-content tab or management tabs
-  const isContentTab = !['submit-content', 'subjects', 'topics', 'job-tests', 'mock-test-analytics', 'quizzes', 'question-bank', 'analytics', 'data-migration', 'review-duplicates', 'bulk-upload', 'dashboard', 'lms-structure', 'jobs', 'scholarships', 'inventory', 'documents', 'messages', 'feedback-analytics', 'study-sounds', 'empty-topics', 'content-health', 'add-content', 'opportunity-review'].includes(activeTab);
+  const isContentTab = !['submit-content', 'subjects', 'topics', 'job-tests', 'mock-test-analytics', 'quizzes', 'question-bank', 'analytics', 'data-migration', 'review-duplicates', 'bulk-upload', 'dashboard', 'lms-structure', 'jobs', 'scholarships', 'inventory', 'documents', 'messages', 'feedback-analytics', 'study-sounds', 'empty-topics', 'content-health', 'lifecycle', 'add-content', 'opportunity-review'].includes(activeTab);
 
   const getCurrentContent = () => currentContent;
 
