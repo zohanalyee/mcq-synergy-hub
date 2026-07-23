@@ -2205,6 +2205,39 @@ export type Database = {
         }
         Relationships: []
       }
+      scraper_signals: {
+        Row: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip_hash: string
+          metadata: Json | null
+          signal_type: string
+          updated_at: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_hash: string
+          metadata?: Json | null
+          signal_type: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_hash?: string
+          metadata?: Json | null
+          signal_type?: string
+          updated_at?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       scraping_attempts: {
         Row: {
           created_at: string | null
@@ -3580,6 +3613,7 @@ export type Database = {
           total_requests: number
         }[]
       }
+      get_all_questions_dump: { Args: never; Returns: Json }
       get_autofill_queue: {
         Args: { limit_count?: number }
         Returns: {
@@ -3869,6 +3903,19 @@ export type Database = {
           two_star: number
         }[]
       }
+      get_scraper_signal_log: {
+        Args: { p_limit?: number }
+        Returns: {
+          created_at: string
+          endpoint: string
+          id: string
+          ip_hash: string
+          metadata: Json
+          signal_type: string
+          user_agent: string
+        }[]
+      }
+      get_scraper_signal_stats: { Args: never; Returns: Json }
       get_student_weaknesses: {
         Args: { target_user_id: string }
         Returns: {
