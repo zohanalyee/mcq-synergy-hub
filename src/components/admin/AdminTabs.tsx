@@ -18,7 +18,7 @@ import AddContentHub from "./AddContentHub";
 import {
   Database, BarChart3, LayoutDashboard, FileText, Upload, BookOpen,
   FolderTree, Briefcase, AlertTriangle, Layers, Archive,
-  BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck,
+  BriefcaseBusiness, GraduationCap, Globe, Library, ShieldCheck, ShieldAlert,
   Sparkles, Zap, Navigation, Settings, Brain, Cpu, Mail, Star, Music,
   PenSquare, HelpCircle, TrendingUp, Inbox, Activity,
 } from "lucide-react";
@@ -40,6 +40,7 @@ import EmptyTopicAnalytics from "./EmptyTopicAnalytics";
 import AgentDashboard from "./AgentDashboard";
 import ContentHealthDashboard from "./ContentHealthDashboard";
 import LifecycleDashboard from "./LifecycleDashboard";
+import ScraperSignalsDashboard from "./ScraperSignalsDashboard";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -76,6 +77,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "inventory", label: "Inventory", icon: Archive },
         { value: "content-health", label: "Content Health", icon: Activity },
         { value: "lifecycle", label: "Lifecycle", icon: TrendingUp },
+        { value: "scraper-signals", label: "Scraper Signals", icon: ShieldAlert },
         { value: "empty-topics", label: "Content Gaps", icon: TrendingUp },
       ],
     },
@@ -301,6 +303,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
       <TabsContent value="content-health"><ContentHealthDashboard /></TabsContent>
       <TabsContent value="lifecycle"><LifecycleDashboard /></TabsContent>
+      <TabsContent value="scraper-signals"><ScraperSignalsDashboard /></TabsContent>
       <TabsContent value="empty-topics"><EmptyTopicAnalytics /></TabsContent>
       <TabsContent value="agent"><AgentDashboard /></TabsContent>
     </Tabs>
