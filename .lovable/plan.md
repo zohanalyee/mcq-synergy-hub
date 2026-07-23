@@ -1,128 +1,69 @@
-# Pending Work — Phased Plan
+# Root cause (confirmed by raw SQL)
 
-Sequence chosen for lowest-risk → highest-value, cheap items first.
+Raw counts pulled just now from the DB:
 
----
 
-## Phase 1 — OG Image Audit (Quick, read-only)
+| Table                 | Rows  | Rows with usage_count > 0 | Max usage_count | Last used_at |
+| --------------------- | ----- | ------------------------- | --------------- | ------------ |
+| `job_test_questions`  | 4,142 | **0**                     | **0**           | **NULL**     |
+| `content_items` (mcq) | 8,602 | 818                       | 87              | 2026-07-21   |
 
-**Goal:** Confirm og:image tags are present in live raw HTML and not stripped by `dedupe-og.mjs`.
 
-**Steps:**
+So haan — aap ka shak sahi hai. `job_test_questions.usage_count` column **hamesha 0 raha hai**. Aap ki FIA-ASI / MDCAT attempts ke baad bhi ye zero par hi hai. Dashboard is column ko sahi read kar raha hai; masla dashboard ka nahi, **usage-tracking wiring ka hai**.
 
-1. `curl -s` raw HTML for 3 sample URLs:
-  - `https://mcqsai.com/` (homepage)
-  - `https://mcqsai.com/mock-tests` (category)
-  - `https://mcqsai.com/jobs` (category with dedicated banner)
-2. Verify: exactly one `og:image` tag, absolute HTTPS apex URL, category-correct banner.
-3. Verify banner files exist in `/public/og/` and are reachable (HTTP 200, valid JPEG).
-4. Re-read `scripts/dedupe-og.mjs` logic to confirm it **keeps the last** occurrence (Helmet-injected) — not accidentally dropping the only one.
-5. Deliverable: short report + Facebook Sharing Debugger + WhatsApp cache-refresh steps.
+## Do actual bugs
 
-**No code changes unless a bug is found.** If found, minimal fix + re-scrape guide.
+1. `**record_question_usage` RPC sirf `content_items` ko bump karta hai.**
+  Function body (already in schema):
+   Job-test questions ke liye equivalent update kabhi likha hi nahi gaya. Jab `generate-job-test` mixed sources se pool banata hai (`generate-job-test/index.ts:454`), sirf `content_items` source IDs bump hote hain — `job_test_questions` source IDs silently ignore ho jaate hain.
+2. **Bump generate-time par hota hai, attempt-time par nahi.**
+  `record_question_usage` sirf test **generation** ke waqt call hota hai (`generate-test`, `generate-job-test`, `questionBankService`). Cached test dobara serve ho, ya user Player mein questions attempt kare — koi bump nahi hota. Yehi wajah hai ke `content_items` mein bhi usage sirf un questions par count hua hai jo AI-generation ke waqt selected hue, na ke jo actually attempt hue.
 
----
+## Fix plan (Phase 4c-fix, observational only)
 
-## Phase 2 — Header AI Coach Link (Tiny UI)
+Sirf tracking wire karni hai — user-facing kuch nahi badalta.
 
-**Goal:** Add `AI Coach` to top-level desktop + mobile nav.
+### 1. SQL migration — dual-source usage bump
 
-**Steps:**
+- Nayi RPC `record_job_test_question_usage(question_ids uuid[])` — same shape jaisi `record_question_usage`, lekin `job_test_questions` table update kare.
+- **OR** existing `record_question_usage` ko dual-source bana dein (dono tables mein `id = ANY(...)` par update — jo match kare bump ho, dusri no-op). Ye simpler hai — koi caller change nahi karna padta. Recommended.
+- `SECURITY DEFINER`, `search_path = public`, `GRANT EXECUTE ... TO authenticated, anon`.
 
-1. `src/components/header/DesktopNavigation.tsx`: add `AI Coach → /features/ai-coach` in the `More` dropdown (keeps primary 6 slots intact on smaller desktops).
-2. Mobile nav component: add same entry with a `New` badge to match footer.
-3. Icon: reuse `Sparkles` or `Brain` from lucide (consistent with Coach branding elsewhere).
+### 2. Bump on **serve/generation** (jahan currently sirf content_items bump hote hain)
 
-No routing / backend changes.
+- `supabase/functions/generate-job-test/index.ts:454` — call already hai; RPC ke dual-source hone ke baad `jobTestSourceIds` bhi bump honge (currently un ka array bhi wahin available hai, sirf pass nahi ho raha). Ek hi RPC call mein `[...ciSourceIds, ...jobTestSourceIds]` bhej dein.
 
----
+### 3. Bump on **actual attempt** (missing everywhere today)
 
-## Phase 3 — Phase 4b: Per-User AI Top-Up (Backend + guardrails)
+- `TestSession.tsx` / `processTestCompletion` (unified test-tracking hook) mein completion ke waqt served question-IDs `record_question_usage` ko bhej dein (fire-and-forget). Ye dono banks par asli "seen by user" count denga — na ke sirf "AI ne is question ko cache ke waqt shortlist kiya".
+- Guest attempts bhi count karein (RPC anon-accessible hai).
 
-**Goal:** Trigger AI generation ONLY when a specific user has exhausted the DB pool for a given test/subject. New questions land in DB permanently.
+### 4. Optional backfill (skip if credits tight)
 
-**Design:**
+- `job_test_questions.usage_count` ke liye historical bump: `user_attempt_history` se derive kar ke ek-time UPDATE. Skippable — new attempts se organically bharega.
 
-- In `JobTestsTab.tsx` sampling loop (already mastery-ranked), after pool-fetch:
-  - If `unseen + learning + review < target * 0.5` AND `mastered ≥ pool_size * 0.7` → treat as "exhausted for this user".
-  - Trigger `generate-job-test` in background with a `topup_reason: 'user_exhausted'` flag.
-- New table `user_ai_topup_log(user_id, job_test_id, subject, created_at)` for caps.
-- **Guardrails (hard-coded, tunable via `system_settings`):**
-  - Per-user: max **2 top-ups/day**, **10/month** across all tests.
-  - Per-user/test cooldown: **6 hours**.
-  - Global daily quota guard: reuse existing `checkQuota` in `_shared/quotaManager.ts`.
-  - Only for authenticated users (guests never trigger).
-- Generated questions saved with `admin_approved = true` (already default in pipeline) so they're immediately reusable across users.
+## What this does NOT change
 
-**Migration:**
+- Dashboard code, mastery logic, top-up guardrails, ranking — sab jaisa hai waisa rahega.
+- User-facing player, generation, or approval flows untouched.
+- Sirf 1 migration + 2 chhoti edits (generate-job-test payload + attempt-completion hook).
 
-- `user_ai_topup_log` table + RLS + GRANTs.
-- `system_settings` row: `user_topup_config` = `{ daily: 2, monthly: 10, cooldown_hours: 6, min_pool_ratio: 0.5 }`.
+## Verification steps after build
 
-**Edge fn change:** `generate-job-test` accepts optional `triggering_user_id` + `topup_reason`, writes log row on success.
+1. Apna khud ka existing test dobara attempt karein.
+2. Raw SQL:
+  ```sql
+   SELECT id, usage_count, last_used_at FROM job_test_questions
+   WHERE usage_count > 0 ORDER BY last_used_at DESC LIMIT 20;
+  ```
+3. Lifecycle Dashboard → "Mock Test Bank Circulation" ab non-zero buckets dikhaye ga.
 
----
-
-## Phase 4 — Phase 4c: Admin Lifecycle Dashboard (Read-only, DB-heavy)
-
-**Goal:** Per-question visibility: origin, usage across tests, attempts, unique users, mastery distribution, overused flag.
-
-**Backend (RPCs, `SECURITY DEFINER`, admin-only via `is_admin()`):**
-
-1. `get_question_lifecycle(p_question_id uuid)` → single-question detail:
-  - source (AI/manual/telegram), created_at, subject, tests using it, total attempts, unique users, mastery counts (learning/review/mastered), avg accuracy, `is_overused` (attempts > 500 OR unique_users > 200).
-2. `get_lifecycle_overview(filters)` → paginated list for the dashboard grid.
-3. `get_test_lifecycle(p_job_test_id)` → per-test rollup.
-4. `get_user_lifecycle(p_user_id)` → per-user attempted question list (admin drill-down).
-
-**UI:** New admin tab `Content Lifecycle` under `AdminTabs.tsx`:
-
-- Filter bar (subject, source, overused, date range).
-- Table with sortable columns + row-expand for mastery distribution.
-- Sub-views: "By Test" / "By User" toggles.
-
-No writes; purely observational.
-
----
-
-## Phase 5 — Rate-Limiting / Scraping Protection Audit (Proposal only)
-
-**Goal:** Written proposal, no code. Balance crawler openness (D2b) vs bulk-scraper defense.
-
-**Audit scope:**
-
-1. Enumerate anon-readable RPCs/tables reachable from browser (list from schema).
-2. Identify high-value targets for scrapers: `get_board_topic_mcqs`, `get_practice_questions`, `get_preview_questions`, `content_items` direct SELECT.
-3. Traffic pattern review: what's a "normal" pageview cost vs a scraper burst.
-
-**Proposal outline (to present, not implement):**
-
-- **Do NOT rate-limit** static prerendered HTML (crawlers must fetch freely).
-- **Do rate-limit** anon RPC calls at the edge:
-  - Cloudflare / hosting-layer rules preferred (per-IP: 60 req/min for RPC endpoints).
-  - Fallback: Supabase edge function `rpc-gateway` wrapping high-value RPCs with in-memory per-IP token bucket.
-- **User-Agent allowlist bypass** for verified bots (Googlebot, Bingbot, GPTBot, ClaudeBot) — reverse-DNS check.
-- **Honeypot RPC** returning 200 with sentinel data to detect scrapers.
-- **Monitoring**: log 429s to `ai_usage_logs` metadata for observability.
-- Tradeoffs section: false-positive risk on shared IPs (schools, offices), mitigation via short block windows (60s) not permanent bans.
-- Confirm current per-project no-standard-rate-limiting-primitive constraint; user must approve ad-hoc approach.
-
-Deliverable: markdown proposal in chat; wait for approval before any code.
-
----
-
-## Execution Order & Checkpoints
-
-1. **Phase 1** (OG audit) — ~1 turn, mostly curl + read.
-2. **Phase 2** (Header link) — ~1 turn, 2 file edits.
-3. **Phase 3** (4b top-up) — 2-3 turns: migration → edge fn → client wiring.
-4. **Phase 4** (4c dashboard) — 2-3 turns: RPCs → UI tab → polish.
-5. **Phase 5** (rate-limit proposal) — 1 turn, doc only.
-
-Stop at any clean checkpoint if budget runs low; each phase is independent and shippable.
+Confirm karein: **Option A** (existing `record_question_usage` ko dual-source banayen — 1 RPC, seamless) ya **Option B** (nayi alag RPC — cleaner separation, 2 callers). Main Option A recommend karta hoon.
 
 &nbsp;
 
-&nbsp;
+**Confirm hua bug samajh aa gaya** — dono fixes zaroori hain (dual-source tracking + attempt-time bump). Option A approve karta hoon (existing record_question_usage ko dual-source banayen — simpler).
 
-Plan approved — jaisa sequence diya hai waisay hi shuru karein: Phase 1 (OG-audit) se Phase 5 (rate-limit proposal) tak, ek-ek karke. Har phase complete hone par summary dein, main review/approve karta rahunga. Agar credits/budget beech mein khatam ho, clean checkpoint par ruk jayen — baaqi agli baar continue karenge.
+Backfill SKIP kar dein abhi (credits bachane ke liye) — naye attempts se organically bhar jayega.
+
+Build/typecheck clean hone ke baad, verification-steps khud follow karunga (apna test dobara attempt karke, raw-SQL check karke).
