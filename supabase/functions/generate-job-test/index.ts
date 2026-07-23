@@ -448,19 +448,11 @@ async function generateForSection(
     } else {
       crossReused = reuseInsertRows.length;
       console.log(`[REUSE] ✅ ${section.subject}: linked ${crossReused} question(s) from cross-source pool`);
-      // Bump usage counters on CI source rows (best-effort).
-      if (ciSourceIdsToBump.length > 0) {
+      // Bump usage counters on all source rows (dual-source RPC handles both banks).
+      const allSourceIds = [...ciSourceIdsToBump, ...jtqSourceIdsToBump];
+      if (allSourceIds.length > 0) {
         try {
-          await supabase.rpc("record_question_usage", { question_ids: ciSourceIdsToBump });
-        } catch (_e) { /* ignore */ }
-      }
-      // Bump last_used_at on JTQ source rows for LRU rotation.
-      if (jtqSourceIdsToBump.length > 0) {
-        try {
-          await supabase
-            .from("job_test_questions")
-            .update({ last_used_at: new Date().toISOString() })
-            .in("id", jtqSourceIdsToBump);
+          await supabase.rpc("record_question_usage", { question_ids: allSourceIds });
         } catch (_e) { /* ignore */ }
       }
     }
