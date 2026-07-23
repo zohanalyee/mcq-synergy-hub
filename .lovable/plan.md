@@ -1,69 +1,127 @@
-# Root cause (confirmed by raw SQL)
+# Phase 5 Implementation Plan — Week 1 (Observe-Only)
 
-Raw counts pulled just now from the DB:
+## Decisions received
 
+1. **Edge layer:** Cloudflare/edge access available → preferred path.
+2. **Approach:** Approve ad-hoc rate-limiting.
+3. **Rollout:** Observe-first 4-week sequencing.
+4. **Honeypot:** Add fake public endpoint now.
 
-| Table                 | Rows  | Rows with usage_count > 0 | Max usage_count | Last used_at |
-| --------------------- | ----- | ------------------------- | --------------- | ------------ |
-| `job_test_questions`  | 4,142 | **0**                     | **0**           | **NULL**     |
-| `content_items` (mcq) | 8,602 | 818                       | 87              | 2026-07-21   |
+## Scope of this plan
 
+Build only the **observation/measurement layer** (Week 1 of proposal). No blocking rules are activated yet. Cloudflare WAF rules will be provided as copy-paste templates for Log mode; user enables them manually in Cloudflare Dashboard.
 
-So haan — aap ka shak sahi hai. `job_test_questions.usage_count` column **hamesha 0 raha hai**. Aap ki FIA-ASI / MDCAT attempts ke baad bhi ye zero par hi hai. Dashboard is column ko sahi read kar raha hai; masla dashboard ka nahi, **usage-tracking wiring ka hai**.
+## What will be built
 
-## Do actual bugs
+### 1. Database: `scraper_signals` table
 
-1. `**record_question_usage` RPC sirf `content_items` ko bump karta hai.**
-  Function body (already in schema):
-   Job-test questions ke liye equivalent update kabhi likha hi nahi gaya. Jab `generate-job-test` mixed sources se pool banata hai (`generate-job-test/index.ts:454`), sirf `content_items` source IDs bump hote hain — `job_test_questions` source IDs silently ignore ho jaate hain.
-2. **Bump generate-time par hota hai, attempt-time par nahi.**
-  `record_question_usage` sirf test **generation** ke waqt call hota hai (`generate-test`, `generate-job-test`, `questionBankService`). Cached test dobara serve ho, ya user Player mein questions attempt kare — koi bump nahi hota. Yehi wajah hai ke `content_items` mein bhi usage sirf un questions par count hua hai jo AI-generation ke waqt selected hue, na ke jo actually attempt hue.
+Stores signals from the honeypot and any future rate-limit events.
 
-## Fix plan (Phase 4c-fix, observational only)
+Fields:
 
-Sirf tracking wire karni hai — user-facing kuch nahi badalta.
+- `id`, `created_at`, `updated_at`
+- `ip_hash` — SHA-256 hash of caller IP (GDPR-safe, no raw IPs)
+- `user_agent` — request User-Agent
+- `endpoint` — which endpoint was hit (`honeypot_dump` initially)
+- `signal_type` — `honeypot`, `rate_limit_trigger`, etc.
+- `metadata` — JSONB for extra context (country, ASN if available, request path)
 
-### 1. SQL migration — dual-source usage bump
+Access:
 
-- Nayi RPC `record_job_test_question_usage(question_ids uuid[])` — same shape jaisi `record_question_usage`, lekin `job_test_questions` table update kare.
-- **OR** existing `record_question_usage` ko dual-source bana dein (dono tables mein `id = ANY(...)` par update — jo match kare bump ho, dusri no-op). Ye simpler hai — koi caller change nahi karna padta. Recommended.
-- `SECURITY DEFINER`, `search_path = public`, `GRANT EXECUTE ... TO authenticated, anon`.
+- `anon` can INSERT only via the honeypot edge function (service_role insert from function).
+- `authenticated` and `anon` cannot SELECT.
+- `service_role` has ALL.
+- Admin-only SELECT policy using `is_admin()`.
 
-### 2. Bump on **serve/generation** (jahan currently sirf content_items bump hote hain)
+### 2. Edge function: `honeypot-questions-dump`
 
-- `supabase/functions/generate-job-test/index.ts:454` — call already hai; RPC ke dual-source hone ke baad `jobTestSourceIds` bhi bump honge (currently un ka array bhi wahin available hai, sirf pass nahi ho raha). Ek hi RPC call mein `[...ciSourceIds, ...jobTestSourceIds]` bhej dein.
+- Path: `supabase/functions/honeypot-questions-dump/index.ts`
+- Public, `verify_jwt = false`.
+- Returns HTTP 200 with realistic-looking but useless sentinel JSON (`{ warning: "scraping detected", items: [] }`).
+- Logs every call to `scraper_signals` via service_role client:
+  - hashes the caller IP (`x-forwarded-for` first entry)
+  - stores UA, endpoint name, signal_type = `honeypot`
+- Includes proper CORS headers.
+- No AI calls, no expensive operations.
 
-### 3. Bump on **actual attempt** (missing everywhere today)
+### 3. Admin tab: "Scraper Signals"
 
-- `TestSession.tsx` / `processTestCompletion` (unified test-tracking hook) mein completion ke waqt served question-IDs `record_question_usage` ko bhej dein (fire-and-forget). Ye dono banks par asli "seen by user" count denga — na ke sirf "AI ne is question ko cache ke waqt shortlist kiya".
-- Guest attempts bhi count karein (RPC anon-accessible hai).
+- New tab under Admin → Overview (next to Lifecycle).
+- Component: `src/components/admin/ScraperSignalsDashboard.tsx`
+- Shows:
+  - Total honeypot hits in last 24h / 7d / 30d
+  - Top IP hashes by hit count
+  - Recent signals table
+  - Common User-Agent strings
+- Uses `supabase--read_query` or RPC for admin fetch.
 
-### 4. Optional backfill (skip if credits tight)
+### 4. Cloudflare WAF rule templates (user-pasteable)
 
-- `job_test_questions.usage_count` ke liye historical bump: `user_attempt_history` se derive kar ke ek-time UPDATE. Skippable — new attempts se organically bharega.
+Provide exact rule expressions and actions for the user's Cloudflare Dashboard:
 
-## What this does NOT change
+**Rule A — Honeypot escalation (Log mode for Week 1):**
 
-- Dashboard code, mastery logic, top-up guardrails, ranking — sab jaisa hai waisa rahega.
-- User-facing player, generation, or approval flows untouched.
-- Sirf 1 migration + 2 chhoti edits (generate-job-test payload + attempt-completion hook).
+```
+(http.request.uri.path eq "/rest/v1/rpc/honeypot_questions_dump")
+Action: Log
+```
 
-## Verification steps after build
+**Rule B — High-value RPC rate limit (Log mode for Week 1):**
 
-1. Apna khud ka existing test dobara attempt karein.
-2. Raw SQL:
-  ```sql
-   SELECT id, usage_count, last_used_at FROM job_test_questions
-   WHERE usage_count > 0 ORDER BY last_used_at DESC LIMIT 20;
-  ```
-3. Lifecycle Dashboard → "Mock Test Bank Circulation" ab non-zero buckets dikhaye ga.
+```
+(http.request.uri.path matches "^/rest/v1/rpc/(get_board_topic_mcqs|get_practice_questions|get_preview_questions)$" and not cf.client.bot)
+Action: Log
+```
 
-Confirm karein: **Option A** (existing `record_question_usage` ko dual-source banayen — 1 RPC, seamless) ya **Option B** (nayi alag RPC — cleaner separation, 2 callers). Main Option A recommend karta hoon.
+**Rule C — Content_items table pagination (Log mode for Week 1):**
+
+```
+(http.request.uri.path matches "^/rest/v1/content_items" and http.request.uri.query matches "(select=|limit=)")
+Action: Log
+```
+
+These will be documented in `docs/phase-5-cloudflare-rules.md` with screenshots-ready steps.
+
+## What is NOT in this plan
+
+- No blocking/429 responses yet.
+- No reverse-DNS verified-bot bypass logic yet (Week 3).
+- No edge-function fallback `rpc-gateway` (Cloudflare path is available).
+- No changes to existing client code paths.
+
+## Budget / credit impact
+
+- Database migration: negligible.
+- Honeypot edge function: zero AI, minimal compute.
+- Admin dashboard: read-only, no AI.
+- **Total expected AI credit cost: 0.**
+
+## Sequencing after Week 1
+
+- Week 2: flip Cloudflare rules to Log mode (templates provided).
+- Week 3: flip to Block/Challenge with verified-bot bypass.
+- Week 4: tune thresholds based on `scraper_signals` data.
+
+## Deliverables
+
+1. Migration file for `scraper_signals` table.
+2. `supabase/functions/honeypot-questions-dump/index.ts`
+3. `src/components/admin/ScraperSignalsDashboard.tsx`
+4. Admin tab registration update.
+5. `docs/phase-5-cloudflare-rules.md` with copy-paste WAF rules.
+
+## Checkpoint
+
+If credits run low after any step, we stop and the system remains safe: honeypot collects data, no blocking is active, no user-facing changes.
 
 &nbsp;
 
-**Confirm hua bug samajh aa gaya** — dono fixes zaroori hain (dual-source tracking + attempt-time bump). Option A approve karta hoon (existing record_question_usage ko dual-source banayen — simpler).
+# **Plan approved** — Week 1 (observe-only) shuru karein. Sab safe/zero-risk hai jaisa propose kiya. 
 
-Backfill SKIP kar dein abhi (credits bachane ke liye) — naye attempts se organically bhar jayega.
+Build/typecheck clean hone ke baad, mujhe:
 
-Build/typecheck clean hone ke baad, verification-steps khud follow karunga (apna test dobara attempt karke, raw-SQL check karke).
+1. Cloudflare WAF-rule-templates dikhayen taake main khud Cloudflare-Dashboard mein Log-mode wale rules add kar sakoon
+
+2. Admin panel mein "Scraper Signals" tab kahan milega batayen
+
+Checkpoint-approach maintain karein — credits khatam hon to clean-jagah par ruk jayen.
