@@ -67,6 +67,16 @@ export const processTestCompletion = async (data: TestCompletionData): Promise<{
   };
 
   try {
+    // Bump served-question usage counters (dual-source RPC, works for guests too).
+    // Fire-and-forget — never blocks completion.
+    if (data.questionIds && data.questionIds.length > 0) {
+      supabase
+        .rpc("record_question_usage", { question_ids: data.questionIds })
+        .then(({ error }) => {
+          if (error) console.warn("record_question_usage failed (non-fatal):", error.message);
+        });
+    }
+
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
       console.log("No user logged in, skipping gamification");
