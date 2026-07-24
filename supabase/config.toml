@@ -84,3 +84,6 @@ verify_jwt = false
 
 [functions.group-concepts]
 verify_jwt = false
+
+[functions.honeypot-questions-dump]
+verify_jwt = false
