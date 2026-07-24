@@ -3910,10 +3910,17 @@ export type Database = {
           endpoint: string
           id: string
           ip_hash: string
-          metadata: Json
+          metadata: Json | null
           signal_type: string
-          user_agent: string
+          updated_at: string
+          user_agent: string | null
         }[]
+        SetofOptions: {
+          from: "*"
+          to: "scraper_signals"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_scraper_signal_stats: { Args: never; Returns: Json }
       get_student_weaknesses: {
