@@ -1,7 +1,10 @@
 # Phase 5 — Cloudflare WAF Rule Templates
 
 **Status:** Week 1 (observe-only) — Log mode only. No blocking yet.  
-**Last updated:** 2026-07-23
+**Last updated:** 2026-07-25
+
+> ⚠️ **Free-plan constraint:** Cloudflare Free plans do **not** allow the `matches` (regex) operator. The expressions below use only Free-plan-compatible operators: `eq`, `contains`, and `in`.  
+> ⚠️ **"Log" action is Enterprise-only:** On Free/Pro plans the `Log` action is unavailable. Use **Action: Skip** → **WAF components to skip: All rate limiting rules** instead. This records the request in Cloudflare Security Events without blocking it and without affecting your existing custom rules.
 
 ---
 
@@ -14,7 +17,37 @@ These rules match high-value RPC endpoints that scrapers love and log every matc
 1. Open [Cloudflare Dashboard](https://dash.cloudflare.com) → your domain → **Security** → **WAF** → **Custom rules**.
 2. Click **Create rule**.
 3. Give it a name, paste the expression, set the action, and save.
-4. Repeat for each rule below.
+
+---
+
+## Recommended: 1-slot combined rule (Free plan)
+
+If you only have **1 free custom-rule slot** left, use this single rule. It covers the honeypot, high-value RPCs, and bulk `content_items` pagination in one expression.
+
+**Name:** `Phase 5 — Scraper observation (1 slot)`
+
+**Expression:**
+```
+(
+  http.request.uri.path eq "/rest/v1/rpc/get_all_questions_dump"
+  or http.request.uri.path in { "/rest/v1/rpc/get_board_topic_mcqs" "/rest/v1/rpc/get_practice_questions" "/rest/v1/rpc/get_preview_questions" }
+  or (
+    http.request.uri.path eq "/rest/v1/content_items"
+    and (
+      http.request.uri.query contains "select="
+      or http.request.uri.query contains "limit="
+    )
+  )
+)
+and not cf.client.bot
+```
+
+**Action:** `Skip` → **WAF components to skip:** `All rate limiting rules`
+
+**Notes:**
+- `cf.client.bot` excludes verified good bots (Googlebot, Bingbot, etc.).
+- This is observe-only. The request still reaches Supabase and is logged by the honeypot edge function.
+- If the rule does not deploy with `in`, replace the `in` line with three separate `eq` conditions joined by `or` (see Rule B alternative below).
 
 ---
 
@@ -27,7 +60,7 @@ These rules match high-value RPC endpoints that scrapers love and log every matc
 (http.request.uri.path eq "/rest/v1/rpc/get_all_questions_dump")
 ```
 
-**Action:** `Log`
+**Action:** `Skip` → **WAF components to skip:** `All rate limiting rules`
 
 **Notes:**
 - This is the decoy RPC we created in Supabase.
@@ -40,12 +73,27 @@ These rules match high-value RPC endpoints that scrapers love and log every matc
 
 **Name:** `Phase 5 — High-value RPC rate limit (log mode)`
 
-**Expression:**
+**Expression (preferred, uses `in`):**
 ```
-(http.request.uri.path matches "^/rest/v1/rpc/(get_board_topic_mcqs|get_practice_questions|get_preview_questions)$" and not cf.client.bot)
+(
+  http.request.uri.path in { "/rest/v1/rpc/get_board_topic_mcqs" "/rest/v1/rpc/get_practice_questions" "/rest/v1/rpc/get_preview_questions" }
+  and not cf.client.bot
+)
 ```
 
-**Action:** `Log`
+**Alternative expression (if `in` fails on your plan, use `eq` + `or`):**
+```
+(
+  (
+    http.request.uri.path eq "/rest/v1/rpc/get_board_topic_mcqs"
+    or http.request.uri.path eq "/rest/v1/rpc/get_practice_questions"
+    or http.request.uri.path eq "/rest/v1/rpc/get_preview_questions"
+  )
+  and not cf.client.bot
+)
+```
+
+**Action:** `Skip` → **WAF components to skip:** `All rate limiting rules`
 
 **Notes:**
 - `cf.client.bot` excludes verified good bots (Googlebot, Bingbot, etc.) from being logged.
@@ -59,10 +107,16 @@ These rules match high-value RPC endpoints that scrapers love and log every matc
 
 **Expression:**
 ```
-(http.request.uri.path matches "^/rest/v1/content_items" and http.request.uri.query matches "(select=|limit=)")
+(
+  http.request.uri.path eq "/rest/v1/content_items"
+  and (
+    http.request.uri.query contains "select="
+    or http.request.uri.query contains "limit="
+  )
+)
 ```
 
-**Action:** `Log`
+**Action:** `Skip` → **WAF components to skip:** `All rate limiting rules`
 
 **Notes:**
 - Catches bulk scraping of the `content_items` table via PostgREST pagination.
@@ -76,26 +130,38 @@ These rules match high-value RPC endpoints that scrapers love and log every matc
 
 **Expression:**
 ```
-(http.request.uri.path matches "^/rest/v1/rpc/" and not cf.client.bot)
+(
+  http.request.uri.path contains "/rest/v1/rpc/"
+  and not cf.client.bot
+)
 ```
 
-**Action:** `Log`
+**Action:** `Skip` → **WAF components to skip:** `All rate limiting rules`
 
 **Notes:**
 - Broader net to see overall RPC scraping behavior.
+- **Skip this if you only have 1 custom-rule slot left** — use the combined 1-slot rule instead.
 - Use this for the first 7 days to establish a baseline before enabling Rule B blocking.
 
 ---
 
 ## Tuning for Week 3 (Block mode)
 
-When you are ready to enforce, change the action on Rule B to **Block** and add a rate-limiting expression. Example:
+When you are ready to enforce, change the action on Rule B to **Block** and add a rate-limiting expression. Free-plan version:
 
 ```
 (
-  http.request.uri.path matches "^/rest/v1/rpc/(get_board_topic_mcqs|get_practice_questions|get_preview_questions)$"
+  http.request.uri.path in { "/rest/v1/rpc/get_board_topic_mcqs" "/rest/v1/rpc/get_practice_questions" "/rest/v1/rpc/get_preview_questions" }
   and not cf.client.bot
-  and not http.user_agent matches "(Googlebot|Bingbot|GPTBot|ClaudeBot|PerplexityBot|Applebot|DuckDuckBot)"
+  and not (
+    http.user_agent contains "Googlebot"
+    or http.user_agent contains "Bingbot"
+    or http.user_agent contains "GPTBot"
+    or http.user_agent contains "ClaudeBot"
+    or http.user_agent contains "PerplexityBot"
+    or http.user_agent contains "Applebot"
+    or http.user_agent contains "DuckDuckBot"
+  )
 )
 ```
 
@@ -121,7 +187,7 @@ After enabling rules:
 1. Watch the **Scraper Signals** tab in Admin → Overview for honeypot hits.
 2. Check Cloudflare **Security Events** for rule match counts.
 3. Monitor Google Search Console coverage for 429 spikes on crawler URLs.
-4. If false positives appear, switch back to Log mode and tune the expression.
+4. If false positives appear, switch back to Skip mode and tune the expression.
 
 ---
 
@@ -129,9 +195,9 @@ After enabling rules:
 
 | Week | Action |
 |------|--------|
-| Week 1 | Add rules A–D in **Log** mode only. Honeypot collects data. |
-| Week 2 | Keep Log mode; review Security Events + Scraper Signals. |
-| Week 3 | Flip Rule B to **Block**; keep Rule A in Log or Block. |
+| Week 1 | Add the combined 1-slot rule (or rules A–C) in **Skip** mode. Honeypot collects data. |
+| Week 2 | Keep Skip mode; review Security Events + Scraper Signals. |
+| Week 3 | Flip Rule B to **Block**; keep Rule A in Skip or Block. |
 | Week 4 | Tune thresholds and add verified-bot bypass if needed. |
 
 ---
