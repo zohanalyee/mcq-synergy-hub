@@ -29,7 +29,7 @@ If you only have **1 free custom-rule slot** left, use this single rule. It cove
 **Expression:**
 ```
 (
-  http.request.uri.path eq "/rest/v1/rpc/get_all_questions_dump"
+  http.request.uri.path eq "/functions/v1/honeypot-questions-dump"
   or http.request.uri.path in { "/rest/v1/rpc/get_board_topic_mcqs" "/rest/v1/rpc/get_practice_questions" "/rest/v1/rpc/get_preview_questions" }
   or (
     http.request.uri.path eq "/rest/v1/content_items"
