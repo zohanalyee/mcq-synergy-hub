@@ -186,7 +186,7 @@ serve(async (req) => {
 
       const embeddings: number[][] = [];
       for (let i = 0; i < chunks.length; i++) {
-        const embedding = await generateEmbedding(chunks[i], geminiApiKey);
+        const embedding = await callGeminiEmbedding(chunks[i], { logCtx: { supabaseClient: supabase, sourceType: "pdf_embedding" } });
         embeddings.push(embedding);
         if ((i + 1) % 10 === 0) console.log(`[queue] Embeddings: ${i + 1}/${chunks.length}`);
         if (i < chunks.length - 1) await new Promise(r => setTimeout(r, 100));
