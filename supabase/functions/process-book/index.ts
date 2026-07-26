@@ -207,12 +207,12 @@ async function generateEmbeddingsBatch(chunks: string[], supabase: any): Promise
 
 
 // Background processing for Tier 1 & 2 (≤200 pages)
-async function processInBackground(documentId: string, fileUrl: string, title: string | undefined, GEMINI_API_KEY: string, supabase: any) {
+async function processInBackground(documentId: string, fileUrl: string, title: string | undefined, supabase: any) {
   const startTime = Date.now();
   console.log(`[process-book] 🔥 BACKGROUND JOB STARTED for: ${documentId}`);
 
   try {
-    const { text, pageCount, method } = await extractPdfContent(fileUrl, GEMINI_API_KEY);
+    const { text, pageCount, method } = await extractPdfContent(fileUrl, supabase);
     console.log(`[process-book] Extracted ${text.length} chars from ${pageCount} pages via ${method}`);
 
     if (!text || text.length < 100) {
@@ -240,7 +240,8 @@ async function processInBackground(documentId: string, fileUrl: string, title: s
     }
 
     console.log("[process-book] Generating embeddings...");
-    const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
+    const embeddings = await generateEmbeddingsBatch(chunks, supabase);
+
     console.log(`[process-book] Generated ${embeddings.length} embeddings`);
 
     const sections = chunks.map((content, index) => ({
@@ -286,8 +287,8 @@ serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY is not configured");
+    // GEMINI_API_KEY presence is validated inside the shared helpers.
+
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -334,7 +335,7 @@ serve(async (req) => {
           try {
             const chunks = chunkText(nativeResult.text, CHUNK_SIZE, CHUNK_OVERLAP);
             if (chunks.length === 0) throw new Error("No valid chunks");
-            const embeddings = await generateEmbeddingsBatch(chunks, GEMINI_API_KEY);
+            const embeddings = await generateEmbeddingsBatch(chunks, supabase);
             const sections = chunks.map((content, index) => ({
               document_id: documentId, content, embedding: JSON.stringify(embeddings[index]),
               section_index: index, token_count: Math.ceil(content.length / 4),
@@ -349,7 +350,8 @@ serve(async (req) => {
         })());
       } catch {
         // Fallback inline
-        await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
+        await processInBackground(documentId, fileUrl, title, supabase);
+
       }
       return new Response(
         JSON.stringify({ success: true, status: "processing", documentId, tier: "native", pageCount }),
@@ -364,11 +366,11 @@ serve(async (req) => {
       console.log(`[process-book] Tier ${tier}: ${pageCount} pages, using ${tier === 1 ? 'direct' : 'batch'} OCR`);
       try {
         // @ts-ignore
-        EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase));
+        EdgeRuntime.waitUntil(processInBackground(documentId, fileUrl, title, supabase));
         console.log(`[process-book] waitUntil() accepted background job for: ${documentId}`);
       } catch (waitUntilError) {
         console.error(`[process-book] waitUntil() REJECTED, running inline:`, waitUntilError);
-        await processInBackground(documentId, fileUrl, title, GEMINI_API_KEY, supabase);
+        await processInBackground(documentId, fileUrl, title, supabase);
       }
       return new Response(
         JSON.stringify({ success: true, status: "processing", documentId, tier, pageCount }),
