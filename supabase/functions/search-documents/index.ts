@@ -36,15 +36,11 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
      // ============= AUTHENTICATION CHECK =============
      const authHeader = req.headers.get("Authorization");
@@ -101,8 +97,8 @@ serve(async (req) => {
 
     // Generate embedding for the query
     console.log("Generating query embedding...");
-    const queryEmbedding = await generateEmbedding(trimmedQuery, GEMINI_API_KEY);
-    console.log(`Generated embedding with ${queryEmbedding.length} dimensions`);
+    const queryEmbedding = await callGeminiEmbedding(trimmedQuery, { logCtx: { supabaseClient: supabase, sourceType: "search-documents" } });
+
 
     // Perform vector similarity search using RPC
     console.log("Performing vector search...");
