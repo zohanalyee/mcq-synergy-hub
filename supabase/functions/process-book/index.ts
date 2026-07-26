@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
 import { checkQuota, QuotaExhaustedError } from '../_shared/quotaManager.ts';
-import { callVisionWithAutoSwitch } from '../_shared/gemini.ts';
+import { callVisionWithAutoSwitch, callGeminiEmbedding } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,7 +13,7 @@ const corsHeaders = {
 // Configuration
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
-const EMBEDDING_MODELS = ["gemini-embedding-001", "text-embedding-005", "text-embedding-004"];
+// Embedding models: managed inside shared callGeminiEmbedding helper.
 const MAX_PDF_SIZE = 25 * 1024 * 1024;
 const MIN_QUALITY_CHARS = 500;
 const MIN_QUALITY_LETTERS = 100;
@@ -93,125 +93,67 @@ function pdfToBase64(pdfBytes: Uint8Array): string {
   return btoa(raw);
 }
 
-function extractTextFromGeminiResponse(result: any): string {
-  if (result.candidates?.length > 0 && result.candidates[0].content?.parts?.length > 0) {
-    return (result.candidates[0].content.parts[0].text || "").trim();
-  }
-  return "";
-}
+// Batch OCR via shared callVisionWithAutoSwitch (handles key rotation +
+// ai_usage_logs recording centrally).
+async function extractViaGeminiDirect(pdfBytes: Uint8Array, pageCount = 0, supabase: any): Promise<string> {
+  const logCtx = { supabaseClient: supabase, sourceType: 'process-book-ocr' };
 
-// extractViaLovableGateway removed — all OCR now uses direct Gemini API
-
-// Batch OCR via direct Gemini
-async function extractViaGeminiDirect(pdfBytes: Uint8Array, apiKey: string, retries = 1, pageCount = 0): Promise<string> {
   // For small PDFs or unknown page count, send whole thing
   if (pageCount <= DIRECT_OCR_LIMIT) {
-    console.log("[process-book] 🔍 Using direct Gemini Vision OCR (single request)...");
+    console.log("[process-book] 🔍 Using Gemini Vision OCR (single request)...");
     const base64Pdf = pdfToBase64(pdfBytes);
-    for (let attempt = 0; attempt <= retries; attempt++) {
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [
-              { text: "Extract ALL text from this PDF document. Preserve page structure and formatting. Output only the extracted text, nothing else." },
-              { inline_data: { mime_type: "application/pdf", data: base64Pdf } },
-            ] }],
-            generationConfig: { maxOutputTokens: 65536, temperature: 0.1 },
-          }),
-        }
-      );
-      if (response.ok) {
-        const result = await response.json();
-        const text = extractTextFromGeminiResponse(result);
-        if (text && text.length >= 50) {
-          console.log(`[process-book] ✅ Direct Gemini OCR extracted ${text.length} characters`);
-          return text;
-        }
-        throw new Error("Gemini Vision OCR returned insufficient text");
-      }
-      if (response.status === 429 && attempt < retries) {
-        console.warn(`[process-book] ⚠️ Gemini rate limited (attempt ${attempt + 1}). Retrying in 55s...`);
-        await new Promise(resolve => setTimeout(resolve, 55000));
-        continue;
-      }
-      const errorText = await response.text();
-      throw new Error(`Gemini Vision OCR failed: ${response.status} - ${errorText}`);
-    }
-    throw new Error("Gemini Vision OCR exhausted all retries");
+    const { text } = await callVisionWithAutoSwitch(
+      "Extract ALL text from this PDF document. Preserve page structure and formatting. Output only the extracted text, nothing else.",
+      base64Pdf,
+      "application/pdf",
+      { maxOutputTokens: 65536, temperature: 0.1 },
+      logCtx
+    );
+    if (!text || text.length < 50) throw new Error("Gemini Vision OCR returned insufficient text");
+    console.log(`[process-book] ✅ Vision OCR extracted ${text.length} characters`);
+    return text;
   }
 
   // Batch mode for medium PDFs
   const batches = Math.ceil(pageCount / BATCH_SIZE);
-  console.log(`[process-book] 🔍 Batch OCR via direct Gemini: ${batches} batches`);
+  console.log(`[process-book] 🔍 Batch OCR: ${batches} batches`);
   let fullText = "";
 
   for (let batch = 0; batch < batches; batch++) {
     const startPage = batch * BATCH_SIZE + 1;
     const endPage = Math.min(startPage + BATCH_SIZE - 1, pageCount);
-    console.log(`[process-book] Gemini batch ${batch + 1}/${batches}: pages ${startPage}-${endPage}`);
+    console.log(`[process-book] Batch ${batch + 1}/${batches}: pages ${startPage}-${endPage}`);
 
     try {
       const batchBytes = await extractPageRange(pdfBytes, startPage, endPage);
       const batchBase64 = pdfToBase64(batchBytes);
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [
-              { text: `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.` },
-              { inline_data: { mime_type: "application/pdf", data: batchBase64 } },
-            ] }],
-            generationConfig: { maxOutputTokens: 16384, temperature: 0.1 },
-          }),
-        }
+      const { text: batchText } = await callVisionWithAutoSwitch(
+        `Extract ALL text from pages ${startPage}-${endPage}. Preserve structure. Output only the extracted text.`,
+        batchBase64,
+        "application/pdf",
+        { maxOutputTokens: 16384, temperature: 0.1 },
+        logCtx
       );
-
-      if (response.ok) {
-        const result = await response.json();
-        const batchText = extractTextFromGeminiResponse(result);
-        fullText += batchText + "\n\n";
-        console.log(`[process-book] Gemini batch ${batch + 1} extracted ${batchText.length} chars`);
-      } else {
-        const errText = await response.text();
-        console.warn(`[process-book] ⚠️ Gemini batch ${batch + 1} failed: ${response.status}`);
-        if (response.status === 429 && batch < batches - 1) {
-          console.log("[process-book] Rate limited, waiting 55s...");
-          await new Promise(r => setTimeout(r, 55000));
-        }
-      }
-
+      fullText += (batchText || "") + "\n\n";
+      console.log(`[process-book] Batch ${batch + 1} extracted ${batchText?.length || 0} chars`);
       if (batch < batches - 1) await new Promise(r => setTimeout(r, 500));
     } catch (batchError) {
-      console.warn(`[process-book] ⚠️ Gemini batch ${batch + 1} error:`, batchError instanceof Error ? batchError.message : batchError);
+      console.warn(`[process-book] ⚠️ Batch ${batch + 1} error:`, batchError instanceof Error ? batchError.message : batchError);
     }
   }
 
   if (fullText.length < 50) throw new Error("Gemini batch OCR extracted insufficient text");
-  console.log(`[process-book] ✅ Total Gemini batch OCR: ${fullText.length} characters`);
+  console.log(`[process-book] ✅ Total OCR: ${fullText.length} characters`);
   return fullText.trim();
 }
 
-async function extractTextWithVisionOCR(pdfBytes: Uint8Array, geminiApiKey: string, pageCount: number): Promise<string> {
-  try {
-    return await extractViaGeminiDirect(pdfBytes, geminiApiKey, 1, pageCount);
-  } catch (geminiError) {
-    console.error(`[process-book] Direct Gemini failed: ${geminiError instanceof Error ? geminiError.message : geminiError}`);
-  }
-  const altKey = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
-  if (altKey && altKey !== geminiApiKey) {
-    console.log("[process-book] Trying EXTERNAL_JOBS_GEMINI_KEY as final fallback...");
-    return await extractViaGeminiDirect(pdfBytes, altKey, 0, pageCount);
-  }
-  throw new Error("All OCR methods failed.");
+async function extractTextWithVisionOCR(pdfBytes: Uint8Array, supabase: any, pageCount: number): Promise<string> {
+  // Shared helper already rotates GEMINI_API_KEY → EXTERNAL_JOBS_GEMINI_KEY.
+  return await extractViaGeminiDirect(pdfBytes, pageCount, supabase);
 }
 
-async function extractPdfContent(fileUrl: string, apiKey: string): Promise<{ text: string; pageCount: number; method: "native" | "vision-ocr" }> {
+async function extractPdfContent(fileUrl: string, supabase: any): Promise<{ text: string; pageCount: number; method: "native" | "vision-ocr" }> {
   console.log(`[process-book] Fetching PDF from: ${fileUrl}`);
   const response = await fetch(fileUrl);
   if (!response.ok) throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
@@ -231,7 +173,7 @@ async function extractPdfContent(fileUrl: string, apiKey: string): Promise<{ tex
   }
 
   console.log(`[process-book] ⚠️ Native extraction poor (${nativeResult.text.length} chars). Falling back to Vision OCR...`);
-  const ocrText = await extractTextWithVisionOCR(pdfBytes, apiKey, nativeResult.pageCount || 1);
+  const ocrText = await extractTextWithVisionOCR(pdfBytes, supabase, nativeResult.pageCount || 1);
 
   if (!ocrText || ocrText.length < 100) {
     throw new Error("PDF appears to be empty or unreadable.");
@@ -251,47 +193,18 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
   return chunks;
 }
 
-async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
-  let lastError = "";
-  for (const model of EMBEDDING_MODELS) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: `models/${model}`,
-          content: { parts: [{ text }] },
-          outputDimensionality: 768,
-        }),
-      }
-    );
-    if (response.ok) {
-      const data = await response.json();
-      if (data.embedding?.values) return data.embedding.values;
-    }
-    const errorText = await response.text();
-    if (response.status === 404) {
-      console.warn(`[process-book] Embedding model ${model} not found, trying next...`);
-      lastError = errorText;
-      continue;
-    }
-    console.error(`Gemini embedding error (${model}):`, errorText);
-    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
-  }
-  throw new Error(`No embedding model available. Last error: ${lastError}`);
-}
-
-async function generateEmbeddingsBatch(chunks: string[], apiKey: string): Promise<number[][]> {
+async function generateEmbeddingsBatch(chunks: string[], supabase: any): Promise<number[][]> {
+  const logCtx = { supabaseClient: supabase, sourceType: 'process-book-embedding' };
   const embeddings: number[][] = [];
   for (let i = 0; i < chunks.length; i++) {
-    const embedding = await generateEmbedding(chunks[i], apiKey);
+    const embedding = await callGeminiEmbedding(chunks[i], { logCtx });
     embeddings.push(embedding);
     if ((i + 1) % 10 === 0) console.log(`Generated embeddings: ${i + 1}/${chunks.length}`);
     if (i < chunks.length - 1) await new Promise(resolve => setTimeout(resolve, 100));
   }
   return embeddings;
 }
+
 
 // Background processing for Tier 1 & 2 (≤200 pages)
 async function processInBackground(documentId: string, fileUrl: string, title: string | undefined, GEMINI_API_KEY: string, supabase: any) {
