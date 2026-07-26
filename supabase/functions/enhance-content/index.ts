@@ -1,12 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { callAIWithAutoSwitch } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
+
 
 const categoryPrompts: Record<string, string> = {
   job: `Extract these fields from the job advertisement:
