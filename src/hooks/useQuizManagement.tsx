@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { MCQItem } from "@/interfaces/content";
 import { Quiz, addQuiz, getQuizzes, removeQuiz } from "@/services/quizService";
-import { getSubjects, getTopics } from "@/services/adminService";
+import { getSubjects } from "@/services/adminService";
+import { getTopics } from "@/services/topicService";
 
 export const useQuizManagement = () => {
   const { toast } = useToast();

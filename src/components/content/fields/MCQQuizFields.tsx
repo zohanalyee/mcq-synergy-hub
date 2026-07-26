@@ -6,7 +6,7 @@ import { ContentCategory } from "@/interfaces/content";
 import CSVUploader from "@/components/CSVUploader";
 import { useEffect, useState } from "react";
 import { getSubjects } from "@/services/adminService";
-import { getTopics } from "@/services/adminService";
+import { getTopics } from "@/services/topicService";
 
 interface MCQQuizFieldsProps {
   category: ContentCategory;
