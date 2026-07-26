@@ -67,31 +67,10 @@ function chunkText(text: string, chunkSize: number, overlap: number): string[] {
   return chunks;
 }
 
-async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
-  for (const model of EMBEDDING_MODELS) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: `models/${model}`,
-          content: { parts: [{ text }] },
-          outputDimensionality: 768,
-        }),
-      }
-    );
-    if (response.ok) {
-      const data = await response.json();
-      if (data.embedding?.values) return data.embedding.values;
-    }
-    if (response.status !== 404) {
-      const errorText = await response.text();
-      throw new Error(`Embedding error: ${response.status} - ${errorText}`);
-    }
-  }
-  throw new Error("No embedding model available");
-}
+// Embedding generation is now delegated to the shared callGeminiEmbedding helper
+// (includes key rotation across GEMINI_API_KEY + EXTERNAL_JOBS_GEMINI_KEY and
+// per-attempt logging into ai_usage_logs).
+
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -101,7 +80,7 @@ serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-  const geminiApiKey = Deno.env.get("GEMINI_API_KEY")!;
+  
 
   // ============= AUTHENTICATION (admin only) =============
   const authHeader = req.headers.get("Authorization");
