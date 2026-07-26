@@ -451,3 +451,92 @@ export async function callVisionWithAutoSwitch(
 
   throw new Error('All Gemini Vision keys exhausted. Vision does not support Lovable Gateway fallback.');
 }
+
+
+// ============= EMBEDDINGS (shared helper) =============
+// Gemini embedding call with key rotation + quota-logging. Lovable Gateway
+// does NOT expose an embedContent-equivalent, so there is no paid fallback.
+// This helper exists so every embedding call is logged into ai_usage_logs
+// (via recordAIAttempt), matching the visibility that callAIWithAutoSwitch
+// gives text generation. Never call the Gemini embedContent endpoint directly
+// from an edge function — always go through this helper.
+const EMBEDDING_MODELS_DEFAULT = ["gemini-embedding-001", "text-embedding-005", "text-embedding-004"];
+
+export async function callGeminiEmbedding(
+  text: string,
+  options: { outputDimensionality?: number; models?: string[]; logCtx?: AILogContext } = {}
+): Promise<number[]> {
+  const models = options.models ?? EMBEDDING_MODELS_DEFAULT;
+  const outputDimensionality = options.outputDimensionality ?? 768;
+  const client = options.logCtx?.supabaseClient ?? getLogClient();
+  const sourceType = options.logCtx?.sourceType ?? 'embedding';
+  const record = (provider: 'gemini' | 'none', key_index: number, outcome: string, status: number) =>
+    recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType });
+
+  const keys = [
+    Deno.env.get('GEMINI_API_KEY'),
+    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
+  ]
+    .map((key, index) => ({ key, index }))
+    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+
+  if (keys.length === 0) {
+    await record('none', -1, 'no_key', 0);
+    throw new Error('GEMINI_API_KEY is not configured (embeddings require a Gemini key)');
+  }
+
+  let lastStatus = 0;
+  let lastError = '';
+
+  for (const { key, index } of keys) {
+    for (const model of models) {
+      try {
+        const response = await fetch(
+          `${GEMINI_API_BASE}/${model}:embedContent?key=${key}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: `models/${model}`,
+              content: { parts: [{ text }] },
+              outputDimensionality,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.embedding?.values) {
+            await record('gemini', index, 'success', 200);
+            return data.embedding.values;
+          }
+          lastError = 'empty embedding response';
+          continue;
+        }
+
+        lastStatus = response.status;
+        lastError = await response.text();
+
+        if (response.status === 404) {
+          // Model not available on this key — try next model
+          continue;
+        }
+        if (response.status === 429) {
+          await record('gemini', index, 'rate_limited', 429);
+          break; // try next key
+        }
+        if (response.status === 401 || response.status === 403) {
+          await record('gemini', index, 'auth_error', response.status);
+          break; // try next key
+        }
+        await record('gemini', index, 'error', response.status);
+      } catch (e: any) {
+        lastError = e?.message ?? String(e);
+        await record('gemini', index, 'error', 0);
+      }
+    }
+  }
+
+  throw new Error(`Embedding failed on all keys/models (last status ${lastStatus}): ${lastError.substring(0, 200)}`);
+}
+
