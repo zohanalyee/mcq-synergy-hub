@@ -87,15 +87,11 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    if (!GEMINI_API_KEY) {
-      throw new Error("GEMINI_API_KEY is not configured");
-    }
-
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
 
      // ============= MANDATORY AUTHENTICATION =============
      const authHeader = req.headers.get("Authorization");
@@ -163,8 +159,8 @@ serve(async (req) => {
 
     // Step 1: Generate embedding for user query
     console.log("Generating query embedding...");
-    const queryEmbedding = await generateEmbedding(trimmedQuery, GEMINI_API_KEY);
-    console.log(`Generated embedding with ${queryEmbedding.length} dimensions`);
+    const queryEmbedding = await callGeminiEmbedding(trimmedQuery, { logCtx: { supabaseClient: supabase, sourceType: "rag_search" } });
+
 
     // Step 2: Vector similarity search
     console.log("Performing vector search...");
