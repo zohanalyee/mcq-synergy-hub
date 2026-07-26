@@ -3613,7 +3613,6 @@ export type Database = {
           total_requests: number
         }[]
       }
-      get_all_questions_dump: { Args: never; Returns: Json }
       get_autofill_queue: {
         Args: { limit_count?: number }
         Returns: {
