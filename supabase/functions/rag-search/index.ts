@@ -1,14 +1,14 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { callAIWithAutoSwitch, callGeminiEmbedding } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const EMBEDDING_MODELS = ["gemini-embedding-001", "text-embedding-005", "text-embedding-004"];
-const GEMINI_CHAT_MODEL = "gemini-2.0-flash";
 const MAX_QUERY_LENGTH = 500;
+
 const DEFAULT_TOP_K = 5;
 const MATCH_THRESHOLD = 0.70;
 
@@ -48,46 +48,11 @@ interface SearchResult {
   title: string;
 }
 
-// Generate embedding using Google Gemini API with model fallback
-async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
-  for (const model of EMBEDDING_MODELS) {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: `models/${model}`,
-          content: { parts: [{ text }] },
-          outputDimensionality: 768,
-        }),
-      }
-    );
-
-    if (response.ok) {
-      const data = await response.json();
-      if (data.embedding?.values) return data.embedding.values;
-    }
-
-    if (response.status === 404) {
-      const err = await response.text();
-      console.warn(`Embedding model ${model} not found, trying next...`);
-      continue;
-    }
-
-    const error = await response.text();
-    console.error("Gemini embedding error:", error);
-    throw new Error(`Embedding API error: ${response.status}`);
-  }
-
-  throw new Error("No embedding model available");
-}
-
-// Generate answer using Gemini chat model
+// Generate answer using shared AI helper (Gemini + Lovable Gateway fallback + logged)
 async function generateAnswer(
   query: string,
   context: string,
-  apiKey: string
+  supabase: any
 ): Promise<string> {
   const systemPrompt = `You are an academic assistant helping students understand their course material.
 
@@ -101,44 +66,17 @@ STRICT RULES:
 CONTEXT FROM UPLOADED DOCUMENTS:
 ${context}`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_CHAT_MODEL}:generateContent?key=${apiKey}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: `Question: ${query}\n\nPlease answer based only on the document context provided.` }],
-          },
-        ],
-        systemInstruction: {
-          parts: [{ text: systemPrompt }],
-        },
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1024,
-        },
-      }),
-    }
+  const userPrompt = `Question: ${query}\n\nPlease answer based only on the document context provided.`;
+  const { text } = await callAIWithAutoSwitch(
+    systemPrompt,
+    userPrompt,
+    { temperature: 0.3, maxOutputTokens: 1024 },
+    { supabaseClient: supabase, sourceType: "rag_search" }
   );
-
-  if (!response.ok) {
-    const error = await response.text();
-    console.error("Gemini chat error:", error);
-    throw new Error(`Chat API error: ${response.status}`);
-  }
-
-  const data = await response.json();
-  const answer = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  
-  if (!answer) {
-    throw new Error("No answer generated from Gemini API");
-  }
-
-  return answer;
+  if (!text) throw new Error("No answer generated");
+  return text;
 }
+
 
 serve(async (req) => {
   // Handle CORS preflight
