@@ -422,35 +422,45 @@ export async function callVisionWithAutoSwitch(
   prompt: string,
   base64Data: string,
   mimeType: string,
-  config: GeminiConfig = {}
+  config: GeminiConfig = {},
+  logCtx?: AILogContext
 ): Promise<AutoSwitchResult> {
   checkDailyReset();
 
+  const client = logCtx?.supabaseClient ?? getLogClient();
+  const sourceType = logCtx?.sourceType ?? 'vision';
   const geminiKey = Deno.env.get('GEMINI_API_KEY');
   const fallbackKey = Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY');
-  const keysToTry = [geminiKey, fallbackKey].filter((k): k is string => !!k && k.trim().length > 0);
+  const keys = [
+    { key: geminiKey, index: 0 },
+    { key: fallbackKey, index: 1 },
+  ].filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
 
-  for (const key of keysToTry) {
-    const label = key === geminiKey ? 'primary' : 'fallback';
+  for (const { key, index } of keys) {
+    const label = index === 0 ? 'primary' : 'fallback';
     try {
       console.log(`[AI-Switch] Attempting Gemini Vision (${label} key)...`);
       await waitForRateLimit();
       const text = await callGeminiVision(key, prompt, base64Data, mimeType, config);
       console.log(`[AI-Switch] ✅ Vision success with ${label} key`);
+      await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'success', status: 200, source_type: sourceType });
       return { text, provider: 'gemini', cost: 0 };
     } catch (error: any) {
       if (isQuotaError(error)) {
         console.warn(`[AI-Switch] ⚠️ Vision rate limited on ${label} key, trying next...`);
+        await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'rate_limited', status: 429, source_type: sourceType });
         continue;
       }
       console.error(`[AI-Switch] Vision error on ${label} key:`, error.message?.substring(0, 100));
-      if (label === 'primary' && fallbackKey) continue; // Try fallback
+      await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'error', status: error?.status ?? 0, source_type: sourceType });
+      if (label === 'primary' && fallbackKey) continue;
       throw error;
     }
   }
 
   throw new Error('All Gemini Vision keys exhausted. Vision does not support Lovable Gateway fallback.');
 }
+
 
 
 // ============= EMBEDDINGS (shared helper) =============
