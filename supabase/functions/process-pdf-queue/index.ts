@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import { PDFDocument } from "https://esm.sh/pdf-lib@1.17.1";
+import { callGeminiEmbedding } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,9 +11,9 @@ const corsHeaders = {
 
 const BATCH_SIZE = 15;
 const PAGES_PER_INVOCATION = 50;
-const EMBEDDING_MODELS = ["gemini-embedding-001", "text-embedding-005", "text-embedding-004"];
 const CHUNK_SIZE = 1000;
 const CHUNK_OVERLAP = 200;
+
 
 function pdfToBase64(pdfBytes: Uint8Array): string {
   let raw = "";
