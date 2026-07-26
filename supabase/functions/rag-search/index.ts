@@ -256,7 +256,7 @@ serve(async (req) => {
 
     // Step 6: Generate answer using Gemini
     console.log("Generating answer...");
-    const answer = await generateAnswer(trimmedQuery, context, GEMINI_API_KEY);
+    const answer = await generateAnswer(trimmedQuery, context, supabase);
     console.log(`Generated answer: ${answer.length} chars`);
 
     // Step 7: Format sources for response
