@@ -6,7 +6,7 @@ import { ContentCategory } from "@/interfaces/content";
 import CSVUploader from "@/components/CSVUploader";
 import { useEffect, useState } from "react";
 import { getSubjects } from "@/services/adminService";
-import { getTopics } from "@/services/adminService";
+import { getTopics } from "@/services/topicService";
 
 interface MCQQuizFieldsProps {
   category: ContentCategory;
@@ -32,10 +32,10 @@ const MCQQuizFields = ({ category, form }: MCQQuizFieldsProps) => {
       if (selectedSubject) {
         const topicsData = getTopics();
         const subjectTopics = topicsData[selectedSubject] || [];
-        setTopics(subjectTopics.map(topic => ({ title: topic })));
+        setTopics(subjectTopics.map(t => ({ title: t.title })));
         
         // Reset topic when subject changes
-        if (form.getValues('topic') && !subjectTopics.some(t => t === form.getValues('topic'))) {
+        if (form.getValues('topic') && !subjectTopics.some(t => t.title === form.getValues('topic'))) {
           form.setValue('topic', '');
         }
       } else {

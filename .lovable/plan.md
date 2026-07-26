@@ -1,127 +1,116 @@
-# Phase 5 Implementation Plan — Week 1 (Observe-Only)
+# Batch 1 Audit Report — Dead Code, Architecture & AI Architecture
 
-## Decisions received
+**Yeh sirf report hai — koi code change nahi hoga jab tak aap specific findings approve na karein.**
 
-1. **Edge layer:** Cloudflare/edge access available → preferred path.
-2. **Approach:** Approve ad-hoc rate-limiting.
-3. **Rollout:** Observe-first 4-week sequencing.
-4. **Honeypot:** Add fake public endpoint now.
+---
 
-## Scope of this plan
+## Executive Summary (Batch 1)
 
-Build only the **observation/measurement layer** (Week 1 of proposal). No blocking rules are activated yet. Cloudflare WAF rules will be provided as copy-paste templates for Log mode; user enables them manually in Cloudflare Dashboard.
+- **1 High-severity finding**: 6 edge functions Gemini API ko direct call kar rahe hain, shared quota/fallback helper bypass karke → quota exhaust ho to hard-fail, aur AI-usage dashboard mein yeh calls track hi nahi hoti.
+- **Koi Critical/security-hole nahi mila** is batch mein.
+- **5 fully orphaned service files** (zero imports) safely delete ho sakti hain.
+- **31 edge functions** hain — 2 clear consolidation candidates: `generate-test` vs `generate-job-test`, aur `rag-search` vs `search-documents`.
+- **Duplicate slug utilities** 3 jagah bikhri hain (`utils/slugify.ts`, `lib/slugUtils.ts`, `lib/jobTestSlug.ts`).
+- **Two toast systems** parallel chal rahe hain (sonner + shadcn) — sonner already 105 jagah use ho raha hai, shadcn wala remove ho sakta hai.
+- `**subjectsData.ts` aur `subjectsData.tsx` dono coexist karte hain** — Vite resolver ambiguity ka risk.
+- Sirf **1 pg_cron job** registered hai (nightly autofill) — baaqi queue-processors ka trigger-source unknown (open question).
+- Koi deprecated React pattern nahi mila. Class components sirf legitimate use-cases mein hain.
 
-## What will be built
+---
 
-### 1. Database: `scraper_signals` table
+## Master Issue Table — Batch 1
 
-Stores signals from the honeypot and any future rate-limit events.
 
-Fields:
+| #       | Issue                                                                     | Category  | Severity | Effort | Risk       | Plain-language explanation                                                                                                                                                                                     | Recommended fix                                                                   |
+| ------- | ------------------------------------------------------------------------- | --------- | -------- | ------ | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **F11** | 6 edge functions Gemini ko direct call karti hain, shared fallback bypass | AI        | **High** | M      | Moderate   | `rag-search`, `search-documents`, `process-book`, `process-pdf-queue`, `enhance-content` — Gemini down/quota-out ho to yeh crash karengi bina fallback ke; aur admin dashboard mein inka usage dikhta hi nahi. | `callAIWithAutoSwitch` ya kam-se-kam `recordAIAttempt` wrapper mein route karo.   |
+| **F8**  | 31 edge functions, kuch overlap                                           | Arch      | Medium   | M      | Moderate   | `generate-test` + `generate-job-test` dono MCQ banate hain alag prompts se; `rag-search` + `search-documents` dono embedding search karte hain alag code se.                                                   | Prompts/logic diff karke merge candidate identify karo.                           |
+| **F1**  | 5 orphaned service files (zero imports)                                   | Dead code | Medium   | S      | Safe       | `contentStatsService`, `contentSubmissionService`, `enhancedCSVProcessor`, `sampleContentData`, `unifiedTestService` kahin use nahi ho rahi.                                                                   | Final grep confirm ke baad delete.                                                |
+| **F2**  | `adminService.ts` mein 4 fake stub functions                              | Dead code | Medium   | S      | Safe       | `getTopics`/`getQuizzes`/etc return empty aur console.warn karte hain — real versions dusri services mein hain.                                                                                                | Stubs delete, agar imports mile to sahi service pe repoint.                       |
+| **F14** | `generate-test` vs `generate-job-test` prompt duplication                 | AI        | Medium   | M      | Structural | Dono MCQ generate karte hain — line-by-line diff nahi kiya, but scaffolding overlap likely.                                                                                                                    | Prompts diff karo, ek template mein consolidate.                                  |
+| **F5**  | Do toast systems parallel                                                 | Dead code | Low      | M      | Moderate   | `sonner` (105 usages) + shadcn `use-toast` (25 usages) — dono UI mount hote hain. Memory rule already sonner-only kehta hai.                                                                                   | Baaqi 25 usages sonner pe migrate, shadcn Toaster mount + component delete.       |
+| **F3**  | 3 slug utilities scattered                                                | Dead code | Low      | M      | Moderate   | `utils/slugify.ts`, `lib/slugUtils.ts`, `lib/jobTestSlug.ts` — same responsibility 3 jagah.                                                                                                                    | Ek `lib/slugs/` module mein consolidate.                                          |
+| **F6**  | `subjectsData.ts` + `.tsx` dono maujood                                   | Dead code | Low      | S      | Safe       | Extension-less import (`@/data/subjectsData`) ambiguous — Vite resolver kis file ko uthata hai clear nahi.                                                                                                     | Confirm which is live, dusra delete/rename.                                       |
+| **F4**  | `mockTestUtils.ts` vs `MockTestUtils.ts` naming trap                      | Dead code | Low      | S      | Safe       | Same naam alag casing/folder — future confusion risk.                                                                                                                                                          | Component-folder wali file rename.                                                |
+| **F13** | `enhance-content` mein secondary `EXTERNAL_JOBS_GEMINI_KEY` fallback      | AI        | Low      | S      | Safe       | Ek aur Gemini key kahin aur use nahi — leftover ho sakti hai.                                                                                                                                                  | Confirm karo kya key abhi bhi provisioned hai, warna cleanup.                     |
+| **F12** | `ai-health` direct Gemini call                                            | AI        | Low      | —      | Safe       | Liveness ping ke liye direct call reasonable hai — F11 se exception.                                                                                                                                           | No action.                                                                        |
+| **F9**  | Sirf 1 pg_cron job                                                        | Arch      | Low      | —      | —          | `process-*-queue` functions ka trigger-source pg_cron mein nahi — external ho ya manual, confirm nahi hua.                                                                                                     | Aap batayen kaise trigger hote hain, phir decide.                                 |
+| **F7**  | `unifiedTestService.ts` (orphan) — possibly abandoned consolidation       | Dead code | Low      | —      | —          | 258 lines ka file jo shayad `jobTestService`+`testGenerationService` unify karne ki koshish thi.                                                                                                               | Delete se pehle ek nazar dalein — future consolidation ka blueprint ho sakta hai. |
+| **F10** | Deprecated React patterns                                                 | Arch      | Info     | —      | —          | Koi class-component/legacy API misuse nahi.                                                                                                                                                                    | No action.                                                                        |
 
-- `id`, `created_at`, `updated_at`
-- `ip_hash` — SHA-256 hash of caller IP (GDPR-safe, no raw IPs)
-- `user_agent` — request User-Agent
-- `endpoint` — which endpoint was hit (`honeypot_dump` initially)
-- `signal_type` — `honeypot`, `rate_limit_trigger`, etc.
-- `metadata` — JSONB for extra context (country, ASN if available, request path)
 
-Access:
+---
 
-- `anon` can INSERT only via the honeypot edge function (service_role insert from function).
-- `authenticated` and `anon` cannot SELECT.
-- `service_role` has ALL.
-- Admin-only SELECT policy using `is_admin()`.
+## Recommended Sequencing (Batch 1 Fixes)
 
-### 2. Edge function: `honeypot-questions-dump`
+Jab aap fixes shuru karna chahen, yeh order sujha hoon (chhota + safe pehle, structural aakhir mein):
 
-- Path: `supabase/functions/honeypot-questions-dump/index.ts`
-- Public, `verify_jwt = false`.
-- Returns HTTP 200 with realistic-looking but useless sentinel JSON (`{ warning: "scraping detected", items: [] }`).
-- Logs every call to `scraper_signals` via service_role client:
-  - hashes the caller IP (`x-forwarded-for` first entry)
-  - stores UA, endpoint name, signal_type = `honeypot`
-- Includes proper CORS headers.
-- No AI calls, no expensive operations.
+**Group 1A — Safe cleanup (~1 turn, low credit):**
 
-### 3. Admin tab: "Scraper Signals"
+- F1 (delete 5 orphaned services) + F2 (delete stubs) + F6 (resolve subjectsData duplicate) + F4 (rename MockTestUtils)
+- Sab presentation-only, koi runtime risk nahi.
 
-- New tab under Admin → Overview (next to Lifecycle).
-- Component: `src/components/admin/ScraperSignalsDashboard.tsx`
-- Shows:
-  - Total honeypot hits in last 24h / 7d / 30d
-  - Top IP hashes by hit count
-  - Recent signals table
-  - Common User-Agent strings
-- Uses `supabase--read_query` or RPC for admin fetch.
+**Group 1B — High-impact AI fix (~1 turn):**
 
-### 4. Cloudflare WAF rule templates (user-pasteable)
+- **F11** — 6 edge functions ko `callAIWithAutoSwitch` mein route karo. Yeh sabse zaroori hai (fallback + quota visibility).
+- F13 (`EXTERNAL_JOBS_GEMINI_KEY` cleanup) sath kar lein.
 
-Provide exact rule expressions and actions for the user's Cloudflare Dashboard:
+**Group 1C — Toast consolidation (~1 turn):**
 
-**Rule A — Honeypot escalation (Log mode for Week 1):**
+- F5 — 25 shadcn toast usages sonner pe migrate + old toast component/mount delete.
 
-```
-(http.request.uri.path eq "/rest/v1/rpc/honeypot_questions_dump")
-Action: Log
-```
+**Group 1D — Slug consolidation (~1 turn):**
 
-**Rule B — High-value RPC rate limit (Log mode for Week 1):**
+- F3 — 3 slug utilities ko ek module mein merge. Careful refactor, saari 22 usages update honi hain.
 
-```
-(http.request.uri.path matches "^/rest/v1/rpc/(get_board_topic_mcqs|get_practice_questions|get_preview_questions)$" and not cf.client.bot)
-Action: Log
-```
+**Group 1E — Structural (approval-heavy, ~2 turns):**
 
-**Rule C — Content_items table pagination (Log mode for Week 1):**
+- F8 + F14 — `generate-test`/`generate-job-test` prompts diff, phir merge decision.
+- `rag-search`/`search-documents` bhi isi group mein.
+- F7 — `unifiedTestService.ts` review + delete/revive decision.
 
-```
-(http.request.uri.path matches "^/rest/v1/content_items" and http.request.uri.query matches "(select=|limit=)")
-Action: Log
-```
+**Group 1F — Info-only:**
 
-These will be documented in `docs/phase-5-cloudflare-rules.md` with screenshots-ready steps.
+- F9 — aap confirm karein queue-processor functions kaise trigger hote hain (external cron? Supabase dashboard? manual admin action?). Phir zaroorat ho to formal pg_cron mein le aayein.
 
-## What is NOT in this plan
+---
 
-- No blocking/429 responses yet.
-- No reverse-DNS verified-bot bypass logic yet (Week 3).
-- No edge-function fallback `rpc-gateway` (Cloudflare path is available).
-- No changes to existing client code paths.
+## Open Questions For You
 
-## Budget / credit impact
+1. **F9**: `process-pdf-queue`, `process-jobtest-queue`, `process-agent-tasks` kaise trigger hote hain? (pg_cron mein nahi hain — kya external scheduler/webhook hai ya sirf admin-triggered?)
+2. **F13**: Kya `EXTERNAL_JOBS_GEMINI_KEY` naam ka secret abhi bhi Supabase mein set hai, ya purani rotation se leftover?
+3. **F7**: `unifiedTestService.ts` — delete ya deep-review ke liye rakhein?
 
-- Database migration: negligible.
-- Honeypot edge function: zero AI, minimal compute.
-- Admin dashboard: read-only, no AI.
-- **Total expected AI credit cost: 0.**
+---
 
-## Sequencing after Week 1
+## Next Steps
 
-- Week 2: flip Cloudflare rules to Log mode (templates provided).
-- Week 3: flip to Block/Challenge with verified-bot bypass.
-- Week 4: tune thresholds based on `scraper_signals` data.
+Please batayen:
 
-## Deliverables
+- **A**: Batch 1 findings approve — Group-by-Group fixes shuru karein (kaunse group se?)
+- **B**: Batch 2 (Backend + Security) audit ab shuru karein
+- **C**: Pehle open questions ke jawab doon, phir decide
 
-1. Migration file for `scraper_signals` table.
-2. `supabase/functions/honeypot-questions-dump/index.ts`
-3. `src/components/admin/ScraperSignalsDashboard.tsx`
-4. Admin tab registration update.
-5. `docs/phase-5-cloudflare-rules.md` with copy-paste WAF rules.
-
-## Checkpoint
-
-If credits run low after any step, we stop and the system remains safe: honeypot collects data, no blocking is active, no user-facing changes.
+**Batch 2/3/4 abhi shuru nahi hue** — is batch ka feedback milne ke baad hi agla audit chalayenge.
 
 &nbsp;
 
-# **Plan approved** — Week 1 (observe-only) shuru karein. Sab safe/zero-risk hai jaisa propose kiya. 
+A — Batch 1 findings approve. Group-by-group shuru karein isi order mein:
 
-Build/typecheck clean hone ke baad, mujhe:
+&nbsp;
 
-1. Cloudflare WAF-rule-templates dikhayen taake main khud Cloudflare-Dashboard mein Log-mode wale rules add kar sakoon
+Group 1A (safe-cleanup) se shuru karein, phir 1B (High-priority AI-fix — F11), phir 1C, 1D. Group 1E (structural) alag se discuss karenge baad mein.
 
-2. Admin panel mein "Scraper Signals" tab kahan milega batayen
+&nbsp;
 
-Checkpoint-approach maintain karein — credits khatam hon to clean-jagah par ruk jayen.
+Open Questions ke jawab:
+
+- F9: Mujhe nahi pata queue-processors kaise trigger hote hain — please khud confirm kar lein codebase check karke.
+
+- F13: Please confirm karein EXTERNAL_JOBS_GEMINI_KEY abhi bhi Supabase-secrets mein set hai ya nahi — agar set hai aur use nahi ho raha, cleanup kar dein.
+
+- F7 (unifiedTestService.ts): DELETE kar dein — agar zaroorat pare future mein, hum dobara bana lenge; abhi unused-code rakhna confusion hi barhata hai.
+
+&nbsp;
+
+Group 1A + 1B se shuru karein.
