@@ -92,7 +92,7 @@ const ScraperSignalsDashboard = () => {
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
           <p>
-            The public <code className="rounded bg-muted px-1 py-0.5 text-xs">get_all_questions_dump</code> RPC
+            The <code className="rounded bg-muted px-1 py-0.5 text-xs">/functions/v1/honeypot-questions-dump</code> edge function
             is a decoy endpoint. Every hit is logged here. Use this data to decide when to flip
             Cloudflare rules from Log to Block mode.
           </p>
