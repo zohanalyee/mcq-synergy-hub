@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { FeedbackSubmission, FeedbackType, submitFeedback } from '@/services/feedbackService';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
 const feedbackFormSchema = z.object({

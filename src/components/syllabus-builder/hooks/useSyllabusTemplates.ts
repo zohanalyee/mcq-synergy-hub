@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { SavedSyllabusTemplate, FilterState, QuizSettings } from '../interfaces';
 import type { Json } from '@/integrations/supabase/types';
 

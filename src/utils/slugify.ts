@@ -22,22 +22,16 @@ export function isContactInfoTitle(value: string): boolean {
   return false;
 }
 
+import { toSlug } from '@/lib/slugUtils';
+
 export function generateSlug(title: string): string {
   // Reject contact-info values outright so they never become a slug.
   if (isContactInfoTitle(title)) return '';
 
-  const slug = (title || '')
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60)
-    .replace(/-+$/g, '');
+  // Reuse the canonical slug primitive, then apply opportunity-specific
+  // 60-char cap and bare-domain safety net.
+  const slug = toSlug(title || '').slice(0, 60).replace(/-+$/g, '');
 
-  // Safety net: if the cleaned slug still resembles a bare domain
-  // (e.g. "wwwetedupk", "hrpsgedupk") treat it as invalid.
   if (!slug || /^(www|hr|info|contact|admin)[a-z]*(pk|com|org|net|edu|gov)+$/.test(slug)) {
     return '';
   }
