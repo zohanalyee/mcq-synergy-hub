@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
+import PasswordStrengthIndicator, { getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import { Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
 const ChangePasswordForm = () => {
