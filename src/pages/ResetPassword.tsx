@@ -32,16 +32,13 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 8) {
-      toast({ variant: "destructive", title: "Error", description: "Password must be at least 8 characters." });
-      return;
-    }
     if (password !== confirmPassword) {
-      toast({ variant: "destructive", title: "Error", description: "Passwords do not match." });
+      toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
-    if (calculatePasswordStrength(password) < 50) {
-      toast({ variant: "destructive", title: "Error", description: "Password is too weak." });
+    const policyError = getPasswordPolicyError(password);
+    if (policyError) {
+      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
       return;
     }
 
