@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
+import PasswordStrengthIndicator, { getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
 
 const ResetPassword = () => {
@@ -32,16 +32,13 @@ const ResetPassword = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (password.length < 8) {
-      toast({ variant: "destructive", title: "Error", description: "Password must be at least 8 characters." });
-      return;
-    }
     if (password !== confirmPassword) {
-      toast({ variant: "destructive", title: "Error", description: "Passwords do not match." });
+      toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
-    if (calculatePasswordStrength(password) < 50) {
-      toast({ variant: "destructive", title: "Error", description: "Password is too weak." });
+    const policyError = getPasswordPolicyError(password);
+    if (policyError) {
+      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
       return;
     }
 

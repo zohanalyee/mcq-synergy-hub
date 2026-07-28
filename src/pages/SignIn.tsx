@@ -9,7 +9,7 @@ import { getIntentRaw, clearIntentRaw } from "@/hooks/useAuthIntent";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import PasswordStrengthIndicator, { calculatePasswordStrength } from "@/components/PasswordStrengthIndicator";
+import PasswordStrengthIndicator, { passwordMeetsPolicy, getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import {
   Loader2, Mail, Lock, User, Brain, Eye, EyeOff, ArrowLeft
@@ -152,12 +152,9 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
-    if (signUpData.password.length < 8) {
-      toast({ variant: "destructive", title: "Weak Password", description: "Password must be at least 8 characters." });
-      return;
-    }
-    if (calculatePasswordStrength(signUpData.password) < 50) {
-      toast({ variant: "destructive", title: "Weak Password", description: "Please use a stronger password." });
+    const policyError = getPasswordPolicyError(signUpData.password);
+    if (policyError) {
+      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
       return;
     }
     setIsSubmitting("signup");
