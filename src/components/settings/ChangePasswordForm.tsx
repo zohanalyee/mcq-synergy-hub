@@ -16,16 +16,13 @@ const ChangePasswordForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.newPassword.length < 8) {
-      toast({ variant: "destructive", title: "Error", description: "Password must be at least 8 characters." });
-      return;
-    }
     if (formData.newPassword !== formData.confirmPassword) {
-      toast({ variant: "destructive", title: "Error", description: "Passwords do not match." });
+      toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
-    if (calculatePasswordStrength(formData.newPassword) < 50) {
-      toast({ variant: "destructive", title: "Error", description: "Password is too weak." });
+    const policyError = getPasswordPolicyError(formData.newPassword);
+    if (policyError) {
+      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
       return;
     }
 
