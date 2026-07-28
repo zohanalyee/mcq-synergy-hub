@@ -152,12 +152,9 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
       return;
     }
-    if (signUpData.password.length < 8) {
-      toast({ variant: "destructive", title: "Weak Password", description: "Password must be at least 8 characters." });
-      return;
-    }
-    if (calculatePasswordStrength(signUpData.password) < 50) {
-      toast({ variant: "destructive", title: "Weak Password", description: "Please use a stronger password." });
+    const policyError = getPasswordPolicyError(signUpData.password);
+    if (policyError) {
+      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
       return;
     }
     setIsSubmitting("signup");
