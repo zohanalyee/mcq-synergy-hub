@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { checkQuota, retryWithBackoff, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
+import { enforceGuestRateLimit, rateLimitResponse } from '../_shared/guestRateLimit.ts';
 
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
