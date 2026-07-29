@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import SEOHead from '@/components/SEOHead';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -12,6 +12,9 @@ import { toast } from 'sonner';
 import { z } from 'zod';
 import { supabase } from '@/integrations/supabase/client';
 import { motion, AnimatePresence } from 'framer-motion';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
+
+const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '10000000-ffff-ffff-ffff-000000000001';
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, 'Name is required').max(100),
@@ -47,6 +50,8 @@ const Contact = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const captchaRef = useRef<HCaptcha>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,22 +64,30 @@ const Contact = () => {
       setErrors(fieldErrors);
       return;
     }
+    if (!captchaToken) {
+      toast.error('Please complete the captcha before sending.');
+      return;
+    }
     setErrors({});
     setIsSubmitting(true);
 
     try {
-      const { error } = await supabase
-        .from('user_inquiries')
-        .insert({
+      const { data, error } = await supabase.functions.invoke('submit-inquiry', {
+        body: {
           name: result.data.name,
           email: result.data.email,
           subject: result.data.subject,
           message: result.data.message,
-        });
+          captcha_token: captchaToken,
+        },
+      });
 
-      if (error) {
-        console.error('Error submitting inquiry:', error);
-        toast.error('Failed to send message. Please try again.');
+      if (error || (data && (data as any).error)) {
+        const msg = (data as any)?.error || 'Failed to send message. Please try again.';
+        console.error('Error submitting inquiry:', error || msg);
+        toast.error(msg);
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
         return;
       }
 
@@ -83,10 +96,14 @@ const Contact = () => {
       setTimeout(() => {
         setFormData({ name: '', email: '', subject: '', message: '' });
         setIsSuccess(false);
+        captchaRef.current?.resetCaptcha();
+        setCaptchaToken(null);
       }, 3000);
     } catch (error) {
       console.error('Submission error:', error);
       toast.error('Something went wrong. Please try again.');
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken(null);
     } finally {
       setIsSubmitting(false);
     }
@@ -96,6 +113,7 @@ const Contact = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
     if (errors[field]) setErrors(prev => ({ ...prev, [field]: '' }));
   };
+
 
   return (
     <Header>
