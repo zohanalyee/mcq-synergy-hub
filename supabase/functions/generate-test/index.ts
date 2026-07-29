@@ -1344,6 +1344,22 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    // ============= G2E: Guest per-IP rate limit =============
+    // Only enforced for guests (unauthenticated) and non-service-role callers.
+    // Prevents scrapers from hammering the AI pipeline. Signed-in users are
+    // still guarded by user_credits + AI quota upstream.
+    if (isGuest && !isServiceRoleCall) {
+      const rl = await enforceGuestRateLimit(supabase, req, {
+        endpoint: 'generate-test',
+        maxPerHour: 8,
+        maxPerDay: 30,
+      });
+      if (!rl.allowed) {
+        return rateLimitResponse(rl, corsHeaders);
+      }
+    }
+    // ============= END G2E =============
+
     // ============= AI COACH MODE =============
     if (mode === 'ai_coach') {
       if (!verified_user_id) {
