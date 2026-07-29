@@ -87,3 +87,7 @@ verify_jwt = false
 
 [functions.honeypot-questions-dump]
 verify_jwt = false
+
+[functions.submit-inquiry]
+verify_jwt = false
+

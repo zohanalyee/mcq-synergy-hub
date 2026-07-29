@@ -1315,6 +1315,39 @@ export type Database = {
         }
         Relationships: []
       }
+      guest_rate_limits: {
+        Row: {
+          count_day: number
+          count_hour: number
+          day_bucket: string
+          endpoint: string
+          hour_bucket: string
+          id: string
+          ip_address: string
+          updated_at: string
+        }
+        Insert: {
+          count_day?: number
+          count_hour?: number
+          day_bucket: string
+          endpoint: string
+          hour_bucket: string
+          id?: string
+          ip_address: string
+          updated_at?: string
+        }
+        Update: {
+          count_day?: number
+          count_hour?: number
+          day_bucket?: string
+          endpoint?: string
+          hour_bucket?: string
+          id?: string
+          ip_address?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       holidays: {
         Row: {
           applies_to: string | null
@@ -3589,6 +3622,15 @@ export type Database = {
       }
       can_user_topup: {
         Args: { p_job_test_id: string; p_subject: string; p_user_id: string }
+        Returns: Json
+      }
+      check_guest_rate_limit: {
+        Args: {
+          p_endpoint: string
+          p_ip: string
+          p_max_per_day: number
+          p_max_per_hour: number
+        }
         Returns: Json
       }
       compute_content_fingerprint: { Args: { p_text: string }; Returns: string }

@@ -47,24 +47,41 @@ Deno.serve(async (req) => {
     // Parse request body
     const body: WebhookRequest = await req.json();
 
-    // Validate API key
-    const providedKey = body.api_key || req.headers.get('x-api-key');
-    
-    if (!expectedApiKey) {
-      console.error('[External Webhook] EXTERNAL_AGENT_API_KEY not configured');
+    // ============= G2F: Authentication (header-only, constant-time) =============
+    // Reject early if the shared secret is not configured on the server.
+    if (!expectedApiKey || expectedApiKey.length < 16) {
+      console.error('[External Webhook] EXTERNAL_AGENT_API_KEY missing or too short');
       return new Response(
         JSON.stringify({ error: 'Webhook not configured. Please set EXTERNAL_AGENT_API_KEY.' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (providedKey !== expectedApiKey) {
-      console.log('[External Webhook] Invalid API key attempt');
+    // Prefer the header. The `body.api_key` path is deprecated because request
+    // bodies are more likely to end up in logs; still accept as fallback but log a warning.
+    const headerKey = req.headers.get('x-api-key');
+    if (!headerKey && body.api_key) {
+      console.warn('[External Webhook] Deprecated: api_key sent in body — move it to the x-api-key header.');
+    }
+    const providedKey = headerKey || body.api_key || '';
+
+    // Constant-time comparison to prevent timing-based key discovery.
+    const timingSafeEqual = (a: string, b: string): boolean => {
+      if (a.length !== b.length) return false;
+      let diff = 0;
+      for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      return diff === 0;
+    };
+
+    if (!providedKey || !timingSafeEqual(providedKey, expectedApiKey)) {
+      const ip = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown';
+      console.warn(`[External Webhook] Invalid API key attempt from ${ip}`);
       return new Response(
         JSON.stringify({ error: 'Invalid API key' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    // ============= END G2F =============
 
     // Validate payload
     if (!body.opportunities || !Array.isArray(body.opportunities)) {
