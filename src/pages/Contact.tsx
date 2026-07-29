@@ -176,7 +176,17 @@ const Contact = () => {
                     <Textarea id="message" rows={5} value={formData.message} onChange={e => update('message', e.target.value)} placeholder="Your message..." disabled={isSubmitting} />
                     {errors.message && <p className="text-xs text-destructive mt-1">{errors.message}</p>}
                   </div>
-                  <Button type="submit" className="w-full" disabled={isSubmitting}>
+                  <div className="flex justify-center pt-1">
+                    <HCaptcha
+                      ref={captchaRef}
+                      sitekey={HCAPTCHA_SITE_KEY}
+                      onVerify={(token) => setCaptchaToken(token)}
+                      onExpire={() => setCaptchaToken(null)}
+                      onError={() => setCaptchaToken(null)}
+                      theme="light"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isSubmitting || !captchaToken}>
                     {isSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -189,6 +199,7 @@ const Contact = () => {
                       </>
                     )}
                   </Button>
+
                 </motion.form>
               )}
             </AnimatePresence>
