@@ -454,8 +454,9 @@ const App = () => {
                       <Route path="/editorial-policy" element={<Suspense fallback={<TopProgressBar />}><EditorialPolicy /></Suspense>} />
                       
                       <Route path="*" element={<NotFound />} />
-                    </Routes>
-                    </Suspense>
+                   </Routes>
+                   </RouteErrorBoundary>
+                   </Suspense>
                     </ProfileCompletionGuard>
                     </TooltipProvider>
                     </FloatingToolsProvider>
