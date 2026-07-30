@@ -240,6 +240,7 @@ const App = () => {
   }, []);
 
   return (
+    <GlobalErrorBoundary scope="app">
     <QueryClientProvider client={queryClient}>
       <Router>
         <GA4PageTracker />
