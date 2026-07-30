@@ -12,6 +12,8 @@ const Router = ({ children }: { children: React.ReactNode }) =>
 import { useState, lazy, Suspense, useEffect, type ComponentType } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
+import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
+import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
 import TopProgressBar from "./components/TopProgressBar";
@@ -238,6 +240,7 @@ const App = () => {
   }, []);
 
   return (
+    <GlobalErrorBoundary scope="app">
     <QueryClientProvider client={queryClient}>
       <Router>
         <GA4PageTracker />
@@ -275,6 +278,7 @@ const App = () => {
                     <GlobalCreditExhaustedListener />
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
+                    <RouteErrorBoundary>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/larkana" element={<Index />} />
@@ -453,8 +457,9 @@ const App = () => {
                       <Route path="/editorial-policy" element={<Suspense fallback={<TopProgressBar />}><EditorialPolicy /></Suspense>} />
                       
                       <Route path="*" element={<NotFound />} />
-                    </Routes>
-                    </Suspense>
+                   </Routes>
+                   </RouteErrorBoundary>
+                   </Suspense>
                     </ProfileCompletionGuard>
                     </TooltipProvider>
                     </FloatingToolsProvider>
@@ -467,6 +472,7 @@ const App = () => {
         </LoadingProvider>
       </Router>
     </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 };
 

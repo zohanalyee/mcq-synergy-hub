@@ -58,3 +58,17 @@ Jo tut'ta hai: (a) result carry-forward nahi, (b) koi "aap ne 3 test diye — si
 - **Phase 3D — Housekeeping:** production se console.log strip, routes ko route-groups mein todna, sab se risky `any` jagahon ko type karna, admin alt text. F3-8 se F3-12.
 
 Har phase alag turn mein, aap ke approve karne par.
+
+&nbsp;
+
+&nbsp;
+
+**Roadmap approved — is order mein karein:**
+
+Phase 3A (crash-safety-net) — pehle, sasta hai
+
+Phase 3B (guest-conversion) — ISKO SABSE ZYADA PRIORITY dein, kyunki yeh directly signup/revenue se juda hai — jitni jaldi ho sake implement karein
+
+Phase 3C aur 3D — baad mein, jab budget ho
+
+Phase 3A se shuru kar dein.
