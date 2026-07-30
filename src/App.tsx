@@ -472,6 +472,7 @@ const App = () => {
         </LoadingProvider>
       </Router>
     </QueryClientProvider>
+    </GlobalErrorBoundary>
   );
 };
 
