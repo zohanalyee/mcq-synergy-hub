@@ -12,6 +12,8 @@ const Router = ({ children }: { children: React.ReactNode }) =>
 import { useState, lazy, Suspense, useEffect, type ComponentType } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 
+import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
+import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
 import TopProgressBar from "./components/TopProgressBar";
