@@ -275,6 +275,7 @@ const App = () => {
                     <GlobalCreditExhaustedListener />
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
+                    <RouteErrorBoundary>
                     <Routes>
                       <Route path="/" element={<Index />} />
                       <Route path="/larkana" element={<Index />} />
