@@ -30,6 +30,8 @@ import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestPro
 import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { loadGuestSession } from "@/lib/guestSession";
+import { savePendingGuestResult } from "@/lib/guestResultCarry";
+
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 import BrandMark from "@/components/BrandMark";
 
@@ -414,7 +416,24 @@ const TestSession = () => {
     if (subjects.length === 0 && questions.length > 0) {
       subjects = [...new Set(questions.map((q: any) => q.subject).filter(Boolean))];
     }
-    
+
+    // Guest carry-forward: stash the result so it can be saved to the account
+    // the moment they sign up / sign in (survives tab close).
+    if (!user) {
+      savePendingGuestResult({
+        testName: sessionName || "Practice Test",
+        testType: "custom_quiz",
+        score: correctAnswers,
+        totalQuestions: questions.length,
+        timeTaken,
+        subjects,
+        answers: answers as any,
+        questionIds,
+        returnPath: lastUsedContext.returnPath,
+      });
+    }
+
+
     const result = await processTestCompletion({
       score: correctAnswers, totalQuestions: questions.length, timeTaken,
       testType: "custom_quiz", subjects, answers,
@@ -742,8 +761,23 @@ const TestSession = () => {
             const weakestSections = sectionBreakdown.filter((s) => s.pct < 70);
 
             // Guests get a single bilingual sign-in gate instead of the full
-            // premium results screen / analytics / answer review.
+            // premium results screen / analytics / answer review — plus ONE
+            // free explanation as a taste of the full review.
             if (!user) {
+              const withExplanation = questions
+                .map((q: any, i: number) => ({ q, i }))
+                .filter(({ q }: any) => !!(q?.explanation || q?.explanation_text));
+              const pick =
+                withExplanation.find(({ q, i }: any) => !checkAnswer(q, answers[i])) ||
+                withExplanation[0];
+              const freeExplanation = pick
+                ? {
+                    question: pick.q.question || pick.q.title || "",
+                    correctAnswer: resolveAnswer(pick.q) || "",
+                    explanation: pick.q.explanation || pick.q.explanation_text || "",
+                  }
+                : null;
+
               return (
                 <GuestResultGate
                   open={true}
@@ -752,9 +786,12 @@ const TestSession = () => {
                   total={totalQ}
                   correctCount={correctCount}
                   returnPath={lastUsedContext.returnPath || "/mock-tests"}
+                  freeExplanation={freeExplanation}
+                  lockedExplanationCount={Math.max(0, withExplanation.length - 1)}
                 />
               );
             }
+
 
             return (
               <div className="space-y-4">

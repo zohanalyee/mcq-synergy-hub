@@ -56,6 +56,21 @@ export const QuickTestDialog = ({
           </DialogDescription>
         </DialogHeader>
 
+        {isGuest && (
+          <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+            <p className="text-xs font-semibold text-primary">
+              Guest mode: 20 questions free — no sign-up needed
+            </p>
+            <p className="text-[11px] text-muted-foreground leading-tight" dir="rtl">
+              مہمان موڈ: 20 سوالات مفت — سائن اپ کی ضرورت نہیں
+            </p>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Free account unlocks 100 questions, explanations & progress tracking.
+            </p>
+          </div>
+        )}
+
+
         <div className="space-y-4 py-2">
           <div className="space-y-2">
             <Label className="text-sm font-medium">Difficulty</Label>
@@ -84,9 +99,10 @@ export const QuickTestDialog = ({
             </select>
             {isGuest && (
               <p className="text-xs text-muted-foreground">
-                Sign in for 50-question tests and full progress tracking.
+                Guests are capped at 20 questions. Sign in for 50-question tests and full progress tracking.
               </p>
             )}
+
           </div>
         </div>
 
