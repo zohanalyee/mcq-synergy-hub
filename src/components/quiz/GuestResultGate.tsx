@@ -93,15 +93,67 @@ export const GuestResultGate = ({
           </p>
         </div>
 
+        {/* Free explanation — a taste of the full review */}
+        {freeExplanation && (
+          <div className="px-5 pt-3">
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+              <div className="flex items-center gap-1.5 mb-1.5">
+                <Unlock className="h-3.5 w-3.5 text-primary" />
+                <p className="text-[11px] font-semibold text-primary uppercase tracking-wide">
+                  Free explanation · مفت وضاحت
+                </p>
+              </div>
+              <p className="text-xs font-medium leading-snug mb-1.5 line-clamp-3">
+                {freeExplanation.question}
+              </p>
+              {freeExplanation.correctAnswer && (
+                <p className="text-xs mb-1">
+                  <span className="text-muted-foreground">Correct: </span>
+                  <span className="font-semibold text-success">{freeExplanation.correctAnswer}</span>
+                </p>
+              )}
+              <p className="text-[11px] text-muted-foreground leading-snug line-clamp-4">
+                {freeExplanation.explanation}
+              </p>
+            </div>
+            {lockedExplanationCount > 0 && (
+              <p className="mt-1.5 text-[11px] text-muted-foreground flex items-center gap-1">
+                <Lock className="h-3 w-3 shrink-0" />
+                {lockedExplanationCount} more explanations locked · مزید {lockedExplanationCount} وضاحتیں لاک ہیں
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Carry-forward promise */}
+        <div className="px-5 pt-3">
+          <div className="rounded-lg border border-success/30 bg-success/5 px-3 py-2 flex items-start gap-2">
+            <Save className="h-3.5 w-3.5 text-success mt-0.5 shrink-0" />
+            <div className="flex-1">
+              <p className="text-[11px] font-medium leading-tight">
+                Sign up now and this result ({correctCount}/{total}) is saved to your account.
+              </p>
+              <p className="text-[11px] text-muted-foreground leading-tight" dir="rtl">
+                ابھی سائن اپ کریں — یہ نتیجہ آپ کے اکاؤنٹ میں محفوظ ہو جائے گا
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Sign In CTA */}
         <div className="px-5 pt-3">
           <Button
-            className="w-full h-10 bg-brand-gradient text-white shadow-brand hover:brightness-110 text-sm font-semibold"
+            className="w-full h-11 bg-brand-gradient text-white shadow-brand hover:brightness-110 text-sm font-semibold"
             onClick={handleSignIn}
           >
-            Sign In / سائن ان
+            Save My Result / نتیجہ محفوظ کریں
           </Button>
+          <p className="mt-1.5 text-[11px] text-center text-muted-foreground">
+            Guest limit: {guestCap} questions per test · Free account: {memberCap}
+          </p>
         </div>
+
+
 
         {/* Benefits */}
         <div className="px-5 pt-2 pb-2">
