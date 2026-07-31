@@ -99,9 +99,10 @@ export const QuickTestDialog = ({
             </select>
             {isGuest && (
               <p className="text-xs text-muted-foreground">
-                Sign in for 50-question tests and full progress tracking.
+                Guests are capped at 20 questions. Sign in for 50-question tests and full progress tracking.
               </p>
             )}
+
           </div>
         </div>
 
