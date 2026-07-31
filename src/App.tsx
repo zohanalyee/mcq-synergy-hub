@@ -276,6 +276,8 @@ const App = () => {
                     <ToolRouteSEO />
                     <GlobalCanonical />
                     <GlobalCreditExhaustedListener />
+                    <GuestResultCarryForward />
+
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
                     <RouteErrorBoundary>
