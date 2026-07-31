@@ -24,7 +24,7 @@ const VerifyEmail = () => {
   }, [navigate]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">

@@ -17,7 +17,7 @@ const NotFound = () => {
   }, [location.pathname]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-dvh flex items-center justify-center bg-background">
       <SEOHead
         title="Page Not Found | MCQsAI"
         description="The page you are looking for does not exist. Explore MCQsAI for free MCQ practice for NTS, FPSC, PPSC, Matric, FSc exams."

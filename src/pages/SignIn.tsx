@@ -213,7 +213,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2">
+    <div className="min-h-dvh flex flex-col lg:grid lg:grid-cols-2">
       <SEOHead title="Sign In" noindex />
       {/* Left Panel - Desktop Only */}
       <JoinSection />

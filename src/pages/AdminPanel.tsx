@@ -75,7 +75,7 @@ const AdminPanel = () => {
 
   return (
     <Header>
-      <div className="relative min-h-screen">
+      <div className="relative min-h-dvh">
         {/* AI-themed background */}
         <div className="fixed inset-0 pointer-events-none z-0">
           <div className="absolute inset-0 bg-gradient-to-b from-violet-950/5 via-transparent to-cyan-950/5 dark:from-violet-950/20 dark:via-transparent dark:to-cyan-950/10" />
