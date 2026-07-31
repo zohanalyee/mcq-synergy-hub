@@ -14,6 +14,12 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { saveIntentRaw } from '@/hooks/useAuthIntent';
 import BrandMark from '@/components/BrandMark';
 
+interface FreeExplanation {
+  question: string;
+  correctAnswer: string;
+  explanation: string;
+}
+
 interface GuestResultGateProps {
   open: boolean;
   onClose: () => void;
@@ -21,6 +27,14 @@ interface GuestResultGateProps {
   total: number;
   correctCount: number;
   returnPath?: string;
+  /** One unlocked explanation shown free as a taste of the full review. */
+  freeExplanation?: FreeExplanation | null;
+  /** Total questions that have a locked explanation. */
+  lockedExplanationCount?: number;
+  /** Guest question cap, shown as a feature (not hidden). */
+  guestCap?: number;
+  /** Question cap for signed-in learners. */
+  memberCap?: number;
 }
 
 export const GuestResultGate = ({
@@ -30,6 +44,10 @@ export const GuestResultGate = ({
   total,
   correctCount,
   returnPath = '/quizzes',
+  freeExplanation = null,
+  lockedExplanationCount = 0,
+  guestCap = 20,
+  memberCap = 100,
 }: GuestResultGateProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,6 +71,7 @@ export const GuestResultGate = ({
     onClose();
     navigate(returnPath);
   };
+
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleTryAgain()}>
