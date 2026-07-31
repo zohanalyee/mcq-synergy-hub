@@ -4,7 +4,7 @@ import { Star, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
 
 const STORAGE_KEY = "ai-mcqs-has-rated";
@@ -65,10 +65,7 @@ const UserSatisfactionPopup = () => {
           .maybeSingle();
 
         if (existing) {
-          toast({
-            title: "You've already shared your feedback!",
-            description: "Thank you for your previous rating.",
-          });
+          toast("You've already shared your feedback!", { description: "Thank you for your previous rating." });
           localStorage.setItem(STORAGE_KEY, "true");
           setVisible(false);
           return;
@@ -105,10 +102,7 @@ const UserSatisfactionPopup = () => {
 
       if (error) throw error;
 
-      toast({
-        title: "Thank you for your feedback!",
-        description: "Your rating helps us improve.",
-      });
+      toast("Thank you for your feedback!", { description: "Your rating helps us improve." });
       localStorage.setItem(STORAGE_KEY, "true");
       setVisible(false);
 
@@ -120,11 +114,7 @@ const UserSatisfactionPopup = () => {
       queryClient.invalidateQueries({ queryKey: ["platform-stats"] });
     } catch (err) {
       console.error("Rating submission error:", err);
-      toast({
-        title: "Something went wrong",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
+      toast.error("Something went wrong", { description: "Please try again later." });
     } finally {
       setSubmitting(false);
     }

@@ -278,7 +278,7 @@ const QuizPlayer = () => {
 
   if (error || !testData || total === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="min-h-dvh flex items-center justify-center px-4">
         <Card className="max-w-md w-full">
           <CardContent className="pt-6 text-center space-y-4">
             <p className="text-sm text-muted-foreground">
@@ -295,7 +295,7 @@ const QuizPlayer = () => {
     const timeTaken = Math.round((Date.now() - startedAtRef.current) / 1000);
     if (!user) {
       return (
-        <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+        <div className="min-h-dvh bg-gradient-to-b from-background via-background to-primary/5">
           <div className="max-w-2xl mx-auto px-4 pt-6">
             <ResultAdviceCard
               score={total > 0 ? Math.round((correctCount / total) * 100) : 0}
@@ -315,7 +315,7 @@ const QuizPlayer = () => {
       );
     }
     return (
-      <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5">
+      <div className="min-h-dvh bg-gradient-to-b from-background via-background to-primary/5">
         <QuizResultScreen
           title={testData.session_name || "Quiz"}
           score={score}
@@ -344,7 +344,7 @@ const QuizPlayer = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-32 sm:pb-28">
+    <div className="min-h-dvh bg-gradient-to-b from-background via-background to-primary/5 pb-32 sm:pb-28">
       <QuizHUD
         title={testData.session_name || "Quiz"}
         current={currentIdx + 1}

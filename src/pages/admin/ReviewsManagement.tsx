@@ -5,11 +5,10 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Star, Check, Trash2, Eye, EyeOff } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { formatDistanceToNow } from 'date-fns';
 
 const ReviewsManagement = () => {
-  const { toast } = useToast();
   const queryClient = useQueryClient();
 
   const { data: reviews, isLoading } = useQuery({
@@ -35,7 +34,7 @@ const ReviewsManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
-      toast({ title: 'Review verified ✓' });
+      toast('Review verified ✓');
     },
   });
 
@@ -49,7 +48,7 @@ const ReviewsManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
-      toast({ title: 'Visibility updated' });
+      toast('Visibility updated');
     },
   });
 
@@ -60,7 +59,7 @@ const ReviewsManagement = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-reviews'] });
-      toast({ title: 'Review deleted' });
+      toast('Review deleted');
     },
   });
 

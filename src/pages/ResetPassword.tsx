@@ -5,14 +5,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import PasswordStrengthIndicator, { getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import { Loader2, Lock, Eye, EyeOff } from "lucide-react";
 
 const ResetPassword = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -22,7 +21,7 @@ const ResetPassword = () => {
     const checkSession = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
-        toast({ variant: "destructive", title: "Invalid Link", description: "This password reset link is invalid or expired." });
+        toast.error("Invalid Link", { description: "This password reset link is invalid or expired." });
         navigate("/forgot-password");
       }
     };
@@ -33,12 +32,12 @@ const ResetPassword = () => {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
+      toast.error("Password Mismatch", { description: "Passwords do not match." });
       return;
     }
     const policyError = getPasswordPolicyError(password);
     if (policyError) {
-      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
+      toast.error("Password Requirements", { description: policyError });
       return;
     }
 
@@ -46,17 +45,17 @@ const ResetPassword = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
-      toast({ title: "Success!", description: "Your password has been reset successfully." });
+      toast("Success!", { description: "Your password has been reset successfully." });
       navigate("/auth");
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message || "Failed to reset password." });
+      toast.error("Error", { description: error.message || "Failed to reset password." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">

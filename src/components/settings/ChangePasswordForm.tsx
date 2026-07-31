@@ -2,13 +2,12 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import PasswordStrengthIndicator, { getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import { Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 
 const ChangePasswordForm = () => {
-  const { toast } = useToast();
   const [formData, setFormData] = useState({ newPassword: "", confirmPassword: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -17,12 +16,12 @@ const ChangePasswordForm = () => {
     e.preventDefault();
 
     if (formData.newPassword !== formData.confirmPassword) {
-      toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
+      toast.error("Password Mismatch", { description: "Passwords do not match." });
       return;
     }
     const policyError = getPasswordPolicyError(formData.newPassword);
     if (policyError) {
-      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
+      toast.error("Password Requirements", { description: policyError });
       return;
     }
 
@@ -30,10 +29,10 @@ const ChangePasswordForm = () => {
     try {
       const { error } = await supabase.auth.updateUser({ password: formData.newPassword });
       if (error) throw error;
-      toast({ title: "Success!", description: "Your password has been changed." });
+      toast("Success!", { description: "Your password has been changed." });
       setFormData({ newPassword: "", confirmPassword: "" });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message || "Failed to change password." });
+      toast.error("Error", { description: error.message || "Failed to change password." });
     } finally {
       setLoading(false);
     }

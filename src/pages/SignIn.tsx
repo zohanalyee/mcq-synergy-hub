@@ -8,7 +8,7 @@ import { signInWithGoogle } from "@/services/authService";
 import { getIntentRaw, clearIntentRaw } from "@/hooks/useAuthIntent";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import PasswordStrengthIndicator, { passwordMeetsPolicy, getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
 import {
@@ -37,7 +37,6 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const { user, signIn, signUp, loading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { toast } = useToast();
   const queryTab = searchParams.get("tab");
   const resolvedDefaultTab: AuthTab = queryTab === "signup" || queryTab === "signin" ? queryTab : defaultTab;
   const [activeTab, setActiveTab] = useState<AuthTab>(resolvedDefaultTab);
@@ -111,7 +110,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
       const { error } = await signInWithGoogle();
       if (error) throw error;
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Google Sign In Failed", description: error.message || "Failed to sign in with Google." });
+      toast.error("Google Sign In Failed", { description: error.message || "Failed to sign in with Google." });
       setIsGoogleLoading(false);
     }
   };
@@ -121,7 +120,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     setServerError(null);
     setCaptchaError(null);
     if (!signInCaptchaToken) {
-      toast({ variant: "destructive", title: "Captcha Required", description: "Please complete the hCaptcha verification before signing in." });
+      toast.error("Captcha Required", { description: "Please complete the hCaptcha verification before signing in." });
       return;
     }
     setIsSubmitting("signin");
@@ -141,26 +140,26 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     setServerError(null);
     setCaptchaError(null);
     if (!agreedToTerms) {
-      toast({ variant: "destructive", title: "Terms Required", description: "Please agree to the Terms of Service and Privacy Policy." });
+      toast.error("Terms Required", { description: "Please agree to the Terms of Service and Privacy Policy." });
       return;
     }
     if (!signUpCaptchaToken) {
-      toast({ variant: "destructive", title: "Captcha Required", description: "Please complete the hCaptcha verification." });
+      toast.error("Captcha Required", { description: "Please complete the hCaptcha verification." });
       return;
     }
     if (signUpData.password !== signUpData.confirmPassword) {
-      toast({ variant: "destructive", title: "Password Mismatch", description: "Passwords do not match." });
+      toast.error("Password Mismatch", { description: "Passwords do not match." });
       return;
     }
     const policyError = getPasswordPolicyError(signUpData.password);
     if (policyError) {
-      toast({ variant: "destructive", title: "Password Requirements", description: policyError });
+      toast.error("Password Requirements", { description: policyError });
       return;
     }
     setIsSubmitting("signup");
     try {
       await signUp(signUpData.email, signUpData.password, signUpCaptchaToken);
-      toast({ title: "Account Created!", description: "Please check your email to verify your account." });
+      toast("Account Created!", { description: "Please check your email to verify your account." });
       signUpCaptchaRef.current?.resetCaptcha();
       setSignUpCaptchaToken(null);
     } catch (error: any) {
@@ -214,7 +213,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   );
 
   return (
-    <div className="min-h-screen flex flex-col lg:grid lg:grid-cols-2">
+    <div className="min-h-dvh flex flex-col lg:grid lg:grid-cols-2">
       <SEOHead title="Sign In" noindex />
       {/* Left Panel - Desktop Only */}
       <JoinSection />

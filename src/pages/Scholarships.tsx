@@ -4,7 +4,7 @@ import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Award, Calendar, Eye, AlertCircle } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import Header from "@/components/Header";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,6 @@ import RelatedContent from "@/components/seo/related/RelatedContent";
 
 const Scholarships = () => {
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
   const [scholarships, setScholarships] = useState<ContentItem[]>([]);
   const [externalScholarships, setExternalScholarships] = useState<ExternalOpportunity[]>([]);
@@ -47,11 +46,7 @@ const Scholarships = () => {
         setExternalScholarships(externalData);
       } catch (error) {
         console.error("Error fetching scholarships:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load scholarships. Please try again."
-        });
+        toast.error("Error", { description: "Failed to load scholarships. Please try again." });
       } finally {
         setIsLoading(false);
       }

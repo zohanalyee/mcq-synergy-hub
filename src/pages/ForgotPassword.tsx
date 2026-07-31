@@ -5,12 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Mail, ArrowLeft, CheckCircle } from "lucide-react";
 
 const ForgotPassword = () => {
-  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
@@ -26,16 +25,16 @@ const ForgotPassword = () => {
       if (error) throw error;
 
       setEmailSent(true);
-      toast({ title: "Email Sent!", description: "Check your inbox for password reset instructions." });
+      toast("Email Sent!", { description: "Check your inbox for password reset instructions." });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message || "Failed to send reset email." });
+      toast.error("Error", { description: error.message || "Failed to send reset email." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
+    <div className="min-h-dvh bg-gradient-to-br from-primary/20 via-background to-secondary/20 flex items-center justify-center p-4">
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
         <Card>
           <CardHeader className="text-center">

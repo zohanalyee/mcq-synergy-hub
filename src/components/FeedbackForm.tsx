@@ -23,7 +23,7 @@ import {
 } from '@/components/ui/select';
 import { Loader2 } from 'lucide-react';
 import { FeedbackSubmission, FeedbackType, submitFeedback } from '@/services/feedbackService';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { useAuth } from '@/contexts/AuthContext';
 
 const feedbackFormSchema = z.object({
@@ -35,7 +35,6 @@ type FeedbackFormValues = z.infer<typeof feedbackFormSchema>;
 
 const FeedbackForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
   const { user } = useAuth();
 
   const form = useForm<FeedbackFormValues>({
@@ -48,11 +47,7 @@ const FeedbackForm: React.FC = () => {
 
   const onSubmit = async (data: FeedbackFormValues) => {
     if (!user) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign in to submit feedback.",
-        variant: "destructive",
-      });
+      toast.error("Authentication required", { description: "Please sign in to submit feedback." });
       return;
     }
 
@@ -66,25 +61,14 @@ const FeedbackForm: React.FC = () => {
       const result = await submitFeedback(feedback);
       
       if (result) {
-        toast({
-          title: "Feedback submitted",
-          description: "Thank you for your feedback! We'll review it soon.",
-        });
+        toast("Feedback submitted", { description: "Thank you for your feedback! We'll review it soon." });
         form.reset();
       } else {
-        toast({
-          title: "Submission failed",
-          description: "There was an error submitting your feedback. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Submission failed", { description: "There was an error submitting your feedback. Please try again." });
       }
     } catch (error) {
       console.error('Error submitting feedback:', error);
-      toast({
-        title: "Submission failed",
-        description: "There was an error submitting your feedback. Please try again.",
-        variant: "destructive",
-      });
+      toast.error("Submission failed", { description: "There was an error submitting your feedback. Please try again." });
     } finally {
       setIsSubmitting(false);
     }

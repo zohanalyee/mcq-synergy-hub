@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, Upload, UserCircle2, Shield, Target, Crown, Lock, LogOut } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import Header from '@/components/Header';
 import PageHeader from '@/components/ui/PageHeader';
@@ -56,7 +56,6 @@ const Profile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [targetExam, setTargetExam] = useState<string>('');
-  const { toast } = useToast();
   const navigate = useNavigate();
 
   // Redirect if not authenticated
@@ -102,17 +101,10 @@ const Profile = () => {
         .eq('id', user.id);
       if (error) throw error;
 
-      toast({
-        title: 'Profile updated',
-        description: 'Your profile information has been saved.',
-      });
+      toast('Profile updated', { description: 'Your profile information has been saved.' });
     } catch (error) {
       console.error('Error updating profile:', error);
-      toast({
-        title: 'Update failed',
-        description: 'There was an error updating your profile.',
-        variant: 'destructive',
-      });
+      toast.error('Update failed', { description: 'There was an error updating your profile.' });
     } finally {
       setIsSaving(false);
     }
@@ -122,22 +114,22 @@ const Profile = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      toast({ title: 'File too large', description: 'Avatar image must be less than 2MB.', variant: 'destructive' });
+      toast.error('File too large', { description: 'Avatar image must be less than 2MB.' });
       return;
     }
     if (!file.type.startsWith('image/')) {
-      toast({ title: 'Invalid file type', description: 'Please upload an image file.', variant: 'destructive' });
+      toast.error('Invalid file type', { description: 'Please upload an image file.' });
       return;
     }
     try {
       setIsUploading(true);
       const url = await uploadAvatar(file);
       if (url) {
-        toast({ title: 'Avatar updated', description: 'Your profile picture has been updated.' });
+        toast('Avatar updated', { description: 'Your profile picture has been updated.' });
       }
     } catch (error) {
       console.error('Error uploading avatar:', error);
-      toast({ title: 'Upload failed', description: 'There was an error uploading your avatar.', variant: 'destructive' });
+      toast.error('Upload failed', { description: 'There was an error uploading your avatar.' });
     } finally {
       setIsUploading(false);
     }

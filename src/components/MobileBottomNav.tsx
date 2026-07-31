@@ -6,7 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { useLanguage, type Language } from '@/contexts/LanguageContext';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { supabase } from '@/integrations/supabase/client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -42,7 +42,6 @@ const MobileBottomNav = () => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [streak, setStreak] = useState(0);
   const { language, setLanguage, t } = useLanguage();
-  const { toast } = useToast();
   const [theme, setTheme] = useState<string>(() => {
     if (typeof window === 'undefined') return 'light';
     return localStorage.getItem('theme') || 'light';
@@ -99,7 +98,7 @@ const MobileBottomNav = () => {
       sd: { title: 'ٻولي تبديل', desc: 'سنڌي' },
     };
     const msg = messages[value];
-    toast({ title: msg.title, description: msg.desc, duration: 1500 });
+    toast(msg.title, { description: msg.desc, duration: 1500 });
   };
 
   // Immersive routes — hide bottom nav for full-focus test/quiz/auth sessions

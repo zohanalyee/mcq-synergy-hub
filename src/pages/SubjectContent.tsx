@@ -26,7 +26,7 @@ import { prefetchPracticeAnswers, type ScoredAnswer } from "@/services/practiceS
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Lock } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
@@ -54,7 +54,6 @@ const SubjectContent = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { toast } = useToast();
   const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
   const [studyMode, setStudyMode] = useState<StudyMode>("practice");
@@ -201,10 +200,7 @@ const SubjectContent = () => {
         setCachedCount(0);
         setAiCount(0);
         openGuestGate();
-        toast({
-          title: "AI Generation Available",
-          description: "No cached questions found. Sign in to generate questions instantly using AI!",
-        });
+        toast("AI Generation Available", { description: "No cached questions found. Sign in to generate questions instantly using AI!" });
         setIsLoadingMCQs(false);
         return;
       }
@@ -232,7 +228,7 @@ const SubjectContent = () => {
       setGuestStarted(true);
     } catch (error: any) {
       console.error('Guest subject quiz error:', error);
-      toast({ variant: "destructive", title: "Failed to load questions", description: error?.message || "Please try again." });
+      toast.error("Failed to load questions", { description: error?.message || "Please try again." });
     } finally {
       setIsLoadingMCQs(false);
     }
@@ -318,7 +314,7 @@ const SubjectContent = () => {
         setMcqs(transformed);
         setQuestionSource('cache');
         setCachedCount(transformed.length);
-        toast({ title: "⚡ Loaded from offline cache", description: `${transformed.length} questions available instantly` });
+        toast("⚡ Loaded from offline cache", { description: `${transformed.length} questions available instantly` });
         return;
       }
     }
@@ -335,10 +331,7 @@ const SubjectContent = () => {
         setSelectedTopicId(topicIdFromUrl);
         setSelectedTopic(matchingTopic.name);
         
-        toast({
-          title: "📚 Topic Selected",
-          description: `Showing MCQs for "${matchingTopic.name}"`,
-        });
+        toast("📚 Topic Selected", { description: `Showing MCQs for "${matchingTopic.name}"` });
       }
     }
   }, [topicIdFromUrl, dbTopics]);
@@ -562,12 +555,9 @@ const SubjectContent = () => {
       }
       
       if (data.source === 'ai' || data.ai_count > 0) {
-        toast({
-          title: data.source === 'ai' ? "🤖 AI Generated Questions" : "🔀 Mixed Source",
-          description: data.source === 'ai' 
+        toast(data.source === 'ai' ? "🤖 AI Generated Questions" : "🔀 Mixed Source", { description: data.source === 'ai' 
             ? `Generated ${data.ai_count} new questions and saved to bank`
-            : `${data.cached_count} from bank + ${data.ai_count} AI generated`,
-        });
+            : `${data.cached_count} from bank + ${data.ai_count} AI generated` });
       }
       
     } catch (error: any) {
@@ -623,10 +613,7 @@ const SubjectContent = () => {
             setAiCount(0);
             setLoadError(null);
 
-            toast({
-              title: 'Daily AI limit reached',
-              description: 'Showing practice questions from our question bank.',
-            });
+            toast('Daily AI limit reached', { description: 'Showing practice questions from our question bank.' });
 
             return;
           }
@@ -639,11 +626,7 @@ const SubjectContent = () => {
       setMcqs([]);
       
       // Show error toast
-      toast({
-        variant: "destructive",
-        title: "Failed to load questions",
-        description: error.message || "Please try again or generate new questions",
-      });
+      toast.error("Failed to load questions", { description: error.message || "Please try again or generate new questions" });
     } finally {
       setIsLoadingMCQs(false);
       setIsGenerating(false);

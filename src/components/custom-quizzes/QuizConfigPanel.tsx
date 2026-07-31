@@ -6,7 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 import { CustomSubject, QuizSettings } from "./interfaces";
 import SelectedQuizTopics from "./SelectedQuizTopics";
@@ -40,11 +40,7 @@ const QuizConfigPanel: React.FC<QuizConfigPanelProps> = ({
   
   const createQuiz = async () => {
     if (selectedTopicsCount === 0) {
-      toast({
-        title: "Selection Required",
-        description: "Please select at least one topic for your custom quiz.",
-        variant: "destructive"
-      });
+      toast.error("Selection Required", { description: "Please select at least one topic for your custom quiz." });
       return;
     }
 
@@ -74,29 +70,18 @@ const QuizConfigPanel: React.FC<QuizConfigPanelProps> = ({
       });
 
       if (!generatedTest) {
-        toast({
-          title: "No Questions Available",
-          description: "No questions found in the Question Bank for the selected topics. Please try different topics or add questions to the bank.",
-          variant: "destructive"
-        });
+        toast.error("No Questions Available", { description: "No questions found in the Question Bank for the selected topics. Please try different topics or add questions to the bank." });
         setIsGenerating(false);
         return;
       }
 
-      toast({
-        title: "Quiz Generated!",
-        description: `Your custom quiz with ${generatedTest.questions.length} questions is ready.`,
-      });
+      toast("Quiz Generated!", { description: `Your custom quiz with ${generatedTest.questions.length} questions is ready.` });
 
       // Navigate to test session with generated test
       navigate('/test-session', { state: { test: generatedTest } });
     } catch (error) {
       console.error("Error generating quiz:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate quiz. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Error", { description: "Failed to generate quiz. Please try again." });
     } finally {
       setIsGenerating(false);
     }

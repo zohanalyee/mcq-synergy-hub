@@ -3,10 +3,9 @@ import { useState, useEffect } from "react";
 import { ContentItem, ContentStatus } from "@/interfaces/content";
 import { getAllContent, updateContentStatus, deleteContent } from "@/services/supabaseContentService";
 import { toast } from "sonner";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useContentManagement = () => {
-  const { toast: hookToast } = useToast();
   const [content, setContent] = useState<ContentItem[]>([]);
   const [currentItem, setCurrentItem] = useState<ContentItem | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -22,11 +21,7 @@ export const useContentManagement = () => {
         console.log("Loaded content items from Supabase:", allContent.length);
       } catch (error) {
         console.error("Error loading content:", error);
-        hookToast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load content. Please try again."
-        });
+        toast.error("Error", { description: "Failed to load content. Please try again." });
       } finally {
         setLoading(false);
       }
@@ -57,11 +52,7 @@ export const useContentManagement = () => {
       }
     } catch (error) {
       console.error(`Error ${status === "approved" ? "approving" : "rejecting"} content:`, error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to ${status === "approved" ? "approve" : "reject"} content. Please try again.`
-      });
+      toast.error("Error", { description: `Failed to ${status === "approved" ? "approve" : "reject"} content. Please try again.` });
     }
   };
 
@@ -85,11 +76,7 @@ export const useContentManagement = () => {
       }
     } catch (error) {
       console.error("Error updating content:", error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to update content. Please try again."
-      });
+      toast.error("Error", { description: "Failed to update content. Please try again." });
     }
   };
 
@@ -201,11 +188,7 @@ export const useContentManagement = () => {
       }
     } catch (error) {
       console.error("Error performing bulk action:", error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to perform bulk action. Please try again."
-      });
+      toast.error("Error", { description: "Failed to perform bulk action. Please try again." });
     }
   };
 
