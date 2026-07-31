@@ -30,6 +30,8 @@ import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestPro
 import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { loadGuestSession } from "@/lib/guestSession";
+import { savePendingGuestResult } from "@/lib/guestResultCarry";
+
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 import BrandMark from "@/components/BrandMark";
 
