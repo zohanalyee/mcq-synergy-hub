@@ -8,10 +8,9 @@ import {
   getContentByCategory 
 } from "@/services/contentService";
 import { toast } from "sonner";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 export const useSupabaseContent = () => {
-  const { toast: hookToast } = useToast();
   const [content, setContent] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -27,11 +26,7 @@ export const useSupabaseContent = () => {
     } catch (error) {
       console.error("Error loading content:", error);
       setError("Failed to load content");
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load content. Please try again."
-      });
+      toast.error("Error", { description: "Failed to load content. Please try again." });
     } finally {
       setLoading(false);
     }
@@ -57,11 +52,7 @@ export const useSupabaseContent = () => {
       }
     } catch (error) {
       console.error(`Error ${status === "approved" ? "approving" : "rejecting"} content:`, error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: `Failed to ${status === "approved" ? "approve" : "reject"} content. Please try again.`
-      });
+      toast.error("Error", { description: `Failed to ${status === "approved" ? "approve" : "reject"} content. Please try again.` });
     }
   };
 
@@ -77,11 +68,7 @@ export const useSupabaseContent = () => {
       }
     } catch (error) {
       console.error("Error deleting content:", error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to delete content. Please try again."
-      });
+      toast.error("Error", { description: "Failed to delete content. Please try again." });
     }
   };
 
@@ -137,11 +124,7 @@ export const useSupabaseContent = () => {
       }
     } catch (error) {
       console.error("Error performing bulk action:", error);
-      hookToast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to perform bulk action. Please try again."
-      });
+      toast.error("Error", { description: "Failed to perform bulk action. Please try again." });
     }
   };
 

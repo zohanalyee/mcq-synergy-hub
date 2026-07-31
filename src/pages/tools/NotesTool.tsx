@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 
 interface Note {
   id: string;
@@ -26,7 +26,6 @@ const colors = [
 const NotesTool = () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-  const { toast } = useToast();
 
   useEffect(() => {
     const savedNotes = localStorage.getItem('study-notes');
@@ -67,7 +66,7 @@ const NotesTool = () => {
     if (selectedNote?.id === id) {
       setSelectedNote(null);
     }
-    toast({ title: 'Note deleted' });
+    toast('Note deleted');
   };
 
   return (

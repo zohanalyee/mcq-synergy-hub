@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, User, MapPin, Briefcase, GraduationCap } from "lucide-react";
 
@@ -22,7 +22,6 @@ const PAKISTANI_CITIES = [
 const CompleteProfile = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [userData, setUserData] = useState({
     fullName: "",
@@ -64,23 +63,23 @@ const CompleteProfile = () => {
     e.preventDefault();
 
     if (!userData.fullName.trim()) {
-      toast({ variant: "destructive", title: "Error", description: "Please enter your name" });
+      toast.error("Error", { description: "Please enter your name" });
       return;
     }
     if (!userData.city) {
-      toast({ variant: "destructive", title: "Error", description: "Please select your city" });
+      toast.error("Error", { description: "Please select your city" });
       return;
     }
     if (userData.city === 'Other' && !userData.otherCity.trim()) {
-      toast({ variant: "destructive", title: "Error", description: "Please enter your city name" });
+      toast.error("Error", { description: "Please enter your city name" });
       return;
     }
     if (!userData.occupation.trim()) {
-      toast({ variant: "destructive", title: "Error", description: "Please enter your occupation" });
+      toast.error("Error", { description: "Please enter your occupation" });
       return;
     }
     if (!userData.userType) {
-      toast({ variant: "destructive", title: "Error", description: "Please select your profile type" });
+      toast.error("Error", { description: "Please select your profile type" });
       return;
     }
 
@@ -107,12 +106,12 @@ const CompleteProfile = () => {
 
       if (error) throw error;
 
-      toast({ title: "Profile Completed! 🎉", description: "Welcome to MCQSAI" });
+      toast("Profile Completed! 🎉", { description: "Welcome to MCQSAI" });
 
       const from = (location.state as any)?.from || '/';
       navigate(from, { replace: true });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message || "Failed to save profile." });
+      toast.error("Error", { description: error.message || "Failed to save profile." });
     } finally {
       setLoading(false);
     }

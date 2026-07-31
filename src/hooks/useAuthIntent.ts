@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 
 const INTENT_KEY = 'auth_intent';
 const REDIRECT_KEY = 'redirect_after_auth';
@@ -85,10 +85,7 @@ export const useAuthIntent = () => {
     clearIntentRaw();
     log('Executing:', intent);
 
-    toast({
-      title: 'Welcome back! 🎉',
-      description: `Continuing where you left off...`,
-    });
+    toast('Welcome back! 🎉', { description: `Continuing where you left off...` });
 
     // Small delay for toast to show
     setTimeout(() => {

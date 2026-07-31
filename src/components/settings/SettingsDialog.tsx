@@ -8,7 +8,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import AppearanceSettings from './AppearanceSettings';
 import { useDeviceCapability, PerformanceMode } from '@/hooks/useDeviceCapability';
-import { useToast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { cn } from '@/lib/utils';
 
 interface SettingsDialogProps {
@@ -18,7 +18,6 @@ interface SettingsDialogProps {
 
 const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
   const { performanceMode, setPerformanceMode } = useDeviceCapability();
-  const { toast } = useToast();
 
   const handleModeChange = (mode: PerformanceMode) => {
     setPerformanceMode(mode);
@@ -29,10 +28,7 @@ const SettingsDialog = ({ open, onOpenChange }: SettingsDialogProps) => {
       'performance': 'Performance mode activated - Visuals reduced for speed',
     };
     
-    toast({
-      title: 'Visual Quality Updated',
-      description: messages[mode],
-    });
+    toast('Visual Quality Updated', { description: messages[mode] });
   };
 
   const qualityModes: { id: PerformanceMode; icon: React.ReactNode; label: string; description: string }[] = [

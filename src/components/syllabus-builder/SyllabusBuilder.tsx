@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -118,11 +118,7 @@ export const SyllabusBuilder = () => {
         ).length;
         
         if (currentlySelectedCount >= MAX_SUBJECTS) {
-          toast({
-            title: "Maximum Subjects Reached",
-            description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
-            variant: "destructive"
-          });
+          toast.error("Maximum Subjects Reached", { description: `You can select up to ${MAX_SUBJECTS} subjects at a time.` });
           return prev;
         }
       }
@@ -160,11 +156,7 @@ export const SyllabusBuilder = () => {
         ).length;
         
         if (currentlySelectedCount >= MAX_SUBJECTS) {
-          toast({
-            title: "Maximum Subjects Reached",
-            description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
-            variant: "destructive"
-          });
+          toast.error("Maximum Subjects Reached", { description: `You can select up to ${MAX_SUBJECTS} subjects at a time.` });
           return prev;
         }
       }
@@ -211,11 +203,7 @@ export const SyllabusBuilder = () => {
   // Save template handler
   const handleSaveTemplate = async (templateName: string): Promise<boolean> => {
     if (!user) {
-      toast({
-        title: "Sign in Required",
-        description: "Please sign in to save templates.",
-        variant: "destructive"
-      });
+      toast.error("Sign in Required", { description: "Please sign in to save templates." });
       return false;
     }
 
@@ -255,10 +243,7 @@ export const SyllabusBuilder = () => {
       };
     }));
 
-    toast({
-      title: "Template Loaded",
-      description: `"${template.name}" has been applied.`
-    });
+    toast("Template Loaded", { description: `"${template.name}" has been applied.` });
   }, [setFilterState, setRawSubjects]);
 
   // Handle smart search selection - auto-select topic or expand subject
@@ -278,11 +263,7 @@ export const SyllabusBuilder = () => {
           ).length;
           
           if (currentlySelectedCount >= MAX_SUBJECTS) {
-            toast({
-              title: "Maximum Subjects Reached",
-              description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
-              variant: "destructive"
-            });
+            toast.error("Maximum Subjects Reached", { description: `You can select up to ${MAX_SUBJECTS} subjects at a time.` });
             return prev;
           }
         }
@@ -303,10 +284,7 @@ export const SyllabusBuilder = () => {
         });
       });
 
-      toast({
-        title: "Topic Added",
-        description: `"${item.name}" has been added to your selection.`
-      });
+      toast("Topic Added", { description: `"${item.name}" has been added to your selection.` });
     } else {
       // For subjects, expand and select all topics
       const subject = rawSubjects.find(s => s.id === item.id);
@@ -317,11 +295,7 @@ export const SyllabusBuilder = () => {
         ).length;
         
         if (currentlySelectedCount >= MAX_SUBJECTS && !subject.topics.some(t => t.isSelected)) {
-          toast({
-            title: "Maximum Subjects Reached",
-            description: `You can select up to ${MAX_SUBJECTS} subjects at a time.`,
-            variant: "destructive"
-          });
+          toast.error("Maximum Subjects Reached", { description: `You can select up to ${MAX_SUBJECTS} subjects at a time.` });
           return;
         }
 
@@ -337,10 +311,7 @@ export const SyllabusBuilder = () => {
           return s;
         }));
 
-        toast({
-          title: "Subject Added",
-          description: `All topics from "${item.name}" have been added.`
-        });
+        toast("Subject Added", { description: `All topics from "${item.name}" have been added.` });
       }
     }
   }, [rawSubjects, setRawSubjects]);
@@ -351,11 +322,7 @@ export const SyllabusBuilder = () => {
   // Generate test with smart hybrid logic: bank-first + AI generation for shortages
   const handleGenerateQuiz = async () => {
     if (selectedTopicsCount === 0) {
-      toast({
-        title: "Selection Required",
-        description: "Please select at least one topic for your test.",
-        variant: "destructive"
-      });
+      toast.error("Selection Required", { description: "Please select at least one topic for your test." });
       return;
     }
 
@@ -371,11 +338,11 @@ export const SyllabusBuilder = () => {
           difficulty: undefined,
         });
         if (bankResult.questions.length === 0) {
-          toast({ title: "No bank questions available", description: "Please select different topics." });
+          toast("No bank questions available", { description: "Please select different topics." });
           return;
         }
         const session = createGuestTestSession(bankResult.questions.slice(0, requestedCount));
-        toast({ title: "✅ Test Ready!", description: `${bankResult.questions.length} questions loaded from Question Bank.` });
+        toast("✅ Test Ready!", { description: `${bankResult.questions.length} questions loaded from Question Bank.` });
         navigate(`/test-session/${session}`);
         return;
       }
@@ -399,11 +366,7 @@ export const SyllabusBuilder = () => {
 
       // Difficulty fallback notification
       if (bankResult.usedDifficultyFallback && foundInBank > 0) {
-        toast({
-          title: "ℹ️ Difficulty Adjusted",
-          description: `No ${quizSettings.difficulty} questions found. Using available difficulties instead.`,
-          duration: 4000
-        });
+        toast("ℹ️ Difficulty Adjusted", { description: `No ${quizSettings.difficulty} questions found. Using available difficulties instead.`, duration: 4000 });
       }
 
       // Step 2: Enough in bank? Create test immediately
@@ -411,11 +374,7 @@ export const SyllabusBuilder = () => {
         console.log('✅ Enough in bank, creating test directly');
         const session = await createTestSession(bankResult.questions.slice(0, requestedCount));
         if (session) {
-          toast({
-            title: "✅ Test Ready!",
-            description: `${requestedCount} questions loaded instantly from Question Bank.`,
-            duration: 5000
-          });
+          toast("✅ Test Ready!", { description: `${requestedCount} questions loaded instantly from Question Bank.`, duration: 5000 });
           navigate(`/test-session/${session}`);
         }
         return;
@@ -423,29 +382,16 @@ export const SyllabusBuilder = () => {
 
       // Step 3: Some questions exist but not enough — or zero
       if (shortage > MAX_AUTO_GENERATE) {
-        toast({
-          title: "⚠️ Too Many Questions Needed",
-          description: `Need to generate ${shortage} questions which exceeds the limit of ${MAX_AUTO_GENERATE}. Please reduce the quantity or select topics with more existing questions.`,
-          variant: "destructive",
-          duration: 6000
-        });
+        toast.error("⚠️ Too Many Questions Needed", { description: `Need to generate ${shortage} questions which exceeds the limit of ${MAX_AUTO_GENERATE}. Please reduce the quantity or select topics with more existing questions.`, duration: 6000 });
         setIsGenerating(false);
         return;
       }
 
       // Step 4: Generate shortage via AI
       if (foundInBank > 0) {
-        toast({
-          title: "🔄 Generating Additional Questions...",
-          description: `Found ${foundInBank} in bank. Generating ${shortage} more (~${Math.ceil(shortage / 15) * 10}s)...`,
-          duration: 8000
-        });
+        toast("🔄 Generating Additional Questions...", { description: `Found ${foundInBank} in bank. Generating ${shortage} more (~${Math.ceil(shortage / 15) * 10}s)...`, duration: 8000 });
       } else {
-        toast({
-          title: "🔄 Generating Questions...",
-          description: `Generating ${shortage} questions via AI (~${Math.ceil(shortage / 15) * 10}s). They'll be saved for instant reuse!`,
-          duration: 8000
-        });
+        toast("🔄 Generating Questions...", { description: `Generating ${shortage} questions via AI (~${Math.ceil(shortage / 15) * 10}s). They'll be saved for instant reuse!`, duration: 8000 });
       }
 
       console.log('🤖 Calling generate-test for', shortage, 'questions');
@@ -468,20 +414,16 @@ export const SyllabusBuilder = () => {
         const errMsg = generatedResult.error?.message || '';
         
         if (errMsg.includes('429') || errMsg.includes('quota') || errMsg.includes('rate limit')) {
-          toast({ title: "⏳ API Rate Limited", description: "AI generation temporarily unavailable. Please try again in a few minutes.", variant: "destructive", duration: 6000 });
+          toast.error("⏳ API Rate Limited", { description: "AI generation temporarily unavailable. Please try again in a few minutes.", duration: 6000 });
         } else if (errMsg.includes('402') || errMsg.includes('credit')) {
-          toast({ title: "💳 Credits Exhausted", description: "AI generation credits exhausted. Contact administrator.", variant: "destructive", duration: 6000 });
+          toast.error("💳 Credits Exhausted", { description: "AI generation credits exhausted. Contact administrator.", duration: 6000 });
         } else {
-          toast({ title: "⚠️ AI Generation Failed", description: `Error: ${errMsg || 'Unknown error'}. Try reducing question count.`, variant: "destructive", duration: 6000 });
+          toast.error("⚠️ AI Generation Failed", { description: `Error: ${errMsg || 'Unknown error'}. Try reducing question count.`, duration: 6000 });
         }
 
         // If we have bank questions, use them as fallback
         if (foundInBank > 0) {
-          toast({
-            title: "Using Available Questions",
-            description: `Creating test with ${foundInBank} questions from bank.`,
-            duration: 4000
-          });
+          toast("Using Available Questions", { description: `Creating test with ${foundInBank} questions from bank.`, duration: 4000 });
           const session = await createTestSession(bankResult.questions);
           if (session) navigate(`/test-session/${session}`);
           return;
@@ -503,42 +445,26 @@ export const SyllabusBuilder = () => {
 
       // Notify if subject fallback was used
       if (updatedBank.usedSubjectFallback) {
-        toast({
-          title: "ℹ️ Using Related Questions",
-          description: "No questions found for selected topics. Using questions from the same subject instead.",
-          duration: 5000
-        });
+        toast("ℹ️ Using Related Questions", { description: "No questions found for selected topics. Using questions from the same subject instead.", duration: 5000 });
       }
 
       if (finalQuestions.length === 0) {
-        toast({
-          title: "❌ Generation Failed",
-          description: "No questions could be generated. Please try again or select different topics.",
-          variant: "destructive"
-        });
+        toast.error("❌ Generation Failed", { description: "No questions could be generated. Please try again or select different topics." });
         setIsGenerating(false);
         return;
       }
 
       if (finalQuestions.length < requestedCount * 0.8) {
-        toast({
-          title: "⚠️ Partial Test",
-          description: `Generated ${finalQuestions.length} of ${requestedCount} requested. Creating test with available questions.`,
-          duration: 5000
-        });
+        toast("⚠️ Partial Test", { description: `Generated ${finalQuestions.length} of ${requestedCount} requested. Creating test with available questions.`, duration: 5000 });
       }
 
       // Step 6: Create test
       const session = await createTestSession(finalQuestions);
       if (session) {
         const newlyGenerated = finalQuestions.length - foundInBank;
-        toast({
-          title: "✅ Test Ready!",
-          description: newlyGenerated > 0
+        toast("✅ Test Ready!", { description: newlyGenerated > 0
             ? `${foundInBank} from bank + ${newlyGenerated} newly generated. Bank grew to ${updatedBank.questions.length}! 🌱`
-            : `${finalQuestions.length} questions loaded from Question Bank.`,
-          duration: 6000
-        });
+            : `${finalQuestions.length} questions loaded from Question Bank.`, duration: 6000 });
         navigate(`/test-session/${session}`);
       }
 

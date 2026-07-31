@@ -3,12 +3,11 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, ArrowLeft, Loader2 } from "lucide-react";
 
 const VerifyEmailSent = () => {
-  const { toast } = useToast();
   const [resending, setResending] = useState(false);
 
   const handleResend = async () => {
@@ -20,9 +19,9 @@ const VerifyEmailSent = () => {
       const { error } = await supabase.auth.resend({ type: "signup", email: user.email });
       if (error) throw error;
 
-      toast({ title: "Email Sent!", description: "Please check your inbox." });
+      toast("Email Sent!", { description: "Please check your inbox." });
     } catch (error: any) {
-      toast({ variant: "destructive", title: "Error", description: error.message || "Failed to resend email." });
+      toast.error("Error", { description: error.message || "Failed to resend email." });
     } finally {
       setResending(false);
     }

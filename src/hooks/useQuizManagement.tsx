@@ -1,13 +1,12 @@
 
 import { useState, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { MCQItem } from "@/interfaces/content";
 import { Quiz, addQuiz, getQuizzes, removeQuiz } from "@/services/quizService";
 import { getSubjects } from "@/services/adminService";
 import { getTopics } from "@/services/topicService";
 
 export const useQuizManagement = () => {
-  const { toast } = useToast();
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -43,11 +42,7 @@ export const useQuizManagement = () => {
 
   const handleSaveQuiz = () => {
     if (!title || !subject) {
-      toast({
-        variant: "destructive",
-        title: "Missing information",
-        description: "Please provide a title and select a subject.",
-      });
+      toast.error("Missing information", { description: "Please provide a title and select a subject." });
       return;
     }
 
@@ -67,10 +62,7 @@ export const useQuizManagement = () => {
       // Reset form
       resetForm();
 
-      toast({
-        title: "Quiz saved",
-        description: "The quiz has been saved successfully.",
-      });
+      toast("Quiz saved", { description: "The quiz has been saved successfully." });
     }
   };
 
@@ -78,10 +70,7 @@ export const useQuizManagement = () => {
     if (removeQuiz(id)) {
       setQuizzes(quizzes.filter(quiz => quiz.id !== id));
       
-      toast({
-        title: "Quiz deleted",
-        description: "The quiz has been removed.",
-      });
+      toast("Quiz deleted", { description: "The quiz has been removed." });
     }
   };
 

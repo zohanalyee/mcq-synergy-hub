@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from '@/hooks/use-toast';
+import { toast } from "sonner";
 import { SavedSyllabusTemplate, FilterState, QuizSettings } from '../interfaces';
 import type { Json } from '@/integrations/supabase/types';
 
@@ -55,11 +55,7 @@ export const useSyllabusTemplates = (userId: string | undefined) => {
     quizSettings: QuizSettings
   ): Promise<boolean> => {
     if (!userId) {
-      toast({
-        title: "Sign in Required",
-        description: "Please sign in to save templates.",
-        variant: "destructive"
-      });
+      toast.error("Sign in Required", { description: "Please sign in to save templates." });
       return false;
     }
 
@@ -76,20 +72,13 @@ export const useSyllabusTemplates = (userId: string | undefined) => {
 
       if (error) throw error;
 
-      toast({
-        title: "Template Saved!",
-        description: `"${name}" has been saved successfully.`
-      });
+      toast("Template Saved!", { description: `"${name}" has been saved successfully.` });
 
       fetchTemplates();
       return true;
     } catch (error) {
       console.error('Error saving template:', error);
-      toast({
-        title: "Save Failed",
-        description: "Could not save template. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Save Failed", { description: "Could not save template. Please try again." });
       return false;
     }
   };
@@ -106,20 +95,13 @@ export const useSyllabusTemplates = (userId: string | undefined) => {
 
       if (error) throw error;
 
-      toast({
-        title: "Template Deleted",
-        description: "Template has been removed."
-      });
+      toast("Template Deleted", { description: "Template has been removed." });
 
       setTemplates(prev => prev.filter(t => t.id !== templateId));
       return true;
     } catch (error) {
       console.error('Error deleting template:', error);
-      toast({
-        title: "Delete Failed",
-        description: "Could not delete template. Please try again.",
-        variant: "destructive"
-      });
+      toast.error("Delete Failed", { description: "Could not delete template. Please try again." });
       return false;
     }
   };

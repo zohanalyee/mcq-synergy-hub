@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Target, Loader2, X } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 
 const RecommendedPractice = () => {
@@ -69,11 +69,7 @@ const RecommendedPractice = () => {
       navigate(`/test-session/${session.id}`);
     } catch (err) {
       console.error("Error starting practice:", err);
-      toast({
-        title: "Error",
-        description: "Failed to start practice test. Try again.",
-        variant: "destructive",
-      });
+      toast.error("Error", { description: "Failed to start practice test. Try again." });
     } finally {
       setStartingId(null);
     }
