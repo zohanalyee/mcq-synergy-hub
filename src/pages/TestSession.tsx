@@ -414,7 +414,24 @@ const TestSession = () => {
     if (subjects.length === 0 && questions.length > 0) {
       subjects = [...new Set(questions.map((q: any) => q.subject).filter(Boolean))];
     }
-    
+
+    // Guest carry-forward: stash the result so it can be saved to the account
+    // the moment they sign up / sign in (survives tab close).
+    if (!user) {
+      savePendingGuestResult({
+        testName: sessionName || "Practice Test",
+        testType: "custom_quiz",
+        score: correctAnswers,
+        totalQuestions: questions.length,
+        timeTaken,
+        subjects,
+        answers: answers as any,
+        questionIds,
+        returnPath: lastUsedContext.returnPath,
+      });
+    }
+
+
     const result = await processTestCompletion({
       score: correctAnswers, totalQuestions: questions.length, timeTaken,
       testType: "custom_quiz", subjects, answers,
