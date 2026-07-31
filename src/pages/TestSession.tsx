@@ -761,8 +761,23 @@ const TestSession = () => {
             const weakestSections = sectionBreakdown.filter((s) => s.pct < 70);
 
             // Guests get a single bilingual sign-in gate instead of the full
-            // premium results screen / analytics / answer review.
+            // premium results screen / analytics / answer review — plus ONE
+            // free explanation as a taste of the full review.
             if (!user) {
+              const withExplanation = questions
+                .map((q: any, i: number) => ({ q, i }))
+                .filter(({ q }: any) => !!(q?.explanation || q?.explanation_text));
+              const pick =
+                withExplanation.find(({ q, i }: any) => !checkAnswer(q, answers[i])) ||
+                withExplanation[0];
+              const freeExplanation = pick
+                ? {
+                    question: pick.q.question || pick.q.title || "",
+                    correctAnswer: resolveAnswer(pick.q) || "",
+                    explanation: pick.q.explanation || pick.q.explanation_text || "",
+                  }
+                : null;
+
               return (
                 <GuestResultGate
                   open={true}
@@ -771,9 +786,12 @@ const TestSession = () => {
                   total={totalQ}
                   correctCount={correctCount}
                   returnPath={lastUsedContext.returnPath || "/mock-tests"}
+                  freeExplanation={freeExplanation}
+                  lockedExplanationCount={Math.max(0, withExplanation.length - 1)}
                 />
               );
             }
+
 
             return (
               <div className="space-y-4">
