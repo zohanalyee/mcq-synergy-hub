@@ -145,6 +145,12 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
     if (filters.subtopics?.length && filters.subtopics.length > 0) {
       query = query.in('subtopic', filters.subtopics);
     }
+    if (filters.subjectLike) {
+      query = query.ilike('subject', `%${filters.subjectLike}%`);
+    }
+    if (filters.topicLike) {
+      query = query.ilike('topic', `%${filters.topicLike}%`);
+    }
     if (filters.difficulties?.length) {
       query = query.in('difficulty', filters.difficulties);
     }
