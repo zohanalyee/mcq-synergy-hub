@@ -8,7 +8,6 @@ import {
   getContentByCategory 
 } from "@/services/contentService";
 import { toast } from "sonner";
-import { toast } from "sonner";
 
 export const useSupabaseContent = () => {
   const [content, setContent] = useState<ContentItem[]>([]);
