@@ -86,13 +86,21 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
           ? filters.examCategory.replace(/[(),]/g, '')
           : null,
         p_is_featured: filters.is_featured ?? null,
+        p_subject_like: filters.subjectLike || null,
+        // Fuzzy topic matching has no RPC parameter; it is applied client-side
+        // below on the already-filtered (answer-free) rows.
         p_limit: filters.limit ?? 60,
       });
       if (error) {
         console.error('Error fetching practice questions (guest):', error);
         return [];
       }
-      return (data || []).map((item: any) => ({
+      const topicNeedle = filters.topicLike?.toLowerCase();
+      const guestRows = topicNeedle
+        ? (data || []).filter((item: any) =>
+            String(item.topic || '').toLowerCase().includes(topicNeedle))
+        : (data || []);
+      return guestRows.map((item: any) => ({
         id: item.id,
         title: item.title,
         question: item.description || '',
