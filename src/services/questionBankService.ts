@@ -45,6 +45,11 @@ export interface QuestionFilters {
   // This stops cross-exam leakage (e.g. a Biology MCQ surfacing in an FIA
   // paper, or a Pakistan Affairs MCQ surfacing in MDCAT).
   examCategory?: string;
+  // Last-resort relaxation rungs. Partial (ILIKE) match on subject / topic so a
+  // label mismatch ("Computer Studies" vs "Computer Science") cannot starve the
+  // pool and silently shrink the test. Applied only after the exact filters fail.
+  subjectLike?: string;
+  topicLike?: string;
 }
 
 export interface CustomTestSession {
