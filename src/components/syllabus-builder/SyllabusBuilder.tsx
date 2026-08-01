@@ -483,7 +483,7 @@ export const SyllabusBuilder = () => {
         description = "AI credits exhausted. Contact admin.";
       }
       
-      toast({ title, description, variant: "destructive" });
+      toast.error(title, { description });
     } finally {
       setIsGenerating(false);
     }

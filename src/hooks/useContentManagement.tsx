@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { ContentItem, ContentStatus } from "@/interfaces/content";
 import { getAllContent, updateContentStatus, deleteContent } from "@/services/supabaseContentService";
 import { toast } from "sonner";
-import { toast } from "sonner";
 
 export const useContentManagement = () => {
   const [content, setContent] = useState<ContentItem[]>([]);
