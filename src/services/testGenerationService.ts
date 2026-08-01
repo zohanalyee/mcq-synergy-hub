@@ -118,6 +118,35 @@ const fetchSubjectQuota = async (
     questions = await getQuestionBank(subjectFilters);
   }
 
+  // Query 3 — relaxation ladder. The strict queries above keep the difficulty
+  // filter, so a thin Easy/Hard pool (or NULL-difficulty rows) would shrink the
+  // section. Widen: any difficulty on the same label, then a fuzzy label match.
+  if (questions.length < quota) {
+    const seen = new Set(questions.map(q => q.id));
+    const baseName = subjectName.replace(/\s*\(.*?\)\s*/g, '').trim();
+    const rungs: QuestionFilters[] = [
+      { topics: [subjectName] },
+      { subjects: [subjectName] },
+      { subjectLike: baseName || subjectName },
+    ];
+    for (const rung of rungs) {
+      if (questions.length >= quota) break;
+      const extra = await getQuestionBank({
+        ...rung,
+        limit: quota * 3,
+        excludeIds: options.excludeQuestionIds,
+        excludeFingerprints: options.excludeFingerprints,
+        examCategory: options.examCategory,
+      });
+      for (const q of extra) {
+        if (seen.has(q.id)) continue;
+        seen.add(q.id);
+        questions.push(q);
+      }
+    }
+  }
+
+
   // STRICT SLICE + FORCE subject/topic labels for UI badges
   return fisherYatesShuffle(questions).slice(0, quota).map(q => ({
     ...q,
