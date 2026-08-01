@@ -298,6 +298,39 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
       console.log(`📊 After subject fallback: ${availableQuestions.length} questions`);
     }
 
+    // --- Step 5: Fuzzy label rung (last resort, still DB-only) ---
+    // Exact `subject`/`topic` labels often differ between the LMS taxonomy and
+    // the bank ("Computer Studies" vs "Computer Science", "Physics (Class 11)"
+    // vs "Physics"). Without this rung a guest asking for 20 questions could
+    // silently receive 5. Difficulty is intentionally NOT applied here.
+    if (availableQuestions.length < options.questionCount) {
+      const needles: string[] = [];
+      const firstSubject = options.subjects?.[0];
+      const firstTopic = options.topics?.[0];
+      // Strip parenthetical qualifiers so "Physics (Class 11)" matches "Physics".
+      const baseSubject = firstSubject?.replace(/\s*\(.*?\)\s*/g, '').trim();
+      if (baseSubject) needles.push(baseSubject);
+      if (firstTopic) needles.push(firstTopic.replace(/\s*\(.*?\)\s*/g, '').trim());
+
+      for (const needle of needles) {
+        if (availableQuestions.length >= options.questionCount || !needle) break;
+        const fuzzy = await getQuestionBank({
+          subjectLike: needle,
+          limit: options.questionCount * 3,
+          excludeIds: options.excludeQuestionIds,
+          excludeFingerprints: options.excludeFingerprints,
+          examCategory: options.examCategory,
+        });
+        const existingIds = new Set(availableQuestions.map(q => q.id));
+        availableQuestions = [
+          ...availableQuestions,
+          ...fuzzy.filter(q => !existingIds.has(q.id)),
+        ];
+        console.log(`📊 After fuzzy subject "${needle}": ${availableQuestions.length} questions`);
+      }
+    }
+
+
     availableQuestions = fisherYatesShuffle(availableQuestions);
 
     if (availableQuestions.length === 0) {
