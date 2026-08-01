@@ -45,6 +45,11 @@ export interface QuestionFilters {
   // This stops cross-exam leakage (e.g. a Biology MCQ surfacing in an FIA
   // paper, or a Pakistan Affairs MCQ surfacing in MDCAT).
   examCategory?: string;
+  // Last-resort relaxation rungs. Partial (ILIKE) match on subject / topic so a
+  // label mismatch ("Computer Studies" vs "Computer Science") cannot starve the
+  // pool and silently shrink the test. Applied only after the exact filters fail.
+  subjectLike?: string;
+  topicLike?: string;
 }
 
 export interface CustomTestSession {
@@ -81,13 +86,21 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
           ? filters.examCategory.replace(/[(),]/g, '')
           : null,
         p_is_featured: filters.is_featured ?? null,
+        p_subject_like: filters.subjectLike || null,
+        // Fuzzy topic matching has no RPC parameter; it is applied client-side
+        // below on the already-filtered (answer-free) rows.
         p_limit: filters.limit ?? 60,
       });
       if (error) {
         console.error('Error fetching practice questions (guest):', error);
         return [];
       }
-      return (data || []).map((item: any) => ({
+      const topicNeedle = filters.topicLike?.toLowerCase();
+      const guestRows = topicNeedle
+        ? (data || []).filter((item: any) =>
+            String(item.topic || '').toLowerCase().includes(topicNeedle))
+        : (data || []);
+      return guestRows.map((item: any) => ({
         id: item.id,
         title: item.title,
         question: item.description || '',
@@ -131,6 +144,12 @@ export const getQuestionBank = async (filters: QuestionFilters = {}): Promise<Qu
     }
     if (filters.subtopics?.length && filters.subtopics.length > 0) {
       query = query.in('subtopic', filters.subtopics);
+    }
+    if (filters.subjectLike) {
+      query = query.ilike('subject', `%${filters.subjectLike}%`);
+    }
+    if (filters.topicLike) {
+      query = query.ilike('topic', `%${filters.topicLike}%`);
     }
     if (filters.difficulties?.length) {
       query = query.in('difficulty', filters.difficulties);

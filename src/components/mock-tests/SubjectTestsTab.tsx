@@ -140,6 +140,16 @@ export const SubjectTestsTab = ({ allMockTests, isLoaded, searchQuery }: Subject
         throw new Error('No questions available for this topic. Please try another.');
       }
 
+      // Be honest about a short test rather than silently shrinking it.
+      if (allQuestions.length < settings.questionCount) {
+        toast.info(`Starting with ${allQuestions.length} of ${settings.questionCount} questions`, {
+          description: user
+            ? "That's all we have for this selection right now."
+            : "This bank is still growing. Sign in to generate fresh questions instantly.",
+          duration: 5000,
+        });
+      }
+
       // GUEST PATH — store in canonical guest session and route.
       if (!user) {
         const session = buildGuestSession({

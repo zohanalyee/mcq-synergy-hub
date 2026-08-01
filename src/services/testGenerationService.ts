@@ -118,6 +118,35 @@ const fetchSubjectQuota = async (
     questions = await getQuestionBank(subjectFilters);
   }
 
+  // Query 3 — relaxation ladder. The strict queries above keep the difficulty
+  // filter, so a thin Easy/Hard pool (or NULL-difficulty rows) would shrink the
+  // section. Widen: any difficulty on the same label, then a fuzzy label match.
+  if (questions.length < quota) {
+    const seen = new Set(questions.map(q => q.id));
+    const baseName = subjectName.replace(/\s*\(.*?\)\s*/g, '').trim();
+    const rungs: QuestionFilters[] = [
+      { topics: [subjectName] },
+      { subjects: [subjectName] },
+      { subjectLike: baseName || subjectName },
+    ];
+    for (const rung of rungs) {
+      if (questions.length >= quota) break;
+      const extra = await getQuestionBank({
+        ...rung,
+        limit: quota * 3,
+        excludeIds: options.excludeQuestionIds,
+        excludeFingerprints: options.excludeFingerprints,
+        examCategory: options.examCategory,
+      });
+      for (const q of extra) {
+        if (seen.has(q.id)) continue;
+        seen.add(q.id);
+        questions.push(q);
+      }
+    }
+  }
+
+
   // STRICT SLICE + FORCE subject/topic labels for UI badges
   return fisherYatesShuffle(questions).slice(0, quota).map(q => ({
     ...q,
@@ -297,6 +326,39 @@ export const generateCustomTest = async (options: TestGenerationOptions): Promis
       availableQuestions = [...availableQuestions, ...subjectQuestions.filter(q => !existingIds.has(q.id))];
       console.log(`📊 After subject fallback: ${availableQuestions.length} questions`);
     }
+
+    // --- Step 5: Fuzzy label rung (last resort, still DB-only) ---
+    // Exact `subject`/`topic` labels often differ between the LMS taxonomy and
+    // the bank ("Computer Studies" vs "Computer Science", "Physics (Class 11)"
+    // vs "Physics"). Without this rung a guest asking for 20 questions could
+    // silently receive 5. Difficulty is intentionally NOT applied here.
+    if (availableQuestions.length < options.questionCount) {
+      const needles: string[] = [];
+      const firstSubject = options.subjects?.[0];
+      const firstTopic = options.topics?.[0];
+      // Strip parenthetical qualifiers so "Physics (Class 11)" matches "Physics".
+      const baseSubject = firstSubject?.replace(/\s*\(.*?\)\s*/g, '').trim();
+      if (baseSubject) needles.push(baseSubject);
+      if (firstTopic) needles.push(firstTopic.replace(/\s*\(.*?\)\s*/g, '').trim());
+
+      for (const needle of needles) {
+        if (availableQuestions.length >= options.questionCount || !needle) break;
+        const fuzzy = await getQuestionBank({
+          subjectLike: needle,
+          limit: options.questionCount * 3,
+          excludeIds: options.excludeQuestionIds,
+          excludeFingerprints: options.excludeFingerprints,
+          examCategory: options.examCategory,
+        });
+        const existingIds = new Set(availableQuestions.map(q => q.id));
+        availableQuestions = [
+          ...availableQuestions,
+          ...fuzzy.filter(q => !existingIds.has(q.id)),
+        ];
+        console.log(`📊 After fuzzy subject "${needle}": ${availableQuestions.length} questions`);
+      }
+    }
+
 
     availableQuestions = fisherYatesShuffle(availableQuestions);
 

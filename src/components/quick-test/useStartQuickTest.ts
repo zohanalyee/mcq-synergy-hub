@@ -99,6 +99,17 @@ export const useStartQuickTest = () => {
           return;
         }
 
+        // Be honest when the bank cannot fill the requested size, instead of
+        // silently handing over a shorter test.
+        if (questions.length < effectiveCount) {
+          toast.info(`Starting with ${questions.length} of ${effectiveCount} questions`, {
+            description: user
+              ? "That's all we have for this selection right now — more are added regularly."
+              : "This topic's bank is still growing. Sign in to generate fresh questions instantly.",
+            duration: 5000,
+          });
+        }
+
         // Guest flow → local session.
         if (!user) {
           const session = buildGuestSession({
@@ -114,6 +125,7 @@ export const useStartQuickTest = () => {
           navigate(`/test-session/${session.id}`, { state: { returnPath } });
           return;
         }
+
 
         // Authenticated → persist to custom_test_sessions.
         const { data: session, error: sessionError } = await supabase
