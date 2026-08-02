@@ -123,7 +123,8 @@ const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
 const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
 import EditorialPolicy from "./pages/legal/EditorialPolicy";
 const QuestionBank = lazy(() => import("./pages/QuestionBank"));
-const AskDocument = lazy(() => import("./pages/AskDocument"));
+// Ask-Document is temporarily disabled — the route renders a Coming Soon page.
+const AskDocument = lazy(() => import("./pages/AskDocumentComingSoon"));
 const TestSession = lazy(() => import("./pages/TestSession"));
 const Notifications = lazy(() => import("./pages/Notifications"));
 
