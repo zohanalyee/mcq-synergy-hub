@@ -35,6 +35,27 @@ const Leaderboard = () => {
           <p className="text-muted-foreground">See how you rank against other students</p>
         </motion.div>
 
+        {isGuest && (
+          <div className="mb-6 rounded-xl border border-primary/30 bg-primary/5 p-4 flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-start gap-3 flex-1">
+              <Trophy className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-foreground">
+                  Sign in to appear on the leaderboard
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Guest scores aren&apos;t ranked. Create a free account to save your results and compete with other students.
+                </p>
+              </div>
+            </div>
+            <Button asChild size="sm" className="shrink-0 touch-target">
+              <Link to="/signin">Sign in</Link>
+            </Button>
+          </div>
+        )}
+
+
+
         <Card className="mb-8">
           <CardHeader className="pb-0">
             <div className="flex justify-between items-center">
