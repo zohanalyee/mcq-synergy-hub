@@ -1,14 +1,21 @@
 
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import SEOHead from '@/components/SEOHead';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { Trophy } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import SubjectFilter from "@/components/leaderboard/SubjectFilter";
 import LeaderboardTabs from "@/components/leaderboard/LeaderboardTabs";
+import { useAuthSafe } from "@/contexts/AuthContext";
 
 const Leaderboard = () => {
   const [filter, setFilter] = useState("all");
+  const auth = useAuthSafe();
+  const isGuest = !auth?.user;
+
 
   return (
     <Header>
