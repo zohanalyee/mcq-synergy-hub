@@ -84,6 +84,20 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // ============= FEATURE KILL SWITCH =============
+  // Ask-Document / document Q&A is temporarily disabled to stop all AI spend
+  // on this route. Remove this block (or set RAG_SEARCH_ENABLED="true") to
+  // re-enable the feature.
+  if (Deno.env.get("RAG_SEARCH_ENABLED") !== "true") {
+    return new Response(
+      JSON.stringify({
+        error: "This feature is temporarily unavailable. Coming soon.",
+        disabled: true,
+      }),
+      { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
+  }
+
   const startTime = Date.now();
 
   try {
