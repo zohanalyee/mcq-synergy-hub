@@ -13,6 +13,7 @@ import { GlassSearchInput } from '@/components/ui/GlassSearchInput';
 import { GlobalSearchResult } from '@/services/globalSearchService';
 import { getQuestionsWithFallbackInfo } from '@/services/syllabusRAGFallback';
 import { buildGuestSession, saveGuestSession } from '@/lib/guestSession';
+import { saveIntentRaw } from '@/hooks/useAuthIntent';
 
 import { useSyllabusData } from './hooks/useSyllabusData';
 import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
@@ -203,7 +204,7 @@ export const SyllabusBuilder = () => {
   // Save template handler
   const handleSaveTemplate = async (templateName: string): Promise<boolean> => {
     if (!user) {
-      toast.error("Sign in Required", { description: "Please sign in to save templates." });
+      toast.error("Sign in to unlock", { description: "Sign in to save your syllabus templates." });
       return false;
     }
 
@@ -326,26 +327,25 @@ export const SyllabusBuilder = () => {
       return;
     }
 
+    // Preview-first gate: guests can browse/select freely, but running a custom
+    // syllabus is a personalization action → sign-in required. Selection is
+    // preserved via auth intent so nothing is lost.
+    if (!user) {
+      saveIntentRaw({
+        action: 'Run your custom syllabus',
+        path: '/custom-syllabus',
+        params: { filterState, selectedTopicIds, quizSettings },
+      });
+      toast('Sign in to unlock', { description: 'Your selection is saved — continue right after signing in.' });
+      navigate('/auth');
+      setIsGenerating(false);
+      return;
+    }
+
     setIsGenerating(true);
 
     try {
       const requestedCount = quizSettings.questionsCount;
-
-      if (!user) {
-        const bankResult = await getQuestionsWithFallbackInfo({
-          topicIds: selectedTopicIds,
-          requestedCount,
-          difficulty: undefined,
-        });
-        if (bankResult.questions.length === 0) {
-          toast("No bank questions available", { description: "Please select different topics." });
-          return;
-        }
-        const session = createGuestTestSession(bankResult.questions.slice(0, requestedCount));
-        toast("✅ Test Ready!", { description: `${bankResult.questions.length} questions loaded from Question Bank.` });
-        navigate(`/test-session/${session}`);
-        return;
-      }
 
       // Step 1: Check question bank
       console.log('=== HYBRID GENERATION START ===');
@@ -662,9 +662,10 @@ export const SyllabusBuilder = () => {
         updateQuizSettings={updateQuizSettings}
         onGenerateQuiz={handleGenerateQuiz}
         isGenerating={isGenerating}
+        isGuest={!user}
         onSaveTemplate={user ? handleSaveTemplate : undefined}
         isSavingTemplate={isSavingTemplate}
-        saveDisabledMessage={!user ? "Sign in to save your syllabus" : undefined}
+        saveDisabledMessage={!user ? "Sign in to unlock saving" : undefined}
         topicQuestionCounts={topicQuestionCounts}
         selectedTopicIds={selectedTopicIds}
         subjects={rawSubjects}
