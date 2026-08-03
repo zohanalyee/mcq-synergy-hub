@@ -20,7 +20,7 @@ import { useSyllabusTemplates } from './hooks/useSyllabusTemplates';
 import { GlassFilterSidebar } from './GlassFilterSidebar';
 import { SubjectGrid } from './SubjectGrid';
 import { FloatingActionBar } from './FloatingActionBar';
-import { SyllabusSubject, QuizSettings, SavedSyllabusTemplate } from './interfaces';
+import { SyllabusSubject, QuizSettings, SavedSyllabusTemplate, FilterState } from './interfaces';
 
 const MAX_SUBJECTS = 10;
 
