@@ -69,7 +69,7 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
         toast.info(`You currently have ${unlockedCap} questions unlocked. Score 80%+ to unlock more.`, { duration: 5000 });
       }
       // Guest demo cap — guests always get a fixed short demo attempt, clearly labelled.
-      const isGuestAttempt = !user;
+      const isGuestAttempt = !authCtxUser;
       const fullLength = test.questions || requestedCount;
       if (isGuestAttempt) {
         cappedCount = Math.min(GUEST_DEMO_QUESTION_COUNT, fullLength);
@@ -601,7 +601,7 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
         defaultQuestions={dialogTest?.questions || 20}
         defaultDuration={dialogTest?.duration || 90}
         defaultDifficulty="medium"
-        isGuest={!user}
+        isGuest={!authCtxUser}
         onStart={handleDialogStart}
         isGenerating={generatingTestId === dialogTest?.id}
       />
