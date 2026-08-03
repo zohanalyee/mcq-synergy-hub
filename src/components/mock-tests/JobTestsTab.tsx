@@ -28,6 +28,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { buildGuestSession, saveGuestSession } from "@/lib/guestSession";
 import { toJobTestSlug } from "@/lib/jobTestSlug";
 
+/** Guests always get a fixed short "free demo attempt", regardless of requested length. */
+const GUEST_DEMO_QUESTION_COUNT = 15;
+
 type JobTestsTabProps = {
   jobTests: JobTest[];
   /** When set, hands the parent a bound start fn + generating flag (used by detail-page top CTA). */
@@ -36,7 +39,8 @@ type JobTestsTabProps = {
 
 export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user: authCtxUser } = useAuth();
+
   const [expandedJobTest, setExpandedJobTest] = useState<string | null>(null);
   const [customizeJobTest, setCustomizeJobTest] = useState<string | null>(null);
   const [generatingTestId, setGeneratingTestId] = useState<string | null>(null);
