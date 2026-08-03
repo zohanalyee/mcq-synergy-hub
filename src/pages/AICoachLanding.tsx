@@ -152,7 +152,7 @@ const AICoachLanding = () => {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link to="/get-started">Start free</Link>
+              <Link to="/get-started">Try free</Link>
             </Button>
           </div>
         </section>

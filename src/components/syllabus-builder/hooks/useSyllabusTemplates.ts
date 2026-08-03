@@ -55,7 +55,7 @@ export const useSyllabusTemplates = (userId: string | undefined) => {
     quizSettings: QuizSettings
   ): Promise<boolean> => {
     if (!userId) {
-      toast.error("Sign in Required", { description: "Please sign in to save templates." });
+      toast.error("Sign in to unlock", { description: "Sign in to save your syllabus templates." });
       return false;
     }
 

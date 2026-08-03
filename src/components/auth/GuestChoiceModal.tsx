@@ -48,7 +48,7 @@ const GuestChoiceModal = ({
                 <UserX className="w-5 h-5 text-muted-foreground" />
               </div>
               <div>
-                <p className="font-medium text-foreground">Continue as Guest</p>
+                <p className="font-medium text-foreground">Try free</p>
                 <p className="text-xs text-muted-foreground">Quick access, no account needed</p>
               </div>
             </div>
@@ -69,7 +69,7 @@ const GuestChoiceModal = ({
             </div>
 
             <Button variant="outline" className="w-full" onClick={onGuestContinue}>
-              Continue as Guest
+              Try free
             </Button>
           </div>
 
@@ -84,7 +84,7 @@ const GuestChoiceModal = ({
                 <UserCheck className="w-5 h-5 text-primary" />
               </div>
               <div>
-                <p className="font-medium text-foreground">Sign In</p>
+                <p className="font-medium text-foreground">Sign in to unlock</p>
                 <p className="text-xs text-muted-foreground">Full features & progress tracking</p>
               </div>
             </div>
@@ -105,7 +105,7 @@ const GuestChoiceModal = ({
             </div>
 
             <Button className="w-full" onClick={onSignIn}>
-              Sign In to {action}
+              Sign in to unlock {action}
             </Button>
           </div>
         </div>
