@@ -39,9 +39,10 @@ export const CustomizeTestDialog = ({
   onStart,
   isGenerating = false,
 }: CustomizeTestDialogProps) => {
+  const GUEST_DEMO_COUNT = 15;
   const [settings, setSettings] = useState({
     difficulty: defaultDifficulty.toLowerCase() as "easy" | "medium" | "hard",
-    questionCount: isGuest ? Math.min(defaultQuestions, 20) : defaultQuestions,
+    questionCount: isGuest ? GUEST_DEMO_COUNT : defaultQuestions,
     duration: defaultDuration,
   });
 
@@ -49,15 +50,16 @@ export const CustomizeTestDialog = ({
     onStart(settings);
   };
 
-  // Minimal guest dialog — no difficulty, no time slider, no AI/credit text.
+  // Minimal guest dialog — fixed free demo length, no difficulty, no AI/credit text.
   if (isGuest) {
+    const demoCount = Math.min(GUEST_DEMO_COUNT, defaultQuestions || GUEST_DEMO_COUNT);
     return (
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Zap className="h-5 w-5 text-primary" />
-              Start Test / ٹیسٹ شروع کریں
+              Try free / مفت آزمائیں
             </DialogTitle>
             <DialogDescription>
               <span className="font-medium text-foreground">{testTitle}</span>
@@ -65,30 +67,21 @@ export const CustomizeTestDialog = ({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                Questions / سوالات
-              </Label>
-              <select
-                value={settings.questionCount}
-                onChange={(e) =>
-                  setSettings((prev) => ({
-                    ...prev,
-                    questionCount: Number(e.target.value),
-                  }))
-                }
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value={10}>10 Questions / 10 سوالات</option>
-                <option value={20}>20 Questions / 20 سوالات</option>
-              </select>
+            <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-1">
+              <p className="text-sm font-medium text-foreground flex items-center gap-2">
+                <HelpCircle className="h-4 w-4 text-primary" />
+                Free demo attempt ({demoCount} of {defaultQuestions || demoCount} questions)
+              </p>
+              <p className="text-xs text-muted-foreground">
+                مفت ڈیمو ٹیسٹ · Sign in to unlock the full paper, all explanations and saved progress.
+              </p>
             </div>
 
             <p className="text-xs text-muted-foreground text-center">
               📚 Practice with available questions · موجودہ سوالات سے مشق کریں
             </p>
           </div>
+
 
           <div className="flex gap-3">
             <Button variant="outline" onClick={onClose} className="flex-1">

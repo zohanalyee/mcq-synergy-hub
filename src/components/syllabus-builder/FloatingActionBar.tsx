@@ -9,7 +9,7 @@ import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Settings, Sparkles, Bookmark, Zap, SlidersHorizontal, X } from 'lucide-react';
+import { Settings, Sparkles, Bookmark, Zap, SlidersHorizontal, X, Lock } from 'lucide-react';
 import { QuizSettings, SyllabusSubject } from './interfaces';
 import { TopicsSelectorModal } from './TopicsSelectorModal';
 
@@ -22,6 +22,8 @@ interface FloatingActionBarProps {
   updateQuizSettings: (key: keyof QuizSettings, value: any) => void;
   onGenerateQuiz: () => void;
   isGenerating: boolean;
+  /** Guest (not signed in) — actions are gated behind sign-in, content stays open. */
+  isGuest?: boolean;
   onSaveTemplate?: (name: string) => Promise<boolean>;
   isSavingTemplate?: boolean;
   saveDisabledMessage?: string;
@@ -42,6 +44,7 @@ export const FloatingActionBar = ({
   updateQuizSettings,
   onGenerateQuiz,
   isGenerating,
+  isGuest = false,
   onSaveTemplate,
   isSavingTemplate = false,
   saveDisabledMessage,
@@ -209,7 +212,12 @@ export const FloatingActionBar = ({
                 disabled={isGenerating}
                 className="h-7 text-[11px] bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-lg border-0 px-2.5 shrink-0"
               >
-                {isGenerating ? '...' : (
+                {isGenerating ? '...' : isGuest ? (
+                  <>
+                    <Lock className="h-3 w-3 mr-1" />
+                    Sign in to run your syllabus
+                  </>
+                ) : (
                   <>
                     {willGenerate > 0 ? <Zap className="h-3 w-3 mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
                     Generate ({quizSettings.questionsCount})

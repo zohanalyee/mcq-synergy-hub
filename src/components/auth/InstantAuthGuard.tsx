@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { saveIntentRaw } from '@/hooks/useAuthIntent';
 import Header from '@/components/Header';
+import { getFeatureForPath } from '@/config/features';
 
 interface InstantAuthGuardProps {
   children: ReactNode;
@@ -37,9 +38,12 @@ const InstantAuthGuard = ({
   }
 
   if (!user) {
+    // Guest policy resolves from FEATURE_CONFIG (single source of truth).
+    const feature = getFeatureForPath(location.pathname);
     const pathParts = location.pathname.split('/');
     const featureName =
       actionName ||
+      feature?.name ||
       pathParts[pathParts.length - 1]?.replace(/-/g, ' ') ||
       'this feature';
 
