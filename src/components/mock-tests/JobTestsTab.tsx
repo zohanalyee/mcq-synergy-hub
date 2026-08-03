@@ -60,15 +60,27 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
       const persistedWeak = Array.isArray(progress?.weak_topics) ? progress!.weak_topics : [];
 
       const requestedCount = customSettings?.questionCount || Math.min(test.questions || 20, 20);
-      const cappedCount = Math.min(requestedCount, unlockedCap);
+      let cappedCount = Math.min(requestedCount, unlockedCap);
       if (cappedCount < requestedCount) {
         toast.info(`You currently have ${unlockedCap} questions unlocked. Score 80%+ to unlock more.`, { duration: 5000 });
+      }
+      // Guest demo cap — guests always get a fixed short demo attempt, clearly labelled.
+      const isGuestAttempt = !user;
+      const fullLength = test.questions || requestedCount;
+      if (isGuestAttempt) {
+        cappedCount = Math.min(GUEST_DEMO_QUESTION_COUNT, fullLength);
       }
       const settings = {
         difficulty: customSettings?.difficulty || "mixed",
         questionCount: cappedCount,
         duration: customSettings?.duration || test.duration,
       };
+      const guestToast = (n: number) =>
+        toast.success(`Free demo attempt · ${n} of ${fullLength} questions`, {
+          description: "Sign in to unlock the full paper and all explanations.",
+          duration: 4500,
+        });
+
 
       // ============================================================
       // ISOLATED PATH: try job_test_definitions first (DB-only).
