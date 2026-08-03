@@ -246,7 +246,7 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
             difficulty_levels: [settings.difficulty],
           });
           saveGuestSession(session);
-          toast.success(`Test ready with ${finalQuestions.length} questions!`, { duration: 3500 });
+          guestToast(finalQuestions.length);
           navigate(`/test-session/${session.id}`, { state: { returnPath: "/mock-tests" } });
           setGeneratingTestId(null);
           return;
@@ -323,7 +323,7 @@ export const JobTestsTab = ({ jobTests, onReady }: JobTestsTabProps) => {
             difficulty_levels: [settings.difficulty],
           });
           saveGuestSession(session);
-          toast.success(`Test ready with ${guestQuestions.length} questions!`, { duration: 3500 });
+          guestToast(guestQuestions.length);
           navigate(`/test-session/${session.id}`, { state: { returnPath: "/mock-tests" } });
           setGeneratingTestId(null);
           return;
