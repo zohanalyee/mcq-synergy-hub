@@ -67,6 +67,24 @@ export const SyllabusBuilder = () => {
     }
   }, [location.state]);
 
+  // Restore a guest selection carried through sign-in via auth intent.
+  useEffect(() => {
+    const carried = location.state as
+      | { filterState?: FilterState; selectedTopicIds?: string[]; quizSettings?: QuizSettings }
+      | null;
+    if (!carried?.selectedTopicIds?.length) return;
+    if (carried.filterState && setFilterState) setFilterState(carried.filterState);
+    if (carried.quizSettings) setQuizSettings(carried.quizSettings);
+    const ids = new Set(carried.selectedTopicIds);
+    setRawSubjects(prev => prev.map(s => {
+      const topics = s.topics.map(t => (ids.has(t.id) ? { ...t, isSelected: true } : t));
+      return { ...s, topics, isSelected: topics.some(t => t.isSelected) };
+    }));
+    window.history.replaceState({}, document.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state, loading]);
+
+
   // Prefill search from URL params (?subject=, ?topic=, ?q=) — used by SEO landing-page deep-links
   useEffect(() => {
     const params = new URLSearchParams(location.search);
