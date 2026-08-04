@@ -208,6 +208,41 @@ for (const route of requiredDynamicRoutes) {
   }
 }
 
+// ---- static.xml ⇄ prerender parity guard --------------------------------
+// Every URL advertised in sitemaps/static.xml must ship its OWN prerendered
+// head. Without this, a hub route missing from PRERENDER_ROUTES silently serves
+// the homepage shell — including canonical → "/" — telling Google to drop it.
+let staticFailed = 0;
+const staticSitemap = ['dist/sitemaps/static.xml', 'public/sitemaps/static.xml']
+  .map((p) => join(process.cwd(), p))
+  .find((p) => existsSync(p));
+if (!staticSitemap) {
+  console.warn('❌ [static-parity] sitemaps/static.xml not found — cannot verify hub prerendering');
+  staticFailed++;
+} else {
+  const xml = readFileSync(staticSitemap, 'utf8');
+  const routes = [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)]
+    .map((m) => m[1].replace(BASE_URL, ''))
+    .map((r) => (r === '' ? '/' : r));
+  const bad = [];
+  for (const route of routes) {
+    const file = route === '/' ? join(DIST, 'index.html') : join(DIST, route.replace(/^\//, ''), 'index.html');
+    if (!existsSync(file)) { bad.push(`${route} (not prerendered)`); continue; }
+    if (route === '/') continue;
+    const html = readFileSync(file, 'utf8');
+    const canon = canonicalOf(html);
+    if (canon !== `${BASE_URL}${route}`) bad.push(`${route} (canonical "${canon}")`);
+    else if (titleOf(html) === homeTitle) bad.push(`${route} (homepage title)`);
+  }
+  if (bad.length) {
+    console.warn(`❌ [static-parity] ${bad.length}/${routes.length} sitemap hubs not self-canonical:\n   - ${bad.join('\n   - ')}`);
+    staticFailed++;
+  } else {
+    console.log(`✅ [static-parity] all ${routes.length} static.xml hubs prerendered + self-canonical`);
+  }
+}
+
+
 // ---- Topic CONTENT assertion (D2c/D3.5) ---------------------------------
 // At least one indexable /boards/.../topic page must ship, in RAW HTML, real
 // MCQ content + Quiz + FAQPage JSON-LD (not just a corrected head). This guards
@@ -234,6 +269,6 @@ if (topicFiles.length > 0) {
   }
 }
 
-console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK; topic-content ${contentFailed ? 'FAILED' : 'OK'}`);
-process.exit(failed || typeFailed || requiredFailed || contentFailed ? 1 : 0);
+console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK; static-parity ${staticFailed ? "FAILED" : "OK"}; topic-content ${contentFailed ? 'FAILED' : 'OK'}`);
+process.exit(failed || typeFailed || requiredFailed || staticFailed || contentFailed ? 1 : 0);
 

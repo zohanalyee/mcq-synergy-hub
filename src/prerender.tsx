@@ -12,6 +12,16 @@ import './index.css';
 function parseHelmetHtml(html: string): Array<{ type: string; props: Record<string, string>; children?: string }> {
   const out: Array<{ type: string; props: Record<string, string>; children?: string }> = [];
   if (!html) return out;
+  // Helmet's toString() already HTML-escapes attribute values, and
+  // vite-prerender-plugin escapes them AGAIN when it serializes the props.
+  // Decode once here so "Matric & FSc" does not become "Matric &amp;amp; FSc".
+  const decodeEntities = (v: string) =>
+    v
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&');
   const parseAttrs = (s: string) => {
     const props: Record<string, string> = {};
     const attrRe = /([a-zA-Z_:][-a-zA-Z0-9_:.]*)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s/>]+)))?/g;
@@ -26,7 +36,7 @@ function parseHelmetHtml(html: string): Array<{ type: string; props: Record<stri
         props['data-rh'] = 'true';
         continue;
       }
-      props[name] = a[2] ?? a[3] ?? a[4] ?? '';
+      props[name] = decodeEntities(a[2] ?? a[3] ?? a[4] ?? '');
     }
     return props;
   };

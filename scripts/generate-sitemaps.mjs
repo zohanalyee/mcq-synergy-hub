@@ -146,7 +146,8 @@ const PROG_SEO_SLUGS = [
   "chemistry-mcqs-class-12","physics-mcqs-class-12",
 ];
 
-const EXAM_SLUGS = ["mdcat","ecat","css","ppsc","fpsc","nts"];
+// Keep in sync with the "/exams/*" entries of PRERENDER_ROUTES in vite.config.ts.
+const EXAM_SLUGS = ["mdcat","ecat","css","ppsc","fpsc","nts","pms"];
 
 function writeStatic() {
   write("static.xml", urlSet(STATIC_PAGES.map(p => ({
@@ -159,9 +160,12 @@ function writeTools() {
   }))));
 }
 function writeExams() {
-  write("exams.xml", urlSet(EXAM_SLUGS.map(s => ({
-    loc: `${BASE_URL}/exams/${s}`, lastmod: today, freq: "monthly", priority: "0.8",
-  }))));
+  write("exams.xml", urlSet([
+    { loc: `${BASE_URL}/exams`, lastmod: today, freq: "weekly", priority: "0.8" },
+    ...EXAM_SLUGS.map(s => ({
+      loc: `${BASE_URL}/exams/${s}`, lastmod: today, freq: "monthly", priority: "0.8",
+    })),
+  ]));
 }
 function writeProgSeo() {
   const entries = [
