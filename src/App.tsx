@@ -66,15 +66,15 @@ function lazyWithReload<T extends { default: ComponentType<any> }>(
 }
 
 // Lazy: large feature pages (code-split for mobile performance)
-const Subjects = lazyWithReload(() => import("./pages/Subjects"));
-const MockTests = lazyWithReload(() => import("./pages/MockTests"));
+import Subjects from "./pages/Subjects"; // eager: prerendered SEO hub
+import MockTests from "./pages/MockTests"; // eager: prerendered SEO hub
 const MockTestDetail = lazyWithReload(() => import("./pages/MockTestDetail"));
 const Analytics = lazyWithReload(() => import("./pages/Analytics"));
-const Leaderboard = lazyWithReload(() => import("./pages/Leaderboard"));
+import Leaderboard from "./pages/Leaderboard"; // eager: prerendered SEO hub
 import PastPapers from "./pages/PastPapers";
 import Jobs from "./pages/Jobs";
 import Scholarships from "./pages/Scholarships";
-const CustomSyllabus = lazyWithReload(() => import("./pages/CustomSyllabus"));
+import CustomSyllabus from "./pages/CustomSyllabus"; // eager: prerendered SEO hub
 const SubjectContent = lazyWithReload(() => import("./pages/SubjectContent"));
 const CustomQuizzes = lazyWithReload(() => import("./pages/CustomQuizzes"));
 const AdminPanel = lazyWithReload(() => import("./pages/AdminPanel"));
@@ -119,10 +119,10 @@ import PAFTest from "./pages/seo/PAFTest";
 import ASFTest from "./pages/seo/ASFTest";
 import ForcesJobsTests from "./pages/seo/ForcesJobsTests";
 import Contact from "./pages/Contact";
-const PrivacyPolicy = lazy(() => import("./pages/legal/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/legal/TermsOfService"));
+import PrivacyPolicy from "./pages/legal/PrivacyPolicy"; // eager: prerendered SEO page
+import TermsOfService from "./pages/legal/TermsOfService"; // eager: prerendered SEO page
 import EditorialPolicy from "./pages/legal/EditorialPolicy";
-const QuestionBank = lazy(() => import("./pages/QuestionBank"));
+import QuestionBank from "./pages/QuestionBank"; // eager: prerendered SEO hub
 // Ask-Document is temporarily disabled — the route renders a Coming Soon page.
 const AskDocument = lazy(() => import("./pages/AskDocumentComingSoon"));
 const TestSession = lazy(() => import("./pages/TestSession"));
@@ -210,7 +210,7 @@ const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
 import FAQ from "./pages/FAQ";
-const StudyGuides = lazy(() => import("./pages/StudyGuides"));
+import StudyGuides from "./pages/StudyGuides"; // eager: prerendered SEO hub
 import Boards from "./pages/Boards";
 import BoardLandingPage from "./pages/BoardLandingPage";
 import BoardClassPage from "./pages/BoardClassPage";

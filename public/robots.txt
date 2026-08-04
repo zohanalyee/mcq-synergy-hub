@@ -22,6 +22,7 @@ Disallow: /*?*topic=
 Disallow: /*?*difficulty=
 Disallow: /*?*q=
 Disallow: /subjects?*
-Disallow: /*?*lang=
+# NOTE: ?lang= is intentionally CRAWLABLE. Those URLs already rank, and
+# GlobalCanonical strips the query so there is no duplicate-content risk.
 
 Sitemap: https://mcqsai.com/sitemap.xml

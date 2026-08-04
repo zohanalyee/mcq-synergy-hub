@@ -1,9 +1,14 @@
+import SEOHead from '@/components/SEOHead';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
 const PrivacyPolicy = () => {
   return (
     <Header>
+      <SEOHead
+        title="Privacy Policy"
+        description="How MCQsAI collects, uses, and protects your data — account details, test performance, and analytics. Read our privacy commitments for Pakistani students."
+      />
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-2">Privacy Policy</h1>
         <p className="text-sm text-muted-foreground mb-8">Last Updated: March 12, 2026</p>

@@ -109,7 +109,10 @@ function humanize(slug) {
 // ---------- head patching ----------
 function esc(s) {
   return String(s ?? "")
-    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    // Do NOT re-escape an existing entity: prerendered heads are already
+    // escaped, so a blind `&` → `&amp;` produced "&amp;amp;" in descriptions.
+    .replace(/&(?!(?:#\d+|#x[0-9a-fA-F]+|[a-zA-Z][a-zA-Z0-9]{1,10});)/g, "&amp;")
+    .replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 function clamp(s, max = 160) {
   const v = String(s || "").replace(/\s+/g, " ").trim();

@@ -14,6 +14,17 @@ import { EXTRA_PRERENDER_ROUTES } from "./scripts/prerender-routes.mjs";
 const PRERENDER_ROUTES = [
   "/",
   "/quizzes",
+  // Hub pages listed in sitemaps/static.xml — MUST be prerendered, otherwise
+  // crawlers receive the homepage shell head (incl. canonical → "/") and
+  // Google consolidates these URLs into the homepage.
+  "/subjects",
+  "/mock-tests",
+  "/question-bank",
+  "/custom-syllabus",
+  "/study-guides",
+  "/leaderboard",
+  "/privacy-policy",
+  "/terms-of-service",
   "/exams",
   "/exams/mdcat",
   "/exams/ecat",
