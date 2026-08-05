@@ -4035,6 +4035,7 @@ export type Database = {
           match_count?: number
           match_threshold?: number
           query_embedding: string
+          requesting_user_id?: string
         }
         Returns: {
           content: string
