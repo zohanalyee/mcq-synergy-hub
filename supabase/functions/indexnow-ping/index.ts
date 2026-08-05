@@ -17,6 +17,9 @@ Deno.serve(async (req) => {
     return new Response('ok', { headers: corsHeaders })
   }
 
+  const unauthorized = await requireAdminOrService(req)
+  if (unauthorized) return unauthorized
+
   try {
     const body = await req.json().catch(() => ({}))
     const rawUrls: unknown = body?.urls ?? (body?.url ? [body.url] : [])
