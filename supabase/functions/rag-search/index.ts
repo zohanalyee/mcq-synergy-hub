@@ -192,6 +192,8 @@ serve(async (req) => {
             match_threshold: MATCH_THRESHOLD,
             match_count: topK,
             filter_document_id: docId,
+            // Scope to the verified caller's own documents (admins: all)
+            requesting_user_id: userId,
           }
         );
         if (data && !error) {
@@ -202,7 +204,7 @@ serve(async (req) => {
       sections.sort((a, b) => b.similarity - a.similarity);
       sections = sections.slice(0, topK);
     } else {
-      // Search across all documents
+      // Search across the caller's own documents only
       const { data, error } = await supabase.rpc(
         "match_document_sections",
         {
@@ -210,6 +212,7 @@ serve(async (req) => {
           match_threshold: MATCH_THRESHOLD,
           match_count: topK,
           filter_document_id: null,
+          requesting_user_id: userId,
         }
       );
       if (error) {
