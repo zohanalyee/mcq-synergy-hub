@@ -1,4 +1,5 @@
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { requireAdminOrService } from '../_shared/adminGuard.ts'
 
 // IndexNow instant push-indexing (Bing, Yandex, Seznam, Naver).
 // POST { urls: string[] } — each must be an absolute https://mcqsai.com/... URL.
