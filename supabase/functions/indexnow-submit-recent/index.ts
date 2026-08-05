@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { requireAdminOrService } from '../_shared/adminGuard.ts'
 
 // indexnow-submit-recent
 // Collects URLs for content published/updated in the last N minutes across the
