@@ -1,5 +1,6 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+import { requireAdminOrService } from '../_shared/adminGuard.ts'
 
 // indexnow-submit-recent
 // Collects URLs for content published/updated in the last N minutes across the
@@ -53,6 +54,11 @@ function jobTestSlug(test: any, all: any[]) {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders })
+
+  const unauthorized = await requireAdminOrService(req)
+  if (unauthorized) return unauthorized
+
+
 
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,

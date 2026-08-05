@@ -109,6 +109,8 @@ serve(async (req) => {
         match_threshold: MATCH_THRESHOLD,
         match_count: Math.min(matchCount, 10), // Cap at 10 results
         filter_document_id: documentId || null,
+        // Scope results to the verified caller's own documents (admins: all)
+        requesting_user_id: userId,
       }
     );
 
