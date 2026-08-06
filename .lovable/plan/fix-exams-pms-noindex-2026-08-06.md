@@ -34,3 +34,7 @@ https://mcqsai.com/exams/pms
 ```
 
 I'll also confirm the built static HTML for that route contains `index,follow` (not `noindex`) as part of the existing prerender verification, so the same class of failure is caught for any other slug advertised in the sitemap but absent from `examsData`.
+
+&nbsp;
+
+Approved — PMS-content add kar dein jaisa propose kiya, phir publish karein.
