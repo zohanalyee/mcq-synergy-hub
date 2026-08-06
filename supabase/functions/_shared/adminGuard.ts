@@ -24,12 +24,28 @@ export async function requireAdminOrService(req: Request): Promise<Response | nu
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
+  // Scheduled pg_cron call: presents the shared cron token stored in system_settings
+  const cronToken = req.headers.get('x-cron-token')
+  if (cronToken) {
+    const admin = createClient(supabaseUrl, serviceKey)
+    const { data } = await admin
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'indexnow_cron_token')
+      .maybeSingle()
+    const expected = typeof data?.value === 'string' ? data.value : null
+    if (expected && cronToken === expected) return null
+    return deny(401, 'Unauthorized: invalid cron token')
+  }
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return deny(401, 'Unauthorized: missing authorization token')
   }
 
-  // Scheduled / server-to-server call
+  // Server-to-server call with the service-role key
   if (authHeader.includes(serviceKey)) return null
+
+
 
   const userClient = createClient(supabaseUrl, anonKey, {
     global: { headers: { Authorization: authHeader } },
