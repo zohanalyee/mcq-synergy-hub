@@ -179,6 +179,34 @@ export const examsData: Record<string, ExamData> = {
     totalMarks: '100 (typically)',
     officialUrl: 'https://www.nts.org.pk',
   },
+  pms: {
+    slug: 'pms',
+    name: 'PMS',
+    fullName: 'Provincial Management Service Examination',
+    metaTitle: 'PMS Preparation 2025 – MCQs & Past Papers',
+    metaDescription: 'Prepare for the PMS exam with free MCQs, past papers, and AI practice tests. General Knowledge, Pakistan Affairs, Current Affairs, Islamiat & English preparation.',
+    keywords: 'PMS preparation, PMS MCQs, PMS past papers, Provincial Management Service, PPSC PMS, PCS exam, PMS general knowledge, PMS Pakistan affairs',
+    description: 'The Provincial Management Service (PMS) examination is conducted by the Punjab Public Service Commission for recruitment to BS-17 provincial management posts in Punjab. Other provinces run equivalent provincial services examinations through SPSC (Sindh), KPPSC (Khyber Pakhtunkhwa) and BPSC (Balochistan), with a very similar compulsory-paper structure.',
+    eligibility: [
+      "Bachelor's degree (second division or above) from a recognized university",
+      'Age 21-30 years (relaxable as per provincial rules)',
+      'Domicile of the relevant province',
+      'Pakistani citizen with valid CNIC',
+    ],
+    subjects: ['English Essay', 'English (Precis & Composition)', 'General Knowledge', 'Islamic Studies', 'Pakistan Affairs', 'Current Affairs', 'Optional Subjects'],
+    tips: [
+      'Read Dawn or The News daily – current affairs carries heavy weight',
+      'Write one timed essay every week and get it reviewed',
+      'Focus on Punjab-specific geography, administration and local government',
+      'Pick optional subjects that overlap with your degree to save study time',
+      'Take timed mock tests on MCQsAI to build exam-day speed and accuracy',
+    ],
+    examBody: 'Punjab Public Service Commission (PPSC)',
+    frequency: 'Once a year (announcement-based)',
+    duration: '3 hours per paper',
+    totalMarks: '1200 (written) + 300 (interview/psychological)',
+    officialUrl: 'https://www.ppsc.gop.pk',
+  },
 };
 
 export const getAllExamSlugs = () => Object.keys(examsData);
