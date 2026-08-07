@@ -119,8 +119,8 @@ const AICoachLanding = () => {
         ]}
       />
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(softwareJsonLd)}</script>
-        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+        <script type="application/ld+json">{safeJsonLd(softwareJsonLd)}</script>
+        <script type="application/ld+json">{safeJsonLd(faqJsonLd)}</script>
       </Helmet>
 
       <div className="max-w-5xl mx-auto px-4 py-8">

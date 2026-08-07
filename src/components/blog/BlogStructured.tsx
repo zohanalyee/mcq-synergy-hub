@@ -165,7 +165,7 @@ export const BlogFAQ = ({ faqs }: { faqs: FAQItem[] | null | undefined }) => {
   return (
     <section className="my-8">
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(schema)}</script>
+        <script type="application/ld+json">{safeJsonLd(schema)}</script>
       </Helmet>
       <h2 className="text-xl font-bold mb-3">Frequently Asked Questions</h2>
       <Accordion type="single" collapsible className="w-full">
@@ -287,7 +287,7 @@ export const JobPostingSchema = ({ data, url, title, description, datePosted }: 
   }
   return (
     <Helmet>
-      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+      <script type="application/ld+json">{safeJsonLd(schema)}</script>
     </Helmet>
   );
 };
@@ -324,7 +324,7 @@ export const HowToSchema = ({
   if (totalTimeMinutes) schema.totalTime = `PT${totalTimeMinutes}M`;
   return (
     <Helmet>
-      <script type="application/ld+json">{JSON.stringify(schema)}</script>
+      <script type="application/ld+json">{safeJsonLd(schema)}</script>
     </Helmet>
   );
 };

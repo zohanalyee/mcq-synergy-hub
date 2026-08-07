@@ -203,10 +203,10 @@ const StructuredData = () => {
 
   return (
     <Helmet>
-      <script type="application/ld+json">{JSON.stringify(organizationSchema)}</script>
-      <script type="application/ld+json">{JSON.stringify(websiteSchema)}</script>
+      <script type="application/ld+json">{safeJsonLd(organizationSchema)}</script>
+      <script type="application/ld+json">{safeJsonLd(websiteSchema)}</script>
       {includeGlobalFaq && (
-        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+        <script type="application/ld+json">{safeJsonLd(faqSchema)}</script>
       )}
     </Helmet>
   );

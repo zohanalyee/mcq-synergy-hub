@@ -67,7 +67,7 @@ const FAQ = () => {
         keywords="MCQsAI FAQ, exam preparation questions, MDCAT help, study tools help"
       />
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+        <script type="application/ld+json">{safeJsonLd(faqSchema)}</script>
       </Helmet>
       <Header>
         <div className="max-w-3xl mx-auto px-4 py-8">

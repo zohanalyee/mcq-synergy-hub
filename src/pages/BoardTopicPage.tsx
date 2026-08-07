@@ -231,8 +231,8 @@ const BoardTopicPage = () => {
   return (
     <Header>
       <SEOHead title={seoTitle} description={seoDesc} keywords={`${names.topic} MCQs, ${names.subject} class ${classNumber}, ${names.board} preparation, Pakistan exam MCQs`} url={canonicalUrl} noindex={isThin} />
-      {quizSchema && <Helmet><script type="application/ld+json">{JSON.stringify(quizSchema)}</script></Helmet>}
-      {faqSchema && <Helmet><script type="application/ld+json">{JSON.stringify(faqSchema)}</script></Helmet>}
+      {quizSchema && <Helmet><script type="application/ld+json">{safeJsonLd(quizSchema)}</script></Helmet>}
+      {faqSchema && <Helmet><script type="application/ld+json">{safeJsonLd(faqSchema)}</script></Helmet>}
 
       <BreadcrumbSchema items={[
         { name: 'Home', path: '/' },
