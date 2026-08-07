@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -47,7 +48,7 @@ const ExamLandingPage = () => {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }}
       />
       <BreadcrumbSchema
         items={[

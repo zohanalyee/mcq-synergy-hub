@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 interface Crumb {
   name: string;
   path: string;
@@ -22,7 +23,7 @@ const BreadcrumbSchema = ({ items, baseUrl = 'https://mcqsai.com' }: { items: Cr
   return (
     <script
       type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(json) }}
+      dangerouslySetInnerHTML={{ __html: safeJsonLd(json) }}
     />
   );
 };

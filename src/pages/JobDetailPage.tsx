@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
@@ -95,7 +96,7 @@ const JobDetailPage = () => {
         keywords={`${title}, ${title} 2026, ${title} apply online, ${title} test preparation, Pakistan government jobs, ${org || ''}`}
         url={`https://mcqsai.com/jobs/${jobSlug}`}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <BreadcrumbSchema items={[
         { name: 'Home', path: '/' },
         { name: 'Jobs', path: '/jobs' },

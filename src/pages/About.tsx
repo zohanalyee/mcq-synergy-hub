@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import Header from '@/components/Header';
 import SEOHead from '@/components/SEOHead';
 import Footer from '@/components/Footer';
@@ -56,8 +57,8 @@ const About = () => {
         description="MCQsAI is Pakistan's AI-powered MCQ practice platform with 6000+ questions, 50+ tools, and comprehensive exam preparation for MDCAT, ECAT, CSS, and more."
         keywords="about MCQsAI, AI exam platform, Pakistan education, EdTech"
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(aboutJsonLd) }} />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(personJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(aboutJsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(personJsonLd) }} />
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-6">About MCQSAI</h1>
 

@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import { useParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import Header from '@/components/Header';
@@ -98,7 +99,7 @@ const ScholarshipDetailPage = () => {
         keywords={`${title}, ${title} 2026, ${title} apply online, Pakistan scholarships 2026, fully funded scholarships, ${org || ''}`}
         url={`https://mcqsai.com/scholarships/${scholarshipSlug}`}
       />
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       <BreadcrumbSchema items={[
         { name: 'Home', path: '/' },
         { name: 'Scholarships', path: '/scholarships' },

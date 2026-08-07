@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -218,9 +219,9 @@ const OpportunityDetail = () => {
         noindex={isThinOpp}
       />
       {jsonLd && (
-        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
       )}
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(breadcrumbLd) }} />
       <Header>
         <div className="max-w-4xl mx-auto px-4 pt-4 pb-8">
           <nav className="text-sm text-muted-foreground mb-3" aria-label="Breadcrumb">
