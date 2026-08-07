@@ -52,9 +52,22 @@ Deno.serve(async (req) => {
 
     const authHeader = req.headers.get("Authorization");
     const isScheduled = !!authHeader && authHeader.includes(serviceKey);
-    const isAdminTrigger = req.headers.get("x-admin-trigger") === "true";
 
     let authorized = isScheduled;
+
+    const admin0 = createClient(supabaseUrl, serviceKey);
+
+    // Scheduled pg_cron call: presents the shared cron token from system_settings.
+    const cronToken = req.headers.get("x-cron-token");
+    if (!authorized && cronToken) {
+      const { data: setting } = await admin0
+        .from("system_settings")
+        .select("value")
+        .eq("key", "indexnow_cron_token")
+        .maybeSingle();
+      const expected = typeof setting?.value === "string" ? setting.value : null;
+      authorized = !!expected && cronToken === expected;
+    }
 
     // Browser admins invoke with their JWT — verify the admin role.
     if (!authorized && authHeader?.startsWith("Bearer ")) {
@@ -74,13 +87,7 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Internal cron kick: it presents the anon apikey + x-admin-trigger and no
-    // user JWT. This only DRAINS the queue (rows are admin-gated by RLS and
-    // generation is deficit-only), so it is safe to accept as an internal
-    // trigger even without an admin user session.
-    if (!authorized && isAdminTrigger) {
-      authorized = true;
-    }
+
 
 
     if (!authorized) {
