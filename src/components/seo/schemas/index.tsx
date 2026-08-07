@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 /**
  * Phase 2D — EEAT Schema Emitters
  * Reusable JSON-LD components. All entity references use the apex domain
@@ -12,7 +13,7 @@ const PUBLISHER_LOGO = `${ORIGIN}/logo.png`;
 
 const Json = ({ data }: { data: Record<string, unknown> }) => (
   <Helmet>
-    <script type="application/ld+json">{JSON.stringify(data)}</script>
+    <script type="application/ld+json">{safeJsonLd(data)}</script>
   </Helmet>
 );
 
@@ -145,7 +146,7 @@ interface ReviewListSchemaProps {
 export const ReviewListSchema = ({ itemName, reviews }: ReviewListSchemaProps) => (
   <Helmet>
     {reviews.slice(0, 10).map((r, i) => (
-      <script key={i} type="application/ld+json">{JSON.stringify({
+      <script key={i} type="application/ld+json">{safeJsonLd({
         '@context': 'https://schema.org',
         '@type': 'Review',
         itemReviewed: { '@type': 'Product', name: itemName, brand: { '@id': ORG_ID } },

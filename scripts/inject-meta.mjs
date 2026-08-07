@@ -346,10 +346,21 @@ function stripFaqJsonLd(html) {
   );
 }
 
+// JSON-LD is placed inside a <script> tag: escape `<`, `>`, `&` and the JS line
+// terminators so scraped/AI content can never break out with `</script>`.
+function safeJsonLd(data) {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026")
+    .replace(/\u2028/g, "\\u2028")
+    .replace(/\u2029/g, "\\u2029");
+}
+
 function injectContentIntoHtml(html, contentHtml, schemas) {
   const scriptTags = (schemas || [])
     .filter(Boolean)
-    .map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</script>`)
+    .map((s) => `<script type="application/ld+json">${safeJsonLd(s)}</script>`)
     .join("\n    ");
   let out = stripFaqJsonLd(html);
   if (scriptTags) out = out.replace("</head>", `    ${scriptTags}\n  </head>`);

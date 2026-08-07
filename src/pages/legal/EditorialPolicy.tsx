@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
@@ -65,7 +66,7 @@ const EditorialPolicy = () => {
         { name: 'Editorial Policy', path: '/editorial-policy' },
       ]} />
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
+        <script type="application/ld+json">{safeJsonLd(jsonLd)}</script>
       </Helmet>
 
       <article className="container mx-auto max-w-3xl px-4 py-10">

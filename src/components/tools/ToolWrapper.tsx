@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
@@ -91,10 +92,10 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         image={ogImage}
       />
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(webAppLd)}</script>
-        <script type="application/ld+json">{JSON.stringify(breadcrumbLd)}</script>
-        {faqLd && <script type="application/ld+json">{JSON.stringify(faqLd)}</script>}
-        {howToLd && <script type="application/ld+json">{JSON.stringify(howToLd)}</script>}
+        <script type="application/ld+json">{safeJsonLd(webAppLd)}</script>
+        <script type="application/ld+json">{safeJsonLd(breadcrumbLd)}</script>
+        {faqLd && <script type="application/ld+json">{safeJsonLd(faqLd)}</script>}
+        {howToLd && <script type="application/ld+json">{safeJsonLd(howToLd)}</script>}
       </Helmet>
 
       {/* Back Button */}

@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import Header from '@/components/Header';
@@ -58,8 +59,8 @@ const ProgrammaticLandingPage = () => {
         { name: entry.title.split('—')[0].trim(), path: `/p/${entry.slug}` },
       ]} />
       <Helmet>
-        <script type="application/ld+json">{JSON.stringify(courseJsonLd)}</script>
-        <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
+        <script type="application/ld+json">{safeJsonLd(courseJsonLd)}</script>
+        <script type="application/ld+json">{safeJsonLd(faqJsonLd)}</script>
       </Helmet>
 
       <article className="container mx-auto max-w-4xl px-4 py-8">
