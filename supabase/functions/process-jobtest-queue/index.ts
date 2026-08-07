@@ -8,7 +8,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-admin-trigger",
+    "authorization, x-client-info, apikey, content-type, x-cron-token",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
@@ -34,7 +34,6 @@ async function kickNextIfPending(admin: any, supabaseUrl: string, serviceKey: st
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${serviceKey}`,
-      "x-admin-trigger": "true",
     },
     body: JSON.stringify({ chained: true }),
   }).catch((e) => console.error("[jobtest-queue] next-kick failed:", e?.message || e));
