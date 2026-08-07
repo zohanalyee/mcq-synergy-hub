@@ -349,7 +349,7 @@ function stripFaqJsonLd(html) {
 function injectContentIntoHtml(html, contentHtml, schemas) {
   const scriptTags = (schemas || [])
     .filter(Boolean)
-    .map((s) => `<script type="application/ld+json">${JSON.stringify(s)}</script>`)
+    .map((s) => `<script type="application/ld+json">${safeJsonLd(s)}</script>`)
     .join("\n    ");
   let out = stripFaqJsonLd(html);
   if (scriptTags) out = out.replace("</head>", `    ${scriptTags}\n  </head>`);
