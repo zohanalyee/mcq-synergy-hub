@@ -933,9 +933,10 @@ export const enqueueGeneration = async (
   }
 
   // Best-effort kick so it starts without waiting for the next cron tick.
-  supabase.functions.invoke("process-jobtest-queue", {
-    headers: { "x-admin-trigger": "true" },
-  }).catch(() => {});
+  // Auth: the admin's session JWT travels with the invoke; the function
+  // verifies the `admin` role server-side.
+  supabase.functions.invoke("process-jobtest-queue").catch(() => {});
+
 
   return { success: true, queued: rows.length };
 };
