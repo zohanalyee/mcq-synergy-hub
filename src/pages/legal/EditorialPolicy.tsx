@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';

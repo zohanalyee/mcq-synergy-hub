@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 /**
  * Structured blog presentation components used by BlogPost.
  * All visual styling uses semantic tokens (no hardcoded colors).

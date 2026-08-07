@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 /**
  * Phase 2D — EEAT Schema Emitters
  * Reusable JSON-LD components. All entity references use the apex domain

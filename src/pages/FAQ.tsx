@@ -1,3 +1,4 @@
+import { safeJsonLd } from '@/lib/jsonLd';
 import { useState, useMemo } from "react";
 import { useFAQItems } from "@/hooks/useFAQItems";
 import SEOHead from "@/components/SEOHead";
