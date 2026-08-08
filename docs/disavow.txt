@@ -1,0 +1,16 @@
+# Google Search Console disavow file for mcqsai.com
+# Generated: 2026-08-08 from Semrush backlink data (11 referring domains, AS 2/100)
+# All entries below are spam/PBN link-shortener domains with "buy backlinks" anchors.
+# Upload at: https://search.google.com/search-console/disavow-links
+# Do NOT commit changes here without re-pulling a fresh referring-domain list.
+
+domain:atomizelink.icu
+domain:nivira.shop
+domain:plumeriamarketing.com
+domain:anchorurl.cloud
+domain:buzzshrink.website
+domain:byteshort.xyz
+domain:creativeposts.top
+domain:dailymusings.top
+domain:drjack.world
+domain:metamagic.top
