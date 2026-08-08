@@ -341,6 +341,7 @@ const AskDocument: React.FC = () => {
         title="Ask AI About Your Document | MCQ Generator | MCQsAI"
         description="Upload any document and generate MCQs instantly with AI. Perfect for Pakistani students preparing for board exams, NTS, FPSC, PPSC."
         keywords="AI MCQ generator, document to MCQ, study tool Pakistan, AI exam preparation"
+        noindex
       />
       <div className="flex h-[calc(100vh-4rem)] overflow-hidden bg-background">
 

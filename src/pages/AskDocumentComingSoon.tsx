@@ -19,6 +19,7 @@ const AskDocumentComingSoon = () => {
       <SEOHead
         title="Ask Your Documents — Coming Soon | MCQsAI"
         description="AI document Q&A is coming soon to MCQsAI. Meanwhile, practise free board MCQs, mock tests and AI-generated quizzes."
+        noindex
       />
       <Header>
         <main className="container mx-auto px-4 py-12 max-w-2xl">
