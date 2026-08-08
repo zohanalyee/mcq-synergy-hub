@@ -15,6 +15,7 @@ import { prefetchTopRoutes } from "./lib/prefetchRoutes";
 import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import GuestResultCarryForward from "./components/GuestResultCarryForward";
+import CookieConsent from "./components/CookieConsent";
 
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
@@ -280,6 +281,7 @@ const App = () => {
                     <GlobalCanonical />
                     <GlobalCreditExhaustedListener />
                     <GuestResultCarryForward />
+                    <CookieConsent />
 
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>
