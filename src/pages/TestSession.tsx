@@ -891,6 +891,11 @@ const TestSession = () => {
                   isGuest={!user}
                 />
 
+                {/* Results screen only — never rendered during a live exam */}
+                <AdSlot surface="test-results" />
+
+
+
                 <SmartFeedbackCard
                   score={score}
                   totalQuestions={totalQ}
