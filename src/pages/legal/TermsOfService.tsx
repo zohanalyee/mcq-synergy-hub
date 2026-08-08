@@ -11,7 +11,7 @@ const TermsOfService = () => {
       />
       <div className="max-w-3xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold text-foreground mb-2">Terms of Service</h1>
-        <p className="text-sm text-muted-foreground mb-8">Last Updated: March 12, 2026</p>
+        <p className="text-sm text-muted-foreground mb-8">Last Updated: August 8, 2026</p>
 
         <div className="prose prose-sm dark:prose-invert max-w-none space-y-6 text-muted-foreground">
           <section>
