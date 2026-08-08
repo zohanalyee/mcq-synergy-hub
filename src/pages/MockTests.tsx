@@ -10,6 +10,7 @@ import { Timer } from "lucide-react";
 import ExamFiltersBar, { ExamFilters } from "@/components/mock-tests/ExamFilters";
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { getJobTests } from "@/services/jobTestService";
+import AdSlot from "@/components/ads/AdSlot";
 
 const CompetitiveExams = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -73,6 +74,8 @@ const CompetitiveExams = () => {
             onFiltersChange={setFilters}
             jobTests={jobTests}
           />
+
+          <AdSlot surface="hub" />
 
           <div className="mt-6">
             <JobTestsTab jobTests={filteredTests} />

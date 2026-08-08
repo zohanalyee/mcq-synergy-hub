@@ -4,6 +4,7 @@ import SEOHead from "@/components/SEOHead";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AdSlot from "@/components/ads/AdSlot";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User, ArrowLeft } from "lucide-react";
@@ -267,6 +268,8 @@ const BlogPost = () => {
               <BlogSources sources={sources} />
             </BlogErrorBoundary>
           </article>
+
+          <AdSlot surface="blog-post" />
 
 
           {/* Related Posts */}

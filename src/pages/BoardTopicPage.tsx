@@ -8,6 +8,7 @@ import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from '@/components/PageBreadcrumb';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import AdSlot from '@/components/ads/AdSlot';
 import PracticeMCQCard from '@/components/subject-content/PracticeMCQCard';
 import TopicStatsBar from '@/components/board-topic/TopicStatsBar';
 import PracticeModeButtons from '@/components/board-topic/PracticeModeButtons';
@@ -292,7 +293,8 @@ const BoardTopicPage = () => {
             )}
 
             <div className="text-left">
-              <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
+              <AdSlot surface="board-topic" />
+            <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
               <ExploreMore boardName={names.board} subjectName={names.subject} classNumber={resolvedClassNumber || classNumber || ''} boardSlug={boardSlug || ''} classSeg={canonicalClassSeg} subjectSlug={subjectSlug || ''} />
               <RelatedExamsTools subjectName={names.subject} />
             </div>
