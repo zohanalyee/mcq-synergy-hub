@@ -39,7 +39,12 @@ const SEOHead = ({
   const defaultKeywords =
     'MDCAT MCQs, ECAT preparation, CSS test, PPSC MCQs, NTS practice, Pakistan exam preparation, اردو میں MCQs, MCQSAI';
 
-  const finalTitle = title ? `${title} | MCQsAI` : defaultTitle;
+  // Pages sometimes already end with a brand suffix ("… | MCQSAI"/"… | MCQsAI").
+  // Strip it before appending so we never emit "MCQSAI | MCQsAI".
+  const brandStripped = title
+    ? title.replace(/\s*[|\-–—]\s*MCQ?s?AI\s*$/i, '').trim()
+    : '';
+  const finalTitle = brandStripped ? `${brandStripped} | MCQsAI` : defaultTitle;
   const finalDescription = description || defaultDescription;
   const finalKeywords = keywords || defaultKeywords;
 
