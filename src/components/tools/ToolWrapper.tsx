@@ -5,6 +5,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Copy } from 'lucide-react';
 import { ALL_TOOLS, getRelatedTools } from '@/data/toolsData';
+import { isToolIndexable } from '@/config/toolsSeo';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import SEOHead from '@/components/SEOHead';
@@ -90,6 +91,7 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
         description={seoDescription}
         url={toolUrl}
         image={ogImage}
+        noindex={!isToolIndexable(toolData?.href)}
       />
       <Helmet>
         <script type="application/ld+json">{safeJsonLd(webAppLd)}</script>

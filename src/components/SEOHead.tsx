@@ -66,7 +66,7 @@ const SEOHead = ({
       <title>{finalTitle}</title>
       <meta name="description" content={finalDescription} />
       <meta name="keywords" content={finalKeywords} />
-      <meta name="robots" content={noindex ? 'noindex,nofollow' : 'index,follow'} />
+      <meta name="robots" content={noindex ? 'noindex,follow' : 'index,follow'} />
 
       {/* Open Graph (og:url is emitted by GlobalCanonical) */}
       <meta property="og:type" content={type} />
