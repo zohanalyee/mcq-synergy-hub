@@ -86,23 +86,97 @@ const PrivacyPolicy = () => {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground">6. Your Rights</h2>
-            <p>You have the right to:</p>
+            <h2 className="text-xl font-semibold text-foreground">6. Analytics</h2>
+            <p>
+              We use Google Analytics 4 to understand which pages are useful and where visitors
+              drop off. It sets cookies and records page views, approximate location (country/city
+              level), device type and referral source. We do not send your name or email to
+              Analytics.
+            </p>
+            <p className="mt-3">
+              You can prevent Google Analytics from collecting your data using the{' '}
+              <a
+                href="https://tools.google.com/dlpage/gaoptout"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline"
+              >
+                Google Analytics Opt-out Browser Add-on
+              </a>
+              .
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">7. Children&apos;s Privacy</h2>
+            <p>
+              MCQsAI is intended for students aged 13 and above. We do not knowingly collect
+              personal information from children under 13. If you believe a child under 13 has
+              created an account, email us and we will delete the account and its data.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">8. Data Retention</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li>Access your personal data</li>
-              <li>Request data deletion</li>
-              <li>Opt-out of marketing communications</li>
-              <li>Export your data</li>
+              <li>Account details are kept while your account is active.</li>
+              <li>
+                Test attempts, scores and progress history are kept while your account is active so
+                your analytics and AI coach recommendations remain accurate.
+              </li>
+              <li>
+                After you request deletion, account data is removed within 30 days. Aggregated,
+                non-identifying statistics (for example total attempts on a topic) may be retained.
+              </li>
+              <li>Server and security logs are retained for up to 12 months.</li>
             </ul>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground">7. Contact Us</h2>
+            <h2 className="text-xl font-semibold text-foreground">9. We Do Not Sell Your Data</h2>
+            <p>
+              We do not sell, rent or trade your personal information. Data is shared only with the
+              service providers listed above (analytics, advertising, hosting and database), and
+              only to the extent needed to operate the platform, or where we are required to do so
+              by law.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">10. Your Rights</h2>
+            <p>You have the right to:</p>
+            <ul className="list-disc pl-5 space-y-1">
+              <li>Access your personal data</li>
+              <li>Request correction of inaccurate data</li>
+              <li>Request data deletion</li>
+              <li>Opt-out of marketing communications</li>
+              <li>Export your data</li>
+            </ul>
+            <p className="mt-3">
+              To exercise any of these rights, email{' '}
+              <a href="mailto:privacy@mcqsai.com" className="text-primary hover:underline">privacy@mcqsai.com</a>{' '}
+              from the address on your account. We acknowledge requests within 48 hours and aim to
+              complete them within 30 days.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">11. Changes to This Policy</h2>
+            <p>
+              We may update this policy as the platform evolves. The &quot;Last Updated&quot; date
+              at the top of the page always reflects the current version, and material changes will
+              be announced on the site.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-xl font-semibold text-foreground">12. Contact Us</h2>
             <p>
               For privacy-related questions, email us at{' '}
               <a href="mailto:privacy@mcqsai.com" className="text-primary hover:underline">privacy@mcqsai.com</a>
             </p>
           </section>
+
 
         </div>
       </div>
