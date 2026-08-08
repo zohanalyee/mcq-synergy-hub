@@ -249,9 +249,8 @@ async function injectOpportunities() {
       const thin = wordCount(r.description) < OPPORTUNITY_MIN_WORDS;
       patch({
         path: `/opportunity/${slug}`,
-        // Mirror OpportunityDetail.tsx SEOHead title (it passes "<title> | MCQSAI",
-        // and SEOHead appends " | MCQsAI").
-        title: `${r.title} | MCQSAI | MCQsAI`,
+        // SEOHead strips any brand suffix the page passes, then appends " | MCQsAI".
+        title: `${r.title} | MCQsAI`,
         description: clamp(r.description || fallback, 160),
         ogImage: cfg.og,
         ogType: "article",

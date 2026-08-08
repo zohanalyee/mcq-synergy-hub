@@ -1,5 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
+import { isToolIndexable } from '@/config/toolsSeo';
 import { ALL_TOOLS } from '@/data/toolsData';
 import { OG_IMAGE_HEIGHT, OG_IMAGE_WIDTH, SITE_ORIGIN, ogImageForPath } from '@/lib/seoUrls';
 
@@ -56,7 +57,7 @@ const ToolRouteSEO = () => {
       <title>{title}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
-      <meta name="robots" content="index,follow" />
+      <meta name="robots" content={isToolIndexable(tool.href) ? 'index,follow' : 'noindex,follow'} />
       {/* Canonical is emitted globally by <GlobalCanonical />. */}
 
       {/* Open Graph */}

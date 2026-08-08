@@ -110,27 +110,15 @@ const STATIC_PAGES = [
   { loc: "/editorial-policy", priority: "0.5", freq: "monthly" },
 ];
 
+// I-5 tools triage: only Pakistan-education-relevant tools with real on-page
+// depth are indexable. MUST stay in sync with INDEXABLE_TOOL_PATHS in
+// src/config/toolsSeo.ts (every other /tools/* page is noindex,follow).
 const TOOL_PATHS = [
-  "/tools/school-attendance-system","/tools/math","/tools/age-calculator","/tools/timer",
-  "/tools/gpa-calculator","/tools/units","/tools/notes","/tools/calendar",
-  "/tools/islamic-calendar","/tools/international-calendar","/tools/bmi-calculator",
-  "/tools/percentage-calculator","/tools/salary-calculator","/tools/emi-calculator",
-  "/tools/tip-calculator","/tools/loan-calculator","/tools/discount-calculator",
-  "/tools/bmr-calculator","/tools/duration-calculator","/tools/ratio-calculator",
-  "/tools/speed-calculator","/tools/area-calculator","/tools/fraction-calculator",
-  "/tools/date-calculator","/tools/fuel-calculator","/tools/cgpa-calculator",
-  "/tools/gpa-to-percentage","/tools/percentage-to-gpa","/tools/grade-calculator",
-  "/tools/marks-calculator","/tools/attendance-calculator","/tools/result-calculator",
-  "/tools/formula-sheet","/tools/periodic-table","/tools/multiplication-table",
-  "/tools/currency-converter","/tools/temperature-converter","/tools/roman-converter",
-  "/tools/binary-converter","/tools/case-converter","/tools/image-resizer",
-  "/tools/image-compressor","/tools/image-converter","/tools/pdf-compressor",
-  "/tools/pdf-merger","/tools/pdf-to-text","/tools/pdf-splitter","/tools/stopwatch",
-  "/tools/world-clock","/tools/word-counter","/tools/character-counter","/tools/qr-generator","/tools/qr-scanner",
-  "/tools/password-generator","/tools/name-generator","/tools/color-picker",
-  "/tools/random-number","/tools/equation-solver",
-  "/tools/aggregate-calculator","/tools/merit-calculator",
-  "/tools/pakistan-tax-calculator","/tools/zakat-calculator",
+  "/tools/school-attendance-system","/tools/aggregate-calculator","/tools/merit-calculator",
+  "/tools/gpa-calculator","/tools/cgpa-calculator","/tools/gpa-to-percentage",
+  "/tools/percentage-to-gpa","/tools/marks-calculator","/tools/result-calculator",
+  "/tools/attendance-calculator","/tools/percentage-calculator","/tools/age-calculator",
+  "/tools/periodic-table","/tools/pakistan-tax-calculator","/tools/zakat-calculator",
 ];
 
 // Programmatic SEO /p/* slugs — mirrors indexableProgSeoSlugs() in src/data/programmaticSeo.ts

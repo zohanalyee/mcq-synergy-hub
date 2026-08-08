@@ -48,7 +48,7 @@ const CompetitiveExams = () => {
   return (
     <Header>
       <SEOHead
-        title="Mock Tests | Free Online Exam Preparation | MCQSAI"
+        title="Mock Tests | Free Online Exam Preparation"
         description="Free mock tests for FPSC, PPSC, NTS, FIA, ASF and more. Practice with AI-powered, timed mock tests and official syllabus coverage."
       />
       <div className="container mx-auto px-4 pt-4 pb-8 max-w-7xl">

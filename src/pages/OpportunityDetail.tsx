@@ -212,7 +212,7 @@ const OpportunityDetail = () => {
   return (
     <>
       <SEOHead
-        title={`${opportunity.title} | MCQSAI`}
+        title={opportunity.title}
         description={opportunity.description?.substring(0, 160) || `${opportunity.type} opportunity from ${opportunity.organization || opportunity.source_name}`}
         keywords={keywords?.join(', ') || undefined}
         image={opportunity.image_url || undefined}
