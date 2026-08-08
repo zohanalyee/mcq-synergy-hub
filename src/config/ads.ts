@@ -21,10 +21,10 @@ export type AdSurface =
   | 'hub';
 
 export const AD_SLOTS: Record<AdSurface, string> = {
-  'board-topic': '',
-  'blog-post': '',
-  'test-results': '',
-  hub: '',
+  'board-topic': '1302556495',
+  'blog-post': '5833542456',
+  'test-results': '7676393152',
+  hub: '6504460441',
 };
 
 /**
