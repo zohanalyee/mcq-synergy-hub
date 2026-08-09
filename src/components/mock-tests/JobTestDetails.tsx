@@ -1,6 +1,8 @@
 
 import { Clock, Building, BookOpen, Briefcase, GraduationCap } from "lucide-react";
 import { SyllabusItem } from "@/data/jobTestsData";
+import { markdownExcerpt } from "@/lib/markdownText";
+
 
 interface JobTestDetailsProps {
   title: string;
@@ -28,7 +30,7 @@ export const JobTestDetails = ({
         <span>{organization}</span>
       </div>
       
-      <p className="text-muted-foreground text-sm mb-6">{description}</p>
+      <p className="text-muted-foreground text-sm mb-6">{markdownExcerpt(description, 260)}</p>
       
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="flex items-center gap-2 text-sm">
