@@ -2,7 +2,10 @@ import { useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import { safeMarkdownComponents } from "@/components/SafeMarkdownLink";
 import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck, Play, Gauge } from "lucide-react";
+
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
 
@@ -237,8 +240,23 @@ const MockTestDetail = () => {
           </Dialog>
         </motion.header>
 
+        {/* About this test — admin/AI authored markdown rendered properly */}
+        {test.description?.trim() && (
+          <section aria-labelledby="about-heading" className="space-y-3">
+            <h2 id="about-heading" className="text-lg font-semibold text-foreground">
+              About the {test.title} Test
+            </h2>
+            <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:text-foreground prose-headings:text-base prose-headings:font-semibold prose-p:text-muted-foreground prose-li:text-muted-foreground prose-strong:text-foreground rounded-xl border border-border bg-card/60 p-4">
+              <ReactMarkdown components={safeMarkdownComponents}>
+                {test.description}
+              </ReactMarkdown>
+            </div>
+          </section>
+        )}
+
         {/* Test pattern */}
         <section aria-labelledby="pattern-heading" className="space-y-3">
+
           <h2 id="pattern-heading" className="text-lg font-semibold text-foreground">
             Test Pattern
           </h2>
