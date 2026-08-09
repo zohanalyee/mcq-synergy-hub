@@ -390,6 +390,45 @@ export type Database = {
           },
         ]
       }
+      campaign_visits: {
+        Row: {
+          campaign: string
+          created_at: string
+          device_type: string | null
+          id: string
+          landing_path: string | null
+          referrer: string | null
+          user_id: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          visitor_hash: string | null
+        }
+        Insert: {
+          campaign: string
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          landing_path?: string | null
+          referrer?: string | null
+          user_id?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_hash?: string | null
+        }
+        Update: {
+          campaign?: string
+          created_at?: string
+          device_type?: string | null
+          id?: string
+          landing_path?: string | null
+          referrer?: string | null
+          user_id?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          visitor_hash?: string | null
+        }
+        Relationships: []
+      }
       class_attendance_summary: {
         Row: {
           absent_students: number
@@ -2047,6 +2086,7 @@ export type Database = {
           id: string
           occupation: string | null
           profile_completed: boolean | null
+          signup_campaign: string | null
           target_exam: string | null
           updated_at: string | null
           user_type: string | null
@@ -2061,6 +2101,7 @@ export type Database = {
           id: string
           occupation?: string | null
           profile_completed?: boolean | null
+          signup_campaign?: string | null
           target_exam?: string | null
           updated_at?: string | null
           user_type?: string | null
@@ -2075,6 +2116,7 @@ export type Database = {
           id?: string
           occupation?: string | null
           profile_completed?: boolean | null
+          signup_campaign?: string | null
           target_exam?: string | null
           updated_at?: string | null
           user_type?: string | null
@@ -3681,6 +3723,21 @@ export type Database = {
           id: string
           options: Json
           title: string
+        }[]
+      }
+      get_campaign_stats: {
+        Args: never
+        Returns: {
+          campaign: string
+          first_visit: string
+          last_visit: string
+          signups: number
+          signups_7d: number
+          students_practiced: number
+          tests_completed: number
+          visits_7d: number
+          visits_today: number
+          visits_total: number
         }[]
       }
       get_content_fill_progress: {
