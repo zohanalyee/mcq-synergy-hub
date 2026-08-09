@@ -19,6 +19,7 @@ import CookieConsent from "./components/CookieConsent";
 
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
+import CampaignTracker from "./components/CampaignTracker";
 import TopProgressBar from "./components/TopProgressBar";
 import ToolRouteSEO from "./components/seo/ToolRouteSEO";
 import GlobalCanonical from "./components/seo/GlobalCanonical";
@@ -248,7 +249,6 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <Router>
         <GA4PageTracker />
-        <CampaignTracker />
         <StructuredData />
         <LoadingProvider>
           <AuthProvider>
