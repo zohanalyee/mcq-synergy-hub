@@ -307,6 +307,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="content-health"><ContentHealthDashboard /></TabsContent>
       <TabsContent value="lifecycle"><LifecycleDashboard /></TabsContent>
       <TabsContent value="scraper-signals"><ScraperSignalsDashboard /></TabsContent>
+      <TabsContent value="campaigns"><CampaignsDashboard /></TabsContent>
       <TabsContent value="empty-topics"><EmptyTopicAnalytics /></TabsContent>
       <TabsContent value="agent"><AgentDashboard /></TabsContent>
     </Tabs>
