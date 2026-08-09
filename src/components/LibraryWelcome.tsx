@@ -94,7 +94,9 @@ const LibraryWelcome = () => {
     }
   }, [show]);
 
-  useEffect(() => () => confetti.reset(), []);
+  useEffect(() => () => {
+    confetti.reset();
+  }, []);
 
   const handleClose = () => {
     confetti.reset();
