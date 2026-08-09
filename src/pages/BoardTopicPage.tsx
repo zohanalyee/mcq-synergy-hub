@@ -31,8 +31,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import indexableTopics from '@/generated/indexableTopics.json';
 
-// Build-time set of indexable board topic paths (topics with >= 5 approved
-// MCQs). Same source as the sitemap. Used for a deterministic SSR noindex.
+// Build-time set of indexable board topic paths (topics with >= 8 approved
+// MCQs — I-6 tightening). Same source as the sitemap. Used for a deterministic
+// SSR noindex and to prefer substantive sibling internal links.
+
 const INDEXABLE_TOPIC_PATHS = new Set(indexableTopics as string[]);
 
 interface MCQOption { key: string; text: string; }
@@ -120,8 +122,9 @@ const BoardTopicPage = () => {
         debug.topicName = topic.name;
       }
 
-      // 5. Related topics
-      const relatedTopics = (allTopics || []).filter(t => t.id !== topic?.id).slice(0, 8);
+      // 5. Sibling topics (extra candidates so we can prefer indexable ones)
+      const relatedTopics = (allTopics || []).filter(t => t.id !== topic?.id).slice(0, 24);
+
 
       const resolvedNames = {
         board: sys.name, subject: subject.name,
