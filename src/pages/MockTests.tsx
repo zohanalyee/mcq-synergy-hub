@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from "@/components/PageBreadcrumb";
@@ -13,7 +14,8 @@ import { getJobTests } from "@/services/jobTestService";
 import AdSlot from "@/components/ads/AdSlot";
 
 const CompetitiveExams = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchParams] = useSearchParams();
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
   const [filters, setFilters] = useState<ExamFilters>({ organization: 'all', duration: 'all' });
   const [isLoaded, setIsLoaded] = useState(false);
 
