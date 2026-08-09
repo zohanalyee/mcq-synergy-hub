@@ -7,8 +7,9 @@ import BrandMark from '@/components/BrandMark';
 
 const STORAGE_KEY = 'library-welcomed-larkana';
 
-// The curated starter test a scanner lands on — one tap from scan to question.
-const STARTER_TEST_PATH = '/mock-tests/nts-gat-general-mock-test';
+// The curated starter surface a scanner lands on — a pre-filtered single test,
+// so it is one tap from scan to questions instead of the full catalogue.
+const STARTER_TEST_PATH = '/mock-tests?q=NTS%20GAT';
 
 // Detects a scan from the Shahnawaz Bhutto Library banner.
 // URL-strip proof: matches the dedicated /larkana path OR the tracking params,
