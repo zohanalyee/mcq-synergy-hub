@@ -262,6 +262,7 @@ const App = () => {
                     <PageLoader />
                     <AIWelcome />
                     <LibraryWelcome />
+                    <CampaignTracker />
                     <NavigationLoader />
                     <Sonner 
                       position="top-right"
