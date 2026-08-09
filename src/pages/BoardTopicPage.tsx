@@ -177,7 +177,16 @@ const BoardTopicPage = () => {
   // `isLoading`/approvedCount check that never resolved at SSR time.
   const canonicalPath = `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}`;
   const isThin = !INDEXABLE_TOPIC_PATHS.has(canonicalPath);
-  const relatedTopics = data?.relatedTopics || [];
+  // I-6: sibling internal links prefer siblings that are themselves indexable
+  // (>= 8 approved MCQs), so link equity and crawl budget flow to substantive
+  // pages instead of thin ones. Thin siblings are only used as filler.
+  const allSiblings = data?.relatedTopics || [];
+  const siblingPath = (name: string) =>
+    `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${toSlug(name)}`;
+  const richSiblings = allSiblings.filter((t: any) => INDEXABLE_TOPIC_PATHS.has(siblingPath(t.name)));
+  const thinSiblings = allSiblings.filter((t: any) => !INDEXABLE_TOPIC_PATHS.has(siblingPath(t.name)));
+  const relatedTopics = [...richSiblings, ...thinSiblings].slice(0, 6);
+
   const names = data?.resolvedNames || { board: boardName, subject: subjectName, topic: topicName };
   const debugInfo = data?.debug;
   const subjectId = (names as any).subjectId;
