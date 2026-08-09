@@ -19,6 +19,8 @@ import {
 } from "lucide-react";
 import { SyllabusItem } from "@/data/jobTestsData";
 import { getCardTheme } from "@/components/ui/GlassCard";
+import { markdownExcerpt } from "@/lib/markdownText";
+
 
 export type JobTestCardProps = {
   test: {
@@ -124,10 +126,11 @@ export const JobTestCard = ({
             </div>
           </div>
 
-          {/* Description */}
+          {/* Description — markdown stripped so raw ##/- never shows in the card */}
           <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-2 mb-2">
-            {test.description}
+            {markdownExcerpt(test.description, 200)}
           </p>
+
 
           {/* Stats Row */}
           <div className="flex flex-wrap gap-2 mb-2">

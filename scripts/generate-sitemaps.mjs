@@ -247,20 +247,24 @@ async function buildMockTests() {
 
 async function buildBoards() {
   // AdSense / crawl-budget: only emit board topic URLs that have enough
-  // approved MCQs to be genuinely useful. Thin pages (< 5 approved MCQs) are
+  // approved MCQs to be genuinely useful. Thin pages (< 8 approved MCQs) are
   // low-value near-duplicates — they stay reachable for users but are kept out
   // of the sitemap and are noindex (see BoardTopicPage.tsx).
+  //
+  // I-6 tightening: threshold raised 5 -> 8 so every indexed topic page carries
+  // a substantive question set for AdSense content-quality review.
   //
   // IMPORTANT: anonymous clients can no longer read content_items directly
   // (RLS hardening for the answer-leak fix). We therefore resolve the indexable
   // board topic paths + approved-MCQ counts through a SECURITY DEFINER RPC that
   // returns ONLY public URL paths and aggregate counts — never question content
   // or answer keys.
-  const MIN_APPROVED_MCQS = 5;
+  const MIN_APPROVED_MCQS = 8;
 
   const { data: rows, error } = await supabase.rpc("get_indexable_board_topic_paths", {
     p_min_approved_mcqs: MIN_APPROVED_MCQS,
   });
+
   if (error) throw error;
 
   const all = [];
