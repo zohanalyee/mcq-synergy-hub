@@ -1,11 +1,14 @@
 import { useState, useLayoutEffect, useCallback, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { Stethoscope, Landmark, Scale, FileText, GraduationCap, Sparkles } from 'lucide-react';
+import { Stethoscope, Landmark, Scale, FileText, GraduationCap, Sparkles, ShieldCheck } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import BrandMark from '@/components/BrandMark';
 
 const STORAGE_KEY = 'library-welcomed-larkana';
+
+// The curated starter test a scanner lands on — one tap from scan to question.
+const STARTER_TEST_PATH = '/mock-tests/nts-gat-general-mock-test';
 
 // Detects a scan from the Shahnawaz Bhutto Library banner.
 // URL-strip proof: matches the dedicated /larkana path OR the tracking params,
@@ -18,19 +21,26 @@ const isLibraryVisit = (pathname: string, search: string): boolean => {
   const params = new URLSearchParams(search);
   const utm = (params.get('utm_source') || '').toLowerCase();
   const src = (params.get('src') || '').toLowerCase();
-  if (utm === 'library_banner' || src === 'larkana_library') return true;
+  const campaign = (params.get('utm_campaign') || '').toLowerCase();
+  if (utm === 'library_banner' || src === 'larkana_library' || campaign === 'larkana_library') return true;
 
   // Fallback: some scanners strip the "?" but keep the raw string in the URL.
   const raw = `${pathname}${search}`.toLowerCase();
   return raw.includes('library_banner') || raw.includes('larkana_library') || raw.includes('larkana');
 };
 
-const badges = [
-  { icon: Stethoscope, emoji: '🩺', label: 'MDCAT & Medical Entrance' },
-  { icon: Landmark, emoji: '🏛️', label: 'SPSC / CCE Prep' },
-  { icon: Scale, emoji: '⚖️', label: 'FPSC & Federal Jobs' },
-  { icon: FileText, emoji: '📝', label: 'STS / NTS Screening Tests' },
-  { icon: GraduationCap, emoji: '🎓', label: 'Lectureship & Teaching Exams' },
+const prefersReducedMotion = (): boolean => {
+  if (typeof window === 'undefined' || !window.matchMedia) return false;
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+};
+
+// Exam chooser — every chip deep-links to real, ready content.
+const examChoices = [
+  { icon: Stethoscope, label: 'MDCAT', to: '/mock-tests?q=MDCAT' },
+  { icon: Landmark, label: 'SPSC / CCE', to: '/mock-tests?q=Sindh' },
+  { icon: Scale, label: 'FPSC & Federal', to: '/mock-tests?q=FPSC' },
+  { icon: FileText, label: 'STS / NTS', to: '/mock-tests?q=NTS' },
+  { icon: GraduationCap, label: 'Class 9–12', to: '/boards' },
 ];
 
 const LibraryWelcome = () => {
@@ -45,51 +55,19 @@ const LibraryWelcome = () => {
     return isLibraryVisit(window.location.pathname, window.location.search);
   });
 
-  // Holds the id of the continuous celebration interval so we can stop it on action.
-  const celebrationInterval = useRef<number | null>(null);
+  const celebrated = useRef(false);
 
-  const stopCelebration = useCallback(() => {
-    if (celebrationInterval.current !== null) {
-      window.clearInterval(celebrationInterval.current);
-      celebrationInterval.current = null;
-    }
-    // Instantly clear any confetti already on screen.
-    confetti.reset();
-  }, []);
-
-  // Light multi-color party-popper burst rendered ON TOP of the modal (zIndex 99999).
-  const fireBurst = useCallback(() => {
-    const colors = ['#facc15', '#f59e0b', '#6366f1', '#a855f7', '#22d3ee', '#ec4899', '#10b981'];
-    // Left edge popper
-    confetti({
-      particleCount: 18,
-      angle: 60,
-      spread: 75,
-      startVelocity: 55,
-      origin: { x: 0, y: 0.85 },
-      colors,
-      zIndex: 99999,
-    });
-    // Right edge popper
-    confetti({
-      particleCount: 18,
-      angle: 120,
-      spread: 75,
-      startVelocity: 55,
-      origin: { x: 1, y: 0.85 },
-      colors,
-      zIndex: 99999,
-    });
-  }, []);
-
-  // Continuous celebration: burst now, then a fresh light burst every 3.5s until action.
+  // Single light party-popper burst on top of the modal — no repeating interval,
+  // so low-end Android phones aren't fighting confetti for their first paint.
   const fireCelebration = useCallback(() => {
-    if (celebrationInterval.current !== null) return; // already running
-    fireBurst();
-    celebrationInterval.current = window.setInterval(() => {
-      fireBurst();
-    }, 3500);
-  }, [fireBurst]);
+    if (celebrated.current) return;
+    celebrated.current = true;
+    if (prefersReducedMotion()) return;
+
+    const colors = ['#a855f7', '#8b5cf6', '#22d3ee', '#06b6d4', '#facc15'];
+    confetti({ particleCount: 16, angle: 60, spread: 70, startVelocity: 50, origin: { x: 0, y: 0.9 }, colors, zIndex: 99999 });
+    confetti({ particleCount: 16, angle: 120, spread: 70, startVelocity: 50, origin: { x: 1, y: 0.9 }, colors, zIndex: 99999 });
+  }, []);
 
   // Fire the celebration synchronously before paint when the modal is shown,
   // and re-check on client-side route changes into /larkana.
@@ -116,122 +94,90 @@ const LibraryWelcome = () => {
     }
   }, [show]);
 
-  // Ensure the interval is cleared if the component unmounts mid-celebration.
-  useEffect(() => stopCelebration, [stopCelebration]);
+  useEffect(() => () => confetti.reset(), []);
 
   const handleClose = () => {
-    stopCelebration();
+    confetti.reset();
     setShow(false);
     try {
       sessionStorage.setItem(STORAGE_KEY, 'true');
     } catch {}
   };
 
-
   return (
     <AnimatePresence>
       {show && (
         <div
-          className="fixed inset-0 z-[120] flex items-start sm:items-center justify-center overflow-y-auto bg-black/75 p-3 sm:p-4 sm:backdrop-blur-sm"
-          style={{ willChange: 'transform, opacity' }}
+          className="fixed inset-0 z-[120] flex items-center justify-center overflow-y-auto bg-background/85 p-3 sm:backdrop-blur-sm"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="library-welcome-title"
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.9, y: 20 }}
-            transition={{ type: 'spring', damping: 20, stiffness: 260 }}
-            className="relative my-auto w-[92%] max-w-md md:max-w-2xl [will-change:transform]"
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ type: 'spring', damping: 22, stiffness: 260 }}
+            className="relative my-auto w-full max-w-sm md:max-w-lg [will-change:transform]"
           >
-            {/* Glowing gold border */}
-            <motion.div
-              className="rounded-3xl p-[2px] bg-gradient-to-br from-amber-300 via-yellow-500 to-amber-600"
-              animate={{
-                boxShadow: [
-                  '0 0 25px 2px rgba(250,204,21,0.35)',
-                  '0 0 55px 8px rgba(245,158,11,0.55)',
-                  '0 0 25px 2px rgba(250,204,21,0.35)',
-                ],
-              }}
-              transition={{ duration: 2.4, repeat: Infinity }}
-            >
-              <div className="relative overflow-hidden rounded-3xl border border-amber-400/50 bg-amber-50/95 p-6 sm:p-8">
-                {/* Animated glow blobs */}
-                <motion.div
-                  className="pointer-events-none absolute -top-16 -left-16 h-48 w-48 rounded-full bg-amber-300/40 blur-3xl"
-                  animate={{ opacity: [0.3, 0.6, 0.3], scale: [1, 1.2, 1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-                <motion.div
-                  className="pointer-events-none absolute -bottom-16 -right-16 h-48 w-48 rounded-full bg-yellow-300/40 blur-3xl"
-                  animate={{ opacity: [0.3, 0.6, 0.3], scale: [1.1, 1, 1.1] }}
-                  transition={{ duration: 3, repeat: Infinity }}
-                />
-
-                <div className="relative">
-                  <div className="mb-4 flex items-center justify-between">
-                    <BrandMark />
-                    <span className="text-2xl" aria-hidden="true">🎆</span>
-                  </div>
-
-                  <motion.div
-                    initial={{ rotate: -8, scale: 0.8 }}
-                    animate={{ rotate: [0, -6, 6, 0], scale: 1 }}
-                    transition={{ duration: 1.2, repeat: Infinity, repeatDelay: 1 }}
-                    className="mb-3 inline-flex h-12 w-12 sm:h-14 sm:w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 shadow-lg"
-                  >
-                    <Sparkles className="h-6 w-6 sm:h-7 sm:w-7 text-black" />
-                  </motion.div>
-
-                  <h2 className="text-lg sm:text-xl md:text-2xl font-extrabold leading-tight text-amber-950">
-                    CONGRATULATIONS ASPIRANTS OF SHAHNAWAZ BHUTTO LIBRARY, LARKANA! 🌟
-                  </h2>
-                  <p className="mt-2.5 text-sm md:text-base font-medium text-slate-800">
-                    Your Gateway to Exam Success. MDCAT, SPSC, FPSC, STS &amp; NTS Mock Tests &amp;
-                    Practice MCQs.
-                  </p>
-                  <p className="mt-1 text-xs sm:text-sm font-semibold text-amber-700">
-                    Scan to Access Free Online Test Portal
-                  </p>
-
-                  <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-2">
-                    {badges.map((b, i) => (
-                      <motion.div
-                        key={b.label}
-                        initial={{ opacity: 0, x: -12 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: 0.15 + i * 0.08 }}
-                        className="flex items-center gap-3 rounded-xl border border-amber-200 bg-white px-3 py-2 transition-colors hover:bg-amber-100"
-                      >
-                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400/25 to-yellow-500/25 text-lg">
-                          {b.emoji}
-                        </span>
-                        <span className="text-sm font-semibold text-slate-800">{b.label}</span>
-                      </motion.div>
-                    ))}
-                  </div>
-
-
-                  <Link
-                    to="/mock-tests"
-                    onClick={handleClose}
-                    className="mt-5 block rounded-xl bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 px-5 py-3 text-center text-sm sm:text-base font-extrabold uppercase tracking-wide text-black shadow-[0_0_25px_rgba(250,204,21,0.5)] transition-all hover:shadow-[0_0_40px_rgba(250,204,21,0.8)] hover:brightness-110"
-                  >
-                    Start Practicing MCQs Now 🚀
-                  </Link>
-
-                  <button
-                    onClick={handleClose}
-                    className="mt-3 block w-full text-center text-xs text-slate-500 transition-colors hover:text-slate-800"
-                  >
-                    Maybe later
-                  </button>
-
-                  <div className="pointer-events-none absolute bottom-0 right-0 text-xs opacity-30">
-                    🇵🇰
-                  </div>
+            <div className="rounded-2xl bg-gradient-to-br from-primary via-primary/70 to-accent p-[1.5px] shadow-2xl">
+              <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-4 sm:p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <BrandMark />
+                  <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary">
+                    <Sparkles className="h-3 w-3" />
+                    Free
+                  </span>
                 </div>
+
+                <h2
+                  id="library-welcome-title"
+                  className="text-base font-extrabold leading-snug text-foreground sm:text-lg md:text-xl"
+                >
+                  Welcome, Shahnawaz Bhutto Library aspirants!
+                </h2>
+                <p className="mt-1.5 text-xs text-muted-foreground sm:text-sm">
+                  Pick your exam and start practising MCQs right now — no signup needed.
+                </p>
+
+                <div className="mt-3 grid grid-cols-2 gap-1.5">
+                  {examChoices.map((choice) => {
+                    const Icon = choice.icon;
+                    return (
+                      <Link
+                        key={choice.label}
+                        to={choice.to}
+                        onClick={handleClose}
+                        className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-muted/40 px-2.5 py-2 text-xs font-semibold text-foreground transition-colors hover:border-primary/40 hover:bg-primary/10 last:odd:col-span-2"
+                      >
+                        <Icon className="h-4 w-4 shrink-0 text-primary" />
+                        <span className="truncate">{choice.label}</span>
+                      </Link>
+                    );
+                  })}
+                </div>
+
+                <Link
+                  to={STARTER_TEST_PATH}
+                  onClick={handleClose}
+                  className="mt-3 flex min-h-11 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-3 text-center text-sm font-extrabold uppercase tracking-wide text-primary-foreground shadow-lg transition-all hover:brightness-110"
+                >
+                  Start a quick test now
+                </Link>
+
+                <p className="mt-2 flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground">
+                  <ShieldCheck className="mt-px h-3.5 w-3.5 shrink-0 text-primary" />
+                  Practise as a guest — your result is saved to your account the moment you sign up.
+                </p>
+
+                <button
+                  onClick={handleClose}
+                  className="mt-2 block min-h-11 w-full text-center text-xs text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  Maybe later
+                </button>
               </div>
-            </motion.div>
+            </div>
           </motion.div>
         </div>
       )}
