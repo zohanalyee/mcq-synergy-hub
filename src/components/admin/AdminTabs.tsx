@@ -41,6 +41,8 @@ import AgentDashboard from "./AgentDashboard";
 import ContentHealthDashboard from "./ContentHealthDashboard";
 import LifecycleDashboard from "./LifecycleDashboard";
 import ScraperSignalsDashboard from "./ScraperSignalsDashboard";
+import CampaignsDashboard from "./CampaignsDashboard";
+import { Megaphone } from "lucide-react";
 
 type AdminTabsProps = {
   activeTab: string;
@@ -79,6 +81,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "lifecycle", label: "Lifecycle", icon: TrendingUp },
         { value: "scraper-signals", label: "Scraper Signals", icon: ShieldAlert },
         { value: "empty-topics", label: "Content Gaps", icon: TrendingUp },
+        { value: "campaigns", label: "Campaigns", icon: Megaphone },
       ],
     },
     {
