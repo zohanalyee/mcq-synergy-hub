@@ -6,10 +6,10 @@ Two parts: (1) DNS steps you do in Cloudflare now, (2) the system I build after 
 
 1. Resend dashboard → Domains → Add Domain → enter `mcqsai.com`, region EU/US (either is fine).
 2. Resend shows 3–4 records. Add them in Cloudflare DNS for `mcqsai.com`, all with **Proxy status = DNS only (grey cloud)**:
-   - **MX** — name `send` (or `bounces`), value `feedback-smtp.<region>.amazonses.com`, priority `10`.
-   - **TXT (SPF)** — name `send`, value `v=spf1 include:amazonses.com ~all`.
-   - **TXT (DKIM)** — name `resend._domainkey`, value = the long `p=...` key Resend gives you (paste exactly, no line breaks).
-   - **TXT (DMARC, optional but recommended)** — name `_dmarc`, value `v=DMARC1; p=none; rua=mailto:you@mcqsai.com`.
+  - **MX** — name `send` (or `bounces`), value `feedback-smtp.<region>.amazonses.com`, priority `10`.
+  - **TXT (SPF)** — name `send`, value `v=spf1 include:amazonses.com ~all`.
+  - **TXT (DKIM)** — name `resend._domainkey`, value = the long `p=...` key Resend gives you (paste exactly, no line breaks).
+  - **TXT (DMARC, optional but recommended)** — name `_dmarc`, value `v=DMARC1; p=none; rua=mailto:you@mcqsai.com`.
 3. Careful with existing records: if `mcqsai.com` already has an SPF TXT at the root, do **not** add a second root SPF — the Resend SPF goes on the `send` subdomain, so there's no clash.
 4. Click **Verify** in Resend (usually 5–15 min on Cloudflare).
 5. Create an API key (Sending access) — I'll then ask you to save it as `RESEND_API_KEY` via the secure secret form.
@@ -18,6 +18,7 @@ Two parts: (1) DNS steps you do in Cloudflare now, (2) the system I build after 
 ## 2. Email copy for your review
 
 Subject line options (pick one):
+
 - A: `{{name}}, aapka streak tootne wala hai 😅`
 - B: `{{name}} — 10 questions, 5 minutes. Chalein?`
 - C: `Aap ne {{testName}} adhoora chhoda tha…`
@@ -79,3 +80,15 @@ Notes on tone: Roman-Urdu + English mix (site tone), one emoji per paragraph max
 - **Admin**: reminder counts (sent today / 7d) surfaced in the existing admin Campaigns area.
 
 Guardrails: max 1 email per user per 5 days, hard per-run send cap, dry-run mode for the first run so we inspect the recipient list before anything actually sends.
+
+&nbsp;
+
+Approved:
+
+1. Subject-line: Option-B — "{{name}} — 10 questions, 5 minutes. Chalein?"
+
+2. Sender: [hello@mcqsai.com](mailto:hello@mcqsai.com)
+
+3. Wording: as-is, koi-change-nahi-chahiye — bohot-acha-hai.
+
+Pehle main DNS-records Cloudflare-mein-add-updated hai or verified hai. 
