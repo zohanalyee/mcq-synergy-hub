@@ -201,17 +201,24 @@ Deno.serve(async (req) => {
       // Prefer the stored first name for a realistic preview greeting.
       let previewRaw: string | null = testName
       if (!previewRaw) {
-        const { data: authList } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 })
-        const match = authList?.users?.find((u: any) => u.email?.toLowerCase() === testEmail!.toLowerCase())
-        if (match) {
+        let matchId: string | null = null
+        for (let page = 1; page <= 20 && !matchId; page++) {
+          const { data: authList } = await admin.auth.admin.listUsers({ page, perPage: 200 })
+          const users = authList?.users || []
+          const hit = users.find((u: any) => u.email?.toLowerCase() === testEmail!.toLowerCase())
+          if (hit) matchId = hit.id
+          if (users.length < 200) break
+        }
+        if (matchId) {
           const { data: prof } = await admin
             .from('profiles')
             .select('first_name, username')
-            .eq('id', match.id)
+            .eq('id', matchId)
             .maybeSingle()
           previewRaw = (prof as any)?.first_name || (prof as any)?.username || null
         }
       }
+
       const sample = buildEmail({
         userId: 'test',
         email: testEmail,
