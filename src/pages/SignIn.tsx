@@ -159,6 +159,13 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     }
     setIsSubmitting("signup");
     try {
+      // Reminders default to ON server-side; remember an opt-out and apply it
+      // once the session exists (EmailPrefSync).
+      if (wantsReminders) {
+        localStorage.removeItem(PENDING_EMAIL_OPTOUT_KEY);
+      } else {
+        localStorage.setItem(PENDING_EMAIL_OPTOUT_KEY, "true");
+      }
       await signUp(signUpData.email, signUpData.password, signUpCaptchaToken);
       toast("Account Created!", { description: "Please check your email to verify your account." });
       signUpCaptchaRef.current?.resetCaptcha();
