@@ -33,29 +33,36 @@ const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 const firstName = (raw: string | null | undefined, email: string) => {
-  const source = (raw || '').trim() || email.split('@')[0]
-  const cleaned = source.replace(/[._-]+/g, ' ').trim()
-  const first = cleaned.split(/\s+/)[0] || 'dost'
+  let source = (raw || '').trim()
+  // Ignore email-like or handle-like usernames — they make terrible greetings.
+  if (!source || source.includes('@')) source = email.split('@')[0]
+  const cleaned = source
+    .replace(/[._\-+]+/g, ' ')
+    .replace(/[^\p{L}\s]/gu, '') // drop digits/symbols, keep letters
+    .trim()
+  const first = cleaned.split(/\s+/)[0] || ''
+  if (first.length < 2) return 'dost'
   return first.charAt(0).toUpperCase() + first.slice(1)
 }
 
 function buildEmail(c: Candidate) {
-  const name = esc(c.name)
+  const name = c.name
   const unsubUrl = `${SITE_URL}/unsubscribe?token=${c.unsubscribeToken}`
   const ctaUrl = `${SITE_URL}${c.testUrl}`
   const coachUrl = `${SITE_URL}/dashboard`
 
-  const subject = `${c.name} — 10 questions, 5 minutes. Chalein?`
+  const subject = `${name} — 10 questions, 5 minutes. Chalein?`
 
   const hasAttempt = !!c.testName
   const scoreBit =
     c.score !== null && c.total ? ` (${c.score}/${c.total} correct)` : ''
 
+  // Raw (unescaped) copy — escaped only when injected into HTML.
   const bodyBlocks = hasAttempt
     ? [
         `Assalam-o-Alaikum ${name} 👋`,
         `2 din se aap nazar nahi aaye — sab khairiyat? 🙂`,
-        `Aap ne last time "${esc(c.testName!)}" attempt kiya tha${scoreBit}. Achhi baat yeh hai: is test ke liye hamare paas questions ka bohat bara bank hai — aap jitni baar chahein practice kar sakte hain, har baar naye questions milenge. Questions khatam hone ka koi darr nahi. 💪`,
+        `Aap ne last time "${c.testName}" attempt kiya tha${scoreBit}. Achhi baat yeh hai: is test ke liye hamare paas questions ka bohat bara bank hai — aap jitni baar chahein practice kar sakte hain, har baar naye questions milenge. Questions khatam hone ka koi darr nahi. 💪`,
         `Aur aapka AI Coach bhi kaam kar raha hai — wo silently aapki progress track kar raha hai, aapke weak topics note kar raha hai, aur next practice ke liye plan bana raha hai. Aap sahi jagah par hain apni preparation ke liye.`,
       ]
     : [
@@ -72,7 +79,7 @@ function buildEmail(c: Candidate) {
   const paragraphs = bodyBlocks
     .map(
       (p) =>
-        `<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#1f2937;">${p}</p>`
+        `<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#1f2937;">${esc(p)}</p>`
     )
     .join('')
 
@@ -88,12 +95,12 @@ function buildEmail(c: Candidate) {
         <tr><td style="padding:24px;font-family:Arial,Helvetica,sans-serif;">
           ${paragraphs}
           <p style="margin:24px 0 12px;">
-            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(90deg,#7c3aed,#06b6d4);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 22px;border-radius:12px;">${ctaLabel}</a>
+            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(90deg,#7c3aed,#06b6d4);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 22px;border-radius:12px;">${esc(ctaLabel)}</a>
           </p>
           <p style="margin:0 0 20px;font-size:14px;">
             <a href="${coachUrl}" style="color:#7c3aed;text-decoration:underline;">Dekhein aapka AI Coach kya kehta hai</a>
           </p>
-          <p style="margin:0 0 8px;font-size:15px;line-height:1.65;color:#1f2937;">${closing}</p>
+          <p style="margin:0 0 8px;font-size:15px;line-height:1.65;color:#1f2937;">${esc(closing)}</p>
           <p style="margin:0;font-size:14px;color:#6b7280;">— Team MCQsAI</p>
         </td></tr>
         <tr><td style="padding:16px 24px 24px;border-top:1px solid #e5e7eb;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9ca3af;">
@@ -106,7 +113,7 @@ function buildEmail(c: Candidate) {
 </body></html>`
 
   const text = [
-    ...bodyBlocks.map((p) => p.replace(/<[^>]+>/g, '')),
+    ...bodyBlocks,
     `${ctaLabel}: ${ctaUrl}`,
     `AI Coach: ${coachUrl}`,
     closing,
@@ -117,6 +124,7 @@ function buildEmail(c: Candidate) {
 
   return { subject, html, text }
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
