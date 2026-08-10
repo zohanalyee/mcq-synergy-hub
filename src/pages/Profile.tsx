@@ -263,7 +263,11 @@ const Profile = () => {
           </CardContent>
         </Card>
 
+        {/* Email Reminders */}
+        <EmailPreferencesCard />
+
         {/* Security Card */}
+
         <Card className="border border-border/60 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
