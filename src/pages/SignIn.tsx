@@ -8,6 +8,7 @@ import { signInWithGoogle } from "@/services/authService";
 import { getIntentRaw, clearIntentRaw } from "@/hooks/useAuthIntent";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PENDING_EMAIL_OPTOUT_KEY } from "@/components/EmailPrefSync";
 import { toast } from "sonner";
 import PasswordStrengthIndicator, { passwordMeetsPolicy, getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
@@ -62,6 +63,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     password: "",
     confirmPassword: "",
   });
+  const [wantsReminders, setWantsReminders] = useState(true);
 
   useEffect(() => {
     setActiveTab(resolvedDefaultTab);
@@ -158,6 +160,13 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     }
     setIsSubmitting("signup");
     try {
+      // Reminders default to ON server-side; remember an opt-out and apply it
+      // once the session exists (EmailPrefSync).
+      if (wantsReminders) {
+        localStorage.removeItem(PENDING_EMAIL_OPTOUT_KEY);
+      } else {
+        localStorage.setItem(PENDING_EMAIL_OPTOUT_KEY, "true");
+      }
       await signUp(signUpData.email, signUpData.password, signUpCaptchaToken);
       toast("Account Created!", { description: "Please check your email to verify your account." });
       signUpCaptchaRef.current?.resetCaptcha();
@@ -442,6 +451,20 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                     <Link to="/privacy-policy" className="text-[hsl(var(--primary))] hover:underline">Privacy Policy</Link>
                   </label>
                 </div>
+
+                {/* Streak reminder opt-in */}
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="reminders"
+                    checked={wantsReminders}
+                    onCheckedChange={(checked) => setWantsReminders(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="reminders" className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed cursor-pointer">
+                    Mujhe streak reminder emails bhejein (2-3 din practice na karne par ek friendly nudge). Kabhi bhi band kar sakte hain.
+                  </label>
+                </div>
+
 
                 {/* hCaptcha */}
                 {renderCaptcha({

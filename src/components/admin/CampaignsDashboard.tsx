@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { QrCode, Users, MousePointerClick, Target, RefreshCw, Megaphone } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import EmailRemindersPanel from "./EmailRemindersPanel";
 
 type CampaignRow = {
   campaign: string;
@@ -182,7 +183,10 @@ const CampaignsDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      <EmailRemindersPanel />
     </div>
+
   );
 };
 

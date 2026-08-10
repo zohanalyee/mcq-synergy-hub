@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
+import EmailPreferencesCard from '@/components/settings/EmailPreferencesCard';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
@@ -263,7 +264,11 @@ const Profile = () => {
           </CardContent>
         </Card>
 
+        {/* Email Reminders */}
+        <EmailPreferencesCard />
+
         {/* Security Card */}
+
         <Card className="border border-border/60 shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-lg">
