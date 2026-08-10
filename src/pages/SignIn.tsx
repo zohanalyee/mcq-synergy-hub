@@ -62,6 +62,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     password: "",
     confirmPassword: "",
   });
+  const [wantsReminders, setWantsReminders] = useState(true);
 
   useEffect(() => {
     setActiveTab(resolvedDefaultTab);
