@@ -277,9 +277,12 @@ Deno.serve(async (req) => {
 
     const { data: profiles } = await admin
       .from('profiles')
-      .select('id, username')
+      .select('id, username, first_name')
       .in('id', userIds)
-    const nameById = new Map<string, string | null>((profiles || []).map((p: any) => [p.id, p.username]))
+    const nameById = new Map<string, string | null>(
+      (profiles || []).map((p: any) => [p.id, p.first_name || p.username])
+    )
+
 
     const candidates: Candidate[] = []
 
