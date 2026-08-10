@@ -444,6 +444,20 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
                   </label>
                 </div>
 
+                {/* Streak reminder opt-in */}
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id="reminders"
+                    checked={wantsReminders}
+                    onCheckedChange={(checked) => setWantsReminders(checked === true)}
+                    className="mt-0.5"
+                  />
+                  <label htmlFor="reminders" className="text-xs text-[hsl(var(--muted-foreground))] leading-relaxed cursor-pointer">
+                    Mujhe streak reminder emails bhejein (2-3 din practice na karne par ek friendly nudge). Kabhi bhi band kar sakte hain.
+                  </label>
+                </div>
+
+
                 {/* hCaptcha */}
                 {renderCaptcha({
                   captchaRef: signUpCaptchaRef,
