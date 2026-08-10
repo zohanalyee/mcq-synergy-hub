@@ -1126,6 +1126,63 @@ export type Database = {
         }
         Relationships: []
       }
+      email_prefs: {
+        Row: {
+          created_at: string
+          last_reminder_at: string | null
+          streak_reminders: boolean
+          unsubscribe_token: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_reminder_at?: string | null
+          streak_reminders?: boolean
+          unsubscribe_token?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_reminder_at?: string | null
+          streak_reminders?: boolean
+          unsubscribe_token?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      email_send_log: {
+        Row: {
+          created_at: string
+          email_type: string
+          error: string | null
+          id: string
+          meta: Json | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email_type: string
+          error?: string | null
+          id?: string
+          meta?: Json | null
+          status: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email_type?: string
+          error?: string | null
+          id?: string
+          meta?: Json | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       empty_topic_analytics: {
         Row: {
           board_name: string
