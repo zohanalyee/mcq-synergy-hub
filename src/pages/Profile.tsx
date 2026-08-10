@@ -86,12 +86,10 @@ const Profile = () => {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       username: profile?.username || '',
-      first_name: '',
       target_exam: '',
     },
     values: {
       username: profile?.username || '',
-      first_name: firstNameVal,
       target_exam: targetExam,
     },
   });
@@ -106,10 +104,11 @@ const Profile = () => {
         .from('profiles')
         .update({
           target_exam: targetExam || null,
-          first_name: (data.first_name || '').trim() || null,
+          first_name: firstNameVal.trim() || null,
           updated_at: new Date().toISOString(),
         } as any)
         .eq('id', user.id);
+
       if (error) throw error;
 
 
