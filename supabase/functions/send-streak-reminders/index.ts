@@ -43,11 +43,11 @@ const firstName = (raw: string | null | undefined, email: string) => {
     .replace(/(?<=[a-z])(?=[A-Z])/g, ' ') // camelCase → two words
     .replace(/[^\p{L}\s]/gu, '') // drop digits/symbols, keep letters
     .trim()
-  let first = cleaned.split(/\s+/)[0] || ''
-  // Glued handles like "zohaibalichanna" — trim to a sane greeting length.
-  if (first.length > 12) first = first.slice(0, 12)
-  if (first.length < 2) return 'dost'
+  const first = cleaned.split(/\s+/)[0] || ''
+  // A glued handle ("zohaibalichanna") is not a name — greet warmly instead.
+  if (first.length < 2 || first.length > 14) return 'dost'
   return first.charAt(0).toUpperCase() + first.slice(1)
+
 }
 
 function buildEmail(c: Candidate) {
