@@ -147,9 +147,13 @@ Deno.serve(async (req) => {
     const admin = createClient(supabaseUrl, serviceKey)
 
     let dryRun = false
+    let testEmail: string | null = null
     try {
       const body = await req.json()
       dryRun = body?.dryRun === true
+      if (typeof body?.testEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.testEmail)) {
+        testEmail = body.testEmail.trim()
+      }
     } catch (_) {
       /* no body */
     }
@@ -157,6 +161,39 @@ Deno.serve(async (req) => {
     if (!resendKey && !dryRun) {
       return json({ error: 'RESEND_API_KEY is not configured' }, 500)
     }
+
+    // One-off preview send: sample copy to a single address, no DB writes.
+    if (testEmail) {
+      const sample = buildEmail({
+        userId: 'test',
+        email: testEmail,
+        name: firstName(null, testEmail),
+        lastActiveAt: new Date(Date.now() - 2 * 86400000).toISOString(),
+        testName: 'General Knowledge & Everyday Science practice test',
+        score: 11,
+        total: 20,
+        testUrl: '/mock-tests',
+        unsubscribeToken: 'preview-token',
+      })
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },
+        body: JSON.stringify({
+          from: FROM,
+          to: [testEmail],
+          subject: `[TEST] ${sample.subject}`,
+          html: sample.html,
+          text: sample.text,
+        }),
+      })
+      const bodyText = await res.text()
+      if (!res.ok) {
+        console.error(`[streak-reminders] test send failed [${res.status}]: ${bodyText}`)
+        return json({ error: 'Resend request failed', status: res.status, details: bodyText }, res.status)
+      }
+      return json({ ok: true, testEmail, sent: 1, subject: `[TEST] ${sample.subject}` })
+    }
+
 
     const now = Date.now()
     const inactiveSince = new Date(now - INACTIVE_MAX_DAYS * 86400000) // oldest allowed activity
