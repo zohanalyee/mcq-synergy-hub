@@ -231,6 +231,25 @@ const Profile = () => {
                     />
 
                     <div className="space-y-2">
+                      <label htmlFor="first-name" className="text-sm font-medium flex items-center gap-1.5">
+                        <UserCircle2 className="h-3.5 w-3.5 text-primary" />
+                        First name
+                      </label>
+                      <Input
+                        id="first-name"
+                        value={firstNameVal}
+                        maxLength={40}
+                        placeholder="e.g. Zohaib"
+                        onChange={(e) => setFirstNameVal(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Used to greet you in emails and on your dashboard.
+                      </p>
+                    </div>
+
+
+
+                    <div className="space-y-2">
                       <label className="text-sm font-medium flex items-center gap-1.5">
                         <Target className="h-3.5 w-3.5 text-primary" />
                         Target Exam / Education Level
