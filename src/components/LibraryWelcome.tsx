@@ -89,14 +89,12 @@ const LibraryWelcome = () => {
   // and re-check on client-side route changes into /larkana.
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      if (sessionStorage.getItem(STORAGE_KEY)) return;
-    } catch {}
+    if (wasDismissed(window.location.search)) return;
     if (!isLibraryVisit(location.pathname, window.location.search)) return;
     setShow(true);
     fireCelebration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Lock body scroll immediately (0ms) while the modal is visible to stop mobile flash.
   useLayoutEffect(() => {
