@@ -67,9 +67,7 @@ const LibraryWelcome = () => {
   // paints on the very first frame — no post-hydration flash of base content.
   const [show, setShow] = useState(() => {
     if (typeof window === 'undefined') return false;
-    try {
-      if (sessionStorage.getItem(STORAGE_KEY)) return false;
-    } catch {}
+    if (wasDismissed(window.location.search)) return false;
     return isLibraryVisit(window.location.pathname, window.location.search);
   });
 
