@@ -180,12 +180,14 @@ Deno.serve(async (req) => {
 
     let dryRun = false
     let testEmail: string | null = null
+    let testName: string | null = null
     try {
       const body = await req.json()
       dryRun = body?.dryRun === true
       if (typeof body?.testEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.testEmail)) {
         testEmail = body.testEmail.trim()
       }
+      if (typeof body?.name === 'string' && body.name.trim()) testName = body.name.trim()
     } catch (_) {
       /* no body */
     }
@@ -196,10 +198,25 @@ Deno.serve(async (req) => {
 
     // One-off preview send: sample copy to a single address, no DB writes.
     if (testEmail) {
+      // Prefer the stored first name for a realistic preview greeting.
+      let previewRaw: string | null = testName
+      if (!previewRaw) {
+        const { data: authList } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 })
+        const match = authList?.users?.find((u: any) => u.email?.toLowerCase() === testEmail!.toLowerCase())
+        if (match) {
+          const { data: prof } = await admin
+            .from('profiles')
+            .select('first_name, username')
+            .eq('id', match.id)
+            .maybeSingle()
+          previewRaw = (prof as any)?.first_name || (prof as any)?.username || null
+        }
+      }
       const sample = buildEmail({
         userId: 'test',
         email: testEmail,
-        name: firstName(null, testEmail),
+        name: firstName(previewRaw, testEmail),
+
         lastActiveAt: new Date(Date.now() - 2 * 86400000).toISOString(),
         testName: 'General Knowledge & Everyday Science practice test',
         score: 11,
