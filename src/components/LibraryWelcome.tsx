@@ -116,7 +116,7 @@ const LibraryWelcome = () => {
     confetti.reset();
     setShow(false);
     try {
-      sessionStorage.setItem(STORAGE_KEY, 'true');
+      sessionStorage.setItem(visitKey(window.location.search), 'true');
     } catch {}
   };
 
