@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
+import EmailPreferencesCard from '@/components/settings/EmailPreferencesCard';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
