@@ -2140,6 +2140,7 @@ export type Database = {
           bio: string | null
           city: string | null
           created_at: string | null
+          first_name: string | null
           id: string
           occupation: string | null
           profile_completed: boolean | null
@@ -2155,6 +2156,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string | null
+          first_name?: string | null
           id: string
           occupation?: string | null
           profile_completed?: boolean | null
@@ -2170,6 +2172,7 @@ export type Database = {
           bio?: string | null
           city?: string | null
           created_at?: string | null
+          first_name?: string | null
           id?: string
           occupation?: string | null
           profile_completed?: boolean | null
