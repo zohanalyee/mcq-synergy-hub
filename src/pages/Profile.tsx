@@ -46,8 +46,10 @@ const TARGET_EXAMS = [
 
 const profileFormSchema = z.object({
   username: z.string().min(3, 'Username must be at least 3 characters'),
+  first_name: z.string().max(40, 'Keep it short').optional(),
   target_exam: z.string().optional(),
 });
+
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
