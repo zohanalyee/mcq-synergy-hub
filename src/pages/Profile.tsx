@@ -59,6 +59,7 @@ const Profile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [targetExam, setTargetExam] = useState<string>('');
+  const [firstNameVal, setFirstNameVal] = useState<string>('');
   const navigate = useNavigate();
 
   // Redirect if not authenticated
@@ -67,16 +68,17 @@ const Profile = () => {
     return null;
   }
 
-  // Load target_exam directly from DB (not in profile context yet)
+  // Load target_exam / first_name directly from DB (not in profile context yet)
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('target_exam')
+        .select('target_exam, first_name')
         .eq('id', user.id)
         .maybeSingle();
       if (data?.target_exam) setTargetExam(data.target_exam);
+      if ((data as any)?.first_name) setFirstNameVal((data as any).first_name);
     })();
   }, [user?.id]);
 
@@ -84,10 +86,12 @@ const Profile = () => {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       username: profile?.username || '',
+      first_name: '',
       target_exam: '',
     },
     values: {
       username: profile?.username || '',
+      first_name: firstNameVal,
       target_exam: targetExam,
     },
   });
@@ -97,12 +101,17 @@ const Profile = () => {
       setIsSaving(true);
       // Update username via context
       await updateProfile({ username: data.username });
-      // Update target_exam directly
+      // Update target_exam / first_name directly
       const { error } = await supabase
         .from('profiles')
-        .update({ target_exam: targetExam || null, updated_at: new Date().toISOString() })
+        .update({
+          target_exam: targetExam || null,
+          first_name: (data.first_name || '').trim() || null,
+          updated_at: new Date().toISOString(),
+        } as any)
         .eq('id', user.id);
       if (error) throw error;
+
 
       toast('Profile updated', { description: 'Your profile information has been saved.' });
     } catch (error) {
