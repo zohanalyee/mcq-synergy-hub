@@ -32,17 +32,22 @@ type Candidate = {
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
+const LOGO_URL = `${SITE_URL}/email-logo.png`
+
 const firstName = (raw: string | null | undefined, email: string) => {
   let source = (raw || '').trim()
   // Ignore email-like or handle-like usernames — they make terrible greetings.
   if (!source || source.includes('@')) source = email.split('@')[0]
   const cleaned = source
     .replace(/[._\-+]+/g, ' ')
+    .replace(/(?<=[a-z])(?=[A-Z])/g, ' ') // camelCase → two words
     .replace(/[^\p{L}\s]/gu, '') // drop digits/symbols, keep letters
     .trim()
   const first = cleaned.split(/\s+/)[0] || ''
-  if (first.length < 2) return 'dost'
+  // A glued handle ("zohaibalichanna") is not a name — greet warmly instead.
+  if (first.length < 2 || first.length > 14) return 'dost'
   return first.charAt(0).toUpperCase() + first.slice(1)
+
 }
 
 function buildEmail(c: Candidate) {
@@ -79,32 +84,58 @@ function buildEmail(c: Candidate) {
   const paragraphs = bodyBlocks
     .map(
       (p) =>
-        `<p style="margin:0 0 16px;font-size:15px;line-height:1.65;color:#1f2937;">${esc(p)}</p>`
+        `<p style="margin:0 0 16px;font-size:15px;line-height:1.7;color:#1f2937;">${esc(p)}</p>`
     )
     .join('')
 
   const html = `<!doctype html>
-<html><body style="margin:0;padding:0;background:#f6f7fb;">
+<html><body style="margin:0;padding:0;background:#f5f6fb;">
   <div style="display:none;max-height:0;overflow:hidden;">${esc(closing)}</div>
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f6f7fb;padding:24px 12px;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f6fb;padding:28px 12px;">
     <tr><td align="center">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #e5e7eb;">
-        <tr><td style="padding:20px 24px;background:linear-gradient(90deg,#7c3aed,#06b6d4);">
-          <span style="font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#ffffff;letter-spacing:0.5px;">MCQsAI</span>
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 12px 32px rgba(76,29,149,0.12);border:1px solid #ece9f8;">
+
+        <!-- Brand header: logo tile + wordmark on brand gradient -->
+        <tr><td style="padding:26px 24px 24px;background:linear-gradient(120deg,#6d28d9 0%,#7c3aed 45%,#22d3ee 100%);">
+          <table role="presentation" cellpadding="0" cellspacing="0">
+            <tr>
+              <td style="padding-right:12px;" valign="middle">
+                <img src="${LOGO_URL}" width="44" height="44" alt="MCQSAI"
+                  style="display:block;width:44px;height:44px;border-radius:12px;border:0;background:#ffffff;" />
+              </td>
+              <td valign="middle">
+                <div style="font-family:'Trebuchet MS',Arial,Helvetica,sans-serif;font-size:20px;font-weight:700;color:#ffffff;letter-spacing:1px;line-height:1.1;">MCQSAI</div>
+                <div style="font-family:Arial,Helvetica,sans-serif;font-size:12px;color:rgba(255,255,255,0.85);margin-top:3px;">AI-powered exam prep · Made in Pakistan</div>
+              </td>
+            </tr>
+          </table>
         </td></tr>
-        <tr><td style="padding:24px;font-family:Arial,Helvetica,sans-serif;">
+
+        <!-- Streak strip -->
+        <tr><td style="padding:14px 24px;background:#faf8ff;border-bottom:1px solid #f0ecfd;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:#6d28d9;font-weight:700;">
+          🔥 Aapka streak wapas jag sakta hai — sirf 5 minute chahiye
+        </td></tr>
+
+        <tr><td style="padding:26px 24px 8px;font-family:Arial,Helvetica,sans-serif;">
           ${paragraphs}
-          <p style="margin:24px 0 12px;">
-            <a href="${ctaUrl}" style="display:inline-block;background:linear-gradient(90deg,#7c3aed,#06b6d4);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:13px 22px;border-radius:12px;">${esc(ctaLabel)}</a>
+          <table role="presentation" cellpadding="0" cellspacing="0" style="margin:22px 0 14px;">
+            <tr><td style="border-radius:14px;background:linear-gradient(120deg,#6d28d9,#22d3ee);box-shadow:0 8px 18px rgba(109,40,217,0.28);">
+              <a href="${ctaUrl}" style="display:inline-block;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 26px;border-radius:14px;">${esc(ctaLabel)} →</a>
+            </td></tr>
+          </table>
+          <p style="margin:0 0 22px;font-size:14px;">
+            <a href="${coachUrl}" style="color:#6d28d9;text-decoration:none;font-weight:600;border-bottom:1px solid #ddd6fe;">Dekhein aapka AI Coach kya kehta hai</a>
           </p>
-          <p style="margin:0 0 20px;font-size:14px;">
-            <a href="${coachUrl}" style="color:#7c3aed;text-decoration:underline;">Dekhein aapka AI Coach kya kehta hai</a>
-          </p>
-          <p style="margin:0 0 8px;font-size:15px;line-height:1.65;color:#1f2937;">${esc(closing)}</p>
-          <p style="margin:0;font-size:14px;color:#6b7280;">— Team MCQsAI</p>
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 20px;">
+            <tr><td style="padding:14px 16px;background:#f8fafc;border-left:3px solid #22d3ee;border-radius:10px;font-size:14px;line-height:1.6;color:#334155;">
+              ${esc(closing)}
+            </td></tr>
+          </table>
+          <p style="margin:0 0 22px;font-size:14px;color:#6b7280;">— Team MCQSAI</p>
         </td></tr>
-        <tr><td style="padding:16px 24px 24px;border-top:1px solid #e5e7eb;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:#9ca3af;">
-          Yeh reminder aap ne on kiya tha. Nahi chahiye? Ek click mein band karein:
+
+        <tr><td style="padding:16px 24px 26px;border-top:1px solid #f1f0f7;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:1.6;color:#9ca3af;">
+          Yeh reminder aap ne khud on kiya tha. Nahi chahiye? Ek click mein band karein:
           <a href="${unsubUrl}" style="color:#6b7280;">Unsubscribe</a>
         </td></tr>
       </table>
@@ -117,13 +148,14 @@ function buildEmail(c: Candidate) {
     `${ctaLabel}: ${ctaUrl}`,
     `AI Coach: ${coachUrl}`,
     closing,
-    '— Team MCQsAI',
+    '— Team MCQSAI',
     '',
     `Unsubscribe: ${unsubUrl}`,
   ].join('\n\n')
 
   return { subject, html, text }
 }
+
 
 
 Deno.serve(async (req) => {
@@ -148,12 +180,14 @@ Deno.serve(async (req) => {
 
     let dryRun = false
     let testEmail: string | null = null
+    let testName: string | null = null
     try {
       const body = await req.json()
       dryRun = body?.dryRun === true
       if (typeof body?.testEmail === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.testEmail)) {
         testEmail = body.testEmail.trim()
       }
+      if (typeof body?.name === 'string' && body.name.trim()) testName = body.name.trim()
     } catch (_) {
       /* no body */
     }
@@ -164,10 +198,25 @@ Deno.serve(async (req) => {
 
     // One-off preview send: sample copy to a single address, no DB writes.
     if (testEmail) {
+      // Prefer the stored first name for a realistic preview greeting.
+      let previewRaw: string | null = testName
+      if (!previewRaw) {
+        const { data: authList } = await admin.auth.admin.listUsers({ page: 1, perPage: 200 })
+        const match = authList?.users?.find((u: any) => u.email?.toLowerCase() === testEmail!.toLowerCase())
+        if (match) {
+          const { data: prof } = await admin
+            .from('profiles')
+            .select('first_name, username')
+            .eq('id', match.id)
+            .maybeSingle()
+          previewRaw = (prof as any)?.first_name || (prof as any)?.username || null
+        }
+      }
       const sample = buildEmail({
         userId: 'test',
         email: testEmail,
-        name: firstName(null, testEmail),
+        name: firstName(previewRaw, testEmail),
+
         lastActiveAt: new Date(Date.now() - 2 * 86400000).toISOString(),
         testName: 'General Knowledge & Everyday Science practice test',
         score: 11,
@@ -245,9 +294,12 @@ Deno.serve(async (req) => {
 
     const { data: profiles } = await admin
       .from('profiles')
-      .select('id, username')
+      .select('id, username, first_name')
       .in('id', userIds)
-    const nameById = new Map<string, string | null>((profiles || []).map((p: any) => [p.id, p.username]))
+    const nameById = new Map<string, string | null>(
+      (profiles || []).map((p: any) => [p.id, p.first_name || p.username])
+    )
+
 
     const candidates: Candidate[] = []
 

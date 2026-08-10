@@ -49,6 +49,8 @@ const profileFormSchema = z.object({
   target_exam: z.string().optional(),
 });
 
+
+
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
 const Profile = () => {
@@ -57,6 +59,7 @@ const Profile = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [targetExam, setTargetExam] = useState<string>('');
+  const [firstNameVal, setFirstNameVal] = useState<string>('');
   const navigate = useNavigate();
 
   // Redirect if not authenticated
@@ -65,16 +68,17 @@ const Profile = () => {
     return null;
   }
 
-  // Load target_exam directly from DB (not in profile context yet)
+  // Load target_exam / first_name directly from DB (not in profile context yet)
   useEffect(() => {
     if (!user?.id) return;
     (async () => {
       const { data } = await supabase
         .from('profiles')
-        .select('target_exam')
+        .select('target_exam, first_name')
         .eq('id', user.id)
         .maybeSingle();
       if (data?.target_exam) setTargetExam(data.target_exam);
+      if ((data as any)?.first_name) setFirstNameVal((data as any).first_name);
     })();
   }, [user?.id]);
 
@@ -95,12 +99,18 @@ const Profile = () => {
       setIsSaving(true);
       // Update username via context
       await updateProfile({ username: data.username });
-      // Update target_exam directly
+      // Update target_exam / first_name directly
       const { error } = await supabase
         .from('profiles')
-        .update({ target_exam: targetExam || null, updated_at: new Date().toISOString() })
+        .update({
+          target_exam: targetExam || null,
+          first_name: firstNameVal.trim() || null,
+          updated_at: new Date().toISOString(),
+        } as any)
         .eq('id', user.id);
+
       if (error) throw error;
+
 
       toast('Profile updated', { description: 'Your profile information has been saved.' });
     } catch (error) {
@@ -219,6 +229,25 @@ const Profile = () => {
                         </FormItem>
                       )}
                     />
+
+                    <div className="space-y-2">
+                      <label htmlFor="first-name" className="text-sm font-medium flex items-center gap-1.5">
+                        <UserCircle2 className="h-3.5 w-3.5 text-primary" />
+                        First name
+                      </label>
+                      <Input
+                        id="first-name"
+                        value={firstNameVal}
+                        maxLength={40}
+                        placeholder="e.g. Zohaib"
+                        onChange={(e) => setFirstNameVal(e.target.value)}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Used to greet you in emails and on your dashboard.
+                      </p>
+                    </div>
+
+
 
                     <div className="space-y-2">
                       <label className="text-sm font-medium flex items-center gap-1.5">
