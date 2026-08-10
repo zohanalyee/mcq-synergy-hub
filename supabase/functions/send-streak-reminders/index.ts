@@ -9,6 +9,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
 import { requireAdminOrService } from '../_shared/adminGuard.ts'
+import { LOGO_BASE64, LOGO_CID } from './logo.ts'
 
 const SITE_URL = 'https://mcqsai.com'
 const FROM = 'MCQsAI <hello@mcqsai.com>'
@@ -32,7 +33,16 @@ type Candidate = {
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-const LOGO_URL = `${SITE_URL}/email-logo.png`
+// The logo travels WITH the email as an inline CID attachment. Hosting it on
+// mcqsai.com does not work: Cloudflare bot-challenges (403) block Gmail's image proxy.
+const LOGO_URL = `cid:${LOGO_CID}`
+const LOGO_ATTACHMENT = {
+  filename: 'mcqsai-logo.png',
+  content: LOGO_BASE64,
+  content_id: LOGO_CID,
+  content_type: 'image/png',
+  disposition: 'inline',
+}
 
 const firstName = (raw: string | null | undefined, email: string) => {
   let source = (raw || '').trim()
@@ -240,6 +250,7 @@ Deno.serve(async (req) => {
           subject: `[TEST] ${sample.subject}`,
           html: sample.html,
           text: sample.text,
+          attachments: [LOGO_ATTACHMENT],
         }),
       })
       const bodyText = await res.text()
@@ -388,6 +399,7 @@ Deno.serve(async (req) => {
             subject,
             html,
             text,
+            attachments: [LOGO_ATTACHMENT],
             headers: {
               'List-Unsubscribe': `<${SITE_URL}/unsubscribe?token=${c.unsubscribeToken}>`,
               'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
