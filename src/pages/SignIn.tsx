@@ -8,6 +8,7 @@ import { signInWithGoogle } from "@/services/authService";
 import { getIntentRaw, clearIntentRaw } from "@/hooks/useAuthIntent";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { PENDING_EMAIL_OPTOUT_KEY } from "@/components/EmailPrefSync";
 import { toast } from "sonner";
 import PasswordStrengthIndicator, { passwordMeetsPolicy, getPasswordPolicyError } from "@/components/PasswordStrengthIndicator";
 import HCaptcha from "@hcaptcha/react-hcaptcha";
