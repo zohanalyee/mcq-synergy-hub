@@ -265,6 +265,7 @@ const App = () => {
                     <AIWelcome />
                     <LibraryWelcome />
                     <CampaignTracker />
+                    <EmailPrefSync />
                     <NavigationLoader />
                     <Sonner 
                       position="top-right"
