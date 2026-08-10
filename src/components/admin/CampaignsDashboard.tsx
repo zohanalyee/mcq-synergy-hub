@@ -182,7 +182,10 @@ const CampaignsDashboard = () => {
           )}
         </CardContent>
       </Card>
+
+      <EmailRemindersPanel />
     </div>
+
   );
 };
 
