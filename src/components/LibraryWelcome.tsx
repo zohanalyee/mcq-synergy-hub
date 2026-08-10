@@ -7,6 +7,23 @@ import BrandMark from '@/components/BrandMark';
 
 const STORAGE_KEY = 'library-welcomed-larkana';
 
+// A dismissal must not leak across entry variants: a plain /larkana visit
+// earlier in the session was suppressing the real QR (UTM) scan afterwards.
+const visitKey = (search: string): string => {
+  const params = new URLSearchParams(search || '');
+  const tagged =
+    params.has('utm_source') || params.has('utm_campaign') || params.has('src') || params.has('ref');
+  return tagged ? `${STORAGE_KEY}:qr` : `${STORAGE_KEY}:direct`;
+};
+
+const wasDismissed = (search: string): boolean => {
+  try {
+    return !!sessionStorage.getItem(visitKey(search));
+  } catch {
+    return false;
+  }
+};
+
 // The curated starter surface a scanner lands on — a pre-filtered single test,
 // so it is one tap from scan to questions instead of the full catalogue.
 const STARTER_TEST_PATH = '/mock-tests?q=NTS%20GAT';
@@ -50,9 +67,7 @@ const LibraryWelcome = () => {
   // paints on the very first frame — no post-hydration flash of base content.
   const [show, setShow] = useState(() => {
     if (typeof window === 'undefined') return false;
-    try {
-      if (sessionStorage.getItem(STORAGE_KEY)) return false;
-    } catch {}
+    if (wasDismissed(window.location.search)) return false;
     return isLibraryVisit(window.location.pathname, window.location.search);
   });
 
@@ -74,14 +89,12 @@ const LibraryWelcome = () => {
   // and re-check on client-side route changes into /larkana.
   useLayoutEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      if (sessionStorage.getItem(STORAGE_KEY)) return;
-    } catch {}
+    if (wasDismissed(window.location.search)) return;
     if (!isLibraryVisit(location.pathname, window.location.search)) return;
     setShow(true);
     fireCelebration();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   // Lock body scroll immediately (0ms) while the modal is visible to stop mobile flash.
   useLayoutEffect(() => {
@@ -103,7 +116,7 @@ const LibraryWelcome = () => {
     confetti.reset();
     setShow(false);
     try {
-      sessionStorage.setItem(STORAGE_KEY, 'true');
+      sessionStorage.setItem(visitKey(window.location.search), 'true');
     } catch {}
   };
 
