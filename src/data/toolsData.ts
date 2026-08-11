@@ -19,9 +19,14 @@ export interface ToolDefinition {
   popular?: boolean;
   href: string;
   seoDescription?: string;
+  /** Overrides the generated `<title>` for keyword-led tools. Keep under 60 chars. */
+  seoTitle?: string;
+  /** Overrides the generated H1. Falls back to the generated string when absent. */
+  h1?: string;
   howToUse?: string[];
   faq?: { q: string; a: string }[];
 }
+
 
 export const TOOL_CATEGORIES = [
   'All',
@@ -190,13 +195,23 @@ export const ALL_TOOLS: ToolDefinition[] = [
 
   // === Pakistan-specific high-intent calculators ===
   { id: 'aggregate-calculator', name: 'Aggregate Calculator', description: 'MDCAT, ECAT, NUST, NUMS & UHS aggregate', category: 'Student Tools', icon: Target, popular: true, href: '/tools/aggregate-calculator',
-    seoDescription: 'Free MDCAT, ECAT, NUST, NUMS and UHS aggregate calculator for Pakistani medical and engineering admissions. Get aggregate % and admission-chance band instantly.',
+    seoTitle: 'MDCAT Aggregate Calculator 2026 — NUMS, UHS, ECAT & NUST',
+    h1: 'MDCAT Aggregate Calculator 2026',
+    seoDescription: 'Free MDCAT aggregate calculator for Pakistan — PMC, UHS, NUMS, ECAT and NUST NET formulas. Enter Matric, FSc and entry-test marks to get your aggregate % instantly.',
     howToUse: ['Pick your exam (MDCAT / ECAT / NUST / NUMS / UHS)', 'Enter Matric, FSc and entry-test marks', 'View aggregate % and admission-chance band'],
     faq: [
-      { q: 'Which formula does this use for MDCAT?', a: 'PMC standard: 10% Matric + 40% FSc + 50% MDCAT.' },
-      { q: 'Is the NUST aggregate formula different?', a: 'Yes — NUST weights NET heavily: 75% NET + 15% FSc + 10% Matric.' },
-      { q: 'Are admission chances guaranteed?', a: 'No. Bands are based on 2024 open-merit closings and are indicative only — always confirm against the official prospectus.' },
+      { q: 'What is the aggregate formula for MDCAT?', a: 'The PMC standard aggregate is 10% Matric + 40% FSc + 50% MDCAT. Each component is converted to a percentage first, then weighted and added.' },
+      { q: 'How do I calculate my MDCAT aggregate manually?', a: 'Convert each result to a percentage (obtained ÷ total × 100), then multiply Matric % by 0.10, FSc % by 0.40 and MDCAT % by 0.50 and add the three numbers.' },
+      { q: 'Is this a PMC aggregate calculator?', a: 'Yes — the MDCAT option uses the PMC/PM&DC weightage (10/40/50) that Pakistani public medical colleges apply to open-merit lists.' },
+      { q: 'Can I use it as an aggregate calculator for MBBS?', a: 'Yes. MBBS and BDS open-merit lists in Pakistan are built from the same MDCAT aggregate, so pick MDCAT (or UHS Punjab for Punjab colleges) and enter your marks.' },
+      { q: 'How is the NUMS aggregate calculated?', a: 'NUMS also weights 10% Matric + 40% FSc + 50% NUMS entry test, but it uses its own test rather than the MDCAT score.' },
+      { q: 'Does the UHS merit formula differ from PMC?', a: 'UHS Punjab applies the same 10% Matric + 40% FSc + 50% entry-test weightage; the difference is the merit list and closing aggregate, not the formula.' },
+      { q: 'Is the NUST aggregate formula different?', a: 'Yes — NUST weights NET heavily: 75% NET + 15% FSc + 10% Matric, so the entry test matters far more than your board results.' },
+      { q: 'What is the ECAT aggregate formula for UET?', a: 'UET Lahore and most Punjab engineering universities use 25% Matric + 45% FSc + 30% ECAT.' },
+      { q: 'Should I enter marks or percentages?', a: 'Enter raw obtained marks along with the total (for example 950 out of 1100). The calculator converts each part to a percentage for you.' },
+      { q: 'Are the admission chances guaranteed?', a: 'No. The bands are based on 2024 open-merit closing aggregates and are indicative only — always confirm against the official prospectus for the current session.' },
     ] },
+
   { id: 'merit-calculator', name: 'Merit Calculator', description: 'University merit with hafiz & quota bonuses', category: 'Student Tools', icon: Trophy, popular: true, href: '/tools/merit-calculator',
     seoDescription: 'Free Pakistani university merit calculator. Apply hafiz-e-Quran bonus, sports, disability, minorities and overseas quotas to your open-merit percentage.',
     howToUse: ['Enter your open-merit percentage', 'Toggle hafiz-e-Quran bonus if applicable', 'Pick your quota / category to see adjusted merit'],

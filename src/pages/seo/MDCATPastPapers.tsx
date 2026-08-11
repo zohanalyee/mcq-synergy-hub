@@ -96,11 +96,13 @@ const MDCATPastPapers = () => (
         <div className="flex flex-wrap gap-2">
           {[
             { label: 'MDCAT Syllabus 2026', url: '/mdcat-syllabus' },
+            { label: 'MDCAT Aggregate Calculator', url: '/tools/aggregate-calculator' },
             { label: 'ECAT Preparation', url: '/ecat-preparation' },
             { label: 'PPSC Past Papers', url: '/ppsc-past-papers' },
             { label: 'FPSC Past Papers', url: '/fpsc-past-papers' },
             { label: 'MDCAT MCQs Practice', url: '/exams/mdcat' },
             { label: 'NUMS Preparation', url: '/exams/nums' },
+
           ].map((link) => (
             <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}

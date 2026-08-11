@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import ToolWrapper, { CopyButton } from '@/components/tools/ToolWrapper';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
+
 
 type ExamKey = 'mdcat' | 'ecat' | 'nust' | 'nums' | 'uhs';
 
@@ -29,7 +32,144 @@ const pctOf = (obt: string, tot: string) => {
   return Math.min(100, (o / t) * 100);
 };
 
+const FORMULA_TABLE: { exam: string; matric: string; fsc: string; test: string; body: string }[] = [
+  { exam: 'MDCAT (PMC / PM&DC)', matric: '10%', fsc: '40%', test: '50%', body: 'Public medical & dental colleges' },
+  { exam: 'UHS Punjab', matric: '10%', fsc: '40%', test: '50%', body: 'Punjab MBBS / BDS merit lists' },
+  { exam: 'NUMS', matric: '10%', fsc: '40%', test: '50%', body: 'NUMS own entry test' },
+  { exam: 'ECAT (UET Lahore)', matric: '25%', fsc: '45%', test: '30%', body: 'Punjab engineering universities' },
+  { exam: 'NUST (NET)', matric: '10%', fsc: '15%', test: '75%', body: 'NUST engineering & sciences' },
+];
+
+const RELATED_PREP = [
+  { label: 'MDCAT Past Papers', url: '/mdcat-past-papers' },
+  { label: 'MDCAT Syllabus 2026', url: '/mdcat-syllabus' },
+  { label: 'MDCAT MCQs Practice', url: '/exams/mdcat' },
+  { label: 'NUMS Preparation', url: '/exams/nums' },
+  { label: 'ECAT Preparation', url: '/ecat-preparation' },
+  { label: 'Merit Calculator (quotas & hafiz bonus)', url: '/tools/merit-calculator' },
+];
+
+const AggregateContent = () => (
+  <div className="space-y-4">
+    <Card className="border-border/50">
+      <CardContent className="p-4 sm:p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">How the MDCAT aggregate is calculated</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Pakistani public medical colleges do not rank students on MDCAT marks alone. Your admission
+          aggregate combines three results — Matric, FSc (Pre-Medical) and the entry test — using the
+          PMC weightage of <strong className="text-foreground">10% Matric + 40% FSc + 50% MDCAT</strong>.
+          Each result is first converted to a percentage, then multiplied by its weight, and the three
+          weighted values are added together.
+        </p>
+        <div className="rounded-lg bg-accent/30 p-4 space-y-1.5 text-sm">
+          <p className="font-medium text-foreground">Worked example</p>
+          <p className="text-muted-foreground">Matric 1000 / 1100 = 90.91% → 90.91 × 0.10 = <strong className="text-foreground">9.09</strong></p>
+          <p className="text-muted-foreground">FSc 950 / 1100 = 86.36% → 86.36 × 0.40 = <strong className="text-foreground">34.55</strong></p>
+          <p className="text-muted-foreground">MDCAT 160 / 200 = 80.00% → 80.00 × 0.50 = <strong className="text-foreground">40.00</strong></p>
+          <p className="pt-1 border-t border-border/50 text-foreground font-semibold">Aggregate = 9.09 + 34.55 + 40.00 = 83.64%</p>
+        </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          The same three-step method applies to every exam below — only the weights change. That is why a
+          strong entry test can lift a modest FSc result for NUST, while for MDCAT your FSc marks carry
+          almost as much weight as the test itself.
+        </p>
+      </CardContent>
+    </Card>
+
+    <Card className="border-border/50">
+      <CardContent className="p-4 sm:p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Aggregate formulas compared</h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="text-left text-muted-foreground border-b border-border/50">
+                <th scope="col" className="py-2 pr-3 font-medium">Exam</th>
+                <th scope="col" className="py-2 pr-3 font-medium">Matric</th>
+                <th scope="col" className="py-2 pr-3 font-medium">FSc</th>
+                <th scope="col" className="py-2 pr-3 font-medium">Entry test</th>
+                <th scope="col" className="py-2 font-medium">Used for</th>
+              </tr>
+            </thead>
+            <tbody>
+              {FORMULA_TABLE.map((r) => (
+                <tr key={r.exam} className="border-b border-border/30 last:border-0">
+                  <td className="py-2 pr-3 font-medium text-foreground">{r.exam}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{r.matric}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{r.fsc}</td>
+                  <td className="py-2 pr-3 text-muted-foreground">{r.test}</td>
+                  <td className="py-2 text-muted-foreground">{r.body}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Weightages follow the formulas published by PMC/PM&amp;DC, UHS, NUMS, UET Lahore and NUST.
+          Universities can revise them between sessions — confirm against the current prospectus before
+          relying on a number.
+        </p>
+      </CardContent>
+    </Card>
+
+    <Card className="border-border/50">
+      <CardContent className="p-4 sm:p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">What aggregate do I need?</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          There is no fixed passing aggregate — merit is relative and moves every year with the number of
+          applicants and seats. The chance bands shown by the calculator are drawn from 2024 open-merit
+          closing aggregates, so treat them as a rough position check rather than a cut-off:
+        </p>
+        <ul className="list-disc list-inside space-y-1.5 text-sm text-muted-foreground">
+          <li><strong className="text-foreground">MDCAT / UHS:</strong> roughly 88%+ has been competitive for top public MBBS seats; the mid-80s often lands mid-tier public or strong private lists.</li>
+          <li><strong className="text-foreground">NUMS:</strong> closing aggregates have typically sat a little below UHS open merit.</li>
+          <li><strong className="text-foreground">ECAT / UET:</strong> around 80%+ for the most in-demand engineering disciplines, lower for others.</li>
+          <li><strong className="text-foreground">NUST NET:</strong> because NET is 75% of the aggregate, your test score effectively decides the outcome.</li>
+        </ul>
+        <p className="text-xs text-muted-foreground">
+          These are historical indications only, not predictions or guarantees. Always check the official
+          merit lists published by the university for the current session.
+        </p>
+      </CardContent>
+    </Card>
+
+    <Card className="border-border/50">
+      <CardContent className="p-4 sm:p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Common aggregate mistakes</h2>
+        <ul className="list-disc list-inside space-y-1.5 text-sm text-muted-foreground">
+          <li><strong className="text-foreground">Weighting raw marks instead of percentages.</strong> Multiply the percentage by the weight, never the marks.</li>
+          <li><strong className="text-foreground">Using the wrong total.</strong> Matric and FSc totals differ across boards — enter the total printed on your own result card.</li>
+          <li><strong className="text-foreground">Forgetting improvement-exam rules.</strong> Many institutions deduct marks for improvement attempts, or count the original result. Check the prospectus.</li>
+          <li><strong className="text-foreground">Mixing formulas.</strong> A NUST aggregate cannot be compared with an MDCAT aggregate — the weightages are completely different.</li>
+          <li><strong className="text-foreground">Confusing aggregate with merit.</strong> Quotas, hafiz-e-Quran bonus and reserved seats adjust merit after the aggregate is calculated — use the <Link to="/tools/merit-calculator" className="text-primary hover:underline">merit calculator</Link> for that step.</li>
+        </ul>
+      </CardContent>
+    </Card>
+
+    <Card className="border-border/50">
+      <CardContent className="p-4 sm:p-6 space-y-3">
+        <h2 className="text-lg font-semibold text-foreground">Calculated your aggregate? Now raise it</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          The entry test is the only component you can still change. Practise the exact topics that appear
+          on your paper with free MCQs and past papers:
+        </p>
+        <div className="flex flex-wrap gap-2">
+          {RELATED_PREP.map((l) => (
+            <Link
+              key={l.url}
+              to={l.url}
+              className="px-4 py-2 bg-background border border-border/50 rounded-full text-sm text-primary hover:bg-primary/5 transition-colors"
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+);
+
 const AggregateCalculator = () => {
+
   const [exam, setExam] = useState<ExamKey>('mdcat');
   const [matricObt, setMatricObt] = useState('');
   const [matricTot, setMatricTot] = useState('1100');
@@ -60,6 +200,8 @@ const AggregateCalculator = () => {
         title="Aggregate Calculator"
         description="MDCAT, ECAT, NUST, NUMS & UHS aggregate calculator with admission-chance estimate"
         category="Student Tools"
+        extraContent={<AggregateContent />}
+
       >
         <div className="space-y-4">
           <div>

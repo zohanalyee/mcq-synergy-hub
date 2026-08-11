@@ -32,7 +32,7 @@ const ToolRouteSEO = () => {
   if (!tool) return null;
 
   const canonical = `${SITE_ORIGIN}${tool.href}`;
-  const title = `${tool.name} — Free Online Tool | MCQsAI`;
+  const title = tool.seoTitle ? `${tool.seoTitle} | MCQsAI` : `${tool.name} — Free Online Tool | MCQsAI`;
   const description =
     tool.seoDescription ||
     `${tool.description}. Free online ${tool.name.toLowerCase()} from MCQsAI — no signup, instant results.`;
