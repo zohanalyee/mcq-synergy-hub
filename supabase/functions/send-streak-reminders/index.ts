@@ -433,14 +433,20 @@ Deno.serve(async (req) => {
     }
 
 
+    const streakCount = candidates.filter((c) => c.variant !== 'never_started').length
+    const neverStartedCount = candidates.filter((c) => c.variant === 'never_started').length
+
     if (dryRun) {
       return json({
         ok: true,
         dryRun: true,
         candidates: candidates.length,
+        streakCandidates: streakCount,
+        neverStartedCandidates: neverStartedCount,
         preview: candidates.slice(0, 10).map((c) => ({
           email: c.email.replace(/(.{2}).*(@.*)/, '$1***$2'),
           name: c.name,
+          variant: c.variant,
           testName: c.testName,
           lastActiveAt: c.lastActiveAt,
         })),
@@ -450,8 +456,11 @@ Deno.serve(async (req) => {
 
     let sent = 0
     let failed = 0
+    let sentStreak = 0
+    let sentNeverStarted = 0
 
     for (const c of candidates) {
+      const emailType = c.variant === 'never_started' ? NEVER_STARTED_TYPE : 'streak_reminder'
       const { subject, html, text } = buildEmail(c)
       try {
         const res = await fetch('https://api.resend.com/emails', {
@@ -480,7 +489,7 @@ Deno.serve(async (req) => {
           failed++
           await admin.from('email_send_log').insert({
             user_id: c.userId,
-            email_type: 'streak_reminder',
+            email_type: emailType,
             status: 'failed',
             error: `[${res.status}] ${errorBody}`.slice(0, 1000),
           })
@@ -489,29 +498,53 @@ Deno.serve(async (req) => {
 
         await res.text()
         sent++
-        await admin
-          .from('email_prefs')
-          .update({ last_reminder_at: new Date().toISOString() })
-          .eq('user_id', c.userId)
+        if (c.variant === 'never_started') sentNeverStarted++
+        else sentStreak++
+        if (c.variant !== 'never_started') {
+          await admin
+            .from('email_prefs')
+            .update({ last_reminder_at: new Date().toISOString() })
+            .eq('user_id', c.userId)
+        }
         await admin.from('email_send_log').insert({
           user_id: c.userId,
-          email_type: 'streak_reminder',
+          email_type: emailType,
           status: 'sent',
-          meta: { test_name: c.testName, last_active_at: c.lastActiveAt },
+          meta: { test_name: c.testName, last_active_at: c.lastActiveAt, variant: c.variant },
         })
       } catch (e: any) {
         failed++
         console.error('[streak-reminders] send error:', e?.message || e)
         await admin.from('email_send_log').insert({
           user_id: c.userId,
-          email_type: 'streak_reminder',
+          email_type: emailType,
           status: 'failed',
           error: String(e?.message || e).slice(0, 1000),
         })
       }
     }
 
-    return json({ ok: true, candidates: candidates.length, sent, failed })
+    const summary = {
+      ok: true,
+      candidates: candidates.length,
+      streakCandidates: streakCount,
+      neverStartedCandidates: neverStartedCount,
+      sent,
+      sentStreak,
+      sentNeverStarted,
+      failed,
+      optedIn: (allPrefs as any[]).length,
+    }
+
+    // Observability: one row per run, so an empty log means "the run never happened".
+    await admin.from('email_send_log').insert({
+      user_id: null,
+      email_type: 'run_summary',
+      status: failed > 0 ? 'partial' : 'ok',
+      meta: summary,
+    })
+
+    return json(summary)
   } catch (e: any) {
     console.error('[streak-reminders] fatal:', e?.message || e)
     return json({ error: String(e?.message || e) }, 500)
