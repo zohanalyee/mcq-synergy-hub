@@ -105,7 +105,24 @@ const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 // Eager: SEO/public prerender whitelisted routes (need real HTML in #root)
 import About from "./pages/About";
 import MDCATSyllabus from "./pages/MDCATSyllabus";
-import AggregateCalculator from "./pages/tools/AggregateCalculator"; // eager: SEO content page (prerendered body)
+// Indexable tools (src/config/toolsSeo.ts INDEXABLE_TOOL_PATHS) must be EAGER:
+// a lazy() route renders only the Suspense fallback during prerender, so the
+// static HTML ships an empty #root and non-JS crawlers see no body content.
+import AggregateCalculator from "./pages/tools/AggregateCalculator";
+import MeritCalculator from "./pages/tools/MeritCalculator";
+import GPACalculator from "./pages/tools/GPACalculator";
+import CGPACalculator from "./pages/tools/CGPACalculator";
+import GPAToPercentage from "./pages/tools/GPAToPercentage";
+import PercentageToGPA from "./pages/tools/PercentageToGPA";
+import MarksCalculator from "./pages/tools/MarksCalculator";
+import ResultCalculator from "./pages/tools/ResultCalculator";
+import AttendanceCalculator from "./pages/tools/AttendanceCalculator";
+import PercentageCalculator from "./pages/tools/PercentageCalculator";
+import AgeCalculator from "./pages/tools/AgeCalculator";
+import PeriodicTable from "./pages/tools/PeriodicTable";
+import PakistanTaxCalculator from "./pages/tools/PakistanTaxCalculator";
+import ZakatCalculator from "./pages/tools/ZakatCalculator";
+import AttendanceDashboard from "./pages/tools/AttendanceDashboard";
 import MDCATPastPapers from "./pages/seo/MDCATPastPapers";
 import PPSCPastPapers from "./pages/seo/PPSCPastPapers";
 import FPSCPastPapers from "./pages/seo/FPSCPastPapers";
@@ -138,9 +155,7 @@ const CalendarTool = lazy(() => import("./pages/tools/CalendarTool"));
 const IslamicCalendar = lazy(() => import("./pages/tools/IslamicCalendar"));
 const InternationalCalendar = lazy(() => import("./pages/tools/InternationalCalendar"));
 const MathTool = lazy(() => import("./pages/tools/MathTool"));
-const AgeCalculator = lazy(() => import("./pages/tools/AgeCalculator"));
 const TimerTool = lazy(() => import("./pages/tools/TimerTool"));
-const GPACalculator = lazy(() => import("./pages/tools/GPACalculator"));
 const UnitConverter = lazy(() => import("./pages/tools/UnitConverter"));
 const NotesTool = lazy(() => import("./pages/tools/NotesTool"));
 
@@ -149,7 +164,6 @@ import Tools from "./pages/Tools";
 
 // Lazy-loaded new tool pages
 const BMICalculator = lazy(() => import("./pages/tools/BMICalculator"));
-const PercentageCalculator = lazy(() => import("./pages/tools/PercentageCalculator"));
 const SalaryCalculator = lazy(() => import("./pages/tools/SalaryCalculator"));
 const EMICalculator = lazy(() => import("./pages/tools/EMICalculator"));
 const TipCalculator = lazy(() => import("./pages/tools/TipCalculator"));
@@ -163,18 +177,8 @@ const AreaCalculator = lazy(() => import("./pages/tools/AreaCalculator"));
 const FractionCalculator = lazy(() => import("./pages/tools/FractionCalculator"));
 const DateCalculator = lazy(() => import("./pages/tools/DateCalculator"));
 const FuelCalculator = lazy(() => import("./pages/tools/FuelCalculator"));
-const CGPACalculator = lazy(() => import("./pages/tools/CGPACalculator"));
-const GPAToPercentage = lazy(() => import("./pages/tools/GPAToPercentage"));
-const PercentageToGPA = lazy(() => import("./pages/tools/PercentageToGPA"));
 const GradeCalculator = lazy(() => import("./pages/tools/GradeCalculator"));
-const MarksCalculator = lazy(() => import("./pages/tools/MarksCalculator"));
-const MeritCalculator = lazy(() => import("./pages/tools/MeritCalculator"));
-const PakistanTaxCalculator = lazy(() => import("./pages/tools/PakistanTaxCalculator"));
-const ZakatCalculator = lazy(() => import("./pages/tools/ZakatCalculator"));
-const AttendanceCalculator = lazy(() => import("./pages/tools/AttendanceCalculator"));
-const ResultCalculator = lazy(() => import("./pages/tools/ResultCalculator"));
 const FormulaSheet = lazy(() => import("./pages/tools/FormulaSheet"));
-const PeriodicTable = lazy(() => import("./pages/tools/PeriodicTable"));
 const MultiplicationTable = lazy(() => import("./pages/tools/MultiplicationTable"));
 const CurrencyConverter = lazy(() => import("./pages/tools/CurrencyConverter"));
 const TemperatureConverter = lazy(() => import("./pages/tools/TemperatureConverter"));
@@ -199,7 +203,6 @@ const NameGenerator = lazy(() => import("./pages/tools/NameGenerator"));
 const ColorPicker = lazy(() => import("./pages/tools/ColorPicker"));
 const RandomNumber = lazy(() => import("./pages/tools/RandomNumber"));
 const EquationSolver = lazy(() => import("./pages/tools/EquationSolver"));
-const AttendanceDashboard = lazy(() => import("./pages/tools/AttendanceDashboard"));
 const StudentAttendancePage = lazy(() => import("./pages/tools/StudentAttendancePage"));
 const StaffAttendancePage = lazy(() => import("./pages/tools/StaffAttendancePage"));
 const HRSetupPage = lazy(() => import("./pages/tools/HRSetupPage"));
