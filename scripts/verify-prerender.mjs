@@ -269,6 +269,38 @@ if (topicFiles.length > 0) {
   }
 }
 
-console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK; static-parity ${staticFailed ? "FAILED" : "OK"}; topic-content ${contentFailed ? 'FAILED' : 'OK'}`);
-process.exit(failed || typeFailed || requiredFailed || staticFailed || contentFailed ? 1 : 0);
+// ---- Indexable tool BODY assertion --------------------------------------
+// Every path in src/config/toolsSeo.ts INDEXABLE_TOOL_PATHS must prerender real
+// body content. A lazy()/Suspense route ships an empty #root, so crawlers that
+// do not run JS see nothing. This guard catches that regression per tool.
+let toolFailed = 0;
+const toolsSeoSrc = join(process.cwd(), 'src/config/toolsSeo.ts');
+if (!existsSync(toolsSeoSrc)) {
+  console.warn('❌ [tool-body] src/config/toolsSeo.ts not found');
+  toolFailed++;
+} else {
+  const src = readFileSync(toolsSeoSrc, 'utf8');
+  const block = src.split('INDEXABLE_TOOL_PATHS')[1] || '';
+  const toolPaths = [...block.matchAll(/'(\/tools\/[a-z0-9-]+)'/g)].map((m) => m[1]);
+  const bad = [];
+  for (const route of toolPaths) {
+    const file = join(DIST, route.replace(/^\//, ''), 'index.html');
+    if (!existsSync(file)) { bad.push(`${route} (not prerendered)`); continue; }
+    const html = readFileSync(file, 'utf8');
+    const root = html.match(/<div id="root">([\s\S]*?)<\/div>\s*<script/i)?.[1] ?? '';
+    const text = root.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ').trim();
+    if (text.length < 400) bad.push(`${route} (body text ${text.length} chars — Suspense shell?)`);
+    else if (!/<h1[\s>]/i.test(root)) bad.push(`${route} (no h1 in body)`);
+  }
+  if (bad.length) {
+    console.warn(`❌ [tool-body] ${bad.length}/${toolPaths.length} indexable tools have empty/thin prerendered body:\n   - ${bad.join('\n   - ')}`);
+    toolFailed++;
+  } else {
+    console.log(`✅ [tool-body] all ${toolPaths.length} indexable tools ship real prerendered body content`);
+  }
+}
+
+console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK; static-parity ${staticFailed ? "FAILED" : "OK"}; topic-content ${contentFailed ? 'FAILED' : 'OK'}; tool-body ${toolFailed ? 'FAILED' : 'OK'}`);
+process.exit(failed || typeFailed || requiredFailed || staticFailed || contentFailed || toolFailed ? 1 : 0);
 
