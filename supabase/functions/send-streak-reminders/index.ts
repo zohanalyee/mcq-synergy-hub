@@ -331,6 +331,21 @@ Deno.serve(async (req) => {
     )
 
 
+    // One paginated auth listing instead of a per-user lookup.
+    const authById = new Map<string, { email: string | null; createdAt: string | null; fullName: string | null }>()
+    for (let page = 1; page <= 25; page++) {
+      const { data: authList } = await admin.auth.admin.listUsers({ page, perPage: 200 })
+      const users = authList?.users || []
+      for (const u of users as any[]) {
+        authById.set(u.id, {
+          email: u.email ?? null,
+          createdAt: u.created_at ?? null,
+          fullName: (u.user_metadata?.full_name as string | undefined) ?? null,
+        })
+      }
+      if (users.length < 200) break
+    }
+
     const candidates: Candidate[] = []
 
     for (const pref of prefs as any[]) {
@@ -342,19 +357,16 @@ Deno.serve(async (req) => {
       // only when their account itself is inside the window (checked below).
       if (lastActive && !(lastActive <= inactiveUntil && lastActive >= inactiveSince)) continue
 
-      const { data: authUser } = await admin.auth.admin.getUserById(pref.user_id)
-      const email = authUser?.user?.email
+      const authUser = authById.get(pref.user_id)
+      const email = authUser?.email
       if (!email) continue
 
       if (!lastActive) {
-        const created = authUser.user?.created_at ? new Date(authUser.user.created_at) : null
+        const created = authUser.createdAt ? new Date(authUser.createdAt) : null
         if (!created || !(created <= inactiveUntil && created >= inactiveSince)) continue
       }
 
-      const rawName =
-        nameById.get(pref.user_id) ||
-        (authUser.user?.user_metadata?.full_name as string | undefined) ||
-        null
+      const rawName = nameById.get(pref.user_id) || authUser.fullName || null
 
       const testName = attempt
         ? titleById.get(attempt.content_id) ||
@@ -373,10 +385,53 @@ Deno.serve(async (req) => {
         total: attempt?.total_questions ?? null,
         testUrl: attempt ? '/mock-tests' : '/mock-tests',
         unsubscribeToken: pref.unsubscribe_token,
+        variant: 'streak',
       })
 
       if (candidates.length >= MAX_PER_RUN) break
     }
+
+    // ---- "Never started" nudge: signed up, zero attempts ever, 7-day cooldown.
+    const neverStartedCooldown = new Date(now - NEVER_STARTED_COOLDOWN_DAYS * 86400000)
+    const { data: recentNudges } = await admin
+      .from('email_send_log')
+      .select('user_id')
+      .eq('email_type', NEVER_STARTED_TYPE)
+      .gte('created_at', neverStartedCooldown.toISOString())
+      .limit(5000)
+    const nudgedRecently = new Set<string>((recentNudges || []).map((r: any) => r.user_id))
+    const alreadyQueued = new Set(candidates.map((c) => c.userId))
+
+    for (const pref of allPrefs as any[]) {
+      if (candidates.filter((c) => c.variant === 'never_started').length >= MAX_NEVER_STARTED_PER_RUN) break
+      if (alreadyQueued.has(pref.user_id)) continue
+      if (nudgedRecently.has(pref.user_id)) continue
+      if (latestAttempt.has(pref.user_id)) continue // has practised at least once
+
+      const authUser = authById.get(pref.user_id)
+      const email = authUser?.email
+      if (!email) continue
+
+      // Give brand-new signups a day to explore before nudging.
+      const created = authUser.createdAt ? new Date(authUser.createdAt) : null
+      if (!created || created > new Date(now - 1 * 86400000)) continue
+
+      const rawName = nameById.get(pref.user_id) || authUser.fullName || null
+
+      candidates.push({
+        userId: pref.user_id,
+        email,
+        name: firstName(rawName, email),
+        lastActiveAt: null,
+        testName: null,
+        score: null,
+        total: null,
+        testUrl: '/mock-tests',
+        unsubscribeToken: pref.unsubscribe_token,
+        variant: 'never_started',
+      })
+    }
+
 
     if (dryRun) {
       return json({
