@@ -418,7 +418,7 @@ const App = () => {
                       <Route path="/tools/percentage-to-gpa" element={<Suspense fallback={<TopProgressBar />}><PercentageToGPA /></Suspense>} />
                       <Route path="/tools/grade-calculator" element={<Suspense fallback={<TopProgressBar />}><GradeCalculator /></Suspense>} />
                       <Route path="/tools/marks-calculator" element={<Suspense fallback={<TopProgressBar />}><MarksCalculator /></Suspense>} />
-                      <Route path="/tools/aggregate-calculator" element={<Suspense fallback={<TopProgressBar />}><AggregateCalculator /></Suspense>} />
+                      <Route path="/tools/aggregate-calculator" element={<AggregateCalculator />} />
                       <Route path="/tools/merit-calculator" element={<Suspense fallback={<TopProgressBar />}><MeritCalculator /></Suspense>} />
                       <Route path="/tools/pakistan-tax-calculator" element={<Suspense fallback={<TopProgressBar />}><PakistanTaxCalculator /></Suspense>} />
                       <Route path="/tools/zakat-calculator" element={<Suspense fallback={<TopProgressBar />}><ZakatCalculator /></Suspense>} />
