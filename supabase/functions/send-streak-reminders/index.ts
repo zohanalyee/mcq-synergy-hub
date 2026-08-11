@@ -71,7 +71,10 @@ function buildEmail(c: Candidate) {
   const ctaUrl = `${SITE_URL}${c.testUrl}`
   const coachUrl = `${SITE_URL}/dashboard`
 
-  const subject = `${name} — 10 questions, 5 minutes. Chalein?`
+  const subject =
+    c.variant === 'never_started'
+      ? `${name} — pehla test shuru karein? 10 questions, 5 minutes`
+      : `${name} — 10 questions, 5 minutes. Chalein?`
 
   const hasAttempt = !!c.testName
   const scoreBit =
