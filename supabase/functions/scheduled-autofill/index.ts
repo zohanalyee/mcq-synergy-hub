@@ -282,16 +282,36 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Check nightly limit
+      // Check run target
       if (totalQuestionsSaved >= HARD_NIGHTLY_LIMIT) {
-        stopReason = 'Nightly limit reached (safety cap)';
+        stopReason = 'Run target reached (safety cap)';
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
 
       // Small delay to prevent hammering
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 400));
     }
+
+    // ============= RUN SUMMARY (always logged, even for 0 questions) =============
+    await logQuotaUsage(supabase, {
+      source_type: 'auto_fill_run_summary',
+      questions_requested: 0,
+      questions_fetched: 0,
+      questions_saved: totalQuestionsSaved,
+      metadata: {
+        run_summary: true,
+        triggered_by: isAdminCall ? 'admin' : 'cron',
+        topics_processed: topicsProcessed,
+        topics_attempted: attemptedTopicIds.size,
+        questions_saved: totalQuestionsSaved,
+        run_target: HARD_RUN_TARGET,
+        batch_size: batchSize,
+        stop_reason: stopReason || 'completed',
+        queue_error: queueError,
+        duration_ms: Date.now() - runStartedAt,
+      },
+    });
 
     // Log the run result
     console.log(`[Scheduled Auto-Fill] ✅ Completed. Topics: ${topicsProcessed}, Questions: ${totalQuestionsSaved}, Reason: ${stopReason}`);
