@@ -247,7 +247,7 @@ Deno.serve(async (req) => {
               topic_id: topic.topic_id,
               topic_name: topic.topic_name,
               subject_name: topic.subject_name,
-              difficulty: 'medium',
+              difficulty: difficultyPool[difficultyIndex++ % difficultyPool.length],
               question_count: questionsToRequest,
               count: questionsToRequest,
               mode: 'bank_only',
