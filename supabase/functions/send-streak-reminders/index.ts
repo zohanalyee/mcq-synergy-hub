@@ -17,6 +17,10 @@ const MAX_PER_RUN = 200
 const INACTIVE_MIN_DAYS = 2
 const INACTIVE_MAX_DAYS = 4
 const REMINDER_COOLDOWN_DAYS = 5
+// Separate "never started" nudge: signed up but zero attempts, ever.
+const NEVER_STARTED_COOLDOWN_DAYS = 7
+const MAX_NEVER_STARTED_PER_RUN = 100
+const NEVER_STARTED_TYPE = 'never_started_nudge'
 
 type Candidate = {
   userId: string
@@ -28,6 +32,7 @@ type Candidate = {
   total: number | null
   testUrl: string
   unsubscribeToken: string
+  variant?: 'streak' | 'never_started'
 }
 
 const esc = (s: string) =>
