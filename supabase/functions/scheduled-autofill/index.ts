@@ -38,8 +38,26 @@ Deno.serve(async (req) => {
     
     // ============= AUTHORIZATION GUARD =============
     const authHeader = req.headers.get('Authorization');
-    const isScheduledCall = authHeader?.includes(supabaseServiceKey);
+    let isScheduledCall = !!authHeader?.includes(supabaseServiceKey);
     const isAdminCall = req.headers.get('x-admin-trigger') === 'true';
+
+    // Cron calls authenticate with a shared x-cron-token (the scheduled job
+    // cannot carry the service-role key safely).
+    const cronToken = req.headers.get('x-cron-token');
+    if (!isScheduledCall && cronToken) {
+      const guardClient = createClient(supabaseUrl, supabaseServiceKey);
+      const { data: tokenSetting } = await guardClient
+        .from('system_settings')
+        .select('value')
+        .eq('key', 'indexnow_cron_token')
+        .maybeSingle();
+      const expected = typeof tokenSetting?.value === 'string'
+        ? tokenSetting.value
+        : (tokenSetting?.value as any)?.token;
+      if (expected && cronToken === expected) {
+        isScheduledCall = true;
+      }
+    }
 
     if (!isScheduledCall && !isAdminCall) {
       console.log('[Scheduled Auto-Fill] ⛔ Blocked: Not a valid scheduled or admin call');
