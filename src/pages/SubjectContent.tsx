@@ -30,6 +30,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
+import { findBestMatch } from "@/lib/slugUtils";
+
 import { processTestCompletion } from "@/utils/gamification";
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 
@@ -234,20 +236,28 @@ const SubjectContent = () => {
     }
   };
 
-  // Hydrate context from URL :id when state is missing (refresh / deep-link)
+  // Hydrate context from URL :id when state is missing (refresh / deep-link).
+  // Supports BOTH the legacy UUID form and the canonical human slug form.
   useEffect(() => {
     if (ctx.title || !routeId) return;
     let cancelled = false;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(routeId);
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from('subjects')
-          .select('id, name, description, levels(id, name, system_id, educational_systems(id, name))')
-          .eq('id', routeId)
-          .maybeSingle();
+        const select = 'id, name, description, levels(id, name, system_id, educational_systems(id, name))';
+        let data: any = null;
+        if (isUuid) {
+          const res = await supabase.from('subjects').select(select).eq('id', routeId).maybeSingle();
+          data = res.data;
+        } else {
+          const res = await supabase.from('subjects').select(select);
+          data = findBestMatch((res.data || []) as any[], routeId) as any;
+        }
         if (cancelled) return;
-        if (error || !data) {
-          navigate('/subjects');
+        if (!data) {
+          // Unknown subject → real 404 + noindex (no soft redirect, so Google
+          // never reports these as "Page with redirect").
+          setNotFound(true);
           return;
         }
         const lvl: any = (data as any).levels;
@@ -264,13 +274,14 @@ const SubjectContent = () => {
         });
       } catch (e) {
         console.error('Subject hydration failed:', e);
-        if (!cancelled) navigate('/subjects');
+        if (!cancelled) setNotFound(true);
       } finally {
         if (!cancelled) setIsHydrating(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [routeId, ctx.title, navigate]);
+  }, [routeId, ctx.title]);
+
 
   useEffect(() => {
     // Wait for hydration before initializing
