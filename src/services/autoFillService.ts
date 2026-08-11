@@ -42,6 +42,7 @@ export interface AutoFillConfig {
   batch_size: number;
   priority: 'lowest_first' | 'random';
   difficulty_weights?: DifficultyWeights;
+  run_target?: number;
 }
 
 export interface AILimitConfig {
@@ -236,8 +237,8 @@ export async function getLastAutoFillRun(): Promise<{ timestamp: string; questio
 }
 
 // Generate questions for a specific topic with FK link
-// Re-enabled with hard safety limits and RAG-first priority
-const MAX_QUESTIONS_PER_CALL = 5; // Hard safety limit
+// Phase 2: raised from 5 to 20 per call — the real ceiling is the daily quota guard.
+const MAX_QUESTIONS_PER_CALL = 20; // Hard safety limit
 
 export async function generateForTopic(params: {
   topic_id: string;

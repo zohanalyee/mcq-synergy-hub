@@ -11,6 +11,8 @@ interface AutoFillConfig {
   min_threshold: number;
   batch_size: number;
   priority: 'lowest_first' | 'random';
+  run_target?: number;
+  difficulty_weights?: { easy?: number; medium?: number; hard?: number };
 }
 
 interface AutoFillQueueItem {
@@ -104,19 +106,21 @@ Deno.serve(async (req) => {
       throw err;
     }
 
-    // ============= ALREADY RAN TODAY CHECK (scheduled calls only) =============
+    // ============= OVERLAP GUARD (scheduled calls only) =============
+    // Phase 2: runs every few hours now, so only guard against an overlapping
+    // run started within the last 90 minutes instead of once-per-day.
     if (!isAdminCall) {
-      const today = new Date().toISOString().split('T')[0];
-      const { count: todayRunCount } = await supabase
+      const since = new Date(Date.now() - 90 * 60 * 1000).toISOString();
+      const { count: recentRunCount } = await supabase
         .from('ai_usage_logs')
         .select('*', { count: 'exact', head: true })
-        .eq('source_type', 'auto_fill')
-        .gte('created_at', `${today}T00:00:00Z`);
+        .eq('source_type', 'auto_fill_run_summary')
+        .gte('created_at', since);
 
-      if ((todayRunCount || 0) > 0) {
-        console.log(`[Scheduled Auto-Fill] ⏭️ Already ran today (${todayRunCount} entries). Skipping.`);
+      if ((recentRunCount || 0) > 0) {
+        console.log(`[Scheduled Auto-Fill] ⏭️ A run already happened in the last 90 minutes. Skipping.`);
         return new Response(
-          JSON.stringify({ success: true, skipped: true, reason: 'Already ran today', today_runs: todayRunCount }),
+          JSON.stringify({ success: true, skipped: true, reason: 'Recent run within 90 minutes', recent_runs: recentRunCount }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -139,16 +143,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Hard safety limits (reduced from 50 to 30)
-    const HARD_BATCH_LIMIT = 5;
-    const HARD_NIGHTLY_LIMIT = 30;
-    
-    const batchSize = Math.min(config.batch_size || 5, HARD_BATCH_LIMIT);
+    // Phase 2 safety limits — raised deliberately. Real ceiling stays the
+    // DAILY_QUOTA_LIMIT check in quotaManager (1400 requests/day).
+    const HARD_BATCH_LIMIT = 20;
+    const DEFAULT_RUN_TARGET = 600;
+    const HARD_RUN_TARGET = Math.max(
+      10,
+      Math.min(config.run_target || DEFAULT_RUN_TARGET, 1500)
+    );
+    const HARD_NIGHTLY_LIMIT = HARD_RUN_TARGET;
+
+    const batchSize = Math.min(config.batch_size || 15, HARD_BATCH_LIMIT);
+
+    // Difficulty rotation from configured weights (default 20/60/20).
+    const weights = config.difficulty_weights || { easy: 20, medium: 60, hard: 20 };
+    const difficultyPool: string[] = [
+      ...Array(Math.max(1, Math.round((weights.easy ?? 20) / 10))).fill('easy'),
+      ...Array(Math.max(1, Math.round((weights.medium ?? 60) / 10))).fill('medium'),
+      ...Array(Math.max(1, Math.round((weights.hard ?? 20) / 10))).fill('hard'),
+    ];
+    let difficultyIndex = 0;
+
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
     let stopReason = '';
+    let queueError: string | null = null;
+    const attemptedTopicIds = new Set<string>();
+    const runStartedAt = Date.now();
 
-    console.log(`[Scheduled Auto-Fill] Safety limits: batch=${batchSize}, nightly=${HARD_NIGHTLY_LIMIT}`);
+    console.log(`[Scheduled Auto-Fill] Limits: batch=${batchSize}, run_target=${HARD_RUN_TARGET}`);
 
     // Continuous loop until limit hit or no gaps
     while (totalQuestionsSaved < HARD_NIGHTLY_LIMIT) {
@@ -165,20 +188,32 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // Fetch the top priority gap
-      const { data: queueData } = await supabase.rpc('get_autofill_queue', { 
-        limit_count: 1 
+      // Fetch a window of priority gaps (curriculum-priority ordered in the RPC),
+      // then pick the first one we have not attempted in this run. Prevents an
+      // infinite loop on a topic that keeps returning 0 saved questions.
+      const { data: queueData, error: queueRpcError } = await supabase.rpc('get_autofill_queue', {
+        limit_count: 50
       });
-      
-      const queue = queueData as AutoFillQueueItem[] | null;
 
-      if (!queue || queue.length === 0) {
-        stopReason = 'All topics fully stocked';
+      if (queueRpcError) {
+        queueError = queueRpcError.message;
+        stopReason = `Queue unavailable: ${queueRpcError.message}`;
+        console.error(`[Scheduled Auto-Fill] ❌ ${stopReason}`);
+        break;
+      }
+
+      const queue = (queueData as AutoFillQueueItem[] | null) || [];
+      const topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
+      if (!topic) {
+        stopReason = queue.length === 0
+          ? 'All topics fully stocked'
+          : 'All queued topics already attempted in this run';
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
 
-      const topic = queue[0];
+      attemptedTopicIds.add(topic.topic_id);
       console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})`);
 
       // Check if topic has RAG documents
@@ -212,7 +247,7 @@ Deno.serve(async (req) => {
               topic_id: topic.topic_id,
               topic_name: topic.topic_name,
               subject_name: topic.subject_name,
-              difficulty: 'medium',
+              difficulty: difficultyPool[difficultyIndex++ % difficultyPool.length],
               question_count: questionsToRequest,
               count: questionsToRequest,
               mode: 'bank_only',
@@ -247,26 +282,49 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Check nightly limit
+      // Check run target
       if (totalQuestionsSaved >= HARD_NIGHTLY_LIMIT) {
-        stopReason = 'Nightly limit reached (safety cap)';
+        stopReason = 'Run target reached (safety cap)';
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
 
       // Small delay to prevent hammering
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 400));
     }
+
+    // ============= RUN SUMMARY (always logged, even for 0 questions) =============
+    await logQuotaUsage(supabase, {
+      source_type: 'auto_fill_run_summary',
+      questions_requested: 0,
+      questions_fetched: 0,
+      questions_saved: totalQuestionsSaved,
+      metadata: {
+        run_summary: true,
+        triggered_by: isAdminCall ? 'admin' : 'cron',
+        topics_processed: topicsProcessed,
+        topics_attempted: attemptedTopicIds.size,
+        questions_saved: totalQuestionsSaved,
+        run_target: HARD_RUN_TARGET,
+        batch_size: batchSize,
+        stop_reason: stopReason || 'completed',
+        queue_error: queueError,
+        duration_ms: Date.now() - runStartedAt,
+      },
+    });
 
     // Log the run result
     console.log(`[Scheduled Auto-Fill] ✅ Completed. Topics: ${topicsProcessed}, Questions: ${totalQuestionsSaved}, Reason: ${stopReason}`);
 
     return new Response(
       JSON.stringify({
-        success: true,
+        success: !queueError,
         message: `Auto-fill completed: ${stopReason}`,
         topics_processed: topicsProcessed,
+        topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
+        run_target: HARD_RUN_TARGET,
+        queue_error: queueError,
         stop_reason: stopReason
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
