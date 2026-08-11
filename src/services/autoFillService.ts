@@ -42,6 +42,7 @@ export interface AutoFillConfig {
   batch_size: number;
   priority: 'lowest_first' | 'random';
   difficulty_weights?: DifficultyWeights;
+  run_target?: number;
 }
 
 export interface AILimitConfig {
