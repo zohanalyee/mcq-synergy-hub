@@ -104,19 +104,21 @@ Deno.serve(async (req) => {
       throw err;
     }
 
-    // ============= ALREADY RAN TODAY CHECK (scheduled calls only) =============
+    // ============= OVERLAP GUARD (scheduled calls only) =============
+    // Phase 2: runs every few hours now, so only guard against an overlapping
+    // run started within the last 90 minutes instead of once-per-day.
     if (!isAdminCall) {
-      const today = new Date().toISOString().split('T')[0];
-      const { count: todayRunCount } = await supabase
+      const since = new Date(Date.now() - 90 * 60 * 1000).toISOString();
+      const { count: recentRunCount } = await supabase
         .from('ai_usage_logs')
         .select('*', { count: 'exact', head: true })
-        .eq('source_type', 'auto_fill')
-        .gte('created_at', `${today}T00:00:00Z`);
+        .eq('source_type', 'auto_fill_run_summary')
+        .gte('created_at', since);
 
-      if ((todayRunCount || 0) > 0) {
-        console.log(`[Scheduled Auto-Fill] ⏭️ Already ran today (${todayRunCount} entries). Skipping.`);
+      if ((recentRunCount || 0) > 0) {
+        console.log(`[Scheduled Auto-Fill] ⏭️ A run already happened in the last 90 minutes. Skipping.`);
         return new Response(
-          JSON.stringify({ success: true, skipped: true, reason: 'Already ran today', today_runs: todayRunCount }),
+          JSON.stringify({ success: true, skipped: true, reason: 'Recent run within 90 minutes', recent_runs: recentRunCount }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -139,16 +141,33 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Hard safety limits (reduced from 50 to 30)
-    const HARD_BATCH_LIMIT = 5;
-    const HARD_NIGHTLY_LIMIT = 30;
-    
-    const batchSize = Math.min(config.batch_size || 5, HARD_BATCH_LIMIT);
+    // Phase 2 safety limits — raised deliberately. Real ceiling stays the
+    // DAILY_QUOTA_LIMIT check in quotaManager (1400 requests/day).
+    const HARD_BATCH_LIMIT = 20;
+    const DEFAULT_RUN_TARGET = 600;
+    const HARD_RUN_TARGET = Math.max(
+      10,
+      Math.min(config.run_target || DEFAULT_RUN_TARGET, 1500)
+    );
+    const HARD_NIGHTLY_LIMIT = HARD_RUN_TARGET;
+
+    const batchSize = Math.min(config.batch_size || 15, HARD_BATCH_LIMIT);
+
+    // Difficulty rotation from configured weights (default 20/60/20).
+    const weights = config.difficulty_weights || { easy: 20, medium: 60, hard: 20 };
+    const difficultyPool: string[] = [
+      ...Array(Math.max(1, Math.round((weights.easy ?? 20) / 10))).fill('easy'),
+      ...Array(Math.max(1, Math.round((weights.medium ?? 60) / 10))).fill('medium'),
+      ...Array(Math.max(1, Math.round((weights.hard ?? 20) / 10))).fill('hard'),
+    ];
+    let difficultyIndex = 0;
+
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
     let stopReason = '';
+    let queueError: string | null = null;
 
-    console.log(`[Scheduled Auto-Fill] Safety limits: batch=${batchSize}, nightly=${HARD_NIGHTLY_LIMIT}`);
+    console.log(`[Scheduled Auto-Fill] Limits: batch=${batchSize}, run_target=${HARD_RUN_TARGET}`);
 
     // Continuous loop until limit hit or no gaps
     while (totalQuestionsSaved < HARD_NIGHTLY_LIMIT) {
