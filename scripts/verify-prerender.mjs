@@ -280,7 +280,7 @@ if (!existsSync(toolsSeoSrc)) {
   toolFailed++;
 } else {
   const src = readFileSync(toolsSeoSrc, 'utf8');
-  const block = src.split('INDEXABLE_TOOL_PATHS')[1] || '';
+  const block = src.split(/export const INDEXABLE_TOOL_PATHS[^=]*=/)[1] || '';
   const toolPaths = [...block.matchAll(/'(\/tools\/[a-z0-9-]+)'/g)].map((m) => m[1]);
   const bad = [];
   for (const route of toolPaths) {
