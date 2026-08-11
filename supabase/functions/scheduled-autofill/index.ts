@@ -168,6 +168,8 @@ Deno.serve(async (req) => {
     let totalQuestionsSaved = 0;
     let stopReason = '';
     let queueError: string | null = null;
+    const attemptedTopicIds = new Set<string>();
+    const runStartedAt = Date.now();
 
     console.log(`[Scheduled Auto-Fill] Limits: batch=${batchSize}, run_target=${HARD_RUN_TARGET}`);
 
