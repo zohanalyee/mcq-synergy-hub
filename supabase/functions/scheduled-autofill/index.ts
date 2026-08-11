@@ -318,10 +318,13 @@ Deno.serve(async (req) => {
 
     return new Response(
       JSON.stringify({
-        success: true,
+        success: !queueError,
         message: `Auto-fill completed: ${stopReason}`,
         topics_processed: topicsProcessed,
+        topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
+        run_target: HARD_RUN_TARGET,
+        queue_error: queueError,
         stop_reason: stopReason
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
