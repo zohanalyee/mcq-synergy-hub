@@ -105,7 +105,24 @@ const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 // Eager: SEO/public prerender whitelisted routes (need real HTML in #root)
 import About from "./pages/About";
 import MDCATSyllabus from "./pages/MDCATSyllabus";
-import AggregateCalculator from "./pages/tools/AggregateCalculator"; // eager: SEO content page (prerendered body)
+// Indexable tools (src/config/toolsSeo.ts INDEXABLE_TOOL_PATHS) must be EAGER:
+// a lazy() route renders only the Suspense fallback during prerender, so the
+// static HTML ships an empty #root and non-JS crawlers see no body content.
+import AggregateCalculator from "./pages/tools/AggregateCalculator";
+import MeritCalculator from "./pages/tools/MeritCalculator";
+import GPACalculator from "./pages/tools/GPACalculator";
+import CGPACalculator from "./pages/tools/CGPACalculator";
+import GPAToPercentage from "./pages/tools/GPAToPercentage";
+import PercentageToGPA from "./pages/tools/PercentageToGPA";
+import MarksCalculator from "./pages/tools/MarksCalculator";
+import ResultCalculator from "./pages/tools/ResultCalculator";
+import AttendanceCalculator from "./pages/tools/AttendanceCalculator";
+import PercentageCalculator from "./pages/tools/PercentageCalculator";
+import AgeCalculator from "./pages/tools/AgeCalculator";
+import PeriodicTable from "./pages/tools/PeriodicTable";
+import PakistanTaxCalculator from "./pages/tools/PakistanTaxCalculator";
+import ZakatCalculator from "./pages/tools/ZakatCalculator";
+import AttendanceDashboard from "./pages/tools/AttendanceDashboard";
 import MDCATPastPapers from "./pages/seo/MDCATPastPapers";
 import PPSCPastPapers from "./pages/seo/PPSCPastPapers";
 import FPSCPastPapers from "./pages/seo/FPSCPastPapers";
