@@ -165,7 +165,9 @@ const MDCATSyllabus = () => {
           <h2 className="font-semibold mb-3">Related Resources</h2>
           <div className="flex flex-wrap gap-2">
             {[
+              { label: 'MDCAT Aggregate Calculator', url: '/tools/aggregate-calculator' },
               { label: 'ECAT Syllabus', url: '/exams/ecat' },
+
               { label: 'FSc Pre-Medical MCQs', url: '/exams/fsc-pre-medical' },
               { label: 'Biology MCQs', url: '/subjects' },
               { label: 'Chemistry MCQs', url: '/subjects' },

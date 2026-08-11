@@ -65,7 +65,9 @@ const ECATPreparation = () => (
             { label: 'MDCAT Past Papers', url: '/mdcat-past-papers' },
             { label: 'FSc Pre-Engineering', url: '/exams/fsc-pre-engineering' },
             { label: 'NTS NAT', url: '/exams/nts-nat' },
+            { label: 'ECAT Aggregate Calculator', url: '/tools/aggregate-calculator' },
             { label: 'Mathematics MCQs', url: '/subjects' },
+
           ].map((link) => (
             <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}

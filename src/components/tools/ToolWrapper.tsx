@@ -18,9 +18,11 @@ interface ToolWrapperProps {
   description: string;
   category?: string;
   children: ReactNode;
+  /** Long-form SEO content rendered below the tool, above How to Use. */
+  extraContent?: ReactNode;
 }
 
-const ToolWrapper = ({ toolId, title, description, category, children }: ToolWrapperProps) => {
+const ToolWrapper = ({ toolId, title, description, category, children, extraContent }: ToolWrapperProps) => {
   const relatedTools = getRelatedTools(toolId, 4);
   const navigate = useNavigate();
   const toolData = ALL_TOOLS.find(t => t.id === toolId);
@@ -28,8 +30,10 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
   const faq = toolData?.faq || [];
 
   // Enriched H1 + SEO title — keyword-rich without losing the "Free Online" cue.
-  const h1 = `${title} — Free Online ${category || 'Tool'}`;
-  const seoTitle = `${title} — Free Online ${category || 'Tool'}`;
+  // Keyword-led tools may override both from toolsData.
+  const h1 = toolData?.h1 || `${title} — Free Online ${category || 'Tool'}`;
+  const seoTitle = toolData?.seoTitle || `${title} — Free Online ${category || 'Tool'}`;
+
   const seoDescription =
     toolData?.seoDescription ||
     `Use our free ${title.toLowerCase()} for instant results. ${description}. No signup, works in your browser.`;
@@ -143,6 +147,11 @@ const ToolWrapper = ({ toolId, title, description, category, children }: ToolWra
           </CardContent>
         </Card>
       </motion.div>
+
+      {/* Long-form SEO content (per-tool) */}
+      {extraContent}
+
+
 
       {/* How to Use */}
       {howToUse.length > 0 && (
