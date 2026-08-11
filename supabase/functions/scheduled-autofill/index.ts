@@ -184,20 +184,32 @@ Deno.serve(async (req) => {
         break;
       }
 
-      // Fetch the top priority gap
-      const { data: queueData } = await supabase.rpc('get_autofill_queue', { 
-        limit_count: 1 
+      // Fetch a window of priority gaps (curriculum-priority ordered in the RPC),
+      // then pick the first one we have not attempted in this run. Prevents an
+      // infinite loop on a topic that keeps returning 0 saved questions.
+      const { data: queueData, error: queueRpcError } = await supabase.rpc('get_autofill_queue', {
+        limit_count: 50
       });
-      
-      const queue = queueData as AutoFillQueueItem[] | null;
 
-      if (!queue || queue.length === 0) {
-        stopReason = 'All topics fully stocked';
+      if (queueRpcError) {
+        queueError = queueRpcError.message;
+        stopReason = `Queue unavailable: ${queueRpcError.message}`;
+        console.error(`[Scheduled Auto-Fill] ❌ ${stopReason}`);
+        break;
+      }
+
+      const queue = (queueData as AutoFillQueueItem[] | null) || [];
+      const topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
+      if (!topic) {
+        stopReason = queue.length === 0
+          ? 'All topics fully stocked'
+          : 'All queued topics already attempted in this run';
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
 
-      const topic = queue[0];
+      attemptedTopicIds.add(topic.topic_id);
       console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})`);
 
       // Check if topic has RAG documents
