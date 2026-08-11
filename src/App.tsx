@@ -167,7 +167,7 @@ const GPAToPercentage = lazy(() => import("./pages/tools/GPAToPercentage"));
 const PercentageToGPA = lazy(() => import("./pages/tools/PercentageToGPA"));
 const GradeCalculator = lazy(() => import("./pages/tools/GradeCalculator"));
 const MarksCalculator = lazy(() => import("./pages/tools/MarksCalculator"));
-const AggregateCalculator = lazy(() => import("./pages/tools/AggregateCalculator"));
+import AggregateCalculator from "./pages/tools/AggregateCalculator"; // eager: SEO content page (prerendered body)
 const MeritCalculator = lazy(() => import("./pages/tools/MeritCalculator"));
 const PakistanTaxCalculator = lazy(() => import("./pages/tools/PakistanTaxCalculator"));
 const ZakatCalculator = lazy(() => import("./pages/tools/ZakatCalculator"));
