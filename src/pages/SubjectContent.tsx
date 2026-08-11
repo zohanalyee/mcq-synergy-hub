@@ -58,6 +58,9 @@ const SubjectContent = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
+  // True when the :id in the URL matches no subject — renders a real 404 + noindex.
+  const [notFound, setNotFound] = useState(false);
+
   const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
   // Batch-prefetched answer keys for the guest flow (id -> ScoredAnswer).
