@@ -14,6 +14,8 @@ import { GlobalSearchResult } from "@/services/globalSearchService";
 import { useSubjectsPageData } from "@/hooks/useSubjectsPageData";
 import { Skeleton } from "@/components/ui/skeleton";
 import { syncAllSubjects } from "@/services/offlineSyncService";
+import { toSlug } from "@/lib/slugUtils";
+
 
 const Subjects = () => {
   const navigate = useNavigate();
@@ -100,13 +102,19 @@ const Subjects = () => {
       color: '#3b82f6'
     };
 
+    // Always link by human-readable slug (never the raw UUID) so Google sees a
+    // single canonical, keyword-bearing URL per subject.
+    const subjectName = item.result_type === 'subject' ? item.name : item.subject_name;
+    const subjectSlug = toSlug(subjectName || '') || (item.result_type === 'subject' ? item.id : item.subject_id);
+
     if (item.result_type === 'subject') {
-      navigate(`/subject-content/${item.id}`, { state: statePayload });
+      navigate(`/subject-content/${subjectSlug}`, { state: statePayload });
     } else {
       // Navigate to subject with topic pre-selected
-      navigate(`/subject-content/${item.subject_id}?topic=${item.id}`, { state: statePayload });
+      navigate(`/subject-content/${subjectSlug}?topic=${item.id}`, { state: statePayload });
     }
   };
+
 
   // Map subjects to the format expected by SubjectGrid
   const mappedSubjects = subjects.map(s => ({
