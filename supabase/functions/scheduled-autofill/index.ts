@@ -11,6 +11,8 @@ interface AutoFillConfig {
   min_threshold: number;
   batch_size: number;
   priority: 'lowest_first' | 'random';
+  run_target?: number;
+  difficulty_weights?: { easy?: number; medium?: number; hard?: number };
 }
 
 interface AutoFillQueueItem {
