@@ -775,7 +775,30 @@ const SubjectContent = () => {
       : "";
   const seoSubject = title || humanizedRouteId;
 
+  if (notFound) {
+    return (
+      <Header>
+        <SEOHead
+          title="Subject not found"
+          description="This subject page does not exist on MCQsAI. Browse all available subjects instead."
+          noindex
+        />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <AlertCircle className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
+          <h1 className="text-xl font-semibold mb-2">Subject not found</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            The subject you're looking for doesn't exist or was removed.
+          </p>
+          <Button asChild>
+            <Link to="/subjects">Browse all subjects</Link>
+          </Button>
+        </div>
+      </Header>
+    );
+  }
+
   return (
+
     <Header>
       <SEOHead
         title={seoSubject ? `${seoSubject} MCQs with Answers — Free Practice` : 'Subject Practice'}
