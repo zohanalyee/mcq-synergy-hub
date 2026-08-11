@@ -287,7 +287,8 @@ if (!existsSync(toolsSeoSrc)) {
     const file = join(DIST, route.replace(/^\//, ''), 'index.html');
     if (!existsSync(file)) { bad.push(`${route} (not prerendered)`); continue; }
     const html = readFileSync(file, 'utf8');
-    const root = html.match(/<div id="root">([\s\S]*?)<\/div>\s*<script/i)?.[1] ?? '';
+    const rootStart = html.search(/<div id=["']root["'][^>]*>/i);
+    const root = rootStart === -1 ? '' : html.slice(rootStart).split(/<\/body>/i)[0];
     const text = root.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ').trim();
     if (text.length < 400) bad.push(`${route} (body text ${text.length} chars — Suspense shell?)`);
