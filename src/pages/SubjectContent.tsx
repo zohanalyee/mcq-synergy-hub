@@ -30,6 +30,8 @@ import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useAuthIntent } from "@/hooks/useAuthIntent";
 import { generateSlugUrl } from "@/utils/slugify";
+import { findBestMatch } from "@/lib/slugUtils";
+
 import { processTestCompletion } from "@/utils/gamification";
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 
@@ -56,6 +58,9 @@ const SubjectContent = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [isLoaded, setIsLoaded] = useState(false);
+  // True when the :id in the URL matches no subject — renders a real 404 + noindex.
+  const [notFound, setNotFound] = useState(false);
+
   const [studyMode, setStudyMode] = useState<StudyMode>("practice");
   const [mcqs, setMcqs] = useState<MCQItem[]>([]);
   // Batch-prefetched answer keys for the guest flow (id -> ScoredAnswer).
@@ -234,20 +239,28 @@ const SubjectContent = () => {
     }
   };
 
-  // Hydrate context from URL :id when state is missing (refresh / deep-link)
+  // Hydrate context from URL :id when state is missing (refresh / deep-link).
+  // Supports BOTH the legacy UUID form and the canonical human slug form.
   useEffect(() => {
     if (ctx.title || !routeId) return;
     let cancelled = false;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-/i.test(routeId);
     (async () => {
       try {
-        const { data, error } = await supabase
-          .from('subjects')
-          .select('id, name, description, levels(id, name, system_id, educational_systems(id, name))')
-          .eq('id', routeId)
-          .maybeSingle();
+        const select = 'id, name, description, levels(id, name, system_id, educational_systems(id, name))';
+        let data: any = null;
+        if (isUuid) {
+          const res = await supabase.from('subjects').select(select).eq('id', routeId).maybeSingle();
+          data = res.data;
+        } else {
+          const res = await supabase.from('subjects').select(select);
+          data = findBestMatch((res.data || []) as any[], routeId) as any;
+        }
         if (cancelled) return;
-        if (error || !data) {
-          navigate('/subjects');
+        if (!data) {
+          // Unknown subject → real 404 + noindex (no soft redirect, so Google
+          // never reports these as "Page with redirect").
+          setNotFound(true);
           return;
         }
         const lvl: any = (data as any).levels;
@@ -264,13 +277,14 @@ const SubjectContent = () => {
         });
       } catch (e) {
         console.error('Subject hydration failed:', e);
-        if (!cancelled) navigate('/subjects');
+        if (!cancelled) setNotFound(true);
       } finally {
         if (!cancelled) setIsHydrating(false);
       }
     })();
     return () => { cancelled = true; };
-  }, [routeId, ctx.title, navigate]);
+  }, [routeId, ctx.title]);
+
 
   useEffect(() => {
     // Wait for hydration before initializing
@@ -761,7 +775,30 @@ const SubjectContent = () => {
       : "";
   const seoSubject = title || humanizedRouteId;
 
+  if (notFound) {
+    return (
+      <Header>
+        <SEOHead
+          title="Subject not found"
+          description="This subject page does not exist on MCQsAI. Browse all available subjects instead."
+          noindex
+        />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <AlertCircle className="h-10 w-10 mx-auto mb-4 text-muted-foreground" />
+          <h1 className="text-xl font-semibold mb-2">Subject not found</h1>
+          <p className="text-sm text-muted-foreground mb-6">
+            The subject you're looking for doesn't exist or was removed.
+          </p>
+          <Button asChild>
+            <Link to="/subjects">Browse all subjects</Link>
+          </Button>
+        </div>
+      </Header>
+    );
+  }
+
   return (
+
     <Header>
       <SEOHead
         title={seoSubject ? `${seoSubject} MCQs with Answers — Free Practice` : 'Subject Practice'}
