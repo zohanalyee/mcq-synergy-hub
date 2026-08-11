@@ -275,18 +275,22 @@ Deno.serve(async (req) => {
     const inactiveUntil = new Date(now - INACTIVE_MIN_DAYS * 86400000) // newest allowed activity
     const cooldownBefore = new Date(now - REMINDER_COOLDOWN_DAYS * 86400000)
 
-    // Opted-in users who are off cooldown.
-    const { data: prefs, error: prefsErr } = await admin
+    // All opted-in users; per-type cooldowns are applied below in JS.
+    const { data: allPrefs, error: prefsErr } = await admin
       .from('email_prefs')
       .select('user_id, unsubscribe_token, last_reminder_at')
       .eq('streak_reminders', true)
-      .or(`last_reminder_at.is.null,last_reminder_at.lt.${cooldownBefore.toISOString()}`)
       .limit(2000)
 
     if (prefsErr) throw prefsErr
-    if (!prefs?.length) return json({ ok: true, candidates: 0, sent: 0, dryRun })
+    if (!allPrefs?.length) return json({ ok: true, candidates: 0, sent: 0, dryRun })
 
-    const userIds = prefs.map((p: any) => p.user_id)
+    // Streak reminders honour the 5-day cooldown.
+    const prefs = (allPrefs as any[]).filter(
+      (p) => !p.last_reminder_at || new Date(p.last_reminder_at) < cooldownBefore
+    )
+
+    const userIds = (allPrefs as any[]).map((p: any) => p.user_id)
 
     // Latest activity per user within the inactivity window.
     const { data: attempts } = await admin
