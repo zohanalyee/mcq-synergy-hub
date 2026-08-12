@@ -1689,6 +1689,7 @@ export type Database = {
           attempts: number
           created_at: string
           error_message: string | null
+          grow_target: number | null
           id: string
           job_test_id: string
           processed_at: string | null
@@ -1702,6 +1703,7 @@ export type Database = {
           attempts?: number
           created_at?: string
           error_message?: string | null
+          grow_target?: number | null
           id?: string
           job_test_id: string
           processed_at?: string | null
@@ -1715,6 +1717,7 @@ export type Database = {
           attempts?: number
           created_at?: string
           error_message?: string | null
+          grow_target?: number | null
           id?: string
           job_test_id?: string
           processed_at?: string | null
@@ -3915,6 +3918,23 @@ export type Database = {
           topic_name: string
         }[]
       }
+      get_mock_test_popularity: {
+        Args: { p_days?: number }
+        Returns: {
+          approved_pool: number
+          attempts: number
+          definition_id: string
+          distinct_users: number
+          exam_length: number
+          grow_target: number
+          last_attempt_at: string
+          pool_deficit: number
+          pool_multiplier: number
+          slug: string
+          test_id: string
+          title: string
+        }[]
+      }
       get_my_credit_history: {
         Args: { p_limit?: number }
         Returns: {
@@ -4165,6 +4185,7 @@ export type Database = {
           similarity: number
         }[]
       }
+      mock_test_slug: { Args: { p_title: string }; Returns: string }
       record_question_usage: {
         Args: { question_ids: string[] }
         Returns: undefined
