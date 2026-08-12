@@ -229,7 +229,7 @@ Deno.serve(async (req) => {
       // then pick the first one we have not attempted in this run. Prevents an
       // infinite loop on a topic that keeps returning 0 saved questions.
       const { data: queueData, error: queueRpcError } = await supabase.rpc('get_autofill_queue', {
-        limit_count: 50
+        limit_count: sprintOn ? 400 : 50
       });
 
       if (queueRpcError) {
@@ -239,16 +239,20 @@ Deno.serve(async (req) => {
         break;
       }
 
-      const queue = (queueData as AutoFillQueueItem[] | null) || [];
+      const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
+      const queue = rawQueue.filter(inSprintScope);
       const topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
 
       if (!topic) {
-        stopReason = queue.length === 0
+        stopReason = rawQueue.length === 0
           ? 'All topics fully stocked'
-          : 'All queued topics already attempted in this run';
+          : queue.length === 0
+            ? 'No queued topics match the sprint scope'
+            : 'All queued topics already attempted in this run';
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
+
 
       attemptedTopicIds.add(topic.topic_id);
       console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})`);
