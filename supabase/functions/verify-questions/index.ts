@@ -17,7 +17,8 @@ interface Verdict {
 }
 
 const SYSTEM_PROMPT = `You are a senior Pakistani exam-board question reviewer (Punjab/Sindh/KPK/Federal boards, MDCAT/ECAT, FPSC/PPSC/NTS).
-You are given multiple-choice questions with their marked correct option.
+You are given multiple-choice questions with the FULL TEXT of the marked correct answer.
+Treat the marked answer as correct unless you are confident it is wrong.
 Flag a question ONLY when it is clearly defective:
 - the marked correct answer is factually wrong
 - more than one option is correct, or none is correct
@@ -31,13 +32,27 @@ function parseVerdicts(text: string): Verdict[] {
   const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
   const start = cleaned.indexOf('[');
   const end = cleaned.lastIndexOf(']');
-  if (start === -1 || end === -1) return [];
-  try {
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+  if (start !== -1 && end !== -1) {
+    try {
+      const parsed = JSON.parse(cleaned.slice(start, end + 1));
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as Verdict[];
+    } catch {
+      // fall through to the tolerant object scan below
+    }
   }
+
+  // Tolerant fallback: pull individual verdict objects out of noisy output.
+  const found: Verdict[] = [];
+  const objectRe = /\{[^{}]*"index"\s*:\s*(\d+)[^{}]*\}/g;
+  let match: RegExpExecArray | null;
+  while ((match = objectRe.exec(cleaned)) !== null) {
+    const chunk = match[0];
+    const isFlag = /"verdict"\s*:\s*"flag"/i.test(chunk);
+    const isOk = /"verdict"\s*:\s*"ok"/i.test(chunk);
+    if (!isFlag && !isOk) continue;
+    found.push({ index: Number(match[1]), verdict: isFlag ? 'flag' : 'ok' });
+  }
+  return found;
 }
 
 Deno.serve(async (req) => {
@@ -114,13 +129,13 @@ Deno.serve(async (req) => {
     let stopReason = 'completed';
 
     for (let b = 0; b < requestedBatches; b++) {
-      // Pull AI-generated, still-unverified approved MCQs (oldest first).
+      // Pull still-unverified approved MCQs (oldest first). Most legacy rows are
+      // labelled 'manual' even when AI-generated, so we review the whole bank.
       const { data: rows, error: fetchError } = await admin
         .from('content_items')
         .select('id, title, description, options, correct_option, subject, topic, explanation')
         .eq('category', 'mcq')
         .eq('status', 'approved')
-        .in('source_type', ['ai_generated', 'rag_generated', 'auto_fill'])
         .is('quality_verified_at', null)
         .order('created_at', { ascending: true })
         .limit(BATCH_SIZE);
@@ -135,22 +150,28 @@ Deno.serve(async (req) => {
       }
 
       const userPrompt = rows.map((r: any, i: number) => {
-        const opts = (r.options || {}) as Record<string, string>;
+        // options is stored either as an array ["a","b",...] or as {A,B,C,D};
+        // correct_option holds either a letter or the full answer text.
+        const raw = r.options;
+        const list: string[] = Array.isArray(raw)
+          ? raw.map((o: any) => String(o ?? ''))
+          : ['A', 'B', 'C', 'D'].map((k) => String((raw || {})[k] ?? ''));
+        const letters = ['A', 'B', 'C', 'D'];
+        const correctRaw = String(r.correct_option ?? '').trim();
+        const letterIdx = letters.indexOf(correctRaw.toUpperCase());
+        const correctText = letterIdx >= 0 ? list[letterIdx] : correctRaw;
         return `#${i + 1}
 Subject: ${r.subject || '-'} | Topic: ${r.topic || '-'}
 Q: ${r.title}
-A) ${opts.A ?? ''}
-B) ${opts.B ?? ''}
-C) ${opts.C ?? ''}
-D) ${opts.D ?? ''}
-Marked correct: ${r.correct_option ?? '-'}`;
+${list.map((o, k) => `${letters[k]}) ${o}`).join('\n')}
+Marked correct: ${correctText || '-'}`;
       }).join('\n\n');
 
       let verdicts: Verdict[] = [];
       try {
         const result = await callAIWithAutoSwitch(SYSTEM_PROMPT, userPrompt, {
           temperature: 0.1,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
         }, { sourceType: 'quality_gate', supabaseClient: admin });
         verdicts = parseVerdicts(result.text);
       } catch (err: any) {

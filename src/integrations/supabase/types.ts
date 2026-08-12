@@ -586,6 +586,7 @@ export type Database = {
           meta_title: string | null
           options: Json | null
           quality_grade: string | null
+          quality_verified_at: string | null
           question_type: string | null
           questions: Json | null
           reference_material: string | null
@@ -639,6 +640,7 @@ export type Database = {
           meta_title?: string | null
           options?: Json | null
           quality_grade?: string | null
+          quality_verified_at?: string | null
           question_type?: string | null
           questions?: Json | null
           reference_material?: string | null
@@ -692,6 +694,7 @@ export type Database = {
           meta_title?: string | null
           options?: Json | null
           quality_grade?: string | null
+          quality_verified_at?: string | null
           question_type?: string | null
           questions?: Json | null
           reference_material?: string | null
