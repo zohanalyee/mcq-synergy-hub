@@ -17,7 +17,8 @@ interface Verdict {
 }
 
 const SYSTEM_PROMPT = `You are a senior Pakistani exam-board question reviewer (Punjab/Sindh/KPK/Federal boards, MDCAT/ECAT, FPSC/PPSC/NTS).
-You are given multiple-choice questions with their marked correct option.
+You are given multiple-choice questions with the FULL TEXT of the marked correct answer.
+Treat the marked answer as correct unless you are confident it is wrong.
 Flag a question ONLY when it is clearly defective:
 - the marked correct answer is factually wrong
 - more than one option is correct, or none is correct
@@ -149,15 +150,21 @@ Deno.serve(async (req) => {
       }
 
       const userPrompt = rows.map((r: any, i: number) => {
-        const opts = (r.options || {}) as Record<string, string>;
+        // options is stored either as an array ["a","b",...] or as {A,B,C,D};
+        // correct_option holds either a letter or the full answer text.
+        const raw = r.options;
+        const list: string[] = Array.isArray(raw)
+          ? raw.map((o: any) => String(o ?? ''))
+          : ['A', 'B', 'C', 'D'].map((k) => String((raw || {})[k] ?? ''));
+        const letters = ['A', 'B', 'C', 'D'];
+        const correctRaw = String(r.correct_option ?? '').trim();
+        const letterIdx = letters.indexOf(correctRaw.toUpperCase());
+        const correctText = letterIdx >= 0 ? list[letterIdx] : correctRaw;
         return `#${i + 1}
 Subject: ${r.subject || '-'} | Topic: ${r.topic || '-'}
 Q: ${r.title}
-A) ${opts.A ?? ''}
-B) ${opts.B ?? ''}
-C) ${opts.C ?? ''}
-D) ${opts.D ?? ''}
-Marked correct: ${r.correct_option ?? '-'}`;
+${list.map((o, k) => `${letters[k]}) ${o}`).join('\n')}
+Marked correct: ${correctText || '-'}`;
       }).join('\n\n');
 
       let verdicts: Verdict[] = [];
