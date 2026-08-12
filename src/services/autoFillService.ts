@@ -376,3 +376,104 @@ export async function backfillTopicIds(): Promise<{
     matched_topics: result.matched_topics || []
   };
 }
+
+// ============= Phase 3: Content Fill Sprint =============
+export interface SprintConfig {
+  enabled: boolean;
+  scope_keywords: string[];
+  target_per_topic: number;
+  daily_budget: number;
+}
+
+export async function getSprintConfig(): Promise<SprintConfig | null> {
+  return getSystemSetting<SprintConfig>('content_fill_sprint');
+}
+
+export async function updateSprintConfig(config: Partial<SprintConfig>): Promise<boolean> {
+  const current = await getSprintConfig();
+  const merged: SprintConfig = {
+    enabled: false,
+    scope_keywords: [],
+    target_per_topic: 15,
+    daily_budget: 600,
+    ...(current || {}),
+    ...config,
+  };
+  return updateSystemSetting('content_fill_sprint', merged);
+}
+
+export interface RunSummary {
+  id: string;
+  created_at: string;
+  questions_saved: number;
+  metadata: Record<string, any> | null;
+}
+
+// Recent auto-fill run summaries (live progress feed for the sprint panel)
+export async function getRecentAutoFillRuns(limit = 10): Promise<RunSummary[]> {
+  const { data, error } = await supabase
+    .from('ai_usage_logs')
+    .select('id, created_at, questions_saved, metadata')
+    .eq('source_type', 'auto_fill_run_summary')
+    .order('created_at', { ascending: false })
+    .limit(limit);
+
+  if (error) {
+    console.error('Error fetching run summaries:', error);
+    return [];
+  }
+  return (data || []) as RunSummary[];
+}
+
+// ============= Phase 4: Quality Gate =============
+export interface QualityGateResult {
+  success: boolean;
+  reviewed: number;
+  flagged: number;
+  batches_run: number;
+  stop_reason?: string;
+  error?: string;
+}
+
+export async function runQualityGate(batches = 3): Promise<QualityGateResult> {
+  const { data, error } = await supabase.functions.invoke('verify-questions', {
+    body: { batches },
+    headers: { 'x-admin-trigger': 'true' },
+  });
+
+  if (error) {
+    return { success: false, reviewed: 0, flagged: 0, batches_run: 0, error: error.message };
+  }
+  return data as QualityGateResult;
+}
+
+export async function getQualityGateStats(): Promise<{ unverified: number; flagged: number; lastRun: RunSummary | null }> {
+  const [unverifiedRes, flaggedRes, lastRunRes] = await Promise.all([
+    supabase
+      .from('content_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('category', 'mcq')
+      .eq('status', 'approved')
+      .in('source_type', ['ai_generated', 'rag_generated', 'auto_fill'])
+      .is('quality_verified_at', null),
+    supabase
+      .from('content_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('category', 'mcq')
+      .eq('status', 'pending')
+      .eq('quality_grade', 'D'),
+    supabase
+      .from('ai_usage_logs')
+      .select('id, created_at, questions_saved, metadata')
+      .eq('source_type', 'quality_gate_run_summary')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  return {
+    unverified: unverifiedRes.count || 0,
+    flagged: flaggedRes.count || 0,
+    lastRun: (lastRunRes.data as RunSummary | null) || null,
+  };
+}
