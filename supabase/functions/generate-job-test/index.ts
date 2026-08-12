@@ -763,6 +763,13 @@ Deno.serve(async (req) => {
 
     for (const section of targetSections) {
       const samples = samplesAll[section.subject] || [];
+      const sectionTarget = section.question_count || 10;
+      const sectionGrow =
+        subject && grow_target && grow_target > 0
+          ? grow_target
+          : grow_multiplier && grow_multiplier > 0
+            ? Math.ceil(sectionTarget * grow_multiplier)
+            : undefined;
       const r = await generateForSection(
         supabase,
         job_test_id,
@@ -770,7 +777,9 @@ Deno.serve(async (req) => {
         samples,
         batchNumber,
         examLabel,
+        sectionGrow,
       );
+
       results.push(r);
       // brief pause between sections
       await new Promise((r) => setTimeout(r, 500));
