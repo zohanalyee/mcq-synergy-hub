@@ -280,7 +280,12 @@ Deno.serve(async (req) => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${serviceKey}`,
           },
-          body: JSON.stringify({ job_test_id: row.job_test_id, subject: row.subject }),
+          body: JSON.stringify({
+            job_test_id: row.job_test_id,
+            subject: row.subject,
+            ...(row.grow_target ? { grow_target: row.grow_target } : {}),
+          }),
+
         });
 
         const payload = await resp.json().catch(() => ({}));
