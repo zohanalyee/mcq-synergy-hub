@@ -23,6 +23,7 @@ import ContentGapQueue from "./ContentGapQueue";
 import AutoFillSettings from "./AutoFillSettings";
 import QuotaMonitor from "../QuotaMonitor";
 import SprintModePanel from "./SprintModePanel";
+import MockTestEnginePanel from "./MockTestEnginePanel";
 
 const AutoFillDashboard = () => {
   const [usage, setUsage] = useState<AIUsageToday | null>(null);
