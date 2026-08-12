@@ -39,6 +39,87 @@ async function kickNextIfPending(admin: any, supabaseUrl: string, serviceKey: st
   }).catch((e) => console.error("[jobtest-queue] next-kick failed:", e?.message || e));
 }
 
+/**
+ * Phase 2 — popularity-first pool growth.
+ * When the queue is idle, look at which mock tests users are actually taking
+ * (attempts + distinct users, 14-day window) and enqueue per-section pool
+ * growth for the most popular tests whose pool is below its growth target.
+ * Generation stays background + draft-only; approval remains manual.
+ */
+async function enqueuePopularTests(
+  admin: any,
+  maxTests = 3,
+  maxRows = 10,
+): Promise<{ enqueued: number; considered: number; error?: string }> {
+  const { data: pop, error } = await admin.rpc("get_mock_test_popularity", { p_days: 14 });
+  if (error) {
+    console.error("[jobtest-queue] popularity rpc failed:", error.message);
+    return { enqueued: 0, considered: 0, error: error.message };
+  }
+
+  const candidates = (pop || [])
+    .filter((r: any) => r.definition_id && Number(r.attempts) > 0 && Number(r.pool_deficit) > 0)
+    .slice(0, maxTests);
+
+  if (candidates.length === 0) return { enqueued: 0, considered: 0 };
+
+  const { data: active } = await admin
+    .from("job_test_generation_queue")
+    .select("job_test_id, subject")
+    .in("status", ["pending", "processing"]);
+  const activeKeys = new Set(
+    (active || []).map((r: any) => `${r.job_test_id}|${r.subject}`),
+  );
+
+  const rows: any[] = [];
+  for (const t of candidates) {
+    if (rows.length >= maxRows) break;
+    const { data: def } = await admin
+      .from("job_test_definitions")
+      .select("syllabus, pool_multiplier")
+      .eq("id", t.definition_id)
+      .maybeSingle();
+    const sections = (def?.syllabus?.sections || []) as any[];
+    const multiplier = Math.max(1, Number(def?.pool_multiplier ?? t.pool_multiplier ?? 2));
+
+    for (const s of sections) {
+      if (rows.length >= maxRows) break;
+      const sectionTarget = Number(s?.question_count || 0);
+      if (!s?.subject || sectionTarget <= 0) continue;
+      if (activeKeys.has(`${t.definition_id}|${s.subject}`)) continue;
+
+      const growTarget = Math.ceil(sectionTarget * multiplier);
+      const { count } = await admin
+        .from("job_test_questions")
+        .select("id", { count: "exact", head: true })
+        .eq("job_test_id", t.definition_id)
+        .eq("subject", s.subject);
+      if ((count || 0) >= growTarget) continue;
+
+      rows.push({
+        job_test_id: t.definition_id,
+        subject: s.subject,
+        target_count: sectionTarget,
+        grow_target: growTarget,
+        status: "pending",
+      });
+    }
+  }
+
+  if (rows.length === 0) return { enqueued: 0, considered: candidates.length };
+
+  const { error: insErr } = await admin.from("job_test_generation_queue").insert(rows);
+  if (insErr) {
+    console.error("[jobtest-queue] popularity enqueue failed:", insErr.message);
+    return { enqueued: 0, considered: candidates.length, error: insErr.message };
+  }
+
+  console.log(
+    `[jobtest-queue] 📈 popularity fill queued ${rows.length} section(s) across ${candidates.length} popular test(s)`,
+  );
+  return { enqueued: rows.length, considered: candidates.length };
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
