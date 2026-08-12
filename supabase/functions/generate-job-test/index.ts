@@ -274,6 +274,8 @@ async function generateForSection(
   samples: SampleQ[],
   batchNumber: number,
   examLabel?: string,
+  /** Absolute desired pool size for THIS section (Phase 1 pool growth). */
+  growTarget?: number,
 ) {
   console.log(`\n${"=".repeat(60)}`);
   console.log(`[GENERATE] Subject: ${section.subject}`);
