@@ -14,6 +14,13 @@ interface AutoFillConfig {
   run_target?: number;
   difficulty_weights?: { easy?: number; medium?: number; hard?: number };
 }
+interface SprintConfig {
+  enabled: boolean;
+  scope_keywords?: string[];
+  target_per_topic?: number;
+  daily_budget?: number;
+}
+
 
 interface AutoFillQueueItem {
   topic_id: string;
