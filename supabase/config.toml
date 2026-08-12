@@ -96,3 +96,6 @@ verify_jwt = false
 verify_jwt = false
 
 
+
+[functions.verify-questions]
+verify_jwt = false
