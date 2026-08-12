@@ -656,14 +656,26 @@ Deno.serve(async (req) => {
     }
 
     const body = await req.json().catch(() => ({}));
-    const { job_test_id, subject, triggering_user_id, topup_reason } = body as {
+    const {
+      job_test_id,
+      subject,
+      triggering_user_id,
+      topup_reason,
+      grow_target,
+      grow_multiplier,
+    } = body as {
       job_test_id?: string;
       subject?: string;
       triggering_user_id?: string;
       topup_reason?: string;
+      /** Absolute desired pool for the requested subject. */
+      grow_target?: number;
+      /** Pool multiple of each section's exam-share target (e.g. 5 = 5×). */
+      grow_multiplier?: number;
     };
 
-    console.log(`\n[REQUEST] generate-job-test job_test_id=${job_test_id} subject=${subject || "(all)"} topup=${topup_reason || "(none)"} user=${triggering_user_id || "(none)"}`);
+    console.log(`\n[REQUEST] generate-job-test job_test_id=${job_test_id} subject=${subject || "(all)"} grow_target=${grow_target ?? "-"} grow_multiplier=${grow_multiplier ?? "-"} topup=${topup_reason || "(none)"} user=${triggering_user_id || "(none)"}`);
+
 
     if (!job_test_id) {
       return new Response(
