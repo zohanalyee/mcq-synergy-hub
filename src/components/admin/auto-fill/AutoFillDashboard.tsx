@@ -23,6 +23,7 @@ import ContentGapQueue from "./ContentGapQueue";
 import AutoFillSettings from "./AutoFillSettings";
 import QuotaMonitor from "../QuotaMonitor";
 import SprintModePanel from "./SprintModePanel";
+import MockTestEnginePanel from "./MockTestEnginePanel";
 
 const AutoFillDashboard = () => {
   const [usage, setUsage] = useState<AIUsageToday | null>(null);
@@ -338,6 +339,8 @@ const AutoFillDashboard = () => {
       {/* Sprint mode + Quality gate */}
       <SprintModePanel />
 
+      {/* Unified content engine: popular mock tests needing pool growth */}
+      <MockTestEnginePanel />
 
       {/* Priority Queue */}
       <ContentGapQueue 
@@ -345,6 +348,7 @@ const AutoFillDashboard = () => {
         totalCount={queueCount}
         onRefresh={loadData}
       />
+
     </div>
   );
 };

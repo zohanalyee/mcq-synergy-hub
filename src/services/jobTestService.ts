@@ -1054,3 +1054,111 @@ export const getAllTestsCoverage = async (): Promise<TestCoverageSummary[]> => {
   );
   return results;
 };
+
+// ---------- Phase 1/2: Popularity-driven pool growth ----------
+
+export interface MockTestPopularity {
+  definition_id: string | null;
+  test_id: string;
+  title: string;
+  slug: string;
+  attempts: number;
+  distinct_users: number;
+  last_attempt_at: string | null;
+  exam_length: number;
+  approved_pool: number;
+  pool_multiplier: number;
+  grow_target: number;
+  pool_deficit: number;
+}
+
+/** Popularity + pool health for every mock test (admin only, 14-day window). */
+export const getMockTestPopularity = async (
+  days = 14,
+): Promise<MockTestPopularity[]> => {
+  const { data, error } = await (supabase as any).rpc("get_mock_test_popularity", {
+    p_days: days,
+  });
+  if (error) {
+    console.error("Error loading mock test popularity:", error);
+    return [];
+  }
+  return ((data || []) as any[]).map((r) => ({
+    ...r,
+    attempts: Number(r.attempts || 0),
+    distinct_users: Number(r.distinct_users || 0),
+    approved_pool: Number(r.approved_pool || 0),
+    pool_multiplier: Number(r.pool_multiplier || 2),
+    grow_target: Number(r.grow_target || 0),
+    pool_deficit: Number(r.pool_deficit || 0),
+  })) as MockTestPopularity[];
+};
+
+/**
+ * Grow a mock test's question pool beyond the exam length so repeat attempts
+ * stay fresh. Queues one background row per syllabus section with an explicit
+ * `grow_target` (multiplier × the section's exam-share target). Questions land
+ * as drafts — approval stays manual.
+ */
+export const growJobTestPool = async (
+  definitionId: string,
+  multiplier = 5,
+): Promise<{ success: boolean; queued: number; message: string }> => {
+  const def = await getJobTestDefinition(definitionId);
+  const sections = def?.syllabus?.sections || [];
+  if (sections.length === 0) {
+    return { success: false, queued: 0, message: "No syllabus sections found for this test" };
+  }
+
+  const { data: existing } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .select("subject")
+    .eq("job_test_id", definitionId)
+    .in("status", ["pending", "processing"]);
+  const activeSubjects = new Set((existing || []).map((r: any) => r.subject));
+
+  const questions = await getQuestionsForDefinition(definitionId);
+  const totalBySubject = new Map<string, number>();
+  for (const q of questions) {
+    totalBySubject.set(q.subject, (totalBySubject.get(q.subject) || 0) + 1);
+  }
+
+  const rows = sections
+    .filter((s) => s.subject && (s.question_count || 0) > 0 && !activeSubjects.has(s.subject))
+    .map((s) => ({
+      job_test_id: definitionId,
+      subject: s.subject,
+      target_count: s.question_count || 0,
+      grow_target: Math.ceil((s.question_count || 0) * multiplier),
+      status: "pending",
+    }))
+    .filter((r) => (totalBySubject.get(r.subject) || 0) < r.grow_target);
+
+  if (rows.length === 0) {
+    return { success: true, queued: 0, message: "Pool already at the growth target" };
+  }
+
+  const { error } = await (supabase as any)
+    .from("job_test_generation_queue")
+    .insert(rows);
+  if (error) {
+    console.error("Error queuing pool growth:", error);
+    return { success: false, queued: 0, message: error.message };
+  }
+
+  supabase.functions.invoke("process-jobtest-queue").catch(() => {});
+  return {
+    success: true,
+    queued: rows.length,
+    message: `Queued pool growth for ${rows.length} section(s) at ${multiplier}×`,
+  };
+};
+
+/** Manually trigger one popularity-first fill pass (queue popular tests). */
+export const runPopularityFill = async (): Promise<{ success: boolean; message: string }> => {
+  const { data, error } = await supabase.functions.invoke("process-jobtest-queue", {
+    body: { popularity_fill: true },
+  });
+  if (error) return { success: false, message: error.message };
+  return { success: true, message: data?.message || "Popularity fill triggered" };
+};
