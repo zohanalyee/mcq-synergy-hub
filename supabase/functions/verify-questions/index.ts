@@ -31,13 +31,27 @@ function parseVerdicts(text: string): Verdict[] {
   const cleaned = text.replace(/```json/gi, '').replace(/```/g, '').trim();
   const start = cleaned.indexOf('[');
   const end = cleaned.lastIndexOf(']');
-  if (start === -1 || end === -1) return [];
-  try {
-    const parsed = JSON.parse(cleaned.slice(start, end + 1));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
+  if (start !== -1 && end !== -1) {
+    try {
+      const parsed = JSON.parse(cleaned.slice(start, end + 1));
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed as Verdict[];
+    } catch {
+      // fall through to the tolerant object scan below
+    }
   }
+
+  // Tolerant fallback: pull individual verdict objects out of noisy output.
+  const found: Verdict[] = [];
+  const objectRe = /\{[^{}]*"index"\s*:\s*(\d+)[^{}]*\}/g;
+  let match: RegExpExecArray | null;
+  while ((match = objectRe.exec(cleaned)) !== null) {
+    const chunk = match[0];
+    const isFlag = /"verdict"\s*:\s*"flag"/i.test(chunk);
+    const isOk = /"verdict"\s*:\s*"ok"/i.test(chunk);
+    if (!isFlag && !isOk) continue;
+    found.push({ index: Number(match[1]), verdict: isFlag ? 'flag' : 'ok' });
+  }
+  return found;
 }
 
 Deno.serve(async (req) => {
@@ -150,7 +164,7 @@ Marked correct: ${r.correct_option ?? '-'}`;
       try {
         const result = await callAIWithAutoSwitch(SYSTEM_PROMPT, userPrompt, {
           temperature: 0.1,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 4096,
         }, { sourceType: 'quality_gate', supabaseClient: admin });
         verdicts = parseVerdicts(result.text);
       } catch (err: any) {
