@@ -222,11 +222,37 @@ Deno.serve(async (req) => {
     if (fetchErr) throw new Error(`Fetch queue failed: ${fetchErr.message}`);
 
     if (!rows || rows.length === 0) {
+      // Idle queue → popularity-first pool growth (skipped for chained kicks
+      // so a drain loop never re-enqueues on itself).
+      const body = await req.json().catch(() => ({} as any));
+      if (!body?.chained && body?.popularity_fill !== false) {
+        const fill = await enqueuePopularTests(admin);
+        if (fill.enqueued > 0) {
+          await kickNextIfPending(admin, supabaseUrl, serviceKey);
+          return new Response(
+            JSON.stringify({
+              processed: 0,
+              message: `Popularity fill queued ${fill.enqueued} section(s)`,
+              popularity_fill: fill,
+            }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            processed: 0,
+            message: "No pending queue items",
+            popularity_fill: fill,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
       return new Response(
         JSON.stringify({ processed: 0, message: "No pending queue items" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
+
 
     const results: any[] = [];
 
