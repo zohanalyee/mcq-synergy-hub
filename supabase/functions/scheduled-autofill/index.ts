@@ -355,6 +355,8 @@ Deno.serve(async (req) => {
         questions_saved: totalQuestionsSaved,
         run_target: HARD_RUN_TARGET,
         batch_size: batchSize,
+        sprint_mode: sprintOn,
+        sprint_scope: sprintOn ? sprintKeywords : [],
         stop_reason: stopReason || 'completed',
         queue_error: queueError,
         duration_ms: Date.now() - runStartedAt,
@@ -372,8 +374,11 @@ Deno.serve(async (req) => {
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         run_target: HARD_RUN_TARGET,
+        sprint_mode: sprintOn,
+        sprint_scope: sprintOn ? sprintKeywords : [],
         queue_error: queueError,
         stop_reason: stopReason
+
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
