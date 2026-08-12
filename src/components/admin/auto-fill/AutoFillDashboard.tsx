@@ -338,6 +338,8 @@ const AutoFillDashboard = () => {
       {/* Sprint mode + Quality gate */}
       <SprintModePanel />
 
+      {/* Unified content engine: popular mock tests needing pool growth */}
+      <MockTestEnginePanel />
 
       {/* Priority Queue */}
       <ContentGapQueue 
@@ -345,6 +347,7 @@ const AutoFillDashboard = () => {
         totalCount={queueCount}
         onRefresh={loadData}
       />
+
     </div>
   );
 };
