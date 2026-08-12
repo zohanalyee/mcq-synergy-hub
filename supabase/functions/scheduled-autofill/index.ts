@@ -144,15 +144,19 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Check if auto-fill is enabled
-    const { data: configData } = await supabase
+    // Check if auto-fill is enabled + read Phase 3 sprint config
+    const { data: settingsRows } = await supabase
       .from('system_settings')
-      .select('value')
-      .eq('key', 'auto_fill_config')
-      .single();
+      .select('key, value')
+      .in('key', ['auto_fill_config', 'content_fill_sprint']);
 
-    const config = configData?.value as AutoFillConfig | null;
-    
+    const config = (settingsRows?.find((r: any) => r.key === 'auto_fill_config')?.value ?? null) as AutoFillConfig | null;
+    const sprint = (settingsRows?.find((r: any) => r.key === 'content_fill_sprint')?.value ?? null) as SprintConfig | null;
+    const sprintOn = !!sprint?.enabled;
+    const sprintKeywords = (sprint?.scope_keywords || [])
+      .map((k) => String(k).trim().toLowerCase())
+      .filter((k) => k.length > 1);
+
     if (!config?.enabled) {
       console.log('[Scheduled Auto-Fill] Auto-fill is disabled. Exiting.');
       return new Response(
@@ -165,13 +169,16 @@ Deno.serve(async (req) => {
     // DAILY_QUOTA_LIMIT check in quotaManager (1400 requests/day).
     const HARD_BATCH_LIMIT = 20;
     const DEFAULT_RUN_TARGET = 600;
-    const HARD_RUN_TARGET = Math.max(
-      10,
-      Math.min(config.run_target || DEFAULT_RUN_TARGET, 1500)
-    );
+    const requestedTarget = sprintOn
+      ? (sprint?.daily_budget || config.run_target || DEFAULT_RUN_TARGET)
+      : (config.run_target || DEFAULT_RUN_TARGET);
+    const HARD_RUN_TARGET = Math.max(10, Math.min(requestedTarget, 1500));
     const HARD_NIGHTLY_LIMIT = HARD_RUN_TARGET;
 
-    const batchSize = Math.min(config.batch_size || 15, HARD_BATCH_LIMIT);
+    const requestedBatch = sprintOn
+      ? (sprint?.target_per_topic || config.batch_size || 15)
+      : (config.batch_size || 15);
+    const batchSize = Math.min(requestedBatch, HARD_BATCH_LIMIT);
 
     // Difficulty rotation from configured weights (default 20/60/20).
     const weights = config.difficulty_weights || { easy: 20, medium: 60, hard: 20 };
@@ -182,6 +189,17 @@ Deno.serve(async (req) => {
     ];
     let difficultyIndex = 0;
 
+    // Sprint scope filter: keep only topics whose exam/board/class/subject/topic
+    // text matches one of the configured priority keywords.
+    const inSprintScope = (item: AutoFillQueueItem): boolean => {
+      if (!sprintOn || sprintKeywords.length === 0) return true;
+      const haystack = [item.system_name, item.level_name, item.subject_name, item.topic_name]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return sprintKeywords.some((k) => haystack.includes(k));
+    };
+
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
     let stopReason = '';
@@ -189,7 +207,8 @@ Deno.serve(async (req) => {
     const attemptedTopicIds = new Set<string>();
     const runStartedAt = Date.now();
 
-    console.log(`[Scheduled Auto-Fill] Limits: batch=${batchSize}, run_target=${HARD_RUN_TARGET}`);
+    console.log(`[Scheduled Auto-Fill] Limits: batch=${batchSize}, run_target=${HARD_RUN_TARGET}, sprint=${sprintOn ? sprintKeywords.join('|') || 'all' : 'off'}`);
+
 
     // Continuous loop until limit hit or no gaps
     while (totalQuestionsSaved < HARD_NIGHTLY_LIMIT) {
