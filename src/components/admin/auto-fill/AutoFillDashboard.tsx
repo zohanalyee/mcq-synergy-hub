@@ -334,6 +334,10 @@ const AutoFillDashboard = () => {
         </motion.div>
       )}
 
+      {/* Sprint mode + Quality gate */}
+      <SprintModePanel />
+
+
       {/* Priority Queue */}
       <ContentGapQueue 
         topPriorityTopics={topPriorityTopics} 
