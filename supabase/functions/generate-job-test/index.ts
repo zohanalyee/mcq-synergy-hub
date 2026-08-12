@@ -302,8 +302,19 @@ async function generateForSection(
   } catch (_e) { /* fall back to 2.0 */ }
   const poolTarget = Math.ceil(target * poolMultiplier);
 
+  // ===== Phase 1 — Growth target =====
+  // Popular tests must be able to grow their pool BEYOND the exam-share target,
+  // otherwise a 100-Q test with 200 questions never generates again and users
+  // keep seeing repeats. `growTarget` (admin "Grow pool" / queue row) wins;
+  // otherwise we fall back to the rotation pool (target × pool_multiplier).
+  const desiredPool = Math.max(
+    target,
+    growTarget && growTarget > 0 ? Math.ceil(growTarget) : poolTarget,
+  );
+
   // ===== DB PRECHECK (reuse-first) =====
   let existingApproved = 0;
+  let existingTotal = 0;
   try {
     const { count } = await supabase
       .from("job_test_questions")
@@ -312,15 +323,24 @@ async function generateForSection(
       .eq("subject", section.subject)
       .eq("admin_approved", true);
     existingApproved = count ?? 0;
+    const { count: totalCount } = await supabase
+      .from("job_test_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("job_test_id", jobTestId)
+      .eq("subject", section.subject);
+    existingTotal = totalCount ?? existingApproved;
   } catch (e) {
     console.warn(`[PRECHECK] count failed for ${section.subject}:`, (e as Error).message);
   }
 
-  const deficit = Math.max(0, target - existingApproved);       // AI trigger
-  const reuseNeed = Math.max(0, poolTarget - existingApproved); // reuse enrichment
+  // AI trigger counts drafts too, so repeated runs never re-generate questions
+  // that are already sitting in the approval queue.
+  const deficit = Math.max(0, desiredPool - existingTotal);
+  const reuseNeed = Math.max(0, desiredPool - existingApproved); // reuse enrichment
   console.log(
-    `[PRECHECK] ${section.subject}: existing_approved=${existingApproved} target=${target} pool_target=${poolTarget} ai_deficit=${deficit} reuse_need=${reuseNeed}`,
+    `[PRECHECK] ${section.subject}: existing_approved=${existingApproved} existing_total=${existingTotal} target=${target} pool_target=${poolTarget} desired_pool=${desiredPool} ai_deficit=${deficit} reuse_need=${reuseNeed}`,
   );
+
 
   // ===== PHASE 3 — Cross-source LINK-only reuse layer =====
   // Runs whenever reuseNeed>0 (even when AI deficit=0), so the pool keeps
