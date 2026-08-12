@@ -454,7 +454,6 @@ export async function getQualityGateStats(): Promise<{ unverified: number; flagg
       .select('id', { count: 'exact', head: true })
       .eq('category', 'mcq')
       .eq('status', 'approved')
-      .in('source_type', ['ai_generated', 'rag_generated', 'auto_fill'])
       .is('quality_verified_at', null),
     supabase
       .from('content_items')

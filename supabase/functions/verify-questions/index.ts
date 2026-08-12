@@ -114,13 +114,13 @@ Deno.serve(async (req) => {
     let stopReason = 'completed';
 
     for (let b = 0; b < requestedBatches; b++) {
-      // Pull AI-generated, still-unverified approved MCQs (oldest first).
+      // Pull still-unverified approved MCQs (oldest first). Most legacy rows are
+      // labelled 'manual' even when AI-generated, so we review the whole bank.
       const { data: rows, error: fetchError } = await admin
         .from('content_items')
         .select('id, title, description, options, correct_option, subject, topic, explanation')
         .eq('category', 'mcq')
         .eq('status', 'approved')
-        .in('source_type', ['ai_generated', 'rag_generated', 'auto_fill'])
         .is('quality_verified_at', null)
         .order('created_at', { ascending: true })
         .limit(BATCH_SIZE);
