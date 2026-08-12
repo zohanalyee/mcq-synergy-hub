@@ -198,7 +198,8 @@ Deno.serve(async (req) => {
       // (or an earlier queue run) has since filled/approved enough questions.
       // Re-check the LIVE approved count before spending any AI. If the target
       // is already met, skip generation entirely — zero AI call, zero credits.
-      const target = row.target_count || 0;
+      // A grow row asks for a bigger pool than the exam-share target; honour it.
+      const target = row.grow_target || row.target_count || 0;
       if (target > 0) {
         const { count: approvedCount, error: countErr } = await admin
           .from("job_test_questions")
