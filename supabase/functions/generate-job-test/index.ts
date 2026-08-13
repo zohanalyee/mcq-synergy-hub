@@ -443,7 +443,7 @@ async function generateForSection(
         .from("job_test_questions")
         .select("id, question, options, correct_answer, explanation, difficulty, topic, concept_group_id")
         .eq("admin_approved", true)
-        .eq("subject", section.subject)
+        .in("subject", subjectPool)
         .neq("job_test_id", jobTestId)
         .order("usage_count", { ascending: true, nullsFirst: true })
         .order("last_used_at", { ascending: true, nullsFirst: true })
