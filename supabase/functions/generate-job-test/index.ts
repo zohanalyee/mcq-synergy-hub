@@ -345,7 +345,31 @@ async function generateForSection(
   // ===== PHASE 3 — Cross-source LINK-only reuse layer =====
   // Runs whenever reuseNeed>0 (even when AI deficit=0), so the pool keeps
   // growing beyond the target for rotation variety.
+  //
+  // Subject-alias map: equivalent section names across tests (e.g. "General
+  // Knowledge" vs "General Knowledge (Pakistan & Current Affairs)") share one
+  // canonical pool, so court/clerk posts with overlapping syllabi reuse each
+  // other's questions instead of paying AI twice. Display names never change.
+  let subjectPool: string[] = [section.subject];
+  try {
+    const { data: aliasRows, error: aliasErr } = await supabase.rpc("get_subject_aliases", {
+      p_subject: section.subject,
+    });
+    if (!aliasErr && Array.isArray(aliasRows) && aliasRows.length > 0) {
+      const names = aliasRows
+        .map((r: any) => (typeof r === "string" ? r : r?.subject))
+        .filter((s: any): s is string => typeof s === "string" && s.trim().length > 0);
+      if (names.length > 0) subjectPool = Array.from(new Set(names));
+    }
+  } catch (e) {
+    console.warn(`[REUSE] alias lookup failed:`, (e as Error).message);
+  }
+  if (subjectPool.length > 1) {
+    console.log(`[REUSE] ${section.subject}: alias pool = ${subjectPool.join(" | ")}`);
+  }
+
   const seenGroups = new Set<string>();
+
   let crossReused = 0;
   const reuseInsertRows: any[] = [];
   const ciSourceIdsToBump: string[] = [];
@@ -372,7 +396,7 @@ async function generateForSection(
       .select("id, title, options, correct_option, explanation, difficulty, topic, concept_group_id")
       .eq("category", "mcq")
       .eq("status", "approved")
-      .eq("subject", section.subject)
+      .in("subject", subjectPool)
       .order("usage_count", { ascending: true, nullsFirst: true })
       .order("last_used_at", { ascending: true, nullsFirst: true })
       .limit(need * 4);
@@ -419,7 +443,7 @@ async function generateForSection(
         .from("job_test_questions")
         .select("id, question, options, correct_answer, explanation, difficulty, topic, concept_group_id")
         .eq("admin_approved", true)
-        .eq("subject", section.subject)
+        .in("subject", subjectPool)
         .neq("job_test_id", jobTestId)
         .order("usage_count", { ascending: true, nullsFirst: true })
         .order("last_used_at", { ascending: true, nullsFirst: true })
