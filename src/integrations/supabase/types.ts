@@ -2834,6 +2834,24 @@ export type Database = {
         }
         Relationships: []
       }
+      subject_aliases: {
+        Row: {
+          alias: string
+          canonical: string
+          created_at: string
+        }
+        Insert: {
+          alias: string
+          canonical: string
+          created_at?: string
+        }
+        Update: {
+          alias?: string
+          canonical?: string
+          created_at?: string
+        }
+        Relationships: []
+      }
       subjects: {
         Row: {
           admin_reviewed_at: string | null
@@ -4110,6 +4128,12 @@ export type Database = {
           average_score: number
           subject: string
           tests_count: number
+        }[]
+      }
+      get_subject_aliases: {
+        Args: { p_subject: string }
+        Returns: {
+          subject: string
         }[]
       }
       get_topic_inventory: {
