@@ -396,7 +396,7 @@ async function generateForSection(
       .select("id, title, options, correct_option, explanation, difficulty, topic, concept_group_id")
       .eq("category", "mcq")
       .eq("status", "approved")
-      .eq("subject", section.subject)
+      .in("subject", subjectPool)
       .order("usage_count", { ascending: true, nullsFirst: true })
       .order("last_used_at", { ascending: true, nullsFirst: true })
       .limit(need * 4);
