@@ -73,6 +73,28 @@ export const signInWithGoogle = async () => {
   }
 };
 
+// Sign in with Facebook OAuth
+export const signInWithFacebook = async () => {
+  try {
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'facebook',
+      options: {
+        redirectTo: `${window.location.origin}/analytics`,
+      },
+    });
+
+    if (error) {
+      console.error('Facebook sign in error:', error);
+      throw error;
+    }
+
+    return { data, error: null };
+  } catch (error) {
+    console.error('Failed to sign in with Facebook:', error);
+    return { data: null, error };
+  }
+};
+
 // Sign out
 export const signOut = async () => {
   try {

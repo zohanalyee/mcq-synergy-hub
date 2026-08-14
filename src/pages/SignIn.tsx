@@ -4,7 +4,7 @@ import SEOHead from '@/components/SEOHead';
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { signInWithGoogle } from "@/services/authService";
+import { signInWithGoogle, signInWithFacebook } from "@/services/authService";
 import { getIntentRaw, clearIntentRaw } from "@/hooks/useAuthIntent";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,6 +26,12 @@ const GoogleIcon = () => (
   </svg>
 );
 
+const FacebookIcon = () => (
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="#1877F2" xmlns="http://www.w3.org/2000/svg">
+    <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.412c0-3.017 1.792-4.684 4.533-4.684 1.312 0 2.686.235 2.686.235v2.955H15.83c-1.49 0-1.955.929-1.955 1.882v2.273h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z"/>
+  </svg>
+);
+
 const HCAPTCHA_SITE_KEY = import.meta.env.VITE_HCAPTCHA_SITE_KEY || '10000000-ffff-ffff-ffff-000000000001';
 
 interface SignInPageProps {
@@ -42,6 +48,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const resolvedDefaultTab: AuthTab = queryTab === "signup" || queryTab === "signin" ? queryTab : defaultTab;
   const [activeTab, setActiveTab] = useState<AuthTab>(resolvedDefaultTab);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState<AuthTab | null>(null);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
@@ -114,6 +121,17 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     } catch (error: any) {
       toast.error("Google Sign In Failed", { description: error.message || "Failed to sign in with Google." });
       setIsGoogleLoading(false);
+    }
+  };
+
+  const handleFacebookLogin = async () => {
+    setIsFacebookLoading(true);
+    try {
+      const { error } = await signInWithFacebook();
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error("Facebook Sign In Failed", { description: error.message || "Failed to sign in with Facebook." });
+      setIsFacebookLoading(false);
     }
   };
 
@@ -250,18 +268,32 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
             </p>
           </div>
 
-          {/* Google OAuth */}
-          <button
-            onClick={handleGoogleLogin}
-            disabled={isGoogleLoading || isLoading}
-            className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
-          >
-            {isGoogleLoading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
-            ) : (
-              <><GoogleIcon /> Continue with Google</>
-            )}
-          </button>
+          {/* Social OAuth */}
+          <div className="space-y-2.5">
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading || isFacebookLoading || isLoading}
+              className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
+            >
+              {isGoogleLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
+              ) : (
+                <><GoogleIcon /> Continue with Google</>
+              )}
+            </button>
+
+            <button
+              onClick={handleFacebookLogin}
+              disabled={isFacebookLoading || isGoogleLoading || isLoading}
+              className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
+            >
+              {isFacebookLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
+              ) : (
+                <><FacebookIcon /> Continue with Facebook</>
+              )}
+            </button>
+          </div>
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-6">
