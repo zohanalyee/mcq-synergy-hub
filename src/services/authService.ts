@@ -17,7 +17,7 @@ export const getAuthOrigin = (): string => {
 // Sign up with email and password
 export const signUp = async (email: string, password: string, captchaToken?: string) => {
   try {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${getAuthOrigin()}/`;
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -68,7 +68,7 @@ export const signInWithGoogle = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/analytics`,
+        redirectTo: `${getAuthOrigin()}/analytics`,
       },
     });
 
@@ -90,7 +90,7 @@ export const signInWithFacebook = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
-        redirectTo: `${window.location.origin}/analytics`,
+        redirectTo: `${getAuthOrigin()}/analytics`,
       },
     });
 
