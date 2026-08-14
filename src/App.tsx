@@ -322,7 +322,9 @@ const App = () => {
                       <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
                       <Route path="/verify-email" element={<VerifyEmail />} />
                       <Route path="/unsubscribe" element={<Unsubscribe />} />
+                      <Route path="/delete-account" element={<DeleteAccount />} />
                       <Route path="/complete-profile" element={<CompleteProfile />} />
+
                       
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
