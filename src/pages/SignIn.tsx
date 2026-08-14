@@ -124,6 +124,17 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
     }
   };
 
+  const handleFacebookLogin = async () => {
+    setIsFacebookLoading(true);
+    try {
+      const { error } = await signInWithFacebook();
+      if (error) throw error;
+    } catch (error: any) {
+      toast.error("Facebook Sign In Failed", { description: error.message || "Failed to sign in with Facebook." });
+      setIsFacebookLoading(false);
+    }
+  };
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setServerError(null);
