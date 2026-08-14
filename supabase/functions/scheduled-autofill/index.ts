@@ -260,7 +260,7 @@ Deno.serve(async (req) => {
       }
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
-      const queue = rawQueue.filter(inSprintScope);
+      const queue = applySprintScope(rawQueue);
       const topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
 
       if (!topic) {
