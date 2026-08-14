@@ -85,6 +85,10 @@ const DeleteAccountCard = () => {
           <li>Your login (email or social sign-in) is removed permanently.</li>
           <li>Profile, test attempts, badges, credits, and email preferences are deleted.</li>
           <li>You will need to create a new account to use MCQsAI again.</li>
+          <li>
+            Your Facebook, Google, or Microsoft account itself is <span className="text-foreground font-medium">not</span> deleted —
+            only its connection to MCQsAI is removed.
+          </li>
         </ul>
 
         <AlertDialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setConfirmText(''); }}>
