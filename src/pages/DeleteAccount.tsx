@@ -136,6 +136,11 @@ const DeleteAccount = () => {
               removed.
             </p>
             <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+              <span className="text-foreground font-medium">Please note:</span> deleting your MCQsAI
+              account does not delete your Facebook, Google, or Microsoft account. We only remove the
+              connection between that account and MCQsAI, along with the data we stored about you.
+            </p>
+            <p className="text-sm text-muted-foreground leading-relaxed mt-2">
               See our{' '}
               <Link to="/privacy-policy" className="underline text-foreground">
                 Privacy Policy
