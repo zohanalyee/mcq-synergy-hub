@@ -70,7 +70,7 @@ export const ExamPageSchema: React.FC<ExamPageSchemaProps> = ({
     <Helmet>
       {schemas.map((schema, i) => (
         <script key={i} type="application/ld+json">
-          {JSON.stringify(schema)}
+          {safeJsonLd(schema)}
         </script>
       ))}
     </Helmet>
