@@ -22,6 +22,10 @@ import GA4PageTracker from "./components/GA4PageTracker";
 import CampaignTracker from "./components/CampaignTracker";
 import EmailPrefSync from "./components/EmailPrefSync";
 import Unsubscribe from "./pages/Unsubscribe";
+// Public data-deletion page (Meta Facebook Login requirement) — eager so it
+// prerenders with real body content for crawlers and Meta's reviewers.
+import DeleteAccount from "./pages/DeleteAccount";
+
 import TopProgressBar from "./components/TopProgressBar";
 import ToolRouteSEO from "./components/seo/ToolRouteSEO";
 import GlobalCanonical from "./components/seo/GlobalCanonical";
