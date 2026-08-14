@@ -48,6 +48,7 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
   const resolvedDefaultTab: AuthTab = queryTab === "signup" || queryTab === "signin" ? queryTab : defaultTab;
   const [activeTab, setActiveTab] = useState<AuthTab>(resolvedDefaultTab);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isFacebookLoading, setIsFacebookLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState<AuthTab | null>(null);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const [showSignUpPassword, setShowSignUpPassword] = useState(false);
