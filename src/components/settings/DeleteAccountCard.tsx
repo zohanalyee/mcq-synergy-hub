@@ -44,10 +44,17 @@ const DeleteAccountCard = () => {
         description: 'Your account and personal data have been permanently removed.',
       });
       setOpen(false);
+      // The auth user no longer exists, so a server-side sign-out will fail.
+      // Clear the local session explicitly so no stale token remains.
+      try {
+        await supabase.auth.signOut({ scope: 'local' });
+      } catch {
+        /* ignore */
+      }
       try {
         await signOut();
       } catch {
-        await supabase.auth.signOut();
+        /* ignore */
       }
       navigate('/', { replace: true });
     } catch (err: any) {
