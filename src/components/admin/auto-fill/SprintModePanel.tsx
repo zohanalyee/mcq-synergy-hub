@@ -323,8 +323,12 @@ const SprintModePanel = () => {
             {isVerifying ? "Reviewing..." : "Review next 60 questions"}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Runs 3 batches of 20 per click on the free Gemini tier, so review cost stays at zero.
+            Auto-review runs hourly (~200 questions per run) on the free Gemini tier and skips when
+            the daily quota is low. Backlog clears in about{" "}
+            {Math.max(1, Math.ceil((quality?.unverified ?? 0) / 4800))} day(s) at that rate. Use the
+            button above for an extra 60-question burst.
           </p>
+
         </CardContent>
       </Card>
     </div>
