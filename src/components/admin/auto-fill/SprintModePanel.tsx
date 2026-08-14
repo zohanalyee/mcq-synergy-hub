@@ -179,14 +179,57 @@ const SprintModePanel = () => {
                   className="min-h-9"
                   onClick={() => {
                     setKeywordText(p.keywords.join(", "));
-                    save({ scope_keywords: p.keywords });
+                    saveKeywords(p.keywords);
                   }}
                 >
                   {p.label}
                 </Button>
               ))}
             </div>
+
+            {/* Scope preview — makes scope drift visible before a run */}
+            <div className="rounded-lg border border-border/60 p-2.5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">
+                  {isPreviewing
+                    ? "Checking scope..."
+                    : `Scope preview: ${scope?.total ?? 0} topics need questions`}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="min-h-9"
+                  disabled={isPreviewing}
+                  onClick={() =>
+                    refreshScope(
+                      keywordText.split(",").map((k) => k.trim()).filter((k) => k.length > 1)
+                    )
+                  }
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isPreviewing ? "animate-spin" : ""}`} />
+                </Button>
+              </div>
+              {scope && scope.total === 0 && (
+                <p className="text-xs text-destructive">
+                  No queued topics match these keywords — sprint runs will stop immediately.
+                </p>
+              )}
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {(scope?.sample || []).map((t) => (
+                  <div key={t.topic_id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate">
+                      {t.topic_name}
+                      <span className="text-muted-foreground"> · {t.subject_name}</span>
+                    </span>
+                    <span className="text-muted-foreground shrink-0">
+                      {t.current_count}/{t.current_count + t.questions_needed}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
