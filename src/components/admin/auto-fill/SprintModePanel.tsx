@@ -14,9 +14,12 @@ import {
   getRecentAutoFillRuns,
   getQualityGateStats,
   runQualityGate,
+  previewSprintScope,
   type SprintConfig,
   type RunSummary,
+  type SprintScopePreview,
 } from "@/services/autoFillService";
+
 
 const PRESETS = [
   { label: "MDCAT", keywords: ["mdcat"] },
