@@ -402,6 +402,37 @@ export async function updateSprintConfig(config: Partial<SprintConfig>): Promise
   return updateSystemSetting('content_fill_sprint', merged);
 }
 
+// Sprint scope preview — mirrors the edge function's matching rules
+// (direct keyword hit + subject-level inheritance) so admins can see exactly
+// which topics a preset would target before saving it.
+export interface SprintScopePreview {
+  total: number;
+  sample: AutoFillQueueItem[];
+}
+
+export async function previewSprintScope(keywords: string[]): Promise<SprintScopePreview> {
+  const cleaned = keywords.map((k) => k.trim().toLowerCase()).filter((k) => k.length > 1);
+  const queue = await getAutoFillQueue(400);
+  if (cleaned.length === 0) return { total: queue.length, sample: queue.slice(0, 10) };
+
+  const matches = (item: AutoFillQueueItem) => {
+    const haystack = [item.system_name, item.level_name, item.subject_name, item.topic_name]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return cleaned.some((k) => haystack.includes(k));
+  };
+
+  const scopedSubjects = new Set<string>();
+  queue.forEach((item) => {
+    if (matches(item) && item.subject_id) scopedSubjects.add(item.subject_id);
+  });
+
+  const scoped = queue.filter((item) => matches(item) || scopedSubjects.has(item.subject_id));
+  return { total: scoped.length, sample: scoped.slice(0, 10) };
+}
+
+
 export interface RunSummary {
   id: string;
   created_at: string;

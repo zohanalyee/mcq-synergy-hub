@@ -198,14 +198,27 @@ Deno.serve(async (req) => {
 
     // Sprint scope filter: keep only topics whose exam/board/class/subject/topic
     // text matches one of the configured priority keywords.
-    const inSprintScope = (item: AutoFillQueueItem): boolean => {
-      if (!sprintOn || sprintKeywords.length === 0) return true;
+    const matchesKeyword = (item: AutoFillQueueItem): boolean => {
       const haystack = [item.system_name, item.level_name, item.subject_name, item.topic_name]
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
       return sprintKeywords.some((k) => haystack.includes(k));
     };
+
+    // Subject-level inheritance: if ANY topic under a subject matches a sprint
+    // keyword (e.g. "MDCAT Past Papers"), every sibling topic of that subject
+    // counts as in-scope too, so a whole exam syllabus fills instead of the
+    // handful of topics whose own name happens to contain the keyword.
+    const applySprintScope = (rows: AutoFillQueueItem[]): AutoFillQueueItem[] => {
+      if (!sprintOn || sprintKeywords.length === 0) return rows;
+      const scopedSubjects = new Set<string>();
+      for (const row of rows) {
+        if (matchesKeyword(row) && row.subject_id) scopedSubjects.add(row.subject_id);
+      }
+      return rows.filter((row) => matchesKeyword(row) || scopedSubjects.has(row.subject_id));
+    };
+
 
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
@@ -247,7 +260,7 @@ Deno.serve(async (req) => {
       }
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
-      const queue = rawQueue.filter(inSprintScope);
+      const queue = applySprintScope(rawQueue);
       const topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
 
       if (!topic) {

@@ -14,9 +14,12 @@ import {
   getRecentAutoFillRuns,
   getQualityGateStats,
   runQualityGate,
+  previewSprintScope,
   type SprintConfig,
   type RunSummary,
+  type SprintScopePreview,
 } from "@/services/autoFillService";
+
 
 const PRESETS = [
   { label: "MDCAT", keywords: ["mdcat"] },
@@ -31,9 +34,20 @@ const SprintModePanel = () => {
   const [keywordText, setKeywordText] = useState("");
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [quality, setQuality] = useState<{ unverified: number; flagged: number; lastRun: RunSummary | null } | null>(null);
+  const [scope, setScope] = useState<SprintScopePreview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
+  const refreshScope = async (keywords: string[]) => {
+    setIsPreviewing(true);
+    try {
+      setScope(await previewSprintScope(keywords));
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
 
   const load = async () => {
     setIsLoading(true);
@@ -47,6 +61,7 @@ const SprintModePanel = () => {
       setKeywordText((cfg?.scope_keywords || []).join(", "));
       setRuns(recentRuns);
       setQuality(qStats);
+      refreshScope(cfg?.scope_keywords || []);
     } finally {
       setIsLoading(false);
     }
@@ -68,13 +83,29 @@ const SprintModePanel = () => {
     toast.success("Sprint settings saved");
   };
 
+  // Safety: never save a scope silently when it targets zero queued topics —
+  // that is what made earlier sprint runs stop with "no topics match".
+  const saveKeywords = async (keywords: string[]) => {
+    const preview = await previewSprintScope(keywords);
+    setScope(preview);
+    if (preview.total === 0) {
+      toast.error("This scope matches 0 queued topics", {
+        description: "Sprint runs would stop immediately. Pick different keywords before saving.",
+      });
+      return;
+    }
+    await save({ scope_keywords: keywords });
+    toast.message(`Scope covers ${preview.total} topics needing questions`);
+  };
+
   const applyKeywords = () => {
     const keywords = keywordText
       .split(",")
       .map((k) => k.trim())
       .filter((k) => k.length > 1);
-    save({ scope_keywords: keywords });
+    saveKeywords(keywords);
   };
+
 
   const handleVerify = async () => {
     setIsVerifying(true);
@@ -148,14 +179,57 @@ const SprintModePanel = () => {
                   className="min-h-9"
                   onClick={() => {
                     setKeywordText(p.keywords.join(", "));
-                    save({ scope_keywords: p.keywords });
+                    saveKeywords(p.keywords);
                   }}
                 >
                   {p.label}
                 </Button>
               ))}
             </div>
+
+            {/* Scope preview — makes scope drift visible before a run */}
+            <div className="rounded-lg border border-border/60 p-2.5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-medium">
+                  {isPreviewing
+                    ? "Checking scope..."
+                    : `Scope preview: ${scope?.total ?? 0} topics need questions`}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="min-h-9"
+                  disabled={isPreviewing}
+                  onClick={() =>
+                    refreshScope(
+                      keywordText.split(",").map((k) => k.trim()).filter((k) => k.length > 1)
+                    )
+                  }
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${isPreviewing ? "animate-spin" : ""}`} />
+                </Button>
+              </div>
+              {scope && scope.total === 0 && (
+                <p className="text-xs text-destructive">
+                  No queued topics match these keywords — sprint runs will stop immediately.
+                </p>
+              )}
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {(scope?.sample || []).map((t) => (
+                  <div key={t.topic_id} className="flex items-center justify-between gap-2 text-xs">
+                    <span className="truncate">
+                      {t.topic_name}
+                      <span className="text-muted-foreground"> · {t.subject_name}</span>
+                    </span>
+                    <span className="text-muted-foreground shrink-0">
+                      {t.current_count}/{t.current_count + t.questions_needed}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
+
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -249,8 +323,12 @@ const SprintModePanel = () => {
             {isVerifying ? "Reviewing..." : "Review next 60 questions"}
           </Button>
           <p className="text-xs text-muted-foreground">
-            Runs 3 batches of 20 per click on the free Gemini tier, so review cost stays at zero.
+            Auto-review runs hourly (~200 questions per run) on the free Gemini tier and skips when
+            the daily quota is low. Backlog clears in about{" "}
+            {Math.max(1, Math.ceil((quality?.unverified ?? 0) / 4800))} day(s) at that rate. Use the
+            button above for an extra 60-question burst.
           </p>
+
         </CardContent>
       </Card>
     </div>
