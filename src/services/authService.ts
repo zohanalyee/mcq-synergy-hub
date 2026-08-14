@@ -3,10 +3,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { trackSignUp } from "@/utils/analytics";
 
+// Auth redirects always follow the origin the user is actually on (production
+// domain in production, preview domain in Lovable previews). The only
+// normalisation is www → apex so it matches Supabase's redirect allow-list.
+export const getAuthOrigin = (): string => {
+  const { origin, hostname, protocol } = window.location;
+  if (hostname === "www.mcqsai.com") return `${protocol}//mcqsai.com`;
+  return origin;
+};
+
+
+
 // Sign up with email and password
 export const signUp = async (email: string, password: string, captchaToken?: string) => {
   try {
-    const redirectUrl = `${window.location.origin}/`;
+    const redirectUrl = `${getAuthOrigin()}/`;
     
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -57,7 +68,7 @@ export const signInWithGoogle = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/analytics`,
+        redirectTo: `${getAuthOrigin()}/analytics`,
       },
     });
 
@@ -79,7 +90,7 @@ export const signInWithFacebook = async () => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'facebook',
       options: {
-        redirectTo: `${window.location.origin}/analytics`,
+        redirectTo: `${getAuthOrigin()}/analytics`,
       },
     });
 
