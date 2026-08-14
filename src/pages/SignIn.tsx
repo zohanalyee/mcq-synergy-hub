@@ -250,18 +250,32 @@ const SignIn: React.FC<SignInPageProps> = ({ defaultTab = "signin" }) => {
             </p>
           </div>
 
-          {/* Google OAuth */}
-          <button
-            onClick={handleGoogleLogin}
-            disabled={isGoogleLoading || isLoading}
-            className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
-          >
-            {isGoogleLoading ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
-            ) : (
-              <><GoogleIcon /> Continue with Google</>
-            )}
-          </button>
+          {/* Social OAuth */}
+          <div className="space-y-2.5">
+            <button
+              onClick={handleGoogleLogin}
+              disabled={isGoogleLoading || isFacebookLoading || isLoading}
+              className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
+            >
+              {isGoogleLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
+              ) : (
+                <><GoogleIcon /> Continue with Google</>
+              )}
+            </button>
+
+            <button
+              onClick={handleFacebookLogin}
+              disabled={isFacebookLoading || isGoogleLoading || isLoading}
+              className="w-full h-11 rounded-xl border border-[hsl(var(--border))] bg-[hsl(var(--background))] flex items-center justify-center gap-3 text-sm font-medium text-[hsl(var(--foreground))] hover:shadow-md hover:bg-[hsl(var(--muted))] hover:border-[hsl(var(--brand-from)/0.4)] transition-all duration-200 disabled:opacity-50"
+            >
+              {isFacebookLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin" /> Connecting...</>
+              ) : (
+                <><FacebookIcon /> Continue with Facebook</>
+              )}
+            </button>
+          </div>
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-6">
