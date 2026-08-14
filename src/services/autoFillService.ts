@@ -430,6 +430,7 @@ export async function previewSprintScope(keywords: string[]): Promise<SprintScop
 
   const scoped = queue.filter((item) => matches(item) || scopedSubjects.has(item.subject_id));
   return { total: scoped.length, sample: scoped.slice(0, 10) };
+}
 
 
 export interface RunSummary {
