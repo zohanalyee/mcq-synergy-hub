@@ -68,6 +68,7 @@ Deno.serve(async (req) => {
     // ============= AUTHORIZATION =============
     const authHeader = req.headers.get('Authorization');
     let authorized = !!authHeader?.includes(serviceKey);
+    let isScheduledCall = authorized;
 
     const cronToken = req.headers.get('x-cron-token');
     if (!authorized && cronToken) {
@@ -79,7 +80,10 @@ Deno.serve(async (req) => {
       const expected = typeof tokenSetting?.value === 'string'
         ? tokenSetting.value
         : (tokenSetting?.value as any)?.token;
-      if (expected && cronToken === expected) authorized = true;
+      if (expected && cronToken === expected) {
+        authorized = true;
+        isScheduledCall = true;
+      }
     }
 
     if (!authorized) {
@@ -112,12 +116,29 @@ Deno.serve(async (req) => {
     }
 
     // ============= QUOTA =============
+    // Scheduled (hourly) reviews yield to learner-facing generation: they skip
+    // entirely unless a healthy slice of the daily quota is still available.
+    const CRON_QUOTA_FLOOR = 200;
     try {
-      await checkQuota(admin);
+      const quota = await checkQuota(admin);
+      if (isScheduledCall && quota.remaining < CRON_QUOTA_FLOOR) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            skipped: true,
+            reviewed: 0,
+            flagged: 0,
+            batches_run: 0,
+            stop_reason: `Quota reserved for generation (${quota.remaining} left)`,
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } },
+        );
+      }
     } catch (err) {
       if (err instanceof QuotaExhaustedError) return quotaExhaustedResponse(corsHeaders);
       throw err;
     }
+
 
     const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
     const requestedBatches = Math.max(1, Math.min(Number(body.batches) || 3, MAX_BATCHES));
