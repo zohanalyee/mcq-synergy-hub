@@ -34,9 +34,20 @@ const SprintModePanel = () => {
   const [keywordText, setKeywordText] = useState("");
   const [runs, setRuns] = useState<RunSummary[]>([]);
   const [quality, setQuality] = useState<{ unverified: number; flagged: number; lastRun: RunSummary | null } | null>(null);
+  const [scope, setScope] = useState<SprintScopePreview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isPreviewing, setIsPreviewing] = useState(false);
+
+  const refreshScope = async (keywords: string[]) => {
+    setIsPreviewing(true);
+    try {
+      setScope(await previewSprintScope(keywords));
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
 
   const load = async () => {
     setIsLoading(true);
@@ -50,6 +61,7 @@ const SprintModePanel = () => {
       setKeywordText((cfg?.scope_keywords || []).join(", "));
       setRuns(recentRuns);
       setQuality(qStats);
+      refreshScope(cfg?.scope_keywords || []);
     } finally {
       setIsLoading(false);
     }
@@ -71,13 +83,29 @@ const SprintModePanel = () => {
     toast.success("Sprint settings saved");
   };
 
+  // Safety: never save a scope silently when it targets zero queued topics —
+  // that is what made earlier sprint runs stop with "no topics match".
+  const saveKeywords = async (keywords: string[]) => {
+    const preview = await previewSprintScope(keywords);
+    setScope(preview);
+    if (preview.total === 0) {
+      toast.error("This scope matches 0 queued topics", {
+        description: "Sprint runs would stop immediately. Pick different keywords before saving.",
+      });
+      return;
+    }
+    await save({ scope_keywords: keywords });
+    toast.message(`Scope covers ${preview.total} topics needing questions`);
+  };
+
   const applyKeywords = () => {
     const keywords = keywordText
       .split(",")
       .map((k) => k.trim())
       .filter((k) => k.length > 1);
-    save({ scope_keywords: keywords });
+    saveKeywords(keywords);
   };
+
 
   const handleVerify = async () => {
     setIsVerifying(true);
