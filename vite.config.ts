@@ -25,6 +25,8 @@ const PRERENDER_ROUTES = [
   "/leaderboard",
   "/privacy-policy",
   "/terms-of-service",
+  "/delete-account",
+
   "/exams",
   "/exams/mdcat",
   "/exams/ecat",

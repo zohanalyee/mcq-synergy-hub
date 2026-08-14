@@ -22,6 +22,10 @@ import GA4PageTracker from "./components/GA4PageTracker";
 import CampaignTracker from "./components/CampaignTracker";
 import EmailPrefSync from "./components/EmailPrefSync";
 import Unsubscribe from "./pages/Unsubscribe";
+// Public data-deletion page (Meta Facebook Login requirement) — eager so it
+// prerenders with real body content for crawlers and Meta's reviewers.
+import DeleteAccount from "./pages/DeleteAccount";
+
 import TopProgressBar from "./components/TopProgressBar";
 import ToolRouteSEO from "./components/seo/ToolRouteSEO";
 import GlobalCanonical from "./components/seo/GlobalCanonical";
@@ -322,7 +326,9 @@ const App = () => {
                       <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
                       <Route path="/verify-email" element={<VerifyEmail />} />
                       <Route path="/unsubscribe" element={<Unsubscribe />} />
+                      <Route path="/delete-account" element={<DeleteAccount />} />
                       <Route path="/complete-profile" element={<CompleteProfile />} />
+
                       
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />

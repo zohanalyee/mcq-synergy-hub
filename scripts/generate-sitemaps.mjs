@@ -108,6 +108,9 @@ const STATIC_PAGES = [
   { loc: "/privacy-policy", priority: "0.3", freq: "yearly" },
   { loc: "/terms-of-service", priority: "0.3", freq: "yearly" },
   { loc: "/editorial-policy", priority: "0.5", freq: "monthly" },
+  // Meta (Facebook Login) requires a publicly reachable data-deletion page.
+  { loc: "/delete-account", priority: "0.3", freq: "yearly" },
+
 ];
 
 // I-5 tools triage: only Pakistan-education-relevant tools with real on-page

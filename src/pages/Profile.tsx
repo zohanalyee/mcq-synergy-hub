@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ChangePasswordForm from '@/components/settings/ChangePasswordForm';
 import EmailPreferencesCard from '@/components/settings/EmailPreferencesCard';
+import DeleteAccountCard from '@/components/settings/DeleteAccountCard';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/contexts/UserRoleContext';
@@ -310,6 +311,9 @@ const Profile = () => {
             <ChangePasswordForm />
           </CardContent>
         </Card>
+
+        {/* Danger Zone — permanent account deletion */}
+        <DeleteAccountCard />
 
         {/* Footer Actions */}
         <div className="flex justify-between items-center">
