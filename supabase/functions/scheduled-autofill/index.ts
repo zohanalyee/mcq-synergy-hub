@@ -229,8 +229,7 @@ Deno.serve(async (req) => {
     ];
     let difficultyIndex = 0;
 
-    // Sprint scope filter: keep only topics whose exam/board/class/subject/topic
-    // text matches one of the configured priority keywords.
+    // Sprint scope: does this topic match one of the configured priority keywords?
     const matchesKeyword = (item: AutoFillQueueItem): boolean => {
       const haystack = [item.system_name, item.level_name, item.subject_name, item.topic_name]
         .filter(Boolean)
@@ -239,18 +238,33 @@ Deno.serve(async (req) => {
       return sprintKeywords.some((k) => haystack.includes(k));
     };
 
-    // Subject-level inheritance: if ANY topic under a subject matches a sprint
-    // keyword (e.g. "MDCAT Past Papers"), every sibling topic of that subject
-    // counts as in-scope too, so a whole exam syllabus fills instead of the
-    // handful of topics whose own name happens to contain the keyword.
+    /**
+     * Sprint mode is a PREFERENCE, never an exclusion.
+     *
+     * Previously an exam keyword that matched nothing in the taxonomy (e.g.
+     * "mdcat", which never appears literally — the data says "Biology / Class 11")
+     * filtered the whole queue away and every nightly run exited with 0 saved.
+     * Now matched topics (plus their subject siblings) are simply sorted FIRST
+     * and the rest of the queue follows, so the daily budget is always spent.
+     */
     const applySprintScope = (rows: AutoFillQueueItem[]): AutoFillQueueItem[] => {
       if (!sprintOn || sprintKeywords.length === 0) return rows;
       const scopedSubjects = new Set<string>();
       for (const row of rows) {
         if (matchesKeyword(row) && row.subject_id) scopedSubjects.add(row.subject_id);
       }
-      return rows.filter((row) => matchesKeyword(row) || scopedSubjects.has(row.subject_id));
+      const inScope = (row: AutoFillQueueItem) =>
+        matchesKeyword(row) || scopedSubjects.has(row.subject_id);
+      const priority = rows.filter(inScope);
+      const rest = rows.filter((row) => !inScope(row));
+      if (priority.length === 0) {
+        console.warn(
+          `[Scheduled Auto-Fill] ⚠️ Sprint keywords [${sprintKeywords.join(', ')}] matched 0 of ${rows.length} queued topics — falling back to the full queue so the run is not wasted.`,
+        );
+      }
+      return [...priority, ...rest];
     };
+
 
 
     /**
