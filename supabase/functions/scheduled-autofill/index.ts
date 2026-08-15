@@ -21,6 +21,18 @@ interface SprintConfig {
   daily_budget?: number;
 }
 
+interface CampaignSurge {
+  enabled: boolean;
+  label?: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  daily_budget?: number;
+  min_multiplier?: number;
+  sprint_keywords?: string[];
+}
+
+
+
 
 interface AutoFillQueueItem {
   topic_id: string;
@@ -155,14 +167,30 @@ Deno.serve(async (req) => {
     const { data: settingsRows } = await supabase
       .from('system_settings')
       .select('key, value')
-      .in('key', ['auto_fill_config', 'content_fill_sprint']);
+      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge']);
 
     const config = (settingsRows?.find((r: any) => r.key === 'auto_fill_config')?.value ?? null) as AutoFillConfig | null;
     const sprint = (settingsRows?.find((r: any) => r.key === 'content_fill_sprint')?.value ?? null) as SprintConfig | null;
-    const sprintOn = !!sprint?.enabled;
-    const sprintKeywords = (sprint?.scope_keywords || [])
-      .map((k) => String(k).trim().toLowerCase())
-      .filter((k) => k.length > 1);
+
+    // Campaign Surge window: time-boxed budget/scope boost (e.g. Larkana banner
+    // week). Auto-expires at ends_at — no code change needed to switch it off.
+    const surgeCfg = (settingsRows?.find((r: any) => r.key === 'campaign_surge')?.value ?? null) as CampaignSurge | null;
+    const nowMs = Date.now();
+    const surgeOn = !!surgeCfg?.enabled
+      && (!surgeCfg?.starts_at || new Date(surgeCfg.starts_at).getTime() <= nowMs)
+      && (!surgeCfg?.ends_at || new Date(surgeCfg.ends_at).getTime() >= nowMs);
+    if (surgeOn) {
+      console.log(`[Scheduled Auto-Fill] 🚀 Campaign surge ACTIVE: ${surgeCfg?.label || 'unnamed'}`);
+    }
+
+    const sprintOn = !!sprint?.enabled || surgeOn;
+    const surgeKeywords = surgeOn
+      ? (surgeCfg?.sprint_keywords || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k.length > 1)
+      : [];
+    const sprintKeywords = Array.from(new Set([
+      ...(sprint?.scope_keywords || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k.length > 1),
+      ...surgeKeywords,
+    ]));
 
     if (!config?.enabled) {
       console.log('[Scheduled Auto-Fill] Auto-fill is disabled. Exiting.');
@@ -176,9 +204,13 @@ Deno.serve(async (req) => {
     // DAILY_QUOTA_LIMIT check in quotaManager (1400 requests/day).
     const HARD_BATCH_LIMIT = 20;
     const DEFAULT_RUN_TARGET = 600;
-    const requestedTarget = sprintOn
+    const baseTarget = sprintOn
       ? (sprint?.daily_budget || config.run_target || DEFAULT_RUN_TARGET)
       : (config.run_target || DEFAULT_RUN_TARGET);
+    // Surge raises the run budget (never lowers it), still under the daily quota guard.
+    const requestedTarget = surgeOn
+      ? Math.max(baseTarget, Number(surgeCfg?.daily_budget) || baseTarget)
+      : baseTarget;
     const HARD_RUN_TARGET = Math.max(10, Math.min(requestedTarget, 1500));
     const HARD_NIGHTLY_LIMIT = HARD_RUN_TARGET;
 
@@ -186,6 +218,7 @@ Deno.serve(async (req) => {
       ? (sprint?.target_per_topic || config.batch_size || 15)
       : (config.batch_size || 15);
     const batchSize = Math.min(requestedBatch, HARD_BATCH_LIMIT);
+
 
     // Difficulty rotation from configured weights (default 20/60/20).
     const weights = config.difficulty_weights || { easy: 20, medium: 60, hard: 20 };
@@ -220,14 +253,67 @@ Deno.serve(async (req) => {
     };
 
 
+    /**
+     * Phase 2 — TRAFFIC DEPTH LADDER.
+     * get_autofill_queue only returns topics under the flat min_threshold, so a
+     * popular topic that just crossed the threshold looked "complete" forever.
+     * The ladder raises the per-topic target by real page views, and these rows
+     * are appended AFTER the primary gap queue drains, so empty topics keep
+     * first claim on the budget.
+     */
+    const depthTargetForViews = (views: number): number => {
+      if (views >= 500) return 60;
+      if (views >= 200) return 40;
+      if (views >= 50) return 25;
+      if (views >= 20) return 15;
+      return 0; // no traffic signal yet -> flat threshold governs
+    };
+
+    let depthQueue: AutoFillQueueItem[] | null = null;
+
+    const loadDepthQueue = async (): Promise<AutoFillQueueItem[]> => {
+      if (depthQueue) return depthQueue;
+      const { data, error } = await supabase.rpc('get_content_health');
+      if (error) {
+        console.error('[Scheduled Auto-Fill] depth ladder unavailable:', error.message);
+        depthQueue = [];
+        return depthQueue;
+      }
+      const rows = ((data as any[]) || [])
+        .map((r) => {
+          const views = Number(r.view_count || 0);
+          const approved = Number(r.approved_count || 0);
+          const target = depthTargetForViews(views);
+          return { r, views, approved, target, deficit: target - approved };
+        })
+        .filter((x) => x.r.topic_id && x.deficit > 0)
+        // Hottest, shallowest topics first.
+        .sort((a, b) => b.views - a.views || b.deficit - a.deficit)
+        .map((x) => ({
+          topic_id: x.r.topic_id,
+          topic_name: x.r.topic_name,
+          subject_id: x.r.subject_name || '',
+          subject_name: x.r.subject_name,
+          level_name: x.r.class_number ? `Class ${x.r.class_number}` : '',
+          system_name: x.r.board_name || '',
+          current_count: x.approved,
+          questions_needed: x.deficit,
+        })) as AutoFillQueueItem[];
+      depthQueue = rows;
+      console.log(`[Scheduled Auto-Fill] depth ladder: ${rows.length} high-traffic topic(s) below their traffic-based target`);
+      return depthQueue;
+    };
+
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
+    let depthTopicsProcessed = 0;
     let stopReason = '';
     let queueError: string | null = null;
     const attemptedTopicIds = new Set<string>();
     const runStartedAt = Date.now();
 
     console.log(`[Scheduled Auto-Fill] Limits: batch=${batchSize}, run_target=${HARD_RUN_TARGET}, sprint=${sprintOn ? sprintKeywords.join('|') || 'all' : 'off'}`);
+
 
 
     // Continuous loop until limit hit or no gaps
@@ -261,11 +347,20 @@ Deno.serve(async (req) => {
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
       const queue = applySprintScope(rawQueue);
-      const topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+      let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+      let fromDepthLadder = false;
+
+      // Primary gap queue exhausted -> keep going on high-traffic topics that
+      // are above the flat threshold but below their traffic-based depth target.
+      if (!topic) {
+        const depthRows = applySprintScope(await loadDepthQueue());
+        topic = depthRows.find((q) => !attemptedTopicIds.has(q.topic_id));
+        fromDepthLadder = !!topic;
+      }
 
       if (!topic) {
         stopReason = rawQueue.length === 0
-          ? 'All topics fully stocked'
+          ? 'All topics stocked to their traffic-based depth target'
           : queue.length === 0
             ? 'No queued topics match the sprint scope'
             : 'All queued topics already attempted in this run';
@@ -275,7 +370,9 @@ Deno.serve(async (req) => {
 
 
       attemptedTopicIds.add(topic.topic_id);
-      console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})`);
+      if (fromDepthLadder) depthTopicsProcessed++;
+      console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})${fromDepthLadder ? ' [depth ladder]' : ''}`);
+
 
       // Check if topic has RAG documents
       const { data: documents } = await supabase
@@ -364,6 +461,7 @@ Deno.serve(async (req) => {
         run_summary: true,
         triggered_by: isAdminCall ? 'admin' : 'cron',
         topics_processed: topicsProcessed,
+        depth_ladder_topics: depthTopicsProcessed,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         run_target: HARD_RUN_TARGET,
@@ -384,6 +482,7 @@ Deno.serve(async (req) => {
         success: !queueError,
         message: `Auto-fill completed: ${stopReason}`,
         topics_processed: topicsProcessed,
+        depth_ladder_topics: depthTopicsProcessed,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         run_target: HARD_RUN_TARGET,

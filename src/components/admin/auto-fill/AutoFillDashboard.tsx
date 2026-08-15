@@ -24,6 +24,7 @@ import AutoFillSettings from "./AutoFillSettings";
 import QuotaMonitor from "../QuotaMonitor";
 import SprintModePanel from "./SprintModePanel";
 import MockTestEnginePanel from "./MockTestEnginePanel";
+import CampaignSurgePanel from "./CampaignSurgePanel";
 
 const AutoFillDashboard = () => {
   const [usage, setUsage] = useState<AIUsageToday | null>(null);
@@ -341,6 +342,9 @@ const AutoFillDashboard = () => {
 
       {/* Unified content engine: popular mock tests needing pool growth */}
       <MockTestEnginePanel />
+
+      {/* Time-boxed campaign surge (banner launch buffer) */}
+      <CampaignSurgePanel />
 
       {/* Priority Queue */}
       <ContentGapQueue 

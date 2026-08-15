@@ -1162,3 +1162,150 @@ export const runPopularityFill = async (): Promise<{ success: boolean; message: 
   if (error) return { success: false, message: error.message };
   return { success: true, message: data?.message || "Popularity fill triggered" };
 };
+
+/* ================= Demand-driven scaling (velocity tiers) ================= */
+
+export type DemandTier = "steady" | "warm" | "hot" | "surge";
+
+export interface MockTestDemand {
+  definition_id: string | null;
+  test_id: string;
+  title: string;
+  slug: string;
+  attempts: number;
+  distinct_users: number;
+  last_attempt_at: string | null;
+  active_users_window: number;
+  questions_consumed_window: number;
+  burn_rate: number;
+  demand_tier: DemandTier;
+  exam_length: number;
+  approved_pool: number;
+  base_multiplier: number;
+  effective_multiplier: number;
+  effective_target: number;
+  pool_deficit: number;
+  surge_active: boolean;
+}
+
+/**
+ * Per-test demand signals for the last `hours` window: questions actually
+ * consumed, burn rate against the approved pool, the resulting demand tier and
+ * the effective (auto-scaled) pool target. Admin/service-role only.
+ */
+export const getMockTestDemand = async (hours = 24): Promise<MockTestDemand[]> => {
+  const { data, error } = await (supabase as any).rpc("get_mock_test_demand", {
+    p_hours: hours,
+  });
+  if (error) {
+    console.error("Error loading mock test demand:", error);
+    return [];
+  }
+  return ((data || []) as any[]).map((r) => ({
+    ...r,
+    attempts: Number(r.attempts || 0),
+    distinct_users: Number(r.distinct_users || 0),
+    active_users_window: Number(r.active_users_window || 0),
+    questions_consumed_window: Number(r.questions_consumed_window || 0),
+    burn_rate: Number(r.burn_rate || 0),
+    exam_length: Number(r.exam_length || 0),
+    approved_pool: Number(r.approved_pool || 0),
+    base_multiplier: Number(r.base_multiplier || 2),
+    effective_multiplier: Number(r.effective_multiplier || 2),
+    effective_target: Number(r.effective_target || 0),
+    pool_deficit: Number(r.pool_deficit || 0),
+    surge_active: !!r.surge_active,
+  })) as MockTestDemand[];
+};
+
+/**
+ * Pre-warm run: queue demand-aware pool growth for the top N tests immediately,
+ * so the content buffer exists BEFORE a traffic spike (e.g. banner launch).
+ */
+export const runPoolPreWarm = async (
+  maxTests = 8,
+  maxRows = 30,
+): Promise<{ success: boolean; message: string }> => {
+  const { data, error } = await supabase.functions.invoke("process-jobtest-queue", {
+    body: { prewarm: true, max_tests: maxTests, max_rows: maxRows },
+  });
+  if (error) return { success: false, message: error.message };
+  return { success: true, message: data?.message || "Pre-warm triggered" };
+};
+
+export interface CampaignSurgeConfig {
+  enabled: boolean;
+  label?: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  daily_budget?: number;
+  min_multiplier?: number;
+  sprint_keywords?: string[];
+}
+
+export const getCampaignSurge = async (): Promise<CampaignSurgeConfig | null> => {
+  const { data, error } = await (supabase as any)
+    .from("system_settings")
+    .select("value")
+    .eq("key", "campaign_surge")
+    .maybeSingle();
+  if (error) {
+    console.error("Error loading campaign surge config:", error);
+    return null;
+  }
+  return (data?.value ?? null) as CampaignSurgeConfig | null;
+};
+
+export const updateCampaignSurge = async (
+  patch: Partial<CampaignSurgeConfig>,
+): Promise<boolean> => {
+  const current = (await getCampaignSurge()) || { enabled: false };
+  const { data: userData } = await supabase.auth.getUser();
+  const { error } = await (supabase as any)
+    .from("system_settings")
+    .update({
+      value: { ...current, ...patch },
+      updated_at: new Date().toISOString(),
+      updated_by: userData?.user?.id || null,
+    })
+    .eq("key", "campaign_surge");
+  if (error) {
+    console.error("Error updating campaign surge config:", error);
+    return false;
+  }
+  return true;
+};
+
+/** Is a campaign surge window currently live? */
+export const isSurgeActive = (cfg: CampaignSurgeConfig | null): boolean => {
+  if (!cfg?.enabled) return false;
+  const now = Date.now();
+  if (cfg.starts_at && new Date(cfg.starts_at).getTime() > now) return false;
+  if (cfg.ends_at && new Date(cfg.ends_at).getTime() < now) return false;
+  return true;
+};
+
+export interface PoolScalingEvent {
+  id: string;
+  test_title: string | null;
+  demand_tier: string;
+  burn_rate: number | null;
+  effective_multiplier: number | null;
+  effective_target: number | null;
+  surge_active: boolean;
+  created_at: string;
+}
+
+export const getPoolScalingEvents = async (limit = 10): Promise<PoolScalingEvent[]> => {
+  const { data, error } = await (supabase as any)
+    .from("pool_scaling_events")
+    .select("id, test_title, demand_tier, burn_rate, effective_multiplier, effective_target, surge_active, created_at")
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (error) {
+    console.error("Error loading pool scaling events:", error);
+    return [];
+  }
+  return (data || []) as PoolScalingEvent[];
+};
+

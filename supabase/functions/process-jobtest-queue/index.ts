@@ -40,28 +40,47 @@ async function kickNextIfPending(admin: any, supabaseUrl: string, serviceKey: st
 }
 
 /**
- * Phase 2 — popularity-first pool growth.
- * When the queue is idle, look at which mock tests users are actually taking
- * (attempts + distinct users, 14-day window) and enqueue per-section pool
- * growth for the most popular tests whose pool is below its growth target.
+ * Phase 2 + demand-driven scaling.
+ * When the queue is idle (or an admin triggers a pre-warm), read per-test
+ * demand from `get_mock_test_demand` — attempts, questions consumed in the last
+ * 24h and the resulting burn rate — and enqueue per-section pool growth using
+ * the EFFECTIVE multiplier (base × demand tier, floored by an active campaign
+ * surge, capped by max_pool_multiplier / max_pool_per_test).
  * Generation stays background + draft-only; approval remains manual.
  */
 async function enqueuePopularTests(
   admin: any,
   maxTests = 3,
   maxRows = 10,
-): Promise<{ enqueued: number; considered: number; error?: string }> {
-  const { data: pop, error } = await admin.rpc("get_mock_test_popularity", { p_days: 14 });
+  opts: { prewarm?: boolean } = {},
+): Promise<{
+  enqueued: number;
+  considered: number;
+  scaled: number;
+  surge_active?: boolean;
+  error?: string;
+}> {
+  const { data: demand, error } = await admin.rpc("get_mock_test_demand", { p_hours: 24 });
   if (error) {
-    console.error("[jobtest-queue] popularity rpc failed:", error.message);
-    return { enqueued: 0, considered: 0, error: error.message };
+    console.error("[jobtest-queue] demand rpc failed:", error.message);
+    return { enqueued: 0, considered: 0, scaled: 0, error: error.message };
   }
 
-  const candidates = (pop || [])
-    .filter((r: any) => r.definition_id && Number(r.attempts) > 0 && Number(r.pool_deficit) > 0)
+  const all = (demand || []) as any[];
+  const surgeActive = all.some((r) => r.surge_active === true);
+
+  const candidates = all
+    .filter(
+      (r: any) =>
+        r.definition_id &&
+        Number(r.pool_deficit) > 0 &&
+        (opts.prewarm || surgeActive ? true : Number(r.attempts) > 0),
+    )
     .slice(0, maxTests);
 
-  if (candidates.length === 0) return { enqueued: 0, considered: 0 };
+  if (candidates.length === 0) {
+    return { enqueued: 0, considered: 0, scaled: 0, surge_active: surgeActive };
+  }
 
   const { data: active } = await admin
     .from("job_test_generation_queue")
@@ -72,6 +91,9 @@ async function enqueuePopularTests(
   );
 
   const rows: any[] = [];
+  const events: any[] = [];
+  let scaled = 0;
+
   for (const t of candidates) {
     if (rows.length >= maxRows) break;
     const { data: def } = await admin
@@ -80,7 +102,27 @@ async function enqueuePopularTests(
       .eq("id", t.definition_id)
       .maybeSingle();
     const sections = (def?.syllabus?.sections || []) as any[];
-    const multiplier = Math.max(1, Number(def?.pool_multiplier ?? t.pool_multiplier ?? 2));
+
+    const baseMultiplier = Math.max(1, Number(def?.pool_multiplier ?? t.base_multiplier ?? 2));
+    // Demand-aware multiplier from the RPC (already capped + surge-floored).
+    const multiplier = Math.max(baseMultiplier, Number(t.effective_multiplier ?? baseMultiplier));
+    const isScaled = multiplier > baseMultiplier + 0.001;
+    if (isScaled) scaled++;
+
+    if (isScaled || t.demand_tier !== "steady") {
+      events.push({
+        definition_id: t.definition_id,
+        test_title: t.title,
+        demand_tier: t.demand_tier || "steady",
+        burn_rate: Number(t.burn_rate ?? 0),
+        questions_consumed_24h: Number(t.questions_consumed_window ?? 0),
+        approved_pool: Number(t.approved_pool ?? 0),
+        base_multiplier: baseMultiplier,
+        effective_multiplier: multiplier,
+        effective_target: Number(t.effective_target ?? 0),
+        surge_active: !!t.surge_active,
+      });
+    }
 
     for (const s of sections) {
       if (rows.length >= maxRows) break;
@@ -106,19 +148,34 @@ async function enqueuePopularTests(
     }
   }
 
-  if (rows.length === 0) return { enqueued: 0, considered: candidates.length };
+  if (events.length > 0) {
+    const { error: evErr } = await admin.from("pool_scaling_events").insert(events);
+    if (evErr) console.error("[jobtest-queue] scaling event log failed:", evErr.message);
+  }
+
+  if (rows.length === 0) {
+    return { enqueued: 0, considered: candidates.length, scaled, surge_active: surgeActive };
+  }
 
   const { error: insErr } = await admin.from("job_test_generation_queue").insert(rows);
   if (insErr) {
-    console.error("[jobtest-queue] popularity enqueue failed:", insErr.message);
-    return { enqueued: 0, considered: candidates.length, error: insErr.message };
+    console.error("[jobtest-queue] demand enqueue failed:", insErr.message);
+    return {
+      enqueued: 0,
+      considered: candidates.length,
+      scaled,
+      surge_active: surgeActive,
+      error: insErr.message,
+    };
   }
 
   console.log(
-    `[jobtest-queue] 📈 popularity fill queued ${rows.length} section(s) across ${candidates.length} popular test(s)`,
+    `[jobtest-queue] 📈 demand fill queued ${rows.length} section(s) across ${candidates.length} test(s)` +
+      ` — ${scaled} scaled above base${surgeActive ? ", campaign surge ACTIVE" : ""}`,
   );
-  return { enqueued: rows.length, considered: candidates.length };
+  return { enqueued: rows.length, considered: candidates.length, scaled, surge_active: surgeActive };
 }
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -182,6 +239,33 @@ Deno.serve(async (req) => {
     const nowIso = new Date().toISOString();
     const staleBeforeIso = new Date(Date.now() - STALE_PROCESSING_MS).toISOString();
 
+    const reqBody = await req.json().catch(() => ({} as any));
+
+    // Admin "Pre-warm pool" action: enqueue demand-aware pool growth for the
+    // top N tests right away (used before a campaign banner goes live) so the
+    // buffer exists BEFORE the traffic spike, not reactively during it.
+    if (reqBody?.prewarm) {
+      const maxTests = Math.max(1, Math.min(Number(reqBody.max_tests) || 8, 25));
+      const maxRows = Math.max(1, Math.min(Number(reqBody.max_rows) || 30, 60));
+      const fill = await enqueuePopularTests(admin, maxTests, maxRows, { prewarm: true });
+      if (fill.enqueued > 0) {
+        await kickNextIfPending(admin, supabaseUrl, serviceKey);
+      }
+      return new Response(
+        JSON.stringify({
+          processed: 0,
+          message:
+            fill.enqueued > 0
+              ? `Pre-warm queued ${fill.enqueued} section(s) across ${fill.considered} test(s)`
+              : "Pre-warm found nothing below target",
+          prewarm: fill,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+
+
     // Recover rows left in processing after a timed-out/shutdown invocation.
     const { data: staleRows, error: staleFetchErr } = await admin
       .from("job_test_generation_queue")
@@ -224,7 +308,7 @@ Deno.serve(async (req) => {
     if (!rows || rows.length === 0) {
       // Idle queue → popularity-first pool growth (skipped for chained kicks
       // so a drain loop never re-enqueues on itself).
-      const body = await req.json().catch(() => ({} as any));
+      const body = reqBody;
       if (!body?.chained && body?.popularity_fill !== false) {
         const fill = await enqueuePopularTests(admin);
         if (fill.enqueued > 0) {

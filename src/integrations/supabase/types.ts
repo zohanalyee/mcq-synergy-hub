@@ -2139,6 +2139,51 @@ export type Database = {
           },
         ]
       }
+      pool_scaling_events: {
+        Row: {
+          approved_pool: number | null
+          base_multiplier: number | null
+          burn_rate: number | null
+          created_at: string
+          definition_id: string | null
+          demand_tier: string
+          effective_multiplier: number | null
+          effective_target: number | null
+          id: string
+          questions_consumed_24h: number | null
+          surge_active: boolean
+          test_title: string | null
+        }
+        Insert: {
+          approved_pool?: number | null
+          base_multiplier?: number | null
+          burn_rate?: number | null
+          created_at?: string
+          definition_id?: string | null
+          demand_tier: string
+          effective_multiplier?: number | null
+          effective_target?: number | null
+          id?: string
+          questions_consumed_24h?: number | null
+          surge_active?: boolean
+          test_title?: string | null
+        }
+        Update: {
+          approved_pool?: number | null
+          base_multiplier?: number | null
+          burn_rate?: number | null
+          created_at?: string
+          definition_id?: string | null
+          demand_tier?: string
+          effective_multiplier?: number | null
+          effective_target?: number | null
+          id?: string
+          questions_consumed_24h?: number | null
+          surge_active?: boolean
+          test_title?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           active_learning_context: Json | null
@@ -3934,6 +3979,29 @@ export type Database = {
           system_name: string
           topic_id: string
           topic_name: string
+        }[]
+      }
+      get_mock_test_demand: {
+        Args: { p_hours?: number }
+        Returns: {
+          active_users_window: number
+          approved_pool: number
+          attempts: number
+          base_multiplier: number
+          burn_rate: number
+          definition_id: string
+          demand_tier: string
+          distinct_users: number
+          effective_multiplier: number
+          effective_target: number
+          exam_length: number
+          last_attempt_at: string
+          pool_deficit: number
+          questions_consumed_window: number
+          slug: string
+          surge_active: boolean
+          test_id: string
+          title: string
         }[]
       }
       get_mock_test_popularity: {
