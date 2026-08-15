@@ -229,8 +229,7 @@ Deno.serve(async (req) => {
     ];
     let difficultyIndex = 0;
 
-    // Sprint scope filter: keep only topics whose exam/board/class/subject/topic
-    // text matches one of the configured priority keywords.
+    // Sprint scope: does this topic match one of the configured priority keywords?
     const matchesKeyword = (item: AutoFillQueueItem): boolean => {
       const haystack = [item.system_name, item.level_name, item.subject_name, item.topic_name]
         .filter(Boolean)
@@ -239,18 +238,33 @@ Deno.serve(async (req) => {
       return sprintKeywords.some((k) => haystack.includes(k));
     };
 
-    // Subject-level inheritance: if ANY topic under a subject matches a sprint
-    // keyword (e.g. "MDCAT Past Papers"), every sibling topic of that subject
-    // counts as in-scope too, so a whole exam syllabus fills instead of the
-    // handful of topics whose own name happens to contain the keyword.
+    /**
+     * Sprint mode is a PREFERENCE, never an exclusion.
+     *
+     * Previously an exam keyword that matched nothing in the taxonomy (e.g.
+     * "mdcat", which never appears literally — the data says "Biology / Class 11")
+     * filtered the whole queue away and every nightly run exited with 0 saved.
+     * Now matched topics (plus their subject siblings) are simply sorted FIRST
+     * and the rest of the queue follows, so the daily budget is always spent.
+     */
     const applySprintScope = (rows: AutoFillQueueItem[]): AutoFillQueueItem[] => {
       if (!sprintOn || sprintKeywords.length === 0) return rows;
       const scopedSubjects = new Set<string>();
       for (const row of rows) {
         if (matchesKeyword(row) && row.subject_id) scopedSubjects.add(row.subject_id);
       }
-      return rows.filter((row) => matchesKeyword(row) || scopedSubjects.has(row.subject_id));
+      const inScope = (row: AutoFillQueueItem) =>
+        matchesKeyword(row) || scopedSubjects.has(row.subject_id);
+      const priority = rows.filter(inScope);
+      const rest = rows.filter((row) => !inScope(row));
+      if (priority.length === 0) {
+        console.warn(
+          `[Scheduled Auto-Fill] ⚠️ Sprint keywords [${sprintKeywords.join(', ')}] matched 0 of ${rows.length} queued topics — falling back to the full queue so the run is not wasted.`,
+        );
+      }
+      return [...priority, ...rest];
     };
+
 
 
     /**
@@ -307,6 +321,7 @@ Deno.serve(async (req) => {
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
     let depthTopicsProcessed = 0;
+    let lastRawQueueSize = 0;
     let stopReason = '';
     let queueError: string | null = null;
     const attemptedTopicIds = new Set<string>();
@@ -346,6 +361,7 @@ Deno.serve(async (req) => {
       }
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
+      lastRawQueueSize = rawQueue.length;
       const queue = applySprintScope(rawQueue);
       let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
       let fromDepthLadder = false;
@@ -361,12 +377,11 @@ Deno.serve(async (req) => {
       if (!topic) {
         stopReason = rawQueue.length === 0
           ? 'All topics stocked to their traffic-based depth target'
-          : queue.length === 0
-            ? 'No queued topics match the sprint scope'
-            : 'All queued topics already attempted in this run';
+          : 'All queued topics already attempted in this run';
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
+
 
 
       attemptedTopicIds.add(topic.topic_id);
@@ -451,6 +466,19 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 400));
     }
 
+    /**
+     * WASTED-RUN detector: the run saved nothing even though the gap queue had
+     * work in it. This is exactly the silent failure that burned 8 nightly runs
+     * (sprint keyword matched nothing) — now it is recorded on the run summary
+     * so the admin dashboard can raise a visible warning.
+     */
+    const wastedRun = totalQuestionsSaved === 0 && lastRawQueueSize > 0 && !queueError;
+    if (wastedRun) {
+      console.error(
+        `[Scheduled Auto-Fill] 🚨 WASTED RUN — 0 questions saved while ${lastRawQueueSize} topic(s) were queued. Reason: ${stopReason}`,
+      );
+    }
+
     // ============= RUN SUMMARY (always logged, even for 0 questions) =============
     await logQuotaUsage(supabase, {
       source_type: 'auto_fill_run_summary',
@@ -470,6 +498,8 @@ Deno.serve(async (req) => {
         sprint_scope: sprintOn ? sprintKeywords : [],
         stop_reason: stopReason || 'completed',
         queue_error: queueError,
+        queue_size: lastRawQueueSize,
+        wasted_run: wastedRun,
         duration_ms: Date.now() - runStartedAt,
       },
     });
@@ -489,11 +519,14 @@ Deno.serve(async (req) => {
         sprint_mode: sprintOn,
         sprint_scope: sprintOn ? sprintKeywords : [],
         queue_error: queueError,
+        queue_size: lastRawQueueSize,
+        wasted_run: wastedRun,
         stop_reason: stopReason
 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
 
   } catch (error: any) {
     if (error instanceof QuotaExhaustedError) {

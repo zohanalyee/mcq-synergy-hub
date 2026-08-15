@@ -5,6 +5,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { callAIWithAutoSwitch } from "../_shared/gemini.ts";
+import { checkStemStyle, stemStyleRules } from "../_shared/stemStyle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -169,6 +170,8 @@ SUBJECT: ${section.subject}
 COUNT: ${count}
 DIFFICULTY MIX: ~30% easy, 50% medium, 20% hard
 ${topicsBlock}${styleBlock}${forbiddenBlock}${sampleBlock}
+${stemStyleRules(section.subject)}
+
 HARD RULES:
 1. Only generate questions on the allowed topics above.
 2. NEVER include forbidden content. If unsure, skip.
@@ -177,6 +180,8 @@ HARD RULES:
 5. Provide a concise explanation.
 6. No duplicates.
 7. Pakistan context only — never US SAT, UK GCSE, or foreign curriculum.
+8. Obey the STEM STYLE RULES above — a long passage-style stem is an automatic reject.
+
 
 Return ONLY a JSON array (no markdown), exactly this shape:
 [
@@ -573,12 +578,23 @@ async function generateForSection(
         rejectionReasons["invalid_structure"] = (rejectionReasons["invalid_structure"] || 0) + 1;
         continue;
       }
+      // Genre guard: kill essay/comprehension-style stems before they hit the DB.
+      const style = checkStemStyle(q.question, section.subject);
+      if (!style.ok) {
+        const key = `style:${style.reason}`;
+        rejectionReasons[key] = (rejectionReasons[key] || 0) + 1;
+        console.warn(
+          `[STYLE] ❌ ${section.subject}: ${style.reason} (${style.length}/${style.limit}) — "${String(q.question).slice(0, 80)}"`,
+        );
+        continue;
+      }
       const fb = passesForbiddenCheck(q, section.forbidden || []);
       if (!fb.ok) {
         const key = `forbidden:${fb.matched}`;
         rejectionReasons[key] = (rejectionReasons[key] || 0) + 1;
         continue;
       }
+
       accepted.push({
         job_test_id: jobTestId,
         subject: section.subject,
