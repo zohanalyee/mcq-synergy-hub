@@ -21,6 +21,18 @@ interface SprintConfig {
   daily_budget?: number;
 }
 
+interface CampaignSurge {
+  enabled: boolean;
+  label?: string;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  daily_budget?: number;
+  min_multiplier?: number;
+  sprint_keywords?: string[];
+}
+
+
+
 
 interface AutoFillQueueItem {
   topic_id: string;
