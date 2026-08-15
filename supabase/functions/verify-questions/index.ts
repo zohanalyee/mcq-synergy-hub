@@ -243,7 +243,7 @@ Marked correct: ${correctText || '-'}`;
       const okIds: string[] = [];
 
       for (const v of verdicts) {
-        const row = rows[(Number(v.index) || 0) - 1];
+        const row = aiRows[(Number(v.index) || 0) - 1];
         if (!row) continue;
         if (v.verdict === 'flag') flaggedIds.push(row.id);
         else okIds.push(row.id);
