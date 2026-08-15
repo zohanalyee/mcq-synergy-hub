@@ -466,6 +466,19 @@ Deno.serve(async (req) => {
       await new Promise(resolve => setTimeout(resolve, 400));
     }
 
+    /**
+     * WASTED-RUN detector: the run saved nothing even though the gap queue had
+     * work in it. This is exactly the silent failure that burned 8 nightly runs
+     * (sprint keyword matched nothing) — now it is recorded on the run summary
+     * so the admin dashboard can raise a visible warning.
+     */
+    const wastedRun = totalQuestionsSaved === 0 && lastRawQueueSize > 0 && !queueError;
+    if (wastedRun) {
+      console.error(
+        `[Scheduled Auto-Fill] 🚨 WASTED RUN — 0 questions saved while ${lastRawQueueSize} topic(s) were queued. Reason: ${stopReason}`,
+      );
+    }
+
     // ============= RUN SUMMARY (always logged, even for 0 questions) =============
     await logQuotaUsage(supabase, {
       source_type: 'auto_fill_run_summary',
@@ -485,6 +498,8 @@ Deno.serve(async (req) => {
         sprint_scope: sprintOn ? sprintKeywords : [],
         stop_reason: stopReason || 'completed',
         queue_error: queueError,
+        queue_size: lastRawQueueSize,
+        wasted_run: wastedRun,
         duration_ms: Date.now() - runStartedAt,
       },
     });
@@ -504,11 +519,14 @@ Deno.serve(async (req) => {
         sprint_mode: sprintOn,
         sprint_scope: sprintOn ? sprintKeywords : [],
         queue_error: queueError,
+        queue_size: lastRawQueueSize,
+        wasted_run: wastedRun,
         stop_reason: stopReason
 
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
 
   } catch (error: any) {
     if (error instanceof QuotaExhaustedError) {
