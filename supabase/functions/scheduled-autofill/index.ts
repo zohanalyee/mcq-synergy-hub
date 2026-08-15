@@ -482,6 +482,7 @@ Deno.serve(async (req) => {
         success: !queueError,
         message: `Auto-fill completed: ${stopReason}`,
         topics_processed: topicsProcessed,
+        depth_ladder_topics: depthTopicsProcessed,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         run_target: HARD_RUN_TARGET,
