@@ -343,6 +343,9 @@ const AutoFillDashboard = () => {
       {/* Unified content engine: popular mock tests needing pool growth */}
       <MockTestEnginePanel />
 
+      {/* Time-boxed campaign surge (banner launch buffer) */}
+      <CampaignSurgePanel />
+
       {/* Priority Queue */}
       <ContentGapQueue 
         topPriorityTopics={topPriorityTopics} 
