@@ -170,7 +170,39 @@ Deno.serve(async (req) => {
         break;
       }
 
-      const userPrompt = rows.map((r: any, i: number) => {
+      /**
+       * FREE deterministic pre-pass: essay/comprehension-style stems are the
+       * wrong genre for an exam MCQ. Flag them here (no AI tokens spent) and
+       * exclude them from the AI batch.
+       */
+      const styleFlaggedIds: string[] = [];
+      const aiRows = rows.filter((r: any) => {
+        const style = checkStemStyle(String(r.title ?? ''), r.subject);
+        if (style.ok) return true;
+        styleFlaggedIds.push(r.id);
+        console.warn(`[Quality Gate] ⚠️ style ${style.reason} (${style.length}/${style.limit}) on ${r.id}`);
+        return false;
+      });
+
+      if (styleFlaggedIds.length > 0) {
+        await admin
+          .from('content_items')
+          .update({
+            status: 'pending',
+            quality_grade: 'D',
+            quality_verified_at: new Date().toISOString(),
+          })
+          .in('id', styleFlaggedIds);
+        reviewed += styleFlaggedIds.length;
+        flagged += styleFlaggedIds.length;
+      }
+
+      if (aiRows.length === 0) {
+        batchesRun++;
+        continue;
+      }
+
+      const userPrompt = aiRows.map((r: any, i: number) => {
         // options is stored either as an array ["a","b",...] or as {A,B,C,D};
         // correct_option holds either a letter or the full answer text.
         const raw = r.options;
@@ -189,6 +221,7 @@ Marked correct: ${correctText || '-'}`;
       }).join('\n\n');
 
       let verdicts: Verdict[] = [];
+
       try {
         const result = await callAIWithAutoSwitch(SYSTEM_PROMPT, userPrompt, {
           temperature: 0.1,
