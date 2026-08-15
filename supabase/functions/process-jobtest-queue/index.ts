@@ -239,6 +239,33 @@ Deno.serve(async (req) => {
     const nowIso = new Date().toISOString();
     const staleBeforeIso = new Date(Date.now() - STALE_PROCESSING_MS).toISOString();
 
+    const reqBody = await req.json().catch(() => ({} as any));
+
+    // Admin "Pre-warm pool" action: enqueue demand-aware pool growth for the
+    // top N tests right away (used before a campaign banner goes live) so the
+    // buffer exists BEFORE the traffic spike, not reactively during it.
+    if (reqBody?.prewarm) {
+      const maxTests = Math.max(1, Math.min(Number(reqBody.max_tests) || 8, 25));
+      const maxRows = Math.max(1, Math.min(Number(reqBody.max_rows) || 30, 60));
+      const fill = await enqueuePopularTests(admin, maxTests, maxRows, { prewarm: true });
+      if (fill.enqueued > 0) {
+        await kickNextIfPending(admin, supabaseUrl, serviceKey);
+      }
+      return new Response(
+        JSON.stringify({
+          processed: 0,
+          message:
+            fill.enqueued > 0
+              ? `Pre-warm queued ${fill.enqueued} section(s) across ${fill.considered} test(s)`
+              : "Pre-warm found nothing below target",
+          prewarm: fill,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+
+
     // Recover rows left in processing after a timed-out/shutdown invocation.
     const { data: staleRows, error: staleFetchErr } = await admin
       .from("job_test_generation_queue")
