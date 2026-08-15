@@ -24,6 +24,7 @@ import AutoFillSettings from "./AutoFillSettings";
 import QuotaMonitor from "../QuotaMonitor";
 import SprintModePanel from "./SprintModePanel";
 import MockTestEnginePanel from "./MockTestEnginePanel";
+import CampaignSurgePanel from "./CampaignSurgePanel";
 
 const AutoFillDashboard = () => {
   const [usage, setUsage] = useState<AIUsageToday | null>(null);
