@@ -155,14 +155,30 @@ Deno.serve(async (req) => {
     const { data: settingsRows } = await supabase
       .from('system_settings')
       .select('key, value')
-      .in('key', ['auto_fill_config', 'content_fill_sprint']);
+      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge']);
 
     const config = (settingsRows?.find((r: any) => r.key === 'auto_fill_config')?.value ?? null) as AutoFillConfig | null;
     const sprint = (settingsRows?.find((r: any) => r.key === 'content_fill_sprint')?.value ?? null) as SprintConfig | null;
-    const sprintOn = !!sprint?.enabled;
-    const sprintKeywords = (sprint?.scope_keywords || [])
-      .map((k) => String(k).trim().toLowerCase())
-      .filter((k) => k.length > 1);
+
+    // Campaign Surge window: time-boxed budget/scope boost (e.g. Larkana banner
+    // week). Auto-expires at ends_at — no code change needed to switch it off.
+    const surgeCfg = (settingsRows?.find((r: any) => r.key === 'campaign_surge')?.value ?? null) as CampaignSurge | null;
+    const nowMs = Date.now();
+    const surgeOn = !!surgeCfg?.enabled
+      && (!surgeCfg?.starts_at || new Date(surgeCfg.starts_at).getTime() <= nowMs)
+      && (!surgeCfg?.ends_at || new Date(surgeCfg.ends_at).getTime() >= nowMs);
+    if (surgeOn) {
+      console.log(`[Scheduled Auto-Fill] 🚀 Campaign surge ACTIVE: ${surgeCfg?.label || 'unnamed'}`);
+    }
+
+    const sprintOn = !!sprint?.enabled || surgeOn;
+    const surgeKeywords = surgeOn
+      ? (surgeCfg?.sprint_keywords || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k.length > 1)
+      : [];
+    const sprintKeywords = Array.from(new Set([
+      ...(sprint?.scope_keywords || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k.length > 1),
+      ...surgeKeywords,
+    ]));
 
     if (!config?.enabled) {
       console.log('[Scheduled Auto-Fill] Auto-fill is disabled. Exiting.');
@@ -176,9 +192,13 @@ Deno.serve(async (req) => {
     // DAILY_QUOTA_LIMIT check in quotaManager (1400 requests/day).
     const HARD_BATCH_LIMIT = 20;
     const DEFAULT_RUN_TARGET = 600;
-    const requestedTarget = sprintOn
+    const baseTarget = sprintOn
       ? (sprint?.daily_budget || config.run_target || DEFAULT_RUN_TARGET)
       : (config.run_target || DEFAULT_RUN_TARGET);
+    // Surge raises the run budget (never lowers it), still under the daily quota guard.
+    const requestedTarget = surgeOn
+      ? Math.max(baseTarget, Number(surgeCfg?.daily_budget) || baseTarget)
+      : baseTarget;
     const HARD_RUN_TARGET = Math.max(10, Math.min(requestedTarget, 1500));
     const HARD_NIGHTLY_LIMIT = HARD_RUN_TARGET;
 
@@ -186,6 +206,7 @@ Deno.serve(async (req) => {
       ? (sprint?.target_per_topic || config.batch_size || 15)
       : (config.batch_size || 15);
     const batchSize = Math.min(requestedBatch, HARD_BATCH_LIMIT);
+
 
     // Difficulty rotation from configured weights (default 20/60/20).
     const weights = config.difficulty_weights || { easy: 20, medium: 60, hard: 20 };
