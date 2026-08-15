@@ -20,6 +20,7 @@ Yesterday's target was **NOT** achieved. It is a scope-filter failure, not a cro
 Confirmed the complaint, with an important correction: these are **not** broken non-MCQ items and they are **not** caused by the concept-group reuse system.
 
 Facts:
+
 - 5,235 mock-test questions total. Every single one has a valid 4-option array — **0 questions with missing/malformed options**.
 - Only **22** questions were ever reused from the board bank (`reused_from_content_item_id`), and **none** of the offending long items are reused. So concept-group / subject-alias reuse is not the source. The AI generator wrote these stems directly.
 - The real defect is **stem length / wrong question genre for the exam**: 371 questions (7.1%) have stems over 200 characters, 45 over 300.
@@ -34,7 +35,8 @@ Facts:
 Interpretation: for a BPS-13 clerical post, a 555-character comprehension passage is the wrong genre — real papers use one-line grammar/vocab/GK items. Reasoning subjects legitimately need slightly longer stems, so the fix must be per-subject, not a blanket length cap.
 
 **Fix plan (Phase 1, same sprint as item 0):**
-1. Add an explicit **stem-length + genre rule to the `generate-job-test` prompt**: max ~180 chars for English/GK/Islamiat/Pak Studies/Computer, max ~320 for Analytical/Logical Reasoning; ban "read the following passage", "discuss", "write a", "explain in detail", multi-line numbered condition lists for non-reasoning subjects; require a single-sentence stem.
+
+1. Add an explicit **stem-length + genre rule to the** `generate-job-test` **prompt**: max ~180 chars for English/GK/Islamiat/Pak Studies/Computer, max ~320 for Analytical/Logical Reasoning; ban "read the following passage", "discuss", "write a", "explain in detail", multi-line numbered condition lists for non-reasoning subjects; require a single-sentence stem.
 2. Add a **server-side validator** in the same function that rejects a generated item before insert when it breaks its subject's length cap or matches the banned-genre regex, and asks for a replacement — same shape as the existing duplicate guard.
 3. Extend `verify-questions` (quality gate) with the same check so the **existing 371 long stems get flagged and downgraded** during the hourly audit instead of needing a manual hunt. Flagged items become review-queue items, not deletions.
 4. One-off admin action: list the 48 essay-verb items + the 45 stems over 300 chars in the review panel so you can regenerate the court tests before the banner goes up.
@@ -42,6 +44,7 @@ Interpretation: for a BPS-13 clerical post, a 555-character comprehension passag
 ## 2. Question-count inconsistency across admin panels
 
 There is no single source of truth today, which is exactly why the numbers disagree:
+
 - `content_items` = **9,423** total, 9,293 approved, 130 not approved.
 - `job_test_questions` = **5,235** total, 5,082 approved, 153 drafts.
 - Mock Test Analytics counts `job_test_questions` per definition; Content Health counts `content_items` approved-per-topic; the Auto-Fill panel counts *gaps* against `min_threshold`. Three different denominators, three different filters (approved vs. all, topic-linked vs. all), so three different totals — none of them wrong, all of them incomparable.
@@ -52,13 +55,15 @@ There is no single source of truth today, which is exactly why the numbers disag
 
 Today there is no daily view — the data exists in `ai_usage_logs` (`auto_fill_run_summary`, `admin_bulk_generator`) but only readable by SQL. Actuals for the last 5 days (questions inserted into `content_items`):
 
-| Date | Inserted | vs. 600 target |
-|---|---|---|
-| 14 Aug | 14 | 2% |
-| 13 Aug | 58 | 10% |
-| 12 Aug | 200 | 33% |
-| 11 Aug | 373 | 62% |
-| 10 Aug | 0 | 0% |
+
+| Date   | Inserted | vs. 600 target |
+| ------ | -------- | -------------- |
+| 14 Aug | 14       | 2%             |
+| 13 Aug | 58       | 10%            |
+| 12 Aug | 200      | 33%            |
+| 11 Aug | 373      | 62%            |
+| 10 Aug | 0        | 0%             |
+
 
 **Proposal:** a "Daily Generation" card — today vs. target with a progress bar, 7-day sparkline, per-run rows (time, source, topics, saved, stop reason) and a red badge on any run that saved 0 while the queue was non-empty. This is the alarm that would have caught yesterday on the first run instead of after 8 wasted runs.
 
@@ -75,10 +80,12 @@ Today there is no daily view — the data exists in `ai_usage_logs` (`auto_fill_
 
 Target is 20 / 60 / 20 (easy/medium/hard). Actual:
 
-| Bank | Easy | Medium | Hard |
-|---|---|---|---|
-| Board (`content_items`, 9,423) | 22.5% | 62.5% | 15.0% |
-| Mock tests (`job_test_questions`, 5,235) | 32.7% | 48.8% | 18.5% |
+
+| Bank                                     | Easy  | Medium | Hard  |
+| ---------------------------------------- | ----- | ------ | ----- |
+| Board (`content_items`, 9,423)           | 22.5% | 62.5%  | 15.0% |
+| Mock tests (`job_test_questions`, 5,235) | 32.7% | 48.8%  | 18.5% |
+
 
 Board bank is close to target (Hard is 5 points light). Mock tests skew Easy-heavy and Medium-light. Root cause: the board path rotates difficulty from `auto_fill_config.difficulty_weights`, while the mock-test path uses each definition's own `difficulty_distribution` and does not enforce a global ratio.
 
@@ -91,4 +98,36 @@ Board bank is close to target (Hard is 5 points light). Mock tests skew Easy-hea
 
 ## Technical notes
 
-Files/objects touched in Phase 1: `supabase/functions/scheduled-autofill/index.ts` (sprint scope becomes preference + zero-save alert), `supabase/functions/generate-job-test/index.ts` (prompt rule + validator), `supabase/functions/verify-questions/index.ts` (length/genre check), `system_settings.content_fill_sprint` (keyword correction via data update), and the admin Sprint/Engine panels for the new alert surface. Phase 2 adds one `get_unified_content_counts` RPC, a daily-log RPC over `ai_usage_logs`, and a one-off dedupe data operation.
+Files/objects touched in Phase 1: `supabase/functions/scheduled-autofill/index.ts` (sprint scope becomes preference + zero-save alert), `supabase/functions/generate-job-test/index.ts` (prompt rule + validator), `supabase/functions/verify-questions/index.ts` (length/genre check), `system_settings.content_fill_sprint` (keyword correction via data update), and the admin Sprint/Engine panels for the new alert surface. Phase 2 adds one `get_unified_content_counts` RPC, a daily-log RPC over `ai_usage_logs`, and a one-off dedupe data operation. 
+
+&nbsp;
+
+Approved — is-order-mein:
+
+&nbsp;
+
+PHASE-1 (BANNER-SE-PEHLE, SABSE-URGENT):
+
+1. Sprint-scope-fix — keyword-ko-real-taxonomy-se-match-karein (class-11, biology, chemistry, wagera), AUR Sprint-ko-"preference-not-exclusion"-banayen (taake-0-match-hone-par-bhi-BAAQI-QUEUE-process-ho, run-WASTE-na-ho).
+
+2. "WASTED-RUN"-ALERT — agar-koi-run-0-save-kare-jabke-queue-khali-nahi-thi, VISIBLE-WARNING-aaye.
+
+3. Stem-length/genre-rule AI-prompt-mein-add-karein (per-subject-limits), PLUS server-side-validator jo-generate-hote-hi-reject-kare agar-limit-cross-ho.
+
+4. Quality-Gate-mein-yehi-check-add-karein taake-EXISTING-371-lambe-stems-FLAG-ho-jayen review-ke-liye.
+
+5. 48-essay-verb-items + 45-lambe-stems ki-LIST-dikhayen, taake-COURT-TESTS-BANNER-SE-PEHLE-REGENERATE-ho-sakein.
+
+&nbsp;
+
+PHASE-2:
+
+6. Unified-Count-RPC + Daily-Generation-Card (dashboard-mein-hamesha-visible-rahe).
+
+7. Mock-Test-dedupe (800-duplicate-groups-clean-karein) + times_used-tracking-WIRE-karein.
+
+8. Difficulty-rebalance — Mock-Tests-mein-Medium-ki-taraf-bias-karein jab-tak-ratio-theek-na-ho.
+
+&nbsp;
+
+Phase-1-ABHI-SHURU-KAREIN — yeh-Larkana-banner-se-pehle-CRITICAL-hai.
