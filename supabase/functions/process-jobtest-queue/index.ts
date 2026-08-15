@@ -308,7 +308,7 @@ Deno.serve(async (req) => {
     if (!rows || rows.length === 0) {
       // Idle queue → popularity-first pool growth (skipped for chained kicks
       // so a drain loop never re-enqueues on itself).
-      const body = await req.json().catch(() => ({} as any));
+      const body = reqBody;
       if (!body?.chained && body?.popularity_fill !== false) {
         const fill = await enqueuePopularTests(admin);
         if (fill.enqueued > 0) {
