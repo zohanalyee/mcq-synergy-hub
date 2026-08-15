@@ -321,6 +321,7 @@ Deno.serve(async (req) => {
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
     let depthTopicsProcessed = 0;
+    let lastRawQueueSize = 0;
     let stopReason = '';
     let queueError: string | null = null;
     const attemptedTopicIds = new Set<string>();
