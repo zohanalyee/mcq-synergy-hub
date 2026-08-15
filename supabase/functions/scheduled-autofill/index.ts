@@ -347,11 +347,20 @@ Deno.serve(async (req) => {
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
       const queue = applySprintScope(rawQueue);
-      const topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+      let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+      let fromDepthLadder = false;
+
+      // Primary gap queue exhausted -> keep going on high-traffic topics that
+      // are above the flat threshold but below their traffic-based depth target.
+      if (!topic) {
+        const depthRows = applySprintScope(await loadDepthQueue());
+        topic = depthRows.find((q) => !attemptedTopicIds.has(q.topic_id));
+        fromDepthLadder = !!topic;
+      }
 
       if (!topic) {
         stopReason = rawQueue.length === 0
-          ? 'All topics fully stocked'
+          ? 'All topics stocked to their traffic-based depth target'
           : queue.length === 0
             ? 'No queued topics match the sprint scope'
             : 'All queued topics already attempted in this run';
@@ -361,7 +370,9 @@ Deno.serve(async (req) => {
 
 
       attemptedTopicIds.add(topic.topic_id);
-      console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})`);
+      if (fromDepthLadder) depthTopicsProcessed++;
+      console.log(`[Scheduled Auto-Fill] Generating for topic: ${topic.topic_name} (${topic.subject_name})${fromDepthLadder ? ' [depth ladder]' : ''}`);
+
 
       // Check if topic has RAG documents
       const { data: documents } = await supabase
