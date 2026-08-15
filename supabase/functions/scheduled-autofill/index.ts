@@ -461,6 +461,7 @@ Deno.serve(async (req) => {
         run_summary: true,
         triggered_by: isAdminCall ? 'admin' : 'cron',
         topics_processed: topicsProcessed,
+        depth_ladder_topics: depthTopicsProcessed,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         run_target: HARD_RUN_TARGET,
