@@ -23,6 +23,7 @@ No. Verified: the popularity/engine panels show attempts, distinct users, approv
 Add a demand tier that raises the effective multiplier automatically, with a hard ceiling so cost stays bounded.
 
 Signals per test (computed in SQL, 24h + 7d windows):
+
 - `attempts_24h`, `distinct_users_24h`
 - `questions_consumed_24h ≈ attempts_24h × exam_length`
 - `burn_rate_24h = questions_consumed_24h / approved_pool`
@@ -38,12 +39,14 @@ burn_rate_24h        demand tier   effective multiplier
 ```
 
 Rules:
+
 - Effective multiplier is capped at an admin-configurable `max_pool_multiplier` (default 6.0) and the pool at an absolute `max_pool_per_test` (default 1500) so nothing runs away.
 - Tier can also **cool down**: if burn stays under 0.10 for 7 days, the effective multiplier decays back toward base (target never shrinks the existing pool — it just stops growing).
 - Existing reuse order is untouched: alias-aware shared pools and concept-group rotation are tried first; AI only fills the residual deficit. So a hot Sindh-court test still borrows GK/English from sibling tests before spending a single AI call.
 - Auto-scaling is gated by an `enabled` flag plus the existing daily AI quota guard, so it can never outrun the budget.
 
 Admin surface:
+
 - New "Demand" column set in the Mock Test Engine panel: attempts 24h, burn %, demand tier badge (Steady / Warm / Hot / Surge), effective target vs current pool.
 - A "Scaling up" toast/banner and an admin notification row when a test enters Hot or Surge, so growth is visible rather than silent.
 - Manual override per test: pin a multiplier, or exclude a test from auto-scaling.
@@ -89,3 +92,37 @@ Recommendation: turn the surge window on 3-4 days before the banner is printed, 
 ## Technical notes
 
 New DB objects: `get_mock_test_demand(p_hours)` SECURITY DEFINER RPC (admin/service_role only, same gate pattern as `get_mock_test_popularity`) returning attempts/burn/tier/effective target; `system_settings` keys `dynamic_scaling_config` and `campaign_surge`; optional `pool_scaling_events` audit table (admin-read via `is_admin()`, service_role write) so every automatic target raise is traceable. `process-jobtest-queue` popularity-fill reads the effective multiplier instead of the raw `pool_multiplier`; `scheduled-autofill` reads the depth tier instead of the single `min_threshold`. Approval stays 100% manual — generated questions remain drafts. All new tables get explicit GRANTs plus RLS; existing brand tokens and admin panel layout reused, no new colors or components style.
+
+&nbsp;
+
+Approved — is-order-mein:
+
+&nbsp;
+
+Phase-1 (BANNER-SE-PEHLE, CRITICAL):
+
+- Mock-Test-dynamic-scaling (velocity-based-tiers, caps-ke-sath)
+
+- Campaign-Surge-window feature
+
+- Pre-warm-run
+
+&nbsp;
+
+Phase-2 (Campaign-Week-1):
+
+- Board-Topic-depth-ladder (8→15→30→60)
+
+&nbsp;
+
+Phase-3 (Baad-mein):
+
+- Fine-tuning
+
+&nbsp;
+
+ZAROORI: Campaign-Surge-window ABHI-SE-CONFIGURE-KAR-DEIN (enabled=false rakhein), taake jab-banner-print-hone-wala-ho, main-sirf-EK-TOGGLE-ON-KARUN aur-start_date/end_date-set-karun — koi-naya-build-na-karna-pade us-waqt.
+
+&nbsp;
+
+Build/typecheck-clean-hone-ke-baad, mujhe-EXACT-STEPS-batayen kaise-Campaign-Surge-window-ko-activate-karna-hai jab-banner-printing-ke-liye-ready-ho.
