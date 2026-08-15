@@ -253,14 +253,67 @@ Deno.serve(async (req) => {
     };
 
 
+    /**
+     * Phase 2 — TRAFFIC DEPTH LADDER.
+     * get_autofill_queue only returns topics under the flat min_threshold, so a
+     * popular topic that just crossed the threshold looked "complete" forever.
+     * The ladder raises the per-topic target by real page views, and these rows
+     * are appended AFTER the primary gap queue drains, so empty topics keep
+     * first claim on the budget.
+     */
+    const depthTargetForViews = (views: number): number => {
+      if (views >= 500) return 60;
+      if (views >= 200) return 40;
+      if (views >= 50) return 25;
+      if (views >= 20) return 15;
+      return 0; // no traffic signal yet -> flat threshold governs
+    };
+
+    let depthQueue: AutoFillQueueItem[] | null = null;
+
+    const loadDepthQueue = async (): Promise<AutoFillQueueItem[]> => {
+      if (depthQueue) return depthQueue;
+      const { data, error } = await supabase.rpc('get_content_health');
+      if (error) {
+        console.error('[Scheduled Auto-Fill] depth ladder unavailable:', error.message);
+        depthQueue = [];
+        return depthQueue;
+      }
+      const rows = ((data as any[]) || [])
+        .map((r) => {
+          const views = Number(r.view_count || 0);
+          const approved = Number(r.approved_count || 0);
+          const target = depthTargetForViews(views);
+          return { r, views, approved, target, deficit: target - approved };
+        })
+        .filter((x) => x.r.topic_id && x.deficit > 0)
+        // Hottest, shallowest topics first.
+        .sort((a, b) => b.views - a.views || b.deficit - a.deficit)
+        .map((x) => ({
+          topic_id: x.r.topic_id,
+          topic_name: x.r.topic_name,
+          subject_id: x.r.subject_name || '',
+          subject_name: x.r.subject_name,
+          level_name: x.r.class_number ? `Class ${x.r.class_number}` : '',
+          system_name: x.r.board_name || '',
+          current_count: x.approved,
+          questions_needed: x.deficit,
+        })) as AutoFillQueueItem[];
+      depthQueue = rows;
+      console.log(`[Scheduled Auto-Fill] depth ladder: ${rows.length} high-traffic topic(s) below their traffic-based target`);
+      return depthQueue;
+    };
+
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
+    let depthTopicsProcessed = 0;
     let stopReason = '';
     let queueError: string | null = null;
     const attemptedTopicIds = new Set<string>();
     const runStartedAt = Date.now();
 
     console.log(`[Scheduled Auto-Fill] Limits: batch=${batchSize}, run_target=${HARD_RUN_TARGET}, sprint=${sprintOn ? sprintKeywords.join('|') || 'all' : 'off'}`);
+
 
 
     // Continuous loop until limit hit or no gaps
