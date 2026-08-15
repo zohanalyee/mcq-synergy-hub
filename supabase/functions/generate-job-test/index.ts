@@ -5,6 +5,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { callAIWithAutoSwitch } from "../_shared/gemini.ts";
+import { checkStemStyle, stemStyleRules } from "../_shared/stemStyle.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
