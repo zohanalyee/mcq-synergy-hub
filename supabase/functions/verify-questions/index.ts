@@ -1,6 +1,7 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 import { logQuotaUsage, checkQuota, QuotaExhaustedError, quotaExhaustedResponse } from '../_shared/quotaManager.ts';
+import { checkStemStyle } from '../_shared/stemStyle.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
