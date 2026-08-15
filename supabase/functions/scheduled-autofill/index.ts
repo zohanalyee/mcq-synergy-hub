@@ -360,6 +360,7 @@ Deno.serve(async (req) => {
       }
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
+      lastRawQueueSize = rawQueue.length;
       const queue = applySprintScope(rawQueue);
       let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
       let fromDepthLadder = false;
@@ -375,12 +376,11 @@ Deno.serve(async (req) => {
       if (!topic) {
         stopReason = rawQueue.length === 0
           ? 'All topics stocked to their traffic-based depth target'
-          : queue.length === 0
-            ? 'No queued topics match the sprint scope'
-            : 'All queued topics already attempted in this run';
+          : 'All queued topics already attempted in this run';
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
+
 
 
       attemptedTopicIds.add(topic.topic_id);
