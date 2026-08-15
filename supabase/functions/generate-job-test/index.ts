@@ -169,6 +169,8 @@ SUBJECT: ${section.subject}
 COUNT: ${count}
 DIFFICULTY MIX: ~30% easy, 50% medium, 20% hard
 ${topicsBlock}${styleBlock}${forbiddenBlock}${sampleBlock}
+${stemStyleRules(section.subject)}
+
 HARD RULES:
 1. Only generate questions on the allowed topics above.
 2. NEVER include forbidden content. If unsure, skip.
@@ -177,6 +179,8 @@ HARD RULES:
 5. Provide a concise explanation.
 6. No duplicates.
 7. Pakistan context only — never US SAT, UK GCSE, or foreign curriculum.
+8. Obey the STEM STYLE RULES above — a long passage-style stem is an automatic reject.
+
 
 Return ONLY a JSON array (no markdown), exactly this shape:
 [
