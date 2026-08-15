@@ -577,12 +577,23 @@ async function generateForSection(
         rejectionReasons["invalid_structure"] = (rejectionReasons["invalid_structure"] || 0) + 1;
         continue;
       }
+      // Genre guard: kill essay/comprehension-style stems before they hit the DB.
+      const style = checkStemStyle(q.question, section.subject);
+      if (!style.ok) {
+        const key = `style:${style.reason}`;
+        rejectionReasons[key] = (rejectionReasons[key] || 0) + 1;
+        console.warn(
+          `[STYLE] ❌ ${section.subject}: ${style.reason} (${style.length}/${style.limit}) — "${String(q.question).slice(0, 80)}"`,
+        );
+        continue;
+      }
       const fb = passesForbiddenCheck(q, section.forbidden || []);
       if (!fb.ok) {
         const key = `forbidden:${fb.matched}`;
         rejectionReasons[key] = (rejectionReasons[key] || 0) + 1;
         continue;
       }
+
       accepted.push({
         job_test_id: jobTestId,
         subject: section.subject,
