@@ -109,9 +109,14 @@ const QuotaMonitor = () => {
       rag_mcq_generation: "RAG MCQ",
       document_search: "Doc Search",
       rag_search: "RAG Search",
+      // These are API *attempts*, not saved questions — labelled explicitly so
+      // the number is never read as "questions added today".
+      ai_attempt: "AI attempts",
+      quality_gate: "Quality Gate runs",
     };
     return labels[source] || source.replace(/_/g, " ");
   };
+
 
   return (
     <motion.div
