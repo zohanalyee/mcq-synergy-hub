@@ -634,6 +634,8 @@ async function generateForSection(
           : "medium",
         generation_batch: batchNumber,
         admin_approved: false,
+        exam_tier: targetTier,
+
       });
     }
 
