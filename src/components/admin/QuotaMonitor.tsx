@@ -21,10 +21,12 @@ interface UsageBreakdown {
 const QuotaMonitor = () => {
   const [totalUsed, setTotalUsed] = useState(0);
   const [breakdown, setBreakdown] = useState<UsageBreakdown[]>([]);
+  const [savedToday, setSavedToday] = useState<{ ci: number; jtq: number }>({ ci: 0, jtq: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [lastRefresh, setLastRefresh] = useState<Date>(new Date());
   const [isHealthChecking, setIsHealthChecking] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+
 
   const hoursUntilReset = (() => {
     const now = new Date();
