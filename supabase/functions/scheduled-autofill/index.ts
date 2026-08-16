@@ -147,7 +147,7 @@ Deno.serve(async (req) => {
     // Phase 2: runs every few hours now, so only guard against an overlapping
     // run started within the last 90 minutes instead of once-per-day.
     if (!isAdminCall) {
-      const since = new Date(Date.now() - 90 * 60 * 1000).toISOString();
+      const since = new Date(Date.now() - 25 * 60 * 1000).toISOString();
       const { count: recentRunCount } = await supabase
         .from('ai_usage_logs')
         .select('*', { count: 'exact', head: true })
@@ -155,13 +155,14 @@ Deno.serve(async (req) => {
         .gte('created_at', since);
 
       if ((recentRunCount || 0) > 0) {
-        console.log(`[Scheduled Auto-Fill] ⏭️ A run already happened in the last 90 minutes. Skipping.`);
+        console.log(`[Scheduled Auto-Fill] ⏭️ A run already happened in the last 25 minutes. Skipping.`);
         return new Response(
-          JSON.stringify({ success: true, skipped: true, reason: 'Recent run within 90 minutes', recent_runs: recentRunCount }),
+          JSON.stringify({ success: true, skipped: true, reason: 'Recent run within 25 minutes', recent_runs: recentRunCount }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
     }
+
 
     // Check if auto-fill is enabled + read Phase 3 sprint config
     const { data: settingsRows } = await supabase
@@ -331,8 +332,24 @@ Deno.serve(async (req) => {
 
 
 
-    // Continuous loop until limit hit or no gaps
+    /**
+     * WALL-CLOCK BUDGET (root cause of the "silent runs").
+     * The platform gateway kills the request after ~150s of no response bytes,
+     * which killed the function mid-loop and meant the run summary was NEVER
+     * logged (and the wasted-run alarm could never fire). Each invocation now
+     * stops well before that, logs its summary, and the next scheduled run
+     * (every 30 min) continues where this one left off.
+     */
+    const MAX_RUN_MS = 110_000;
+
+    // Continuous loop until limit hit, time budget spent, or no gaps
     while (totalQuestionsSaved < HARD_NIGHTLY_LIMIT) {
+      if (Date.now() - runStartedAt > MAX_RUN_MS) {
+        stopReason = 'Time budget reached (partial run, continues next cycle)';
+        console.log(`[Scheduled Auto-Fill] ⏱️ ${stopReason}`);
+        break;
+      }
+
       // Re-check quota each iteration
       try {
         const iterQuota = await checkQuota(supabase);
