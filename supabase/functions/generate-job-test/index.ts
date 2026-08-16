@@ -296,16 +296,24 @@ async function generateForSection(
   // ceil(target * pool_multiplier) so repeat attempts have variety to rotate
   // through, instead of drawing from the same fixed target-sized set.
   let poolMultiplier = 2.0;
+  // Exam TIER of this test — reuse must stay inside the same tier so a
+  // CSS-level comprehension item never lands in a BPS-13 clerical paper.
+  let targetTier: ExamTier = "clerical";
   try {
     const { data: defRow } = await supabase
       .from("job_test_definitions")
-      .select("pool_multiplier")
+      .select("pool_multiplier, job_title, department, exam_tier")
       .eq("id", jobTestId)
       .maybeSingle();
     const raw = Number(defRow?.pool_multiplier);
     if (Number.isFinite(raw) && raw >= 1) poolMultiplier = raw;
-  } catch (_e) { /* fall back to 2.0 */ }
+    targetTier = isExamTier(defRow?.exam_tier)
+      ? defRow.exam_tier
+      : tierForJobTest(defRow?.job_title, defRow?.department);
+  } catch (_e) { /* fall back to 2.0 / clerical */ }
+  console.log(`[TIER] ${section.subject}: target tier = ${targetTier}`);
   const poolTarget = Math.ceil(target * poolMultiplier);
+
 
   // ===== Phase 1 — Growth target =====
   // Popular tests must be able to grow their pool BEYOND the exam-share target,
