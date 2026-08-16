@@ -569,6 +569,7 @@ export type Database = {
           description: string | null
           difficulty: string | null
           exam_category: string | null
+          exam_tier: string | null
           exam_type: string | null
           exam_year: string | null
           explanation: string | null
@@ -623,6 +624,7 @@ export type Database = {
           description?: string | null
           difficulty?: string | null
           exam_category?: string | null
+          exam_tier?: string | null
           exam_type?: string | null
           exam_year?: string | null
           explanation?: string | null
@@ -677,6 +679,7 @@ export type Database = {
           description?: string | null
           difficulty?: string | null
           exam_category?: string | null
+          exam_tier?: string | null
           exam_type?: string | null
           exam_year?: string | null
           explanation?: string | null
@@ -1579,6 +1582,7 @@ export type Database = {
           created_by: string | null
           department: string | null
           difficulty_distribution: Json
+          exam_tier: string | null
           id: string
           job_title: string
           max_retries: number
@@ -1594,6 +1598,7 @@ export type Database = {
           created_by?: string | null
           department?: string | null
           difficulty_distribution?: Json
+          exam_tier?: string | null
           id?: string
           job_title: string
           max_retries?: number
@@ -1609,6 +1614,7 @@ export type Database = {
           created_by?: string | null
           department?: string | null
           difficulty_distribution?: Json
+          exam_tier?: string | null
           id?: string
           job_title?: string
           max_retries?: number
@@ -1778,6 +1784,7 @@ export type Database = {
           correct_answer: string
           created_at: string
           difficulty: string
+          exam_tier: string | null
           explanation: string | null
           generation_batch: number | null
           id: string
@@ -1800,6 +1807,7 @@ export type Database = {
           correct_answer: string
           created_at?: string
           difficulty?: string
+          exam_tier?: string | null
           explanation?: string | null
           generation_batch?: number | null
           id?: string
@@ -1822,6 +1830,7 @@ export type Database = {
           correct_answer?: string
           created_at?: string
           difficulty?: string
+          exam_tier?: string | null
           explanation?: string | null
           generation_batch?: number | null
           id?: string

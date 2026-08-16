@@ -6,6 +6,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { callAIWithAutoSwitch } from "../_shared/gemini.ts";
 import { checkStemStyle, stemStyleRules } from "../_shared/stemStyle.ts";
+import { type ExamTier, isExamTier, tierAllowsReuse, tierForJobTest } from "../_shared/examTier.ts";
+
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -296,16 +298,24 @@ async function generateForSection(
   // ceil(target * pool_multiplier) so repeat attempts have variety to rotate
   // through, instead of drawing from the same fixed target-sized set.
   let poolMultiplier = 2.0;
+  // Exam TIER of this test — reuse must stay inside the same tier so a
+  // CSS-level comprehension item never lands in a BPS-13 clerical paper.
+  let targetTier: ExamTier = "clerical";
   try {
     const { data: defRow } = await supabase
       .from("job_test_definitions")
-      .select("pool_multiplier")
+      .select("pool_multiplier, job_title, department, exam_tier")
       .eq("id", jobTestId)
       .maybeSingle();
     const raw = Number(defRow?.pool_multiplier);
     if (Number.isFinite(raw) && raw >= 1) poolMultiplier = raw;
-  } catch (_e) { /* fall back to 2.0 */ }
+    targetTier = isExamTier(defRow?.exam_tier)
+      ? defRow.exam_tier
+      : tierForJobTest(defRow?.job_title, defRow?.department);
+  } catch (_e) { /* fall back to 2.0 / clerical */ }
+  console.log(`[TIER] ${section.subject}: target tier = ${targetTier}`);
   const poolTarget = Math.ceil(target * poolMultiplier);
+
 
   // ===== Phase 1 — Growth target =====
   // Popular tests must be able to grow their pool BEYOND the exam-share target,
@@ -393,18 +403,22 @@ async function generateForSection(
   }
 
   const need = reuseNeed;
+  // Reuse rejection counters (logged, nothing is deleted).
+  let reuseStyleRejected = 0;
+  let reuseTierRejected = 0;
 
   // (a) content_items pool
   try {
     const { data: ciPool } = await supabase
       .from("content_items")
-      .select("id, title, options, correct_option, explanation, difficulty, topic, concept_group_id")
+      .select("id, title, options, correct_option, explanation, difficulty, topic, concept_group_id, exam_tier")
       .eq("category", "mcq")
       .eq("status", "approved")
       .in("subject", subjectPool)
+      .or(`exam_tier.is.null,exam_tier.eq.${targetTier}`)
       .order("usage_count", { ascending: true, nullsFirst: true })
       .order("last_used_at", { ascending: true, nullsFirst: true })
-      .limit(need * 4);
+      .limit(need * 6);
 
     for (const row of ciPool || []) {
       if (reuseInsertRows.length >= need) break;
@@ -412,6 +426,11 @@ async function generateForSection(
       if (!qtext) continue;
       if (existingQuestions.has(qtext.toLowerCase())) continue;
       if (row.concept_group_id && seenGroups.has(row.concept_group_id)) continue;
+      // Tier scope: strict same-tier (untagged legacy rows allowed).
+      if (!tierAllowsReuse(targetTier, row.exam_tier)) { reuseTierRejected++; continue; }
+      // Genre / stem-length guard — same rules the generator enforces.
+      const style = checkStemStyle(qtext, section.subject);
+      if (!style.ok) { reuseStyleRejected++; continue; }
       const opts = row.options || {};
       if (!opts.A || !opts.B || !opts.C || !opts.D) continue;
       const correct = String(row.correct_option || "").toUpperCase();
@@ -432,6 +451,7 @@ async function generateForSection(
         admin_approved: true,
         concept_group_id: row.concept_group_id || null,
         reused_from_content_item_id: row.id,
+        exam_tier: targetTier,
       });
       existingQuestions.add(qtext.toLowerCase());
       if (row.concept_group_id) seenGroups.add(row.concept_group_id);
@@ -446,13 +466,14 @@ async function generateForSection(
     try {
       const { data: jtqPool } = await supabase
         .from("job_test_questions")
-        .select("id, question, options, correct_answer, explanation, difficulty, topic, concept_group_id")
+        .select("id, question, options, correct_answer, explanation, difficulty, topic, concept_group_id, exam_tier")
         .eq("admin_approved", true)
         .in("subject", subjectPool)
         .neq("job_test_id", jobTestId)
+        .or(`exam_tier.is.null,exam_tier.eq.${targetTier}`)
         .order("usage_count", { ascending: true, nullsFirst: true })
         .order("last_used_at", { ascending: true, nullsFirst: true })
-        .limit(need * 4);
+        .limit(need * 6);
 
       for (const row of jtqPool || []) {
         if (reuseInsertRows.length >= need) break;
@@ -460,6 +481,9 @@ async function generateForSection(
         if (!qtext) continue;
         if (existingQuestions.has(qtext.toLowerCase())) continue;
         if (row.concept_group_id && seenGroups.has(row.concept_group_id)) continue;
+        if (!tierAllowsReuse(targetTier, row.exam_tier)) { reuseTierRejected++; continue; }
+        const style = checkStemStyle(qtext, section.subject);
+        if (!style.ok) { reuseStyleRejected++; continue; }
         const opts = row.options || {};
         if (!opts.A || !opts.B || !opts.C || !opts.D) continue;
         const correct = String(row.correct_answer || "").toUpperCase();
@@ -480,6 +504,7 @@ async function generateForSection(
           admin_approved: true,
           concept_group_id: row.concept_group_id || null,
           reused_from_content_item_id: null,
+          exam_tier: targetTier,
         });
         existingQuestions.add(qtext.toLowerCase());
         if (row.concept_group_id) seenGroups.add(row.concept_group_id);
@@ -488,6 +513,7 @@ async function generateForSection(
     } catch (e) {
       console.warn(`[REUSE] JTQ pool query failed:`, (e as Error).message);
     }
+
   }
 
   if (reuseInsertRows.length > 0) {
@@ -519,7 +545,7 @@ async function generateForSection(
       generated_count: 0,
       accepted_count: 0,
       rejected_count: 0,
-      rejection_reasons: { reused_from_db: existingApproved, cross_reused: crossReused },
+      rejection_reasons: { reused_from_db: existingApproved, cross_reused: crossReused, reuse_style_rejected: reuseStyleRejected, reuse_tier_rejected: reuseTierRejected, exam_tier: targetTier },
       api_calls_made: 0,
       generation_time_seconds: 0,
       status: "success",
@@ -608,6 +634,8 @@ async function generateForSection(
           : "medium",
         generation_batch: batchNumber,
         admin_approved: false,
+        exam_tier: targetTier,
+
       });
     }
 
@@ -648,7 +676,7 @@ async function generateForSection(
     generated_count: generated,
     accepted_count: accepted.length,
     rejected_count: generated - accepted.length,
-    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved, cross_reused: crossReused },
+    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved, cross_reused: crossReused, reuse_style_rejected: reuseStyleRejected, reuse_tier_rejected: reuseTierRejected, exam_tier: targetTier },
     api_calls_made: apiCalls,
     generation_time_seconds: elapsed,
     status,
