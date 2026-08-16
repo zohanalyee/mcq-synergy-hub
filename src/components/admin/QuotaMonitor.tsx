@@ -63,7 +63,23 @@ const QuotaMonitor = () => {
       }
       breakdownArr.sort((a, b) => b.count - a.count);
       setBreakdown(breakdownArr);
+
+      // Real questions inserted today (attempts != saved questions).
+      const [ciRes, jtqRes] = await Promise.all([
+        supabase
+          .from("content_items")
+          .select("*", { count: "exact", head: true })
+          .eq("category", "mcq")
+          .gte("created_at", `${today}T00:00:00Z`),
+        supabase
+          .from("job_test_questions")
+          .select("*", { count: "exact", head: true })
+          .gte("created_at", `${today}T00:00:00Z`),
+      ]);
+      setSavedToday({ ci: ciRes.count || 0, jtq: jtqRes.count || 0 });
+
       setLastRefresh(new Date());
+
     } catch (err) {
       console.error("Failed to fetch quota data:", err);
       toast.error("Failed to load quota data");
