@@ -253,9 +253,27 @@ const QuotaMonitor = () => {
                 </Alert>
               )}
 
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em]">
+                  Questions actually saved today
+                </p>
+                <div className="grid grid-cols-2 gap-1">
+                  <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="truncate text-emerald-200/80">Topic MCQs</span>
+                    <span className="text-[10px] font-mono text-emerald-300 ml-1">{savedToday.ci}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                    <span className="truncate text-emerald-200/80">Mock Test Qs</span>
+                    <span className="text-[10px] font-mono text-emerald-300 ml-1">{savedToday.jtq}</span>
+                  </div>
+                </div>
+              </div>
+
               {breakdown.length > 0 && (
                 <div className="space-y-1.5">
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em]">Today's Neural Activity</p>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.15em]">
+                    Today's AI calls (attempts, not saved questions)
+                  </p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
                     {breakdown.map((item) => (
                       <div key={item.source_type} className="flex items-center justify-between text-xs px-2 py-1.5 rounded-lg bg-slate-800/50 border border-slate-700/30">
@@ -266,6 +284,7 @@ const QuotaMonitor = () => {
                   </div>
                 </div>
               )}
+
 
               {breakdown.length === 0 && !isLoading && (
                 <p className="text-xs text-slate-500 text-center py-1">No neural activity recorded today</p>
