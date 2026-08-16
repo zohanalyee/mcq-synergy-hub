@@ -676,7 +676,7 @@ async function generateForSection(
     generated_count: generated,
     accepted_count: accepted.length,
     rejected_count: generated - accepted.length,
-    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved, cross_reused: crossReused },
+    rejection_reasons: { ...rejectionReasons, reused_from_db: existingApproved, cross_reused: crossReused, reuse_style_rejected: reuseStyleRejected, reuse_tier_rejected: reuseTierRejected, exam_tier: targetTier },
     api_calls_made: apiCalls,
     generation_time_seconds: elapsed,
     status,
