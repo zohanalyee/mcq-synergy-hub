@@ -986,16 +986,6 @@ const TestSession = () => {
           onContinue={() => { setJobReward(null); navigate("/mock-tests"); }}
         />
       )}
-      {jobKeepGoing && (
-        <JobTestKeepGoingDialog
-          open={jobKeepGoing.open}
-          score={jobKeepGoing.score}
-          weakTopics={jobKeepGoing.weakTopics}
-          onClose={() => setJobKeepGoing(null)}
-          onPracticeWeak={() => { setJobKeepGoing(null); navigate("/mock-tests"); }}
-          onRetry={() => { setJobKeepGoing(null); handleRetry(); }}
-        />
-      )}
     </Header>
   );
 };
