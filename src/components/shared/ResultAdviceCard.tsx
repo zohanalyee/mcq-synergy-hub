@@ -99,6 +99,7 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
   weakTopic,
   strongTopic,
   isGuest,
+  hideDashboardLink,
 }) => {
   const navigate = useNavigate();
   const advice = isGuest
