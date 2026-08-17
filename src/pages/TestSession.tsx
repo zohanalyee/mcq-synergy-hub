@@ -795,42 +795,34 @@ const TestSession = () => {
 
 
             return (
-              <div className="space-y-4">
-                {/* Pass/Fail Banner */}
+              <div className="space-y-3 sm:space-y-4">
+                {/* Score + Status header */}
                 <Card className={`border-2 ${isPassed ? 'border-success/50 bg-success/5' : 'border-destructive/50 bg-destructive/5'}`}>
-                  <CardContent className="py-6 text-center">
-                    {isPassed ? (
-                      <>
-                        <Award className="h-14 w-14 text-success mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-success mb-1">Congratulations! 🎉</h1>
-                        <p className="text-success/80">You passed the test!</p>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-14 w-14 text-destructive mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-destructive mb-1">Keep Trying! 💪</h1>
-                        <p className="text-destructive/80">You need {passingPercent}% to pass. Review and try again!</p>
-                      </>
+                  <CardContent className="py-5 text-center">
+                    <BrandMark className="justify-center mb-3" />
+                    <h1 className="text-base sm:text-lg font-semibold mb-1">{testData.session_name || 'Test'}</h1>
+                    <div className="text-4xl sm:text-5xl font-bold text-brand-gradient my-1.5">{percentage}%</div>
+                    <p className="text-muted-foreground text-xs sm:text-sm">{correctCount} / {totalQ} correct</p>
+
+                    <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                      <Badge variant={isPassed ? "default" : "destructive"}>
+                        {isPassed ? "PASSED" : "FAILED"}
+                      </Badge>
+                      <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${isPassed ? 'text-success' : 'text-destructive'}`}>
+                        {isPassed ? <Award className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                        {isPassed ? 'Congratulations! 🎉' : 'Keep Trying! 💪'}
+                      </span>
+                    </div>
+                    {!isPassed && (
+                      <p className="mt-1.5 text-xs text-destructive/80">
+                        You need {passingPercent}% to pass. Review and try again!
+                      </p>
                     )}
                   </CardContent>
                 </Card>
 
-                {/* Score + Stats */}
-                <Card>
-                  <CardContent className="py-5 text-center">
-                    <BrandMark className="justify-center mb-3" />
-                    <h2 className="text-lg font-semibold mb-1">{testData.session_name || 'Test'}</h2>
-                    <div className="text-5xl font-bold text-brand-gradient my-2">{percentage}%</div>
-                    <p className="text-muted-foreground text-sm">{correctCount} / {totalQ} correct</p>
-                    <Badge variant={isPassed ? "default" : "destructive"} className="mt-2">
-                      {isPassed ? "PASSED" : "FAILED"}
-                    </Badge>
-                  </CardContent>
-                </Card>
-
-
                 {/* Stats Grid */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { icon: CheckCircle, label: 'Correct', value: correctCount, cls: 'text-success' },
                     { icon: XCircle, label: 'Wrong', value: wrongCount, cls: 'text-destructive' },
@@ -840,7 +832,7 @@ const TestSession = () => {
                     <Card key={i}>
                       <CardContent className="py-3 text-center px-1">
                         <s.icon className={`h-5 w-5 mx-auto mb-1 ${s.cls}`} />
-                        <div className="text-lg font-bold">{s.value}</div>
+                        <div className="text-base sm:text-lg font-bold">{s.value}</div>
                         <div className="text-[10px] text-muted-foreground">{s.label}</div>
                       </CardContent>
                     </Card>
