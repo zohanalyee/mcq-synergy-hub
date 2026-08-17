@@ -8,7 +8,7 @@ The single biggest lever is CTR + rank on queries we already appear for. At posi
 
 - All 74 clicks come from one page: `/mock-tests/junior-office-associate-bps-13`.
 - 100% Pakistan, 76% mobile.
-- Intent split: "past papers" (~470 impressions), "syllabus" (~110 impressions), "NTS / Sindh High Court" branded variants (~250 impressions), "test date" (small but rising).
+- Intent split: "past papers" (470 impressions), "syllabus" (110 impressions), "NTS / Sindh High Court" branded variants (~250 impressions), "test date" (small but rising).
 - Zero clicks on every "syllabus" and "test date" query despite impressions — the page ranks but doesn't look like the answer in the SERP.
 
 ## Confirmed technical gap
@@ -19,9 +19,9 @@ Mock-test detail pages are client-rendered. The build injects only `<title>`/met
 
 1. **Crawler-visible body for mock-test pages.** Extend the prerender step so each `/mock-tests/<slug>` static file contains the real syllabus table, subject weightage, 10-15 approved sample MCQs with answers, and the FAQ block — mirroring the board-topic approach. This is what makes the page eligible for the "past papers" and "syllabus" snippets.
 2. **Query-matched sections on the JOA page.** Add three anchored sections to the live page, written from data we already hold (no invented facts):
-   - "Past Papers Pattern" — subject-wise breakdown of what previous papers contained, framed honestly as practice built on the official syllabus and past-paper pattern.
-   - "Syllabus (subject-wise weightage)" — already present; give it an ID, a summary sentence, and put the weightage in a crawlable table with a one-line takeaway above it.
-   - "Test Date & Roll Number Slip" — a short factual block. I need the official date/venue text from you; without it I will link to the official source only and not state a date.
+  - "Past Papers Pattern" — subject-wise breakdown of what previous papers contained, framed honestly as practice built on the official syllabus and past-paper pattern.
+  - "Syllabus (subject-wise weightage)" — already present; give it an ID, a summary sentence, and put the weightage in a crawlable table with a one-line takeaway above it.
+  - "Test Date & Roll Number Slip" — a short factual block. I need the official date/venue text from you; without it I will link to the official source only and not state a date.
 3. **In-body contextual internal links.** Today's cross-links are only chip/card grids at the bottom. Add keyword-anchored links inside the opening paragraphs (e.g. "Sindh High Court Library Associate BPS-13 mock test", "NTS past papers") so authority flows into siblings instead of dead-ending.
 4. **Sibling cluster.** Verify each parallel Sindh High Court / NTS post (Library Associate, Caretaker, Junior Translator, Stenographer) has a live page, then cross-link all of them both ways. Any post that is missing gets created from its official syllabus.
 5. **Force a re-crawl.** Bump `lastmod` for the affected URLs, regenerate sitemaps, and fire IndexNow (`indexnow-submit-recent`) the moment the content lands so Google re-crawls before Sunday rather than after.
@@ -43,3 +43,37 @@ Mock-test detail pages are client-rendered. The build injects only `<title>`/met
 - Page edits in `src/pages/MockTestDetail.tsx` and the `src/components/mock-tests/*` link blocks; existing FAQ/JSON-LD path via `safeJsonLd` stays unchanged.
 - Sitemap: `scripts/generate-sitemaps.mjs` `mock-tests.xml` lastmod refresh, then the IndexNow edge function.
 - No schema changes required for Phase 1.
+
+&nbsp;
+
+Approved — JOA-Traffic-Sprint audit-ka-Phase-1 implement-karein, LEKIN yeh-STRICT-GUARDRAILS-ke-saath:
+
+CONTEXT-ZAROORI: Webapp-par-abhi-EK-CHHOTA-SA-ORGANIC-TRAFFIC-MOMENTUM-shuru-hua-hai is-hafte. YEH-MOMENTUM-KABHI-BHI-DISTURB-NAHI-HONA-CHAHIYE is-build-se.
+
+MAIN-NE-NOTICE-KIYA-HAI: jab-bhi-naya-build-hota-hai, kabhi-kabhi-PURANE-WORKING-FEATURES mein-GALTI-SE-BUG/REGRESSION aa-jata-hai (jaisa-humne-pehle-email-cron, autofill-toggle, wagera-mein-dekha).
+
+ZAROORI-REQUIREMENTS is-build-ke-liye:
+
+1. ISOLATION — Yeh-fix-STRICTLY-Mock-Test-prerendering + JOA-page-content tak-mehdood-rahe. Koi-EXISTING-WORKING-SYSTEM (Board-Topics-prerender, Sprint-Mode, Quality-Gate, Mock-Test-Growth, Email-system, Auth, Campaign-Surge) BILKUL-NA-CHHUYEN.
+
+2. NO-DESTRUCTIVE-CHANGE — Koi-EXISTING-URL/ROUTE/CANONICAL na-badle jo-abhi-INDEX/RANK-ho-raha-hai. JOA-page-ka-EXISTING-URL, existing-title, existing-content-STRUCTURE — yeh-sab-jitna-mumkin-ho-INTACT-rahe, sirf-NAYI-content-ADD-ho, PURANI-DELETE/REPLACE-na-ho.
+
+3. PRE-BUILD-SNAPSHOT — Build-se-PEHLE, JOA-page-ka-CURRENT-LIVE-STATE (raw-HTML, ranking-position-agar-pata-ho) note-kar-lein taake-COMPARISON-ho-sake build-ke-baad.
+
+4. POST-BUILD-VERIFICATION — Build/typecheck-ke-baad, EXPLICITLY-CONFIRM-karein SMOKE-TEST se:
+
+   - Board-Topic-page-abhi-bhi-theek-load-ho-raha-hai (raw-HTML-check)
+
+   - Mock-Test-generation-abhi-bhi-kaam-kar-raha-hai
+
+   - JOA-page-KA-EXISTING-CANONICAL/TITLE-abhi-bhi-SAME-hai (sirf-body-content-add-hua)
+
+   - Sitemap-mein-koi-EXISTING-URL-missing-to-nahi-ho-gaya
+
+5. GRADUAL-ROLLOUT — Agar-mumkin-ho, PEHLE-SIRF-JOA-PAGE-par-yeh-fix-lagayen (na-ke-EK-SAATH-SAARE-mock-tests-par), taake-agar-kuch-galat-ho-to-SIRF-1-PAGE-affected-ho, POORA-SITE-nahi.
+
+6. Test-date/cutoff — koi-CLAIM-NA-DALEIN jab-tak-main-EXPLICITLY-source/date-na-doon.
+
+Sirf-Phase-1 (items-1-5-jaisa-audit-mein-tha) abhi-karein, SIRF-JOA-page-par-pehle. Baaqi-sibling-posts aur-Phase-2 — result-dekhne-ke-baad.
+
+Publish-se-PEHLE, mujhe-CONFIRM-karein sab-EXISTING-SYSTEMS-theek-hain.
