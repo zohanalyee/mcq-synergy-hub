@@ -177,6 +177,20 @@ const MockTestDetail = () => {
             questions written in simple Pakistani exam English. Use it to build speed, check your weak areas, and improve
             your score before the real test.
           </p>
+          {siblingLinks.length > 0 && (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Preparing for more than one post? Candidates practising this paper also use the{" "}
+              {siblingLinks.map((l, i) => (
+                <span key={l.to}>
+                  {i > 0 && (i === siblingLinks.length - 1 ? " and " : ", ")}
+                  <Link to={l.to} className="font-medium text-primary hover:underline">
+                    {l.label}
+                  </Link>
+                </span>
+              ))}
+              .
+            </p>
+          )}
           {lastUpdated && (
             <p className="text-xs text-muted-foreground">Last updated: {lastUpdated}</p>
           )}
