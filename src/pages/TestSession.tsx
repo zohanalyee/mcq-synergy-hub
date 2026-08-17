@@ -954,22 +954,16 @@ const TestSession = () => {
                   })}
                 </div>
 
-                <div className="flex gap-3 justify-center flex-wrap">
-                  <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-center">
+                  <Button className="w-full sm:w-auto min-h-[44px]" onClick={handleCreateAnother}>Create Another Quiz</Button>
                   <Button
-                    size="sm"
                     variant="outline"
+                    className="w-full sm:w-auto min-h-[44px]"
                     onClick={() => handleShareScore(percentage, correctCount, totalQ, testData.session_name || 'Test')}
                   >
                     <Share2 className="h-3.5 w-3.5 mr-1.5" />
                     Share my score
                   </Button>
-                  <button
-                    onClick={() => navigate('/analytics')}
-                    className="bg-brand-gradient text-white shadow-brand px-6 py-2 rounded-full text-sm font-medium"
-                  >
-                    📊 AI Coach — View Full Analysis
-                  </button>
                 </div>
               </div>
             );
