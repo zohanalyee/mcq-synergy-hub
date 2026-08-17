@@ -9,6 +9,8 @@ interface ResultAdviceCardProps {
   weakTopic?: string;
   strongTopic?: string;
   isGuest?: boolean;
+  /** Hide the inline dashboard text link when dedicated action buttons are rendered below. */
+  hideDashboardLink?: boolean;
 }
 
 const getAdvice = (
