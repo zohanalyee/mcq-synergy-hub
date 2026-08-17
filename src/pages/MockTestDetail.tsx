@@ -99,6 +99,20 @@ const MockTestDetail = () => {
 
   // Factual FAQs derived from the test's own data (no invented claims).
   const subjectsList = test.syllabus.map((s) => s.topic).join(", ");
+
+  // Contextual in-body links: same-organisation tests first, so authority flows
+  // into sibling posts instead of dead-ending on this page.
+  const siblingLinks = allTests
+    .filter((t) => t.id !== test.id)
+    .sort(
+      (a, b) =>
+        Number(b.organization === test.organization) - Number(a.organization === test.organization),
+    )
+    .slice(0, 3)
+    .map((t) => ({
+      to: `/mock-tests/${toJobTestSlug(t, allTests)}`,
+      label: /mock test/i.test(t.title) ? t.title : `${t.title} Mock Test`,
+    }));
   const faqs = [
     {
       question: `What subjects are included in the ${test.title} test?`,
