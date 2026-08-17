@@ -50,4 +50,6 @@ Wrap "Ustaad Ki Advice" and its actions in one section:
 
 - Files: `src/pages/TestSession.tsx` (results branch, ~lines 797-998), `src/components/shared/ResultAdviceCard.tsx` (optional `hideDashboardLink` prop), delete `src/components/jobs/JobTestKeepGoingDialog.tsx`.
 - Presentation-only change: scoring, gamification, reward dialog, ad slot, and answer-review logic stay exactly as they are.
-- `JobTestRewardDialog` (the 80%+ unlock popup) is kept — only the "Keep Going" one is removed.
+- `JobTestRewardDialog` (the 80%+ unlock popup) is kept — only the "Keep Going" one is removed...
+
+Futher no changes in code only what is requested to do.
