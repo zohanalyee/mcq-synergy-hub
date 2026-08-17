@@ -475,12 +475,8 @@ const TestSession = () => {
       // Record job-test progress for both guests (by IP) and logged-in users.
       // The edge function uses service-role internally, so guests don't hit RLS.
       const prog = await recordJobTestProgress(jobTestId, scorePct, weakTopics);
-      if (prog) {
-        if (prog.qualified) {
-          setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
-        } else {
-          setJobKeepGoing({ open: true, score: scorePct, weakTopics });
-        }
+      if (prog?.qualified) {
+        setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
       }
     }
   };
