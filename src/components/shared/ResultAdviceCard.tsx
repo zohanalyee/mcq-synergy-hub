@@ -135,7 +135,7 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
               >
                 🔥 Sign Up Free — Full Analysis dekho →
               </button>
-            ) : (
+            ) : hideDashboardLink ? null : (
               <button
                 type="button"
                 onClick={() => navigate('/analytics')}
