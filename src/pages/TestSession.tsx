@@ -8,7 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward, BookOpen, Share2, Target } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward, BookOpen, Share2, Target, BarChart3, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/lib/questionUtils";
