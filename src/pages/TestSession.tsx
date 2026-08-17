@@ -884,13 +884,40 @@ const TestSession = () => {
 
 
 
-                <ResultAdviceCard
-                  name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
-                  score={percentage}
-                  subject={(testData as any)?.subject || (testData as any)?.session_name}
-                  topic={(testData as any)?.topic}
-                  isGuest={!user}
-                />
+                <div className="space-y-2">
+                  <ResultAdviceCard
+                    name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
+                    score={percentage}
+                    subject={(testData as any)?.subject || (testData as any)?.session_name}
+                    topic={(testData as any)?.topic}
+                    isGuest={!user}
+                    hideDashboardLink={!!user}
+                  />
+
+                  {user && (
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => navigate('/analytics')}
+                        className="w-full min-h-[44px] bg-brand-gradient text-white shadow-brand hover:opacity-90"
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        AI Coach — View Full Analysis
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full min-h-[44px]"
+                        onClick={() => navigate('/mock-tests')}
+                      >
+                        <Target className="h-4 w-4 mr-2" />
+                        Practice Weak Areas
+                      </Button>
+                      <Button variant="outline" className="w-full min-h-[44px]" onClick={handleRetry}>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Try Again
+                      </Button>
+                    </div>
+                  )}
+                </div>
 
                 {/* Results screen only — never rendered during a live exam */}
                 <AdSlot surface="test-results" />
