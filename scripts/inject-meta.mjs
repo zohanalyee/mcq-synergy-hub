@@ -22,6 +22,7 @@ import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TOOLS_WITHOUT_SEOHEAD, SUBJECT_CONTENT_META } from "./prerender-routes.mjs";
 import { buildQuizSchema, buildFaqSchema, buildTopicContentHtml, buildTopicTitleBase } from "./topic-content.mjs";
+import { buildMockTestContentHtml } from "./mock-test-content.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -485,6 +486,86 @@ async function injectBoardTopicContent() {
   return injected;
 }
 
+/**
+ * Mock-test detail pages ship the homepage shell in <body> (they are not
+ * prerenderable — the data is async). This writes the REAL page content into the
+ * raw HTML of an explicit slug allow-list so non-JS crawlers and AI answer
+ * engines can read the syllabus, past-paper pattern and question preview.
+ *
+ * Deliberately allow-listed (gradual rollout): one page can never take the whole
+ * /mock-tests/* category down. Never throws — head-only pages still ship.
+ */
+const MOCK_TEST_CONTENT_SLUGS = ["junior-office-associate-bps-13"];
+
+async function injectMockTestContent() {
+  const { data } = await supabase
+    .from("job_tests")
+    .select("id,title,organization,duration,questions,syllabus,definition_id");
+  const all = data || [];
+  let injected = 0, skipped = 0;
+
+  for (const slug of MOCK_TEST_CONTENT_SLUGS) {
+    const test = all.find((t) => jobTestSlug(t, all) === slug);
+    if (!test) { console.warn(`[inject-meta] mock-test-content: no test for /${slug}`); skipped++; continue; }
+
+    const file = join(DIST, "mock-tests", slug, "index.html");
+    if (!existsSync(file)) { console.warn(`[inject-meta] mock-test-content: missing ${file}`); skipped++; continue; }
+
+    const syllabus = Array.isArray(test.syllabus) ? test.syllabus : [];
+    if (syllabus.length === 0) { skipped++; continue; }
+
+    // Guest-visible approved questions (no correct answers / explanations) —
+    // exactly what the rendered preview shows.
+    let previewQuestions = [];
+    if (test.definition_id) {
+      try {
+        const { data: qs } = await supabase.rpc("get_job_practice_questions", {
+          p_job_test_id: test.definition_id,
+        });
+        previewQuestions = (qs || []).slice(0, 15);
+      } catch (e) {
+        console.warn(`[inject-meta] mock-test-content questions failed ${slug}: ${e?.message || e}`);
+      }
+    }
+
+    const siblings = all
+      .filter((t) => t.id !== test.id)
+      .sort((a, b) => Number(b.organization === test.organization) - Number(a.organization === test.organization))
+      .slice(0, 8)
+      .map((t) => ({
+        href: `/mock-tests/${jobTestSlug(t, all)}`,
+        label: /mock test/i.test(t.title) ? t.title : `${t.title} Mock Test`,
+      }));
+
+    const contentHtml = buildMockTestContentHtml({
+      title: test.title,
+      organization: test.organization,
+      duration: test.duration,
+      questions: test.questions,
+      syllabus,
+      previewQuestions,
+      links: siblings,
+      path: `/mock-tests/${slug}`,
+    });
+
+    try {
+      const html = readFileSync(file, "utf8");
+      // Body only: head (title/description/canonical/OG) stays exactly as
+      // injectMockTests() wrote it, and no JSON-LD is added or removed.
+      writeFileSync(file, injectContentIntoHtml(html, contentHtml, []), "utf8");
+      injected++;
+    } catch (e) {
+      console.warn(`[inject-meta] mock-test-content write failed ${slug}: ${e?.message || e}`);
+      skipped++;
+    }
+  }
+
+  console.log(`[inject-meta] mock-test-content: ${injected} injected, ${skipped} skipped`);
+  return injected;
+}
+
+
+
 
 // Mirror src/lib/slugUtils.ts toSlug so DB display names map back to the exact
 // URL segments the board pages resolve via findBestMatch.
@@ -708,6 +789,15 @@ function verifyRequiredRoutes() {
   } catch (e) {
     counts["board-topic-content"] = -1;
     console.warn(`[inject-meta] board-topic-content FAILED: ${e?.message || e}`);
+  }
+
+  // JOA traffic sprint: real body content for allow-listed mock-test pages
+  // (currently /mock-tests/junior-office-associate-bps-13 only). Fail-safe.
+  try {
+    counts["mock-test-content"] = await injectMockTestContent();
+  } catch (e) {
+    counts["mock-test-content"] = -1;
+    console.warn(`[inject-meta] mock-test-content FAILED: ${e?.message || e}`);
   }
 
   writeManifest();

@@ -99,6 +99,20 @@ const MockTestDetail = () => {
 
   // Factual FAQs derived from the test's own data (no invented claims).
   const subjectsList = test.syllabus.map((s) => s.topic).join(", ");
+
+  // Contextual in-body links: same-organisation tests first, so authority flows
+  // into sibling posts instead of dead-ending on this page.
+  const siblingLinks = allTests
+    .filter((t) => t.id !== test.id)
+    .sort(
+      (a, b) =>
+        Number(b.organization === test.organization) - Number(a.organization === test.organization),
+    )
+    .slice(0, 3)
+    .map((t) => ({
+      to: `/mock-tests/${toJobTestSlug(t, allTests)}`,
+      label: /mock test/i.test(t.title) ? t.title : `${t.title} Mock Test`,
+    }));
   const faqs = [
     {
       question: `What subjects are included in the ${test.title} test?`,
@@ -163,6 +177,20 @@ const MockTestDetail = () => {
             questions written in simple Pakistani exam English. Use it to build speed, check your weak areas, and improve
             your score before the real test.
           </p>
+          {siblingLinks.length > 0 && (
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Preparing for more than one post? Candidates practising this paper also use the{" "}
+              {siblingLinks.map((l, i) => (
+                <span key={l.to}>
+                  {i > 0 && (i === siblingLinks.length - 1 ? " and " : ", ")}
+                  <Link to={l.to} className="font-medium text-primary hover:underline">
+                    {l.label}
+                  </Link>
+                </span>
+              ))}
+              .
+            </p>
+          )}
           {lastUpdated && (
             <p className="text-xs text-muted-foreground">Last updated: {lastUpdated}</p>
           )}
@@ -315,6 +343,33 @@ const MockTestDetail = () => {
             </table>
           </div>
         </section>
+
+        {/* Past papers pattern — derived purely from the official syllabus above.
+            No test dates, cut-offs or "official PDF" claims. */}
+        <section aria-labelledby="past-papers-heading" className="space-y-3">
+          <h2 id="past-papers-heading" className="text-lg font-semibold text-foreground">
+            {test.title} Past Papers Pattern
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Past papers of the {test.title} test follow the official syllabus above. The practice
+            questions on this page are built subject-by-subject on that same pattern, so the balance of
+            topics matches what candidates report seeing in previous papers.
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {test.syllabus.map((item, i) => (
+              <li
+                key={i}
+                className="rounded-xl border border-border bg-card/60 px-3 py-2 text-sm text-muted-foreground"
+              >
+                <span className="font-medium text-foreground">{item.topic}</span> — about{" "}
+                {Math.round(((item.percentage || 0) / totalPct) * test.questions)} of {test.questions}{" "}
+                questions ({item.percentage}%)
+              </li>
+            ))}
+          </ul>
+        </section>
+
+
 
         {/* Custom syllabus editor */}
         <section aria-labelledby="custom-heading" className="space-y-3">
