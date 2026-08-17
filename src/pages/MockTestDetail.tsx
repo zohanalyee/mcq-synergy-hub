@@ -344,6 +344,33 @@ const MockTestDetail = () => {
           </div>
         </section>
 
+        {/* Past papers pattern — derived purely from the official syllabus above.
+            No test dates, cut-offs or "official PDF" claims. */}
+        <section aria-labelledby="past-papers-heading" className="space-y-3">
+          <h2 id="past-papers-heading" className="text-lg font-semibold text-foreground">
+            {test.title} Past Papers Pattern
+          </h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Past papers of the {test.title} test follow the official syllabus above. The practice
+            questions on this page are built subject-by-subject on that same pattern, so the balance of
+            topics matches what candidates report seeing in previous papers.
+          </p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {test.syllabus.map((item, i) => (
+              <li
+                key={i}
+                className="rounded-xl border border-border bg-card/60 px-3 py-2 text-sm text-muted-foreground"
+              >
+                <span className="font-medium text-foreground">{item.topic}</span> — about{" "}
+                {Math.round(((item.percentage || 0) / totalPct) * test.questions)} of {test.questions}{" "}
+                questions ({item.percentage}%)
+              </li>
+            ))}
+          </ul>
+        </section>
+
+
+
         {/* Custom syllabus editor */}
         <section aria-labelledby="custom-heading" className="space-y-3">
           <h2 id="custom-heading" className="text-lg font-semibold text-foreground">
