@@ -302,6 +302,32 @@ if (!existsSync(toolsSeoSrc)) {
   }
 }
 
-console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK; static-parity ${staticFailed ? "FAILED" : "OK"}; topic-content ${contentFailed ? 'FAILED' : 'OK'}; tool-body ${toolFailed ? 'FAILED' : 'OK'}`);
-process.exit(failed || typeFailed || requiredFailed || staticFailed || contentFailed || toolFailed ? 1 : 0);
+// ---- Mock-test BODY assertion (JOA traffic sprint) ----------------------
+// Allow-listed mock-test pages must ship real body content (syllabus table +
+// question preview) in RAW HTML, not the homepage shell. Keep this list in sync
+// with MOCK_TEST_CONTENT_SLUGS in scripts/inject-meta.mjs.
+let mockBodyFailed = 0;
+const MOCK_TEST_CONTENT_ROUTES = ['/mock-tests/junior-office-associate-bps-13'];
+{
+  const bad = [];
+  for (const route of MOCK_TEST_CONTENT_ROUTES) {
+    const file = join(DIST, route.replace(/^\//, ''), 'index.html');
+    if (!existsSync(file)) { bad.push(`${route} (not generated)`); continue; }
+    const html = readFileSync(file, 'utf8');
+    const rootStart = html.search(/<div id=["']root["'][^>]*>/i);
+    const root = rootStart === -1 ? '' : html.slice(rootStart).split(/<\/body>/i)[0];
+    if (!/Official Syllabus/i.test(root)) bad.push(`${route} (no syllabus section in body)`);
+    else if (!/Past Papers Pattern/i.test(root)) bad.push(`${route} (no past-paper pattern in body)`);
+    else if (!/<h1[\s>]/i.test(root)) bad.push(`${route} (no h1 in body)`);
+  }
+  if (bad.length) {
+    console.warn(`❌ [mock-test-body] ${bad.length}/${MOCK_TEST_CONTENT_ROUTES.length} allow-listed mock tests lack raw body content:\n   - ${bad.join('\n   - ')}`);
+    mockBodyFailed++;
+  } else {
+    console.log(`✅ [mock-test-body] all ${MOCK_TEST_CONTENT_ROUTES.length} allow-listed mock-test pages ship raw syllabus + preview content`);
+  }
+}
+
+console.log(`\n[verify-prerender] ${files.length - failed}/${files.length} pages OK; ${pageTypeChecks.length - typeFailed}/${pageTypeChecks.length} page types OK; ${requiredDynamicRoutes.length - requiredFailed}/${requiredDynamicRoutes.length} required routes OK; static-parity ${staticFailed ? "FAILED" : "OK"}; topic-content ${contentFailed ? 'FAILED' : 'OK'}; tool-body ${toolFailed ? 'FAILED' : 'OK'}; mock-test-body ${mockBodyFailed ? 'FAILED' : 'OK'}`);
+process.exit(failed || typeFailed || requiredFailed || staticFailed || contentFailed || toolFailed || mockBodyFailed ? 1 : 0);
 
