@@ -8,7 +8,7 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward, BookOpen, Share2, Target } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Loader2, Award, Clock, SkipForward, BookOpen, Share2, Target, BarChart3, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cleanQuestionText } from "@/lib/questionUtils";
@@ -26,7 +26,7 @@ import { useExamMotivation } from "@/components/exam/useExamMotivation";
 import { useExamPersistence } from "@/components/exam/useExamPersistence";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { JobTestRewardDialog } from "@/components/jobs/JobTestRewardDialog";
-import { JobTestKeepGoingDialog } from "@/components/jobs/JobTestKeepGoingDialog";
+
 import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestProgressService";
 import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
@@ -83,7 +83,6 @@ const TestSession = () => {
   const [isMusicOpen, setIsMusicOpen] = useState(false);
   const [syllabusSheetOpen, setSyllabusSheetOpen] = useState(false);
   const [jobReward, setJobReward] = useState<{ open: boolean; score: number; unlocked: number; delta: number } | null>(null);
-  const [jobKeepGoing, setJobKeepGoing] = useState<{ open: boolean; score: number; weakTopics: string[] } | null>(null);
 
   const hasRestoredRef = useRef(false);
   const questionStartRef = useRef<number>(Date.now());
@@ -475,12 +474,8 @@ const TestSession = () => {
       // Record job-test progress for both guests (by IP) and logged-in users.
       // The edge function uses service-role internally, so guests don't hit RLS.
       const prog = await recordJobTestProgress(jobTestId, scorePct, weakTopics);
-      if (prog) {
-        if (prog.qualified) {
-          setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
-        } else {
-          setJobKeepGoing({ open: true, score: scorePct, weakTopics });
-        }
+      if (prog?.qualified) {
+        setJobReward({ open: true, score: scorePct, unlocked: prog.unlocked, delta: prog.unlocked_delta || 0 });
       }
     }
   };
@@ -795,42 +790,34 @@ const TestSession = () => {
 
 
             return (
-              <div className="space-y-4">
-                {/* Pass/Fail Banner */}
+              <div className="space-y-3 sm:space-y-4">
+                {/* Score + Status header */}
                 <Card className={`border-2 ${isPassed ? 'border-success/50 bg-success/5' : 'border-destructive/50 bg-destructive/5'}`}>
-                  <CardContent className="py-6 text-center">
-                    {isPassed ? (
-                      <>
-                        <Award className="h-14 w-14 text-success mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-success mb-1">Congratulations! 🎉</h1>
-                        <p className="text-success/80">You passed the test!</p>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-14 w-14 text-destructive mx-auto mb-3" />
-                        <h1 className="text-2xl font-bold text-destructive mb-1">Keep Trying! 💪</h1>
-                        <p className="text-destructive/80">You need {passingPercent}% to pass. Review and try again!</p>
-                      </>
+                  <CardContent className="py-5 text-center">
+                    <BrandMark className="justify-center mb-3" />
+                    <h1 className="text-base sm:text-lg font-semibold mb-1">{testData.session_name || 'Test'}</h1>
+                    <div className="text-4xl sm:text-5xl font-bold text-brand-gradient my-1.5">{percentage}%</div>
+                    <p className="text-muted-foreground text-xs sm:text-sm">{correctCount} / {totalQ} correct</p>
+
+                    <div className="mt-3 flex items-center justify-center gap-2 flex-wrap">
+                      <Badge variant={isPassed ? "default" : "destructive"}>
+                        {isPassed ? "PASSED" : "FAILED"}
+                      </Badge>
+                      <span className={`inline-flex items-center gap-1.5 text-sm font-semibold ${isPassed ? 'text-success' : 'text-destructive'}`}>
+                        {isPassed ? <Award className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
+                        {isPassed ? 'Congratulations! 🎉' : 'Keep Trying! 💪'}
+                      </span>
+                    </div>
+                    {!isPassed && (
+                      <p className="mt-1.5 text-xs text-destructive/80">
+                        You need {passingPercent}% to pass. Review and try again!
+                      </p>
                     )}
                   </CardContent>
                 </Card>
 
-                {/* Score + Stats */}
-                <Card>
-                  <CardContent className="py-5 text-center">
-                    <BrandMark className="justify-center mb-3" />
-                    <h2 className="text-lg font-semibold mb-1">{testData.session_name || 'Test'}</h2>
-                    <div className="text-5xl font-bold text-brand-gradient my-2">{percentage}%</div>
-                    <p className="text-muted-foreground text-sm">{correctCount} / {totalQ} correct</p>
-                    <Badge variant={isPassed ? "default" : "destructive"} className="mt-2">
-                      {isPassed ? "PASSED" : "FAILED"}
-                    </Badge>
-                  </CardContent>
-                </Card>
-
-
                 {/* Stats Grid */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     { icon: CheckCircle, label: 'Correct', value: correctCount, cls: 'text-success' },
                     { icon: XCircle, label: 'Wrong', value: wrongCount, cls: 'text-destructive' },
@@ -840,7 +827,7 @@ const TestSession = () => {
                     <Card key={i}>
                       <CardContent className="py-3 text-center px-1">
                         <s.icon className={`h-5 w-5 mx-auto mb-1 ${s.cls}`} />
-                        <div className="text-lg font-bold">{s.value}</div>
+                        <div className="text-base sm:text-lg font-bold">{s.value}</div>
                         <div className="text-[10px] text-muted-foreground">{s.label}</div>
                       </CardContent>
                     </Card>
@@ -884,13 +871,40 @@ const TestSession = () => {
 
 
 
-                <ResultAdviceCard
-                  name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
-                  score={percentage}
-                  subject={(testData as any)?.subject || (testData as any)?.session_name}
-                  topic={(testData as any)?.topic}
-                  isGuest={!user}
-                />
+                <div className="space-y-2">
+                  <ResultAdviceCard
+                    name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
+                    score={percentage}
+                    subject={(testData as any)?.subject || (testData as any)?.session_name}
+                    topic={(testData as any)?.topic}
+                    isGuest={!user}
+                    hideDashboardLink={!!user}
+                  />
+
+                  {user && (
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        onClick={() => navigate('/analytics')}
+                        className="w-full min-h-[44px] bg-brand-gradient text-white shadow-brand hover:opacity-90"
+                      >
+                        <BarChart3 className="h-4 w-4 mr-2" />
+                        AI Coach — View Full Analysis
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="w-full min-h-[44px]"
+                        onClick={() => navigate('/mock-tests')}
+                      >
+                        <Target className="h-4 w-4 mr-2" />
+                        Practice Weak Areas
+                      </Button>
+                      <Button variant="outline" className="w-full min-h-[44px]" onClick={handleRetry}>
+                        <RotateCcw className="h-4 w-4 mr-2" />
+                        Try Again
+                      </Button>
+                    </div>
+                  )}
+                </div>
 
                 {/* Results screen only — never rendered during a live exam */}
                 <AdSlot surface="test-results" />
@@ -954,22 +968,16 @@ const TestSession = () => {
                   })}
                 </div>
 
-                <div className="flex gap-3 justify-center flex-wrap">
-                  <Button size="sm" onClick={handleCreateAnother}>Create Another Quiz</Button>
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-center">
+                  <Button className="w-full sm:w-auto min-h-[44px]" onClick={handleCreateAnother}>Create Another Quiz</Button>
                   <Button
-                    size="sm"
                     variant="outline"
+                    className="w-full sm:w-auto min-h-[44px]"
                     onClick={() => handleShareScore(percentage, correctCount, totalQ, testData.session_name || 'Test')}
                   >
                     <Share2 className="h-3.5 w-3.5 mr-1.5" />
                     Share my score
                   </Button>
-                  <button
-                    onClick={() => navigate('/analytics')}
-                    className="bg-brand-gradient text-white shadow-brand px-6 py-2 rounded-full text-sm font-medium"
-                  >
-                    📊 AI Coach — View Full Analysis
-                  </button>
                 </div>
               </div>
             );
@@ -984,16 +992,6 @@ const TestSession = () => {
           unlockedDelta={jobReward.delta}
           onClose={() => setJobReward(null)}
           onContinue={() => { setJobReward(null); navigate("/mock-tests"); }}
-        />
-      )}
-      {jobKeepGoing && (
-        <JobTestKeepGoingDialog
-          open={jobKeepGoing.open}
-          score={jobKeepGoing.score}
-          weakTopics={jobKeepGoing.weakTopics}
-          onClose={() => setJobKeepGoing(null)}
-          onPracticeWeak={() => { setJobKeepGoing(null); navigate("/mock-tests"); }}
-          onRetry={() => { setJobKeepGoing(null); handleRetry(); }}
         />
       )}
     </Header>

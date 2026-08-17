@@ -9,6 +9,8 @@ interface ResultAdviceCardProps {
   weakTopic?: string;
   strongTopic?: string;
   isGuest?: boolean;
+  /** Hide the inline dashboard text link when dedicated action buttons are rendered below. */
+  hideDashboardLink?: boolean;
 }
 
 const getAdvice = (
@@ -97,6 +99,7 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
   weakTopic,
   strongTopic,
   isGuest,
+  hideDashboardLink,
 }) => {
   const navigate = useNavigate();
   const advice = isGuest
@@ -132,7 +135,7 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
               >
                 🔥 Sign Up Free — Full Analysis dekho →
               </button>
-            ) : (
+            ) : hideDashboardLink ? null : (
               <button
                 type="button"
                 onClick={() => navigate('/analytics')}
