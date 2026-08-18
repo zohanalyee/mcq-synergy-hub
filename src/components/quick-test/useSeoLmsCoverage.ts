@@ -144,7 +144,8 @@ export const useSeoLmsCoverage = (ctx: SeoLmsContext | null) => {
     // number here produced crawlable /boards/<board>/12/... links that only
     // redirect to the canonical form (wasted crawl budget + "Page with
     // redirect" / "Alternate canonical" rows in GSC).
-    const classSeg = toClassSegment(String(ctx.classNumber ?? ''));
+    const rawClass = String(ctx.classNumber ?? '');
+    const classSeg = toClassSegment(rawClass) || rawClass;
     return {
       topicId: row.topicId,
       topicName: row.topicName,
