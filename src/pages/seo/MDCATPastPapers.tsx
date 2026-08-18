@@ -52,10 +52,22 @@ const MDCATPastPapers = () => (
       <p className="text-sm text-purple-600 font-medium mb-6">4,400+ students search for this every month — practice smarter!</p>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
-        <p className="text-sm font-semibold text-yellow-800">📅 MDCAT Sindh 2026 — Important Date</p>
+        <p className="text-sm font-semibold text-yellow-800">📅 MDCAT 2026 — Rescheduled Test Date</p>
         <p className="text-sm text-yellow-700 mt-1">
-          MDCAT Sindh 2026 will be conducted on <strong>August 16, 2026</strong> by <strong>STS (Sindh Testing Service)</strong>.
-          For admission to LUMHS, DUHS, SMBBMU and other Sindh medical universities. Start preparation now — only 3 months left!
+          MDCAT 2026 has been rescheduled from 16 August 2026 to <strong>Sunday, 20 September 2026</strong>.
+          Confirmed by PM&amp;DC Public Notice No. PF-1-C-PM&amp;DC/Notification/2026/1229 (6 August 2026) and the
+          STS press release No. STS/SEC/990/26. Use the remaining weeks to solve past papers subject by subject.
+        </p>
+        <p className="text-xs text-yellow-700 mt-2">
+          Source:{' '}
+          <a
+            href="https://www.iba-suk.edu.pk/sts/announcements"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            className="underline"
+          >
+            SIBA Testing Services — official announcements
+          </a>
         </p>
       </div>
 

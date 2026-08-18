@@ -305,7 +305,9 @@ const BoardTopicPage = () => {
             )}
 
             <div className="text-left">
-              <AdSlot surface="board-topic" />
+              {/* AdSense policy: never serve ads on pages we ourselves mark
+                  noindex for thin content. */}
+              {!isThin && <AdSlot surface="board-topic" />}
             <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
               <ExploreMore boardName={names.board} subjectName={names.subject} classNumber={resolvedClassNumber || classNumber || ''} boardSlug={boardSlug || ''} classSeg={canonicalClassSeg} subjectSlug={subjectSlug || ''} />
               <RelatedExamsTools subjectName={names.subject} />
