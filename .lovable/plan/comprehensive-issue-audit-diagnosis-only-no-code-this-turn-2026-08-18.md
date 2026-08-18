@@ -8,7 +8,7 @@ Confirmed by reading the code:
 
 - `src/components/quick-test/useSeoLmsCoverage.ts` (lines 149 and 151) builds its deep links with the **raw class number**, not the canonical segment:
   - `practicePath: /boards/${boardSlug}/${ctx.classNumber}/${subjectSlug}/${topicSlug}`
-  - `subjectPath: /boards/${boardSlug}/${ctx.classNumber}/${subjectSlug}`
+  - `subjectPath: /boards/${boardSlug}/${ctx.classNumber}/${subjectSlug}`  
   Every other builder in the app correctly wraps the class in `toClassSegment(...)` (`RelatedTopics`, `ExploreMore`, `BoardClassPage`, `BoardSubjectPage`, `BoardLandingPage`, `Boards`, `BoardTopicPage`). This one hook was missed.
 - Those two paths are rendered as real `<Link>` elements by `src/components/quick-test/QuickTestChip.tsx` (lines 114 and 126) — which appears on the SEO landing pages. So Googlebot, which does execute JS, keeps discovering `/boards/<board>/12/...` as a crawlable href.
 - Secondary, non-SEO: `BoardTopicPage.tsx` line 203 writes the numeric path into `empty_topic_analytics.page_path`. Harmless for Google, but it means analytics rows are keyed on a non-canonical path and can double-count against the `class-12` form.
@@ -62,13 +62,15 @@ You have the date as **20 September 2026**, roughly 4-5 weeks out. That changes 
 
 Working backwards from 20 September:
 
-| When | Action |
-|---|---|
-| **This week (by 22 Aug)** | Fix the stale banners on `/mdcat-syllabus` and `/mdcat-past-papers` — both currently say "will be conducted on August 16, 2026" and "only 3 months left". Both are wrong today and read as abandoned. Replace with the confirmed date once you supply the source. |
-| **By 25 Aug** | Add the crawlable pre-exam content block: subject-wise weightage table (already on the page, needs an anchor + summary), "MDCAT 2026 in <N> days — what to revise", 2025/2026 past-paper rows, in-body contextual internal links (aggregate calculator, `/exams/mdcat`, `/exams/nums`, `/ecat-preparation`), FAQ block matched to live queries. Then bump `lastmod` and fire `indexnow-submit-recent`. |
-| **~29 Aug** | Verify in GSC that the updated pages were re-crawled. This is why the content must land ~3-4 weeks before the exam: Google needs a crawl cycle plus a ranking-settle cycle before the search spike. |
-| **1-10 Sep** | Peak-window additions: "roll number slip / test day" block (facts only), practice-volume pre-warm so the MDCAT question pool can absorb a spike without on-the-fly generation. |
-| **After 20 Sep** | Post-exam swing: result / answer key / aggregate section. Content prepared in advance, published the day after the paper. |
+
+| When                      | Action                                                                                                                                                                                                                                                                                                                                                                                                      |
+| ------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **This week (by 22 Aug)** | Fix the stale banners on `/mdcat-syllabus` and `/mdcat-past-papers` — both currently say "will be conducted on August 16, 2026" and "only 3 months left". Both are wrong today and read as abandoned. Replace with the confirmed date once you supply the source.                                                                                                                                           |
+| **By 25 Aug**             | Add the crawlable pre-exam content block: subject-wise weightage table (already on the page, needs an anchor + summary), "MDCAT 2026 in &nbsp; days — what to revise", 2025/2026 past-paper rows, in-body contextual internal links (aggregate calculator, `/exams/mdcat`, `/exams/nums`, `/ecat-preparation`), FAQ block matched to live queries. Then bump `lastmod` and fire `indexnow-submit-recent`. |
+| **~29 Aug**               | Verify in GSC that the updated pages were re-crawled. This is why the content must land ~3-4 weeks before the exam: Google needs a crawl cycle plus a ranking-settle cycle before the search spike.                                                                                                                                                                                                         |
+| **1-10 Sep**              | Peak-window additions: "roll number slip / test day" block (facts only), practice-volume pre-warm so the MDCAT question pool can absorb a spike without on-the-fly generation.                                                                                                                                                                                                                              |
+| **After 20 Sep**          | Post-exam swing: result / answer key / aggregate section. Content prepared in advance, published the day after the paper.                                                                                                                                                                                                                                                                                   |
+
 
 Cluster priority after MDCAT stays as previously proposed: JOA/Sindh High Court siblings (23 Aug) → ECAT/NUMS/entry tests → PPSC/NTS → FPSC → CSS/PMS. I have not verified official dates for any of those from a published source, so date confirmation is step one of each.
 
@@ -83,3 +85,59 @@ Each item is independently shippable and touches no shared system:
 5. Optional hygiene: decide whether `/subject/:id` stays as an alias or gets consolidated on `/subject-content/:id`.
 
 Items 1 and 2 are one-line, zero-regression-risk changes that reduce two of the four GSC buckets and the AdSense flag. I would ship those first, separately from any MDCAT content work.
+
+&nbsp;
+
+&nbsp;
+
+MDCAT-DATE OFFICIALLY-CONFIRMED — attaching source:
+
+&nbsp;
+
+SIBA Testing Services (STS) Press Release, No.STS/SEC/990/26, dated 06/08/2026:
+
+"Pursuant to Public Notice No. PF-1-C-PM&DC/Notification/2026/1229 dated 6th August 2026 issued by Pakistan Medical & Dental Council (PM&DC), MDCAT-2026, originally scheduled for Sunday 16 August 2026, has been RESCHEDULED to Sunday, 20 September 2026."
+
+Source: https://www.iba-suk.edu.pk/sts/announcements
+
+&nbsp;
+
+Please proceed AB with FULL confidence:
+
+&nbsp;
+
+1. IMPLEMENT ABHI (isolated, zero-risk, jaisa-approve-kiya-tha):
+
+   a. useSeoLmsCoverage.ts — toClassSegment-wrap-karein.
+
+   b. BoardTopicPage.tsx — AdSlot ko !isThin ke-peeche-gate-karein.
+
+&nbsp;
+
+2. MDCAT-BANNER-DATE-CORRECTION — /mdcat-syllabus aur /mdcat-past-papers par purani-"August-16"-wali-galat-date HATA-KAR "Sunday, 20 September 2026" (OFFICIALLY-CONFIRMED, PM&DC-notification-ke-mutabiq) update-karein. Source-link-bhi-cite-karein page-par (transparency-ke-liye).
+
+&nbsp;
+
+3. MDCAT-CONTENT-ROADMAP — aapka-diya-hua-timeline follow-karein:
+
+   - By 22-Aug: Banner-date-fix (upar-wala-item-2)
+
+   - By 25-Aug: Pre-exam-content-block (weightage-table-anchor, "MDCAT-2026-in-N-days", past-paper-rows, internal-links, FAQ) + lastmod-bump + IndexNow
+
+   - ~29-Aug: GSC-re-crawl-verify
+
+   - 1-10-Sep: Peak-window-additions (roll-number-slip-block, question-pool-pre-warm)
+
+   - After-20-Sep: Post-exam-content (result/answer-key/aggregate)
+
+&nbsp;
+
+4. ADSENSE-PRIORITY — Item-1(b) upar (AdSlot-gating) ZAROORI-HAI kyunki-yeh-DIRECTLY-"Low-Value-Content"-warning-address-karta-hai (khud-apni-noindex-pages-par-ads-lagana-band-karna). Please-yeh-TURANT-implement-karke, mujhe-CONFIRM-karein publish-hone-ke-baad — main-us-ke-baad-AdSense-"Request-Review"-button-dabaunga.
+
+&nbsp;
+
+ZAROORI-REMINDER: Traffic-momentum-fragile-hai — sab-changes-ISOLATED-rahein, EXISTING-WORKING-SYSTEMS-ko-na-chhuyen, publish-se-pehle-SMOKE-TEST-CONFIRM-karein.
+
+&nbsp;
+
+&nbsp;
