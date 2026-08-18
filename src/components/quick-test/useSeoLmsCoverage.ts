@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { toSlug } from "@/lib/slugUtils";
+import { toSlug, toClassSegment } from "@/lib/slugUtils";
 import { SeoLmsContext } from "@/data/seoLmsMapping";
 
 /**
