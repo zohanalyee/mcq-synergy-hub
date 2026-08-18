@@ -140,15 +140,20 @@ export const useSeoLmsCoverage = (ctx: SeoLmsContext | null) => {
     const boardSlug = toSlug(ctx.systemName);
     const subjectSlug = toSlug(row.subjectName);
     const topicSlug = toSlug(row.topicName);
+    // Board URLs MUST use the canonical `class-N` segment. Emitting the raw
+    // number here produced crawlable /boards/<board>/12/... links that only
+    // redirect to the canonical form (wasted crawl budget + "Page with
+    // redirect" / "Alternate canonical" rows in GSC).
+    const classSeg = toClassSegment(String(ctx.classNumber ?? ''));
     return {
       topicId: row.topicId,
       topicName: row.topicName,
       subjectId: row.subjectId,
       subjectName: row.subjectName,
       mcqCount: row.mcqCount,
-      practicePath: `/boards/${boardSlug}/${ctx.classNumber}/${subjectSlug}/${topicSlug}`,
+      practicePath: `/boards/${boardSlug}/${classSeg}/${subjectSlug}/${topicSlug}`,
       readingPath: `/subject/${row.subjectId}?topic=${encodeURIComponent(row.topicName)}`,
-      subjectPath: `/boards/${boardSlug}/${ctx.classNumber}/${subjectSlug}`,
+      subjectPath: `/boards/${boardSlug}/${classSeg}/${subjectSlug}`,
     };
   };
 
