@@ -39,27 +39,30 @@ const mostRepeated = [
 const MDCATPastPapers = () => (
   <>
     <SEOHead
-      title="MDCAT Past Papers 2024-2026 | Free MCQ Practice | MCQsAI Pakistan"
-      description="Solve MDCAT past papers online free. PMC MDCAT 2024, 2023, 2022 past papers with answers. Biology, Chemistry, Physics, English MCQs from previous years."
-      keywords="MDCAT past papers, MDCAT past papers 2024, MDCAT past papers with answers, PMC past papers, MDCAT MCQs Pakistan"
+      title="MDCAT Past Papers 2020-2025 | Free MCQ Practice | MCQsAI Pakistan"
+      description="Solve MDCAT past papers online free. MDCAT 2025, 2024, 2023 past papers with answers plus the 200-MCQ paper pattern for MDCAT 2026 on 20 September."
+      keywords="MDCAT past papers, MDCAT past papers 2025, MDCAT past papers with answers, MDCAT paper pattern, MDCAT MCQs Pakistan"
     />
     <ExamPageSchema
       name="MDCAT Past Papers — Free Online Practice"
-      description="PMC MDCAT past papers from 2019-2024 with answers and explanations. Free online practice."
+      description="MDCAT past papers from 2020-2025 with answers, explanations and the official 200-MCQ paper pattern. Free online practice."
       url="https://mcqsai.com/mdcat-past-papers"
       breadcrumbs={[
         { name: 'Home', url: 'https://mcqsai.com/' },
         { name: 'MDCAT Past Papers', url: 'https://mcqsai.com/mdcat-past-papers' },
       ]}
       faqs={[
-        { question: 'Where can I solve MDCAT past papers?', answer: 'Practice them free on MCQsAI with answers and detailed explanations.' },
-        { question: 'Are MDCAT 2024 past papers available?', answer: 'Yes, MDCAT 2024 along with 2019-2023 past papers are available.' },
+        { question: 'Where can I solve MDCAT past papers?', answer: 'Practice them free on MCQsAI with answers and detailed explanations, year by year and subject by subject.' },
+        { question: 'Are MDCAT 2025 past papers available?', answer: 'Yes. MDCAT 2025 along with the 2020-2024 papers are available for free practice.' },
+        { question: 'When will the MDCAT 2026 paper be added?', answer: 'MDCAT 2026 is held on Sunday, 20 September 2026. The 2026 paper will be added after test day; the pattern is unchanged, so the 2025 paper is the closest practice.' },
+        { question: 'What is the MDCAT paper pattern?', answer: 'MDCAT has 200 MCQs in 210 minutes: Biology 68, Chemistry 54, Physics 54, English 18 and Logical Reasoning 6. There is no negative marking and the qualifying score is 55%.' },
         { question: 'Is MCQsAI past paper practice free?', answer: 'Yes, all past papers are completely free.' },
       ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">MDCAT Past Papers — Free Online Practice</h1>
-      <p className="text-muted-foreground mb-2">PMC MDCAT past papers from 2019–2024 with answers and explanations.</p>
+      <p className="text-muted-foreground mb-2">MDCAT past papers from 2020–2025 with answers and explanations.</p>
+
       <p className="text-sm text-purple-600 font-medium mb-6">4,400+ students search for this every month — practice smarter!</p>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
