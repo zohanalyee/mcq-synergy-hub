@@ -242,7 +242,7 @@ const MDCATSyllabus = () => {
 
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-green-700">
-            Physics (38 MCQs — 27%)
+            Physics (54 MCQs — 27%)
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
