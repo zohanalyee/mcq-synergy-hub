@@ -10,12 +10,23 @@ const RETURN_PATH = '/mdcat-past-papers';
 const ALL_SUBJECTS = ['Biology', 'Chemistry', 'Physics', 'English'];
 
 const years = [
+  { year: '2025', total: 200 },
   { year: '2024', total: 200 },
   { year: '2023', total: 200 },
   { year: '2022', total: 200 },
   { year: '2021', total: 180 },
   { year: '2020', total: 180 },
 ];
+
+/** PM&DC national MDCAT pattern — 200 MCQs in 210 minutes. */
+const PATTERN = [
+  { subject: 'Biology', mcqs: 68, note: 'Cell Biology, Genetics, Homeostasis and Reproduction repeat most often.' },
+  { subject: 'Chemistry', mcqs: 54, note: 'Organic Chemistry, Atomic Structure and Electrochemistry dominate.' },
+  { subject: 'Physics', mcqs: 54, note: 'Waves, Electrostatics, Motion & Force and Nuclear Physics recur yearly.' },
+  { subject: 'English', mcqs: 18, note: 'Sentence correction, vocabulary and synonyms/antonyms.' },
+  { subject: 'Logical Reasoning', mcqs: 6, note: 'Series, logical deduction and critical thinking — quick marks.' },
+];
+
 
 const mostRepeated = [
   'Cell Biology', 'Biological Molecules',
@@ -28,27 +39,30 @@ const mostRepeated = [
 const MDCATPastPapers = () => (
   <>
     <SEOHead
-      title="MDCAT Past Papers 2024-2026 | Free MCQ Practice | MCQsAI Pakistan"
-      description="Solve MDCAT past papers online free. PMC MDCAT 2024, 2023, 2022 past papers with answers. Biology, Chemistry, Physics, English MCQs from previous years."
-      keywords="MDCAT past papers, MDCAT past papers 2024, MDCAT past papers with answers, PMC past papers, MDCAT MCQs Pakistan"
+      title="MDCAT Past Papers 2020-2025 | Free MCQ Practice"
+      description="Solve MDCAT past papers online free. MDCAT 2025, 2024, 2023 past papers with answers plus the 200-MCQ paper pattern for MDCAT 2026 on 20 September."
+      keywords="MDCAT past papers, MDCAT past papers 2025, MDCAT past papers with answers, MDCAT paper pattern, MDCAT MCQs Pakistan"
     />
     <ExamPageSchema
       name="MDCAT Past Papers — Free Online Practice"
-      description="PMC MDCAT past papers from 2019-2024 with answers and explanations. Free online practice."
+      description="MDCAT past papers from 2020-2025 with answers, explanations and the official 200-MCQ paper pattern. Free online practice."
       url="https://mcqsai.com/mdcat-past-papers"
       breadcrumbs={[
         { name: 'Home', url: 'https://mcqsai.com/' },
         { name: 'MDCAT Past Papers', url: 'https://mcqsai.com/mdcat-past-papers' },
       ]}
       faqs={[
-        { question: 'Where can I solve MDCAT past papers?', answer: 'Practice them free on MCQsAI with answers and detailed explanations.' },
-        { question: 'Are MDCAT 2024 past papers available?', answer: 'Yes, MDCAT 2024 along with 2019-2023 past papers are available.' },
+        { question: 'Where can I solve MDCAT past papers?', answer: 'Practice them free on MCQsAI with answers and detailed explanations, year by year and subject by subject.' },
+        { question: 'Are MDCAT 2025 past papers available?', answer: 'Yes. MDCAT 2025 along with the 2020-2024 papers are available for free practice.' },
+        { question: 'When will the MDCAT 2026 paper be added?', answer: 'MDCAT 2026 is held on Sunday, 20 September 2026. The 2026 paper will be added after test day; the pattern is unchanged, so the 2025 paper is the closest practice.' },
+        { question: 'What is the MDCAT paper pattern?', answer: 'MDCAT has 200 MCQs in 210 minutes: Biology 68, Chemistry 54, Physics 54, English 18 and Logical Reasoning 6. There is no negative marking and the qualifying score is 55%.' },
         { question: 'Is MCQsAI past paper practice free?', answer: 'Yes, all past papers are completely free.' },
       ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
       <h1 className="text-3xl font-bold mb-2">MDCAT Past Papers — Free Online Practice</h1>
-      <p className="text-muted-foreground mb-2">PMC MDCAT past papers from 2019–2024 with answers and explanations.</p>
+      <p className="text-muted-foreground mb-2">MDCAT past papers from 2020–2025 with answers and explanations.</p>
+
       <p className="text-sm text-purple-600 font-medium mb-6">4,400+ students search for this every month — practice smarter!</p>
 
       <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 mb-6">
@@ -75,6 +89,53 @@ const MDCATPastPapers = () => (
         <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
         <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
       </div>
+
+      <section id="mdcat-paper-pattern" className="mb-10 scroll-mt-24">
+        <h2 className="text-xl font-semibold mb-2">MDCAT Past Paper Pattern (200 MCQs / 210 minutes)</h2>
+        <p className="text-sm text-muted-foreground mb-4">
+          Every recent MDCAT paper follows the same PM&amp;DC distribution. That works out to roughly
+          one minute per MCQ, and there is no negative marking — so never leave a blank. The
+          qualifying score is 55% (110 out of 200).
+        </p>
+        <div className="overflow-x-auto rounded-xl border">
+          <table className="w-full text-sm">
+            <thead className="bg-muted/50">
+              <tr>
+                <th className="text-left px-3 py-2 font-semibold">Subject</th>
+                <th className="text-left px-3 py-2 font-semibold">MCQs</th>
+                <th className="text-left px-3 py-2 font-semibold">Commonly repeated areas</th>
+              </tr>
+            </thead>
+            <tbody>
+              {PATTERN.map((p) => (
+                <tr key={p.subject} className="border-t">
+                  <td className="px-3 py-2 font-medium">{p.subject}</td>
+                  <td className="px-3 py-2">{p.mcqs}</td>
+                  <td className="px-3 py-2 text-muted-foreground">{p.note}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-sm text-muted-foreground mt-3">
+          Full chapter list and time-allocation guidance is on the{' '}
+          <Link to="/mdcat-syllabus" className="text-purple-700 underline">
+            MDCAT 2026 syllabus page
+          </Link>
+          .
+        </p>
+      </section>
+
+      <div className="mb-10 rounded-xl border bg-muted/30 p-4">
+        <h2 className="text-base font-semibold mb-1">MDCAT 2026 Paper</h2>
+        <p className="text-sm text-muted-foreground">
+          MDCAT 2026 is held on Sunday, 20 September 2026. The 2026 paper and its solved MCQs will
+          be added here after the test day. Until then, practise the 2025 and 2024 papers below —
+          the pattern is unchanged.
+        </p>
+      </div>
+
+
 
       {years.map((paper) => (
         <SeoSectionGrid
