@@ -115,23 +115,23 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
 
   return (
     <div className={`mt-3 rounded-xl p-[2px] bg-gradient-to-br ${advice.color} shadow-md`}>
-      <div className="rounded-xl bg-background/95 backdrop-blur-sm px-4 py-3">
+      <div className="rounded-xl bg-card px-4 py-4">
         <div className="flex items-start gap-3">
           <div className={`shrink-0 w-10 h-10 rounded-full bg-gradient-to-br ${advice.color} flex items-center justify-center text-xl shadow-sm`}>
             {advice.emoji}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-foreground/70 mb-1">
               🤖 Ustaad Ki Advice
             </p>
-            <p className="text-xs leading-relaxed text-foreground">
+            <p className="text-sm leading-relaxed text-foreground font-medium break-words [overflow-wrap:anywhere]">
               {advice.message}
             </p>
             {isGuest ? (
               <button
                 type="button"
                 onClick={() => navigate('/auth')}
-                className="mt-3 text-xs font-bold bg-white/20 hover:bg-white/30 px-4 py-1.5 rounded-full transition-all inline-flex items-center gap-1"
+                className="mt-3 w-full sm:w-auto min-h-[44px] text-sm font-bold bg-primary text-primary-foreground hover:opacity-90 px-4 py-2 rounded-full transition-all inline-flex items-center justify-center gap-1"
               >
                 🔥 Sign Up Free — Full Analysis dekho →
               </button>
@@ -139,7 +139,7 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
               <button
                 type="button"
                 onClick={() => navigate('/analytics')}
-                className="mt-2 text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                className="mt-2 text-sm font-semibold text-primary hover:underline inline-flex items-center gap-1"
               >
                 📊 Dashboard mein apni detailed performance dekho →
               </button>
@@ -149,6 +149,7 @@ const ResultAdviceCard: React.FC<ResultAdviceCardProps> = ({
       </div>
     </div>
   );
+
 };
 
 export default ResultAdviceCard;
