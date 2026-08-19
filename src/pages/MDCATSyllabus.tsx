@@ -268,7 +268,7 @@ const MDCATSyllabus = () => {
 
         <section className="mb-8">
           <h2 className="text-xl font-semibold mb-4 text-orange-700">
-            English (18 MCQs — 13%)
+            English (18 MCQs — 9%)
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {[
