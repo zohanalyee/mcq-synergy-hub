@@ -10,12 +10,23 @@ const RETURN_PATH = '/mdcat-past-papers';
 const ALL_SUBJECTS = ['Biology', 'Chemistry', 'Physics', 'English'];
 
 const years = [
+  { year: '2025', total: 200 },
   { year: '2024', total: 200 },
   { year: '2023', total: 200 },
   { year: '2022', total: 200 },
   { year: '2021', total: 180 },
   { year: '2020', total: 180 },
 ];
+
+/** PM&DC national MDCAT pattern — 200 MCQs in 210 minutes. */
+const PATTERN = [
+  { subject: 'Biology', mcqs: 68, note: 'Cell Biology, Genetics, Homeostasis and Reproduction repeat most often.' },
+  { subject: 'Chemistry', mcqs: 54, note: 'Organic Chemistry, Atomic Structure and Electrochemistry dominate.' },
+  { subject: 'Physics', mcqs: 54, note: 'Waves, Electrostatics, Motion & Force and Nuclear Physics recur yearly.' },
+  { subject: 'English', mcqs: 18, note: 'Sentence correction, vocabulary and synonyms/antonyms.' },
+  { subject: 'Logical Reasoning', mcqs: 6, note: 'Series, logical deduction and critical thinking — quick marks.' },
+];
+
 
 const mostRepeated = [
   'Cell Biology', 'Biological Molecules',
