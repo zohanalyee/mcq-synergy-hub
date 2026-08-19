@@ -40,10 +40,15 @@ const MDCATSyllabus = () => {
         { name: "MDCAT Syllabus 2026", url: "https://mcqsai.com/mdcat-syllabus" },
       ]}
       faqs={[
-        { question: "What is in the MDCAT 2026 syllabus?", answer: "MDCAT 2026 covers Biology, Chemistry, Physics, English and Logical Reasoning per PMC guidelines." },
-        { question: "Is the MDCAT 2026 syllabus changed?", answer: "PMC reviews the syllabus annually; check the official notification for any changes." },
-        { question: "Where can I practice MDCAT MCQs?", answer: "Practice topic-wise MDCAT MCQs free on MCQsAI." },
+        { question: "When is MDCAT 2026?", answer: "MDCAT 2026 is scheduled for Sunday, 20 September 2026. It was rescheduled from the original date of 16 August 2026 by PM&DC notice and the STS press release." },
+        { question: "Why was MDCAT 2026 rescheduled?", answer: "PM&DC issued a public notice (No. PF-1-C-PM&DC/Notification/2026/1229, dated 6 August 2026) moving MDCAT 2026 from 16 August to Sunday, 20 September 2026; SIBA Testing Services confirmed the new date in press release No. STS/SEC/990/26." },
+        { question: "What is in the MDCAT 2026 syllabus?", answer: "MDCAT 2026 covers Biology, Chemistry, Physics, English and Logical Reasoning per PM&DC guidelines." },
+        { question: "What is the MDCAT subject weightage?", answer: "The MDCAT paper has 200 MCQs: Biology 68, Chemistry 54, Physics 54, English 18 and Logical Reasoning 6." },
+        { question: "Is there negative marking in MDCAT?", answer: "No. MDCAT has no negative marking, so attempt every question — leaving a blank only loses a possible mark." },
+        { question: "What are the MDCAT passing marks?", answer: "The minimum qualifying score for MDCAT is 55% (110 out of 200 MCQs) for admission to MBBS and BDS programmes." },
+        { question: "Where can I practice MDCAT MCQs?", answer: "Practice topic-wise MDCAT MCQs free on MCQsAI, including past-paper style questions." },
       ]}
+
     />
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <h1 className="text-3xl font-bold mb-2">
