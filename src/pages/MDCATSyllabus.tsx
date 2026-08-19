@@ -288,6 +288,37 @@ const MDCATSyllabus = () => {
           </div>
         </section>
 
+        <section className="mb-8">
+          <h2 className="text-xl font-semibold mb-4 text-teal-700">
+            Logical Reasoning (6 MCQs — 3%)
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {[
+              'Critical Thinking', 'Letter & Symbol Series',
+              'Logical Deduction', 'Cause & Effect',
+              'Course of Action', 'Logical Problems',
+            ].map(topic => (
+              <Link
+                key={topic}
+                to={`/exams/mdcat`}
+                className="p-3 border rounded-lg hover:bg-teal-50 flex justify-between items-center"
+              >
+                <span className="text-sm font-medium">{topic}</span>
+                <span className="text-xs text-teal-600">Practice →</span>
+              </Link>
+            ))}
+          </div>
+          <p className="text-sm text-muted-foreground mt-3">
+            Only 6 MCQs, but they are quick marks — see how they appeared in{' '}
+            <Link to="/mdcat-past-papers" className="text-purple-700 underline">
+              previous MDCAT papers
+            </Link>
+            .
+          </p>
+        </section>
+
+
+
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white text-center mt-8">
           <h2 className="text-2xl font-bold mb-2">
             Start MDCAT Practice Free
