@@ -3,7 +3,27 @@ import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 
+/** Official rescheduled MDCAT 2026 test date (PM&DC notice + STS press release). */
+const MDCAT_DATE = new Date('2026-09-20T00:00:00+05:00');
+
+const daysUntilMdcat = () => {
+  const now = new Date();
+  const diff = Math.ceil((MDCAT_DATE.getTime() - now.getTime()) / 86400000);
+  return diff;
+};
+
+/** PM&DC national MDCAT pattern — 200 MCQs total. */
+const WEIGHTAGE = [
+  { subject: 'Biology', mcqs: 68, pct: '34%', time: '~34 min' },
+  { subject: 'Chemistry', mcqs: 54, pct: '27%', time: '~27 min' },
+  { subject: 'Physics', mcqs: 54, pct: '27%', time: '~27 min' },
+  { subject: 'English', mcqs: 18, pct: '9%', time: '~9 min' },
+  { subject: 'Logical Reasoning', mcqs: 6, pct: '3%', time: '~3 min' },
+];
+
 const MDCATSyllabus = () => {
+  const daysLeft = daysUntilMdcat();
+
   return (
     <>
       <SEOHead
