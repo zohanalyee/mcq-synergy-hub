@@ -348,7 +348,8 @@ const MDCATSyllabus = () => {
               { label: 'NUMS Preparation', url: '/exams/nums' },
             ].map(link => (
               <Link
-                key={link.url}
+                key={link.label}
+
                 to={link.url}
                 className="px-4 py-2 bg-white border rounded-full text-sm hover:bg-purple-50 text-purple-700"
               >
