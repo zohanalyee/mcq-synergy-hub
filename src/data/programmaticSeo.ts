@@ -29,8 +29,8 @@ export interface ProgSeoEntry {
 export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
   'mdcat-karachi': {
     slug: 'mdcat-karachi',
-    title: 'MDCAT Karachi 2026 — Centres, Merit & Free MCQs',
-    metaDescription: 'MDCAT 2026 Karachi guide: STS test centres, DUHS/SMBBMU/JSMU admission, Sindh domicile rules, merit cutoffs & free MCQ practice — MCQsAI.',
+    title: 'MDCAT Karachi 2026 Prep – Free MCQs, Past Papers & Mock Tests',
+    metaDescription: 'Karachi students: practice 10,000+ MDCAT MCQs free. Past papers, aggregate calculator & full mock tests for the 20 Sep 2026 exam. Start now.',
     keywords: 'MDCAT Karachi, MDCAT 2026 Karachi, DUHS MDCAT, SMBBMU admission, JSMU merit, Sindh MDCAT centres',
     intro:
       'MDCAT 2026 in Karachi is conducted by the Sindh Testing Service (STS) on August 16, 2026 for admission to public medical universities across Sindh. Karachi-domicile students compete primarily for seats at Dow University of Health Sciences (DUHS), Jinnah Sindh Medical University (JSMU), and Shaheed Mohtarma Benazir Bhutto Medical University (SMBBMU). This guide covers Karachi-specific test centres, university merit trends, domicile requirements, and a focused 12-week prep plan.',

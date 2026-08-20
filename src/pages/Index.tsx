@@ -189,7 +189,7 @@ const Home = () => {
        <div className={`min-h-dvh bg-background ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
       <SEOHead
         title="AI-Powered MCQ Practice Platform"
-        description="Free AI MCQ practice for NTS, FPSC, PPSC, MDCAT, ECAT, Matric & FSc. 10,000+ questions with instant feedback. No signup needed — MCQsAI Pakistan."
+        description="Free AI MCQ practice for NTS, FPSC, PPSC, MDCAT, ECAT, Matric & FSc. 15,000+ questions with instant feedback. No signup needed — MCQsAI Pakistan."
         keywords="MDCAT MCQs, ECAT preparation, CSS exam, PPSC test, NTS practice, Pakistan exams, اردو MCQs, AI learning, MCQSAI"
       />
 
