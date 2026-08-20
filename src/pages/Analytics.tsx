@@ -188,6 +188,13 @@ const Analytics = () => {
           }
         />
 
+        {/* Greeting + intent quick-select (entry point only — flows unchanged) */}
+        <CoachGreetingCard
+          lastAttempt={data.recentAttempts?.[0]}
+          totalTests={data.totalTests}
+          onSuggestForMe={() => setTestDialogOpen(true)}
+        />
+
         {/* Stats row */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
           {statCards.map((s) => (
