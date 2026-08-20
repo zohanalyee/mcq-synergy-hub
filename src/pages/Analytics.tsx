@@ -14,6 +14,7 @@ import { useAnalyticsData } from "@/hooks/useAnalyticsData";
 import { analyzePerformanceTrend } from "@/lib/aiCoach";
 import AIInsightsPanel from "@/components/analytics/AIInsightsPanel";
 import EmptyCoachState from "@/components/coach/EmptyCoachState";
+import CoachGreetingCard from "@/components/coach/CoachGreetingCard";
 import SubjectAnalysisCard from "@/components/analytics/SubjectAnalysisCard";
 import StudyPlanSection from "@/components/analytics/StudyPlanSection";
 import TopicAnalysis from "@/components/analytics/TopicAnalysis";
@@ -185,6 +186,13 @@ const Analytics = () => {
               minHeightClass="min-h-[3rem] md:min-h-[2rem]"
             />
           }
+        />
+
+        {/* Greeting + intent quick-select (entry point only — flows unchanged) */}
+        <CoachGreetingCard
+          lastAttempt={data.recentAttempts?.[0]}
+          totalTests={data.totalTests}
+          onSuggestForMe={() => setTestDialogOpen(true)}
         />
 
         {/* Stats row */}
