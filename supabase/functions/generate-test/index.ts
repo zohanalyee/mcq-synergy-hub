@@ -1432,12 +1432,28 @@ IMPORTANT:
 - Must mention at least 1 specific subject from data
 - Never say "I cannot" or "As an AI"
 
+OUTPUT FORMAT (strict):
+Line 1..N: the advice paragraph.
+Final line, on its own, exactly: MOOD: <one of motivational|urgent|informative|celebratory|neutral>
+Pick the mood that best matches the tone of your advice (celebratory for big improvement, urgent when scores are dropping or effort is low, informative when mostly explaining a plan, motivational for a push, neutral otherwise).
+
 Write the advice now:`;
 
       try {
         const result = await callAIWithAutoSwitch('You are Ustaad, a desi senior student giving short personalized study advice.', aiCoachPrompt);
 
         if (result && result.text) {
+          // Parse the trailing "MOOD: <tag>" line off the advice text (additive — defaults to neutral)
+          const ALLOWED_MOODS = ['motivational', 'urgent', 'informative', 'celebratory', 'neutral'];
+          let adviceText = result.text.trim();
+          let mood = 'neutral';
+          const moodMatch = adviceText.match(/(?:^|\n)\s*\**\s*MOOD\s*\**\s*:\s*\**\s*([A-Za-z]+)\s*\**\s*$/i);
+          if (moodMatch) {
+            const candidate = moodMatch[1].toLowerCase();
+            if (ALLOWED_MOODS.includes(candidate)) mood = candidate;
+            adviceText = adviceText.slice(0, moodMatch.index).trim();
+          }
+
           // Log usage
           await supabase
             .from('ai_usage_logs')
@@ -1457,7 +1473,7 @@ Write the advice now:`;
           });
 
           return new Response(
-            JSON.stringify({ advice: result.text.trim(), credits_deducted: 10 }),
+            JSON.stringify({ advice: adviceText, mood, credits_deducted: 10 }),
             { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
