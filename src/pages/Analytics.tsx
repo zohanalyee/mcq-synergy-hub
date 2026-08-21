@@ -106,10 +106,13 @@ const Analytics = () => {
       });
 
       const advice = (response.data as any)?.advice;
+      const mood = (response.data as any)?.mood as CoachMood | undefined;
       if (advice) {
         setAiAdvice(advice);
+        setAiMood(mood ?? "neutral");
         setAdviceUsedForAttempt(true);
         refreshCreditsBroadcast();
+
       } else {
         const weak = data.subjects.filter((s: any) => s.accuracy < 60).map((s: any) => s.name);
         const strong = data.subjects.filter((s: any) => s.accuracy >= 80).map((s: any) => s.name);
