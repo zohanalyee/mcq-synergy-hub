@@ -33,6 +33,8 @@ import { useUserCredits, refreshCreditsBroadcast } from "@/hooks/useUserCredits"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import CoachAdviceCard, { type CoachMood } from "@/components/coach/CoachAdviceCard";
+
 
 
 
