@@ -33,6 +33,8 @@ import { useUserCredits, refreshCreditsBroadcast } from "@/hooks/useUserCredits"
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
+import CoachAdviceCard, { type CoachMood } from "@/components/coach/CoachAdviceCard";
+
 
 
 
@@ -46,7 +48,9 @@ const Analytics = () => {
   const { language } = useLanguage();
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAdvice, setAiAdvice] = useState<string>("");
+  const [aiMood, setAiMood] = useState<CoachMood>("neutral");
   const [adviceUsedForAttempt, setAdviceUsedForAttempt] = useState(false);
+
   const [lastAttemptCount, setLastAttemptCount] = useState(0);
 
   // Reset gate when user attempts a new test
@@ -102,10 +106,13 @@ const Analytics = () => {
       });
 
       const advice = (response.data as any)?.advice;
+      const mood = (response.data as any)?.mood as CoachMood | undefined;
       if (advice) {
         setAiAdvice(advice);
+        setAiMood(mood ?? "neutral");
         setAdviceUsedForAttempt(true);
         refreshCreditsBroadcast();
+
       } else {
         const weak = data.subjects.filter((s: any) => s.accuracy < 60).map((s: any) => s.name);
         const strong = data.subjects.filter((s: any) => s.accuracy >= 80).map((s: any) => s.name);
@@ -115,7 +122,9 @@ const Analytics = () => {
           strong.length ? `${strong[0]} mein mast ho — aur push karo! 🔥` : '',
         ].filter(Boolean).join(' ');
         setAiAdvice(fallback);
+        setAiMood("motivational");
         setAdviceUsedForAttempt(true);
+
       }
     } catch (e) {
       console.error("AI advice failed:", e);
@@ -232,11 +241,8 @@ const Analytics = () => {
                 : '✨ Ustaad Se Pooch (10 credits)'}
             </button>
           </CardContent>
-          {aiAdvice && (
-            <div className="mx-4 mb-4 p-4 bg-card/70 rounded-xl border border-purple-200/60 dark:border-purple-900/40">
-              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{aiAdvice}</p>
-            </div>
-          )}
+          {aiAdvice && <CoachAdviceCard advice={aiAdvice} mood={aiMood} />}
+
         </Card>
 
         {/* AI Insights */}
