@@ -46,7 +46,9 @@ const Analytics = () => {
   const { language } = useLanguage();
   const [aiLoading, setAiLoading] = useState(false);
   const [aiAdvice, setAiAdvice] = useState<string>("");
+  const [aiMood, setAiMood] = useState<CoachMood>("neutral");
   const [adviceUsedForAttempt, setAdviceUsedForAttempt] = useState(false);
+
   const [lastAttemptCount, setLastAttemptCount] = useState(0);
 
   // Reset gate when user attempts a new test
