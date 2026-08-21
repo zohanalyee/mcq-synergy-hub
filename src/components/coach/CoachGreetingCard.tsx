@@ -53,39 +53,43 @@ const CoachGreetingCard = ({ lastAttempt, totalTests, onSuggestForMe }: Props) =
 
   const intents = [
     { label: "Job Test", icon: Briefcase, onClick: () => navigate("/mock-tests") },
-    { label: "Admission Test", icon: GraduationCap, onClick: () => navigate("/exams") },
+    { label: "Admission Test", icon: GraduationCap, onClick: () => navigate("/exams/mdcat") },
     { label: "Board Exam", icon: School, onClick: () => navigate("/boards") },
     { label: "Suggest for me", icon: Sparkles, onClick: onSuggestForMe },
   ];
 
   return (
-    <Card className="mb-4 p-4 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5 animate-fade-in">
-      <div className="flex items-start gap-2.5">
-        <span className="mt-0.5 shrink-0 rounded-full bg-primary/10 p-1.5">
+    <Card className="mb-4 p-4 md:p-5 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-accent/5 shadow-sm motion-safe:animate-fade-in">
+      <div className="flex items-start gap-3">
+        <span className="mt-0.5 shrink-0 rounded-full bg-primary/10 ring-1 ring-primary/20 p-2">
           <GreetIcon className="w-4 h-4 text-primary" />
         </span>
         <div className="min-w-0">
-          <h2 className="text-base md:text-lg font-semibold text-foreground truncate">
+          <h2 className="text-lg md:text-xl font-bold tracking-tight text-foreground truncate">
             {greeting}, {name}
           </h2>
-          <p className="text-sm text-muted-foreground leading-relaxed mt-0.5 [overflow-wrap:anywhere]">
+          <p className="text-sm text-muted-foreground leading-relaxed mt-1 [overflow-wrap:anywhere]">
             {coachLine}
           </p>
         </div>
       </div>
 
-      <p className="text-xs font-medium text-muted-foreground mt-3 mb-2">Aaj kis ki tayyari?</p>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-        {intents.map((it) => (
-          <button
-            key={it.label}
-            onClick={it.onClick}
-            className="min-h-11 px-3 py-2 rounded-xl border border-border bg-card/70 text-xs md:text-sm font-medium text-foreground flex items-center justify-center gap-1.5 transition-colors hover:bg-primary/10 hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <it.icon className="w-4 h-4 text-primary shrink-0" />
-            <span className="truncate">{it.label}</span>
-          </button>
-        ))}
+      <div className="mt-4 pt-3 border-t border-primary/10">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/80 mb-2">
+          Aaj kis ki tayyari?
+        </p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {intents.map((it) => (
+            <button
+              key={it.label}
+              onClick={it.onClick}
+              className="min-h-11 px-3 py-2 rounded-xl border border-border bg-card/80 text-xs md:text-sm font-medium text-foreground flex items-center justify-center gap-1.5 shadow-sm transition-all duration-200 hover:bg-primary/10 hover:border-primary/40 motion-safe:hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <it.icon className="w-4 h-4 text-primary shrink-0" />
+              <span className="truncate">{it.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
     </Card>
   );
