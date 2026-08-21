@@ -122,7 +122,9 @@ const Analytics = () => {
           strong.length ? `${strong[0]} mein mast ho — aur push karo! 🔥` : '',
         ].filter(Boolean).join(' ');
         setAiAdvice(fallback);
+        setAiMood("motivational");
         setAdviceUsedForAttempt(true);
+
       }
     } catch (e) {
       console.error("AI advice failed:", e);
