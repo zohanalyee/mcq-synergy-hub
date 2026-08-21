@@ -232,11 +232,8 @@ const Analytics = () => {
                 : '✨ Ustaad Se Pooch (10 credits)'}
             </button>
           </CardContent>
-          {aiAdvice && (
-            <div className="mx-4 mb-4 p-4 bg-card/70 rounded-xl border border-purple-200/60 dark:border-purple-900/40">
-              <p className="text-sm text-foreground/90 leading-relaxed whitespace-pre-wrap">{aiAdvice}</p>
-            </div>
-          )}
+          {aiAdvice && <CoachAdviceCard advice={aiAdvice} mood={aiMood} />}
+
         </Card>
 
         {/* AI Insights */}
