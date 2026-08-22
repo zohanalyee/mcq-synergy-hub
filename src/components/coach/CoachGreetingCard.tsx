@@ -53,7 +53,7 @@ const CoachGreetingCard = ({ lastAttempt, totalTests, onSuggestForMe }: Props) =
 
   const intents = [
     { label: "Job Test", icon: Briefcase, onClick: () => navigate("/mock-tests") },
-    { label: "Admission Test", icon: GraduationCap, onClick: () => navigate("/exams/mdcat") },
+    { label: "Admission Test", icon: GraduationCap, onClick: () => navigate("/exams") },
     { label: "Board Exam", icon: School, onClick: () => navigate("/boards") },
     { label: "Suggest for me", icon: Sparkles, onClick: onSuggestForMe },
   ];
