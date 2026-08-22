@@ -229,6 +229,9 @@ import BoardSubjectPage from "./pages/BoardSubjectPage";
 import BoardTopicPage from "./pages/BoardTopicPage";
 import ExamLandingPage from "./pages/exams/ExamLandingPage";
 import ExamsHub from "./pages/exams/ExamsHub"; // eager: prerendered SEO hub
+import NumsEntryTest from "./pages/exams/NumsEntryTest"; // eager: prerendered SEO page
+import IbaSukkurEntryTest from "./pages/exams/IbaSukkurEntryTest"; // eager: prerendered SEO page
+
 const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 const Tenders = lazy(() => import("./pages/Tenders"));
