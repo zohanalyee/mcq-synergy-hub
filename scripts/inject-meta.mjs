@@ -286,9 +286,35 @@ async function injectBlog() {
   return all.length;
 }
 
+// The indexable-topic RPC is heavy. Three injectors need the same rows, so fetch
+// it exactly ONCE (memoized) instead of firing three concurrent copies, which
+// piled up and tripped Postgres' statement timeout. Retries with backoff so a
+// single transient timeout doesn't fail the whole build.
+let indexableTopicRowsPromise = null;
+async function getIndexableTopicRows() {
+  if (!indexableTopicRowsPromise) {
+    indexableTopicRowsPromise = (async () => {
+      let lastError = null;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        const { data, error } = await supabase.rpc("get_indexable_board_topic_paths", {
+          p_min_approved_mcqs: 5,
+        });
+        if (!error) return data || [];
+        lastError = error;
+        console.warn(
+          `[inject-meta] get_indexable_board_topic_paths attempt ${attempt}/3 failed: ${error.message}`,
+        );
+        if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 5000));
+      }
+      throw lastError;
+    })();
+  }
+  return indexableTopicRowsPromise;
+}
+
 async function injectBoards() {
-  const { data, error } = await supabase.rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: 5 });
-  if (error) throw error;
+  const data = await getIndexableTopicRows();
+
   const seen = new Set();
   let count = 0;
   for (const r of data || []) {
