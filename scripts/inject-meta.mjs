@@ -408,8 +408,8 @@ function injectContentIntoHtml(html, contentHtml, schemas) {
 }
 
 async function injectBoardTopicContent() {
-  const { data: topicRows, error } = await supabase.rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: 5 });
-  if (error) throw error;
+  const topicRows = await getIndexableTopicRows();
+
   const rows = (topicRows || []).filter((r) => r.path);
 
   // Build path -> topic_id map so content linked by topic_id (not just
