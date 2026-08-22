@@ -371,6 +371,7 @@ const App = () => {
                       <Route path="/reviews" element={<Reviews />} />
                       
                       {/* Content & SEO Pages */}
+                      <Route path="/exams" element={<ExamsHub />} />
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
                       <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
                       <Route path="/mdcat-past-papers" element={<Suspense fallback={<TopProgressBar />}><MDCATPastPapers /></Suspense>} />
