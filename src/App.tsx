@@ -228,6 +228,7 @@ import BoardClassPage from "./pages/BoardClassPage";
 import BoardSubjectPage from "./pages/BoardSubjectPage";
 import BoardTopicPage from "./pages/BoardTopicPage";
 import ExamLandingPage from "./pages/exams/ExamLandingPage";
+import ExamsHub from "./pages/exams/ExamsHub"; // eager: prerendered SEO hub
 const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 const Tenders = lazy(() => import("./pages/Tenders"));
@@ -370,6 +371,7 @@ const App = () => {
                       <Route path="/reviews" element={<Reviews />} />
                       
                       {/* Content & SEO Pages */}
+                      <Route path="/exams" element={<ExamsHub />} />
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
                       <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
                       <Route path="/mdcat-past-papers" element={<Suspense fallback={<TopProgressBar />}><MDCATPastPapers /></Suspense>} />
