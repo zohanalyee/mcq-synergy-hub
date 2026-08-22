@@ -372,7 +372,10 @@ const App = () => {
                       
                       {/* Content & SEO Pages */}
                       <Route path="/exams" element={<ExamsHub />} />
+                      <Route path="/exams/nums" element={<NumsEntryTest />} />
+                      <Route path="/exams/iba-sukkur" element={<IbaSukkurEntryTest />} />
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
+
                       <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
                       <Route path="/mdcat-past-papers" element={<Suspense fallback={<TopProgressBar />}><MDCATPastPapers /></Suspense>} />
                       <Route path="/ppsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><PPSCPastPapers /></Suspense>} />
