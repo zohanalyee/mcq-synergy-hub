@@ -617,8 +617,8 @@ function pageClassSeg(name) {
 // resolve real display names from the DB so the static description EXACTLY
 // matches each page's client-side SEOHead output.
 async function injectBoardHubs() {
-  const { data: topicRows, error } = await supabase.rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: 5 });
-  if (error) throw error;
+  const topicRows = await getIndexableTopicRows();
+
 
   // Build display-name lookups keyed by URL segment.
   const [{ data: systems }, { data: levels }, { data: subjects }] = await Promise.all([
