@@ -139,3 +139,23 @@ Realistic sequence: fix the debug-tag leak, re-enable generation and let it run 
 4. One live spot-check of a sub-5-MCQ topic URL to close out the ad-gating verification.
 5. Read Security & Manual Actions in the Search Console UI once, to formally rule out a penalty.
 6. Traffic recovery: the JOA spike was event-driven. To replace it, target the next exam windows with the same treatment that worked (prerendered body content + past-papers intent).
+
+URGENT — REAL-DATA-VERIFICATION-CHAHIYE (koi-code-abhi-nahi, sirf-DIAGNOSIS):
+
+User-confirm-karta-hai: 10-20-AUGUST-tak WEBAPP-HIGHLY-RANKED-tha, HAZARON-users-aa-rahe-thay (bara-spike). Phir-SUDDENLY-CRASH — ab-100+-impressions-mein-sirf-1-2-CLICKS.
+
+Yeh-CRITICAL-hai. Please TURANT-CHECK-karein:
+
+1. GSC-PERFORMANCE-GRAPH — pichhle-14-din-ka-EXACT-clicks/impressions/position — EXACT-DATE-dikhayen jab-drop-shuru-hua.
+
+2. CRAWL-STATS (GSC-mein "Crawl-Stats"-report) — kya-CRAWL-REQUESTS-mein-bhi-DROP-hai isi-date-ke-aas-paas? (Agar-Google-khud-crawl-karna-band-kar-de, yeh-TECHNICAL-BLOCK-ka-signal-hai, algorithm-nahi)
+
+3. TIMELINE-CROSS-CHECK — Humne-isi-WINDOW-mein-kaunse-BUILDS-DEPLOY-kiye (JOA-fix, MDCAT-content, AdSlot-!isThin-gating, canonical-fix, Force-Save-bug)? EXACT-TIMESTAMPS-batayen har-deploy-ki, taake-hum-COMPARE-kar-saken drop-ke-timing-se.
+
+4. LIVE-GOOGLEBOT-CHECK — ABHI-turant curl-karein Googlebot-UA-se HOMEPAGE + 3-TOP-RANKING-PAGES (jo-spike-la-rahe-thay) — 200-mil-raha-hai-ya-KOI-403/ERROR?
+
+5. SECURITY-&-MANUAL-ACTIONS (GSC) — koi-MANUAL-PENALTY-dikh-rahi-hai-ya-NAHI?
+
+6. FORCE-SAVE-BUG-STATUS — kya-woh-abhi-tak-UNFIXED-hai? Agar-CORRUPT-QUESTIONS ("[FORCE-SAVE-xxx]"-wale) LIVE-HAIN-aur-INDEXED-ho-gaye-hain, yeh-EXACT-TIMING-MATCH-kar-sakta-hai is-crash-se.
+
+Yeh-SABSE-URGENT-HAI is-poori-session-mein — REAL-TRAFFIC-loss-ho-raha-hai ABHI. Turant-DATA-lekar-aayen, phir-ROOT-CAUSE-decide-karenge.
