@@ -231,6 +231,7 @@ import ExamLandingPage from "./pages/exams/ExamLandingPage";
 import ExamsHub from "./pages/exams/ExamsHub"; // eager: prerendered SEO hub
 import NumsEntryTest from "./pages/exams/NumsEntryTest"; // eager: prerendered SEO page
 import IbaSukkurEntryTest from "./pages/exams/IbaSukkurEntryTest"; // eager: prerendered SEO page
+import LatLawAdmissionTest from "./pages/exams/LatLawAdmissionTest"; // eager: prerendered SEO page
 
 const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
@@ -377,6 +378,7 @@ const App = () => {
                       <Route path="/exams" element={<ExamsHub />} />
                       <Route path="/exams/nums" element={<NumsEntryTest />} />
                       <Route path="/exams/iba-sukkur" element={<IbaSukkurEntryTest />} />
+                      <Route path="/exams/lat" element={<LatLawAdmissionTest />} />
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
 
                       <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
