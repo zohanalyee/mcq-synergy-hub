@@ -11,6 +11,8 @@ export const cleanQuestionText = (text: string): string => {
     .replace(/^\s*\[DUPLICATE\]\s*/i, '')
     .replace(/^\s*DUPLICATE:\s*/i, '')
     .replace(/^\s*\[ERROR\/DUPLICATE-[a-z0-9]+\]\s*/i, '')
+    .replace(/^\s*\[FORCE-SAVE-[a-z0-9]+\]\s*/i, '')
+    .replace(/^\s*\[n-[a-z0-9]+\]\s*/i, '')
     .replace(/^\s*\[AI\]\s*/i, '')
     .replace(/^\s*AI GENERATED:\s*/i, '')
     .trim();
