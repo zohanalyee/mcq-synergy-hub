@@ -297,7 +297,12 @@ async function getIndexableTopicRows() {
       let lastError = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
         const { data, error } = await supabase.rpc("get_indexable_board_topic_paths", {
-          p_min_approved_mcqs: 5,
+          // Fetch EVERY topic that has at least one approved MCQ. Consumers gate
+          // on r.approved_count: >= 8 → indexable (matches sitemap), 5-7 → gets
+          // static content but noindex, < 5 → noindex, no content injection.
+          // Without the thin rows the SPA shell's "index,follow" leaked onto
+          // thin topic URLs (AdSense low-value-content risk).
+          p_min_approved_mcqs: 1,
         });
         if (!error) return data || [];
         lastError = error;
