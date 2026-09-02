@@ -141,13 +141,44 @@ function isCreditsError(error: any): boolean {
 
 
 // ============= DIRECT GEMINI TEXT CALL =============
+// Model fallback chain: if a model id is retired / unavailable for the key
+// (Google answers 404 "model not found for API version"), retry the same
+// request on the next known-good model instead of failing the whole run.
+const TEXT_MODEL_FALLBACKS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest"];
+
 export async function callGeminiText(
   apiKey: string,
   systemPrompt: string,
   userPrompt: string,
   config: GeminiConfig = {}
 ): Promise<string> {
-  const model = config.model || DEFAULT_MODEL;
+  const primary = config.model || DEFAULT_MODEL;
+  const models = [primary, ...TEXT_MODEL_FALLBACKS.filter((m) => m !== primary)];
+
+  let lastError: any = null;
+  for (const model of models) {
+    try {
+      return await callGeminiTextOnce(apiKey, systemPrompt, userPrompt, config, model);
+    } catch (error: any) {
+      lastError = error;
+      // Only a missing/unsupported model is worth retrying on another model.
+      if (error?.status === 404) {
+        console.warn(`[Gemini] Model ${model} unavailable (404) — trying next model...`);
+        continue;
+      }
+      throw error;
+    }
+  }
+  throw lastError ?? createGeminiError("Gemini API error: no model available", 404);
+}
+
+async function callGeminiTextOnce(
+  apiKey: string,
+  systemPrompt: string,
+  userPrompt: string,
+  config: GeminiConfig,
+  model: string
+): Promise<string> {
   const url = `${GEMINI_API_BASE}/${model}:generateContent?key=${apiKey}`;
 
   // Phase 6 — use Gemini's native systemInstruction field for grounding instead
@@ -194,6 +225,7 @@ export async function callGeminiText(
   }
   return text;
 }
+
 
 // ============= DIRECT GEMINI VISION CALL =============
 export async function callGeminiVision(
