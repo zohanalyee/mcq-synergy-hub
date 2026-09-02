@@ -327,6 +327,11 @@ async function injectBoards() {
     const classN = (String(parts[2]).match(/\d+/) || [""])[0];
     const subject = humanize(parts[3]);
     const topic = humanize(parts[4]);
+    // Robots must match the sitemap + src/generated/indexableTopics.json, which
+    // both use the stricter >= 8 approved-MCQ threshold. Rows here come from the
+    // >= 5 query (needed for content injection), so anything under 8 is thin and
+    // ships noindex,follow — exactly what BoardTopicPage renders client-side.
+    const approved = Number(r.approved_count || 0);
     patch({
       path,
       title: `${buildTopicTitleBase(topic, subject, classN)} | MCQsAI`,
@@ -334,6 +339,7 @@ async function injectBoards() {
       keywords: `${topic} MCQs, ${subject} class ${classN}, ${board} preparation, Pakistan exam MCQs`,
       ogImage: OG_BOARDS,
       ogType: "article",
+      robots: approved >= 8 ? "index,follow" : "noindex,follow",
       pageType: "board-topic",
     });
     count++;
