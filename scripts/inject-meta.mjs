@@ -665,6 +665,9 @@ async function injectBoardHubs() {
   const classHub = new Set();
   const subjectHub = new Set();
   for (const r of topicRows || []) {
+    // Hubs are only "real" when they contain at least one indexable (>= 8 MCQ)
+    // leaf — same threshold as the sitemap.
+    if (Number(r.approved_count || 0) < 8) continue;
     const parts = String(r.path || "").split("/").filter(Boolean); // boards, board, class-N, subject, topic
     if (parts.length < 5) continue;
     const [, board, classSeg, subject] = parts;
