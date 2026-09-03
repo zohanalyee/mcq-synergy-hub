@@ -220,6 +220,8 @@ const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics
 // Content & SEO pages (eager for prerender whitelist)
 import Blog from "./pages/Blog";
 import BlogPost from "./pages/BlogPost";
+import Announcements from "./pages/Announcements"; // eager: indexable feed hub
+import AnnouncementDetail from "./pages/AnnouncementDetail";
 import FAQ from "./pages/FAQ";
 import StudyGuides from "./pages/StudyGuides"; // eager: prerendered SEO hub
 import Boards from "./pages/Boards";
