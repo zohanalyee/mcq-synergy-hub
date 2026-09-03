@@ -24,7 +24,7 @@ import {
   saveAnnouncement,
 } from '@/services/announcementService';
 import { detectTopics, evaluateAnnouncementQuality } from '@/lib/announcementEngagement';
-import { slugify } from '@/utils/slugify';
+import { generateSlug as slugify } from '@/utils/slugify';
 
 const emptyForm = {
   title: '',
