@@ -113,6 +113,241 @@ export type Database = {
         }
         Relationships: []
       }
+      announcement_comment_reports: {
+        Row: {
+          comment_id: string
+          created_at: string
+          id: string
+          reason: string | null
+          reporter_key: string
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_key: string
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          id?: string
+          reason?: string | null
+          reporter_key?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_comment_reports_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "announcement_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcement_comments: {
+        Row: {
+          body: string
+          created_at: string
+          display_name: string
+          guest_key: string | null
+          id: string
+          is_hidden: boolean
+          report_count: number
+          target_id: string
+          target_type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          display_name?: string
+          guest_key?: string | null
+          id?: string
+          is_hidden?: boolean
+          report_count?: number
+          target_id: string
+          target_type: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          display_name?: string
+          guest_key?: string | null
+          id?: string
+          is_hidden?: boolean
+          report_count?: number
+          target_id?: string
+          target_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      announcement_reactions: {
+        Row: {
+          created_at: string
+          guest_key: string | null
+          id: string
+          target_id: string
+          target_type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          guest_key?: string | null
+          id?: string
+          target_id: string
+          target_type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          guest_key?: string | null
+          id?: string
+          target_id?: string
+          target_type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      announcement_topics: {
+        Row: {
+          announcement_id: string
+          created_at: string
+          id: string
+          source: string
+          topic_kind: string
+          topic_label: string
+          topic_slug: string
+        }
+        Insert: {
+          announcement_id: string
+          created_at?: string
+          id?: string
+          source?: string
+          topic_kind?: string
+          topic_label: string
+          topic_slug: string
+        }
+        Update: {
+          announcement_id?: string
+          created_at?: string
+          id?: string
+          source?: string
+          topic_kind?: string
+          topic_label?: string
+          topic_slug?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcement_topics_announcement_id_fkey"
+            columns: ["announcement_id"]
+            isOneToOne: false
+            referencedRelation: "announcements"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      announcement_views: {
+        Row: {
+          created_at: string
+          id: string
+          target_id: string
+          target_type: string
+          viewer_key: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          target_id: string
+          target_type: string
+          viewer_key?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          target_id?: string
+          target_type?: string
+          viewer_key?: string | null
+        }
+        Relationships: []
+      }
+      announcements: {
+        Row: {
+          body: string
+          content_updated_at: string | null
+          created_at: string
+          created_by: string | null
+          document_url: string | null
+          id: string
+          image_url: string | null
+          is_indexable: boolean
+          is_pinned: boolean
+          is_urgent: boolean
+          meta_description: string | null
+          meta_title: string | null
+          og_image_url: string | null
+          published_at: string | null
+          slug: string
+          status: string
+          summary: string | null
+          title: string
+          type: string
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          body?: string
+          content_updated_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_indexable?: boolean
+          is_pinned?: boolean
+          is_urgent?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          published_at?: string | null
+          slug: string
+          status?: string
+          summary?: string | null
+          title: string
+          type?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          body?: string
+          content_updated_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          document_url?: string | null
+          id?: string
+          image_url?: string | null
+          is_indexable?: boolean
+          is_pinned?: boolean
+          is_urgent?: boolean
+          meta_description?: string | null
+          meta_title?: string | null
+          og_image_url?: string | null
+          published_at?: string | null
+          slug?: string
+          status?: string
+          summary?: string | null
+          title?: string
+          type?: string
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: []
+      }
       att_staff: {
         Row: {
           created_at: string | null
@@ -3835,6 +4070,29 @@ export type Database = {
           total_requests: number
         }[]
       }
+      get_announcement_feed: {
+        Args: {
+          p_filter?: string
+          p_limit?: number
+          p_offset?: number
+          p_sort?: string
+        }
+        Returns: {
+          comment_count: number
+          excerpt: string
+          href: string
+          image_url: string
+          is_pinned: boolean
+          is_urgent: boolean
+          like_count: number
+          published_at: string
+          slug: string
+          target_id: string
+          target_type: string
+          title: string
+          type_label: string
+        }[]
+      }
       get_autofill_queue: {
         Args: { limit_count?: number }
         Returns: {
@@ -4165,6 +4423,17 @@ export type Database = {
       get_recently_active_users: {
         Args: { minutes_ago?: number }
         Returns: number
+      }
+      get_related_announcements: {
+        Args: { p_announcement_id: string; p_limit?: number }
+        Returns: {
+          id: string
+          published_at: string
+          shared_topics: number
+          slug: string
+          summary: string
+          title: string
+        }[]
       }
       get_review_stats: {
         Args: never

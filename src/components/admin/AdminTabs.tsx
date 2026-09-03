@@ -26,6 +26,7 @@ import { Share2 } from "lucide-react";
 import OpportunityReviewHub from "./OpportunityReviewHub";
 import NavigationManager from "./NavigationManager";
 import BlogManager from "./BlogManager";
+import AnnouncementsManager from "./announcements/AnnouncementsManager";
 import FAQManager from "./FAQManager";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -96,6 +97,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "submit-content", label: "Submit", icon: FileText },
         { value: "bulk-upload", label: "Bulk Upload", icon: Upload },
         { value: "blog-manager", label: "Blog", icon: PenSquare },
+        { value: "announcements", label: "Announcements", icon: Megaphone },
         { value: "faq-manager", label: "FAQ", icon: HelpCircle },
       ],
     },
@@ -302,6 +304,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="messages"><AdminMessagesPanel /></TabsContent>
       <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
       <TabsContent value="blog-manager"><BlogManager /></TabsContent>
+      <TabsContent value="announcements"><AnnouncementsManager /></TabsContent>
       <TabsContent value="faq-manager"><FAQManager /></TabsContent>
       <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
       <TabsContent value="content-health"><ContentHealthDashboard /></TabsContent>
