@@ -103,6 +103,7 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               {[
                 { label: 'Blog', path: '/blog' },
+                { label: 'Announcements', path: '/announcements' },
                 { label: 'AI Coach', path: '/features/ai-coach', badge: 'New' },
                 { label: 'FAQ', path: '/faq' },
                 { label: 'Scholarships', path: '/scholarships' },
