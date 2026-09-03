@@ -403,6 +403,8 @@ const App = () => {
                       <Route path="/forces-jobs-tests" element={<Suspense fallback={<TopProgressBar />}><ForcesJobsTests /></Suspense>} />
                       <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={<TopProgressBar />}><BlogPost /></Suspense>} />
+                      <Route path="/announcements" element={<Suspense fallback={<TopProgressBar />}><Announcements /></Suspense>} />
+                      <Route path="/announcements/:slug" element={<Suspense fallback={<TopProgressBar />}><AnnouncementDetail /></Suspense>} />
                       <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><FAQ /></Suspense>} />
                       <Route path="/study-guides" element={<Suspense fallback={<TopProgressBar />}><StudyGuides /></Suspense>} />
                       
