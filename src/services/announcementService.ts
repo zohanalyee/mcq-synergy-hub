@@ -123,14 +123,17 @@ export const fetchMyReactions = async (
   const key = getEngagementKey();
   const { data: auth } = await supabase.auth.getUser();
   const ids = targets.map((t) => t.target_id);
-  const { data, error } = await table('announcement_reactions')
-    .select('target_type, target_id, user_id, guest_key')
+
+  // Scope the query to the current visitor only — never fetch other people's
+  // reaction rows (guest keys / user ids stay private).
+  let q = table('announcement_reactions')
+    .select('target_type, target_id')
     .in('target_id', ids);
+  q = auth?.user ? q.eq('user_id', auth.user.id) : q.eq('guest_key', key);
+
+  const { data, error } = await q;
   if (error) return new Set();
-  const mine = (data || []).filter(
-    (r: any) => (auth?.user && r.user_id === auth.user.id) || r.guest_key === key,
-  );
-  return new Set(mine.map((r: any) => `${r.target_type}:${r.target_id}`));
+  return new Set((data || []).map((r: any) => `${r.target_type}:${r.target_id}`));
 };
 
 export const toggleReaction = async (
