@@ -28,6 +28,9 @@ const PRERENDER_ROUTES = [
   "/delete-account",
 
   "/exams",
+  "/exams/nums",
+  "/exams/iba-sukkur",
+  "/exams/lat",
   "/exams/mdcat",
   "/exams/ecat",
   "/exams/nts",
