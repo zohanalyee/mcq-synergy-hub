@@ -21,10 +21,11 @@ import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
 import CampaignTracker from "./components/CampaignTracker";
 import EmailPrefSync from "./components/EmailPrefSync";
-import Unsubscribe from "./pages/Unsubscribe";
-// Public data-deletion page (Meta Facebook Login requirement) — eager so it
-// prerenders with real body content for crawlers and Meta's reviewers.
-import DeleteAccount from "./pages/DeleteAccount";
+// Lazy: not in the prerender whitelist (transactional email landing page).
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+// Public data-deletion page (Meta Facebook Login requirement) — eager: prerendered
+// (/delete-account) so it ships real body content for crawlers and Meta reviewers.
+import DeleteAccount from "./pages/DeleteAccount"; // eager: prerendered SEO page (/delete-account)
 
 import TopProgressBar from "./components/TopProgressBar";
 import ToolRouteSEO from "./components/seo/ToolRouteSEO";
@@ -45,14 +46,14 @@ import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
 import GlobalCreditExhaustedListener from "./components/credits/GlobalCreditExhaustedListener";
 import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
-// Eager (above-the-fold / auth landing) — must load fast
-import Index from "./pages/Index";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import Auth from "./pages/Auth";
-import GetStarted from "./pages/GetStarted";
-import AICoachLanding from "./pages/AICoachLanding";
-import NotFound from "./pages/NotFound";
+import Index from "./pages/Index"; // eager: prerendered homepage (/)
+import AICoachLanding from "./pages/AICoachLanding"; // eager: prerendered SEO page (/features/ai-coach)
+import NotFound from "./pages/NotFound"; // eager: wildcard fallback, must render instantly
+// Lazy: auth flows are not prerendered and are never the first paint for crawlers.
+const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const Auth = lazy(() => import("./pages/Auth"));
+const GetStarted = lazy(() => import("./pages/GetStarted"));
 
 // Retry a lazy import once, then force a single full reload on stale-chunk errors
 function lazyWithReload<T extends { default: ComponentType<any> }>(
@@ -79,9 +80,9 @@ import MockTests from "./pages/MockTests"; // eager: prerendered SEO hub
 const MockTestDetail = lazyWithReload(() => import("./pages/MockTestDetail"));
 const Analytics = lazyWithReload(() => import("./pages/Analytics"));
 import Leaderboard from "./pages/Leaderboard"; // eager: prerendered SEO hub
-import PastPapers from "./pages/PastPapers";
-import Jobs from "./pages/Jobs";
-import Scholarships from "./pages/Scholarships";
+import PastPapers from "./pages/PastPapers"; // eager: prerendered SEO hub (/past-papers)
+import Jobs from "./pages/Jobs"; // eager: prerendered SEO hub (/jobs)
+import Scholarships from "./pages/Scholarships"; // eager: prerendered SEO hub (/scholarships)
 import CustomSyllabus from "./pages/CustomSyllabus"; // eager: prerendered SEO hub
 const SubjectContent = lazyWithReload(() => import("./pages/SubjectContent"));
 const CustomQuizzes = lazyWithReload(() => import("./pages/CustomQuizzes"));
@@ -96,58 +97,60 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-import Reviews from "./pages/Reviews";
+import Reviews from "./pages/Reviews"; // eager: prerendered SEO page (/reviews)
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmailSent = lazy(() => import("./pages/VerifyEmailSent"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 
-import Quizzes from "./pages/Quizzes";
+import Quizzes from "./pages/Quizzes"; // eager: prerendered SEO hub (/quizzes)
 const QuizPlayer = lazy(() => import("./pages/QuizPlayer"));
 const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
 // Eager: SEO/public prerender whitelisted routes (need real HTML in #root)
-import About from "./pages/About";
-import MDCATSyllabus from "./pages/MDCATSyllabus";
+import About from "./pages/About"; // eager: prerendered SEO page (/about)
+import MDCATSyllabus from "./pages/MDCATSyllabus"; // eager: prerendered SEO page (/mdcat-syllabus)
 // Indexable tools (src/config/toolsSeo.ts INDEXABLE_TOOL_PATHS) must be EAGER:
 // a lazy() route renders only the Suspense fallback during prerender, so the
 // static HTML ships an empty #root and non-JS crawlers see no body content.
-import AggregateCalculator from "./pages/tools/AggregateCalculator";
-import MeritCalculator from "./pages/tools/MeritCalculator";
-import GPACalculator from "./pages/tools/GPACalculator";
-import CGPACalculator from "./pages/tools/CGPACalculator";
-import GPAToPercentage from "./pages/tools/GPAToPercentage";
-import PercentageToGPA from "./pages/tools/PercentageToGPA";
-import MarksCalculator from "./pages/tools/MarksCalculator";
-import ResultCalculator from "./pages/tools/ResultCalculator";
-import AttendanceCalculator from "./pages/tools/AttendanceCalculator";
-import PercentageCalculator from "./pages/tools/PercentageCalculator";
-import AgeCalculator from "./pages/tools/AgeCalculator";
-import PeriodicTable from "./pages/tools/PeriodicTable";
-import PakistanTaxCalculator from "./pages/tools/PakistanTaxCalculator";
-import ZakatCalculator from "./pages/tools/ZakatCalculator";
-import AttendanceDashboard from "./pages/tools/AttendanceDashboard";
-import MDCATPastPapers from "./pages/seo/MDCATPastPapers";
-import PPSCPastPapers from "./pages/seo/PPSCPastPapers";
-import FPSCPastPapers from "./pages/seo/FPSCPastPapers";
-import CSSMCQs from "./pages/seo/CSSMCQs";
-import ECATPreparation from "./pages/seo/ECATPreparation";
-import NUSTEntryTest from "./pages/seo/NUSTEntryTest";
-import PunjabUniversityEntryTest from "./pages/seo/PunjabUniversityEntryTest";
-import COMSATSEntryTest from "./pages/seo/COMSATSEntryTest";
-import SindhUniversitiesEntryTest from "./pages/seo/SindhUniversitiesEntryTest";
-import EngineeringUniversitiesEntryTest from "./pages/seo/EngineeringUniversitiesEntryTest";
-import PSTSSTTestPreparation from "./pages/seo/PSTSSTTestPreparation";
-import NinthClassMCQs from "./pages/seo/NinthClassMCQs";
-import BoardMCQs from "./pages/seo/BoardMCQs";
-import PakArmyTest from "./pages/seo/PakArmyTest";
-import PAFTest from "./pages/seo/PAFTest";
-import ASFTest from "./pages/seo/ASFTest";
-import ForcesJobsTests from "./pages/seo/ForcesJobsTests";
-import Contact from "./pages/Contact";
+import AggregateCalculator from "./pages/tools/AggregateCalculator"; // eager: prerendered tool
+import MeritCalculator from "./pages/tools/MeritCalculator"; // eager: prerendered tool
+import GPACalculator from "./pages/tools/GPACalculator"; // eager: prerendered tool
+import CGPACalculator from "./pages/tools/CGPACalculator"; // eager: prerendered tool
+import GPAToPercentage from "./pages/tools/GPAToPercentage"; // eager: prerendered tool
+import PercentageToGPA from "./pages/tools/PercentageToGPA"; // eager: prerendered tool
+import MarksCalculator from "./pages/tools/MarksCalculator"; // eager: prerendered tool
+import ResultCalculator from "./pages/tools/ResultCalculator"; // eager: prerendered tool
+import AttendanceCalculator from "./pages/tools/AttendanceCalculator"; // eager: prerendered tool
+import PercentageCalculator from "./pages/tools/PercentageCalculator"; // eager: prerendered tool
+import PeriodicTable from "./pages/tools/PeriodicTable"; // eager: prerendered tool
+import PakistanTaxCalculator from "./pages/tools/PakistanTaxCalculator"; // eager: prerendered tool
+import ZakatCalculator from "./pages/tools/ZakatCalculator"; // eager: prerendered tool
+import AttendanceDashboard from "./pages/tools/AttendanceDashboard"; // eager: prerendered tool
+// Lazy: /tools/age-calculator is in TOOLS_WITHOUT_SEOHEAD, so it is NOT
+// prerendered — its head is injected post-build by scripts/inject-meta.mjs.
+const AgeCalculator = lazy(() => import("./pages/tools/AgeCalculator"));
+import MDCATPastPapers from "./pages/seo/MDCATPastPapers"; // eager: prerendered SEO page
+import PPSCPastPapers from "./pages/seo/PPSCPastPapers"; // eager: prerendered SEO page
+import FPSCPastPapers from "./pages/seo/FPSCPastPapers"; // eager: prerendered SEO page
+import CSSMCQs from "./pages/seo/CSSMCQs"; // eager: prerendered SEO page
+import ECATPreparation from "./pages/seo/ECATPreparation"; // eager: prerendered SEO page
+import NUSTEntryTest from "./pages/seo/NUSTEntryTest"; // eager: prerendered SEO page
+import PunjabUniversityEntryTest from "./pages/seo/PunjabUniversityEntryTest"; // eager: prerendered SEO page
+import COMSATSEntryTest from "./pages/seo/COMSATSEntryTest"; // eager: prerendered SEO page
+import SindhUniversitiesEntryTest from "./pages/seo/SindhUniversitiesEntryTest"; // eager: prerendered SEO page
+import EngineeringUniversitiesEntryTest from "./pages/seo/EngineeringUniversitiesEntryTest"; // eager: prerendered SEO page
+import PSTSSTTestPreparation from "./pages/seo/PSTSSTTestPreparation"; // eager: prerendered SEO page
+import NinthClassMCQs from "./pages/seo/NinthClassMCQs"; // eager: prerendered SEO page
+import BoardMCQs from "./pages/seo/BoardMCQs"; // eager: prerendered SEO page
+import PakArmyTest from "./pages/seo/PakArmyTest"; // eager: prerendered SEO page
+import PAFTest from "./pages/seo/PAFTest"; // eager: prerendered SEO page
+import ASFTest from "./pages/seo/ASFTest"; // eager: prerendered SEO page
+import ForcesJobsTests from "./pages/seo/ForcesJobsTests"; // eager: prerendered SEO page
+import Contact from "./pages/Contact"; // eager: prerendered SEO page (/contact)
 import PrivacyPolicy from "./pages/legal/PrivacyPolicy"; // eager: prerendered SEO page
 import TermsOfService from "./pages/legal/TermsOfService"; // eager: prerendered SEO page
-import EditorialPolicy from "./pages/legal/EditorialPolicy";
+import EditorialPolicy from "./pages/legal/EditorialPolicy"; // eager: prerendered SEO page (/editorial-policy)
 import QuestionBank from "./pages/QuestionBank"; // eager: prerendered SEO hub
 // Ask-Document is temporarily disabled — the route renders a Coming Soon page.
 const AskDocument = lazy(() => import("./pages/AskDocumentComingSoon"));
@@ -164,7 +167,7 @@ const UnitConverter = lazy(() => import("./pages/tools/UnitConverter"));
 const NotesTool = lazy(() => import("./pages/tools/NotesTool"));
 
 // Tools listing page — eager for SSR prerender
-import Tools from "./pages/Tools";
+import Tools from "./pages/Tools"; // eager: prerendered SEO hub (/tools)
 
 // Lazy-loaded new tool pages
 const BMICalculator = lazy(() => import("./pages/tools/BMICalculator"));
@@ -216,32 +219,38 @@ const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReports
 const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
 const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
 
-// Content & SEO pages
-// Content & SEO pages (eager for prerender whitelist)
-import Blog from "./pages/Blog";
-import BlogPost from "./pages/BlogPost";
-import Announcements from "./pages/Announcements"; // eager: indexable feed hub
-import AnnouncementDetail from "./pages/AnnouncementDetail";
-import FAQ from "./pages/FAQ";
+// Content & SEO pages.
+// RULE: keep a page eager ONLY when its route is in PRERENDER_ROUTES /
+// EXTRA_PRERENDER_ROUTES (vite.config.ts + scripts/prerender-routes.mjs) and
+// therefore must render synchronously during prerender. Everything else is
+// lazy() so it stays out of the entry chunk.
+import Blog from "./pages/Blog"; // eager: prerendered SEO hub (/blog)
+import Announcements from "./pages/Announcements"; // eager: prerendered SEO hub (/announcements)
+import FAQ from "./pages/FAQ"; // eager: prerendered SEO page (/faq)
 import StudyGuides from "./pages/StudyGuides"; // eager: prerendered SEO hub
-import Boards from "./pages/Boards";
-import BoardLandingPage from "./pages/BoardLandingPage";
-import BoardClassPage from "./pages/BoardClassPage";
-import BoardSubjectPage from "./pages/BoardSubjectPage";
-import BoardTopicPage from "./pages/BoardTopicPage";
-import ExamLandingPage from "./pages/exams/ExamLandingPage";
+import Boards from "./pages/Boards"; // eager: prerendered SEO hub (/boards)
+import ExamLandingPage from "./pages/exams/ExamLandingPage"; // eager: prerendered /exams/:examSlug set
 import ExamsHub from "./pages/exams/ExamsHub"; // eager: prerendered SEO hub
 import NumsEntryTest from "./pages/exams/NumsEntryTest"; // eager: prerendered SEO page
 import IbaSukkurEntryTest from "./pages/exams/IbaSukkurEntryTest"; // eager: prerendered SEO page
 import LatLawAdmissionTest from "./pages/exams/LatLawAdmissionTest"; // eager: prerendered SEO page
+
+// Lazy: DB-driven detail pages — heads are patched post-build by
+// scripts/inject-meta.mjs, so they never need to render during prerender.
+const BlogPost = lazyWithReload(() => import("./pages/BlogPost"));
+const AnnouncementDetail = lazyWithReload(() => import("./pages/AnnouncementDetail"));
+const BoardLandingPage = lazyWithReload(() => import("./pages/BoardLandingPage"));
+const BoardClassPage = lazyWithReload(() => import("./pages/BoardClassPage"));
+const BoardSubjectPage = lazyWithReload(() => import("./pages/BoardSubjectPage"));
+const BoardTopicPage = lazyWithReload(() => import("./pages/BoardTopicPage"));
 
 const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
 const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
 const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
 const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
-import ProgrammaticLandingPage from "./pages/programmatic/ProgrammaticLandingPage";
-import ProgrammaticIndex from "./pages/programmatic/ProgrammaticIndex";
+import ProgrammaticLandingPage from "./pages/programmatic/ProgrammaticLandingPage"; // eager: prerendered /p/:slug set
+import ProgrammaticIndex from "./pages/programmatic/ProgrammaticIndex"; // eager: prerendered SEO hub (/p)
 
 const App = () => {
   const isPrerender = typeof window === 'undefined' || (globalThis as any).__PRERENDER__;
