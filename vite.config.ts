@@ -43,6 +43,7 @@ const PRERENDER_ROUTES = [
   "/tools",
   "/editorial-policy",
   "/blog",
+  "/announcements",
   "/boards",
   "/scholarships",
   "/jobs",
