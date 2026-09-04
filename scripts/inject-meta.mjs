@@ -726,19 +726,36 @@ async function injectBoardHubs() {
   return count;
 }
 
+// Indexable tool allow-list, read from the single source of truth
+// (src/config/toolsSeo.ts). Tools outside it are noindex,follow — the same
+// policy ToolWrapper applies client-side — and stay out of tools.xml.
+function indexableToolPaths() {
+  try {
+    const src = readFileSync(resolve(ROOT, "src/config/toolsSeo.ts"), "utf8");
+    const block = src.split(/export const INDEXABLE_TOOL_PATHS[^=]*=/)[1] || "";
+    return new Set([...block.matchAll(/'(\/tools\/[a-z0-9-]+)'/g)].map((m) => m[1]));
+  } catch {
+    return null; // unreadable → leave robots untouched (index,follow) rather than guess
+  }
+}
+
 function injectTools() {
   // Tool pages without <SEOHead> (not prerendered) — give them unique heads.
+  const allow = indexableToolPaths();
   for (const t of TOOLS_WITHOUT_SEOHEAD) {
+    const indexable = !allow || allow.has(t.path);
     patch({
       path: t.path,
       title: `${t.title} | MCQsAI`,
       description: t.description,
       ogImage: OG_TOOLS,
+      robots: indexable ? "index,follow" : "noindex,follow",
       pageType: "tools",
     });
   }
   return TOOLS_WITHOUT_SEOHEAD.length;
 }
+
 
 function injectSubjectContent() {
   // Backstop for static /subject-content/:id pages. They ARE prerendered, but a
