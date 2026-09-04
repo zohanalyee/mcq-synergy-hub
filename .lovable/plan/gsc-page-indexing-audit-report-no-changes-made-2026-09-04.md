@@ -4,12 +4,14 @@ All checks below were run live against the published site with a Googlebot user-
 
 ## 1. www vs non-www (I-7) — correctly configured
 
-| URL | Result |
-|---|---|
-| `https://mcqsai.com/` | 200 |
-| `https://www.mcqsai.com/` | 301 → `https://mcqsai.com/` |
-| `https://www.mcqsai.com/tools/pdf-compressor` | 301 → non-www equivalent |
-| `https://www.mcqsai.com/mock-tests/junior-office-associate-bps-13` | 301 → non-www equivalent |
+
+| URL                                                                | Result                      |
+| ------------------------------------------------------------------ | --------------------------- |
+| `https://mcqsai.com/`                                              | 200                         |
+| `https://www.mcqsai.com/`                                          | 301 → `https://mcqsai.com/` |
+| `https://www.mcqsai.com/tools/pdf-compressor`                      | 301 → non-www equivalent    |
+| `https://www.mcqsai.com/mock-tests/junior-office-associate-bps-13` | 301 → non-www equivalent    |
+
 
 Canonicals on the non-www pages point at the non-www URL, so there is **no canonical/redirect conflict**. A single-hop 301 to the canonical host is exactly what Google expects.
 
@@ -30,6 +32,7 @@ One genuine inconsistency worth a decision (not a bug affecting indexing today):
 - But 8 tools listed in `TOOLS_WITHOUT_SEOHEAD` in `scripts/prerender-routes.mjs` — including `pdf-compressor`, `image-compressor`, `image-converter`, `pdf-merger`, `pdf-to-text`, `pdf-splitter`, `age-calculator`, `timer`/`units`/`notes` variants — do not use `ToolWrapper`, so they never emit a robots tag from React. `inject-meta.mjs` gives them static `index,follow` while `tools.xml` (15 URLs) excludes them.
 
 Net effect: those pages are crawlable/indexable but absent from the sitemap — indexable orphans that conflict with the deliberate "thin utility tools are noindex" AdSense-safety policy. Two possible resolutions (your call, no change made):
+
 - (a) Treat them as intentionally indexable → add real on-page depth + include in `tools.xml`.
 - (b) Honour the allow-list → have `inject-meta.mjs` emit `noindex,follow` for tools outside `INDEXABLE_TOOL_PATHS`.
 
@@ -48,3 +51,15 @@ Minor observation: because these parameter URLs are internally linked, Google ke
 - Item 3: no real content blocked; all 657 are intentional parameter duplicates.
 
 No code, config, sitemap, or GSC state was changed, and AdSense "Confirm fixed" was not pressed.
+
+&nbsp;
+
+Apply resolution (b) from the tools indexing audit: make the 8 tools currently in TOOLS_WITHOUT_SEOHEAD (pdf-compressor, image-compressor, image-converter, pdf-merger, pdf-to-text, pdf-splitter, age-calculator, timer/units/notes variants) consistent with the rest of the noindex utility-tools policy.
+
+- Update inject-meta.mjs so these tools emit noindex,follow, matching every other tool outside INDEXABLE_TOOL_PATHS
+
+- Do not add them to tools.xml — they should stay excluded from the sitemap, consistent with the noindex policy
+
+- Isolation guarantee — do not touch the 15 already-indexable tools, ToolWrapper-based tools, or any other page/route
+
+- Confirm after the change that pdf-compressor and the other 7 tools now return noindex,follow for a Googlebot UA
