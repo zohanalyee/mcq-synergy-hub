@@ -154,6 +154,14 @@ const ScholarshipDetailPage = () => {
           </Button>
         )}
 
+        <EngagementSection
+          targetType="scholarship"
+          targetId={scholarship.id}
+          href={`/scholarships/${scholarshipSlug}`}
+          title={title}
+          prompt="Is scholarship ke baare mein sawal ya experience share karein."
+        />
+
         <RelatedContent entitySlug="scholarships-hub" title="Explore Related Resources" />
       </div>
       <Footer />
