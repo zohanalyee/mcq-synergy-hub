@@ -93,6 +93,8 @@ const MDCATPastPapers = () => (
         <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
       </div>
 
+      <MdcatWeightageTable />
+
       <section id="mdcat-paper-pattern" className="mb-10 scroll-mt-24">
         <h2 className="text-xl font-semibold mb-2">MDCAT Past Paper Pattern (200 MCQs / 210 minutes)</h2>
         <p className="text-sm text-muted-foreground mb-4">
