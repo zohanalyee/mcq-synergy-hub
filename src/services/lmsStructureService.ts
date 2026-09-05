@@ -3,7 +3,40 @@ import { EducationalSystem, Level, SyllabusImportItem } from "@/types/lms.types"
 
 // ============ Educational Systems ============
 
+// Public (approved-only) systems change very rarely. Cache the read for the tab
+// session so app-shell mounts / reloads don't re-hit the network.
+const SYSTEMS_CACHE_KEY = 'lms-systems-cache-v1';
+const SYSTEMS_CACHE_TTL = 60 * 60 * 1000; // 1h
+
+const readSystemsCache = (): EducationalSystem[] | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(SYSTEMS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { ts: number; data: EducationalSystem[] };
+    if (Date.now() - parsed.ts > SYSTEMS_CACHE_TTL) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+};
+
+const writeSystemsCache = (data: EducationalSystem[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(SYSTEMS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+  } catch {
+    // storage unavailable — non-fatal
+  }
+};
+
 export const getEducationalSystems = async (includeUnapproved = false): Promise<EducationalSystem[]> => {
+  if (!includeUnapproved) {
+    const cached = readSystemsCache();
+    if (cached) return cached;
+  }
+
+
   let query = supabase
     .from('educational_systems')
     .select(`
