@@ -56,7 +56,7 @@ export const getEducationalSystems = async (includeUnapproved = false): Promise<
     return [];
   }
 
-  return (data || []).map(system => ({
+  const mapped: EducationalSystem[] = (data || []).map(system => ({
     id: system.id,
     name: system.name,
     type: system.type as 'academic' | 'job',
@@ -65,6 +65,10 @@ export const getEducationalSystems = async (includeUnapproved = false): Promise<
     created_at: system.created_at,
     levelCount: system.levels?.[0]?.count || 0
   }));
+
+  if (!includeUnapproved) writeSystemsCache(mapped);
+
+  return mapped;
 };
 
 export const addEducationalSystem = async (
