@@ -86,3 +86,34 @@ export const MdcatWeightageTable = () => (
     </p>
   </section>
 );
+
+/**
+ * In-body contextual links for MDCAT pages (Batch B).
+ * Isolated: rendered only on MDCAT routes, no shared layout changes.
+ */
+export const MdcatContextualLinks = () => (
+  <section className="mb-10 rounded-xl border bg-muted/30 p-4">
+    <h2 className="text-base font-semibold mb-2">Plan the rest of your MDCAT route</h2>
+    <p className="text-sm text-muted-foreground">
+      Once you know your score range, check where you actually stand with the{' '}
+      <Link to="/tools/aggregate-calculator" className="text-purple-700 underline">
+        MDCAT aggregate calculator
+      </Link>{' '}
+      — it weighs your FSc marks and MDCAT score the way public medical colleges do. Keep the
+      daily habit going with{' '}
+      <Link to="/exams/mdcat" className="text-purple-700 underline">
+        free MDCAT MCQ practice
+      </Link>
+      , and if you are also applying to army medical colleges, the{' '}
+      <Link to="/exams/nums" className="text-purple-700 underline">
+        NUMS entry test preparation
+      </Link>{' '}
+      shares most of the Biology and Chemistry syllabus. Engineering aspirants keeping a backup
+      option should start{' '}
+      <Link to="/ecat-preparation" className="text-purple-700 underline">
+        ECAT preparation
+      </Link>{' '}
+      alongside, since Physics and Maths overlap heavily.
+    </p>
+  </section>
+);

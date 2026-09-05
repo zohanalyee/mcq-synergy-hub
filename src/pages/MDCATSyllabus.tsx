@@ -2,6 +2,7 @@ import SEOHead from '@/components/SEOHead';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
+import { MdcatContextualLinks } from '@/components/mdcat/MdcatSprintBlocks';
 
 /** Official rescheduled MDCAT 2026 test date (PM&DC notice + STS press release). */
 const MDCAT_DATE = new Date('2026-09-20T00:00:00+05:00');
@@ -317,7 +318,7 @@ const MDCATSyllabus = () => {
           </p>
         </section>
 
-
+        <MdcatContextualLinks />
 
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white text-center mt-8">
           <h2 className="text-2xl font-bold mb-2">
