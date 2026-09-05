@@ -32,8 +32,8 @@ const Announcements = () => {
   const [sort, setSort] = useState<FeedSort>('latest');
   const [page, setPage] = useState(0);
 
-  useAnnouncementRealtime();
   const { data: items = [], isLoading } = useAnnouncementFeed(filter, sort, page);
+  useAnnouncementRealtime(items);
   const { liked, setLiked } = useMyReactions(items);
 
   // Only the clean /announcements URL is indexable — filter/sort views are
