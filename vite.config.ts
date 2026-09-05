@@ -114,6 +114,8 @@ export default defineConfig(({ mode }) => {
       additionalPrerenderRoutes: PRERENDER_ROUTES,
     }),
   ].filter(Boolean),
+
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
