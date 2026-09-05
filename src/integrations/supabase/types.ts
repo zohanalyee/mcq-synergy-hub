@@ -2383,6 +2383,33 @@ export type Database = {
           },
         ]
       }
+      platform_stats_snapshot: {
+        Row: {
+          id: boolean
+          mcq_count: number
+          refreshed_at: string
+          satisfaction_pct: number
+          subject_count: number
+          test_count: number
+        }
+        Insert: {
+          id?: boolean
+          mcq_count?: number
+          refreshed_at?: string
+          satisfaction_pct?: number
+          subject_count?: number
+          test_count?: number
+        }
+        Update: {
+          id?: boolean
+          mcq_count?: number
+          refreshed_at?: string
+          satisfaction_pct?: number
+          subject_count?: number
+          test_count?: number
+        }
+        Relationships: []
+      }
       pool_scaling_events: {
         Row: {
           approved_pool: number | null
@@ -4560,6 +4587,7 @@ export type Database = {
         Args: { question_ids: string[] }
         Returns: undefined
       }
+      refresh_platform_stats_snapshot: { Args: never; Returns: undefined }
       score_job_practice_answers: {
         Args: { p_answers: Json }
         Returns: {
