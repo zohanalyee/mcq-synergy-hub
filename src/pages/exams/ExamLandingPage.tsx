@@ -79,6 +79,13 @@ const ExamLandingPage = () => {
           <p className="mt-4 text-muted-foreground leading-relaxed">{exam.description}</p>
         </div>
 
+        {exam.slug === 'mdcat' && (
+          <>
+            <MdcatCountdown />
+            <MdcatWeightageTable />
+          </>
+        )}
+
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
           {[
