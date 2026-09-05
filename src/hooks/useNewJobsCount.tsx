@@ -1,29 +1,7 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { useNewContentCounts } from '@/hooks/useNewContentCounts';
 
+/** Derived from the single merged counts query — no extra network request. */
 export function useNewJobsCount() {
-  return useQuery({
-    queryKey: ['new-jobs-count'],
-    queryFn: async () => {
-      // Get jobs posted in the last 7 days
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-      
-      const { count, error } = await supabase
-        .from('content_items')
-        .select('*', { count: 'exact', head: true })
-        .eq('category', 'job')
-        .eq('status', 'approved')
-        .gte('created_at', sevenDaysAgo.toISOString());
-      
-      if (error) {
-        console.error('Error fetching new jobs count:', error);
-        return 0;
-      }
-      
-      return count || 0;
-    },
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    refetchOnWindowFocus: false,
-  });
+  const query = useNewContentCounts();
+  return { ...query, data: query.data?.jobs ?? 0 };
 }
