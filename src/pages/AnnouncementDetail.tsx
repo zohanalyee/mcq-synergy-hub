@@ -22,6 +22,7 @@ import {
   fetchAnnouncementBySlug,
   fetchAnnouncementTopics,
   fetchComments,
+  fetchLikeCount,
   fetchMyReactions,
   fetchRelatedAnnouncements,
   recordView,
@@ -59,6 +60,13 @@ const AnnouncementDetail = () => {
     queryKey: ['announcement-comments', 'announcement', id],
     queryFn: () => fetchComments('announcement', id!),
     enabled: !!id,
+  });
+
+  const { data: likeCount = 0 } = useQuery({
+    queryKey: ['announcement-likes', 'announcement', id],
+    queryFn: () => fetchLikeCount('announcement', id!),
+    enabled: !!id,
+    staleTime: 60_000,
   });
 
   const [liked, setLiked] = useState(false);
@@ -229,7 +237,7 @@ const AnnouncementDetail = () => {
             targetId={announcement.id}
             href={`/announcements/${announcement.slug}`}
             title={announcement.title}
-            likeCount={0}
+            likeCount={likeCount}
             commentCount={comments.length}
             liked={liked}
             onLikedChange={setLiked}

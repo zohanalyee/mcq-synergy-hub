@@ -13,6 +13,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import BreadcrumbSchema from "@/components/seo/BreadcrumbSchema";
 import RelatedContent from "@/components/seo/related/RelatedContent";
+import EngagementSection from "@/components/announcements/EngagementSection";
 import { ArticleSchema } from "@/components/seo/schemas";
 import { safeMarkdownComponents } from "@/components/SafeMarkdownLink";
 import { sanitizeEmailLinks } from "@/lib/markdownSanitize";
@@ -292,6 +293,14 @@ const BlogPost = () => {
               </div>
             </section>
           )}
+
+          <EngagementSection
+            targetType="blog"
+            targetId={post.id}
+            href={`/blog/${post.slug}`}
+            title={post.title}
+            prompt="Is article par apni raay ya sawal share karein."
+          />
 
           <RelatedContent entitySlug="blog-hub" title="Continue Reading" />
         </div>

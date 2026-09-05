@@ -13,6 +13,7 @@ import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
 import { mailtoForEmailHref, isBareEmailHref } from '@/lib/markdownSanitize';
+import EngagementSection from '@/components/announcements/EngagementSection';
 
 const ScholarshipDetailPage = () => {
   const { scholarshipSlug } = useParams<{ scholarshipSlug: string }>();
@@ -152,6 +153,14 @@ const ScholarshipDetailPage = () => {
             </a>
           </Button>
         )}
+
+        <EngagementSection
+          targetType="scholarship"
+          targetId={scholarship.id}
+          href={`/scholarships/${scholarshipSlug}`}
+          title={title}
+          prompt="Is scholarship ke baare mein sawal ya experience share karein."
+        />
 
         <RelatedContent entitySlug="scholarships-hub" title="Explore Related Resources" />
       </div>

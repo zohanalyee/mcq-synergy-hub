@@ -269,3 +269,16 @@ export const adminSetCommentHidden = async (id: string, hidden: boolean): Promis
     .eq('id', id);
   if (error) throw error;
 };
+
+/** Total like count for one target (used by detail pages). */
+export const fetchLikeCount = async (
+  target_type: string,
+  target_id: string,
+): Promise<number> => {
+  const { count, error } = await table('announcement_reactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('target_type', target_type)
+    .eq('target_id', target_id);
+  if (error) return 0;
+  return count ?? 0;
+};

@@ -13,6 +13,7 @@ import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
 import { mailtoForEmailHref, isBareEmailHref } from '@/lib/markdownSanitize';
+import EngagementSection from '@/components/announcements/EngagementSection';
 
 const JobDetailPage = () => {
   const { jobSlug } = useParams<{ jobSlug: string }>();
@@ -149,6 +150,14 @@ const JobDetailPage = () => {
             </a>
           </Button>
         )}
+
+        <EngagementSection
+          targetType="job"
+          targetId={job.id}
+          href={`/jobs/${jobSlug}`}
+          title={title}
+          prompt="Is job ke baare mein sawal ya update? Neeche share karein."
+        />
 
         <RelatedContent entitySlug="jobs-hub" title="Prepare for the Test" />
       </div>
