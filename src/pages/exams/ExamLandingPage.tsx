@@ -10,6 +10,7 @@ import { BookOpen, CheckCircle, Lightbulb, GraduationCap, Clock, Award, External
 import NotFound from '@/pages/NotFound';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
+import { MdcatCountdown, MdcatWeightageTable } from '@/components/mdcat/MdcatSprintBlocks';
 
 const ExamLandingPage = () => {
   const { examSlug } = useParams<{ examSlug: string }>();
