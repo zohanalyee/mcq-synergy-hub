@@ -3,7 +3,40 @@ import { EducationalSystem, Level, SyllabusImportItem } from "@/types/lms.types"
 
 // ============ Educational Systems ============
 
+// Public (approved-only) systems change very rarely. Cache the read for the tab
+// session so app-shell mounts / reloads don't re-hit the network.
+const SYSTEMS_CACHE_KEY = 'lms-systems-cache-v1';
+const SYSTEMS_CACHE_TTL = 60 * 60 * 1000; // 1h
+
+const readSystemsCache = (): EducationalSystem[] | null => {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(SYSTEMS_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { ts: number; data: EducationalSystem[] };
+    if (Date.now() - parsed.ts > SYSTEMS_CACHE_TTL) return null;
+    return parsed.data;
+  } catch {
+    return null;
+  }
+};
+
+const writeSystemsCache = (data: EducationalSystem[]) => {
+  if (typeof window === 'undefined') return;
+  try {
+    sessionStorage.setItem(SYSTEMS_CACHE_KEY, JSON.stringify({ ts: Date.now(), data }));
+  } catch {
+    // storage unavailable — non-fatal
+  }
+};
+
 export const getEducationalSystems = async (includeUnapproved = false): Promise<EducationalSystem[]> => {
+  if (!includeUnapproved) {
+    const cached = readSystemsCache();
+    if (cached) return cached;
+  }
+
+
   let query = supabase
     .from('educational_systems')
     .select(`
@@ -23,7 +56,7 @@ export const getEducationalSystems = async (includeUnapproved = false): Promise<
     return [];
   }
 
-  return (data || []).map(system => ({
+  const mapped: EducationalSystem[] = (data || []).map(system => ({
     id: system.id,
     name: system.name,
     type: system.type as 'academic' | 'job',
@@ -32,11 +65,16 @@ export const getEducationalSystems = async (includeUnapproved = false): Promise<
     created_at: system.created_at,
     levelCount: system.levels?.[0]?.count || 0
   }));
+
+  if (!includeUnapproved) writeSystemsCache(mapped);
+
+  return mapped;
 };
 
 export const addEducationalSystem = async (
   system: Omit<EducationalSystem, 'id' | 'created_at' | 'levelCount'>
 ): Promise<EducationalSystem | null> => {
+  if (typeof window !== 'undefined') { try { sessionStorage.removeItem(SYSTEMS_CACHE_KEY); } catch { /* noop */ } }
   const { data, error } = await supabase
     .from('educational_systems')
     .insert([{
@@ -60,6 +98,7 @@ export const updateEducationalSystem = async (
   id: string,
   updates: Partial<EducationalSystem>
 ): Promise<EducationalSystem | null> => {
+  if (typeof window !== 'undefined') { try { sessionStorage.removeItem(SYSTEMS_CACHE_KEY); } catch { /* noop */ } }
   const { data, error } = await supabase
     .from('educational_systems')
     .update({

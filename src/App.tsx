@@ -1,6 +1,7 @@
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { hydrateQueryCache, persistQueryCache } from "@/lib/queryPersist";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 // SSR-safe Router: during prerender (Node, no window) the prerender entry
 // already provides a <StaticRouter>, so we render a passthrough fragment to
@@ -254,7 +255,8 @@ import ProgrammaticIndex from "./pages/programmatic/ProgrammaticIndex"; // eager
 
 const App = () => {
   const isPrerender = typeof window === 'undefined' || (globalThis as any).__PRERENDER__;
-  const [queryClient] = useState(() => new QueryClient({
+  const [queryClient] = useState(() => {
+    const client = new QueryClient({
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000,
@@ -263,7 +265,15 @@ const App = () => {
         retry: isPrerender ? false : 1,
       },
     },
-  }));
+    });
+    if (!isPrerender) hydrateQueryCache(client);
+    return client;
+  });
+
+  useEffect(() => {
+    if (isPrerender) return;
+    return persistQueryCache(queryClient);
+  }, [queryClient, isPrerender]);
 
   useEffect(() => {
     prefetchTopRoutes();

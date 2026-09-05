@@ -80,7 +80,9 @@ const Header = ({ theme, setTheme, children }: { theme?: string; setTheme?: (the
       if (error) throw error;
       return data?.map(item => ({ title: item.label, path: item.href })) ?? null;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   const rawNavItems = dbNavItems ?? hardcodedNavItems;

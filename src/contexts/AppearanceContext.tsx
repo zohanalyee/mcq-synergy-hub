@@ -101,8 +101,36 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch global + user settings on mount/auth change
   useEffect(() => {
+    const GLOBAL_CACHE_KEY = 'global-appearance-cache';
+    const GLOBAL_CACHE_TTL = 60 * 60 * 1000; // 1h — global theme changes are rare
+
     const loadCloudSettings = async () => {
       try {
+        // Guests: reuse a fresh cached global snapshot instead of re-fetching on
+        // every mount/route change (loading strategy only — same resulting theme).
+        if (!user?.id) {
+          try {
+            const cached = localStorage.getItem(GLOBAL_CACHE_KEY);
+            if (cached) {
+              const parsed = JSON.parse(cached) as { ts: number; settings: Record<string, unknown> | null };
+              if (Date.now() - parsed.ts < GLOBAL_CACHE_TTL) {
+                const gs = parsed.settings
+                  ? { ...defaultSettings, ...parsed.settings } as AppearanceSettings
+                  : null;
+                setGlobalSettings(gs);
+                if (gs) {
+                  setSettings(gs);
+                  setIsUsingCustom(false);
+                }
+                initialLoadDone.current = true;
+                return;
+              }
+            }
+          } catch {
+            // ignore corrupt cache and fall through to network fetch
+          }
+        }
+
         // Fetch global settings
         const { data: globalData } = await (supabase as any)
           .from('global_appearance_settings')
@@ -114,6 +142,11 @@ export const AppearanceProvider = ({ children }: { children: ReactNode }) => {
           ? { ...defaultSettings, ...(globalData.settings as Record<string, unknown>) } as AppearanceSettings
           : null;
         setGlobalSettings(globalS);
+        try {
+          localStorage.setItem(GLOBAL_CACHE_KEY, JSON.stringify({ ts: Date.now(), settings: globalData?.settings ?? null }));
+        } catch {
+          // storage unavailable — non-fatal
+        }
 
         if (user?.id) {
           // Fetch user override
