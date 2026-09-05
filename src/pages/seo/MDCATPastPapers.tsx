@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
 import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
+import { MdcatCountdown, MdcatWeightageTable } from '@/components/mdcat/MdcatSprintBlocks';
 
 const EXAM_NAME = 'MDCAT';
 const RETURN_PATH = '/mdcat-past-papers';
