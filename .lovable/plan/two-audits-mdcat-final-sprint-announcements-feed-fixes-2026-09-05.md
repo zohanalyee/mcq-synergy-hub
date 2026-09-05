@@ -2,14 +2,14 @@
 
 ## Part 1 — Announcements feed: findings (verified today)
 
-**1 & 2. Jobs and scholarships missing — confirmed data-source mismatch (root cause).**
+**1 & 2. Jobs and scholarships missing — confirmed data-source mismatch (root cause).**  
 The feed function `get_announcement_feed` reads jobs/scholarships from `content_items` where `category in ('job','scholarship')`. That query returns **zero rows** — there are no job/scholarship rows in `content_items` at all. All live jobs and scholarships are stored in `external_opportunities`: 124 approved jobs (newest `4 Sep 2026, 12:07` — the job the user posted "yesterday") and 12 approved scholarships. So the feed can only ever show blog posts (32 published) and admin notices (`announcements` table is currently empty — 0 rows). This is a wrong-table bug, not ingestion and not timing.
 
 **3. Comment box.** `CommentThread` is rendered on `/announcements/:slug`, and it is only reachable for admin notices. Since `announcements` has **0 published rows**, there is no detail page to open today — that is why no comment box was seen. The component itself is wired correctly (guest name input, textarea, post/delete/report). Comment count on the detail page also passes `likeCount={0}` hardcoded, which is a separate display bug.
 
 **4. Share.** Share lives in `EngagementBar`, which is rendered on feed cards and on the notice detail page only. On the feed it is present; on job/scholarship/blog pages it is absent, because those pages (`JobDetailPage`, `ScholarshipDetailPage`, `BlogPost`) never import it. Nothing is broken in the share code itself (Web Share with clipboard fallback).
 
-**5. Links going to `/blog/:slug`.** Intentional in the original build: the feed function returns `href = '/blog/' || slug` for blog posts, `/jobs/<id>` and `/scholarships/<id>` for opportunities, and `/announcements/<slug>` only for admin notices. Engagement UI therefore only exists on notices. Additionally the `/jobs/<id>` href does not match the live slug format (`title-slug-id`), so those links are weaker than the real job URLs.
+**5. Links going to** `/blog/:slug`**.** Intentional in the original build: the feed function returns `href = '/blog/' || slug` for blog posts, `/jobs/<id>` and `/scholarships/<id>` for opportunities, and `/announcements/<slug>` only for admin notices. Engagement UI therefore only exists on notices. Additionally the `/jobs/<id>` href does not match the live slug format (`title-slug-id`), so those links are weaker than the real job URLs.
 
 ## Part 1 — fix plan (Announcements)
 
@@ -26,14 +26,16 @@ Isolation: item 1 touches only the feed function; item 2 appends a section to th
 
 Current state verified in code:
 
-| Item | Page(s) | State today |
-|---|---|---|
-| 1. Weightage anchor | `/mdcat-syllabus` already has `#mdcat-weightage` with the 200-MCQ table (Bio 68 / Chem 54 / Phys 54 / Eng 18 / LR 6) | Exists on syllabus page; **missing** on `/exams/mdcat` and `/mdcat-past-papers` |
-| 2. Countdown block | `/mdcat-syllabus` computes `daysLeft` in prose | No visible countdown block on `/exams/mdcat` or `/mdcat-past-papers` |
-| 3. In-body internal links | `/mdcat-syllabus` and `/mdcat-past-papers` link the aggregate calculator | Missing links to `/exams/mdcat`, `/exams/nums`, `/ecat-preparation` in body copy |
-| 4. lastmod + IndexNow | `public/sitemaps/static.xml`, `indexnow-submit-recent` | Function exists and is admin/service-guarded; needs a manual fire after the edits |
-| 5. Roll-number-slip / test-day block | `/exams/mdcat`, `/mdcat-syllabus` | Not present. Needs sourcing from PM&DC / STS / provincial notices; only already-announced facts get published, unannounced dates stay as "not yet announced" |
-| 6. Question pool pre-warm | `system_settings.campaign_surge` (currently `enabled: false`, window ended 30 Aug, keywords already include `mdcat`) | Re-enable with an MDCAT window and MDCAT-subject keywords — no code change needed |
+
+| Item                                 | Page(s)                                                                                                              | State today                                                                                                                                                  |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1. Weightage anchor                  | `/mdcat-syllabus` already has `#mdcat-weightage` with the 200-MCQ table (Bio 68 / Chem 54 / Phys 54 / Eng 18 / LR 6) | Exists on syllabus page; **missing** on `/exams/mdcat` and `/mdcat-past-papers`                                                                              |
+| 2. Countdown block                   | `/mdcat-syllabus` computes `daysLeft` in prose                                                                       | No visible countdown block on `/exams/mdcat` or `/mdcat-past-papers`                                                                                         |
+| 3. In-body internal links            | `/mdcat-syllabus` and `/mdcat-past-papers` link the aggregate calculator                                             | Missing links to `/exams/mdcat`, `/exams/nums`, `/ecat-preparation` in body copy                                                                             |
+| 4. lastmod + IndexNow                | `public/sitemaps/static.xml`, `indexnow-submit-recent`                                                               | Function exists and is admin/service-guarded; needs a manual fire after the edits                                                                            |
+| 5. Roll-number-slip / test-day block | `/exams/mdcat`, `/mdcat-syllabus`                                                                                    | Not present. Needs sourcing from PM&DC / STS / provincial notices; only already-announced facts get published, unannounced dates stay as "not yet announced" |
+| 6. Question pool pre-warm            | `system_settings.campaign_surge` (currently `enabled: false`, window ended 30 Aug, keywords already include `mdcat`) | Re-enable with an MDCAT window and MDCAT-subject keywords — no code change needed                                                                            |
+
 
 Batch order and effort:
 
@@ -50,3 +52,13 @@ Isolation: only the three MDCAT page files plus the sitemap regeneration output 
 - Feed fix is a `CREATE OR REPLACE FUNCTION get_announcement_feed` migration; the `FeedItem` shape stays identical so `fetchFeed`, `FeedCard` and the realtime patcher need no changes.
 - Engagement on jobs/scholarships/blog reuses `announcement_reactions` / `announcement_comments` with `target_type` `job` / `scholarship` / `blog`; existing RLS guard functions already accept those types.
 - Countdown must be computed at render time (no hardcoded day counts) so prerendered HTML never ships a stale number.
+
+Plan approved for both.
+
+&nbsp;
+
+Announcements: Proceed with item 1 (feed source fix — read external_opportunities for jobs/scholarships) first, verify, then items 2-4 (engagement on detail pages, count fix, seed one real notice).
+
+&nbsp;
+
+MDCAT: Proceed with Batch A (countdown + weightage anchor), then B, C (source facts from PM&DC/STS first), D, E in order — stop after each for verification.
