@@ -13,6 +13,7 @@ import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import NotFound from '@/pages/NotFound';
 import { mailtoForEmailHref, isBareEmailHref } from '@/lib/markdownSanitize';
+import EngagementSection from '@/components/announcements/EngagementSection';
 
 const ScholarshipDetailPage = () => {
   const { scholarshipSlug } = useParams<{ scholarshipSlug: string }>();
