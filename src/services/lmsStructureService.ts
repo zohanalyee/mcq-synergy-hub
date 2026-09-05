@@ -74,6 +74,7 @@ export const getEducationalSystems = async (includeUnapproved = false): Promise<
 export const addEducationalSystem = async (
   system: Omit<EducationalSystem, 'id' | 'created_at' | 'levelCount'>
 ): Promise<EducationalSystem | null> => {
+  if (typeof window !== 'undefined') { try { sessionStorage.removeItem(SYSTEMS_CACHE_KEY); } catch { /* noop */ } }
   const { data, error } = await supabase
     .from('educational_systems')
     .insert([{
@@ -97,6 +98,7 @@ export const updateEducationalSystem = async (
   id: string,
   updates: Partial<EducationalSystem>
 ): Promise<EducationalSystem | null> => {
+  if (typeof window !== 'undefined') { try { sessionStorage.removeItem(SYSTEMS_CACHE_KEY); } catch { /* noop */ } }
   const { data, error } = await supabase
     .from('educational_systems')
     .update({
