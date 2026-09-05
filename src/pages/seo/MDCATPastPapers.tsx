@@ -86,6 +86,8 @@ const MDCATPastPapers = () => (
         </p>
       </div>
 
+      <MdcatCountdown />
+
       <div className="mb-10 flex flex-wrap gap-3">
         <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
         <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
