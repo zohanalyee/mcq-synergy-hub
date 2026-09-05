@@ -10,6 +10,7 @@ import { BookOpen, CheckCircle, Lightbulb, GraduationCap, Clock, Award, External
 import NotFound from '@/pages/NotFound';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
+import { MdcatCountdown, MdcatWeightageTable } from '@/components/mdcat/MdcatSprintBlocks';
 
 const ExamLandingPage = () => {
   const { examSlug } = useParams<{ examSlug: string }>();
@@ -77,6 +78,13 @@ const ExamLandingPage = () => {
           <p className="text-lg text-muted-foreground max-w-3xl">{exam.fullName}</p>
           <p className="mt-4 text-muted-foreground leading-relaxed">{exam.description}</p>
         </div>
+
+        {exam.slug === 'mdcat' && (
+          <>
+            <MdcatCountdown />
+            <MdcatWeightageTable />
+          </>
+        )}
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">

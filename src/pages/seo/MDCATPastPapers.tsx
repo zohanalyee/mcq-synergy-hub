@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { ExamQuickTestCTA } from '@/components/quick-test/ExamQuickTestCTA';
 import { SeoSectionGrid } from '@/components/quick-test/SeoSectionGrid';
+import { MdcatCountdown, MdcatWeightageTable } from '@/components/mdcat/MdcatSprintBlocks';
 
 const EXAM_NAME = 'MDCAT';
 const RETURN_PATH = '/mdcat-past-papers';
@@ -85,10 +86,14 @@ const MDCATPastPapers = () => (
         </p>
       </div>
 
+      <MdcatCountdown />
+
       <div className="mb-10 flex flex-wrap gap-3">
         <ExamQuickTestCTA examName={EXAM_NAME} subjects={ALL_SUBJECTS} returnPath={RETURN_PATH} />
         <Link to="/custom-syllabus" className="inline-flex items-center px-4 py-2 rounded-md border text-sm hover:bg-muted">Build a custom syllabus</Link>
       </div>
+
+      <MdcatWeightageTable />
 
       <section id="mdcat-paper-pattern" className="mb-10 scroll-mt-24">
         <h2 className="text-xl font-semibold mb-2">MDCAT Past Paper Pattern (200 MCQs / 210 minutes)</h2>
