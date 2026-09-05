@@ -37,28 +37,23 @@ const PlatformStatsSection = () => {
   const { data, isLoading } = useQuery({
     queryKey: ["platform-stats"],
     queryFn: async () => {
+      // Reads a pre-computed hourly snapshot row — no live COUNT(*) scans.
       const { data, error } = await supabase.rpc("get_platform_stats");
       if (!error && data?.[0]) {
         return data[0];
       }
-      console.warn("RPC fallback: fetching stats directly", error);
-      const [mcqRes, subRes, testRes, ratingRes] = await Promise.all([
-        supabase.from("content_items").select("*", { count: "exact", head: true }),
-        supabase.from("subjects").select("*", { count: "exact", head: true }),
-        supabase.from("test_attempts").select("*", { count: "exact", head: true }),
-        supabase.from("user_ratings" as any).select("rating"),
-      ]);
-      const ratings = (ratingRes.data as any[]) || [];
-      const avgRating = ratings.length > 0 ? ratings.reduce((s: number, r: any) => s + r.rating, 0) / ratings.length : 0;
-      return {
-        mcq_count: mcqRes.count ?? 0,
-        subject_count: subRes.count ?? 0,
-        test_count: testRes.count ?? 0,
-        satisfaction_pct: ratings.length > 0 ? Math.round((avgRating / 5) * 100) : 98,
-      };
+      console.warn("Platform stats snapshot unavailable", error);
+      const { data: snap } = await supabase
+        .from("platform_stats_snapshot" as any)
+        .select("mcq_count, subject_count, test_count, satisfaction_pct")
+        .maybeSingle();
+      return (snap as any) ?? null;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+    refetchOnWindowFocus: false,
   });
+
 
   const stats = [
     { to: Number(data?.mcq_count ?? 0), suffix: "+", label: "MCQs Available" },
