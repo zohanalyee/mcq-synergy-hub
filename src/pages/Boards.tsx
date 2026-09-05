@@ -36,7 +36,9 @@ const Boards = () => {
       );
       return withLevels;
     },
-    staleTime: 10 * 60 * 1000,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+    refetchOnMount: false,
   });
 
   return (
