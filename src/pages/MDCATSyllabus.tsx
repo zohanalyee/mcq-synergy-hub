@@ -317,7 +317,7 @@ const MDCATSyllabus = () => {
           </p>
         </section>
 
-
+        <MdcatContextualLinks />
 
         <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-2xl p-8 text-white text-center mt-8">
           <h2 className="text-2xl font-bold mb-2">
