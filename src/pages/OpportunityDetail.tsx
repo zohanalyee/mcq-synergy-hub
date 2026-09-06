@@ -503,7 +503,16 @@ const OpportunityDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          <EngagementSection
+            targetType={opportunity.type === 'scholarship' ? 'scholarship' : 'job'}
+            targetId={opportunity.id}
+            href={`/opportunity/${slugId}`}
+            title={opportunity.title}
+            prompt="Is opportunity ke baare mein sawal ya tajurba share karein."
+          />
         </div>
+
       </Header>
     </>
   );
