@@ -106,6 +106,63 @@ export const getAllContent = async (): Promise<ContentItem[]> => {
   }
 };
 
+/**
+ * Admin panel: fetch only a recent window of rows (optionally filtered),
+ * instead of pulling the entire content_items table (16k+ rows).
+ */
+export const getAdminContentWindow = async (
+  filter: { status?: string; category?: string } = {},
+  limit = 200
+): Promise<ContentItem[]> => {
+  try {
+    let query = supabase.from('content_items').select('*');
+    if (filter.status) query = query.eq('status', filter.status);
+    if (filter.category) query = query.eq('category', filter.category);
+
+    const { data, error } = await query
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data ? data.map(transformContentItem) : [];
+  } catch (error) {
+    console.error('Error in getAdminContentWindow:', error);
+    return [];
+  }
+};
+
+/** Admin panel: header statistics via count-only queries (no row payload). */
+export const getAdminContentCounts = async () => {
+  const countOf = async (col: 'status' | 'category', value: string) => {
+    const { count } = await supabase
+      .from('content_items')
+      .select('id', { count: 'exact', head: true })
+      .eq(col, value);
+    return count || 0;
+  };
+
+  const totalPromise = supabase
+    .from('content_items')
+    .select('id', { count: 'exact', head: true });
+
+  const [total, pendingCount, scholarshipCount, mcqCount, quizCount] = await Promise.all([
+    totalPromise,
+    countOf('status', 'pending'),
+    countOf('category', 'scholarship'),
+    countOf('category', 'mcq'),
+    countOf('category', 'quiz'),
+  ]);
+
+  return {
+    totalCount: total.count || 0,
+    pendingCount,
+    scholarshipCount,
+    mcqCount,
+    quizCount,
+  };
+};
+
+
 export const getContentByCategory = async (category: string): Promise<ContentItem[]> => {
   try {
     const { data, error } = await supabase

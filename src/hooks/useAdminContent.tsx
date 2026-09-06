@@ -1,26 +1,56 @@
-
-import { useState, useEffect } from "react";
-import { ContentItem, ContentStatus, ContentCategory } from "@/interfaces/content";
-import { getAllContent, updateContentStatus, deleteContent } from "@/services/contentService";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { ContentItem, ContentStatus } from "@/interfaces/content";
+import { updateContentStatus, deleteContent } from "@/services/contentService";
+import { getAdminContentWindow, getAdminContentCounts } from "@/services/supabaseContentService";
 import { toast } from "sonner";
 import { EnhancedContentService } from "@/services/enhancedContentService";
 
+const STATUS_TABS = ["pending", "approved", "rejected", "question_bank", "flagged_duplicate"];
+
+// Tabs that don't render the content table at all (managed by their own components)
+const NON_CONTENT_TABS = [
+  'submit-content', 'subjects', 'topics', 'job-tests', 'mock-test-analytics', 'quizzes',
+  'question-bank', 'analytics', 'data-migration', 'review-duplicates', 'bulk-upload',
+  'dashboard', 'lms-structure', 'jobs', 'scholarships', 'inventory', 'documents',
+  'messages', 'feedback-analytics', 'study-sounds', 'empty-topics', 'content-health',
+  'lifecycle', 'add-content', 'opportunity-review', 'announcements'
+];
+
+const emptyStats = {
+  pendingCount: 0,
+  scholarshipCount: 0,
+  mcqCount: 0,
+  quizCount: 0,
+  totalCount: 0,
+};
+
 export const useAdminContent = () => {
   const [content, setContent] = useState<ContentItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [statistics, setStatistics] = useState(emptyStats);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("submit-content");
-  
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const loadContent = async () => {
+  const loadContent = useCallback(async () => {
+    // Skip fetching rows entirely for tabs that manage their own data
+    if (NON_CONTENT_TABS.includes(activeTab)) {
+      setContent([]);
+      return;
+    }
     try {
       setLoading(true);
       setError(null);
-      const allContent = await getAllContent();
-      setContent(allContent);
-      console.log("Loaded content from Supabase:", allContent.length, "items");
-    } catch (error) {
-      console.error("Error loading content:", error);
+      const filter =
+        activeTab === "all"
+          ? {}
+          : STATUS_TABS.includes(activeTab)
+            ? { status: activeTab }
+            : { category: activeTab };
+      const rows = await getAdminContentWindow(filter, 200);
+      setContent(rows);
+    } catch (err) {
+      console.error("Error loading content:", err);
       setError("Failed to load content");
       toast.error("Failed to load content", {
         description: "Please try again.",
@@ -29,28 +59,46 @@ export const useAdminContent = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
+
+  const loadStatistics = useCallback(async () => {
+    try {
+      setStatistics(await getAdminContentCounts());
+    } catch (err) {
+      console.error("Error loading content counts:", err);
+    }
+  }, []);
 
   useEffect(() => {
     loadContent();
+  }, [loadContent]);
 
-    // Setup real-time updates
-    const unsubscribe = EnhancedContentService.setupRealTimeUpdates((payload) => {
-      console.log('Real-time update received:', payload);
-      loadContent(); // Refresh content when changes occur
+  useEffect(() => {
+    loadStatistics();
+  }, [loadStatistics]);
+
+  // Realtime updates, debounced so bulk changes don't trigger a refetch storm
+  useEffect(() => {
+    const unsubscribe = EnhancedContentService.setupRealTimeUpdates(() => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        loadContent();
+        loadStatistics();
+      }, 1500);
     });
 
-    return unsubscribe;
-  }, []);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      unsubscribe();
+    };
+  }, [loadContent, loadStatistics]);
 
   const handleUpdateStatus = async (id: string, status: ContentStatus) => {
     try {
       const updatedItem = await updateContentStatus(id, status);
       if (updatedItem) {
-        setContent(prev => 
-          prev.map(item => item.id === id ? updatedItem : item)
-        );
-        
+        setContent(prev => prev.map(item => (item.id === id ? updatedItem : item)));
+
         const actionText = status === "approved" ? "approved" : "rejected";
         toast.success(`Content ${actionText}`, {
           description: `Content has been successfully ${actionText}.`,
@@ -58,7 +106,7 @@ export const useAdminContent = () => {
         });
       }
     } catch (error) {
-      console.error(`Error ${status === "approved" ? "approving" : "rejecting"} content:`, error);
+      console.error(`Error updating content status:`, error);
       toast.error("Update failed", {
         description: `Failed to ${status === "approved" ? "approve" : "reject"} content. Please try again.`,
         duration: 3000,
@@ -87,32 +135,12 @@ export const useAdminContent = () => {
 
   const refreshContent = () => {
     loadContent();
+    loadStatistics();
   };
 
-  const getCurrentContent = () => {
-    if (activeTab === "all") return content;
-    if (activeTab === "pending" || activeTab === "approved" || activeTab === "rejected") {
-      return content.filter(item => item.status === activeTab);
-    }
-    // Filter by category
-    return content.filter(item => item.category === activeTab);
-  };
+  const getCurrentContent = () => content;
 
-  const getContentStatistics = () => {
-    const pendingCount = content.filter(item => item.status === "pending").length;
-    const scholarshipCount = content.filter(item => item.category === "scholarship").length;
-    const mcqCount = content.filter(item => item.category === "mcq").length;
-    const quizCount = content.filter(item => item.category === "quiz").length;
-    const totalCount = content.length;
-
-    return {
-      pendingCount,
-      scholarshipCount,
-      mcqCount,
-      quizCount,
-      totalCount
-    };
-  };
+  const getContentStatistics = () => statistics;
 
   return {
     content,
