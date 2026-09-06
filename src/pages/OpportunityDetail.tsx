@@ -17,6 +17,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
 import { sanitizeEmailLinks, mailtoForEmailHref, isBareEmailHref } from "@/lib/markdownSanitize";
+import EngagementSection from "@/components/announcements/EngagementSection";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
@@ -503,7 +504,16 @@ const OpportunityDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          <EngagementSection
+            targetType={opportunity.type === 'scholarship' ? 'scholarship' : 'job'}
+            targetId={opportunity.id}
+            href={`/opportunity/${slugId}`}
+            title={opportunity.title}
+            prompt="Is opportunity ke baare mein sawal ya tajurba share karein."
+          />
         </div>
+
       </Header>
     </>
   );
