@@ -18,6 +18,12 @@ export interface FeedItem {
   published_at: string | null;
   like_count: number;
   comment_count: number;
+  organization: string | null;
+  deadline_date: string | null;
+  location: string | null;
+  sector: string | null;
+  region: string | null;
+  scholarship_scope: string | null;
 }
 
 export interface Announcement {
