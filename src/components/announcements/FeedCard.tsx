@@ -7,6 +7,7 @@ import EngagementBar from './EngagementBar';
 import type { FeedItem } from '@/services/announcementService';
 import { cn } from '@/lib/utils';
 import { trackEvent } from '@/utils/analytics';
+import { stripMarkdown } from '@/lib/markdownText';
 
 const TYPE_META: Record<string, { label: string; className: string }> = {
   announcement: { label: 'Notice', className: 'bg-brand-gradient text-white border-transparent' },
