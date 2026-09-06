@@ -4106,13 +4106,19 @@ export type Database = {
         }
         Returns: {
           comment_count: number
+          deadline_date: string
           excerpt: string
           href: string
           image_url: string
           is_pinned: boolean
           is_urgent: boolean
           like_count: number
+          location: string
+          organization: string
           published_at: string
+          region: string
+          scholarship_scope: string
+          sector: string
           slug: string
           target_id: string
           target_type: string
