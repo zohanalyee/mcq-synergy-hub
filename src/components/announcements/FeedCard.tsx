@@ -123,7 +123,7 @@ const FeedCard = ({ item, liked, onLikedChange }: FeedCardProps) => {
             )}
 
             {item.excerpt && (
-              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{item.excerpt}</p>
+              <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{stripMarkdown(item.excerpt)}</p>
             )}
           </Link>
 
