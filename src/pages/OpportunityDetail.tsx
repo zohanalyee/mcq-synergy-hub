@@ -17,6 +17,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
 import { sanitizeEmailLinks, mailtoForEmailHref, isBareEmailHref } from "@/lib/markdownSanitize";
+import EngagementSection from "@/components/announcements/EngagementSection";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
