@@ -4209,6 +4209,28 @@ export type Database = {
           user_count: number
         }[]
       }
+      get_duplicate_cluster_stats: {
+        Args: never
+        Returns: {
+          approved_dup_groups: number
+          extra_copies: number
+          total_groups: number
+          total_rows: number
+        }[]
+      }
+      get_duplicate_clusters: {
+        Args: { _limit?: number; _offset?: number }
+        Returns: {
+          approved_count: number
+          cluster_key: string
+          copies: number
+          difficulty: string
+          flagged_count: number
+          members: Json
+          sample_title: string
+          subject: string
+        }[]
+      }
       get_feedback_stats: {
         Args: never
         Returns: {
