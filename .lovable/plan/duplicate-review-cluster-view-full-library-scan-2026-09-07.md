@@ -42,3 +42,7 @@ Queue ke top par **Scan Library** button:
 - `DuplicateReviewQueue.tsx` cluster-based ho jayega: left = group list, right = group members comparison. Existing `handleKeepNew` / `handleDiscardNew` logic reuse hogi (status update / delete), sirf group ke upar apply hogi.
 - Reviewed groups ka nishan: `system_settings` mein ek `duplicate_review_dismissed` key (normalized-title hashes ki list) — koi naya table nahi.
 - Duplicate-detection pipeline (generate-test), difficulty, subject tags, aur baaqi flow ko touch nahi karenge — sirf review UI + read-only scan RPC.
+
+&nbsp;
+
+Plan approved. Proceed with the cluster-review rebuild (get_duplicate_clusters RPC, cluster-based DuplicateReviewQueue.tsx with Keep One / Keep All / Discard Group actions, Scan Library button, progress counters). Verify after: run Scan Library once to confirm it surfaces all 111 existing groups correctly, and test Keep One / Discard Group on a real cluster to confirm the whole group leaves the queue permanently.
