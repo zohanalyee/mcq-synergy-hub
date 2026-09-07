@@ -442,12 +442,12 @@ const Home = () => {
       </motion.section>
       
       {/* Stats Section */}
-      <DeferredSection minHeight={280}>
+      <DeferredSection minHeight={190}>
         <PlatformStatsSection />
       </DeferredSection>
 
       {/* Testimonials Section - Real Reviews */}
-      <DeferredSection minHeight={420}>
+      <DeferredSection minHeight={0} rootMargin="800px 0px">
         <TestimonialsSection />
       </DeferredSection>
       

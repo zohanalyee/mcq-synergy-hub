@@ -1,8 +1,10 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 
 interface DeferredSectionProps {
-  /** Reserved height so the placeholder never causes layout shift when content mounts. */
+  /** Reserved height kept in place so mounting the section cannot shift the page. */
   minHeight: number;
+  /** How early (before entering the viewport) the section should mount. */
+  rootMargin?: string;
   children: React.ReactNode;
 }
 
@@ -12,7 +14,7 @@ interface DeferredSectionProps {
  * placeholder is emitted, so no lazy child can suspend server-side.
  * Purely a loading strategy — no visual or brand change.
  */
-const DeferredSection = ({ minHeight, children }: DeferredSectionProps) => {
+const DeferredSection = ({ minHeight, rootMargin = '300px 0px', children }: DeferredSectionProps) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -31,14 +33,14 @@ const DeferredSection = ({ minHeight, children }: DeferredSectionProps) => {
           io.disconnect();
         }
       },
-      { rootMargin: '300px 0px' }
+      { rootMargin }
     );
     io.observe(el);
     return () => io.disconnect();
-  }, []);
+  }, [rootMargin]);
 
   return (
-    <div ref={ref} style={visible ? undefined : { minHeight }}>
+    <div ref={ref} style={minHeight ? { minHeight } : undefined}>
       {visible ? <Suspense fallback={<div style={{ minHeight }} />}>{children}</Suspense> : null}
     </div>
   );
