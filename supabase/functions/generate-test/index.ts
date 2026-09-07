@@ -2039,16 +2039,19 @@ Write the advice now:`;
             return await forceSaveQuestion(q, retryAttempt + 1);
           }
           
-          // Last resort: force insert with guaranteed unique title
+          // Last resort: save as a flagged duplicate for manual review.
+          // The learner-visible title stays exactly the generated question text —
+          // uniqueness is handled by the DB index, which excludes flagged_duplicate rows.
           const emergencyData = {
             ...questionData,
-            title: `[FORCE-SAVE-${shortId}] ${q.question.slice(0, 200)}`,
+            title: q.question,
             status: 'flagged_duplicate',
             show_in_subjects: false,
             show_in_mock_tests: false,
             reference_material: JSON.stringify({
               ...JSON.parse(questionData.reference_material),
               emergency_save: true,
+              emergency_save_id: shortId,
               original_error: insertError.message
             })
           };
