@@ -1,11 +1,18 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
 
 const KEY = 'mcqsai_upcoming_banner_dismissed_v1';
 
 const UpcomingFreeBanner = () => {
-  const [show, setShow] = useState(false);
-  useEffect(() => { setShow(localStorage.getItem(KEY) !== '1'); }, []);
+  // Read synchronously on first render so the banner never appears after mount
+  // and pushes the hero down (layout shift).
+  const [show, setShow] = useState(() => {
+    try {
+      return localStorage.getItem(KEY) !== '1';
+    } catch {
+      return true;
+    }
+  });
   if (!show) return null;
   return (
     <div className="container mx-auto px-4 pt-3">
