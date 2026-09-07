@@ -1,50 +1,49 @@
-# Audit: "[FORCE-SAVE-<hash>]" prefix in question text
+# Plan: remove the "[FORCE-SAVE-<hash>]" tag, keep flagged duplicates reviewable
 
-## 1. Where the tag comes from
+## Audit recap (verified)
 
-One single place writes it: the MCQ generation edge function `supabase/functions/generate-test/index.ts`, line 2045, inside the `forceSaveQuestion` helper.
+- Only one place writes the tag: `supabase/functions/generate-test/index.ts` line 2045, the "emergency save" branch of `forceSaveQuestion`. When the normal insert keeps failing, it re-inserts the question with the title rewritten as `[FORCE-SAVE-<8-char-id>] …`, status `flagged_duplicate`, hidden from subjects and mock tests.
+- Reason it exists: a unique index blocks a second MCQ with the same title — `content_items_mcq_title_unique_idx`, unique on `md5(title)` where `category = 'mcq'` (applies to every status, including `flagged_duplicate`). A second index, `idx_content_items_title_mcq_unique`, is unique on `title` where `category = 'mcq' AND status = 'approved'`.
+- 307 MCQ rows currently carry the prefix: 306 `flagged_duplicate` (hidden, created 4–6 Sep 2026) and 1 `pending` that is still visible to learners (created 11 Aug 2026).
+- Display-time strip already exists (`cleanQuestionText()` in `src/lib/questionUtils.ts`, already covers this tag) and is used in the players, question bank and previews — but not in the admin Review Queue or admin content lists, which is why you see the raw tag.
 
-Flow: the function tries to save a generated question. If the insert fails 4 times (initial + 3 retries), it runs an "emergency save" that re-inserts the same question with the title rewritten as `[FORCE-SAVE-<8-char-id>] <question text…>`, status `flagged_duplicate`, and both `show_in_subjects` / `show_in_mock_tests` set to false.
+## Point 1 — proposed technical approach for new questions
 
-Why it exists: the table has a unique index on the question title for MCQs (`content_items_mcq_title_unique_idx` on `md5(title)` where category = 'mcq'). When a generated question repeats an existing one, the insert is rejected. The prefix made the title artificially unique so the row could still be stored ("zero data loss"), instead of being dropped.
+**Change the constraint's scope, not the text.**
 
-The two other, older tag styles (`[n-…]`, `[POTENTIAL DUPLICATE]`) were already removed from the save paths: both save paths now comment "Never mutate the learner-visible title with admin-only debug tags" and use the clean question as the title. The emergency branch is the last remaining leak.
+Replace `content_items_mcq_title_unique_idx` with the same unique index restricted to non-duplicate rows:
 
-## 2. Internal-only or not?
+```text
+unique on md5(title)  where category = 'mcq' and status <> 'flagged_duplicate'
+```
 
-Internal-only. It is a storage-uniqueness workaround, never intended for learners. Display-time protection already exists — `cleanQuestionText()` in `src/lib/questionUtils.ts` strips it — and it is applied in the exam player, quiz player, question bank table, mock-test preview and board topic pages. It is NOT applied in the admin Review Queue (`DuplicateReviewQueue.tsx`) or in the admin content lists, which is why you see the raw prefix there.
+Why this is the right shape:
 
-## 3. How many rows are affected
+- The live bank stays protected exactly as today — two `approved` / `pending` / `question_bank` MCQs still cannot share a title, so duplicate content can never reach learners.
+- Rows the system judges as duplicates can be stored with the clean question text as their title, because the index no longer covers them. No hash, no tag, no extra column needed in the visible text.
+- The second index (`title` unique where status = 'approved') stays untouched. That means when you approve a flagged duplicate whose text truly matches an already-approved question, the approval is still refused — which is the existing safety net, unchanged.
 
-307 MCQ rows carry the prefix in the stored title:
+**Function change (small, isolated):** in `forceSaveQuestion`, drop the emergency retitle entirely. On the duplicate path the row is inserted once with `title = q.question`, `status = 'flagged_duplicate'`, `show_in_subjects = false`, `show_in_mock_tests = false`, and the duplicate evidence stays where it already goes — in `reference_material` (`duplicate_of_id`, `duplicate_of_title`, `emergency_save`, error message). Retry/return values (`approved` / `flagged` / `failed`) keep their current meaning, so generation counters stay honest.
 
-- 306 rows: status `flagged_duplicate`, hidden from subjects and mock tests, created 4–6 Sep 2026
-- 1 row: status `pending`, still visible (`show_in_subjects = true`), created 11 Aug 2026 — this is the only genuinely user-facing one
+Nothing in the duplicate-detection logic, difficulty mapping, subject/topic tagging, quality gates or queue processing changes.
 
-Important finding for the cleanup: all 307 rows, once the prefix is stripped, exactly match a question that already exists in the bank (and 187 of them also duplicate each other). So none of them is unique content — they are all copies of questions already stored, and the prefix is the only thing that let them be inserted.
+Considered and rejected: a separate `dedup_hash` column plus `unique(md5(title), dedup_hash)` — it works, but it adds a column and rewrites the index for every MCQ row just to solve a case the scoped index already covers.
 
-## 4. Proposed fix
+## Point 2 — existing 307 rows
 
-### a. Stop new writes (code)
+- No deletions. All 306 flagged rows stay in the Review Queue with the identical Approve / Discard workflow.
+- One-time data update: strip the `[FORCE-SAVE-…]` prefix from the stored title of those rows where the cleaned title does not collide with a still-indexed row; after the index is re-scoped, all 306 `flagged_duplicate` rows qualify, so their stored text becomes clean. Add `force_save_legacy: true` into `reference_material` so they remain findable.
+- The single visible `pending` row: set to `flagged_duplicate` with `show_in_subjects = false` and `show_in_mock_tests = false` — off the learner surface, still reviewable by you.
+- Display safety net: run titles through `cleanQuestionText()` in `DuplicateReviewQueue.tsx` and the admin content table, so even if a tagged row ever appears again you see clean text.
 
-In `generate-test/index.ts`, remove the emergency retitle. When the retries are exhausted, do not insert a re-titled row: log the failure and return `failed` (already an existing return value, counted separately, so generation stats stay honest). The title stays exactly the generated question text in every path. Nothing else in the function changes — no difficulty, subject, topic, options, quality or dedup logic touched.
+## Execution order
 
-### b. Clean up existing rows (one-time)
+1. Migration: drop and recreate the MCQ title unique index with the `status <> 'flagged_duplicate'` scope (no table rewrite of data).
+2. Data update: strip prefixes from the 306 flagged rows, flag them `force_save_legacy`, and hide/flag the one `pending` row.
+3. Edge function: remove the emergency retitle branch in `generate-test/index.ts`.
+4. Admin display: apply `cleanQuestionText()` in `src/components/admin/DuplicateReviewQueue.tsx` and `src/components/admin/content/EnhancedContentTable.tsx`.
 
-Stripping the prefix in place is not possible for these rows: every cleaned title collides with the unique MCQ title index, so an in-place `UPDATE` would fail. Given that, and your instruction not to delete, the cleanup does this instead:
+## Technical notes
 
-1. The one visible `pending` row: set it to `flagged_duplicate` with `show_in_subjects = false` and `show_in_mock_tests = false`, so nothing with the prefix can reach a learner.
-2. All 307 rows: record `force_save_legacy: true` in their `reference_material` JSON so admins can find them later.
-3. Review Queue and admin lists: pass titles through the existing `cleanQuestionText()` before rendering, so admins see the clean question instead of the raw tag.
-
-Net effect: no learner ever sees the tag, admins see clean text, no question row is deleted, and no new tagged rows can be created.
-
-If you would rather physically remove these 307 pure-duplicate rows (they add nothing to the bank), say so and I will add a delete step instead of step 2 — but the default plan keeps them.
-
-## Technical summary
-
-- Write site: `supabase/functions/generate-test/index.ts` line 2045 (emergency-save branch of `forceSaveQuestion`).
-- Constraint driving it: `content_items_mcq_title_unique_idx` — unique on `md5(title)` where `category = 'mcq'`.
-- Display strip already available: `cleanQuestionText()` in `src/lib/questionUtils.ts` (already handles `[FORCE-SAVE-…]`).
-- Admin surfaces to patch for display: `src/components/admin/DuplicateReviewQueue.tsx` and the admin content list row rendering.
-- Data change delivered as one migration (status/visibility + `reference_material` flag), scoped by `title ~* '^\s*\[FORCE-SAVE-'` and `category = 'mcq'` only.
+- 467 MCQ rows are currently `flagged_duplicate`, covering 235 distinct cleaned questions — so after the index is re-scoped, repeated flagged copies of the same question are allowed by design and remain individually reviewable.
+- All SQL is scoped to `category = 'mcq'`; no other category, column or pipeline step is touched.
