@@ -39,6 +39,7 @@ Non-composited animations flagged (3 elements) — all animate non-compositable 
 ## 4. Proposed Phase 6
 
 ### 6A — Homepage-only, zero risk to other routes (do first)
+
 1. Lazy-load below-the-fold homepage sections with `lazy()` + `Suspense`, each wrapped in a fixed-height placeholder so nothing shifts: `PlatformStatsSection`, `TestimonialsSection`, the features grid, and the internal-links section. Skip lazy-loading during prerender (`__PRERENDER__`) so crawler HTML stays identical.
 2. Lazy-load `UserSatisfactionPopup` and mount it only after idle (`requestIdleCallback`) — it never needs to exist at paint.
 3. Reserve space for `UpcomingFreeBanner`: render the container with its final height from the first paint (or read `localStorage` synchronously in `useState` initialiser) so it can never push the hero down.
@@ -47,7 +48,9 @@ Non-composited animations flagged (3 elements) — all animate non-compositable 
 6. Give the stat skeletons the exact height of their loaded state.
 
 ### 6B — Entry-chunk split (the 840 KiB; touches `src/App.tsx` routing only, no page visuals)
+
 Split the route table in two so prerender keeps its synchronous imports while browsers get chunks:
+
 - `src/routes/eagerRoutes.tsx` — static imports, used **only** by `src/prerender.tsx` (separate rollup entry, never loaded by the browser).
 - Client `App.tsx` uses `lazy()` + `Suspense` for those same pages.
 - Update `scripts/verify-eager-routes.mjs` to enforce the new rule (eager imports allowed only in the prerender route module) and lower the budget.
@@ -56,7 +59,31 @@ Split the route table in two so prerender keeps its synchronous imports while br
 Expected: entry chunk shrinks by most of the ~840 KiB, cutting TBT/INP on mobile far more than any homepage-local change.
 
 ### 6C — Verification
+
 Re-run Lighthouse on `/` (mobile) before/after each sub-phase, confirm prerendered HTML for `/` and a sample of the 60+ prerendered routes is byte-comparable in head/body content, and confirm CLS ≈ 0 in the lab trace.
 
 ## Isolation
+
 6A touches only homepage components and three animation definitions. 6B touches routing/build plumbing — no page markup, no design tokens, no brand change. If you want strict homepage-only for now, approve 6A alone; 6B is where the 840 KiB actually lives.
+
+&nbsp;
+
+&nbsp;
+
+Plan approved. Proceed with 6A first:
+
+1. Lazy-load below-the-fold sections (PlatformStatsSection, TestimonialsSection, features grid, internal-links section), skip lazy-loading during prerender
+
+2. Lazy-load UserSatisfactionPopup, mount after idle
+
+3. Reserve space for UpcomingFreeBanner (biggest CLS fix)
+
+4. Drop the opacity-0 fade-in gate
+
+5. Fix the 3 non-composited animations (shimmer, btn-shine, hero orbs) — same visual result, different CSS property
+
+6. Match skeleton heights to loaded content
+
+Verify: re-run Lighthouse mobile on /, confirm CLS drops significantly, confirm no visual change.
+
+Stop after 6A for verification, then proceed with 6B (entry-chunk split via separate eagerRoutes.tsx for prerender vs lazy() for browser) — verify prerendered HTML stays byte-comparable for / and a sample of routes before/after.
