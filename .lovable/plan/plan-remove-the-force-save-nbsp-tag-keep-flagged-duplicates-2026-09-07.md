@@ -1,4 +1,4 @@
-# Plan: remove the "[FORCE-SAVE-<hash>]" tag, keep flagged duplicates reviewable
+# Plan: remove the "[FORCE-SAVE-&nbsp;]" tag, keep flagged duplicates reviewable
 
 ## Audit recap (verified)
 
@@ -47,3 +47,17 @@ Considered and rejected: a separate `dedup_hash` column plus `unique(md5(title),
 
 - 467 MCQ rows are currently `flagged_duplicate`, covering 235 distinct cleaned questions — so after the index is re-scoped, repeated flagged copies of the same question are allowed by design and remain individually reviewable.
 - All SQL is scoped to `category = 'mcq'`; no other category, column or pipeline step is touched.
+
+&nbsp;
+
+Plan approved. Proceed with all 4 steps in order:
+
+1. Migration — rescope the MCQ title unique index to exclude flagged_duplicate status
+
+2. Data update — strip prefixes from the 306 flagged rows, flag force_save_legacy, hide the one visible pending row
+
+3. Edge function — remove the emergency retitle branch in generate-test/index.ts
+
+4. Admin display — apply cleanQuestionText() in DuplicateReviewQueue.tsx and EnhancedContentTable.tsx
+
+Verify after: confirm a newly-generated duplicate question saves with a clean title and appears normally in Review Queue, and that approving a flagged duplicate that truly matches an approved question is still correctly blocked.
