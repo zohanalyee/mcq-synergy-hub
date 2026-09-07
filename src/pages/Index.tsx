@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import SEOHead from '@/components/SEOHead';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -9,10 +9,8 @@ import SubjectCard from '@/components/SubjectCard';
 import FeatureCard from '@/components/FeatureCard';
 import TestCategoryCard from '@/components/TestCategoryCard';
 import AnimatedCounter from '@/components/AnimatedCounter';
-import TestimonialsSection from '@/components/reviews/TestimonialsSection';
 import HeroStatsSection from '@/components/home/HeroStatsSection';
-import PlatformStatsSection from '@/components/home/PlatformStatsSection';
-import UserSatisfactionPopup from '@/components/UserSatisfactionPopup';
+import DeferredSection from '@/components/home/DeferredSection';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLanguage } from '@/contexts/LanguageContext';
@@ -20,6 +18,11 @@ import { cn } from '@/lib/utils';
 import { getLocalizedGreeting } from '@/lib/greetings';
 import TypewriterText from '@/components/TypewriterText';
 import UpcomingFreeBanner from '@/components/home/UpcomingFreeBanner';
+
+// Below-the-fold / post-idle only — kept out of the initial homepage bundle.
+const TestimonialsSection = lazy(() => import('@/components/reviews/TestimonialsSection'));
+const PlatformStatsSection = lazy(() => import('@/components/home/PlatformStatsSection'));
+const UserSatisfactionPopup = lazy(() => import('@/components/UserSatisfactionPopup'));
 import { 
   BookOpen, 
   Brain,
@@ -64,7 +67,7 @@ const sectionReveal = {
 
 const Home = () => {
   const { theme, setTheme } = useTheme();
-  const [isLoaded, setIsLoaded] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
   const navigate = useNavigate();
   const { user, profile } = useAuth();
   const { t, tr, isRTL, language } = useLanguage();
@@ -84,7 +87,14 @@ const Home = () => {
   ];
 
   useEffect(() => {
-    setIsLoaded(true);
+    // Satisfaction popup is never needed at first paint — mount it when idle.
+    const w = window as unknown as { requestIdleCallback?: (cb: () => void) => number };
+    if (w.requestIdleCallback) {
+      const id = w.requestIdleCallback(() => setShowPopup(true));
+      return () => (window as unknown as { cancelIdleCallback?: (i: number) => void }).cancelIdleCallback?.(id);
+    }
+    const t = setTimeout(() => setShowPopup(true), 2500);
+    return () => clearTimeout(t);
   }, []);
 
   const subjects = [
@@ -186,7 +196,7 @@ const Home = () => {
 
   return (
     <Header theme={theme} setTheme={setTheme}>
-       <div className={`min-h-dvh bg-background ${isLoaded ? 'animate-fade-in' : 'opacity-0'}`}>
+       <div className="min-h-dvh bg-background">
       <SEOHead
         title="AI-Powered MCQ Practice Platform"
         description="Free AI MCQ practice for NTS, FPSC, PPSC, MDCAT, ECAT, Matric & FSc. 15,000+ questions with instant feedback. No signup needed — MCQsAI Pakistan."
@@ -247,7 +257,7 @@ const Home = () => {
                 transition={{ duration: 0.5, delay: 0.2 }}
               >
                 <Sparkles className="h-3 w-3 text-violet-500 animate-pulse" />
-                <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-[length:500px_auto] animate-shimmer bg-clip-text text-transparent font-semibold">
+                <span className="bg-gradient-to-r from-violet-600 via-blue-500 to-violet-600 bg-clip-text text-transparent font-semibold">
                   {tr('hero.badge')}
                 </span>
               </motion.span>
@@ -264,16 +274,16 @@ const Home = () => {
                   <span>{t('hero.title')} </span>
                   <span className="brand-mcqsai">{t('hero.brandName')}</span>
                   <span> {t('hero.titleSuffix')} </span>
-                  <span className="text-gradient text-gradient-animated">{t('hero.titleHighlight1')}</span>
+                  <span className="text-gradient">{t('hero.titleHighlight1')}</span>
                   <span> & </span>
-                  <span className="text-gradient text-gradient-animated">{t('hero.titleHighlight2')}</span>
+                  <span className="text-gradient">{t('hero.titleHighlight2')}</span>
                 </>
               ) : (
                 <>
                   <span>{tr('hero.title')} </span>
-                  <span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight1')}</span>
+                  <span className="text-gradient">{tr('hero.titleHighlight1')}</span>
                   {language === 'sd' ? ' ۽ ' : ' اور '}
-                  <span className="text-gradient text-gradient-animated">{tr('hero.titleHighlight2')}</span>
+                  <span className="text-gradient">{tr('hero.titleHighlight2')}</span>
                   <span> {tr('hero.titleSuffix')} </span>
                   <span className="brand-mcqsai">{t('hero.brandName')}</span>
                   <span> {tr('hero.titlePrefix')}</span>
@@ -439,10 +449,14 @@ const Home = () => {
       </motion.section>
       
       {/* Stats Section */}
-      <PlatformStatsSection />
-      
+      <DeferredSection minHeight={280}>
+        <PlatformStatsSection />
+      </DeferredSection>
+
       {/* Testimonials Section - Real Reviews */}
-      <TestimonialsSection />
+      <DeferredSection minHeight={420}>
+        <TestimonialsSection />
+      </DeferredSection>
       
       {/* CTA Section */}
       <motion.section
@@ -548,7 +562,11 @@ const Home = () => {
 
       {/* Footer */}
       <Footer />
-      <UserSatisfactionPopup />
+      {showPopup && (
+        <Suspense fallback={null}>
+          <UserSatisfactionPopup />
+        </Suspense>
+      )}
       </div>
     </Header>
   );
