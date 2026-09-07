@@ -18,6 +18,7 @@ import {
   Scale
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { cleanQuestionText } from "@/lib/questionUtils";
 
 interface FlaggedQuestion {
   id: string;
@@ -377,7 +378,7 @@ const DuplicateReviewQueue = () => {
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium line-clamp-2">
-                              {q.title}
+                              {cleanQuestionText(q.title)}
                             </p>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {q.subject && (
@@ -457,7 +458,7 @@ const DuplicateReviewQueue = () => {
                 <div className="flex items-center gap-2 mb-2">
                   <Badge className="bg-yellow-500">New (Flagged)</Badge>
                 </div>
-                <p className="text-sm font-medium mb-2">{selectedQuestion.title}</p>
+                <p className="text-sm font-medium mb-2">{cleanQuestionText(selectedQuestion.title)}</p>
                 {selectedQuestion.options && (
                   <div className="space-y-1 text-xs">
                     {selectedQuestion.options.map((opt, i) => (
@@ -491,7 +492,7 @@ const DuplicateReviewQueue = () => {
                     <Badge className="bg-blue-500">Original</Badge>
                     <Badge variant="outline" className="text-xs">{originalQuestion.status}</Badge>
                   </div>
-                  <p className="text-sm font-medium mb-2">{originalQuestion.title}</p>
+                  <p className="text-sm font-medium mb-2">{cleanQuestionText(originalQuestion.title)}</p>
                   {originalQuestion.options && (
                     <div className="space-y-1 text-xs">
                       {originalQuestion.options.map((opt, i) => (

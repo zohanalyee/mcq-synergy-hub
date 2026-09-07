@@ -15,6 +15,7 @@ import {
 import StatusBadge from "./StatusBadge";
 import CategoryBadge from "./CategoryBadge";
 import ContentDetails from "./ContentDetails";
+import { cleanQuestionText } from "@/lib/questionUtils";
 
 interface EnhancedContentTableProps {
   content: ContentItem[];
@@ -330,7 +331,7 @@ const EnhancedContentTable = ({
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium">{item.title}</div>
+                      <div className="font-medium">{cleanQuestionText(item.title)}</div>
                       <div className="text-sm text-muted-foreground hidden md:block">
                         {item.description.length > 40 
                           ? `${item.description.substring(0, 40)}...` 
