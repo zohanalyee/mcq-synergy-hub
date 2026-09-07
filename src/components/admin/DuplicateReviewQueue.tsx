@@ -18,6 +18,7 @@ import {
   Scale
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { cleanQuestionText } from "@/lib/questionUtils";
 
 interface FlaggedQuestion {
   id: string;
