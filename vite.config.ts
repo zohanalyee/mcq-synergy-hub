@@ -105,6 +105,7 @@ export default defineConfig(({ mode }) => {
 
 
 
+          if (/node_modules\/(react|react-dom|scheduler)\//.test(norm)) return 'react-core';
           if (id.includes('framer-motion')) return 'framer';
           if (id.includes('recharts') || id.includes('d3-')) return 'charts';
           if (id.includes('pdf-lib') || id.includes('jspdf') || id.includes('html2canvas')) return 'pdf';
