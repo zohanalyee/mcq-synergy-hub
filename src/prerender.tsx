@@ -3,6 +3,14 @@ import './prerender-shims';
 import { renderToString } from 'react-dom/server';
 import { StaticRouter } from 'react-router-dom/server';
 import { HelmetProvider } from 'react-helmet-async';
+
+// react-helmet-async decides at module-init whether a DOM exists. Our prerender
+// shims define a stub `document`, so depending on chunk-evaluation order Helmet
+// could think it is in a browser and write tags into the stub instead of into
+// the render context — silently dropping <title>/<meta> from prerendered HTML.
+// Forcing this flag makes head collection order-independent.
+(HelmetProvider as unknown as { canUseDOM: boolean }).canUseDOM = false;
+
 import './index.css';
 
 /**

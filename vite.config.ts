@@ -90,13 +90,24 @@ export default defineConfig(({ mode }) => {
     rollupOptions: {
       output: {
         manualChunks(id) {
+          const norm = id.replace(/\\/g, '/');
+          // Shared rollup/vite helper modules must never live inside a heavy
+          // vendor chunk, otherwise common chunks import (and preload) it.
+          if (norm.includes('commonjsHelpers') || norm.includes('preload-helper') || norm.includes('commonjs-dynamic-modules')) {
+            return 'vendor-helpers';
+          }
           if (!id.includes('node_modules')) return;
+          // Tiny shared utilities (clsx & friends) must not land in a heavy
+          // vendor chunk, or every common chunk would import/preload it.
+          if (/node_modules\/(clsx|tailwind-merge|class-variance-authority)\//.test(norm)) {
+            return 'vendor-helpers';
+          }
           if (id.includes('framer-motion')) return 'framer';
-          if (id.includes('recharts') || id.includes('d3-')) return 'charts';
           if (id.includes('pdf-lib') || id.includes('jspdf') || id.includes('html2canvas')) return 'pdf';
           if (id.includes('exceljs')) return 'excel';
           if (id.includes('react-markdown') || id.includes('remark') || id.includes('rehype') || id.includes('micromark') || id.includes('mdast') || id.includes('hast')) return 'markdown';
         },
+
       },
     },
   },
