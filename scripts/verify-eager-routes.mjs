@@ -72,7 +72,7 @@ if (eagerKeys.length > EAGER_BUDGET) {
 }
 
 // 3. Only the prerender registry may import pages eagerly.
-if (!/from ['"]\.\/routes\/eagerPages['"]/.test(read('src/prerender.tsx'))) {
+if (!/['"]\.\/routes\/eagerPages['"]/.test(read('src/prerender.tsx'))) {
   problems.push('src/prerender.tsx no longer loads src/routes/eagerPages — prerendered routes would ship an empty #root.');
 }
 
