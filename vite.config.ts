@@ -97,8 +97,8 @@ export default defineConfig(({ mode }) => {
             return 'vendor-helpers';
           }
           if (!id.includes('node_modules')) return;
-          // Keep shared React core in its own chunk so heavy vendor chunks
-          // (charts / pdf) never become a dependency of common app chunks.
+          // Tiny shared utilities (clsx & friends) must not land in a heavy
+          // vendor chunk, or every common chunk would import/preload it.
           if (/node_modules\/(clsx|tailwind-merge|class-variance-authority)\//.test(norm)) {
             return 'vendor-helpers';
           }
