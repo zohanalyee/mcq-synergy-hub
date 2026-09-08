@@ -61,8 +61,12 @@ export async function prerender(data: { url: string }) {
   (globalThis as any).__PRERENDER__ = true;
 
   let App: any;
+  let eagerPages: any;
   try {
     App = (await import('./App')).default;
+    // Eager route registry: renderToString cannot await lazy() imports, so the
+    // prerender pass must use statically imported page components.
+    eagerPages = (await import('./routes/eagerPages')).default;
   } catch (err) {
     console.error(`[prerender] FAILED loading App for ${data.url}:`, err);
     throw err;
@@ -73,7 +77,7 @@ export async function prerender(data: { url: string }) {
     html = renderToString(
       <HelmetProvider context={helmetContext}>
         <StaticRouter location={data.url}>
-          <App />
+          <App pages={eagerPages} />
         </StaticRouter>
       </HelmetProvider>
     );
