@@ -10,8 +10,14 @@ const Router = ({ children }: { children: React.ReactNode }) =>
   (typeof window === 'undefined' || (globalThis as any).__PRERENDER__)
     ? <>{children}</>
     : <BrowserRouter>{children}</BrowserRouter>;
-import { useState, lazy, Suspense, useEffect, type ComponentType } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
 import { prefetchTopRoutes } from "./lib/prefetchRoutes";
+import { lazyWithReload } from "./routes/lazyWithReload";
+import type { PageMap } from "./routes/pageMap";
+// Browser default: every prerendered page is a separate chunk (see
+// src/routes/lazyPages.ts). src/prerender.tsx passes the EAGER registry instead
+// so renderToString ships full body content for crawlers.
+import lazyPages from "./routes/lazyPages";
 
 import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
@@ -24,9 +30,6 @@ import CampaignTracker from "./components/CampaignTracker";
 import EmailPrefSync from "./components/EmailPrefSync";
 // Lazy: not in the prerender whitelist (transactional email landing page).
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
-// Public data-deletion page (Meta Facebook Login requirement) — eager: prerendered
-// (/delete-account) so it ships real body content for crawlers and Meta reviewers.
-import DeleteAccount from "./pages/DeleteAccount"; // eager: prerendered SEO page (/delete-account)
 
 import TopProgressBar from "./components/TopProgressBar";
 import ToolRouteSEO from "./components/seo/ToolRouteSEO";
@@ -47,44 +50,15 @@ import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
 import GlobalCreditExhaustedListener from "./components/credits/GlobalCreditExhaustedListener";
 import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
-import Index from "./pages/Index"; // eager: prerendered homepage (/)
-import AICoachLanding from "./pages/AICoachLanding"; // eager: prerendered SEO page (/features/ai-coach)
-import NotFound from "./pages/NotFound"; // eager: wildcard fallback, must render instantly
 // Lazy: auth flows are not prerendered and are never the first paint for crawlers.
 const SignIn = lazy(() => import("./pages/SignIn"));
 const SignUp = lazy(() => import("./pages/SignUp"));
 const Auth = lazy(() => import("./pages/Auth"));
 const GetStarted = lazy(() => import("./pages/GetStarted"));
 
-// Retry a lazy import once, then force a single full reload on stale-chunk errors
-function lazyWithReload<T extends { default: ComponentType<any> }>(
-  factory: () => Promise<T>
-) {
-  return lazy(async () => {
-    try {
-      return await factory();
-    } catch (err) {
-      const key = "chunk-reloaded";
-      if (!sessionStorage.getItem(key)) {
-        sessionStorage.setItem(key, "1");
-        window.location.reload();
-        return await new Promise<T>(() => {});
-      }
-      throw err;
-    }
-  });
-}
-
 // Lazy: large feature pages (code-split for mobile performance)
-import Subjects from "./pages/Subjects"; // eager: prerendered SEO hub
-import MockTests from "./pages/MockTests"; // eager: prerendered SEO hub
 const MockTestDetail = lazyWithReload(() => import("./pages/MockTestDetail"));
 const Analytics = lazyWithReload(() => import("./pages/Analytics"));
-import Leaderboard from "./pages/Leaderboard"; // eager: prerendered SEO hub
-import PastPapers from "./pages/PastPapers"; // eager: prerendered SEO hub (/past-papers)
-import Jobs from "./pages/Jobs"; // eager: prerendered SEO hub (/jobs)
-import Scholarships from "./pages/Scholarships"; // eager: prerendered SEO hub (/scholarships)
-import CustomSyllabus from "./pages/CustomSyllabus"; // eager: prerendered SEO hub
 const SubjectContent = lazyWithReload(() => import("./pages/SubjectContent"));
 const CustomQuizzes = lazyWithReload(() => import("./pages/CustomQuizzes"));
 const AdminPanel = lazyWithReload(() => import("./pages/AdminPanel"));
@@ -98,61 +72,17 @@ const Profile = lazy(() => import("./pages/Profile"));
 const Feedback = lazy(() => import("./pages/Feedback"));
 const Achievements = lazy(() => import("./pages/Achievements"));
 const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-import Reviews from "./pages/Reviews"; // eager: prerendered SEO page (/reviews)
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const VerifyEmailSent = lazy(() => import("./pages/VerifyEmailSent"));
 const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
 const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
 
-import Quizzes from "./pages/Quizzes"; // eager: prerendered SEO hub (/quizzes)
 const QuizPlayer = lazy(() => import("./pages/QuizPlayer"));
 const SubmitContent = lazy(() => import("./pages/SubmitContent"));
 
-// Eager: SEO/public prerender whitelisted routes (need real HTML in #root)
-import About from "./pages/About"; // eager: prerendered SEO page (/about)
-import MDCATSyllabus from "./pages/MDCATSyllabus"; // eager: prerendered SEO page (/mdcat-syllabus)
-// Indexable tools (src/config/toolsSeo.ts INDEXABLE_TOOL_PATHS) must be EAGER:
-// a lazy() route renders only the Suspense fallback during prerender, so the
-// static HTML ships an empty #root and non-JS crawlers see no body content.
-import AggregateCalculator from "./pages/tools/AggregateCalculator"; // eager: prerendered tool
-import MeritCalculator from "./pages/tools/MeritCalculator"; // eager: prerendered tool
-import GPACalculator from "./pages/tools/GPACalculator"; // eager: prerendered tool
-import CGPACalculator from "./pages/tools/CGPACalculator"; // eager: prerendered tool
-import GPAToPercentage from "./pages/tools/GPAToPercentage"; // eager: prerendered tool
-import PercentageToGPA from "./pages/tools/PercentageToGPA"; // eager: prerendered tool
-import MarksCalculator from "./pages/tools/MarksCalculator"; // eager: prerendered tool
-import ResultCalculator from "./pages/tools/ResultCalculator"; // eager: prerendered tool
-import AttendanceCalculator from "./pages/tools/AttendanceCalculator"; // eager: prerendered tool
-import PercentageCalculator from "./pages/tools/PercentageCalculator"; // eager: prerendered tool
-import PeriodicTable from "./pages/tools/PeriodicTable"; // eager: prerendered tool
-import PakistanTaxCalculator from "./pages/tools/PakistanTaxCalculator"; // eager: prerendered tool
-import ZakatCalculator from "./pages/tools/ZakatCalculator"; // eager: prerendered tool
-import AttendanceDashboard from "./pages/tools/AttendanceDashboard"; // eager: prerendered tool
 // Lazy: /tools/age-calculator is in TOOLS_WITHOUT_SEOHEAD, so it is NOT
 // prerendered — its head is injected post-build by scripts/inject-meta.mjs.
 const AgeCalculator = lazy(() => import("./pages/tools/AgeCalculator"));
-import MDCATPastPapers from "./pages/seo/MDCATPastPapers"; // eager: prerendered SEO page
-import PPSCPastPapers from "./pages/seo/PPSCPastPapers"; // eager: prerendered SEO page
-import FPSCPastPapers from "./pages/seo/FPSCPastPapers"; // eager: prerendered SEO page
-import CSSMCQs from "./pages/seo/CSSMCQs"; // eager: prerendered SEO page
-import ECATPreparation from "./pages/seo/ECATPreparation"; // eager: prerendered SEO page
-import NUSTEntryTest from "./pages/seo/NUSTEntryTest"; // eager: prerendered SEO page
-import PunjabUniversityEntryTest from "./pages/seo/PunjabUniversityEntryTest"; // eager: prerendered SEO page
-import COMSATSEntryTest from "./pages/seo/COMSATSEntryTest"; // eager: prerendered SEO page
-import SindhUniversitiesEntryTest from "./pages/seo/SindhUniversitiesEntryTest"; // eager: prerendered SEO page
-import EngineeringUniversitiesEntryTest from "./pages/seo/EngineeringUniversitiesEntryTest"; // eager: prerendered SEO page
-import PSTSSTTestPreparation from "./pages/seo/PSTSSTTestPreparation"; // eager: prerendered SEO page
-import NinthClassMCQs from "./pages/seo/NinthClassMCQs"; // eager: prerendered SEO page
-import BoardMCQs from "./pages/seo/BoardMCQs"; // eager: prerendered SEO page
-import PakArmyTest from "./pages/seo/PakArmyTest"; // eager: prerendered SEO page
-import PAFTest from "./pages/seo/PAFTest"; // eager: prerendered SEO page
-import ASFTest from "./pages/seo/ASFTest"; // eager: prerendered SEO page
-import ForcesJobsTests from "./pages/seo/ForcesJobsTests"; // eager: prerendered SEO page
-import Contact from "./pages/Contact"; // eager: prerendered SEO page (/contact)
-import PrivacyPolicy from "./pages/legal/PrivacyPolicy"; // eager: prerendered SEO page
-import TermsOfService from "./pages/legal/TermsOfService"; // eager: prerendered SEO page
-import EditorialPolicy from "./pages/legal/EditorialPolicy"; // eager: prerendered SEO page (/editorial-policy)
-import QuestionBank from "./pages/QuestionBank"; // eager: prerendered SEO hub
 // Ask-Document is temporarily disabled — the route renders a Coming Soon page.
 const AskDocument = lazy(() => import("./pages/AskDocumentComingSoon"));
 const TestSession = lazy(() => import("./pages/TestSession"));
@@ -166,9 +96,6 @@ const MathTool = lazy(() => import("./pages/tools/MathTool"));
 const TimerTool = lazy(() => import("./pages/tools/TimerTool"));
 const UnitConverter = lazy(() => import("./pages/tools/UnitConverter"));
 const NotesTool = lazy(() => import("./pages/tools/NotesTool"));
-
-// Tools listing page — eager for SSR prerender
-import Tools from "./pages/Tools"; // eager: prerendered SEO hub (/tools)
 
 // Lazy-loaded new tool pages
 const BMICalculator = lazy(() => import("./pages/tools/BMICalculator"));
@@ -220,22 +147,6 @@ const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReports
 const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
 const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
 
-// Content & SEO pages.
-// RULE: keep a page eager ONLY when its route is in PRERENDER_ROUTES /
-// EXTRA_PRERENDER_ROUTES (vite.config.ts + scripts/prerender-routes.mjs) and
-// therefore must render synchronously during prerender. Everything else is
-// lazy() so it stays out of the entry chunk.
-import Blog from "./pages/Blog"; // eager: prerendered SEO hub (/blog)
-import Announcements from "./pages/Announcements"; // eager: prerendered SEO hub (/announcements)
-import FAQ from "./pages/FAQ"; // eager: prerendered SEO page (/faq)
-import StudyGuides from "./pages/StudyGuides"; // eager: prerendered SEO hub
-import Boards from "./pages/Boards"; // eager: prerendered SEO hub (/boards)
-import ExamLandingPage from "./pages/exams/ExamLandingPage"; // eager: prerendered /exams/:examSlug set
-import ExamsHub from "./pages/exams/ExamsHub"; // eager: prerendered SEO hub
-import NumsEntryTest from "./pages/exams/NumsEntryTest"; // eager: prerendered SEO page
-import IbaSukkurEntryTest from "./pages/exams/IbaSukkurEntryTest"; // eager: prerendered SEO page
-import LatLawAdmissionTest from "./pages/exams/LatLawAdmissionTest"; // eager: prerendered SEO page
-
 // Lazy: DB-driven detail pages — heads are patched post-build by
 // scripts/inject-meta.mjs, so they never need to render during prerender.
 const BlogPost = lazyWithReload(() => import("./pages/BlogPost"));
@@ -250,10 +161,9 @@ const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage")
 const Tenders = lazy(() => import("./pages/Tenders"));
 const BoardResults = lazy(() => import("./pages/BoardResults"));
 const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
-import ProgrammaticLandingPage from "./pages/programmatic/ProgrammaticLandingPage"; // eager: prerendered /p/:slug set
-import ProgrammaticIndex from "./pages/programmatic/ProgrammaticIndex"; // eager: prerendered SEO hub (/p)
 
-const App = () => {
+const App = ({ pages = lazyPages }: { pages?: PageMap }) => {
+  const P = pages;
   const isPrerender = typeof window === 'undefined' || (globalThis as any).__PRERENDER__;
   const [queryClient] = useState(() => {
     const client = new QueryClient({
@@ -325,12 +235,12 @@ const App = () => {
                     <Suspense fallback={<TopProgressBar />}>
                     <RouteErrorBoundary>
                     <Routes>
-                      <Route path="/" element={<Index />} />
-                      <Route path="/larkana" element={<Index />} />
+                      <Route path="/" element={<P.Index />} />
+                      <Route path="/larkana" element={<P.Index />} />
 
                       {/* Programmatic SEO — curated /p hub + /p/:slug landing pages */}
-                      <Route path="/p" element={<ProgrammaticIndex />} />
-                      <Route path="/p/:slug" element={<Suspense fallback={<TopProgressBar />}><ProgrammaticLandingPage /></Suspense>} />
+                      <Route path="/p" element={<P.ProgrammaticIndex />} />
+                      <Route path="/p/:slug" element={<Suspense fallback={<TopProgressBar />}><P.ProgrammaticLandingPage /></Suspense>} />
 
 
 
@@ -339,7 +249,7 @@ const App = () => {
                       <Route path="/boards/:boardSlug/:classNumber/:subjectSlug" element={<Suspense fallback={<TopProgressBar />}><BoardSubjectPage /></Suspense>} />
                       <Route path="/boards/:boardSlug/:classNumber" element={<Suspense fallback={<TopProgressBar />}><BoardClassPage /></Suspense>} />
                       <Route path="/boards/:boardSlug" element={<Suspense fallback={<TopProgressBar />}><BoardLandingPage /></Suspense>} />
-                      <Route path="/boards" element={<Suspense fallback={<TopProgressBar />}><Boards /></Suspense>} />
+                      <Route path="/boards" element={<Suspense fallback={<TopProgressBar />}><P.Boards /></Suspense>} />
 
                       <Route path="/auth" element={<Auth />} />
                       <Route path="/signin" element={<SignIn />} />
@@ -352,96 +262,96 @@ const App = () => {
                       <Route path="/verify-email-sent" element={<VerifyEmailSent />} />
                       <Route path="/verify-email" element={<VerifyEmail />} />
                       <Route path="/unsubscribe" element={<Unsubscribe />} />
-                      <Route path="/delete-account" element={<DeleteAccount />} />
+                      <Route path="/delete-account" element={<P.DeleteAccount />} />
                       <Route path="/complete-profile" element={<CompleteProfile />} />
 
                       
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
                       <Route path="/admin/reviews" element={<Suspense fallback={<TopProgressBar />}><ReviewsManagement /></Suspense>} />
-                      <Route path="/subjects" element={<Subjects />} />
+                      <Route path="/subjects" element={<P.Subjects />} />
                       <Route path="/dashboard" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
                       <Route path="/profile" element={<InstantAuthGuard title="Your Profile" description="Sign in to access your profile" actionName="Profile"><Profile /></InstantAuthGuard>} />
                       <Route path="/analytics" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
-                      <Route path="/features/ai-coach" element={<AICoachLanding />} />
+                      <Route path="/features/ai-coach" element={<P.AICoachLanding />} />
                       <Route path="/ai-coach" element={<InstantAuthGuard title="AI Coach Dashboard" description="Sign in to view your personalized AI coach insights" actionName="AI Coach"><Analytics /></InstantAuthGuard>} />
                       {/* Job/recruitment tests are public — guests use DB-only approved questions; no AI generation, no auth gate. */}
-                      <Route path="/mock-tests" element={<MockTests />} />
+                      <Route path="/mock-tests" element={<P.MockTests />} />
                       <Route path="/mock-tests/:slug" element={<Suspense fallback={<TopProgressBar />}><MockTestDetail /></Suspense>} />
                       <Route path="/custom-quizzes" element={<CustomQuizzes />} />
-                      <Route path="/custom-syllabus" element={<CustomSyllabus />} />
-                      <Route path="/leaderboard" element={<Leaderboard />} />
+                      <Route path="/custom-syllabus" element={<P.CustomSyllabus />} />
+                      <Route path="/leaderboard" element={<P.Leaderboard />} />
                       <Route path="/feedback" element={<InstantAuthGuard title="Feedback" description="Sign in to submit feedback" actionName="Feedback"><Feedback /></InstantAuthGuard>} />
                       <Route path="/achievements" element={<InstantAuthGuard title="Achievements" description="Sign in to view your achievements" actionName="Achievements"><Achievements /></InstantAuthGuard>} />
                       <Route path="/subject/:id" element={<SubjectContent />} />
                       <Route path="/subject-content/:id" element={<SubjectContent />} />
                       <Route path="/jobs/:jobSlug" element={<Suspense fallback={<TopProgressBar />}><JobDetailPage /></Suspense>} />
-                      <Route path="/jobs" element={<Jobs />} />
+                      <Route path="/jobs" element={<P.Jobs />} />
                       <Route path="/scholarships/:scholarshipSlug" element={<Suspense fallback={<TopProgressBar />}><ScholarshipDetailPage /></Suspense>} />
-                      <Route path="/scholarships" element={<Scholarships />} />
+                      <Route path="/scholarships" element={<P.Scholarships />} />
                       <Route path="/tenders" element={<Suspense fallback={<TopProgressBar />}><Tenders /></Suspense>} />
                       <Route path="/board-results" element={<Suspense fallback={<TopProgressBar />}><BoardResults /></Suspense>} />
                       <Route path="/opportunity/:id" element={<Suspense fallback={<TopProgressBar />}><OpportunityDetail /></Suspense>} />
-                      <Route path="/past-papers" element={<PastPapers />} />
+                      <Route path="/past-papers" element={<P.PastPapers />} />
                       
                       {/* /quizzes is publicly indexable for SEO; the page itself
                           gates the "Start Quiz" action behind sign-in. */}
-                      <Route path="/quizzes" element={<Quizzes />} />
-                      <Route path="/question-bank" element={<QuestionBank />} />
+                      <Route path="/quizzes" element={<P.Quizzes />} />
+                      <Route path="/question-bank" element={<P.QuestionBank />} />
                       <Route path="/submit-content" element={<SubmitContent />} />
                       <Route path="/ask-document" element={<AskDocument />} />
                       <Route path="/test-session/:id" element={<Suspense fallback={<TopProgressBar />}><TestSession /></Suspense>} />
                       <Route path="/quiz-session/:id" element={<Suspense fallback={<TopProgressBar />}><QuizPlayer /></Suspense>} />
                       <Route path="/notifications" element={<InstantAuthGuard title="Notifications" description="Sign in to view your notifications" actionName="Notifications"><Notifications /></InstantAuthGuard>} />
-                      <Route path="/reviews" element={<Reviews />} />
+                      <Route path="/reviews" element={<P.Reviews />} />
                       
                       {/* Content & SEO Pages */}
-                      <Route path="/exams" element={<ExamsHub />} />
-                      <Route path="/exams/nums" element={<NumsEntryTest />} />
-                      <Route path="/exams/iba-sukkur" element={<IbaSukkurEntryTest />} />
-                      <Route path="/exams/lat" element={<LatLawAdmissionTest />} />
-                      <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><ExamLandingPage /></Suspense>} />
+                      <Route path="/exams" element={<P.ExamsHub />} />
+                      <Route path="/exams/nums" element={<P.NumsEntryTest />} />
+                      <Route path="/exams/iba-sukkur" element={<P.IbaSukkurEntryTest />} />
+                      <Route path="/exams/lat" element={<P.LatLawAdmissionTest />} />
+                      <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><P.ExamLandingPage /></Suspense>} />
 
-                      <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><MDCATSyllabus /></Suspense>} />
-                      <Route path="/mdcat-past-papers" element={<Suspense fallback={<TopProgressBar />}><MDCATPastPapers /></Suspense>} />
-                      <Route path="/ppsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><PPSCPastPapers /></Suspense>} />
-                      <Route path="/fpsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><FPSCPastPapers /></Suspense>} />
-                      <Route path="/css-mcqs-practice" element={<Suspense fallback={<TopProgressBar />}><CSSMCQs /></Suspense>} />
-                      <Route path="/ecat-preparation" element={<Suspense fallback={<TopProgressBar />}><ECATPreparation /></Suspense>} />
-                      <Route path="/nust-entry-test" element={<Suspense fallback={<TopProgressBar />}><NUSTEntryTest /></Suspense>} />
-                      <Route path="/punjab-university-entry-test" element={<Suspense fallback={<TopProgressBar />}><PunjabUniversityEntryTest /></Suspense>} />
-                      <Route path="/comsats-entry-test" element={<Suspense fallback={<TopProgressBar />}><COMSATSEntryTest /></Suspense>} />
-                      <Route path="/sindh-universities-entry-test" element={<Suspense fallback={<TopProgressBar />}><SindhUniversitiesEntryTest /></Suspense>} />
-                      <Route path="/engineering-universities-entry-test" element={<Suspense fallback={<TopProgressBar />}><EngineeringUniversitiesEntryTest /></Suspense>} />
-                      <Route path="/pst-sst-test-preparation" element={<Suspense fallback={<TopProgressBar />}><PSTSSTTestPreparation /></Suspense>} />
-                      <Route path="/9th-class-mcqs" element={<Suspense fallback={<TopProgressBar />}><NinthClassMCQs /></Suspense>} />
-                      <Route path="/board-mcqs" element={<Suspense fallback={<TopProgressBar />}><BoardMCQs /></Suspense>} />
-                      <Route path="/pak-army-test" element={<Suspense fallback={<TopProgressBar />}><PakArmyTest /></Suspense>} />
-                      <Route path="/paf-test" element={<Suspense fallback={<TopProgressBar />}><PAFTest /></Suspense>} />
-                      <Route path="/asf-test" element={<Suspense fallback={<TopProgressBar />}><ASFTest /></Suspense>} />
-                      <Route path="/forces-jobs-tests" element={<Suspense fallback={<TopProgressBar />}><ForcesJobsTests /></Suspense>} />
-                      <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><Blog /></Suspense>} />
+                      <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><P.MDCATSyllabus /></Suspense>} />
+                      <Route path="/mdcat-past-papers" element={<Suspense fallback={<TopProgressBar />}><P.MDCATPastPapers /></Suspense>} />
+                      <Route path="/ppsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><P.PPSCPastPapers /></Suspense>} />
+                      <Route path="/fpsc-past-papers" element={<Suspense fallback={<TopProgressBar />}><P.FPSCPastPapers /></Suspense>} />
+                      <Route path="/css-mcqs-practice" element={<Suspense fallback={<TopProgressBar />}><P.CSSMCQs /></Suspense>} />
+                      <Route path="/ecat-preparation" element={<Suspense fallback={<TopProgressBar />}><P.ECATPreparation /></Suspense>} />
+                      <Route path="/nust-entry-test" element={<Suspense fallback={<TopProgressBar />}><P.NUSTEntryTest /></Suspense>} />
+                      <Route path="/punjab-university-entry-test" element={<Suspense fallback={<TopProgressBar />}><P.PunjabUniversityEntryTest /></Suspense>} />
+                      <Route path="/comsats-entry-test" element={<Suspense fallback={<TopProgressBar />}><P.COMSATSEntryTest /></Suspense>} />
+                      <Route path="/sindh-universities-entry-test" element={<Suspense fallback={<TopProgressBar />}><P.SindhUniversitiesEntryTest /></Suspense>} />
+                      <Route path="/engineering-universities-entry-test" element={<Suspense fallback={<TopProgressBar />}><P.EngineeringUniversitiesEntryTest /></Suspense>} />
+                      <Route path="/pst-sst-test-preparation" element={<Suspense fallback={<TopProgressBar />}><P.PSTSSTTestPreparation /></Suspense>} />
+                      <Route path="/9th-class-mcqs" element={<Suspense fallback={<TopProgressBar />}><P.NinthClassMCQs /></Suspense>} />
+                      <Route path="/board-mcqs" element={<Suspense fallback={<TopProgressBar />}><P.BoardMCQs /></Suspense>} />
+                      <Route path="/pak-army-test" element={<Suspense fallback={<TopProgressBar />}><P.PakArmyTest /></Suspense>} />
+                      <Route path="/paf-test" element={<Suspense fallback={<TopProgressBar />}><P.PAFTest /></Suspense>} />
+                      <Route path="/asf-test" element={<Suspense fallback={<TopProgressBar />}><P.ASFTest /></Suspense>} />
+                      <Route path="/forces-jobs-tests" element={<Suspense fallback={<TopProgressBar />}><P.ForcesJobsTests /></Suspense>} />
+                      <Route path="/blog" element={<Suspense fallback={<TopProgressBar />}><P.Blog /></Suspense>} />
                       <Route path="/blog/:slug" element={<Suspense fallback={<TopProgressBar />}><BlogPost /></Suspense>} />
-                      <Route path="/announcements" element={<Suspense fallback={<TopProgressBar />}><Announcements /></Suspense>} />
+                      <Route path="/announcements" element={<Suspense fallback={<TopProgressBar />}><P.Announcements /></Suspense>} />
                       <Route path="/announcements/:slug" element={<Suspense fallback={<TopProgressBar />}><AnnouncementDetail /></Suspense>} />
-                      <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><FAQ /></Suspense>} />
-                      <Route path="/study-guides" element={<Suspense fallback={<TopProgressBar />}><StudyGuides /></Suspense>} />
+                      <Route path="/faq" element={<Suspense fallback={<TopProgressBar />}><P.FAQ /></Suspense>} />
+                      <Route path="/study-guides" element={<Suspense fallback={<TopProgressBar />}><P.StudyGuides /></Suspense>} />
                       
                     {/* Tool Routes */}
-                      <Route path="/tools" element={<Tools />} />
+                      <Route path="/tools" element={<P.Tools />} />
                       <Route path="/tools/calendar" element={<CalendarTool />} />
                       <Route path="/tools/islamic-calendar" element={<Suspense fallback={<TopProgressBar />}><IslamicCalendar /></Suspense>} />
                       <Route path="/tools/international-calendar" element={<Suspense fallback={<TopProgressBar />}><InternationalCalendar /></Suspense>} />
                       <Route path="/tools/math" element={<MathTool />} />
                       <Route path="/tools/age-calculator" element={<AgeCalculator />} />
                       <Route path="/tools/timer" element={<TimerTool />} />
-                      <Route path="/tools/gpa-calculator" element={<GPACalculator />} />
+                      <Route path="/tools/gpa-calculator" element={<P.GPACalculator />} />
                       <Route path="/tools/units" element={<UnitConverter />} />
                       <Route path="/tools/notes" element={<NotesTool />} />
                       
                       {/* Lazy-loaded tools */}
                       <Route path="/tools/bmi-calculator" element={<Suspense fallback={<TopProgressBar />}><BMICalculator /></Suspense>} />
-                      <Route path="/tools/percentage-calculator" element={<Suspense fallback={<TopProgressBar />}><PercentageCalculator /></Suspense>} />
+                      <Route path="/tools/percentage-calculator" element={<Suspense fallback={<TopProgressBar />}><P.PercentageCalculator /></Suspense>} />
                       <Route path="/tools/salary-calculator" element={<Suspense fallback={<TopProgressBar />}><SalaryCalculator /></Suspense>} />
                       <Route path="/tools/emi-calculator" element={<Suspense fallback={<TopProgressBar />}><EMICalculator /></Suspense>} />
                       <Route path="/tools/tip-calculator" element={<Suspense fallback={<TopProgressBar />}><TipCalculator /></Suspense>} />
@@ -455,19 +365,19 @@ const App = () => {
                       <Route path="/tools/fraction-calculator" element={<Suspense fallback={<TopProgressBar />}><FractionCalculator /></Suspense>} />
                       <Route path="/tools/date-calculator" element={<Suspense fallback={<TopProgressBar />}><DateCalculator /></Suspense>} />
                       <Route path="/tools/fuel-calculator" element={<Suspense fallback={<TopProgressBar />}><FuelCalculator /></Suspense>} />
-                      <Route path="/tools/cgpa-calculator" element={<Suspense fallback={<TopProgressBar />}><CGPACalculator /></Suspense>} />
-                      <Route path="/tools/gpa-to-percentage" element={<Suspense fallback={<TopProgressBar />}><GPAToPercentage /></Suspense>} />
-                      <Route path="/tools/percentage-to-gpa" element={<Suspense fallback={<TopProgressBar />}><PercentageToGPA /></Suspense>} />
+                      <Route path="/tools/cgpa-calculator" element={<Suspense fallback={<TopProgressBar />}><P.CGPACalculator /></Suspense>} />
+                      <Route path="/tools/gpa-to-percentage" element={<Suspense fallback={<TopProgressBar />}><P.GPAToPercentage /></Suspense>} />
+                      <Route path="/tools/percentage-to-gpa" element={<Suspense fallback={<TopProgressBar />}><P.PercentageToGPA /></Suspense>} />
                       <Route path="/tools/grade-calculator" element={<Suspense fallback={<TopProgressBar />}><GradeCalculator /></Suspense>} />
-                      <Route path="/tools/marks-calculator" element={<Suspense fallback={<TopProgressBar />}><MarksCalculator /></Suspense>} />
-                      <Route path="/tools/aggregate-calculator" element={<AggregateCalculator />} />
-                      <Route path="/tools/merit-calculator" element={<Suspense fallback={<TopProgressBar />}><MeritCalculator /></Suspense>} />
-                      <Route path="/tools/pakistan-tax-calculator" element={<Suspense fallback={<TopProgressBar />}><PakistanTaxCalculator /></Suspense>} />
-                      <Route path="/tools/zakat-calculator" element={<Suspense fallback={<TopProgressBar />}><ZakatCalculator /></Suspense>} />
-                      <Route path="/tools/attendance-calculator" element={<Suspense fallback={<TopProgressBar />}><AttendanceCalculator /></Suspense>} />
-                      <Route path="/tools/result-calculator" element={<Suspense fallback={<TopProgressBar />}><ResultCalculator /></Suspense>} />
+                      <Route path="/tools/marks-calculator" element={<Suspense fallback={<TopProgressBar />}><P.MarksCalculator /></Suspense>} />
+                      <Route path="/tools/aggregate-calculator" element={<P.AggregateCalculator />} />
+                      <Route path="/tools/merit-calculator" element={<Suspense fallback={<TopProgressBar />}><P.MeritCalculator /></Suspense>} />
+                      <Route path="/tools/pakistan-tax-calculator" element={<Suspense fallback={<TopProgressBar />}><P.PakistanTaxCalculator /></Suspense>} />
+                      <Route path="/tools/zakat-calculator" element={<Suspense fallback={<TopProgressBar />}><P.ZakatCalculator /></Suspense>} />
+                      <Route path="/tools/attendance-calculator" element={<Suspense fallback={<TopProgressBar />}><P.AttendanceCalculator /></Suspense>} />
+                      <Route path="/tools/result-calculator" element={<Suspense fallback={<TopProgressBar />}><P.ResultCalculator /></Suspense>} />
                       <Route path="/tools/formula-sheet" element={<Suspense fallback={<TopProgressBar />}><FormulaSheet /></Suspense>} />
-                      <Route path="/tools/periodic-table" element={<Suspense fallback={<TopProgressBar />}><PeriodicTable /></Suspense>} />
+                      <Route path="/tools/periodic-table" element={<Suspense fallback={<TopProgressBar />}><P.PeriodicTable /></Suspense>} />
                       <Route path="/tools/multiplication-table" element={<Suspense fallback={<TopProgressBar />}><MultiplicationTable /></Suspense>} />
                       <Route path="/tools/currency-converter" element={<Suspense fallback={<TopProgressBar />}><CurrencyConverter /></Suspense>} />
                       <Route path="/tools/temperature-converter" element={<Suspense fallback={<TopProgressBar />}><TemperatureConverter /></Suspense>} />
@@ -494,7 +404,7 @@ const App = () => {
                       <Route path="/tools/equation-solver" element={<Suspense fallback={<TopProgressBar />}><EquationSolver /></Suspense>} />
                       
                       {/* School Attendance System */}
-                      <Route path="/tools/school-attendance-system" element={<Suspense fallback={<TopProgressBar />}><AttendanceDashboard /></Suspense>} />
+                      <Route path="/tools/school-attendance-system" element={<Suspense fallback={<TopProgressBar />}><P.AttendanceDashboard /></Suspense>} />
                       <Route path="/tools/school-attendance-system/student-attendance" element={<InstantAuthGuard title="Student Attendance" description="Sign in to mark student attendance" actionName="Student Attendance"><Suspense fallback={<TopProgressBar />}><StudentAttendancePage /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/school-attendance-system/staff-attendance" element={<InstantAuthGuard title="Staff Attendance" description="Sign in to mark staff attendance" actionName="Staff Attendance"><Suspense fallback={<TopProgressBar />}><StaffAttendancePage /></Suspense></InstantAuthGuard>} />
                       <Route path="/tools/school-attendance-system/setup" element={<InstantAuthGuard title="HR Setup" description="Sign in to configure HR settings" actionName="HR Setup"><Suspense fallback={<TopProgressBar />}><HRSetupPage /></Suspense></InstantAuthGuard>} />
@@ -505,13 +415,13 @@ const App = () => {
                       <Route path="/tools/school-attendance-system/analytics" element={<InstantAuthGuard title="Attendance Analytics" description="Sign in to view attendance analytics" actionName="Analytics"><Suspense fallback={<TopProgressBar />}><AttendanceAnalytics /></Suspense></InstantAuthGuard>} />
                       
                       {/* Legal & Info Pages */}
-                      <Route path="/about" element={<Suspense fallback={<TopProgressBar />}><About /></Suspense>} />
-                      <Route path="/contact" element={<Suspense fallback={<TopProgressBar />}><Contact /></Suspense>} />
-                      <Route path="/privacy-policy" element={<Suspense fallback={<TopProgressBar />}><PrivacyPolicy /></Suspense>} />
-                      <Route path="/terms-of-service" element={<Suspense fallback={<TopProgressBar />}><TermsOfService /></Suspense>} />
-                      <Route path="/editorial-policy" element={<Suspense fallback={<TopProgressBar />}><EditorialPolicy /></Suspense>} />
+                      <Route path="/about" element={<Suspense fallback={<TopProgressBar />}><P.About /></Suspense>} />
+                      <Route path="/contact" element={<Suspense fallback={<TopProgressBar />}><P.Contact /></Suspense>} />
+                      <Route path="/privacy-policy" element={<Suspense fallback={<TopProgressBar />}><P.PrivacyPolicy /></Suspense>} />
+                      <Route path="/terms-of-service" element={<Suspense fallback={<TopProgressBar />}><P.TermsOfService /></Suspense>} />
+                      <Route path="/editorial-policy" element={<Suspense fallback={<TopProgressBar />}><P.EditorialPolicy /></Suspense>} />
                       
-                      <Route path="*" element={<NotFound />} />
+                      <Route path="*" element={<P.NotFound />} />
                    </Routes>
                    </RouteErrorBoundary>
                    </Suspense>
