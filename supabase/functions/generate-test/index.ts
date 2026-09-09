@@ -1350,8 +1350,21 @@ serve(async (req) => {
       session_id, // Session ID to update with generated questions (Job Tests)
       excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
       weakTopics, // AI Coach Phase 2: focus 70% of generated questions on these
+      free_only, // Cost guard: when true, never fall back to the paid AI gateway
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
+
+    // Reset per-invocation waste accounting + cost guard (module scope is reused
+    // across requests in a warm isolate).
+    genStats.api_calls = 0;
+    genStats.ai_returned = 0;
+    genStats.topic_rejected = 0;
+    genStats.duplicate_skipped = 0;
+    freeOnlyMode = free_only === true;
+    if (freeOnlyMode) {
+      console.log('[generate-test] 💰 free_only=true — paid AI gateway fallback is disabled for this request');
+    }
+
 
     // Sanitize excludeQuestionIds — strict UUID validation prevents injection via .in() string
     const safeExcludeIds: string[] = Array.isArray(excludeQuestionIds)
