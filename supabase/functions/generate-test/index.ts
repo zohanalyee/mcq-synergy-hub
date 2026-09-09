@@ -73,6 +73,26 @@ interface UsageLogEntry {
 import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 
 // Wrapper to maintain existing call pattern - now uses auto-switcher
+/**
+ * WASTE ACCOUNTING (per invocation).
+ * Every AI-returned question that we throw away before it ever reaches the DB
+ * used to vanish silently, so a run that burned 15 paid questions to keep 1
+ * looked identical to a healthy run. These counters are attached to the
+ * response + ai_usage_logs metadata so the admin history shows real waste.
+ */
+const genStats = {
+  api_calls: 0,
+  ai_returned: 0,
+  topic_rejected: 0,
+  duplicate_skipped: 0,
+};
+
+/**
+ * COST GUARD for this invocation. When true, the paid Lovable AI Gateway is
+ * never used — the request fails instead of quietly spending credits.
+ */
+let freeOnlyMode = false;
+
 async function callGeminiForBatch(
   _apiKey: string,
   promptText: string,
@@ -83,11 +103,15 @@ async function callGeminiForBatch(
     const { text, provider, cost } = await callAIWithAutoSwitch('', promptText, {
       temperature: generationConfig?.temperature || 0.7,
       maxOutputTokens: generationConfig?.maxOutputTokens || 8000,
-    }, { supabaseClient: null, sourceType: 'generate-test' });
+    }, { supabaseClient: null, sourceType: 'generate-test', allowPaidFallback: !freeOnlyMode });
     console.log(`✅ Success with ${provider} (cost: ${cost})`);
     return { success: true, text, modelUsed: provider === 'gemini' ? 'gemini-2.0-flash' : 'lovable-gateway', provider, cost };
   } catch (err: any) {
     const msg = err.message || '';
+    if (msg.includes('FREE_ONLY_EXHAUSTED')) {
+      return { success: false, error: 'FREE_ONLY_EXHAUSTED', status: 429 };
+    }
+
     if (msg.includes('CREDITS_EXHAUSTED') || msg.includes('402')) {
       return { success: false, error: 'CREDITS_EXHAUSTED', status: 402 };
     }
