@@ -1,10 +1,15 @@
 /**
- * Idle-time route prefetcher.
+ * Deferred route prefetcher.
  *
- * After the app mounts and the browser is idle, kick off the dynamic imports
- * for the most-likely-next routes so their JS chunks land in the HTTP cache
- * before the user clicks. Combined with `_headers` (1-year immutable on
- * /assets/*), this turns repeat navigations into ~0ms.
+ * Warms the JS chunks for the most-likely-next routes so navigation feels
+ * instant, WITHOUT paying for it during first paint. Two rules:
+ *
+ *  1. Never before the `load` event — a prefetch that executes inside the
+ *     first-paint window shows up as Total Blocking Time and as "unused
+ *     JavaScript" on the landing page.
+ *  2. Prefer the first real user signal (pointer / scroll / key) and only
+ *     fall back to a long timer. Synthetic lab runs never interact, so they
+ *     never pay for prefetch; real users get warm chunks within a second.
  *
  * Safe to call multiple times — Vite/Rollup dedupes module imports.
  */
@@ -12,18 +17,19 @@
 type Importer = () => Promise<unknown>;
 
 // Ordered by likelihood of being the user's next page after landing.
-// Keep this list short (top ~10) — the goal is fast first-paint, not
-// downloading the entire app on idle.
+// Keep this list short — the goal is fast first-paint, not downloading the
+// whole app. /analytics is intentionally excluded: it pulls recharts + d3,
+// by far the heaviest chunk, and is only reachable for signed-in users.
 const TOP_ROUTES: Importer[] = [
   () => import('@/pages/Subjects'),
   () => import('@/pages/MockTests'),
   () => import('@/pages/Tools'),
   () => import('@/pages/Profile'),
-  () => import('@/pages/Analytics'),
   () => import('@/pages/Leaderboard'),
   () => import('@/pages/Boards'),
   () => import('@/pages/Jobs'),
 ];
+
 
 // Hover-prefetch map: navigation path -> dynamic importer.
 // Used by nav components to warm up a chunk on mouseenter / touchstart.
@@ -61,9 +67,9 @@ const runIdle = (cb: () => void) => {
     requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
   };
   if (typeof w.requestIdleCallback === 'function') {
-    w.requestIdleCallback(cb, { timeout: 4000 });
+    w.requestIdleCallback(cb, { timeout: 2000 });
   } else {
-    setTimeout(cb, 1500);
+    setTimeout(cb, 200);
   }
 };
 
@@ -76,20 +82,52 @@ const safeImport = (fn: Importer) => {
   });
 };
 
-/** Kick off background prefetch of the top routes after the page is idle. */
+/** Run `cb` once the document has finished loading (or immediately if it has). */
+const afterLoad = (cb: () => void) => {
+  if (document.readyState === 'complete') cb();
+  else window.addEventListener('load', cb, { once: true });
+};
+
+let scheduled = false;
+
+/**
+ * Schedule background prefetch of the top routes.
+ * Fires on the first user signal after `load`, or 6s after `load` at the
+ * latest — never inside the first-paint measurement window.
+ */
 export const prefetchTopRoutes = () => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || scheduled) return;
   // Skip prefetch on slow connections to respect data-saving users.
   const conn = (navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
   if (conn?.saveData) return;
   if (conn?.effectiveType && /(^|-)2g$/.test(conn.effectiveType)) return;
+  scheduled = true;
 
-  runIdle(() => {
-    // Stagger imports across two idle frames so the network isn't slammed.
-    TOP_ROUTES.slice(0, 4).forEach(safeImport);
-    runIdle(() => TOP_ROUTES.slice(4).forEach(safeImport));
+  afterLoad(() => {
+    const EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
+    let started = false;
+    let timer = 0;
+
+    const start = () => {
+      if (started) return;
+      started = true;
+      clearTimeout(timer);
+      EVENTS.forEach((e) => window.removeEventListener(e, start));
+      // Stagger imports across idle slices so no single long task is created.
+      runIdle(() => {
+        TOP_ROUTES.slice(0, 3).forEach(safeImport);
+        runIdle(() => {
+          TOP_ROUTES.slice(3, 5).forEach(safeImport);
+          runIdle(() => TOP_ROUTES.slice(5).forEach(safeImport));
+        });
+      });
+    };
+
+    EVENTS.forEach((e) => window.addEventListener(e, start, { once: true, passive: true }));
+    timer = window.setTimeout(start, 6000);
   });
 };
+
 
 /** Warm up the chunk for a specific route — call on mouseenter / touchstart. */
 export const prefetchRoute = (path: string) => {
