@@ -22,6 +22,18 @@ interface SprintConfig {
   daily_budget?: number;
 }
 
+/**
+ * COST GUARD config. Auto-fill is meant to run on the FREE Gemini keys. If both
+ * free keys are down (429 / invalid key), every batch used to silently fall
+ * through to the paid Lovable gateway. Now a run only spends paid credits when
+ * this setting explicitly allows it, and only up to max_paid_calls_per_run.
+ */
+interface PaidBudgetConfig {
+  enabled?: boolean;
+  max_paid_calls_per_run?: number;
+}
+
+
 interface CampaignSurge {
   enabled: boolean;
   label?: string;
