@@ -73,6 +73,26 @@ interface UsageLogEntry {
 import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
 
 // Wrapper to maintain existing call pattern - now uses auto-switcher
+/**
+ * WASTE ACCOUNTING (per invocation).
+ * Every AI-returned question that we throw away before it ever reaches the DB
+ * used to vanish silently, so a run that burned 15 paid questions to keep 1
+ * looked identical to a healthy run. These counters are attached to the
+ * response + ai_usage_logs metadata so the admin history shows real waste.
+ */
+const genStats = {
+  api_calls: 0,
+  ai_returned: 0,
+  topic_rejected: 0,
+  duplicate_skipped: 0,
+};
+
+/**
+ * COST GUARD for this invocation. When true, the paid Lovable AI Gateway is
+ * never used — the request fails instead of quietly spending credits.
+ */
+let freeOnlyMode = false;
+
 async function callGeminiForBatch(
   _apiKey: string,
   promptText: string,
@@ -83,11 +103,15 @@ async function callGeminiForBatch(
     const { text, provider, cost } = await callAIWithAutoSwitch('', promptText, {
       temperature: generationConfig?.temperature || 0.7,
       maxOutputTokens: generationConfig?.maxOutputTokens || 8000,
-    }, { supabaseClient: null, sourceType: 'generate-test' });
+    }, { supabaseClient: null, sourceType: 'generate-test', allowPaidFallback: !freeOnlyMode });
     console.log(`✅ Success with ${provider} (cost: ${cost})`);
     return { success: true, text, modelUsed: provider === 'gemini' ? 'gemini-2.0-flash' : 'lovable-gateway', provider, cost };
   } catch (err: any) {
     const msg = err.message || '';
+    if (msg.includes('FREE_ONLY_EXHAUSTED')) {
+      return { success: false, error: 'FREE_ONLY_EXHAUSTED', status: 429 };
+    }
+
     if (msg.includes('CREDITS_EXHAUSTED') || msg.includes('402')) {
       return { success: false, error: 'CREDITS_EXHAUSTED', status: 402 };
     }
@@ -888,6 +912,7 @@ RULES:
         console.log(`📤 Batch ${batch + 1} attempt ${attempt}/${MAX_RETRIES}: Calling Gemini...`);
         const promptText = `${systemPrompt}\n\n${userPrompt}`;
         totalApiCalls++;
+        genStats.api_calls++;
 
         const result = await callGeminiForBatch(apiKey, promptText, {
           maxOutputTokens: 8000,
@@ -897,6 +922,9 @@ RULES:
         if (!result.success) {
           if (result.error === 'AUTH_ERROR') {
             throw { status: 403, message: 'Google API key invalid', source: 'google_gemini' };
+          }
+          if (result.error === 'FREE_ONLY_EXHAUSTED') {
+            throw { status: 429, message: 'No usable free Gemini key and paid fallback is disabled', source: 'free_only' };
           }
           if (result.error === 'ALL_MODELS_FAILED') {
             throw { status: 429, message: 'All Gemini models exhausted (rate limited)', source: 'google_gemini' };
@@ -908,22 +936,25 @@ RULES:
         if (!generatedText) continue;
 
         let batchQuestions = parseAIResponse(generatedText);
+        genStats.ai_returned += batchQuestions.length;
 
         // ============= TOPIC-MISMATCH GUARD =============
         const beforeTopicFilter = batchQuestions.length;
         batchQuestions = batchQuestions.filter(q => validateQuestionTopic(q.question, topic));
         const topicRejected = beforeTopicFilter - batchQuestions.length;
+        genStats.topic_rejected += topicRejected;
         if (topicRejected > 0) {
           console.warn(`[topic-guard] ⚠️ Batch ${batch + 1} attempt ${attempt}: rejected ${topicRejected}/${beforeTopicFilter} for topic mismatch`);
         }
 
         // ============= POST-GENERATION DEDUPLICATION =============
         let acceptedThisAttempt = 0;
+        let skippedThisAttempt = 0;
         for (const q of batchQuestions) {
           const normalized = normalizeQuestionText(q.question);
           const fp = generateQuestionFingerprint(q.question);
-          if (normalizedTexts.has(normalized)) continue;
-          if (fp && fp.split('|').length >= 3 && fingerprints.has(fp)) continue;
+          if (normalizedTexts.has(normalized)) { skippedThisAttempt++; continue; }
+          if (fp && fp.split('|').length >= 3 && fingerprints.has(fp)) { skippedThisAttempt++; continue; }
 
           allQuestions.push(q);
           generatedInThisRun.push(q.question);
@@ -932,6 +963,11 @@ RULES:
           acceptedThisAttempt++;
           batchAccepted++;
         }
+        genStats.duplicate_skipped += skippedThisAttempt;
+        if (skippedThisAttempt > 0) {
+          console.warn(`[dedup] 🗑️ Batch ${batch + 1} attempt ${attempt}: discarded ${skippedThisAttempt} near-duplicate question(s) — paid output wasted`);
+        }
+
 
         console.log(`✅ Batch ${batch + 1} attempt ${attempt}: ${acceptedThisAttempt} accepted (batch total: ${batchAccepted}/${batchSize})`);
 
@@ -1314,8 +1350,21 @@ serve(async (req) => {
       session_id, // Session ID to update with generated questions (Job Tests)
       excludeQuestionIds, // AI Coach: per-user exclusion list (UUIDs of already-attempted questions)
       weakTopics, // AI Coach Phase 2: focus 70% of generated questions on these
+      free_only, // Cost guard: when true, never fall back to the paid AI gateway
       // user_id is intentionally IGNORED - we use verified_user_id from JWT instead
     } = await req.json();
+
+    // Reset per-invocation waste accounting + cost guard (module scope is reused
+    // across requests in a warm isolate).
+    genStats.api_calls = 0;
+    genStats.ai_returned = 0;
+    genStats.topic_rejected = 0;
+    genStats.duplicate_skipped = 0;
+    freeOnlyMode = free_only === true;
+    if (freeOnlyMode) {
+      console.log('[generate-test] 💰 free_only=true — paid AI gateway fallback is disabled for this request');
+    }
+
 
     // Sanitize excludeQuestionIds — strict UUID validation prevents injection via .in() string
     const safeExcludeIds: string[] = Array.isArray(excludeQuestionIds)
@@ -2095,7 +2144,9 @@ Write the advice now:`;
 
       // Only rows that actually made it into content_items count as saved.
       const totalSaved = savedCount + flaggedCount;
+      const wasted = genStats.duplicate_skipped + genStats.topic_rejected;
       console.log(`🏭 Save complete: ${totalSaved}/${newQuestions.length} stored (${savedCount} approved, ${flaggedCount} flagged, ${failedCount} failed)`);
+      console.log(`💸 Waste: AI returned ${genStats.ai_returned} in ${genStats.api_calls} call(s) — ${genStats.duplicate_skipped} near-duplicate, ${genStats.topic_rejected} off-topic discarded before insert`);
 
       // Log AI usage - reflects rows truly written to the DB
       await logAIUsage(supabase, {
@@ -2107,7 +2158,19 @@ Write the advice now:`;
         questions_requested: qc,
         questions_fetched: newQuestions.length,
         questions_saved: totalSaved,
-        metadata: { approved: savedCount, flagged_duplicates: flaggedCount, failed: failedCount, zero_loss: totalSaved === newQuestions.length }
+        metadata: {
+          approved: savedCount,
+          flagged_duplicates: flaggedCount,
+          failed: failedCount,
+          zero_loss: totalSaved === newQuestions.length,
+          // Visible waste accounting (was silent before)
+          ai_returned: genStats.ai_returned,
+          api_calls: genStats.api_calls,
+          duplicate_skipped: genStats.duplicate_skipped,
+          topic_rejected: genStats.topic_rejected,
+          discarded_before_insert: wasted,
+          free_only: freeOnlyMode,
+        }
       });
 
       return new Response(
@@ -2120,11 +2183,17 @@ Write the advice now:`;
           questions_approved: savedCount,
           duplicates_flagged: flaggedCount,
           questions_failed: failedCount,
+          ai_returned: genStats.ai_returned,
+          api_calls: genStats.api_calls,
+          duplicate_skipped: genStats.duplicate_skipped,
+          topic_rejected: genStats.topic_rejected,
+          discarded_before_insert: wasted,
           topic: topic,
           difficulty: difficulty
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
+
     }
 
 

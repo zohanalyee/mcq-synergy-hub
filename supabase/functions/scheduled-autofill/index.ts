@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkQuota, retryWithBackoff, logQuotaUsage, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
+import { probeFreeGeminiKeys } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -20,6 +21,18 @@ interface SprintConfig {
   target_per_topic?: number;
   daily_budget?: number;
 }
+
+/**
+ * COST GUARD config. Auto-fill is meant to run on the FREE Gemini keys. If both
+ * free keys are down (429 / invalid key), every batch used to silently fall
+ * through to the paid Lovable gateway. Now a run only spends paid credits when
+ * this setting explicitly allows it, and only up to max_paid_calls_per_run.
+ */
+interface PaidBudgetConfig {
+  enabled?: boolean;
+  max_paid_calls_per_run?: number;
+}
+
 
 interface CampaignSurge {
   enabled: boolean;
@@ -168,10 +181,11 @@ Deno.serve(async (req) => {
     const { data: settingsRows } = await supabase
       .from('system_settings')
       .select('key, value')
-      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge']);
+      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge', 'auto_fill_paid_budget']);
 
     const config = (settingsRows?.find((r: any) => r.key === 'auto_fill_config')?.value ?? null) as AutoFillConfig | null;
     const sprint = (settingsRows?.find((r: any) => r.key === 'content_fill_sprint')?.value ?? null) as SprintConfig | null;
+    const paidBudget = (settingsRows?.find((r: any) => r.key === 'auto_fill_paid_budget')?.value ?? null) as PaidBudgetConfig | null;
 
     // Campaign Surge window: time-boxed budget/scope boost (e.g. Larkana banner
     // week). Auto-expires at ends_at — no code change needed to switch it off.
@@ -200,6 +214,46 @@ Deno.serve(async (req) => {
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // ============= FREE-KEY HEALTH GATE (cost guard) =============
+    // Probe the free Gemini keys once per run (2 tiny calls). If none is usable
+    // and paid credits are not explicitly allowed, abort BEFORE any generation
+    // batch — this is exactly the path that burned paid credits for days.
+    const paidAllowed = paidBudget?.enabled === true && (Number(paidBudget?.max_paid_calls_per_run) || 0) > 0;
+    const keyHealth = await probeFreeGeminiKeys();
+    console.log(`[Scheduled Auto-Fill] 🔑 Free Gemini keys usable: ${keyHealth.usable}/${keyHealth.total}${paidAllowed ? ' (paid fallback allowed)' : ' (paid fallback BLOCKED)'}`);
+    for (const d of keyHealth.details) {
+      if (!d.ok) console.warn(`[Scheduled Auto-Fill] 🔑 key #${d.key_index + 1} unusable (status ${d.status}): ${d.reason ?? ''}`);
+    }
+
+    if (keyHealth.usable === 0 && !paidAllowed) {
+      await logQuotaUsage(supabase, {
+        source_type: 'auto_fill_run_summary',
+        questions_requested: 0,
+        questions_fetched: 0,
+        questions_saved: 0,
+        metadata: {
+          run_summary: true,
+          skipped: true,
+          stop_reason: 'No usable free Gemini key — run skipped to protect paid credits',
+          free_keys_usable: 0,
+          free_keys_total: keyHealth.total,
+          key_health: keyHealth.details,
+        },
+      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          processed: 0,
+          reason: 'No usable free Gemini key; paid fallback disabled',
+          key_health: keyHealth.details,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+
 
     // Phase 2 safety limits — raised deliberately. Real ceiling stays the
     // DAILY_QUOTA_LIMIT check in quotaManager (1400 requests/day).
@@ -321,6 +375,13 @@ Deno.serve(async (req) => {
 
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
+    // Real accounting so the admin history shows yield, not just saved rows.
+    let totalQuestionsRequested = 0;
+    let totalApproved = 0;
+    let totalFlagged = 0;
+    let totalDuplicateSkipped = 0;
+    let totalTopicRejected = 0;
+    let zeroYieldStreak = 0;
     let depthTopicsProcessed = 0;
     let lastRawQueueSize = 0;
     let stopReason = '';
@@ -379,8 +440,14 @@ Deno.serve(async (req) => {
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
       lastRawQueueSize = rawQueue.length;
-      const queue = applySprintScope(rawQueue);
+      // DEFICIT-FIRST: within the priority window, spend the run on the topics
+      // that are furthest from their target instead of near-saturated ones
+      // (those are where AI output gets discarded as near-duplicates).
+      const queue = applySprintScope(rawQueue)
+        .slice()
+        .sort((a, b) => (Number(b.questions_needed) || 0) - (Number(a.questions_needed) || 0));
       let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
       let fromDepthLadder = false;
 
       // Primary gap queue exhausted -> keep going on high-traffic topics that
@@ -442,6 +509,7 @@ Deno.serve(async (req) => {
               count: questionsToRequest,
               mode: 'bank_only',
               source: 'auto_fill',
+              free_only: !paidAllowed,
               forceNew: true
             })
           }),
@@ -449,16 +517,37 @@ Deno.serve(async (req) => {
           `auto-fill ${topic.topic_name}`
         );
 
+        totalQuestionsRequested += questionsToRequest;
+
         if (generateResponse.ok) {
           const result = await generateResponse.json();
           const saved = result.questions_saved || result.saved || 0;
           topicsProcessed++;
           totalQuestionsSaved += saved;
-          console.log(`[Scheduled Auto-Fill] ✓ Generated ${saved} questions for "${topic.topic_name}" (total: ${totalQuestionsSaved})`);
+          totalDuplicateSkipped += Number(result.duplicate_skipped) || 0;
+          totalTopicRejected += Number(result.topic_rejected) || 0;
+          totalFlagged += Number(result.duplicates_flagged) || 0;
+          totalApproved += Number(result.questions_approved) || 0;
+          zeroYieldStreak = saved > 0 ? 0 : zeroYieldStreak + 1;
+          console.log(`[Scheduled Auto-Fill] ✓ Generated ${saved} questions for "${topic.topic_name}" (total: ${totalQuestionsSaved}, discarded this call: ${Number(result.discarded_before_insert) || 0})`);
+
+          // LOW-YIELD ABORT: three saturated topics in a row means the AI output
+          // is being discarded as duplicates. Stop instead of paying for more.
+          if (zeroYieldStreak >= 3) {
+            stopReason = 'Low yield — 3 consecutive topics returned 0 usable questions';
+            console.warn(`[Scheduled Auto-Fill] 🛑 ${stopReason}`);
+            break;
+          }
         } else {
           const errorText = await generateResponse.text();
           console.error(`[Scheduled Auto-Fill] Failed for ${topic.topic_name}:`, errorText);
-          
+
+          if (errorText.includes('FREE_ONLY_EXHAUSTED') || errorText.includes('paid fallback is disabled')) {
+            stopReason = 'Free Gemini capacity exhausted (paid fallback disabled)';
+            console.warn(`[Scheduled Auto-Fill] 🛑 ${stopReason}`);
+            break;
+          }
+
           if (errorText.toLowerCase().includes('limit') || errorText.toLowerCase().includes('quota')) {
             stopReason = 'Daily limit reached';
             break;
@@ -478,6 +567,7 @@ Deno.serve(async (req) => {
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
+
 
       // Small delay to prevent hammering
       await new Promise(resolve => setTimeout(resolve, 400));

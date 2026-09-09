@@ -51,7 +51,57 @@ export interface AutoSwitchResult {
 export interface AILogContext {
   supabaseClient: any;
   sourceType?: string;
+  /**
+   * COST GUARD. When false, the paid Lovable AI Gateway is never used: if every
+   * free Gemini key fails the call throws FREE_ONLY_EXHAUSTED instead of
+   * silently spending credits. Background/bulk jobs pass false.
+   */
+  allowPaidFallback?: boolean;
 }
+
+/**
+ * FREE-KEY HEALTH PROBE.
+ * Sends the cheapest possible request to each configured Gemini key so a
+ * scheduler can decide whether free capacity exists BEFORE it starts a run
+ * that would otherwise fall through to paid credits on every batch.
+ */
+export async function probeFreeGeminiKeys(): Promise<{
+  usable: number;
+  total: number;
+  details: { key_index: number; ok: boolean; status: number; reason?: string }[];
+}> {
+  const keys = [
+    Deno.env.get('GEMINI_API_KEY'),
+    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
+  ]
+    .map((key, index) => ({ key, index }))
+    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+
+  const details: { key_index: number; ok: boolean; status: number; reason?: string }[] = [];
+  let usable = 0;
+
+  for (const { key, index } of keys) {
+    try {
+      await callGeminiText(key, '', 'Reply with the single word: ok', {
+        temperature: 0,
+        maxOutputTokens: 8,
+      });
+      usable++;
+      details.push({ key_index: index, ok: true, status: 200 });
+    } catch (error: any) {
+      const status = error?.status ?? 0;
+      details.push({
+        key_index: index,
+        ok: false,
+        status,
+        reason: String(error?.message || '').substring(0, 120),
+      });
+    }
+  }
+
+  return { usable, total: keys.length, details };
+}
+
 
 
 // ============= PROVIDER STATE (in-memory, per isolate) =============
@@ -388,6 +438,18 @@ export async function callAIWithAutoSwitch(
     console.warn('[AI-Switch] No Gemini keys configured');
   } else {
     console.log('[AI-Switch] Gemini marked unavailable, skipping to Lovable...');
+  }
+
+  // COST GUARD: callers that opt out of paid usage stop here instead of
+  // silently burning credits when the free keys are down.
+  if (logCtx?.allowPaidFallback === false) {
+    console.warn('[AI-Switch] 🚫 Paid fallback disabled for this caller — skipping Lovable Gateway');
+    await record('none', -1, 'free_only_exhausted', 429);
+    throw createCodedError(
+      'FREE_ONLY_EXHAUSTED: no usable free Gemini key and paid fallback is disabled for this caller.',
+      429,
+      'FREE_ONLY_EXHAUSTED',
+    );
   }
 
   // FALLBACK: Lovable AI Gateway (PAID) with bounded retry/backoff.
