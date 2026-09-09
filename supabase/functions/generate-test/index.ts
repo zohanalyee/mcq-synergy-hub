@@ -2144,7 +2144,9 @@ Write the advice now:`;
 
       // Only rows that actually made it into content_items count as saved.
       const totalSaved = savedCount + flaggedCount;
+      const wasted = genStats.duplicate_skipped + genStats.topic_rejected;
       console.log(`🏭 Save complete: ${totalSaved}/${newQuestions.length} stored (${savedCount} approved, ${flaggedCount} flagged, ${failedCount} failed)`);
+      console.log(`💸 Waste: AI returned ${genStats.ai_returned} in ${genStats.api_calls} call(s) — ${genStats.duplicate_skipped} near-duplicate, ${genStats.topic_rejected} off-topic discarded before insert`);
 
       // Log AI usage - reflects rows truly written to the DB
       await logAIUsage(supabase, {
@@ -2156,7 +2158,19 @@ Write the advice now:`;
         questions_requested: qc,
         questions_fetched: newQuestions.length,
         questions_saved: totalSaved,
-        metadata: { approved: savedCount, flagged_duplicates: flaggedCount, failed: failedCount, zero_loss: totalSaved === newQuestions.length }
+        metadata: {
+          approved: savedCount,
+          flagged_duplicates: flaggedCount,
+          failed: failedCount,
+          zero_loss: totalSaved === newQuestions.length,
+          // Visible waste accounting (was silent before)
+          ai_returned: genStats.ai_returned,
+          api_calls: genStats.api_calls,
+          duplicate_skipped: genStats.duplicate_skipped,
+          topic_rejected: genStats.topic_rejected,
+          discarded_before_insert: wasted,
+          free_only: freeOnlyMode,
+        }
       });
 
       return new Response(
@@ -2169,11 +2183,17 @@ Write the advice now:`;
           questions_approved: savedCount,
           duplicates_flagged: flaggedCount,
           questions_failed: failedCount,
+          ai_returned: genStats.ai_returned,
+          api_calls: genStats.api_calls,
+          duplicate_skipped: genStats.duplicate_skipped,
+          topic_rejected: genStats.topic_rejected,
+          discarded_before_insert: wasted,
           topic: topic,
           difficulty: difficulty
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
       );
+
     }
 
 
