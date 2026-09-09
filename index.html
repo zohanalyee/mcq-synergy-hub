@@ -45,8 +45,29 @@
     <link rel="preconnect" href="https://www.googletagmanager.com">
     <link rel="preconnect" href="https://pzhvipkcssxrsxxljbbz.supabase.co" crossorigin>
 
-    <!-- Google AdSense site verification (required before ad units) -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4978762286882236" crossorigin="anonymous"></script>
+    <!-- Google AdSense — injected after the load event so it cannot compete with
+         LCP/first-paint. AdSlot pushes into window.adsbygoogle (a plain array),
+         so slots queued before the script arrives still fill normally. -->
+    <script>
+      (function () {
+        var loaded = false;
+        function loadAds() {
+          if (loaded) return; loaded = true;
+          var s = document.createElement('script');
+          s.async = true;
+          s.crossOrigin = 'anonymous';
+          s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4978762286882236';
+          document.head.appendChild(s);
+        }
+        function schedule() { setTimeout(loadAds, 1500); }
+        if (document.readyState === 'complete') schedule();
+        else window.addEventListener('load', schedule, { once: true });
+        ['pointerdown', 'keydown', 'scroll'].forEach(function (e) {
+          window.addEventListener(e, loadAds, { once: true, passive: true });
+        });
+      })();
+    </script>
+
 
     <!-- Non-blocking Google Fonts (trimmed weights, font-display: swap) -->
     <link
