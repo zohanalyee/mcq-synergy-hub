@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkQuota, retryWithBackoff, logQuotaUsage, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
+import { probeFreeGeminiKeys } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
