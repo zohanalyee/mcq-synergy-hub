@@ -440,6 +440,18 @@ export async function callAIWithAutoSwitch(
     console.log('[AI-Switch] Gemini marked unavailable, skipping to Lovable...');
   }
 
+  // COST GUARD: callers that opt out of paid usage stop here instead of
+  // silently burning credits when the free keys are down.
+  if (logCtx?.allowPaidFallback === false) {
+    console.warn('[AI-Switch] 🚫 Paid fallback disabled for this caller — skipping Lovable Gateway');
+    await record('none', -1, 'free_only_exhausted', 429);
+    throw createCodedError(
+      'FREE_ONLY_EXHAUSTED: no usable free Gemini key and paid fallback is disabled for this caller.',
+      429,
+      'FREE_ONLY_EXHAUSTED',
+    );
+  }
+
   // FALLBACK: Lovable AI Gateway (PAID) with bounded retry/backoff.
   // Retry only transient failures (429 / 5xx). 400 and 402 are terminal.
   if (lovableKey) {
