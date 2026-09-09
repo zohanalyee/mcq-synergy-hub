@@ -169,10 +169,11 @@ Deno.serve(async (req) => {
     const { data: settingsRows } = await supabase
       .from('system_settings')
       .select('key, value')
-      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge']);
+      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge', 'auto_fill_paid_budget']);
 
     const config = (settingsRows?.find((r: any) => r.key === 'auto_fill_config')?.value ?? null) as AutoFillConfig | null;
     const sprint = (settingsRows?.find((r: any) => r.key === 'content_fill_sprint')?.value ?? null) as SprintConfig | null;
+    const paidBudget = (settingsRows?.find((r: any) => r.key === 'auto_fill_paid_budget')?.value ?? null) as PaidBudgetConfig | null;
 
     // Campaign Surge window: time-boxed budget/scope boost (e.g. Larkana banner
     // week). Auto-expires at ends_at — no code change needed to switch it off.
