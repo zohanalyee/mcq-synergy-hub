@@ -502,6 +502,7 @@ Deno.serve(async (req) => {
               count: questionsToRequest,
               mode: 'bank_only',
               source: 'auto_fill',
+              free_only: !paidAllowed,
               forceNew: true
             })
           }),
@@ -509,16 +510,37 @@ Deno.serve(async (req) => {
           `auto-fill ${topic.topic_name}`
         );
 
+        totalQuestionsRequested += questionsToRequest;
+
         if (generateResponse.ok) {
           const result = await generateResponse.json();
           const saved = result.questions_saved || result.saved || 0;
           topicsProcessed++;
           totalQuestionsSaved += saved;
-          console.log(`[Scheduled Auto-Fill] ✓ Generated ${saved} questions for "${topic.topic_name}" (total: ${totalQuestionsSaved})`);
+          totalDuplicateSkipped += Number(result.duplicate_skipped) || 0;
+          totalTopicRejected += Number(result.topic_rejected) || 0;
+          totalFlagged += Number(result.duplicates_flagged) || 0;
+          totalApproved += Number(result.questions_approved) || 0;
+          zeroYieldStreak = saved > 0 ? 0 : zeroYieldStreak + 1;
+          console.log(`[Scheduled Auto-Fill] ✓ Generated ${saved} questions for "${topic.topic_name}" (total: ${totalQuestionsSaved}, discarded this call: ${Number(result.discarded_before_insert) || 0})`);
+
+          // LOW-YIELD ABORT: three saturated topics in a row means the AI output
+          // is being discarded as duplicates. Stop instead of paying for more.
+          if (zeroYieldStreak >= 3) {
+            stopReason = 'Low yield — 3 consecutive topics returned 0 usable questions';
+            console.warn(`[Scheduled Auto-Fill] 🛑 ${stopReason}`);
+            break;
+          }
         } else {
           const errorText = await generateResponse.text();
           console.error(`[Scheduled Auto-Fill] Failed for ${topic.topic_name}:`, errorText);
-          
+
+          if (errorText.includes('FREE_ONLY_EXHAUSTED') || errorText.includes('paid fallback is disabled')) {
+            stopReason = 'Free Gemini capacity exhausted (paid fallback disabled)';
+            console.warn(`[Scheduled Auto-Fill] 🛑 ${stopReason}`);
+            break;
+          }
+
           if (errorText.toLowerCase().includes('limit') || errorText.toLowerCase().includes('quota')) {
             stopReason = 'Daily limit reached';
             break;
@@ -538,6 +560,7 @@ Deno.serve(async (req) => {
         console.log(`[Scheduled Auto-Fill] ${stopReason}`);
         break;
       }
+
 
       // Small delay to prevent hammering
       await new Promise(resolve => setTimeout(resolve, 400));
