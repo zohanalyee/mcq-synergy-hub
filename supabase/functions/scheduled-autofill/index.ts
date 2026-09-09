@@ -433,8 +433,14 @@ Deno.serve(async (req) => {
 
       const rawQueue = (queueData as AutoFillQueueItem[] | null) || [];
       lastRawQueueSize = rawQueue.length;
-      const queue = applySprintScope(rawQueue);
+      // DEFICIT-FIRST: within the priority window, spend the run on the topics
+      // that are furthest from their target instead of near-saturated ones
+      // (those are where AI output gets discarded as near-duplicates).
+      const queue = applySprintScope(rawQueue)
+        .slice()
+        .sort((a, b) => (Number(b.questions_needed) || 0) - (Number(a.questions_needed) || 0));
       let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
       let fromDepthLadder = false;
 
       // Primary gap queue exhausted -> keep going on high-traffic topics that
