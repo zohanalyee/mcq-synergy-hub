@@ -912,6 +912,7 @@ RULES:
         console.log(`📤 Batch ${batch + 1} attempt ${attempt}/${MAX_RETRIES}: Calling Gemini...`);
         const promptText = `${systemPrompt}\n\n${userPrompt}`;
         totalApiCalls++;
+        genStats.api_calls++;
 
         const result = await callGeminiForBatch(apiKey, promptText, {
           maxOutputTokens: 8000,
@@ -921,6 +922,9 @@ RULES:
         if (!result.success) {
           if (result.error === 'AUTH_ERROR') {
             throw { status: 403, message: 'Google API key invalid', source: 'google_gemini' };
+          }
+          if (result.error === 'FREE_ONLY_EXHAUSTED') {
+            throw { status: 429, message: 'No usable free Gemini key and paid fallback is disabled', source: 'free_only' };
           }
           if (result.error === 'ALL_MODELS_FAILED') {
             throw { status: 429, message: 'All Gemini models exhausted (rate limited)', source: 'google_gemini' };
@@ -932,22 +936,25 @@ RULES:
         if (!generatedText) continue;
 
         let batchQuestions = parseAIResponse(generatedText);
+        genStats.ai_returned += batchQuestions.length;
 
         // ============= TOPIC-MISMATCH GUARD =============
         const beforeTopicFilter = batchQuestions.length;
         batchQuestions = batchQuestions.filter(q => validateQuestionTopic(q.question, topic));
         const topicRejected = beforeTopicFilter - batchQuestions.length;
+        genStats.topic_rejected += topicRejected;
         if (topicRejected > 0) {
           console.warn(`[topic-guard] ⚠️ Batch ${batch + 1} attempt ${attempt}: rejected ${topicRejected}/${beforeTopicFilter} for topic mismatch`);
         }
 
         // ============= POST-GENERATION DEDUPLICATION =============
         let acceptedThisAttempt = 0;
+        let skippedThisAttempt = 0;
         for (const q of batchQuestions) {
           const normalized = normalizeQuestionText(q.question);
           const fp = generateQuestionFingerprint(q.question);
-          if (normalizedTexts.has(normalized)) continue;
-          if (fp && fp.split('|').length >= 3 && fingerprints.has(fp)) continue;
+          if (normalizedTexts.has(normalized)) { skippedThisAttempt++; continue; }
+          if (fp && fp.split('|').length >= 3 && fingerprints.has(fp)) { skippedThisAttempt++; continue; }
 
           allQuestions.push(q);
           generatedInThisRun.push(q.question);
@@ -956,6 +963,11 @@ RULES:
           acceptedThisAttempt++;
           batchAccepted++;
         }
+        genStats.duplicate_skipped += skippedThisAttempt;
+        if (skippedThisAttempt > 0) {
+          console.warn(`[dedup] 🗑️ Batch ${batch + 1} attempt ${attempt}: discarded ${skippedThisAttempt} near-duplicate question(s) — paid output wasted`);
+        }
+
 
         console.log(`✅ Batch ${batch + 1} attempt ${attempt}: ${acceptedThisAttempt} accepted (batch total: ${batchAccepted}/${batchSize})`);
 
