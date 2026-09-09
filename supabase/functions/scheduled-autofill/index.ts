@@ -215,6 +215,46 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ============= FREE-KEY HEALTH GATE (cost guard) =============
+    // Probe the free Gemini keys once per run (2 tiny calls). If none is usable
+    // and paid credits are not explicitly allowed, abort BEFORE any generation
+    // batch — this is exactly the path that burned paid credits for days.
+    const paidAllowed = paidBudget?.enabled === true && (Number(paidBudget?.max_paid_calls_per_run) || 0) > 0;
+    const keyHealth = await probeFreeGeminiKeys();
+    console.log(`[Scheduled Auto-Fill] 🔑 Free Gemini keys usable: ${keyHealth.usable}/${keyHealth.total}${paidAllowed ? ' (paid fallback allowed)' : ' (paid fallback BLOCKED)'}`);
+    for (const d of keyHealth.details) {
+      if (!d.ok) console.warn(`[Scheduled Auto-Fill] 🔑 key #${d.key_index + 1} unusable (status ${d.status}): ${d.reason ?? ''}`);
+    }
+
+    if (keyHealth.usable === 0 && !paidAllowed) {
+      await logQuotaUsage(supabase, {
+        source_type: 'auto_fill_run_summary',
+        questions_requested: 0,
+        questions_fetched: 0,
+        questions_saved: 0,
+        metadata: {
+          run_summary: true,
+          skipped: true,
+          stop_reason: 'No usable free Gemini key — run skipped to protect paid credits',
+          free_keys_usable: 0,
+          free_keys_total: keyHealth.total,
+          key_health: keyHealth.details,
+        },
+      });
+      return new Response(
+        JSON.stringify({
+          success: true,
+          skipped: true,
+          processed: 0,
+          reason: 'No usable free Gemini key; paid fallback disabled',
+          key_health: keyHealth.details,
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+
+
     // Phase 2 safety limits — raised deliberately. Real ceiling stays the
     // DAILY_QUOTA_LIMIT check in quotaManager (1400 requests/day).
     const HARD_BATCH_LIMIT = 20;
