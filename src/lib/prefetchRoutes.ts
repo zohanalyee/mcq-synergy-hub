@@ -67,9 +67,9 @@ const runIdle = (cb: () => void) => {
     requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number;
   };
   if (typeof w.requestIdleCallback === 'function') {
-    w.requestIdleCallback(cb, { timeout: 4000 });
+    w.requestIdleCallback(cb, { timeout: 2000 });
   } else {
-    setTimeout(cb, 1500);
+    setTimeout(cb, 200);
   }
 };
 
@@ -82,20 +82,52 @@ const safeImport = (fn: Importer) => {
   });
 };
 
-/** Kick off background prefetch of the top routes after the page is idle. */
+/** Run `cb` once the document has finished loading (or immediately if it has). */
+const afterLoad = (cb: () => void) => {
+  if (document.readyState === 'complete') cb();
+  else window.addEventListener('load', cb, { once: true });
+};
+
+let scheduled = false;
+
+/**
+ * Schedule background prefetch of the top routes.
+ * Fires on the first user signal after `load`, or 6s after `load` at the
+ * latest — never inside the first-paint measurement window.
+ */
 export const prefetchTopRoutes = () => {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined' || scheduled) return;
   // Skip prefetch on slow connections to respect data-saving users.
   const conn = (navigator as unknown as { connection?: { saveData?: boolean; effectiveType?: string } }).connection;
   if (conn?.saveData) return;
   if (conn?.effectiveType && /(^|-)2g$/.test(conn.effectiveType)) return;
+  scheduled = true;
 
-  runIdle(() => {
-    // Stagger imports across two idle frames so the network isn't slammed.
-    TOP_ROUTES.slice(0, 4).forEach(safeImport);
-    runIdle(() => TOP_ROUTES.slice(4).forEach(safeImport));
+  afterLoad(() => {
+    const EVENTS = ['pointerdown', 'keydown', 'scroll', 'touchstart'] as const;
+    let started = false;
+    let timer = 0;
+
+    const start = () => {
+      if (started) return;
+      started = true;
+      clearTimeout(timer);
+      EVENTS.forEach((e) => window.removeEventListener(e, start));
+      // Stagger imports across idle slices so no single long task is created.
+      runIdle(() => {
+        TOP_ROUTES.slice(0, 3).forEach(safeImport);
+        runIdle(() => {
+          TOP_ROUTES.slice(3, 5).forEach(safeImport);
+          runIdle(() => TOP_ROUTES.slice(5).forEach(safeImport));
+        });
+      });
+    };
+
+    EVENTS.forEach((e) => window.addEventListener(e, start, { once: true, passive: true }));
+    timer = window.setTimeout(start, 6000);
   });
 };
+
 
 /** Warm up the chunk for a specific route — call on mouseenter / touchstart. */
 export const prefetchRoute = (path: string) => {
