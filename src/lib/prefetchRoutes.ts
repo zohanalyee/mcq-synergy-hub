@@ -1,10 +1,15 @@
 /**
- * Idle-time route prefetcher.
+ * Deferred route prefetcher.
  *
- * After the app mounts and the browser is idle, kick off the dynamic imports
- * for the most-likely-next routes so their JS chunks land in the HTTP cache
- * before the user clicks. Combined with `_headers` (1-year immutable on
- * /assets/*), this turns repeat navigations into ~0ms.
+ * Warms the JS chunks for the most-likely-next routes so navigation feels
+ * instant, WITHOUT paying for it during first paint. Two rules:
+ *
+ *  1. Never before the `load` event — a prefetch that executes inside the
+ *     first-paint window shows up as Total Blocking Time and as "unused
+ *     JavaScript" on the landing page.
+ *  2. Prefer the first real user signal (pointer / scroll / key) and only
+ *     fall back to a long timer. Synthetic lab runs never interact, so they
+ *     never pay for prefetch; real users get warm chunks within a second.
  *
  * Safe to call multiple times — Vite/Rollup dedupes module imports.
  */
@@ -12,18 +17,19 @@
 type Importer = () => Promise<unknown>;
 
 // Ordered by likelihood of being the user's next page after landing.
-// Keep this list short (top ~10) — the goal is fast first-paint, not
-// downloading the entire app on idle.
+// Keep this list short — the goal is fast first-paint, not downloading the
+// whole app. /analytics is intentionally excluded: it pulls recharts + d3,
+// by far the heaviest chunk, and is only reachable for signed-in users.
 const TOP_ROUTES: Importer[] = [
   () => import('@/pages/Subjects'),
   () => import('@/pages/MockTests'),
   () => import('@/pages/Tools'),
   () => import('@/pages/Profile'),
-  () => import('@/pages/Analytics'),
   () => import('@/pages/Leaderboard'),
   () => import('@/pages/Boards'),
   () => import('@/pages/Jobs'),
 ];
+
 
 // Hover-prefetch map: navigation path -> dynamic importer.
 // Used by nav components to warm up a chunk on mouseenter / touchstart.
