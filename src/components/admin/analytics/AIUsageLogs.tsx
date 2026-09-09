@@ -240,7 +240,9 @@ const AIUsageLogs = () => {
                   </TableHeader>
 
                   <TableBody>
-                    {logs.map((log) => (
+                    {logs.map((log) => {
+                      const waste = readWaste(log.metadata);
+                      return (
                       <TableRow key={log.id}>
                         <TableCell className="text-xs whitespace-nowrap">
                           {format(new Date(log.created_at), 'MMM d, HH:mm')}
@@ -275,9 +277,19 @@ const AIUsageLogs = () => {
                         <TableCell className="text-center text-xs font-medium text-green-600">
                           {log.questions_saved}
                         </TableCell>
+                        <TableCell
+                          className={`text-center text-xs font-medium ${waste.discarded > 0 ? 'text-destructive' : 'text-muted-foreground'}`}
+                          title={waste.discarded > 0 ? `${waste.duplicateSkipped} duplicate, ${waste.topicRejected} off-topic` : undefined}
+                        >
+                          {waste.discarded || '-'}
+                        </TableCell>
+                        <TableCell className="text-center text-xs font-medium text-muted-foreground">
+                          {waste.flagged || '-'}
+                        </TableCell>
                         <TableCell>
                           {getEfficiencyBadge(log.questions_fetched, log.questions_saved)}
                         </TableCell>
+
                       </TableRow>
                     ))}
                   </TableBody>
