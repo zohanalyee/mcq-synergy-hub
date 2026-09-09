@@ -6,13 +6,15 @@ No changes made. Findings below are from live database, usage logs, cron table, 
 
 Yes — but very few. Real counts (MCQs, by day created):
 
-| Day | Approved (visible) | Flagged duplicate (hidden) | Pending |
-|---|---|---|---|
-| 5 Sep | 121 | 9 | 7 |
-| 6 Sep | 138 | 0 | 5 |
-| 7 Sep | 63 | 5 | 5 |
-| 8 Sep | 60 | 33 | 1 |
-| 9 Sep (partial) | 49 | 36 | 0 |
+
+| Day             | Approved (visible) | Flagged duplicate (hidden) | Pending |
+| --------------- | ------------------ | -------------------------- | ------- |
+| 5 Sep           | 121                | 9                          | 7       |
+| 6 Sep           | 138                | 0                          | 5       |
+| 7 Sep           | 63                 | 5                          | 5       |
+| 8 Sep           | 60                 | 33                         | 1       |
+| 9 Sep (partial) | 49                 | 36                         | 0       |
+
 
 Last 3 days: **237 approved and visible**, **74 hidden as flagged duplicates**, 9 pending. So the bank *is* growing, but the rate has dropped by roughly half since 6 Sep, and the share of throwaway output has jumped from ~0% to ~40%.
 
@@ -39,6 +41,7 @@ Evidence from the last six auto-fill cron runs (each every 30 min):
 - `stop_reason: "Time budget reached (partial run, continues next cycle)"` every time, against a `run_target` of 600
 
 So roughly **93% of every paid batch is discarded**. Two discard paths:
+
 1. In-batch/near-duplicate fingerprint filter inside `generate-test` silently skips repeats before insert (no log line, no counter).
 2. Rows that survive that filter but collide are stored as `flagged_duplicate` with `show_in_subjects=false` and `show_in_mock_tests=false` — 74 in three days. These are invisible in the normal bank, which is why it feels like nothing is being added.
 
@@ -60,17 +63,19 @@ Also note: `auto_fill_config.run_target` is 600/run while the function's time bu
 
 ## 5. Exact numbers (last 3 days, 6–9 Sep)
 
-| Metric | Value |
-|---|---|
-| Paid gateway credits consumed (gemini-2.5-flash in+out+cached) | **13.97 credits** |
-| Free Gemini attempts that failed (429 / invalid key / 503) | **937** |
-| Free Gemini attempts that succeeded | 7 |
-| Paid gateway successes | 321 |
-| Questions approved + visible | **237** |
-| Questions hidden as flagged duplicates | **74** |
-| Questions pending | 9 |
-| Questions requested but silently discarded as near-duplicates | **~600–700** (est. from 15/topic × ~7 topics × 48 runs/day vs saved counts) |
-| Effective yield | **~7% of paid output reaches the visible bank** |
+
+| Metric                                                         | Value                                                                       |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Paid gateway credits consumed (gemini-2.5-flash in+out+cached) | **13.97 credits**                                                           |
+| Free Gemini attempts that failed (429 / invalid key / 503)     | **937**                                                                     |
+| Free Gemini attempts that succeeded                            | 7                                                                           |
+| Paid gateway successes                                         | 321                                                                         |
+| Questions approved + visible                                   | **237**                                                                     |
+| Questions hidden as flagged duplicates                         | **74**                                                                      |
+| Questions pending                                              | 9                                                                           |
+| Questions requested but silently discarded as near-duplicates  | **~600–700** (est. from 15/topic × ~7 topics × 48 runs/day vs saved counts) |
+| Effective yield                                                | **~7% of paid output reaches the visible bank**                             |
+
 
 For context on the wallet: workspace daily grant is 5.00 credits with 1.10 remaining today, and total remaining is 7.80 of 355 granted. Of the 65.47 credits used in this window, 51.50 were Lovable build/plan messages and 13.97 were app AI Gateway calls.
 
@@ -80,7 +85,7 @@ For context on the wallet: workspace daily grant is 5.00 credits with 1.10 remai
 2. **Gemini key #1 is permanently at its free quota (429).** With both free keys dead, 100% of generation is billed.
 3. **Surge scope points at saturated topics**, so ~93% of paid output is thrown away.
 4. **Duplicate waste is invisible** — silent fingerprint skips are not counted anywhere, so the dashboard cannot show that a run wasted 90 questions to save 6.
-5. **`run_target: 600` is unreachable** within the function time budget, guaranteeing a "partial run" every cycle.
+5. `**run_target: 600` is unreachable** within the function time budget, guaranteeing a "partial run" every cycle.
 
 ## Recommended fixes (for your approval — nothing built yet)
 
@@ -90,3 +95,21 @@ For context on the wallet: workspace daily grant is 5.00 credits with 1.10 remai
 - Deficit-first topic selection: skip any topic whose approved bank already meets target, and rank saturated topics last, so surge spends on genuinely thin topics.
 - Count and log discarded near-duplicates per run (requested / saved / duplicate-skipped / flagged) and surface it in the admin generation history, plus a visible counter for hidden `flagged_duplicate` rows.
 - Lower `run_target` to what one run can actually complete, so partial-run noise stops masking real failures.
+
+&nbsp;
+
+Immediate stop-loss: pause auto_fill_config.enabled right now (or at minimum, remove the 3x surge multiplier) until the Gemini keys are fixed. We are currently burning paid credits at ~7% yield — this needs to stop before any further spend.
+
+Once paused, please also:
+
+1. Replace the invalid GEMINI_API_KEY_2 secret (I'll provide a fresh key)
+
+2. Add a health-check so the scheduler verifies both free keys work before trusting them, and if no free key is usable, either skip the run entirely or cap spend to a small explicit paid budget (don't silently fall back to unlimited paid usage)
+
+3. Fix topic selection to be deficit-first — skip topics whose bank already meets target, prioritize genuinely thin topics — so surge budget isn't wasted on saturated MDCAT topics
+
+4. Log discarded near-duplicates per run (requested/saved/duplicate-skipped/flagged) visibly in admin generation history, so this kind of silent waste is caught immediately next time
+
+5. Lower run_target to a realistic number the function can actually complete in one cycle, so "partial run" stops masking the real problem
+
+Report back once the keys are fixed and topic-selection logic is updated — I'll re-enable surge after confirming yield improves.
