@@ -589,8 +589,8 @@ Deno.serve(async (req) => {
     // ============= RUN SUMMARY (always logged, even for 0 questions) =============
     await logQuotaUsage(supabase, {
       source_type: 'auto_fill_run_summary',
-      questions_requested: 0,
-      questions_fetched: 0,
+      questions_requested: totalQuestionsRequested,
+      questions_fetched: totalQuestionsSaved,
       questions_saved: totalQuestionsSaved,
       metadata: {
         run_summary: true,
@@ -599,6 +599,16 @@ Deno.serve(async (req) => {
         depth_ladder_topics: depthTopicsProcessed,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
+        // Real yield accounting (previously invisible)
+        questions_requested: totalQuestionsRequested,
+        approved: totalApproved,
+        flagged_duplicates: totalFlagged,
+        duplicate_skipped: totalDuplicateSkipped,
+        topic_rejected: totalTopicRejected,
+        discarded_before_insert: totalDuplicateSkipped + totalTopicRejected,
+        free_keys_usable: keyHealth.usable,
+        free_keys_total: keyHealth.total,
+        paid_fallback_allowed: paidAllowed,
         run_target: HARD_RUN_TARGET,
         batch_size: batchSize,
         sprint_mode: sprintOn,
@@ -612,7 +622,7 @@ Deno.serve(async (req) => {
     });
 
     // Log the run result
-    console.log(`[Scheduled Auto-Fill] ✅ Completed. Topics: ${topicsProcessed}, Questions: ${totalQuestionsSaved}, Reason: ${stopReason}`);
+    console.log(`[Scheduled Auto-Fill] ✅ Completed. Topics: ${topicsProcessed}, Questions: ${totalQuestionsSaved}, Requested: ${totalQuestionsRequested}, Discarded: ${totalDuplicateSkipped + totalTopicRejected}, Reason: ${stopReason}`);
 
     return new Response(
       JSON.stringify({
@@ -622,6 +632,12 @@ Deno.serve(async (req) => {
         depth_ladder_topics: depthTopicsProcessed,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
+        questions_requested: totalQuestionsRequested,
+        duplicate_skipped: totalDuplicateSkipped,
+        topic_rejected: totalTopicRejected,
+        flagged_duplicates: totalFlagged,
+        free_keys_usable: keyHealth.usable,
+        paid_fallback_allowed: paidAllowed,
         run_target: HARD_RUN_TARGET,
         sprint_mode: sprintOn,
         sprint_scope: sprintOn ? sprintKeywords : [],
@@ -633,6 +649,7 @@ Deno.serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
+
 
 
   } catch (error: any) {
