@@ -233,9 +233,12 @@ const AIUsageLogs = () => {
                       <TableHead className="text-xs text-center">Requested</TableHead>
                       <TableHead className="text-xs text-center">Fetched</TableHead>
                       <TableHead className="text-xs text-center">Saved</TableHead>
+                      <TableHead className="text-xs text-center">Discarded</TableHead>
+                      <TableHead className="text-xs text-center">Flagged</TableHead>
                       <TableHead className="text-xs">Efficiency</TableHead>
                     </TableRow>
                   </TableHeader>
+
                   <TableBody>
                     {logs.map((log) => (
                       <TableRow key={log.id}>
