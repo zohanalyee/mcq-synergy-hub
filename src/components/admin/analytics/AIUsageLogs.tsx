@@ -97,12 +97,22 @@ const AIUsageLogs = () => {
     fetchLogs();
   }, [sourceFilter, page]);
 
-  const getEfficiencyColor = (fetched: number, saved: number) => {
-    if (fetched === 0) return "text-muted-foreground";
-    const ratio = saved / fetched;
-    if (ratio >= 0.9) return "text-green-600";
-    if (ratio >= 0.7) return "text-yellow-600";
-    return "text-red-600";
+  /**
+   * Waste accounting written by the generator into metadata. These questions
+   * were paid for but thrown away before insert (near-duplicate / off-topic),
+   * so they never showed up anywhere until now.
+   */
+  const readWaste = (metadata: unknown) => {
+    const m = (metadata && typeof metadata === 'object' ? metadata : {}) as Record<string, unknown>;
+    const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0);
+    const duplicateSkipped = num(m.duplicate_skipped);
+    const topicRejected = num(m.topic_rejected);
+    return {
+      duplicateSkipped,
+      topicRejected,
+      flagged: num(m.flagged_duplicates),
+      discarded: num(m.discarded_before_insert) || duplicateSkipped + topicRejected,
+    };
   };
 
   const getEfficiencyBadge = (fetched: number, saved: number) => {
@@ -112,6 +122,7 @@ const AIUsageLogs = () => {
     if (ratio >= 0.7) return <Badge className="bg-yellow-500/20 text-yellow-700 border-yellow-500/30">Good</Badge>;
     return <Badge className="bg-red-500/20 text-red-700 border-red-500/30">High Waste</Badge>;
   };
+
 
   return (
     <div className="space-y-4">
