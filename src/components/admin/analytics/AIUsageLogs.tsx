@@ -291,7 +291,9 @@ const AIUsageLogs = () => {
                         </TableCell>
 
                       </TableRow>
-                    ))}
+                      );
+                    })}
+
                   </TableBody>
                 </Table>
               </div>
