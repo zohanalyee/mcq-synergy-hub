@@ -375,6 +375,13 @@ Deno.serve(async (req) => {
 
     let topicsProcessed = 0;
     let totalQuestionsSaved = 0;
+    // Real accounting so the admin history shows yield, not just saved rows.
+    let totalQuestionsRequested = 0;
+    let totalApproved = 0;
+    let totalFlagged = 0;
+    let totalDuplicateSkipped = 0;
+    let totalTopicRejected = 0;
+    let zeroYieldStreak = 0;
     let depthTopicsProcessed = 0;
     let lastRawQueueSize = 0;
     let stopReason = '';
