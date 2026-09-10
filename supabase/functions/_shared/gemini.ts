@@ -89,12 +89,8 @@ export async function probeFreeGeminiKeys(): Promise<{
   total: number;
   details: { key_index: number; ok: boolean; status: number; reason?: string }[];
 }> {
-  const keys = [
-    Deno.env.get('GEMINI_API_KEY'),
-    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
-  ]
-    .map((key, index) => ({ key, index }))
-    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  const keys = getFreeGeminiKeys();
+
 
   const details: { key_index: number; ok: boolean; status: number; reason?: string }[] = [];
   let usable = 0;
