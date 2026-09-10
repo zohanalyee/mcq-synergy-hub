@@ -207,7 +207,7 @@ serve(async (req) => {
 
   try {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    const FALLBACK_GEMINI_API_KEY = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
+    
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
