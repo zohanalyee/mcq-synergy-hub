@@ -165,8 +165,9 @@ async function generateWithAdaptiveFallback(
   let lastError: any;
 
   // Try all Gemini keys + model combos first
-  for (const key of apiKeys) {
-    const keyLabel = key === primaryApiKey ? "primary" : "fallback";
+  for (const { key, index } of apiKeys) {
+    const keyLabel = `key #${index + 1}`;
+
 
     for (const cfg of attempts) {
       try {
