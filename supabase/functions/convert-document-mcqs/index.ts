@@ -149,12 +149,12 @@ function isRateLimitError(error: any): boolean {
 }
 
 async function generateWithAdaptiveFallback(
-  primaryApiKey: string,
-  fallbackApiKey: string | undefined,
   systemPrompt: string,
   userPrompt: string
 ): Promise<string> {
-  const apiKeys = [primaryApiKey, fallbackApiKey].filter((k): k is string => !!k && k.trim().length > 0);
+  // Shared free-key rotation: #1 GEMINI_API_KEY → #2 EXTERNAL_JOBS_GEMINI_KEY → #3 GEMINI_API_KEY_3.
+  const apiKeys = getFreeGeminiKeys();
+
 
   const attempts = [
     { model: "gemini-2.0-flash", temperature: 0.2, maxOutputTokens: 8192 },
