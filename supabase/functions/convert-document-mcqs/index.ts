@@ -414,12 +414,7 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
 
     let responseText: string;
     try {
-      responseText = await generateWithAdaptiveFallback(
-        GEMINI_API_KEY,
-        FALLBACK_GEMINI_API_KEY,
-        systemPrompt,
-        userPrompt
-      );
+      responseText = await generateWithAdaptiveFallback(systemPrompt, userPrompt);
     } catch (aiErr: any) {
       const msg = aiErr.message || '';
       console.error(`[convert-document-mcqs] AI error:`, msg);
