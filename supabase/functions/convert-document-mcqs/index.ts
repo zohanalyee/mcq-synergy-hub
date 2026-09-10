@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { extractText, getDocumentProxy } from "https://esm.sh/unpdf@0.12.1";
 import JSZip from "https://esm.sh/jszip@3.10.1";
-import { callGeminiText, callGeminiVision, callAIWithAutoSwitch } from '../_shared/gemini.ts';
+import { callGeminiText, callGeminiVision, callAIWithAutoSwitch, getFreeGeminiKeys } from '../_shared/gemini.ts';
 import { retryWithBackoff } from '../_shared/quotaManager.ts';
 
 const corsHeaders = {
@@ -149,12 +149,12 @@ function isRateLimitError(error: any): boolean {
 }
 
 async function generateWithAdaptiveFallback(
-  primaryApiKey: string,
-  fallbackApiKey: string | undefined,
   systemPrompt: string,
   userPrompt: string
 ): Promise<string> {
-  const apiKeys = [primaryApiKey, fallbackApiKey].filter((k): k is string => !!k && k.trim().length > 0);
+  // Shared free-key rotation: #1 GEMINI_API_KEY → #2 EXTERNAL_JOBS_GEMINI_KEY → #3 GEMINI_API_KEY_3.
+  const apiKeys = getFreeGeminiKeys();
+
 
   const attempts = [
     { model: "gemini-2.0-flash", temperature: 0.2, maxOutputTokens: 8192 },
@@ -165,8 +165,9 @@ async function generateWithAdaptiveFallback(
   let lastError: any;
 
   // Try all Gemini keys + model combos first
-  for (const key of apiKeys) {
-    const keyLabel = key === primaryApiKey ? "primary" : "fallback";
+  for (const { key, index } of apiKeys) {
+    const keyLabel = `key #${index + 1}`;
+
 
     for (const cfg of attempts) {
       try {
@@ -206,7 +207,7 @@ serve(async (req) => {
 
   try {
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    const FALLBACK_GEMINI_API_KEY = Deno.env.get("EXTERNAL_JOBS_GEMINI_KEY");
+    
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
@@ -413,12 +414,7 @@ REMINDER: Extract ALL questions found. Do not stop after a few!`;
 
     let responseText: string;
     try {
-      responseText = await generateWithAdaptiveFallback(
-        GEMINI_API_KEY,
-        FALLBACK_GEMINI_API_KEY,
-        systemPrompt,
-        userPrompt
-      );
+      responseText = await generateWithAdaptiveFallback(systemPrompt, userPrompt);
     } catch (aiErr: any) {
       const msg = aiErr.message || '';
       console.error(`[convert-document-mcqs] AI error:`, msg);
