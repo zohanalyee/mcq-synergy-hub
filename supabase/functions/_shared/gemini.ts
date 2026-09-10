@@ -60,6 +60,25 @@ export interface AILogContext {
 }
 
 /**
+ * SINGLE SOURCE OF TRUTH for the free Gemini key rotation order:
+ *   #1 GEMINI_API_KEY → #2 EXTERNAL_JOBS_GEMINI_KEY → #3 GEMINI_API_KEY_3
+ * Paid Lovable Gateway is only ever tried after all of these fail (and only
+ * when the caller allows paid fallback). Missing/blank keys are skipped, so a
+ * key that is not configured simply shortens the chain.
+ */
+export function getFreeGeminiKeys(): { key: string; index: number }[] {
+  return [
+    Deno.env.get('GEMINI_API_KEY'),
+    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
+    Deno.env.get('GEMINI_API_KEY_3'),
+  ]
+    .map((key, index) => ({ key, index }))
+    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+}
+
+
+
+/**
  * FREE-KEY HEALTH PROBE.
  * Sends the cheapest possible request to each configured Gemini key so a
  * scheduler can decide whether free capacity exists BEFORE it starts a run
@@ -70,12 +89,8 @@ export async function probeFreeGeminiKeys(): Promise<{
   total: number;
   details: { key_index: number; ok: boolean; status: number; reason?: string }[];
 }> {
-  const keys = [
-    Deno.env.get('GEMINI_API_KEY'),
-    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
-  ]
-    .map((key, index) => ({ key, index }))
-    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  const keys = getFreeGeminiKeys();
+
 
   const details: { key_index: number; ok: boolean; status: number; reason?: string }[] = [];
   let usable = 0;
@@ -372,13 +387,9 @@ export async function callAIWithAutoSwitch(
   const record = (provider: 'gemini' | 'lovable' | 'none', key_index: number, outcome: string, status: number) =>
     recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType });
 
-  // Build the Gemini key rotation: primary + secondary (already used by vision).
-  const geminiKeys = [
-    Deno.env.get('GEMINI_API_KEY'),
-    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
-  ]
-    .map((key, index) => ({ key, index }))
-    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  // Free key rotation: #1 → #2 → #3 (shared order), paid gateway last.
+  const geminiKeys = getFreeGeminiKeys();
+
 
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
 
@@ -523,34 +534,34 @@ export async function callVisionWithAutoSwitch(
 
   const client = logCtx?.supabaseClient ?? getLogClient();
   const sourceType = logCtx?.sourceType ?? 'vision';
-  const geminiKey = Deno.env.get('GEMINI_API_KEY');
-  const fallbackKey = Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY');
-  const keys = [
-    { key: geminiKey, index: 0 },
-    { key: fallbackKey, index: 1 },
-  ].filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  // Vision rotates the same free keys (#1 → #2 → #3); no paid fallback exists.
+  const keys = getFreeGeminiKeys();
 
-  for (const { key, index } of keys) {
-    const label = index === 0 ? 'primary' : 'fallback';
+
+  for (let i = 0; i < keys.length; i++) {
+    const { key, index } = keys[i];
+    const isLast = i === keys.length - 1;
+    const label = `key #${index + 1}`;
     try {
-      console.log(`[AI-Switch] Attempting Gemini Vision (${label} key)...`);
+      console.log(`[AI-Switch] Attempting Gemini Vision (${label})...`);
       await waitForRateLimit();
       const text = await callGeminiVision(key, prompt, base64Data, mimeType, config);
-      console.log(`[AI-Switch] ✅ Vision success with ${label} key`);
+      console.log(`[AI-Switch] ✅ Vision success with ${label}`);
       await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'success', status: 200, source_type: sourceType });
       return { text, provider: 'gemini', cost: 0 };
     } catch (error: any) {
       if (isQuotaError(error)) {
-        console.warn(`[AI-Switch] ⚠️ Vision rate limited on ${label} key, trying next...`);
+        console.warn(`[AI-Switch] ⚠️ Vision rate limited on ${label}, trying next...`);
         await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'rate_limited', status: 429, source_type: sourceType });
         continue;
       }
-      console.error(`[AI-Switch] Vision error on ${label} key:`, error.message?.substring(0, 100));
+      console.error(`[AI-Switch] Vision error on ${label}:`, error.message?.substring(0, 100));
       await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'error', status: error?.status ?? 0, source_type: sourceType });
-      if (label === 'primary' && fallbackKey) continue;
+      if (!isLast) continue;
       throw error;
     }
   }
+
 
   throw new Error('All Gemini Vision keys exhausted. Vision does not support Lovable Gateway fallback.');
 }
@@ -577,12 +588,8 @@ export async function callGeminiEmbedding(
   const record = (provider: 'gemini' | 'none', key_index: number, outcome: string, status: number) =>
     recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType });
 
-  const keys = [
-    Deno.env.get('GEMINI_API_KEY'),
-    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
-  ]
-    .map((key, index) => ({ key, index }))
-    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  const keys = getFreeGeminiKeys();
+
 
   if (keys.length === 0) {
     await record('none', -1, 'no_key', 0);
