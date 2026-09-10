@@ -451,6 +451,22 @@ export async function callAIWithAutoSwitch(
     console.log('[AI-Switch] Gemini marked unavailable, skipping to Lovable...');
   }
 
+  // COST GUARD 2: hard daily ceiling on PAID gateway calls across the whole
+  // app (learner-facing included). Free keys are always tried first above, so
+  // this only ever blocks paid top-ups once the day's ceiling is reached.
+  if (logCtx?.allowPaidFallback !== false && lovableKey) {
+    const ceiling = await checkPaidDailyCeiling(client);
+    if (!ceiling.allowed) {
+      console.warn(`[AI-Switch] 🚫 Paid daily ceiling reached (${ceiling.used}/${ceiling.limit}) — refusing paid call`);
+      await record('none', -1, 'paid_daily_ceiling_reached', 429);
+      throw createCodedError(
+        `PAID_DAILY_CEILING: daily paid AI ceiling reached (${ceiling.used}/${ceiling.limit}). Resets at midnight UTC.`,
+        429,
+        'PAID_DAILY_CEILING',
+      );
+    }
+  }
+
   // COST GUARD: callers that opt out of paid usage stop here instead of
   // silently burning credits when the free keys are down.
   if (logCtx?.allowPaidFallback === false) {
