@@ -79,6 +79,57 @@ export function getFreeGeminiKeys(): { key: string; index: number }[] {
 
 
 /**
+ * HARD DAILY PAID CEILING.
+ * Counts today's successful paid (Lovable Gateway) calls and compares them with
+ * the ceiling stored in system_settings → `paid_ai_daily_ceiling`
+ * ({ enabled, max_paid_calls_per_day }). Default 500/day. Cached in-isolate for
+ * 60s so the check never adds meaningful latency to learner requests.
+ * Fails OPEN on any error: a broken counter must never block real students.
+ */
+const DEFAULT_PAID_DAILY_CEILING = 500;
+let paidCeilingCache: { day: string; used: number; limit: number; enabled: boolean; at: number } | null = null;
+
+export async function checkPaidDailyCeiling(
+  client: any,
+): Promise<{ allowed: boolean; used: number; limit: number }> {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!client) return { allowed: true, used: 0, limit: DEFAULT_PAID_DAILY_CEILING };
+
+  try {
+    if (paidCeilingCache && paidCeilingCache.day === day && Date.now() - paidCeilingCache.at < 60_000) {
+      const c = paidCeilingCache;
+      return { allowed: !c.enabled || c.used < c.limit, used: c.used, limit: c.limit };
+    }
+
+    const { data: settingRow } = await client
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'paid_ai_daily_ceiling')
+      .maybeSingle();
+
+    const cfg = settingRow?.value ?? {};
+    const enabled = cfg?.enabled !== false;
+    const limit = Number(cfg?.max_paid_calls_per_day) > 0
+      ? Number(cfg.max_paid_calls_per_day)
+      : DEFAULT_PAID_DAILY_CEILING;
+
+    const { count } = await client
+      .from('ai_usage_logs')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', `${day}T00:00:00Z`)
+      .eq('metadata->>provider', 'lovable')
+      .eq('metadata->>outcome', 'success');
+
+    const used = count || 0;
+    paidCeilingCache = { day, used, limit, enabled, at: Date.now() };
+    return { allowed: !enabled || used < limit, used, limit };
+  } catch (error) {
+    console.warn('[AI-Switch] Paid ceiling check failed (failing open):', String(error).substring(0, 120));
+    return { allowed: true, used: 0, limit: DEFAULT_PAID_DAILY_CEILING };
+  }
+}
+
+/**
  * FREE-KEY HEALTH PROBE.
  * Sends the cheapest possible request to each configured Gemini key so a
  * scheduler can decide whether free capacity exists BEFORE it starts a run
