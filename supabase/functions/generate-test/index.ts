@@ -111,6 +111,10 @@ async function callGeminiForBatch(
     if (msg.includes('FREE_ONLY_EXHAUSTED')) {
       return { success: false, error: 'FREE_ONLY_EXHAUSTED', status: 429 };
     }
+    if (msg.includes('PAID_DAILY_CEILING')) {
+      return { success: false, error: 'PAID_DAILY_CEILING', status: 429 };
+    }
+
 
     if (msg.includes('CREDITS_EXHAUSTED') || msg.includes('402')) {
       return { success: false, error: 'CREDITS_EXHAUSTED', status: 402 };
