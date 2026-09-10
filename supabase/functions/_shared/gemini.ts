@@ -60,6 +60,25 @@ export interface AILogContext {
 }
 
 /**
+ * SINGLE SOURCE OF TRUTH for the free Gemini key rotation order:
+ *   #1 GEMINI_API_KEY → #2 EXTERNAL_JOBS_GEMINI_KEY → #3 GEMINI_API_KEY_3
+ * Paid Lovable Gateway is only ever tried after all of these fail (and only
+ * when the caller allows paid fallback). Missing/blank keys are skipped, so a
+ * key that is not configured simply shortens the chain.
+ */
+export function getFreeGeminiKeys(): { key: string; index: number }[] {
+  return [
+    Deno.env.get('GEMINI_API_KEY'),
+    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
+    Deno.env.get('GEMINI_API_KEY_3'),
+  ]
+    .map((key, index) => ({ key, index }))
+    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+}
+
+
+
+/**
  * FREE-KEY HEALTH PROBE.
  * Sends the cheapest possible request to each configured Gemini key so a
  * scheduler can decide whether free capacity exists BEFORE it starts a run
