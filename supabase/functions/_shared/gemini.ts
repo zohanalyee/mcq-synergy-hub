@@ -588,12 +588,8 @@ export async function callGeminiEmbedding(
   const record = (provider: 'gemini' | 'none', key_index: number, outcome: string, status: number) =>
     recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType });
 
-  const keys = [
-    Deno.env.get('GEMINI_API_KEY'),
-    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
-  ]
-    .map((key, index) => ({ key, index }))
-    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  const keys = getFreeGeminiKeys();
+
 
   if (keys.length === 0) {
     await record('none', -1, 'no_key', 0);
