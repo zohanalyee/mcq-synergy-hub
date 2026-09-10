@@ -79,6 +79,57 @@ export function getFreeGeminiKeys(): { key: string; index: number }[] {
 
 
 /**
+ * HARD DAILY PAID CEILING.
+ * Counts today's successful paid (Lovable Gateway) calls and compares them with
+ * the ceiling stored in system_settings → `paid_ai_daily_ceiling`
+ * ({ enabled, max_paid_calls_per_day }). Default 500/day. Cached in-isolate for
+ * 60s so the check never adds meaningful latency to learner requests.
+ * Fails OPEN on any error: a broken counter must never block real students.
+ */
+const DEFAULT_PAID_DAILY_CEILING = 500;
+let paidCeilingCache: { day: string; used: number; limit: number; enabled: boolean; at: number } | null = null;
+
+export async function checkPaidDailyCeiling(
+  client: any,
+): Promise<{ allowed: boolean; used: number; limit: number }> {
+  const day = new Date().toISOString().slice(0, 10);
+  if (!client) return { allowed: true, used: 0, limit: DEFAULT_PAID_DAILY_CEILING };
+
+  try {
+    if (paidCeilingCache && paidCeilingCache.day === day && Date.now() - paidCeilingCache.at < 60_000) {
+      const c = paidCeilingCache;
+      return { allowed: !c.enabled || c.used < c.limit, used: c.used, limit: c.limit };
+    }
+
+    const { data: settingRow } = await client
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'paid_ai_daily_ceiling')
+      .maybeSingle();
+
+    const cfg = settingRow?.value ?? {};
+    const enabled = cfg?.enabled !== false;
+    const limit = Number(cfg?.max_paid_calls_per_day) > 0
+      ? Number(cfg.max_paid_calls_per_day)
+      : DEFAULT_PAID_DAILY_CEILING;
+
+    const { count } = await client
+      .from('ai_usage_logs')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', `${day}T00:00:00Z`)
+      .eq('metadata->>provider', 'lovable')
+      .eq('metadata->>outcome', 'success');
+
+    const used = count || 0;
+    paidCeilingCache = { day, used, limit, enabled, at: Date.now() };
+    return { allowed: !enabled || used < limit, used, limit };
+  } catch (error) {
+    console.warn('[AI-Switch] Paid ceiling check failed (failing open):', String(error).substring(0, 120));
+    return { allowed: true, used: 0, limit: DEFAULT_PAID_DAILY_CEILING };
+  }
+}
+
+/**
  * FREE-KEY HEALTH PROBE.
  * Sends the cheapest possible request to each configured Gemini key so a
  * scheduler can decide whether free capacity exists BEFORE it starts a run
@@ -449,6 +500,22 @@ export async function callAIWithAutoSwitch(
     console.warn('[AI-Switch] No Gemini keys configured');
   } else {
     console.log('[AI-Switch] Gemini marked unavailable, skipping to Lovable...');
+  }
+
+  // COST GUARD 2: hard daily ceiling on PAID gateway calls across the whole
+  // app (learner-facing included). Free keys are always tried first above, so
+  // this only ever blocks paid top-ups once the day's ceiling is reached.
+  if (logCtx?.allowPaidFallback !== false && lovableKey) {
+    const ceiling = await checkPaidDailyCeiling(client);
+    if (!ceiling.allowed) {
+      console.warn(`[AI-Switch] 🚫 Paid daily ceiling reached (${ceiling.used}/${ceiling.limit}) — refusing paid call`);
+      await record('none', -1, 'paid_daily_ceiling_reached', 429);
+      throw createCodedError(
+        `PAID_DAILY_CEILING: daily paid AI ceiling reached (${ceiling.used}/${ceiling.limit}). Resets at midnight UTC.`,
+        429,
+        'PAID_DAILY_CEILING',
+      );
+    }
   }
 
   // COST GUARD: callers that opt out of paid usage stop here instead of

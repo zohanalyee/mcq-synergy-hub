@@ -111,6 +111,10 @@ async function callGeminiForBatch(
     if (msg.includes('FREE_ONLY_EXHAUSTED')) {
       return { success: false, error: 'FREE_ONLY_EXHAUSTED', status: 429 };
     }
+    if (msg.includes('PAID_DAILY_CEILING')) {
+      return { success: false, error: 'PAID_DAILY_CEILING', status: 429 };
+    }
+
 
     if (msg.includes('CREDITS_EXHAUSTED') || msg.includes('402')) {
       return { success: false, error: 'CREDITS_EXHAUSTED', status: 402 };
@@ -2480,7 +2484,10 @@ Write the advice now:`;
           difficulty,
         );
         await syncQuestionsToSession(supabase, session_id, returnedQuestions);
-        const errorNotice = aiError.status === 429 
+        const hitPaidCeiling = String(aiError?.message || aiError?.error || '').includes('PAID_DAILY_CEILING');
+        const errorNotice = hitPaidCeiling
+          ? "We're extra busy right now — showing saved questions. Please try again shortly."
+          : aiError.status === 429 
           ? 'Google AI quota exceeded. Showing cached questions only.'
           : aiError.status === 403 
             ? 'API key invalid or quota exceeded. Showing cached questions only.'
