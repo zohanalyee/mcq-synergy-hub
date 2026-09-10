@@ -387,13 +387,9 @@ export async function callAIWithAutoSwitch(
   const record = (provider: 'gemini' | 'lovable' | 'none', key_index: number, outcome: string, status: number) =>
     recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType });
 
-  // Build the Gemini key rotation: primary + secondary (already used by vision).
-  const geminiKeys = [
-    Deno.env.get('GEMINI_API_KEY'),
-    Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY'),
-  ]
-    .map((key, index) => ({ key, index }))
-    .filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  // Free key rotation: #1 → #2 → #3 (shared order), paid gateway last.
+  const geminiKeys = getFreeGeminiKeys();
+
 
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
 
