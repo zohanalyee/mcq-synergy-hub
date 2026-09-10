@@ -538,27 +538,30 @@ export async function callVisionWithAutoSwitch(
   const keys = getFreeGeminiKeys();
 
 
-  for (const { key, index } of keys) {
-    const label = index === 0 ? 'primary' : 'fallback';
+  for (let i = 0; i < keys.length; i++) {
+    const { key, index } = keys[i];
+    const isLast = i === keys.length - 1;
+    const label = `key #${index + 1}`;
     try {
-      console.log(`[AI-Switch] Attempting Gemini Vision (${label} key)...`);
+      console.log(`[AI-Switch] Attempting Gemini Vision (${label})...`);
       await waitForRateLimit();
       const text = await callGeminiVision(key, prompt, base64Data, mimeType, config);
-      console.log(`[AI-Switch] ✅ Vision success with ${label} key`);
+      console.log(`[AI-Switch] ✅ Vision success with ${label}`);
       await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'success', status: 200, source_type: sourceType });
       return { text, provider: 'gemini', cost: 0 };
     } catch (error: any) {
       if (isQuotaError(error)) {
-        console.warn(`[AI-Switch] ⚠️ Vision rate limited on ${label} key, trying next...`);
+        console.warn(`[AI-Switch] ⚠️ Vision rate limited on ${label}, trying next...`);
         await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'rate_limited', status: 429, source_type: sourceType });
         continue;
       }
-      console.error(`[AI-Switch] Vision error on ${label} key:`, error.message?.substring(0, 100));
+      console.error(`[AI-Switch] Vision error on ${label}:`, error.message?.substring(0, 100));
       await recordAIAttempt(client, { provider: 'gemini', key_index: index, outcome: 'error', status: error?.status ?? 0, source_type: sourceType });
-      if (label === 'primary' && fallbackKey) continue;
+      if (!isLast) continue;
       throw error;
     }
   }
+
 
   throw new Error('All Gemini Vision keys exhausted. Vision does not support Lovable Gateway fallback.');
 }
