@@ -534,12 +534,9 @@ export async function callVisionWithAutoSwitch(
 
   const client = logCtx?.supabaseClient ?? getLogClient();
   const sourceType = logCtx?.sourceType ?? 'vision';
-  const geminiKey = Deno.env.get('GEMINI_API_KEY');
-  const fallbackKey = Deno.env.get('EXTERNAL_JOBS_GEMINI_KEY');
-  const keys = [
-    { key: geminiKey, index: 0 },
-    { key: fallbackKey, index: 1 },
-  ].filter((k): k is { key: string; index: number } => !!k.key && k.key.trim().length > 0);
+  // Vision rotates the same free keys (#1 → #2 → #3); no paid fallback exists.
+  const keys = getFreeGeminiKeys();
+
 
   for (const { key, index } of keys) {
     const label = index === 0 ? 'primary' : 'fallback';
