@@ -226,7 +226,14 @@ Deno.serve(async (req) => {
       if (!d.ok) console.warn(`[Scheduled Auto-Fill] 🔑 key #${d.key_index + 1} unusable (status ${d.status}): ${d.reason ?? ''}`);
     }
 
+    if (keyHealth.no_model_available) {
+      console.error('[Scheduled Auto-Fill] 🧩 No Gemini model available for any free key — model ids likely retired.');
+    }
+
     if (keyHealth.usable === 0 && !paidAllowed) {
+      const stopReason = keyHealth.no_model_available
+        ? 'No Gemini model available for our free keys (model retired) — update the model list'
+        : 'No usable free Gemini key — run skipped to protect paid credits';
       await logQuotaUsage(supabase, {
         source_type: 'auto_fill_run_summary',
         questions_requested: 0,
@@ -235,9 +242,10 @@ Deno.serve(async (req) => {
         metadata: {
           run_summary: true,
           skipped: true,
-          stop_reason: 'No usable free Gemini key — run skipped to protect paid credits',
+          stop_reason: stopReason,
           free_keys_usable: 0,
           free_keys_total: keyHealth.total,
+          no_model_available: keyHealth.no_model_available,
           key_health: keyHealth.details,
         },
       });
@@ -246,7 +254,8 @@ Deno.serve(async (req) => {
           success: true,
           skipped: true,
           processed: 0,
-          reason: 'No usable free Gemini key; paid fallback disabled',
+          reason: stopReason,
+          no_model_available: keyHealth.no_model_available,
           key_health: keyHealth.details,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
