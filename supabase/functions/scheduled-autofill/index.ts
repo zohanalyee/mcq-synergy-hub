@@ -436,12 +436,21 @@ Deno.serve(async (req) => {
     const MAX_RUN_MS = 110_000;
 
     // Continuous loop until limit hit, time budget spent, or no gaps
+    let paidCallsUsed = 0;
     while (totalQuestionsSaved < HARD_NIGHTLY_LIMIT) {
       if (Date.now() - runStartedAt > MAX_RUN_MS) {
         stopReason = 'Time budget reached (partial run, continues next cycle)';
         console.log(`[Scheduled Auto-Fill] ⏱️ ${stopReason}`);
         break;
       }
+
+      // In paid mode the run is capped to a small number of generation calls.
+      if (paidMode && paidCallsUsed >= paidCallsAllowed) {
+        stopReason = `Paid budget for this run spent (${paidCallsUsed}/${paidCallsAllowed} call(s))`;
+        console.warn(`[Scheduled Auto-Fill] 💳 ${stopReason}`);
+        break;
+      }
+
 
       // Re-check quota each iteration
       try {
