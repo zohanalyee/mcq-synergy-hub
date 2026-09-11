@@ -70,7 +70,7 @@ interface UsageLogEntry {
   metadata?: Record<string, any>;
 }
 
-import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
+import { callAIWithAutoSwitch, getFreeGeminiKeys } from '../_shared/gemini.ts';
 
 // Wrapper to maintain existing call pattern - now uses auto-switcher
 /**
@@ -1969,9 +1969,11 @@ Write the advice now:`;
         throw err;
       }
 
-      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+      // Any configured free key (#1 → #2 → #3) is enough; the shared switcher
+      // rotates them internally, so don't hard-require key #1.
+      const GEMINI_API_KEY = getFreeGeminiKeys()[0]?.key;
       if (!GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY is not configured');
+        throw new Error('No Gemini API key is configured');
       }
 
       // ============= FIX: Fetch existing questions for deduplication =============
@@ -2255,7 +2257,7 @@ Write the advice now:`;
       console.log(`⚡ PARTIAL MODE ACTIVE: Returning ${returnedQuestions.length} questions, Generating ${missingCount} in background`);
       
       if (missingCount > 0) {
-        const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
+        const GEMINI_KEY = getFreeGeminiKeys()[0]?.key;
         if (GEMINI_KEY) {
           (globalThis as any).EdgeRuntime?.waitUntil(
             backgroundGenerateAndSave(
@@ -2333,16 +2335,17 @@ Write the advice now:`;
       throw err;
     }
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    console.log(`🔑 GEMINI_API_KEY configured: ${GEMINI_API_KEY ? 'Yes' : 'NO - MISSING!'}`);
-    
+    const freeKeys = getFreeGeminiKeys();
+    const GEMINI_API_KEY = freeKeys[0]?.key;
+    console.log(`🔑 Free Gemini keys configured: ${freeKeys.length}`);
+
     if (!GEMINI_API_KEY) {
       logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, final_returned: 0, exit_branch: 'no_gemini_key' });
       return new Response(
         JSON.stringify({
-          error: 'GEMINI_API_KEY not configured',
+          error: 'No Gemini API key configured',
           error_type: 'config_error',
-          details: 'GEMINI_API_KEY is missing from Supabase secrets'
+          details: 'None of GEMINI_API_KEY / EXTERNAL_JOBS_GEMINI_KEY / GEMINI_API_KEY_3 is set'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
