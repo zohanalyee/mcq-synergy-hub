@@ -18,12 +18,14 @@ Verified: `probeFreeGeminiKeys()` in `supabase/functions/_shared/gemini.ts` call
 
 Usage log counts for 10 Sep (UTC):
 
-| Feature | Real generation calls |
-|---|---|
-| Auto-fill runs (33 runs) | 0 — every run logged `skipped: No usable free Gemini key` |
-| Learner/admin generation (`generate-test`) | 3 attempts, all at 10:00 (key #1 503, key #2 503, then 1 paid call) |
-| Quality gate (`verify-questions`) | 1 real call (00:20), rest "nothing to verify" |
-| Everything else (AI Coach, RAG, blog, converter, jobs) | 0 rows |
+
+| Feature                                                | Real generation calls                                               |
+| ------------------------------------------------------ | ------------------------------------------------------------------- |
+| Auto-fill runs (33 runs)                               | 0 — every run logged `skipped: No usable free Gemini key`           |
+| Learner/admin generation (`generate-test`)             | 3 attempts, all at 10:00 (key #1 503, key #2 503, then 1 paid call) |
+| Quality gate (`verify-questions`)                      | 1 real call (00:20), rest "nothing to verify"                       |
+| Everything else (AI Coach, RAG, blog, converter, jobs) | 0 rows                                                              |
+
 
 So yesterday's burn was **not** feature traffic. Every key-health entry from
 05:30 UTC on 10 Sep through 04:20 UTC on 11 Sep reads `status 429 GEMINI_RATE_LIMIT`
@@ -44,17 +46,19 @@ the low hundreds to ~1,500 RPD depending on model
 for us:
 
 - If both keys live in the same Google project, they share one quota — the rotation
-  buys nothing. Worth confirming the keys come from two separate projects.
+buys nothing. Worth confirming the keys come from two separate projects.
 - Our "daily" accounting resets at UTC midnight while Google's resets ~07:00 UTC, so
-  a 429 seen at 04:00 UTC still belongs to the previous Google day.
+a 429 seen at 04:00 UTC still belongs to the previous Google day.
 
 ### 4. Per-key / per-feature counts for yesterday
 
-| Key | Probe calls | Real generation calls | Outcome |
-|---|---|---|---|
-| #1 `GEMINI_API_KEY` | ~33 (one per run) | 1 (`generate-test`, 503) | 429 all day |
-| #2 `EXTERNAL_JOBS_GEMINI_KEY` | ~33 | 1 (`generate-test`, 503) | 429 all day |
-| #3 `GEMINI_API_KEY_3` | 0 — not configured | 0 | absent |
+
+| Key                           | Probe calls        | Real generation calls    | Outcome     |
+| ----------------------------- | ------------------ | ------------------------ | ----------- |
+| #1 `GEMINI_API_KEY`           | ~33 (one per run)  | 1 (`generate-test`, 503) | 429 all day |
+| #2 `EXTERNAL_JOBS_GEMINI_KEY` | ~33                | 1 (`generate-test`, 503) | 429 all day |
+| #3 `GEMINI_API_KEY_3`         | 0 — not configured | 0                        | absent      |
+
 
 Paid gateway on 10 Sep: 1 successful call. The 500/day paid ceiling was never
 approached.
@@ -66,14 +70,16 @@ that produce zero questions, plus it blocks the run when it fails.
 ## Part 2 — Proposed fixes
 
 ### A. Stop the probe wasting quota
+
 - Cache probe results in `system_settings` → `free_key_health` with a per-key
-  cooldown: on a 429, mark that key unusable until the next Google reset boundary
-  (next 08:00 UTC) instead of re-probing every 30 minutes.
+cooldown: on a 429, mark that key unusable until the next Google reset boundary
+(next 08:00 UTC) instead of re-probing every 30 minutes.
 - Cache a healthy result for 6 hours.
 - Skip the probe entirely when the run has no deficit work queued.
 - Expected saving: ~96 probe requests/day → under 8.
 
 ### B. Key #3 everywhere
+
 `getFreeGeminiKeys()` already returns #1 → #2 → #3 and is the only key source used by
 the shared text/vision/embedding helpers, so `generate-test`, `generate-job-test`,
 `ai_coach`, `generate-from-rag`, `verify-questions`, `generate-blog`,
@@ -87,34 +93,52 @@ change available.**
 
 Measured paid cost ≈ 0.044 credits per gateway call (13.97 credits / 321 calls).
 
-Proposal: `auto_fill_paid_budget = { enabled: true, max_paid_calls_per_run: 5,
-max_paid_calls_per_day: 40 }`
+Proposal: `auto_fill_paid_budget = { enabled: true, max_paid_calls_per_run: 5, max_paid_calls_per_day: 40 }`
 
 - 40 paid calls/day ≈ **1.8 credits/day** worst case (~55 credits/month at full burn).
 - At batch size 15 that is up to ~600 questions/day of continued background filling
-  even with every free key dead.
+even with every free key dead.
 - Auto-fill paid calls are counted separately from, and also still subject to, the
-  learner ceiling.
+learner ceiling.
 
-Alternatives if you want it tighter or looser: 3/run + 24/day (~1.1 credits/day) or
-8/run + 80/day (~3.5 credits/day).
+Alternatives if you want it tighter or looser: 3/run + 24/day (1.1 credits/day) or
+8/run + 80/day (3.5 credits/day).
 
 ### D. Learner-facing safety unchanged
+
 `paid_ai_daily_ceiling = { enabled: true, max_paid_calls_per_day: 500 }` and the
 `PAID_DAILY_CEILING` graceful-degrade path in `generate-test` stay exactly as they
 are. The auto-fill budget is a separate, smaller gate applied before the learner
 ceiling is consulted, so background filling can never eat the learner allowance.
 
 ## Technical notes
+
 - `_shared/gemini.ts`: add cached/cooldown-aware `probeFreeGeminiKeys`, persist
-  `free_key_health` via the existing service-role log client, add
-  `checkAutoFillPaidBudget()` mirroring `checkPaidDailyCeiling()` but reading
-  `auto_fill_paid_budget` and counting `metadata->>'source' = 'auto_fill'` paid rows.
+`free_key_health` via the existing service-role log client, add
+`checkAutoFillPaidBudget()` mirroring `checkPaidDailyCeiling()` but reading
+`auto_fill_paid_budget` and counting `metadata->>'source' = 'auto_fill'` paid rows.
 - `scheduled-autofill/index.ts`: pass the per-run paid allowance into generation,
-  stop after the allowance is used, and log `paid_calls_used` in the run summary.
+stop after the allowance is used, and log `paid_calls_used` in the run summary.
 - One migration-free `system_settings` update for `auto_fill_paid_budget`.
 - No UI change required; admin history already renders `stop_reason` and counters.
 
 ## Open item for you
+
 Confirm the paid-budget numbers (5/run, 40/day) or pick an alternative, and add the
 `GEMINI_API_KEY_3` secret if you have a third Google account available.
+
+&nbsp;
+
+&nbsp;
+
+Approved. Proceed with:
+
+A. Cache probe results with per-key cooldown (429 → unusable until next Google reset ~08:00 UTC; healthy result cached 6 hours; skip probe entirely when no deficit work queued)
+
+B. Audit for any direct Gemini key calls outside the shared helper and route them through getFreeGeminiKeys() so key #3 reaches every function automatically
+
+C. Auto-fill paid budget: use the recommended values — max_paid_calls_per_run: 5, max_paid_calls_per_day: 40 (~1.8 credits/day worst case, up to ~600 questions/day even if all free keys are dead)
+
+D. Confirm learner-facing 500/day ceiling stays completely separate and untouched, as proposed
+
+I'll add GEMINI_API_KEY_3 now — please open the secure form for it.
