@@ -24,7 +24,9 @@ function getLogClient(): any | null {
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const DEFAULT_MODEL = "gemini-2.0-flash";
+// `gemini-flash-latest` is the only id currently served to our keys; the dated
+// ids below are kept as trailing fallbacks in case a key is pinned to them.
+const DEFAULT_MODEL = "gemini-flash-latest";
 
 const DEFAULT_SAFETY_SETTINGS = [
   { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -135,37 +137,71 @@ export async function checkPaidDailyCeiling(
  * scheduler can decide whether free capacity exists BEFORE it starts a run
  * that would otherwise fall through to paid credits on every batch.
  */
+export interface FreeKeyProbeDetail {
+  key_index: number;
+  ok: boolean;
+  status: number;
+  reason?: string;
+  no_model_available?: boolean;
+}
+
 export async function probeFreeGeminiKeys(): Promise<{
   usable: number;
   total: number;
-  details: { key_index: number; ok: boolean; status: number; reason?: string }[];
+  no_model_available: boolean;
+  details: FreeKeyProbeDetail[];
 }> {
   const keys = getFreeGeminiKeys();
 
-
-  const details: { key_index: number; ok: boolean; status: number; reason?: string }[] = [];
+  const details: FreeKeyProbeDetail[] = [];
   let usable = 0;
+  let noModel = 0;
 
   for (const { key, index } of keys) {
     try {
+      // Reasoning-capable models spend tokens on internal thinking, so the probe
+      // needs real output room — a tiny cap comes back textless and used to be
+      // mis-read as a dead key.
       await callGeminiText(key, '', 'Reply with the single word: ok', {
         temperature: 0,
-        maxOutputTokens: 8,
+        maxOutputTokens: 256,
       });
       usable++;
       details.push({ key_index: index, ok: true, status: 200 });
     } catch (error: any) {
-      const status = error?.status ?? 0;
-      details.push({
-        key_index: index,
-        ok: false,
-        status,
-        reason: String(error?.message || '').substring(0, 120),
-      });
+      const status = Number(error?.status ?? 0);
+      const reason = String(error?.message || '').substring(0, 120);
+
+      // Classify by HTTP status, not by whether text came back.
+      // Unusable ONLY for auth / quota / bad-request failures. A 404 means every
+      // known model id was rejected for this key (model retirement, not a dead
+      // key) — surfaced separately. Anything else (5xx overload, empty body,
+      // network blip) means the key authenticated fine, so keep it usable.
+      const isAuthOrQuota = status === 401 || status === 403 || status === 429 || status === 400;
+      const isNoModel = status === 404;
+
+      if (isNoModel) noModel++;
+
+      if (isAuthOrQuota || isNoModel) {
+        details.push({ key_index: index, ok: false, status, reason, no_model_available: isNoModel });
+      } else {
+        usable++;
+        details.push({
+          key_index: index,
+          ok: true,
+          status: status || 200,
+          reason: `treated as usable (transient): ${reason}`,
+        });
+      }
     }
   }
 
-  return { usable, total: keys.length, details };
+  return {
+    usable,
+    total: keys.length,
+    no_model_available: keys.length > 0 && noModel === keys.length,
+    details,
+  };
 }
 
 
@@ -260,7 +296,7 @@ function isCreditsError(error: any): boolean {
 // Model fallback chain: if a model id is retired / unavailable for the key
 // (Google answers 404 "model not found for API version"), retry the same
 // request on the next known-good model instead of failing the whole run.
-const TEXT_MODEL_FALLBACKS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest"];
+const TEXT_MODEL_FALLBACKS = ["gemini-flash-latest", "gemini-2.0-flash", "gemini-2.5-flash"];
 
 export async function callGeminiText(
   apiKey: string,
