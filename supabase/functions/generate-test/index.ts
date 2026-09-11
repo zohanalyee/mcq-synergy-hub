@@ -2335,16 +2335,17 @@ Write the advice now:`;
       throw err;
     }
 
-    const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
-    console.log(`🔑 GEMINI_API_KEY configured: ${GEMINI_API_KEY ? 'Yes' : 'NO - MISSING!'}`);
-    
+    const freeKeys = getFreeGeminiKeys();
+    const GEMINI_API_KEY = freeKeys[0]?.key;
+    console.log(`🔑 Free Gemini keys configured: ${freeKeys.length}`);
+
     if (!GEMINI_API_KEY) {
       logRequestSummary({ topic, sanitized: sanitizedTopic, qc, forceNew, cache_found: dbQuestions.length, dbQuestions: dbQuestions.length, final_returned: 0, exit_branch: 'no_gemini_key' });
       return new Response(
         JSON.stringify({
-          error: 'GEMINI_API_KEY not configured',
+          error: 'No Gemini API key configured',
           error_type: 'config_error',
-          details: 'GEMINI_API_KEY is missing from Supabase secrets'
+          details: 'None of GEMINI_API_KEY / EXTERNAL_JOBS_GEMINI_KEY / GEMINI_API_KEY_3 is set'
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
