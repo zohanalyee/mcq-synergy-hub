@@ -216,25 +216,44 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ============= WORK PRECHECK (quota guard) =============
+    // The free-key probe is a REAL Gemini request, so never spend one on a run
+    // that has nothing to generate. Cheap DB check first.
+    const { data: precheckRows } = await supabase.rpc('get_autofill_queue', { limit_count: 1 });
+    const hasQueuedWork = ((precheckRows as AutoFillQueueItem[] | null) || []).length > 0;
+
     // ============= FREE-KEY HEALTH GATE (cost guard) =============
-    // Probe the free Gemini keys once per run (2 tiny calls). If none is usable
-    // and paid credits are not explicitly allowed, abort BEFORE any generation
-    // batch — this is exactly the path that burned paid credits for days.
-    const paidAllowed = paidBudget?.enabled === true && (Number(paidBudget?.max_paid_calls_per_run) || 0) > 0;
-    const keyHealth = await probeFreeGeminiKeys();
-    console.log(`[Scheduled Auto-Fill] 🔑 Free Gemini keys usable: ${keyHealth.usable}/${keyHealth.total}${paidAllowed ? ' (paid fallback allowed)' : ' (paid fallback BLOCKED)'}`);
-    for (const d of keyHealth.details) {
-      if (!d.ok) console.warn(`[Scheduled Auto-Fill] 🔑 key #${d.key_index + 1} unusable (status ${d.status}): ${d.reason ?? ''}`);
+    // Cached/cooldown-aware: a key known to be 429 stays parked until the next
+    // Google free-tier reset instead of being re-probed every 30 minutes.
+    const paidBudgetInfo = await checkAutoFillPaidBudget(supabase);
+    let paidCallsAllowed = paidBudgetInfo.allowedThisRun;
+
+    const keyHealth = hasQueuedWork
+      ? await probeFreeGeminiKeys(supabase)
+      : { usable: 0, total: 0, no_model_available: false, probe_calls: 0, details: [] as any[] };
+
+    if (hasQueuedWork) {
+      console.log(`[Scheduled Auto-Fill] 🔑 Free Gemini keys usable: ${keyHealth.usable}/${keyHealth.total} (probe calls spent: ${keyHealth.probe_calls}); paid allowance this run: ${paidCallsAllowed} (used today ${paidBudgetInfo.usedToday}/${paidBudgetInfo.dailyLimit})`);
+      for (const d of keyHealth.details) {
+        if (!d.ok) console.warn(`[Scheduled Auto-Fill] 🔑 key #${d.key_index + 1} unusable (status ${d.status}): ${d.reason ?? ''}`);
+      }
+      if (keyHealth.no_model_available) {
+        console.error('[Scheduled Auto-Fill] 🧩 No Gemini model available for any free key — model ids likely retired.');
+      }
     }
 
-    if (keyHealth.no_model_available) {
-      console.error('[Scheduled Auto-Fill] 🧩 No Gemini model available for any free key — model ids likely retired.');
+    // Paid mode only when free capacity is genuinely gone AND a budget exists.
+    const paidMode = hasQueuedWork && keyHealth.usable === 0 && paidCallsAllowed > 0;
+    if (paidMode) {
+      console.warn(`[Scheduled Auto-Fill] 💳 All free keys down — running on the capped paid budget (${paidCallsAllowed} call(s) this run).`);
     }
 
-    if (keyHealth.usable === 0 && !paidAllowed) {
-      const stopReason = keyHealth.no_model_available
-        ? 'No Gemini model available for our free keys (model retired) — update the model list'
-        : 'No usable free Gemini key — run skipped to protect paid credits';
+    if (!hasQueuedWork || (keyHealth.usable === 0 && !paidMode)) {
+      const stopReason = !hasQueuedWork
+        ? 'No topics below target — nothing to generate (probe skipped, no quota spent)'
+        : keyHealth.no_model_available
+          ? 'No Gemini model available for our free keys (model retired) — update the model list'
+          : 'No usable free Gemini key and no paid budget left — run skipped to protect credits';
       await logQuotaUsage(supabase, {
         source_type: 'auto_fill_run_summary',
         questions_requested: 0,
@@ -244,10 +263,13 @@ Deno.serve(async (req) => {
           run_summary: true,
           skipped: true,
           stop_reason: stopReason,
-          free_keys_usable: 0,
+          free_keys_usable: keyHealth.usable,
           free_keys_total: keyHealth.total,
+          probe_calls: keyHealth.probe_calls,
           no_model_available: keyHealth.no_model_available,
           key_health: keyHealth.details,
+          paid_budget_used_today: paidBudgetInfo.usedToday,
+          paid_budget_daily_limit: paidBudgetInfo.dailyLimit,
         },
       });
       return new Response(
