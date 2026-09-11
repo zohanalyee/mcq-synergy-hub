@@ -206,13 +206,15 @@ serve(async (req) => {
   }
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    
+    // Any of the three free keys is enough (#1 → #2 → #3); OCR uses the first
+    // available one, text generation rotates through all of them.
+    const GEMINI_API_KEY = getFreeGeminiKeys()[0]?.key;
+
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
     if (!GEMINI_API_KEY || !SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-      throw new Error("Missing required environment variables (GEMINI_API_KEY)");
+      throw new Error("Missing required environment variables (no Gemini API key configured)");
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
