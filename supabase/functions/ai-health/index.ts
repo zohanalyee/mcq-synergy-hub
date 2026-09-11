@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getFreeGeminiKeys } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -131,11 +132,12 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
     );
+  } catch (error: any) {
     console.error('🚨 Health check error:', error);
-    
+
     return new Response(
       JSON.stringify({
-        gemini_key_configured: !!Deno.env.get('GEMINI_API_KEY'),
+        gemini_key_configured: getFreeGeminiKeys().length > 0,
         gemini_key_valid: false,
         error: error.message || 'Unknown error during health check',
         status: 'error'
