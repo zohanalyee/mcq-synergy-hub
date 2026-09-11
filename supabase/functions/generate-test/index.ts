@@ -70,7 +70,7 @@ interface UsageLogEntry {
   metadata?: Record<string, any>;
 }
 
-import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
+import { callAIWithAutoSwitch, getFreeGeminiKeys } from '../_shared/gemini.ts';
 
 // Wrapper to maintain existing call pattern - now uses auto-switcher
 /**
@@ -1969,9 +1969,11 @@ Write the advice now:`;
         throw err;
       }
 
-      const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
+      // Any configured free key (#1 → #2 → #3) is enough; the shared switcher
+      // rotates them internally, so don't hard-require key #1.
+      const GEMINI_API_KEY = getFreeGeminiKeys()[0]?.key;
       if (!GEMINI_API_KEY) {
-        throw new Error('GEMINI_API_KEY is not configured');
+        throw new Error('No Gemini API key is configured');
       }
 
       // ============= FIX: Fetch existing questions for deduplication =============
