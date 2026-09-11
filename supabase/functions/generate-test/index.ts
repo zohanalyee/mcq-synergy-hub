@@ -2257,7 +2257,7 @@ Write the advice now:`;
       console.log(`⚡ PARTIAL MODE ACTIVE: Returning ${returnedQuestions.length} questions, Generating ${missingCount} in background`);
       
       if (missingCount > 0) {
-        const GEMINI_KEY = Deno.env.get('GEMINI_API_KEY');
+        const GEMINI_KEY = getFreeGeminiKeys()[0]?.key;
         if (GEMINI_KEY) {
           (globalThis as any).EdgeRuntime?.waitUntil(
             backgroundGenerateAndSave(
