@@ -477,6 +477,32 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Admin/cron "batch fill" action: queue empty DRAFT tests (IBA batch) in a
+    // lane that yields to the active exam sprint and has its own daily budget.
+    if (reqBody?.batch_fill) {
+      const fill = await enqueueBatchFill(admin, {
+        maxTests: Number(reqBody.max_tests) || undefined,
+        maxRows: Number(reqBody.max_rows) || undefined,
+        force: reqBody.force === true,
+      });
+      if (fill.enqueued > 0) {
+        await kickNextIfPending(admin, supabaseUrl, serviceKey);
+      }
+      return new Response(
+        JSON.stringify({
+          processed: 0,
+          message:
+            fill.enqueued > 0
+              ? `Batch fill queued ${fill.enqueued} section(s) across ${fill.tests} draft test(s)`
+              : `Batch fill queued nothing — ${fill.skipped || "nothing below target"}`,
+          batch_fill: fill,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+
+
 
 
     // Recover rows left in processing after a timed-out/shutdown invocation.
