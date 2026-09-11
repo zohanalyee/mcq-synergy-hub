@@ -1,6 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { checkQuota, retryWithBackoff, logQuotaUsage, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
-import { probeFreeGeminiKeys } from '../_shared/gemini.ts';
+import { probeFreeGeminiKeys, checkAutoFillPaidBudget } from '../_shared/gemini.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +31,7 @@ interface SprintConfig {
 interface PaidBudgetConfig {
   enabled?: boolean;
   max_paid_calls_per_run?: number;
+  max_paid_calls_per_day?: number;
 }
 
 
