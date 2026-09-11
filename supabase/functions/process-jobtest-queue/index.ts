@@ -561,15 +561,26 @@ Deno.serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
+        // Demand lane found nothing → let the batch-fill lane top up the empty
+        // draft tests (it defers to an active exam sprint on its own).
+        const batch = await enqueueBatchFill(admin);
+        if (batch.enqueued > 0) {
+          await kickNextIfPending(admin, supabaseUrl, serviceKey);
+        }
         return new Response(
           JSON.stringify({
             processed: 0,
-            message: "No pending queue items",
+            message:
+              batch.enqueued > 0
+                ? `Batch fill queued ${batch.enqueued} section(s) across ${batch.tests} draft test(s)`
+                : "No pending queue items",
             popularity_fill: fill,
+            batch_fill: batch,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+
       return new Response(
         JSON.stringify({ processed: 0, message: "No pending queue items" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
