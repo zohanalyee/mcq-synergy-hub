@@ -231,17 +231,26 @@ export const MdcatTestDayBlock = () => (
       >
         PM&amp;DC public announcements
       </a>
-      . Roll number slips are issued through the PM&amp;DC / test-conducting university portal you
-      registered on — check{' '}
+      , and the{' '}
       <a
-        href="https://www.pmdc.pk"
+        href="https://www.iba-suk.edu.pk/sts/announcements"
         target="_blank"
         rel="noopener noreferrer nofollow"
         className="underline"
       >
-        pmdc.pk
+        SIBA Testing Services — official announcements
+      </a>
+      . Verified on 10 September 2026 against STS Press Release No. STS/SEC/1158/26.
+      Admit slips are issued through the PM&amp;DC / STS portal you registered on — download yours at{' '}
+      <a
+        href="https://eslip.sts.net.pk"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        className="underline"
+      >
+        eslip.sts.net.pk
       </a>{' '}
-      for the download announcement.
+      by entering your CNIC / ID number.
     </p>
     <p className="text-sm text-muted-foreground mt-3">
       While you wait, keep revising with the{' '}
