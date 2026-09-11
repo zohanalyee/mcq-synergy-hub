@@ -1934,6 +1934,7 @@ export type Database = {
           id: string
           job_test_id: string
           processed_at: string | null
+          source: string
           status: string
           subject: string
           target_count: number
@@ -1948,6 +1949,7 @@ export type Database = {
           id?: string
           job_test_id: string
           processed_at?: string | null
+          source?: string
           status?: string
           subject: string
           target_count?: number
@@ -1962,6 +1964,7 @@ export type Database = {
           id?: string
           job_test_id?: string
           processed_at?: string | null
+          source?: string
           status?: string
           subject?: string
           target_count?: number

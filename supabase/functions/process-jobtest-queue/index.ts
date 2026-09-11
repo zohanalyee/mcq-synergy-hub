@@ -176,6 +176,219 @@ async function enqueuePopularTests(
   return { enqueued: rows.length, considered: candidates.length, scaled, surge_active: surgeActive };
 }
 
+/**
+ * Batch fill lane (e.g. the IBA Community Colleges & Schools upload).
+ *
+ * Queues per-section pool growth for DRAFT tests that are still empty (or far
+ * below target), independent of measured demand — these tests have no traffic
+ * yet because they are not published.
+ *
+ * Guard rails:
+ *  - `mock_test_fill_sprint.daily_budget` caps how many questions of deficit can
+ *    be queued per day for this lane (counted from rows created today).
+ *  - `defer_to_exam_sprint`: while `campaign_surge` is active (MDCAT), this lane
+ *    only enqueues when the demand lane has nothing pending/processing, so the
+ *    exam sprint always gets first claim on the free-key allowance.
+ *  - Generation itself is reuse-first inside `generate-job-test`, so the shared
+ *    English / Reasoning / Computer sections come from the existing bank before
+ *    any AI call is made.
+ *  - Everything lands as DRAFT (admin_approved=false); tests stay `draft`.
+ */
+async function enqueueBatchFill(
+  admin: any,
+  opts: { maxTests?: number; maxRows?: number; force?: boolean } = {},
+): Promise<{
+  enqueued: number;
+  tests: number;
+  questions_queued: number;
+  budget_used_today: number;
+  daily_budget: number;
+  deferred?: boolean;
+  skipped?: string;
+}> {
+  const maxTests = Math.max(1, Math.min(opts.maxTests ?? 12, 60));
+  const maxRows = Math.max(1, Math.min(opts.maxRows ?? 40, 200));
+
+  const { data: cfgRow } = await admin
+    .from("system_settings")
+    .select("value")
+    .eq("key", "mock_test_fill_sprint")
+    .maybeSingle();
+  const cfg = (cfgRow?.value || {}) as any;
+
+  const empty = {
+    enqueued: 0,
+    tests: 0,
+    questions_queued: 0,
+    budget_used_today: 0,
+    daily_budget: Number(cfg?.daily_budget ?? 300),
+  };
+
+  if (cfg?.enabled !== true) {
+    return { ...empty, skipped: "mock_test_fill_sprint disabled" };
+  }
+
+  const targetPerTest = Math.max(50, Number(cfg?.target_per_test ?? 200));
+  const dailyBudget = Math.max(0, Number(cfg?.daily_budget ?? 300));
+
+  // ---- MDCAT deference ----
+  const promoteAfter = cfg?.promote_after ? Date.parse(cfg.promote_after) : NaN;
+  const promoted = Number.isFinite(promoteAfter) && Date.now() > promoteAfter;
+  if (cfg?.defer_to_exam_sprint === true && !promoted && !opts.force) {
+    const { data: surgeRow } = await admin
+      .from("system_settings")
+      .select("value")
+      .eq("key", "campaign_surge")
+      .maybeSingle();
+    const surge = (surgeRow?.value || {}) as any;
+    const startsAt = surge?.starts_at ? Date.parse(surge.starts_at) : NaN;
+    const endsAt = surge?.ends_at ? Date.parse(surge.ends_at) : NaN;
+    const surgeLive =
+      surge?.enabled === true &&
+      (!Number.isFinite(startsAt) || Date.now() >= startsAt) &&
+      (!Number.isFinite(endsAt) || Date.now() <= endsAt);
+
+    if (surgeLive) {
+      const { count: busy } = await admin
+        .from("job_test_generation_queue")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["pending", "processing"])
+        .neq("source", "batch_fill");
+      if ((busy || 0) > 0) {
+        return { ...empty, deferred: true, skipped: "exam sprint work still pending" };
+      }
+    }
+  }
+
+  // ---- Daily budget for this lane ----
+  const dayStart = `${new Date().toISOString().slice(0, 10)}T00:00:00Z`;
+  const { data: todayRows } = await admin
+    .from("job_test_generation_queue")
+    .select("target_count, grow_target")
+    .eq("source", "batch_fill")
+    .gte("created_at", dayStart)
+    .limit(1000);
+  const usedToday = (todayRows || []).reduce(
+    (s: number, r: any) => s + (Number(r.grow_target) || Number(r.target_count) || 0),
+    0,
+  );
+  let budgetLeft = dailyBudget - usedToday;
+  if (budgetLeft <= 0) {
+    return {
+      ...empty,
+      budget_used_today: usedToday,
+      daily_budget: dailyBudget,
+      skipped: "daily budget for batch fill already spent",
+    };
+  }
+
+  // ---- Candidate draft tests, emptiest first ----
+  const { data: defs } = await admin
+    .from("job_test_definitions")
+    .select("id, job_title, syllabus")
+    .eq("status", "draft")
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  const { data: active } = await admin
+    .from("job_test_generation_queue")
+    .select("job_test_id, subject")
+    .in("status", ["pending", "processing"]);
+  const activeKeys = new Set(
+    (active || []).map((r: any) => `${r.job_test_id}|${r.subject}`),
+  );
+
+  const rows: any[] = [];
+  const touched = new Set<string>();
+  let questionsQueued = 0;
+
+  for (const def of (defs || []) as any[]) {
+    if (rows.length >= maxRows || touched.size >= maxTests || budgetLeft <= 0) break;
+
+    const sections = (def?.syllabus?.sections || []) as any[];
+    if (sections.length === 0) continue;
+
+    const sectionTotal = sections.reduce(
+      (s: number, x: any) => s + (Number(x?.question_count) || 0),
+      0,
+    );
+    if (sectionTotal <= 0) continue;
+
+    const { count: existing } = await admin
+      .from("job_test_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("job_test_id", def.id);
+    if ((existing || 0) >= targetPerTest) continue;
+
+    // Scale each section proportionally up to the per-test target.
+    const scale = targetPerTest / sectionTotal;
+
+    for (const s of sections) {
+      if (rows.length >= maxRows || budgetLeft <= 0) break;
+      const sectionTarget = Number(s?.question_count || 0);
+      if (!s?.subject || sectionTarget <= 0) continue;
+      if (activeKeys.has(`${def.id}|${s.subject}`)) continue;
+
+      const growTarget = Math.max(sectionTarget, Math.ceil(sectionTarget * scale));
+      const { count: haveSection } = await admin
+        .from("job_test_questions")
+        .select("id", { count: "exact", head: true })
+        .eq("job_test_id", def.id)
+        .eq("subject", s.subject);
+      const deficit = growTarget - (haveSection || 0);
+      if (deficit <= 0) continue;
+      if (deficit > budgetLeft) continue;
+
+      rows.push({
+        job_test_id: def.id,
+        subject: s.subject,
+        target_count: sectionTarget,
+        grow_target: growTarget,
+        status: "pending",
+        source: "batch_fill",
+      });
+      budgetLeft -= deficit;
+      questionsQueued += deficit;
+      touched.add(def.id);
+    }
+  }
+
+  if (rows.length === 0) {
+    return {
+      ...empty,
+      budget_used_today: usedToday,
+      daily_budget: dailyBudget,
+      skipped: "no draft test below target within today's budget",
+    };
+  }
+
+  const { error: insErr } = await admin.from("job_test_generation_queue").insert(rows);
+  if (insErr) {
+    console.error("[jobtest-queue] batch fill enqueue failed:", insErr.message);
+    return {
+      ...empty,
+      budget_used_today: usedToday,
+      daily_budget: dailyBudget,
+      skipped: insErr.message,
+    };
+  }
+
+  console.log(
+    `[jobtest-queue] 🧱 batch fill queued ${rows.length} section(s) across ${touched.size} draft test(s)` +
+      ` — ${questionsQueued} question(s) of deficit (budget ${usedToday + questionsQueued}/${dailyBudget} today)`,
+  );
+
+  return {
+    enqueued: rows.length,
+    tests: touched.size,
+    questions_queued: questionsQueued,
+    budget_used_today: usedToday + questionsQueued,
+    daily_budget: dailyBudget,
+  };
+}
+
+
+
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -264,6 +477,32 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Admin/cron "batch fill" action: queue empty DRAFT tests (IBA batch) in a
+    // lane that yields to the active exam sprint and has its own daily budget.
+    if (reqBody?.batch_fill) {
+      const fill = await enqueueBatchFill(admin, {
+        maxTests: Number(reqBody.max_tests) || undefined,
+        maxRows: Number(reqBody.max_rows) || undefined,
+        force: reqBody.force === true,
+      });
+      if (fill.enqueued > 0) {
+        await kickNextIfPending(admin, supabaseUrl, serviceKey);
+      }
+      return new Response(
+        JSON.stringify({
+          processed: 0,
+          message:
+            fill.enqueued > 0
+              ? `Batch fill queued ${fill.enqueued} section(s) across ${fill.tests} draft test(s)`
+              : `Batch fill queued nothing — ${fill.skipped || "nothing below target"}`,
+          batch_fill: fill,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+
+
 
 
     // Recover rows left in processing after a timed-out/shutdown invocation.
@@ -322,15 +561,26 @@ Deno.serve(async (req) => {
             { headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
+        // Demand lane found nothing → let the batch-fill lane top up the empty
+        // draft tests (it defers to an active exam sprint on its own).
+        const batch = await enqueueBatchFill(admin);
+        if (batch.enqueued > 0) {
+          await kickNextIfPending(admin, supabaseUrl, serviceKey);
+        }
         return new Response(
           JSON.stringify({
             processed: 0,
-            message: "No pending queue items",
+            message:
+              batch.enqueued > 0
+                ? `Batch fill queued ${batch.enqueued} section(s) across ${batch.tests} draft test(s)`
+                : "No pending queue items",
             popularity_fill: fill,
+            batch_fill: batch,
           }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
+
       return new Response(
         JSON.stringify({ processed: 0, message: "No pending queue items" }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } },
