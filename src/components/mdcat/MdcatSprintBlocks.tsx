@@ -118,7 +118,7 @@ export const MdcatContextualLinks = () => (
   </section>
 );
 
-/** Officially confirmed MDCAT 2026 facts (PM&DC notices only). */
+/** Officially confirmed MDCAT 2026 facts (PM&DC + STS notices). */
 const TEST_DAY_FACTS: { label: string; value: string; confirmed: boolean }[] = [
   { label: 'Test date', value: 'Sunday, 20 September 2026', confirmed: true },
   {
@@ -136,8 +136,31 @@ const TEST_DAY_FACTS: { label: string; value: string; confirmed: boolean }[] = [
     value: 'Reopened 17–21 August 2026 with prescribed fee (PM&DC Examinations Dept. notice) — now closed',
     confirmed: true,
   },
-  { label: 'Roll number slip download date', value: 'Not yet announced', confirmed: false },
-  { label: 'Test centre allotment / city list', value: 'Not yet announced', confirmed: false },
+  {
+    label: 'Admit slip / roll number slip download',
+    value: 'Admit slips have been issued and are available now at eslip.sts.net.pk — enter your CNIC / ID number to download',
+    confirmed: true,
+  },
+  {
+    label: 'Test centre city list',
+    value: 'Karachi, Hyderabad, Jamshoro, Mirpurkhas, Shaheed Benazirabad, Larkana, Sukkur and Islamabad (Federal Capital)',
+    confirmed: true,
+  },
+  {
+    label: 'SMS & email alerts',
+    value: 'STS has sent SMS alerts to registered mobile numbers and will email admit slips to the address provided on the PM&DC portal',
+    confirmed: true,
+  },
+  {
+    label: 'Download helpdesk',
+    value: 'Email sts@iba-suk.edu.pk or call 071-5644200 (9 AM – 5 PM) for help downloading the admit slip',
+    confirmed: true,
+  },
+  {
+    label: 'Admit slip instructions',
+    value: 'Download and print your admit slip in advance; bring it with you on test day',
+    confirmed: true,
+  },
   { label: 'Reporting time and gate closing time', value: 'Not yet announced', confirmed: false },
 ];
 
@@ -208,17 +231,26 @@ export const MdcatTestDayBlock = () => (
       >
         PM&amp;DC public announcements
       </a>
-      . Roll number slips are issued through the PM&amp;DC / test-conducting university portal you
-      registered on — check{' '}
+      , and the{' '}
       <a
-        href="https://www.pmdc.pk"
+        href="https://www.iba-suk.edu.pk/sts/announcements"
         target="_blank"
         rel="noopener noreferrer nofollow"
         className="underline"
       >
-        pmdc.pk
+        SIBA Testing Services — official announcements
+      </a>
+      . Verified on 10 September 2026 against STS Press Release No. STS/SEC/1158/26.
+      Admit slips are issued through the PM&amp;DC / STS portal you registered on — download yours at{' '}
+      <a
+        href="https://eslip.sts.net.pk"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        className="underline"
+      >
+        eslip.sts.net.pk
       </a>{' '}
-      for the download announcement.
+      by entering your CNIC / ID number.
     </p>
     <p className="text-sm text-muted-foreground mt-3">
       While you wait, keep revising with the{' '}
