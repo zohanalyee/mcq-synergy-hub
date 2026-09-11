@@ -132,10 +132,66 @@ export async function checkPaidDailyCeiling(
 }
 
 /**
- * FREE-KEY HEALTH PROBE.
- * Sends the cheapest possible request to each configured Gemini key so a
- * scheduler can decide whether free capacity exists BEFORE it starts a run
- * that would otherwise fall through to paid credits on every batch.
+ * AUTO-FILL PAID BUDGET.
+ * Background filling gets a small, separate paid allowance so it never stops
+ * completely when every free key is exhausted, and can never eat the much larger
+ * learner-facing ceiling. Reads `system_settings` → `auto_fill_paid_budget`
+ * ({ enabled, max_paid_calls_per_run, max_paid_calls_per_day }).
+ * Fails CLOSED (0 paid calls) on error — background work is never urgent.
+ */
+export async function checkAutoFillPaidBudget(
+  client: any,
+): Promise<{ allowedThisRun: number; usedToday: number; dailyLimit: number; enabled: boolean }> {
+  const empty = { allowedThisRun: 0, usedToday: 0, dailyLimit: 0, enabled: false };
+  if (!client) return empty;
+
+  try {
+    const { data: row } = await client
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'auto_fill_paid_budget')
+      .maybeSingle();
+
+    const cfg = row?.value ?? {};
+    const enabled = cfg?.enabled === true;
+    const perRun = Math.max(0, Number(cfg?.max_paid_calls_per_run) || 0);
+    const perDay = Math.max(0, Number(cfg?.max_paid_calls_per_day) || 0);
+    if (!enabled || perRun === 0 || perDay === 0) return { ...empty, dailyLimit: perDay, enabled };
+
+    const day = new Date().toISOString().slice(0, 10);
+    const { count } = await client
+      .from('ai_usage_logs')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', `${day}T00:00:00Z`)
+      .eq('metadata->>provider', 'lovable')
+      .eq('metadata->>outcome', 'success')
+      .eq('metadata->>source', 'auto_fill');
+
+    const usedToday = count || 0;
+    const remainingToday = Math.max(0, perDay - usedToday);
+    return {
+      allowedThisRun: Math.min(perRun, remainingToday),
+      usedToday,
+      dailyLimit: perDay,
+      enabled,
+    };
+  } catch (error) {
+    console.warn('[AI-Switch] Auto-fill paid budget check failed (failing closed):', String(error).substring(0, 120));
+    return empty;
+  }
+}
+
+/**
+ * FREE-KEY HEALTH PROBE (quota-aware, cached).
+ * A probe is a REAL Gemini request and therefore spends free-tier quota, so we
+ * never probe a key we already know is down:
+ *  - 429 (daily/RPM quota) → key parked until the next Google free-tier reset
+ *    boundary (~08:00 UTC, midnight US-Pacific).
+ *  - 401/403/400/404 → parked for 30 minutes (long enough to stop hammering,
+ *    short enough that replacing a secret recovers quickly).
+ *  - healthy → cached for 6 hours.
+ * The cache lives in `system_settings` → `free_key_health` so it survives edge
+ * isolate restarts. Cache read/write failures degrade to a live probe.
  */
 export interface FreeKeyProbeDetail {
   key_index: number;
@@ -143,31 +199,113 @@ export interface FreeKeyProbeDetail {
   status: number;
   reason?: string;
   no_model_available?: boolean;
+  cached?: boolean;
 }
 
-export async function probeFreeGeminiKeys(): Promise<{
+const HEALTHY_CACHE_MS = 6 * 60 * 60 * 1000;
+const AUTH_COOLDOWN_MS = 30 * 60 * 1000;
+
+// Next ~08:00 UTC boundary (midnight US-Pacific, when free-tier RPD resets).
+function nextFreeTierReset(now = new Date()): number {
+  const reset = new Date(now);
+  reset.setUTCHours(8, 0, 0, 0);
+  if (reset.getTime() <= now.getTime()) reset.setUTCDate(reset.getUTCDate() + 1);
+  return reset.getTime();
+}
+
+type CachedKeyHealth = Record<string, {
+  ok: boolean;
+  status: number;
+  reason?: string;
+  no_model_available?: boolean;
+  checked_at: number;
+  cooldown_until?: number;
+}>;
+
+async function readKeyHealthCache(client: any): Promise<CachedKeyHealth> {
+  if (!client) return {};
+  try {
+    const { data } = await client
+      .from('system_settings')
+      .select('value')
+      .eq('key', 'free_key_health')
+      .maybeSingle();
+    return (data?.value?.keys ?? {}) as CachedKeyHealth;
+  } catch (_e) {
+    return {};
+  }
+}
+
+async function writeKeyHealthCache(client: any, keys: CachedKeyHealth): Promise<void> {
+  if (!client) return;
+  try {
+    await client
+      .from('system_settings')
+      .upsert(
+        { key: 'free_key_health', value: { keys, updated_at: new Date().toISOString() } },
+        { onConflict: 'key' },
+      );
+  } catch (error) {
+    console.warn('[Gemini] Could not persist free_key_health:', String(error).substring(0, 120));
+  }
+}
+
+export async function probeFreeGeminiKeys(client?: any): Promise<{
   usable: number;
   total: number;
   no_model_available: boolean;
+  probe_calls: number;
   details: FreeKeyProbeDetail[];
 }> {
   const keys = getFreeGeminiKeys();
+  const logClient = client ?? getLogClient();
+  const cache = await readKeyHealthCache(logClient);
+  const now = Date.now();
 
   const details: FreeKeyProbeDetail[] = [];
   let usable = 0;
   let noModel = 0;
+  let probeCalls = 0;
+  let cacheDirty = false;
 
   for (const { key, index } of keys) {
+    const cached = cache[String(index)];
+
+    // 1) Known-bad key still inside its cooldown → do NOT spend quota probing.
+    if (cached && !cached.ok && cached.cooldown_until && cached.cooldown_until > now) {
+      if (cached.no_model_available) noModel++;
+      details.push({
+        key_index: index,
+        ok: false,
+        status: cached.status,
+        reason: `cached: ${cached.reason ?? 'unusable'}`,
+        no_model_available: cached.no_model_available,
+        cached: true,
+      });
+      continue;
+    }
+
+    // 2) Recently healthy → trust it for 6 hours.
+    if (cached && cached.ok && now - cached.checked_at < HEALTHY_CACHE_MS) {
+      usable++;
+      details.push({ key_index: index, ok: true, status: 200, reason: 'cached: healthy', cached: true });
+      continue;
+    }
+
+    // 3) Otherwise spend exactly one probe request.
     try {
       // Reasoning-capable models spend tokens on internal thinking, so the probe
       // needs real output room — a tiny cap comes back textless and used to be
       // mis-read as a dead key.
+      probeCalls++;
       await callGeminiText(key, '', 'Reply with the single word: ok', {
         temperature: 0,
         maxOutputTokens: 256,
       });
       usable++;
       details.push({ key_index: index, ok: true, status: 200 });
+      cache[String(index)] = { ok: true, status: 200, checked_at: now };
+      cacheDirty = true;
     } catch (error: any) {
       const status = Number(error?.status ?? 0);
       const reason = String(error?.message || '').substring(0, 120);
@@ -177,13 +315,23 @@ export async function probeFreeGeminiKeys(): Promise<{
       // known model id was rejected for this key (model retirement, not a dead
       // key) — surfaced separately. Anything else (5xx overload, empty body,
       // network blip) means the key authenticated fine, so keep it usable.
-      const isAuthOrQuota = status === 401 || status === 403 || status === 429 || status === 400;
+      const isQuota = status === 429;
+      const isAuthOrBad = status === 401 || status === 403 || status === 400;
       const isNoModel = status === 404;
 
       if (isNoModel) noModel++;
 
-      if (isAuthOrQuota || isNoModel) {
+      if (isQuota || isAuthOrBad || isNoModel) {
         details.push({ key_index: index, ok: false, status, reason, no_model_available: isNoModel });
+        cache[String(index)] = {
+          ok: false,
+          status,
+          reason,
+          no_model_available: isNoModel,
+          checked_at: now,
+          cooldown_until: isQuota ? nextFreeTierReset() : now + AUTH_COOLDOWN_MS,
+        };
+        cacheDirty = true;
       } else {
         usable++;
         details.push({
@@ -192,17 +340,24 @@ export async function probeFreeGeminiKeys(): Promise<{
           status: status || 200,
           reason: `treated as usable (transient): ${reason}`,
         });
+        // Transient failure: don't cache a verdict either way.
+        delete cache[String(index)];
+        cacheDirty = true;
       }
     }
   }
+
+  if (cacheDirty) await writeKeyHealthCache(logClient, cache);
 
   return {
     usable,
     total: keys.length,
     no_model_available: keys.length > 0 && noModel === keys.length,
+    probe_calls: probeCalls,
     details,
   };
 }
+
 
 
 
