@@ -550,7 +550,7 @@ Deno.serve(async (req) => {
               count: questionsToRequest,
               mode: 'bank_only',
               source: 'auto_fill',
-              free_only: !paidAllowed,
+              free_only: !paidMode,
               forceNew: true
             })
           }),
@@ -559,6 +559,7 @@ Deno.serve(async (req) => {
         );
 
         totalQuestionsRequested += questionsToRequest;
+        if (paidMode) paidCallsUsed++;
 
         if (generateResponse.ok) {
           const result = await generateResponse.json();
