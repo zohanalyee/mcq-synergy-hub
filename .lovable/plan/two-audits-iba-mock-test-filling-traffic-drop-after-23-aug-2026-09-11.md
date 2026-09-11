@@ -91,3 +91,19 @@ Traffic did not break — one exam cluster expired on schedule and nothing was r
 - `campaign_surge.enabled` is `false` (label "MDCAT Final Sprint (to 20 Sep 2026)", `min_multiplier: 1`, `daily_budget: 600`); `content_fill_sprint.enabled` is also `false`.
 - `auto_fill_paid_budget` = 5/run, 40/day; `paid_ai_daily_ceiling` = 500/day. Neither is touched by this plan.
 - Evidence: Search Console 2026-08-11→2026-09-07 snapshot; project analytics daily 2026-08-01→2026-09-11; SEO scanners `http`/`lint` stale as of 2026-08-20, `metadata_basics` never scanned.
+
+&nbsp;
+
+Turant ye karna hai — sab se pehle:
+
+```
+Urgent, before anything else: please re-enable campaign_surge (it's currently disabled despite being labeled "MDCAT Final Sprint to 20 Sep"). Confirm it's active now with the existing MDCAT keywords and budget.
+
+Also run a fresh SEO scan (the stored one is stale from 20 Aug) to check for any technical issue specifically affecting /exams/mdcat, /mdcat-syllabus, and /mdcat-past-papers ranking weakly despite having real content — confirm there's no indexing/crawl issue we're missing, since existing impressions show demand exists but conversion to clicks is very low (avg position 6.3-11.8).
+```
+
+**Phir IBA batch approve kar dein — plan solid hai:**
+
+```
+Approved for the IBA batch: queue the 36 empty tests, reuse the shared 40% (English/Reasoning/Computer) from the existing bank, generate only the 60% subject-specific part, target 200/test, 300/day budget, hard-separated from MDCAT's key allowance (MDCAT gets first claim, IBA only uses what's left over and pauses if MDCAT work isn't done that day). After 20 Sep, promote IBA to primary scope automatically.
+```
