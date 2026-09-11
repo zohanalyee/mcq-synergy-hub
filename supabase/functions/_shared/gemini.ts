@@ -158,16 +158,20 @@ export async function checkAutoFillPaidBudget(
     const perDay = Math.max(0, Number(cfg?.max_paid_calls_per_day) || 0);
     if (!enabled || perRun === 0 || perDay === 0) return { ...empty, dailyLimit: perDay, enabled };
 
+    // Today's paid usage is summed from the auto-fill run summaries, which are
+    // the only writer of `paid_calls_used` — accurate and self-contained.
     const day = new Date().toISOString().slice(0, 10);
-    const { count } = await client
+    const { data: runRows } = await client
       .from('ai_usage_logs')
-      .select('*', { count: 'exact', head: true })
+      .select('metadata')
+      .eq('source_type', 'auto_fill_run_summary')
       .gte('created_at', `${day}T00:00:00Z`)
-      .eq('metadata->>provider', 'lovable')
-      .eq('metadata->>outcome', 'success')
-      .eq('metadata->>source', 'auto_fill');
+      .limit(500);
 
-    const usedToday = count || 0;
+    const usedToday = (runRows || []).reduce(
+      (sum: number, r: any) => sum + (Number(r?.metadata?.paid_calls_used) || 0),
+      0,
+    );
     const remainingToday = Math.max(0, perDay - usedToday);
     return {
       allowedThisRun: Math.min(perRun, remainingToday),
