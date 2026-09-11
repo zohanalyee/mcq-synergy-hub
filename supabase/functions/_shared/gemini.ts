@@ -24,7 +24,9 @@ function getLogClient(): any | null {
 
 const GEMINI_API_BASE = "https://generativelanguage.googleapis.com/v1beta/models";
 const LOVABLE_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const DEFAULT_MODEL = "gemini-2.0-flash";
+// `gemini-flash-latest` is the only id currently served to our keys; the dated
+// ids below are kept as trailing fallbacks in case a key is pinned to them.
+const DEFAULT_MODEL = "gemini-flash-latest";
 
 const DEFAULT_SAFETY_SETTINGS = [
   { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
@@ -260,7 +262,7 @@ function isCreditsError(error: any): boolean {
 // Model fallback chain: if a model id is retired / unavailable for the key
 // (Google answers 404 "model not found for API version"), retry the same
 // request on the next known-good model instead of failing the whole run.
-const TEXT_MODEL_FALLBACKS = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-flash-latest"];
+const TEXT_MODEL_FALLBACKS = ["gemini-flash-latest", "gemini-2.0-flash", "gemini-2.5-flash"];
 
 export async function callGeminiText(
   apiKey: string,
