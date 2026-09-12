@@ -32,6 +32,8 @@ interface PaidBudgetConfig {
   enabled?: boolean;
   max_paid_calls_per_run?: number;
   max_paid_calls_per_day?: number;
+}
+
 
 /**
  * THRESHOLD SPRINT (indexing quality gate).
