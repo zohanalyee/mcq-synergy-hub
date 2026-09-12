@@ -520,15 +520,23 @@ Deno.serve(async (req) => {
       // 5-MCQ indexing gate. Cheapest first so the most pages convert per run.
       let topic: AutoFillQueueItem | undefined;
       if (thresholdOn && !paidMode) {
-        const nearMiss = queue
-          .filter((q) => {
-            const n = Number(q.current_count) || 0;
-            return n >= thresholdMin && n <= thresholdMax;
-          })
-          .sort((a, b) => (Number(b.current_count) || 0) - (Number(a.current_count) || 0));
-        topic = nearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
+        const isNearMiss = (q: AutoFillQueueItem) => {
+          const n = Number(q.current_count) || 0;
+          return n >= thresholdMin && n <= thresholdMax;
+        };
+        const byCheapest = (a: AutoFillQueueItem, b: AutoFillQueueItem) =>
+          (Number(b.current_count) || 0) - (Number(a.current_count) || 0);
+        // In-scope near-miss topics first (keeps the exam sprint in front),
+        // then near-miss topics anywhere — the whole set is only ~190 questions.
+        const scopedNearMiss = queue.filter(isNearMiss).sort(byCheapest);
+        topic = scopedNearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
+        if (!topic) {
+          const globalNearMiss = rawQueue.filter(isNearMiss).sort(byCheapest);
+          topic = globalNearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
+        }
         if (topic) nearMissTopicsProcessed++;
       }
+
       if (!topic) topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
 
 
