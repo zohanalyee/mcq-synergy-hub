@@ -35,6 +35,25 @@ interface PaidBudgetConfig {
 }
 
 
+/**
+ * THRESHOLD SPRINT (indexing quality gate).
+ * Board/topic pages are only allowed into Google's index at >= 5 approved MCQs.
+ * When enabled, a run that is using the FREE keys prefers "near-miss" topics
+ * (1..4 approved) so a handful of questions converts straight into an
+ * indexable page. Deliberately skipped in paid mode so it never creates extra
+ * paid spend.
+ */
+interface ThresholdSprintConfig {
+  enabled?: boolean;
+  min_count?: number;
+  max_count?: number;
+  free_only?: boolean;
+  label?: string;
+}
+
+
+
+
 interface CampaignSurge {
   enabled: boolean;
   label?: string;
@@ -182,11 +201,15 @@ Deno.serve(async (req) => {
     const { data: settingsRows } = await supabase
       .from('system_settings')
       .select('key, value')
-      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge', 'auto_fill_paid_budget']);
+      .in('key', ['auto_fill_config', 'content_fill_sprint', 'campaign_surge', 'auto_fill_paid_budget', 'threshold_sprint']);
 
     const config = (settingsRows?.find((r: any) => r.key === 'auto_fill_config')?.value ?? null) as AutoFillConfig | null;
     const sprint = (settingsRows?.find((r: any) => r.key === 'content_fill_sprint')?.value ?? null) as SprintConfig | null;
     const paidBudget = (settingsRows?.find((r: any) => r.key === 'auto_fill_paid_budget')?.value ?? null) as PaidBudgetConfig | null;
+    const thresholdCfg = (settingsRows?.find((r: any) => r.key === 'threshold_sprint')?.value ?? null) as ThresholdSprintConfig | null;
+    const thresholdMin = Number(thresholdCfg?.min_count ?? 1);
+    const thresholdMax = Number(thresholdCfg?.max_count ?? 4);
+
 
     // Campaign Surge window: time-boxed budget/scope boost (e.g. Larkana banner
     // week). Auto-expires at ends_at — no code change needed to switch it off.
@@ -200,6 +223,8 @@ Deno.serve(async (req) => {
     }
 
     const sprintOn = !!sprint?.enabled || surgeOn;
+    const thresholdOn = !!thresholdCfg?.enabled;
+
     const surgeKeywords = surgeOn
       ? (surgeCfg?.sprint_keywords || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k.length > 1)
       : [];
@@ -415,6 +440,8 @@ Deno.serve(async (req) => {
     let totalTopicRejected = 0;
     let zeroYieldStreak = 0;
     let depthTopicsProcessed = 0;
+    let nearMissTopicsProcessed = 0;
+
     let lastRawQueueSize = 0;
     let stopReason = '';
     let queueError: string | null = null;
@@ -487,7 +514,31 @@ Deno.serve(async (req) => {
       const queue = applySprintScope(rawQueue)
         .slice()
         .sort((a, b) => (Number(b.questions_needed) || 0) - (Number(a.questions_needed) || 0));
-      let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
+      // THRESHOLD SPRINT: on free-key runs only, finish the near-miss topics
+      // (1..4 approved MCQs) first — a few questions each flips them over the
+      // 5-MCQ indexing gate. Cheapest first so the most pages convert per run.
+      let topic: AutoFillQueueItem | undefined;
+      if (thresholdOn && !paidMode) {
+        const isNearMiss = (q: AutoFillQueueItem) => {
+          const n = Number(q.current_count) || 0;
+          return n >= thresholdMin && n <= thresholdMax;
+        };
+        const byCheapest = (a: AutoFillQueueItem, b: AutoFillQueueItem) =>
+          (Number(b.current_count) || 0) - (Number(a.current_count) || 0);
+        // In-scope near-miss topics first (keeps the exam sprint in front),
+        // then near-miss topics anywhere — the whole set is only ~190 questions.
+        const scopedNearMiss = queue.filter(isNearMiss).sort(byCheapest);
+        topic = scopedNearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
+        if (!topic) {
+          const globalNearMiss = rawQueue.filter(isNearMiss).sort(byCheapest);
+          topic = globalNearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
+        }
+        if (topic) nearMissTopicsProcessed++;
+      }
+
+      if (!topic) topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
 
       let fromDepthLadder = false;
 
@@ -639,6 +690,8 @@ Deno.serve(async (req) => {
         triggered_by: isAdminCall ? 'admin' : 'cron',
         topics_processed: topicsProcessed,
         depth_ladder_topics: depthTopicsProcessed,
+        near_miss_topics: nearMissTopicsProcessed,
+        threshold_sprint: thresholdOn,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         // Real yield accounting (previously invisible)
@@ -677,6 +730,8 @@ Deno.serve(async (req) => {
         message: `Auto-fill completed: ${stopReason}`,
         topics_processed: topicsProcessed,
         depth_ladder_topics: depthTopicsProcessed,
+        near_miss_topics: nearMissTopicsProcessed,
+        threshold_sprint: thresholdOn,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         questions_requested: totalQuestionsRequested,
