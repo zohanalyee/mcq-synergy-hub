@@ -510,7 +510,23 @@ Deno.serve(async (req) => {
       const queue = applySprintScope(rawQueue)
         .slice()
         .sort((a, b) => (Number(b.questions_needed) || 0) - (Number(a.questions_needed) || 0));
-      let topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
+      // THRESHOLD SPRINT: on free-key runs only, finish the near-miss topics
+      // (1..4 approved MCQs) first — a few questions each flips them over the
+      // 5-MCQ indexing gate. Cheapest first so the most pages convert per run.
+      let topic: AutoFillQueueItem | undefined;
+      if (thresholdOn && !paidMode) {
+        const nearMiss = queue
+          .filter((q) => {
+            const n = Number(q.current_count) || 0;
+            return n >= thresholdMin && n <= thresholdMax;
+          })
+          .sort((a, b) => (Number(b.current_count) || 0) - (Number(a.current_count) || 0));
+        topic = nearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
+        if (topic) nearMissTopicsProcessed++;
+      }
+      if (!topic) topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
+
 
       let fromDepthLadder = false;
 
