@@ -8,15 +8,17 @@ No changes were made. Everything below is measured, not assumed.
 
 Tested from this sandbox against the live site (`mcqsai.com`):
 
-| Visitor identity | Result |
-|---|---|
-| Googlebot | 200 on all 8 sampled pages (`/exams/mdcat`, `/exams/nts`, `/exams/css`, `/exams/ppsc`, `/p/mdcat-karachi`, the MDCAT blog post, `sitemap.xml`, `robots.txt`) |
-| Bingbot | 200 |
-| GPTBot (AI crawler) | 200 |
-| **Google-InspectionTool** (Google's checking tool) | **403** |
-| **facebookexternalhit** (Facebook/WhatsApp link previews) | **403** |
-| AhrefsBot | 403 |
-| Plain browser identity from this machine | 403 |
+
+| Visitor identity                                          | Result                                                                                                                                                       |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Googlebot                                                 | 200 on all 8 sampled pages (`/exams/mdcat`, `/exams/nts`, `/exams/css`, `/exams/ppsc`, `/p/mdcat-karachi`, the MDCAT blog post, `sitemap.xml`, `robots.txt`) |
+| Bingbot                                                   | 200                                                                                                                                                          |
+| GPTBot (AI crawler)                                       | 200                                                                                                                                                          |
+| **Google-InspectionTool** (Google's checking tool)        | **403**                                                                                                                                                      |
+| **facebookexternalhit** (Facebook/WhatsApp link previews) | **403**                                                                                                                                                      |
+| AhrefsBot                                                 | 403                                                                                                                                                          |
+| Plain browser identity from this machine                  | 403                                                                                                                                                          |
+
 
 So Google's normal crawler is being let in fine — the pages themselves are healthy. Two blocks still matter:
 
@@ -56,10 +58,12 @@ MDCAT priority is intact and verified: the MDCAT sprint is switched on until 21 
 
 ### 3. Discard rate — genuinely improved
 
-| | Requested | Saved | Approved & visible | Held as duplicates | Awaiting review |
-|---|---|---|---|---|---|
-| 11 Sep | 910 | 330 | 402 | 126 | 15 |
-| 12 Sep (to 08:20) | 470 | 387 | 306 | 115 | 6 |
+
+| &nbsp;            | Requested | Saved | Approved & visible | Held as duplicates | Awaiting review |
+| ----------------- | --------- | ----- | ------------------ | ------------------ | --------------- |
+| 11 Sep            | 910       | 330   | 402                | 126                | 15              |
+| 12 Sep (to 08:20) | 470       | 387   | 306                | 115                | 6               |
+
 
 Today's waste rate is about **27%** (115 of 427 stored), against roughly **93%** before the deficit-first fix. Confirmed improvement, and today's save rate (387 of 470 requested) is the healthiest yet.
 
@@ -91,3 +95,19 @@ Suggested follow-up (after MDCAT, or in parallel on free keys only): a small "th
 1. Cloudflare allow-list fix (Google-InspectionTool + social previews), then re-validate and request indexing — this is what actually unblocks the 403 report.
 2. Threshold sprint for the 58 near-miss topics.
 3. Leave MDCAT priority and all current spending caps exactly as they are.
+
+&nbsp;
+
+Please proceed immediately:
+
+1. Add Google-InspectionTool, Google's other verified tools, and social preview fetchers (Facebook, X, LinkedIn, WhatsApp) to the Cloudflare allow-list, same shape as the existing Googlebot rule
+
+2. Re-test each for a 200 response
+
+3. Give me the exact list of ~10 priority pages so I can press "Validate Fix" and "Request Indexing" in Search Console
+
+After the Cloudflare fix, please also run a small "threshold sprint" (using free keys only, no extra paid budget) to push the 58 near-miss topics (currently 1-4 questions each) over the 5-question indexing threshold — roughly 190 questions needed total.
+
+Also
+
+Please give the exact split for 11-12 Sep: of the 708 total approved questions, how many were generated using free Gemini keys versus how many came from the paid safety-net (40 paid calls)? Also confirm: of the 241 questions discarded/held as duplicates, were any of those from paid calls (i.e., did we pay for any of the discarded ones), or were all discards from free-key generation only?
