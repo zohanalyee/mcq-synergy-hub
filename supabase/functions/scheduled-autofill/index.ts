@@ -440,6 +440,8 @@ Deno.serve(async (req) => {
     let totalTopicRejected = 0;
     let zeroYieldStreak = 0;
     let depthTopicsProcessed = 0;
+    let nearMissTopicsProcessed = 0;
+
     let lastRawQueueSize = 0;
     let stopReason = '';
     let queueError: string | null = null;
