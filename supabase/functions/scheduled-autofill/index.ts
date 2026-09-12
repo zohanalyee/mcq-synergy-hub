@@ -223,6 +223,8 @@ Deno.serve(async (req) => {
     }
 
     const sprintOn = !!sprint?.enabled || surgeOn;
+    const thresholdOn = !!thresholdCfg?.enabled;
+
     const surgeKeywords = surgeOn
       ? (surgeCfg?.sprint_keywords || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k.length > 1)
       : [];
