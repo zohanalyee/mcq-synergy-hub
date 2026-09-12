@@ -32,7 +32,24 @@ interface PaidBudgetConfig {
   enabled?: boolean;
   max_paid_calls_per_run?: number;
   max_paid_calls_per_day?: number;
+
+/**
+ * THRESHOLD SPRINT (indexing quality gate).
+ * Board/topic pages are only allowed into Google's index at >= 5 approved MCQs.
+ * When enabled, a run that is using the FREE keys prefers "near-miss" topics
+ * (1..4 approved) so a handful of questions converts straight into an
+ * indexable page. Deliberately skipped in paid mode so it never creates extra
+ * paid spend.
+ */
+interface ThresholdSprintConfig {
+  enabled?: boolean;
+  min_count?: number;
+  max_count?: number;
+  free_only?: boolean;
+  label?: string;
 }
+
+
 
 
 interface CampaignSurge {
