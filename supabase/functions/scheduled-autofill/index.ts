@@ -690,6 +690,8 @@ Deno.serve(async (req) => {
         triggered_by: isAdminCall ? 'admin' : 'cron',
         topics_processed: topicsProcessed,
         depth_ladder_topics: depthTopicsProcessed,
+        near_miss_topics: nearMissTopicsProcessed,
+        threshold_sprint: thresholdOn,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         // Real yield accounting (previously invisible)
@@ -728,6 +730,8 @@ Deno.serve(async (req) => {
         message: `Auto-fill completed: ${stopReason}`,
         topics_processed: topicsProcessed,
         depth_ladder_topics: depthTopicsProcessed,
+        near_miss_topics: nearMissTopicsProcessed,
+        threshold_sprint: thresholdOn,
         topics_attempted: attemptedTopicIds.size,
         questions_saved: totalQuestionsSaved,
         questions_requested: totalQuestionsRequested,
