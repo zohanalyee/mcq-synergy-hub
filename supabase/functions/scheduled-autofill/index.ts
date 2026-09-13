@@ -441,6 +441,10 @@ Deno.serve(async (req) => {
     let zeroYieldStreak = 0;
     let depthTopicsProcessed = 0;
     let nearMissTopicsProcessed = 0;
+    // Threshold-sprint pool, loaded once per run (see the sprint block below).
+    const NEAR_MISS_WINDOW = 2000;
+    let nearMissPool: AutoFillQueueItem[] | null = null;
+
 
     let lastRawQueueSize = 0;
     let stopReason = '';
@@ -518,6 +522,11 @@ Deno.serve(async (req) => {
       // THRESHOLD SPRINT: on free-key runs only, finish the near-miss topics
       // (1..4 approved MCQs) first — a few questions each flips them over the
       // 5-MCQ indexing gate. Cheapest first so the most pages convert per run.
+      //
+      // IMPORTANT: get_autofill_queue orders by count ASC, and there are ~550
+      // completely empty topics, so a 400-row window contains ONLY zero-bank
+      // topics and the near-miss set never surfaced. The sprint therefore loads
+      // its own wide window once per run and keeps it in memory.
       let topic: AutoFillQueueItem | undefined;
       if (thresholdOn && !paidMode) {
         const isNearMiss = (q: AutoFillQueueItem) => {
@@ -526,16 +535,27 @@ Deno.serve(async (req) => {
         };
         const byCheapest = (a: AutoFillQueueItem, b: AutoFillQueueItem) =>
           (Number(b.current_count) || 0) - (Number(a.current_count) || 0);
+
+        if (nearMissPool === null) {
+          const { data: wideData, error: wideErr } = await supabase.rpc('get_autofill_queue', {
+            limit_count: NEAR_MISS_WINDOW,
+          });
+          if (wideErr) {
+            console.error(`[Scheduled Auto-Fill] near-miss window unavailable: ${wideErr.message}`);
+            nearMissPool = [];
+          } else {
+            nearMissPool = ((wideData as AutoFillQueueItem[] | null) || []).filter(isNearMiss);
+            console.log(`[Scheduled Auto-Fill] 🎯 Threshold sprint: ${nearMissPool.length} near-miss topic(s) with ${thresholdMin}-${thresholdMax} approved MCQs — these run BEFORE empty topics`);
+          }
+        }
+
         // In-scope near-miss topics first (keeps the exam sprint in front),
         // then near-miss topics anywhere — the whole set is only ~190 questions.
-        const scopedNearMiss = queue.filter(isNearMiss).sort(byCheapest);
-        topic = scopedNearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
-        if (!topic) {
-          const globalNearMiss = rawQueue.filter(isNearMiss).sort(byCheapest);
-          topic = globalNearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
-        }
+        const scoped = applySprintScope(nearMissPool).slice().sort(byCheapest);
+        topic = scoped.find((q) => !attemptedTopicIds.has(q.topic_id));
         if (topic) nearMissTopicsProcessed++;
       }
+
 
       if (!topic) topic = queue.find((q) => !attemptedTopicIds.has(q.topic_id));
 
