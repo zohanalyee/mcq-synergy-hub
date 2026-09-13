@@ -9,10 +9,10 @@ confirmed yet from this side.
 
 Two ways forward — your pick:
 
-1. You run PageSpeed Insights in your browser on https://mcqsai.com/ (mobile +
-   desktop) and paste the scores; I compare them to the last run.
+1. You run PageSpeed Insights in your browser on [https://mcqsai.com/](https://mcqsai.com/) (mobile +
+  desktop) and paste the scores; I compare them to the last run.
 2. I run a local lab measurement inside the build environment instead. It gives
-   comparable TBT / unused-JavaScript figures but is not the same machine or
+  comparable TBT / unused-JavaScript figures but is not the same machine or
    network as Google's, so absolute scores will differ from PageSpeed.
 
 ## Part 2 — Yesterday's generation (12 Sep), topic by topic
@@ -22,10 +22,12 @@ Totals: 496 questions created — 366 published, 124 held as duplicates, 6 waiti
 
 Grouped by priority scope (published count in brackets):
 
-| Scope | Topics | Added | Published |
-| --- | --- | --- | --- |
-| MDCAT scope (biology / physics / chemistry / Class 11-12) | 31 | 325 | 240 |
-| Everything else (GK, English, Social Sciences, Computer, Maths) | 20 | 171 | 126 |
+
+| Scope                                                           | Topics | Added | Published |
+| --------------------------------------------------------------- | ------ | ----- | --------- |
+| MDCAT scope (biology / physics / chemistry / Class 11-12)       | 31     | 325   | 240       |
+| Everything else (GK, English, Social Sciences, Computer, Maths) | 20     | 171   | 126       |
+
 
 Of these, only 1 topic was a genuine near-miss (had 1-4 published questions
 before) and 10 topics already had 5+; the remaining 40 started from an empty
@@ -95,5 +97,9 @@ Cycle, Nutrition, Cells), Class 9-12 Biology/Physics/Chemistry, Chemistry Class 
 Physics (Modern, Optics, Nuclear), plus Urdu / English / Pakistan Studies at
 class level.
 
-Duplicate-hold rate: 25% yesterday, 29% today — far better than the ~93% discard
+Duplicate-hold rate: 25% yesterday, 29% today — far better than the ~93% discard  
 level seen before the deficit-first fix.
+
+&nbsp;
+
+The threshold sprint isn't behaving as intended — only 1 of yesterday's 51 topics was a genuine 1-4 question near-miss; the rest were completely empty topics. Please adjust the sprint logic to specifically prioritize the 58 near-miss topics (1-4 published questions) ahead of completely empty topics, since finishing those 58 unlocks immediate SEO indexing eligibility with far fewer questions needed. Once those 58 are done, then move to empty topics.
