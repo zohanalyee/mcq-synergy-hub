@@ -34,7 +34,7 @@ function whenIdle(cb: () => void, timeout: number) {
 const DeferredGlobals = () => {
   // Stage 1: toast host + interaction-critical listeners.
   // Stage 2: welcome modals, trackers, floating tools, cookie banner.
-  const [stage, setStage] = useState(isPrerender ? 2 : 0);
+  const [stage, setStage] = useState(0);
 
   useEffect(() => {
     if (isPrerender) return;
