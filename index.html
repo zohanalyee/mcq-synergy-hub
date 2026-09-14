@@ -135,7 +135,7 @@
         document.addEventListener('visibilitychange', function () {
           if (document.visibilityState === 'hidden') loadGA();
         }, { once: true });
-        function fallback() { setTimeout(loadGA, 3500); }
+        function fallback() { setTimeout(loadGA, 12000); }
         if (document.readyState === 'complete') fallback();
         else window.addEventListener('load', fallback, { once: true });
       })();
