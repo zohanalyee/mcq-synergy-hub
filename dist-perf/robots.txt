@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /test-session/*
+Disallow: /auth
+Disallow: /signin
+Disallow: /sign-in
+Disallow: /signup
+Disallow: /sign-up
+Disallow: /complete-profile
+Disallow: /verify-email*
+Disallow: /reset-password
+Disallow: /forgot-password
+
+# Block crawlable query-param permutations (infinite low-value duplicates of
+# the clean canonical URLs). Clean paths remain fully indexable.
+Disallow: /*?*count=
+Disallow: /*?*timed=
+Disallow: /*?*topic=
+Disallow: /*?*difficulty=
+Disallow: /*?*q=
+Disallow: /subjects?*
+# NOTE: ?lang= is intentionally CRAWLABLE. Those URLs already rank, and
+# GlobalCanonical strips the query so there is no duplicate-content risk.
+
+Sitemap: https://mcqsai.com/sitemap.xml

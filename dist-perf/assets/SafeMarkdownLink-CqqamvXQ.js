@@ -1,0 +1,1 @@
+import{j as i}from"./framer-B4bTUMd-.js";import{m as l,i as f}from"./markdownSanitize-DL14EHbv.js";function m({href:t,children:s,...a}){const r=t??"",o=l(r),e=o.startsWith("mailto:")||f(r),n=/^https?:\/\//i.test(o);return i.jsx("a",{href:o,...n?{target:"_blank",rel:"nofollow noopener noreferrer"}:{},...e?{rel:"nofollow"}:{},...a,children:s})}const w={a:m};export{m as S,w as s};
