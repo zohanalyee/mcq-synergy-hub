@@ -1,4 +1,3 @@
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { hydrateQueryCache, persistQueryCache } from "@/lib/queryPersist";
@@ -19,15 +18,12 @@ import type { PageMap } from "./routes/pageMap";
 // so renderToString ships full body content for crawlers.
 import lazyPages from "./routes/lazyPages";
 
+import DeferredGlobals from "./components/DeferredGlobals";
 import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
-import GuestResultCarryForward from "./components/GuestResultCarryForward";
-import CookieConsent from "./components/CookieConsent";
 
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
-import CampaignTracker from "./components/CampaignTracker";
-import EmailPrefSync from "./components/EmailPrefSync";
 // Lazy: not in the prerender whitelist (transactional email landing page).
 const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 
@@ -43,12 +39,8 @@ import { AppearanceProvider } from "./contexts/AppearanceContext";
 import { DeviceCapabilityProvider } from "./contexts/DeviceCapabilityContext";
 import { LanguageProvider } from "./contexts/LanguageContext";
 import PageLoader from "./components/PageLoader";
-import AIWelcome from "./components/AIWelcome";
-import LibraryWelcome from "./components/LibraryWelcome";
 import NavigationLoader from "./components/NavigationLoader";
-import FloatingToolsRenderer from "./components/tools/FloatingToolsRenderer";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
-import GlobalCreditExhaustedListener from "./components/credits/GlobalCreditExhaustedListener";
 import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
 // Lazy: auth flows are not prerendered and are never the first paint for crawlers.
 const SignIn = lazy(() => import("./pages/SignIn"));
@@ -205,31 +197,16 @@ const App = ({ pages = lazyPages }: { pages?: PageMap }) => {
                     <FloatingToolsProvider>
                     <TooltipProvider>
                     <PageLoader />
-                    <AIWelcome />
-                    <LibraryWelcome />
-                    <CampaignTracker />
-                    <EmailPrefSync />
                     <NavigationLoader />
-                    <Sonner 
-                      position="top-right"
-                      expand={true}
-                      closeButton={true}
-                      toastOptions={{
-                        duration: 3000,
-                        style: {
-                          maxWidth: '400px'
-                        }
-                      }}
-                      visibleToasts={5}
-                    />
-                    
+
                     <MobileBottomNav />
-                    <FloatingToolsRenderer />
                     <ToolRouteSEO />
                     <GlobalCanonical />
-                    <GlobalCreditExhaustedListener />
-                    <GuestResultCarryForward />
-                    <CookieConsent />
+                    {/* Toast host, welcome modals, trackers, floating tools and
+                        cookie banner — mounted just after first paint in split
+                        tasks (see DeferredGlobals). No visual difference. */}
+                    <DeferredGlobals />
+
 
                     <ProfileCompletionGuard>
                     <Suspense fallback={<TopProgressBar />}>

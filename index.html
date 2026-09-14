@@ -45,8 +45,10 @@
     <link rel="preconnect" href="https://www.googletagmanager.com">
     <link rel="preconnect" href="https://pzhvipkcssxrsxxljbbz.supabase.co" crossorigin>
 
-    <!-- Google AdSense — injected after the load event so it cannot compete with
-         LCP/first-paint. AdSlot pushes into window.adsbygoogle (a plain array),
+    <!-- Google AdSense — loaded on the first real user interaction (tap, key,
+         scroll) so it never competes with first paint / main-thread startup.
+         A long idle fallback keeps fill behaviour unchanged for visitors who
+         never interact. AdSlot pushes into window.adsbygoogle (a plain array),
          so slots queued before the script arrives still fill normally. -->
     <script>
       (function () {
@@ -59,14 +61,16 @@
           s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4978762286882236';
           document.head.appendChild(s);
         }
-        function schedule() { setTimeout(loadAds, 1500); }
-        if (document.readyState === 'complete') schedule();
-        else window.addEventListener('load', schedule, { once: true });
-        ['pointerdown', 'keydown', 'scroll'].forEach(function (e) {
+        ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'].forEach(function (e) {
           window.addEventListener(e, loadAds, { once: true, passive: true });
         });
+        // Safety net: idle visitors still get ads, just much later.
+        function fallback() { setTimeout(loadAds, 6000); }
+        if (document.readyState === 'complete') fallback();
+        else window.addEventListener('load', fallback, { once: true });
       })();
     </script>
+
 
 
     <!-- Non-blocking Google Fonts (trimmed weights, font-display: swap) -->
@@ -103,13 +107,39 @@
     <script src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Google Analytics 4 — loaded after main bundle to keep FCP fast -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-92HVL8ZQFC"></script>
+    <!-- Google Analytics 4 — the dataLayer/gtag stub is installed immediately so
+         every event (page_view, heartbeats, scroll depth) is queued with its real
+         timestamp; the gtag.js library itself is fetched on the first interaction
+         (or a short idle fallback) so it never lands inside the startup task.
+         Queued hits are flushed unchanged once the library loads. -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
       gtag('config', 'G-92HVL8ZQFC');
+      (function () {
+        var loaded = false;
+        function loadGA() {
+          if (loaded) return; loaded = true;
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-92HVL8ZQFC';
+          document.head.appendChild(s);
+        }
+        ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'].forEach(function (e) {
+          window.addEventListener(e, loadGA, { once: true, passive: true });
+        });
+        // Flush before the visitor leaves, and after a short idle window for
+        // passive readers, so no session goes unreported.
+        window.addEventListener('pagehide', loadGA, { once: true });
+        document.addEventListener('visibilitychange', function () {
+          if (document.visibilityState === 'hidden') loadGA();
+        }, { once: true });
+        function fallback() { setTimeout(loadGA, 12000); }
+        if (document.readyState === 'complete') fallback();
+        else window.addEventListener('load', fallback, { once: true });
+      })();
     </script>
+
   </body>
 </html>

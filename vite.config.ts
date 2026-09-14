@@ -102,6 +102,9 @@ export default defineConfig(({ mode }) => {
           if (/node_modules\/(clsx|tailwind-merge|class-variance-authority)\//.test(norm)) {
             return 'vendor-helpers';
           }
+          if (/node_modules\/(react|react-dom|scheduler|react-is)\//.test(norm)) return 'vendor-react';
+          if (/node_modules\/(@supabase|@tanstack)\//.test(norm)) return 'vendor-data';
+          if (/node_modules\/(@radix-ui|cmdk|vaul|sonner|lucide-react)\//.test(norm)) return 'vendor-ui';
           if (id.includes('framer-motion')) return 'framer';
           if (id.includes('pdf-lib') || id.includes('jspdf') || id.includes('html2canvas')) return 'pdf';
           if (id.includes('exceljs')) return 'excel';
