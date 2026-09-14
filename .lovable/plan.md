@@ -1,77 +1,83 @@
-# Mobile speed regression — audit findings (no changes made)
+# Mobile TBT variance (140ms / 50ms / 520ms) — audit findings
 
-## Short answer
+Your three runs settle the earlier question: FCP ~4.1s and LCP ~6.0s are stable,
+so the 5.1s/7.8s reading was an outlier, not a regression. What is left is TBT
+swinging 10x between runs. Everything below is read from the code as it is live
+today; I could not add fresh PageSpeed runs because Google's speed service is
+still refusing requests from here with a daily-quota error.
 
-The mobile numbers you saw cannot be treated as a real regression yet. The three
-shifts you reported (FCP +0.4s, LCP +0.3s, score 56→47) are inside the range that
-a single throttled mobile run varies by, and my own repeat measurements today
-show swings of that size and larger on the same unchanged build.
+## 1. Third-party scripts — yes, this is the main suspect
 
-Nothing in the prefetch fix is mobile-specific: the delay logic runs identically
-on both form factors, and it only skips prefetch entirely for data-saver / 2G
-connections — a saving, never a cost. So there is no mechanism by which desktop
-gains and mobile loses from that change.
+Two third-party scripts land in a timing window that sometimes falls inside the
+measured trace and sometimes just outside it:
 
-## What I measured today
+- **AdSense** is injected 1.5 seconds after the page's load event (`index.html`),
+  and also immediately on the first scroll/tap/keypress. On a throttled mobile
+  run, "1.5s after load" sits almost exactly on the edge of where the trace
+  stops. When the script lands inside the window, its download plus execution is
+  counted; when the trace closes first, it costs nothing. That single on/off
+  difference is easily worth several hundred milliseconds of blocking time —
+  which matches your 50ms vs 520ms spread.
+- **Analytics** loads at the bottom of the page on every run, so it contributes a
+  baseline, not the swing.
 
-Three back-to-back mobile lab runs of the live site from this environment:
+A second, smaller source of run-to-run difference: on the home page itself no ad
+unit is placed, so nothing fills — but the ad library still loads and
+initialises, and how much work it does before the trace ends is not
+deterministic between runs.
 
-| Run | Score | FCP | LCP | TBT | CLS |
-|-----|-------|-----|-----|-----|-----|
-| 1 | 75 | 0.9 s | 3.0 s | 850 ms | 0.003 |
-| 2 | 73 | 1.0 s | 3.1 s | 960 ms | 0.003 |
-| 3 | 78 | 0.9 s | 1.7 s | 940 ms | 0.003 |
+## 2. Our own prefetch delay — not firing in the window in normal runs
 
-LCP moved 1.7s → 3.1s (a 1.4s spread) across identical runs of identical code.
-That alone is ~5x the 0.3s "regression" you're asking about. Score moved 5
-points run to run. Conclusion: a single run's mobile delta of this size carries
-no signal.
+The route prefetch waits for the load event and then for the first real user
+signal, with a 6-second fallback timer. A speed test never taps or scrolls, and
+the trace almost always closes before load + 6 seconds, so the prefetch is
+normally excluded. It is only borderline in a fast run where load happens very
+early; the ad timer at 1.5s is far more likely to be the swing than the
+prefetch at 6s. So: not the primary cause, but not provably zero either — it is
+the second thing to confirm.
 
-Two caveats that matter for how much weight to give these numbers:
+## 3. A continuously running timer we should look at
 
-1. These runs came from a data-centre IP, so Cloudflare served a bot challenge
-   before the app. Almost all the measured script time (~1.2s) and every long
-   task belongs to that challenge page, not to our code. So the table is useful
-   for **variance**, not for absolute app performance.
-2. Google's own PageSpeed service refused every request today with a
-   daily-quota error, so I could not reproduce the exact PSI mobile conditions.
+Independently of the third parties, the analytics engagement tracker runs a
+frame-by-frame loop for the first 60 seconds of every visit (to record 10s / 30s
+/ 60s engagement). Each tick is tiny, but it runs on every single frame for the
+whole trace, on throttled mobile, and it makes the main thread more likely to tip
+individual tasks over the 50ms "long task" line. This is a plausible amplifier
+for why the same page sometimes registers long tasks and sometimes doesn't. It
+can be rewritten to three plain timers with identical analytics output.
 
-CLS was stable at 0.003 in all three runs — the earlier layout-shift work is
-holding.
+## What I could not verify from here
 
-## Why desktop improved and mobile looks flat
+- Which exact scripts owned the long tasks in your 520ms run. Lighthouse only
+  reports that per run, and the PSI service is quota-blocked for me today. Local
+  runs against the live domain are useless for this because our data-centre IP
+  gets served a Cloudflare bot challenge, whose own script then dominates the
+  entire measurement (I confirmed this: ~1.2s of script time and every long task
+  belonged to the challenge page, not to our app).
 
-- Desktop Lighthouse runs unthrottled, so the prefetch work the fix removed was
-  a large share of a small total (TBT 670ms → 70ms). Removing it is unmissable.
-- Mobile is CPU-throttled 4x and network-throttled, so total main-thread time is
-  several seconds. The same removed work is a small share of a big total, and it
-  gets buried under the throttled cost of everything else. Mobile also weights
-  LCP + FCP + CLS at 60% of the score, and the prefetch fix by design does not
-  touch LCP or FCP — it targets post-paint blocking time.
-- So "desktop big win, mobile roughly unchanged" is the expected shape of this
-  fix, not a contradiction. Mobile's remaining problem is first paint under
-  throttling, which is a separate piece of work.
+## How to confirm the cause (no code changes)
 
-## What would settle it
+Either of these gives a definitive answer:
 
-Since I cannot use Google's service today, one of these:
+1. **You capture it**: run PSI mobile until you get another high-TBT run, then
+   open the report's own long-tasks / third-party sections and paste them — the
+   script names there decide it outright.
+2. **I measure locally against a production build** — this avoids both the
+   Cloudflare challenge and the PSI quota, and lets me run the page with the ad
+   and analytics tags blocked vs allowed, five runs each. That comparison isolates
+   the third-party contribution precisely. It needs a build, which I have not run
+   in audit mode.
 
-1. **You run PSI mobile 3 times** on mcqsai.com in your browser and paste the
-   three sets of numbers. Three runs is the minimum to separate signal from
-   noise. If mobile TBT is also up (not just FCP/LCP), that is worth a real
-   investigation; if only FCP/LCP wobble, it is noise.
-2. **I take a local production measurement** — build the app here and run mobile
-   Lighthouse 3x against it. This avoids both the Cloudflare challenge and the
-   PSI quota, and isolates our code from ad/analytics noise. Requires a build,
-   which I have not run in audit mode.
+## Candidate fixes, for a later phase
 
-## If mobile first paint is the real target
+Listed for completeness — nothing applied:
 
-Separate from this run-to-run question, mobile FCP/LCP in the 4–7s band on PSI
-is dominated by: render-blocking font CSS from a third-party origin, the
-JS-dependent first paint of the app shell, and throttled execution of the
-provider stack before any content exists. Addressing that means work on the
-critical path itself, not on prefetch. Worth its own phase once we have three
-consistent mobile runs to measure against.
+- Move the ad library from a fixed 1.5s timer to a first-interaction-only or
+  clearly-later trigger, so it never straddles the measurement boundary and real
+  users on the home page (where no ad is placed) don't pay for it at all.
+- Replace the per-frame engagement loop with three timers, output unchanged.
+- Optionally have the prefetch wait on interaction only, dropping the 6s
+  fallback.
 
-No code, config, or infrastructure was changed in this audit.
+Expected effect: a stable low TBT run to run, rather than a lucky-run score
+between 51 and 66. No code, config, or infrastructure was changed in this audit.
