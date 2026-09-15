@@ -85,8 +85,15 @@ const DuplicateReviewQueue = () => {
       .select("value")
       .eq("key", DISMISSED_KEY)
       .maybeSingle();
-    const value = data?.value as { keys?: string[] } | null;
-    setDismissed(Array.isArray(value?.keys) ? value!.keys! : []);
+    const value = data?.value as { keys?: (string | DismissedEntry)[] } | null;
+    const raw = Array.isArray(value?.keys) ? value!.keys! : [];
+    // Legacy entries were bare hashes with no timestamp — treat them as resolved long ago
+    // so a group that has received new copies since then comes back for review.
+    setDismissed(
+      raw.map((entry) =>
+        typeof entry === "string" ? { hash: entry, resolved_at: null } : entry
+      )
+    );
   }, []);
 
   const loadClusters = useCallback(async () => {
