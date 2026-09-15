@@ -53,6 +53,11 @@ interface ClusterStats {
   approved_dup_groups: number;
 }
 
+interface DismissedEntry {
+  hash: string;
+  resolved_at: string | null;
+}
+
 const DISMISSED_KEY = "duplicate_review_dismissed";
 
 // Stable short hash so we never store very long question text in settings
@@ -64,6 +69,9 @@ const hashKey = (input: string) => {
   return `${(h >>> 0).toString(36)}-${input.length}`;
 };
 
+const normalizeTitle = (title: string) =>
+  (title || "").replace(/\[FORCE-SAVE-[^\]]*\]/g, "").trim().toLowerCase();
+
 const STATUS_STYLES: Record<string, string> = {
   approved: "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30",
   pending: "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30",
@@ -73,7 +81,7 @@ const STATUS_STYLES: Record<string, string> = {
 const DuplicateReviewQueue = () => {
   const [clusters, setClusters] = useState<DuplicateCluster[]>([]);
   const [stats, setStats] = useState<ClusterStats | null>(null);
-  const [dismissed, setDismissed] = useState<string[]>([]);
+  const [dismissed, setDismissed] = useState<DismissedEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
@@ -85,8 +93,16 @@ const DuplicateReviewQueue = () => {
       .select("value")
       .eq("key", DISMISSED_KEY)
       .maybeSingle();
-    const value = data?.value as { keys?: string[] } | null;
-    setDismissed(Array.isArray(value?.keys) ? value!.keys! : []);
+    const value = data?.value as { keys?: (string | DismissedEntry)[] } | null;
+    const raw = Array.isArray(value?.keys) ? value!.keys! : [];
+    // Legacy entries were bare hashes with no timestamp — treat them as resolved long ago
+    // so a group that has received new copies since then comes back for review.
+    setDismissed(
+      raw.map((entry) =>
+        typeof entry === "string" ? { hash: entry, resolved_at: null } : entry
+      )
+    );
+    return raw.length;
   }, []);
 
   const loadClusters = useCallback(async () => {
@@ -122,42 +138,86 @@ const DuplicateReviewQueue = () => {
     [loadClusters, loadDismissed]
   );
 
+  // Fresh scan every time the tab is opened (component mounts).
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  const persistDismissed = async (keys: string[]) => {
-    setDismissed(keys);
-    const { data: existing } = await supabase
+  const persistDismissed = async (entries: DismissedEntry[]) => {
+    setDismissed(entries);
+    const { data: existing, error: readErr } = await supabase
       .from("system_settings")
       .select("id")
       .eq("key", DISMISSED_KEY)
       .maybeSingle();
 
+    if (readErr) throw readErr;
+
+    const payload = { keys: entries } as unknown as never;
+
     if (existing?.id) {
-      await supabase
+      const { error } = await supabase
         .from("system_settings")
-        .update({ value: { keys } })
+        .update({ value: payload })
         .eq("id", existing.id);
+      if (error) throw error;
     } else {
-      await supabase.from("system_settings").insert({
-        key: DISMISSED_KEY,
-        value: { keys },
-        description: "Duplicate groups already reviewed by an admin",
-      });
+      const { error } = await supabase.from("system_settings").insert([
+        {
+          key: DISMISSED_KEY,
+          value: payload,
+          description: "Duplicate groups already reviewed by an admin",
+        },
+      ] as never);
+      if (error) throw error;
     }
   };
 
   const markReviewed = async (clusterKey: string) => {
     const hash = hashKey(clusterKey);
-    if (dismissed.includes(hash)) return;
-    await persistDismissed([...dismissed, hash]);
+    const next = [
+      ...dismissed.filter((d) => d.hash !== hash),
+      { hash, resolved_at: new Date().toISOString() },
+    ];
+    await persistDismissed(next);
   };
 
-  const visibleClusters = clusters.filter(
-    (c) => !dismissed.includes(hashKey(c.cluster_key))
-  );
+  // A resolved group only stays hidden while no copy is newer than the decision.
+  const isResolved = (cluster: DuplicateCluster) => {
+    const entry = dismissed.find((d) => d.hash === hashKey(cluster.cluster_key));
+    if (!entry) return false;
+    if (!entry.resolved_at) return true; // legacy marker, no timestamp to compare
+    const newest = cluster.members.reduce(
+      (max, m) => (m.created_at > max ? m.created_at : max),
+      ""
+    );
+    return !newest || new Date(newest) <= new Date(entry.resolved_at);
+  };
+
+  const visibleClusters = clusters.filter((c) => !isResolved(c));
   const selected = visibleClusters.find((c) => c.cluster_key === selectedKey) || null;
+
+  // Re-read the group's live copies so anything generated after the last scan is included.
+  const fetchLiveMembers = async (cluster: DuplicateCluster): Promise<string[]> => {
+    const { data, error } = await supabase
+      .from("content_items")
+      .select("id, title")
+      .eq("category", "mcq")
+      .ilike("title", `%${cluster.sample_title.slice(0, 60).replace(/[%_]/g, " ")}%`)
+      .limit(200);
+
+    if (error) {
+      // Fall back to the snapshot rather than blocking the admin action
+      console.error("Live member lookup failed:", error);
+      return cluster.members.map((m) => m.id);
+    }
+
+    const live = (data || [])
+      .filter((row) => normalizeTitle(row.title) === cluster.cluster_key)
+      .map((row) => row.id);
+
+    return Array.from(new Set([...cluster.members.map((m) => m.id), ...live]));
+  };
 
   const finishCluster = async (cluster: DuplicateCluster) => {
     await markReviewed(cluster.cluster_key);
@@ -169,13 +229,15 @@ const DuplicateReviewQueue = () => {
   const handleKeepOne = async (cluster: DuplicateCluster, keepId: string) => {
     setActionLoading(cluster.cluster_key);
     try {
+      const allIds = await fetchLiveMembers(cluster);
+
       const { error: upErr } = await supabase
         .from("content_items")
         .update({ status: "approved", show_in_subjects: true, show_in_mock_tests: true })
         .eq("id", keepId);
       if (upErr) throw upErr;
 
-      const others = cluster.members.filter((m) => m.id !== keepId).map((m) => m.id);
+      const others = allIds.filter((id) => id !== keepId);
       if (others.length > 0) {
         const { error: delErr } = await supabase
           .from("content_items")
@@ -184,11 +246,11 @@ const DuplicateReviewQueue = () => {
         if (delErr) throw delErr;
       }
 
-      toast.success(`Kept 1 question, removed ${others.length} duplicate copies`);
       await finishCluster(cluster);
+      toast.success(`Kept 1 question, removed ${others.length} duplicate copies`);
     } catch (err) {
       console.error("Error keeping one:", err);
-      toast.error("Failed to resolve this group");
+      toast.error("Failed to resolve this group — nothing was marked reviewed");
     } finally {
       setActionLoading(null);
     }
@@ -198,17 +260,18 @@ const DuplicateReviewQueue = () => {
   const handleKeepAll = async (cluster: DuplicateCluster) => {
     setActionLoading(cluster.cluster_key);
     try {
+      const allIds = await fetchLiveMembers(cluster);
       const { error } = await supabase
         .from("content_items")
         .update({ status: "approved", show_in_subjects: true, show_in_mock_tests: true })
-        .in("id", cluster.members.map((m) => m.id));
+        .in("id", allIds);
       if (error) throw error;
 
-      toast.success(`Approved all ${cluster.members.length} questions in this group`);
       await finishCluster(cluster);
+      toast.success(`Approved all ${allIds.length} questions in this group`);
     } catch (err) {
       console.error("Error keeping all:", err);
-      toast.error("Failed to approve this group");
+      toast.error("Failed to approve this group — nothing was marked reviewed");
     } finally {
       setActionLoading(null);
     }
@@ -220,18 +283,19 @@ const DuplicateReviewQueue = () => {
     try {
       const keeper =
         cluster.members.find((m) => m.status === "approved") || cluster.members[0];
-      const removeIds = cluster.members.filter((m) => m.id !== keeper.id).map((m) => m.id);
+      const allIds = await fetchLiveMembers(cluster);
+      const removeIds = allIds.filter((id) => id !== keeper.id);
 
       if (removeIds.length > 0) {
         const { error } = await supabase.from("content_items").delete().in("id", removeIds);
         if (error) throw error;
       }
 
-      toast.success(`Removed ${removeIds.length} extra copies`);
       await finishCluster(cluster);
+      toast.success(`Removed ${removeIds.length} extra copies`);
     } catch (err) {
       console.error("Error discarding group:", err);
-      toast.error("Failed to discard this group");
+      toast.error("Failed to discard this group — nothing was marked reviewed");
     } finally {
       setActionLoading(null);
     }
@@ -241,7 +305,10 @@ const DuplicateReviewQueue = () => {
     setActionLoading(cluster.cluster_key);
     try {
       await finishCluster(cluster);
-      toast.success("Marked as reviewed — it won't come back");
+      toast.success("Marked as reviewed — it only returns if new copies appear");
+    } catch (err) {
+      console.error("Error marking reviewed:", err);
+      toast.error("Couldn't save the reviewed mark — please try again");
     } finally {
       setActionLoading(null);
     }
@@ -369,9 +436,14 @@ const DuplicateReviewQueue = () => {
             <CardTitle className="flex items-center gap-2 text-lg">
               <Scale className="h-5 w-5 text-primary" />
               Group Comparison
+              {selected && (
+                <Badge variant="secondary">{selected.members.length} copies</Badge>
+              )}
             </CardTitle>
             <CardDescription>
-              Compare every copy in the group and decide once
+              {selected
+                ? "Scroll through every copy below, then decide once"
+                : "Compare every copy in the group and decide once"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -382,7 +454,8 @@ const DuplicateReviewQueue = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <ScrollArea className="max-h-[420px] pr-3">
+                {/* Fixed height (not max-height) so the scroll viewport can actually scroll */}
+                <ScrollArea className="h-[420px] pr-3">
                   <div className="space-y-3">
                     {selected.members.map((m, idx) => (
                       <div
@@ -390,7 +463,9 @@ const DuplicateReviewQueue = () => {
                         className="p-3 rounded-lg border border-border/60 bg-card/70 backdrop-blur-sm"
                       >
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <Badge variant="outline" className="text-xs">Copy {idx + 1}</Badge>
+                          <Badge variant="outline" className="text-xs">
+                            Copy {idx + 1} of {selected.members.length}
+                          </Badge>
                           <Badge
                             variant="outline"
                             className={`text-xs ${STATUS_STYLES[m.status] || ""}`}

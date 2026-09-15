@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 import { checkQuota, retryWithBackoff, quotaExhaustedResponse, QuotaExhaustedError } from '../_shared/quotaManager.ts';
+import { checkLibraryDuplicate, questionSignature } from '../_shared/dedupe.ts';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -266,45 +267,70 @@ Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`
       );
     }
 
-     // ============= STEP 7: Save questions to content_items =============
-    let savedCount = 0;
-    const errors: string[] = [];
+      // ============= STEP 7: Save questions to content_items =============
+     // Every question runs through the shared library duplicate check first.
+     // Repeats are parked as `flagged_duplicate` (hidden everywhere) for admin review
+     // instead of landing straight in the approved bank.
+     let savedCount = 0;
+     let flaggedCount = 0;
+     const errors: string[] = [];
+     const batchSignatures = new Set<string>();
 
-    for (const q of questions) {
-      try {
-         // Normalize difficulty to title case
-         const normalizedDifficulty = q.difficulty 
-           ? q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1).toLowerCase()
-           : "Medium";
- 
-        const { error: insertError } = await supabase.from("content_items").insert({
-          title: q.title,
-          description: q.title,
-          category: "mcq",
-          status: "approved",
-           subject: subjectName,
-           topic: topicName,
-          topic_id: topic_id,
-           difficulty: normalizedDifficulty,
-          options: q.options,
-          correct_option: q.correct_option,
-          explanation: q.explanation,
-          source_type: "rag_generated",
-           source_document_id: targetDocumentId,
-          show_in_subjects: true,
-          show_in_syllabus: true,
-          show_in_mock_tests: true,
-        });
+     for (const q of questions) {
+       try {
+          // Normalize difficulty to title case
+          const normalizedDifficulty = q.difficulty 
+            ? q.difficulty.charAt(0).toUpperCase() + q.difficulty.slice(1).toLowerCase()
+            : "Medium";
 
-        if (insertError) {
-          errors.push(`Insert error: ${insertError.message}`);
-        } else {
-          savedCount++;
-        }
-      } catch (err) {
-        errors.push(`Save error: ${(err as Error).message}`);
-      }
-    }
+         const sig = questionSignature(q.title || "");
+         const intraBatch = !!sig && sig.split("|").length >= 3 && batchSignatures.has(sig);
+         const dupCheck = intraBatch
+           ? { isDuplicate: true, matchType: "signature" as const }
+           : await checkLibraryDuplicate(supabase, q.title, { topicId: topic_id, subject: subjectName });
+         const isDuplicate = dupCheck.isDuplicate;
+         if (sig) batchSignatures.add(sig);
+
+         const { error: insertError } = await supabase.from("content_items").insert({
+           title: q.title,
+           description: q.title,
+           category: "mcq",
+           status: isDuplicate ? "flagged_duplicate" : "approved",
+            subject: subjectName,
+            topic: topicName,
+           topic_id: topic_id,
+            difficulty: normalizedDifficulty,
+           options: q.options,
+           correct_option: q.correct_option,
+           explanation: q.explanation,
+           source_type: "rag_generated",
+            source_document_id: targetDocumentId,
+           show_in_subjects: !isDuplicate,
+           show_in_syllabus: !isDuplicate,
+           show_in_mock_tests: !isDuplicate,
+           reference_material: JSON.stringify({
+             generator: "rag",
+             generated_at: new Date().toISOString(),
+             ...(isDuplicate && {
+               duplicate_match: (dupCheck as any).matchType,
+               duplicate_of_id: (dupCheck as any).originalId ?? null,
+               duplicate_of_title: (dupCheck as any).originalTitle ?? null,
+               intra_batch_duplicate: intraBatch || undefined,
+             }),
+           }),
+         });
+
+         if (insertError) {
+           errors.push(`Insert error: ${insertError.message}`);
+         } else if (isDuplicate) {
+           flaggedCount++;
+         } else {
+           savedCount++;
+         }
+       } catch (err) {
+         errors.push(`Save error: ${(err as Error).message}`);
+       }
+     }
 
      // ============= STEP 8: Log usage =============
     await supabase.from("ai_usage_logs").insert({
@@ -315,18 +341,19 @@ Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`
       questions_fetched: questions.length,
       questions_saved: savedCount,
        triggered_by_user_id: auth.userId === "service_role" || auth.userId === "admin_trigger" ? null : auth.userId,
-       metadata: { document_id: targetDocumentId, topic_id, errors: errors.length > 0 ? errors : undefined },
+       metadata: { document_id: targetDocumentId, topic_id, flagged_duplicates: flaggedCount, errors: errors.length > 0 ? errors : undefined },
        ai_provider: aiProvider,
        cost_estimate: aiCost,
     });
 
-     console.log(`[generate-from-rag] ✅ Saved ${savedCount}/${questions.length} questions`);
+     console.log(`[generate-from-rag] ✅ Saved ${savedCount}/${questions.length} questions (${flaggedCount} held as duplicates)`);
 
     return new Response(
       JSON.stringify({
         success: true,
         questions_generated: questions.length,
         questions_saved: savedCount,
+        duplicates: flaggedCount,
          topic_id,
          document_id: targetDocumentId,
         errors: errors.length > 0 ? errors : undefined,
