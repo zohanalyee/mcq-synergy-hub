@@ -49,3 +49,25 @@ Today the scan is manual-only: the queue shows what existed at load time, so new
 - `persistDismissed` ignores errors from both the update and insert branches on `system_settings`.
 - Reviewed markers are text hashes with no timestamp; store `{hash, resolved_at}` and compare against each group's newest `created_at` in `get_duplicate_clusters`.
 - `generate-test` calls `checkDuplicate()` before insert (exact title + `ilike` 50-char prefix, excluding `flagged_duplicate` rows); `generate-from-rag` inserts `status: "approved"` with no duplicate check.
+
+&nbsp;
+
+Plan approved. Proceed with all 7 fixes:
+
+1. Fix the scroll bug — give the group panel a real fixed height (same pattern as the working left list), plus a copy-count header
+
+2. Make "Keep this one only" / group actions re-query current copies from the database at click time (not the stale snapshot)
+
+3. Surface errors if the "reviewed" record fails to save, instead of silently showing success
+
+4. Make "reviewed" status time-aware — store {hash, resolved_at}, and if new copies arrive after that timestamp, bring the group back into the queue automatically
+
+5. Auto-refresh the queue when the Duplicate Review tab opens; keep Scan Library as an explicit manual re-check option
+
+6. Add the same duplicate check to the document/book generation path (generate-from-rag) so it can no longer insert approved near-copies without review — this is the highest-priority fix since it's a real gap in the approval safety net
+
+7. Strengthen matching beyond exact-title/first-50-chars to a keyword-signature comparison (same logic the generator already uses internally), so reworded repeats get caught too
+
+Priority order: #6 first (real approval-safety gap), then #1-2 (immediate usability fixes you're blocked by), then #3-5 and #7.
+
+Verify after: confirm scroll works on the 14-copy group, confirm a resolved group with a genuinely new duplicate correctly reappears, confirm generate-from-rag now runs through the duplicate check before approving.
