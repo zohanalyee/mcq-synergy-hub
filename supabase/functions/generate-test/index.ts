@@ -1083,43 +1083,9 @@ async function logAIUsage(supabase: any, entry: UsageLogEntry): Promise<void> {
   }
 }
 
-// Check if a question is a duplicate (text similarity)
+// Check if a question is a duplicate (exact + prefix + keyword-signature match)
 async function checkDuplicate(supabase: any, questionText: string): Promise<{ isDuplicate: boolean; originalId?: string; originalTitle?: string }> {
-  try {
-    // Exact match check
-    const { data: exactMatch } = await supabase
-      .from('content_items')
-      .select('id, title')
-      .eq('category', 'mcq')
-      .neq('status', 'flagged_duplicate')
-      .eq('title', questionText)
-      .limit(1)
-      .maybeSingle();
-    
-    if (exactMatch) {
-      return { isDuplicate: true, originalId: exactMatch.id, originalTitle: exactMatch.title };
-    }
-    
-    // Fuzzy match: Check if first 50 chars match (catches minor variations)
-    const prefix = questionText.slice(0, 50);
-    const { data: fuzzyMatch } = await supabase
-      .from('content_items')
-      .select('id, title')
-      .eq('category', 'mcq')
-      .neq('status', 'flagged_duplicate')
-      .ilike('title', `${prefix}%`)
-      .limit(1)
-      .maybeSingle();
-    
-    if (fuzzyMatch) {
-      return { isDuplicate: true, originalId: fuzzyMatch.id, originalTitle: fuzzyMatch.title };
-    }
-    
-    return { isDuplicate: false };
-  } catch (err) {
-    console.error('Duplicate check error:', err);
-    return { isDuplicate: false };
-  }
+  return await checkLibraryDuplicate(supabase, questionText);
 }
 
 // Background task to save remaining questions after returning response
