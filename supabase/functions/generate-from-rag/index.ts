@@ -341,18 +341,19 @@ Generate exactly ${count} questions. Return ONLY the JSON array, no other text.`
       questions_fetched: questions.length,
       questions_saved: savedCount,
        triggered_by_user_id: auth.userId === "service_role" || auth.userId === "admin_trigger" ? null : auth.userId,
-       metadata: { document_id: targetDocumentId, topic_id, errors: errors.length > 0 ? errors : undefined },
+       metadata: { document_id: targetDocumentId, topic_id, flagged_duplicates: flaggedCount, errors: errors.length > 0 ? errors : undefined },
        ai_provider: aiProvider,
        cost_estimate: aiCost,
     });
 
-     console.log(`[generate-from-rag] ✅ Saved ${savedCount}/${questions.length} questions`);
+     console.log(`[generate-from-rag] ✅ Saved ${savedCount}/${questions.length} questions (${flaggedCount} held as duplicates)`);
 
     return new Response(
       JSON.stringify({
         success: true,
         questions_generated: questions.length,
         questions_saved: savedCount,
+        duplicates: flaggedCount,
          topic_id,
          document_id: targetDocumentId,
         errors: errors.length > 0 ? errors : undefined,
