@@ -153,18 +153,22 @@ const DuplicateReviewQueue = () => {
 
     if (readErr) throw readErr;
 
+    const payload = { keys: entries } as unknown as never;
+
     if (existing?.id) {
       const { error } = await supabase
         .from("system_settings")
-        .update({ value: { keys: entries } })
+        .update({ value: payload })
         .eq("id", existing.id);
       if (error) throw error;
     } else {
-      const { error } = await supabase.from("system_settings").insert({
-        key: DISMISSED_KEY,
-        value: { keys: entries },
-        description: "Duplicate groups already reviewed by an admin",
-      });
+      const { error } = await supabase.from("system_settings").insert([
+        {
+          key: DISMISSED_KEY,
+          value: payload,
+          description: "Duplicate groups already reviewed by an admin",
+        },
+      ] as never);
       if (error) throw error;
     }
   };
