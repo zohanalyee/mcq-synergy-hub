@@ -545,13 +545,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Grab the oldest pending row only.
-    const { data: rows, error: fetchErr } = await admin
+    // Pull a window of pending rows, then prefer the one whose parent test has
+    // the FEWEST questions (empty tests get baseline coverage first).
+    // created_at is the tiebreak, so behaviour stays FIFO within equal fill.
+    const { data: pendingWindow, error: fetchErr } = await admin
       .from("job_test_generation_queue")
       .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: true })
-      .limit(BATCH_PER_RUN);
+      .limit(40);
+
+    let rows = pendingWindow;
+    if (pendingWindow && pendingWindow.length > 1) {
+      const fill = new Map<string, number>();
+      for (const id of new Set(pendingWindow.map((r: any) => r.job_test_id))) {
+        const { count } = await admin
+          .from("job_test_questions")
+          .select("id", { count: "exact", head: true })
+          .eq("job_test_id", id as string);
+        fill.set(id as string, count || 0);
+      }
+      rows = pendingWindow
+        .slice()
+        .sort(
+          (a: any, b: any) =>
+            (fill.get(a.job_test_id) ?? 0) - (fill.get(b.job_test_id) ?? 0) ||
+            String(a.created_at).localeCompare(String(b.created_at)),
+        )
+        .slice(0, BATCH_PER_RUN);
+    }
 
     if (fetchErr) throw new Error(`Fetch queue failed: ${fetchErr.message}`);
 
