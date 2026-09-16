@@ -1325,6 +1325,54 @@ export type Database = {
           },
         ]
       }
+      duplicate_scan_runs: {
+        Row: {
+          approved_dup_groups: number
+          created_at: string
+          extra_copies: number
+          group_keys: Json
+          groups: number
+          id: string
+          new_copies: number
+          new_groups: number
+          scanned_at: string
+          total_approved: number
+          total_mcqs: number
+          total_rows: number
+          trigger_source: string
+        }
+        Insert: {
+          approved_dup_groups?: number
+          created_at?: string
+          extra_copies?: number
+          group_keys?: Json
+          groups?: number
+          id?: string
+          new_copies?: number
+          new_groups?: number
+          scanned_at?: string
+          total_approved?: number
+          total_mcqs?: number
+          total_rows?: number
+          trigger_source?: string
+        }
+        Update: {
+          approved_dup_groups?: number
+          created_at?: string
+          extra_copies?: number
+          group_keys?: Json
+          groups?: number
+          id?: string
+          new_copies?: number
+          new_groups?: number
+          scanned_at?: string
+          total_approved?: number
+          total_mcqs?: number
+          total_rows?: number
+          trigger_source?: string
+        }
+        Relationships: []
+      }
       educational_systems: {
         Row: {
           admin_reviewed_at: string | null
@@ -4619,6 +4667,19 @@ export type Database = {
         Returns: undefined
       }
       refresh_platform_stats_snapshot: { Args: never; Returns: undefined }
+      run_duplicate_scan: {
+        Args: { _trigger_source?: string }
+        Returns: {
+          approved_dup_groups: number
+          extra_copies: number
+          groups: number
+          new_copies: number
+          new_groups: number
+          total_approved: number
+          total_mcqs: number
+          total_rows: number
+        }[]
+      }
       score_job_practice_answers: {
         Args: { p_answers: Json }
         Returns: {
