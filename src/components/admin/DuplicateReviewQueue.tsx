@@ -385,6 +385,34 @@ const DuplicateReviewQueue = () => {
               Pending: {visibleClusters.length}
             </Badge>
           </div>
+
+          {/* Latest scan snapshot — written nightly in the background and on every manual scan.
+              Scans only record what they find; nothing is deleted or hidden automatically. */}
+          {scanRun && (
+            <div className="w-full border-t border-border/60 pt-2 mt-1 flex flex-wrap items-center gap-2 text-xs">
+              <span className="text-muted-foreground">
+                Last scan{" "}
+                {new Date(scanRun.scanned_at).toLocaleString(undefined, {
+                  dateStyle: "medium",
+                  timeStyle: "short",
+                })}{" "}
+                ({scanRun.trigger_source === "admin" ? "manual" : "automatic"})
+              </span>
+              <Badge variant="outline">
+                Live questions: {scanRun.total_approved.toLocaleString()}
+              </Badge>
+              <Badge variant="outline">Library total: {scanRun.total_mcqs.toLocaleString()}</Badge>
+              <Badge
+                className={
+                  scanRun.new_groups > 0
+                    ? "bg-amber-500/15 text-amber-700 dark:text-amber-300 border-amber-500/30"
+                    : "bg-green-500/15 text-green-700 dark:text-green-300 border-green-500/30"
+                }
+              >
+                New since last scan: {scanRun.new_groups} group(s) / {scanRun.new_copies} copy(ies)
+              </Badge>
+            </div>
+          )}
         </CardContent>
       </Card>
 
