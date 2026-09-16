@@ -58,6 +58,18 @@ interface DismissedEntry {
   resolved_at: string | null;
 }
 
+interface ScanRun {
+  scanned_at: string;
+  total_approved: number;
+  total_mcqs: number;
+  groups: number;
+  extra_copies: number;
+  approved_dup_groups: number;
+  new_groups: number;
+  new_copies: number;
+  trigger_source: string;
+}
+
 const DISMISSED_KEY = "duplicate_review_dismissed";
 
 // Stable short hash so we never store very long question text in settings
@@ -122,11 +134,30 @@ const DuplicateReviewQueue = () => {
     setStats((statsData as unknown as ClusterStats[])?.[0] ?? null);
   }, []);
 
+  const loadScanRun = useCallback(async () => {
+    const { data } = await (supabase as any)
+      .from("duplicate_scan_runs")
+      .select(
+        "scanned_at, total_approved, total_mcqs, groups, extra_copies, approved_dup_groups, new_groups, new_copies, trigger_source"
+      )
+      .order("scanned_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setScanRun((data as ScanRun) ?? null);
+  }, []);
+
   const refresh = useCallback(
     async (isScan = false) => {
       isScan ? setScanning(true) : setLoading(true);
       try {
-        await Promise.all([loadClusters(), loadDismissed()]);
+        if (isScan) {
+          // Records a scan snapshot (read-only on questions) so "new since last scan" stays accurate.
+          const { error: scanErr } = await (supabase as any).rpc("run_duplicate_scan", {
+            _trigger_source: "admin",
+          });
+          if (scanErr) console.error("Scan snapshot failed:", scanErr);
+        }
+        await Promise.all([loadClusters(), loadDismissed(), loadScanRun()]);
         if (isScan) toast.success("Library scan complete");
       } catch (err) {
         console.error("Error loading duplicate clusters:", err);
@@ -135,7 +166,7 @@ const DuplicateReviewQueue = () => {
         isScan ? setScanning(false) : setLoading(false);
       }
     },
-    [loadClusters, loadDismissed]
+    [loadClusters, loadDismissed, loadScanRun]
   );
 
   // Fresh scan every time the tab is opened (component mounts).
