@@ -4,12 +4,14 @@
 
 Current approved + visible MCQ counts per topic (1,855 topics total):
 
-| Bucket | Topics |
-| --- | --- |
-| 0 questions (empty) | 430 |
-| 1–4 (below Google's 5-question threshold) | 52 |
-| 5–9 (just over the line) | 367 |
-| 10+ | 1,006 |
+
+| Bucket                                    | Topics |
+| ----------------------------------------- | ------ |
+| 0 questions (empty)                       | 430    |
+| 1–4 (below Google's 5-question threshold) | 52     |
+| 5–9 (just over the line)                  | 367    |
+| 10+                                       | 1,006  |
+
 
 The near-miss group has moved from 58 to 52, so only a handful crossed the line while most of the fill effort went to empty and already-indexable topics. 52 topics still sit below the threshold and 430 are still completely empty.
 
@@ -55,6 +57,7 @@ Make the pre-save reworded-repeat check search the whole library instead of only
 ### 4. Empty tests first
 
 Reorder both stages so baseline coverage comes first:
+
 - When queueing, sort candidate draft tests by how many questions they already have, ascending — zero-question tests are always picked before partially-filled ones.
 - When draining, process rows belonging to emptier tests first instead of pure first-in-first-out.
 
@@ -68,3 +71,23 @@ Result: all 14 empty tests get filled before further top-ups on the 9 partial on
 - `DuplicateReviewQueue.tsx`: add a summary strip fed by the latest `duplicate_scan_runs` row (with "new since last scan"), keep the manual Scan Library button, and reuse the existing groups/reviewed/pending counters.
 - `supabase/functions/_shared/dedupe.ts`: drop the `topicId`/`subject` narrowing on the signature layer (keep the row cap) so cross-tag rewordings are caught pre-save.
 - `supabase/functions/process-jobtest-queue/index.ts`: in the batch-fill enqueue, fetch existing question counts for candidate drafts and sort ascending before the section loop; in the worker, order pending rows by the parent test's question count ascending, `created_at` as tiebreak. `job_test_definitions` stay draft and generated questions stay unapproved — no change to the manual approval gate.
+
+&nbsp;
+
+Plan approved. Proceed with all 4:
+
+1. Add nightly automatic silent scan (03:00 UTC via pg_cron + new run_duplicate_scan() function) — records only, never deletes/hides/changes anything. Keep manual Scan Library button for on-demand checks.
+
+2. Add scan summary reporting — new duplicate_scan_runs table tracking total approved questions, groups, extra copies, already-approved-dupe groups, and "new since previous scan" (this is the key "needs attention today" number). Show in the Duplicate Review tab.
+
+3. Tighten cross-tag duplicate checking at generation time — drop the topic/subject narrowing on the pre-save reworded-repeat check so it searches the whole library (keep the existing per-run cap so generation speed isn't affected).
+
+4. Reorder the mock-test queue (both queueing and draining stages) so completely empty tests (0 questions) are always filled before partially-filled ones get topped up — sort by existing question count ascending.
+
+Verify after: confirm the 14 empty mock tests get filled before the 9 partial ones in the next few generation cycles; confirm the nightly scan runs and populates duplicate_scan_runs without touching any content_items rows.
+
+&nbsp;
+
+&nbsp;
+
+Separately: the threshold-sprint (57→52 near-miss topics) is moving too slowly — most fill effort is still going to empty/already-indexable topics instead of the 52 remaining near-miss ones. Please check why the sprint's priority isn't being followed strongly enough, and propose a way to genuinely prioritize those 52 topics until they're all resolved, before returning to normal empty-topic filling.
