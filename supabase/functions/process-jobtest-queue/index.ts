@@ -282,7 +282,7 @@ async function enqueueBatchFill(
     };
   }
 
-  // ---- Candidate draft tests, emptiest first ----
+  // ---- Candidate draft tests ----
   const { data: defs } = await admin
     .from("job_test_definitions")
     .select("id, job_title, syllabus")
@@ -298,11 +298,25 @@ async function enqueueBatchFill(
     (active || []).map((r: any) => `${r.job_test_id}|${r.subject}`),
   );
 
+  // EMPTIEST FIRST: a test with zero questions always gets baseline coverage
+  // before a partially-filled test is topped up further.
+  const existingCounts = new Map<string, number>();
+  for (const def of (defs || []) as any[]) {
+    const { count } = await admin
+      .from("job_test_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("job_test_id", def.id);
+    existingCounts.set(def.id, count || 0);
+  }
+  const orderedDefs = ((defs || []) as any[])
+    .slice()
+    .sort((a, b) => (existingCounts.get(a.id) ?? 0) - (existingCounts.get(b.id) ?? 0));
+
   const rows: any[] = [];
   const touched = new Set<string>();
   let questionsQueued = 0;
 
-  for (const def of (defs || []) as any[]) {
+  for (const def of orderedDefs) {
     if (rows.length >= maxRows || touched.size >= maxTests || budgetLeft <= 0) break;
 
     const sections = (def?.syllabus?.sections || []) as any[];
@@ -314,11 +328,8 @@ async function enqueueBatchFill(
     );
     if (sectionTotal <= 0) continue;
 
-    const { count: existing } = await admin
-      .from("job_test_questions")
-      .select("id", { count: "exact", head: true })
-      .eq("job_test_id", def.id);
-    if ((existing || 0) >= targetPerTest) continue;
+    const existing = existingCounts.get(def.id) ?? 0;
+    if (existing >= targetPerTest) continue;
 
     // Scale each section proportionally up to the per-test target.
     const scale = targetPerTest / sectionTotal;
