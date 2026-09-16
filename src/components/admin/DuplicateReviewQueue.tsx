@@ -94,6 +94,7 @@ const DuplicateReviewQueue = () => {
   const [clusters, setClusters] = useState<DuplicateCluster[]>([]);
   const [stats, setStats] = useState<ClusterStats | null>(null);
   const [dismissed, setDismissed] = useState<DismissedEntry[]>([]);
+  const [scanRun, setScanRun] = useState<ScanRun | null>(null);
   const [loading, setLoading] = useState(true);
   const [scanning, setScanning] = useState(false);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
