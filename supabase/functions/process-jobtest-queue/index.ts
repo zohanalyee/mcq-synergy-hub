@@ -448,9 +448,9 @@ Deno.serve(async (req) => {
       }
     }
 
-
-
-
+    // NOTE: client-supplied hint headers (e.g. `x-admin-trigger`) are NEVER
+    // treated as proof of identity. Only the real service-role bearer, the
+    // shared cron token, or a verified admin JWT can reach the queue drain.
     if (!authorized) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
