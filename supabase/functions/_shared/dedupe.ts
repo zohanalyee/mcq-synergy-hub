@@ -101,20 +101,20 @@ export async function checkLibraryDuplicate(
     const keywords = sig.split('|').slice(0, 3).filter((k) => k.length > 3);
     if (keywords.length === 0) return { isDuplicate: false };
 
+    // Library-wide on purpose: the same question is often re-saved under a
+    // different subject/topic label, so narrowing by tag would miss cross-tag
+    // rewordings. The keyword filters + row cap keep this cheap.
     let query = supabase
       .from('content_items')
       .select('id, title')
       .eq('category', 'mcq')
       .neq('status', 'flagged_duplicate');
 
-    if (opts.topicId) query = query.eq('topic_id', opts.topicId);
-    else if (opts.subject) query = query.eq('subject', opts.subject);
-
     for (const kw of keywords) {
       query = query.ilike('title', `%${escapeLike(kw)}%`);
     }
 
-    const { data: candidates } = await query.limit(60);
+    const { data: candidates } = await query.limit(80);
     for (const row of candidates || []) {
       if (questionSignature(row.title || '') === sig) {
         return { isDuplicate: true, originalId: row.id, originalTitle: row.title, matchType: 'signature' };

@@ -282,7 +282,7 @@ async function enqueueBatchFill(
     };
   }
 
-  // ---- Candidate draft tests, emptiest first ----
+  // ---- Candidate draft tests ----
   const { data: defs } = await admin
     .from("job_test_definitions")
     .select("id, job_title, syllabus")
@@ -298,11 +298,25 @@ async function enqueueBatchFill(
     (active || []).map((r: any) => `${r.job_test_id}|${r.subject}`),
   );
 
+  // EMPTIEST FIRST: a test with zero questions always gets baseline coverage
+  // before a partially-filled test is topped up further.
+  const existingCounts = new Map<string, number>();
+  for (const def of (defs || []) as any[]) {
+    const { count } = await admin
+      .from("job_test_questions")
+      .select("id", { count: "exact", head: true })
+      .eq("job_test_id", def.id);
+    existingCounts.set(def.id, count || 0);
+  }
+  const orderedDefs = ((defs || []) as any[])
+    .slice()
+    .sort((a, b) => (existingCounts.get(a.id) ?? 0) - (existingCounts.get(b.id) ?? 0));
+
   const rows: any[] = [];
   const touched = new Set<string>();
   let questionsQueued = 0;
 
-  for (const def of (defs || []) as any[]) {
+  for (const def of orderedDefs) {
     if (rows.length >= maxRows || touched.size >= maxTests || budgetLeft <= 0) break;
 
     const sections = (def?.syllabus?.sections || []) as any[];
@@ -314,11 +328,8 @@ async function enqueueBatchFill(
     );
     if (sectionTotal <= 0) continue;
 
-    const { count: existing } = await admin
-      .from("job_test_questions")
-      .select("id", { count: "exact", head: true })
-      .eq("job_test_id", def.id);
-    if ((existing || 0) >= targetPerTest) continue;
+    const existing = existingCounts.get(def.id) ?? 0;
+    if (existing >= targetPerTest) continue;
 
     // Scale each section proportionally up to the per-test target.
     const scale = targetPerTest / sectionTotal;
@@ -534,13 +545,35 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Grab the oldest pending row only.
-    const { data: rows, error: fetchErr } = await admin
+    // Pull a window of pending rows, then prefer the one whose parent test has
+    // the FEWEST questions (empty tests get baseline coverage first).
+    // created_at is the tiebreak, so behaviour stays FIFO within equal fill.
+    const { data: pendingWindow, error: fetchErr } = await admin
       .from("job_test_generation_queue")
       .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: true })
-      .limit(BATCH_PER_RUN);
+      .limit(40);
+
+    let rows = pendingWindow;
+    if (pendingWindow && pendingWindow.length > 1) {
+      const fill = new Map<string, number>();
+      for (const id of new Set(pendingWindow.map((r: any) => r.job_test_id))) {
+        const { count } = await admin
+          .from("job_test_questions")
+          .select("id", { count: "exact", head: true })
+          .eq("job_test_id", id as string);
+        fill.set(id as string, count || 0);
+      }
+      rows = pendingWindow
+        .slice()
+        .sort(
+          (a: any, b: any) =>
+            (fill.get(a.job_test_id) ?? 0) - (fill.get(b.job_test_id) ?? 0) ||
+            String(a.created_at).localeCompare(String(b.created_at)),
+        )
+        .slice(0, BATCH_PER_RUN);
+    }
 
     if (fetchErr) throw new Error(`Fetch queue failed: ${fetchErr.message}`);
 

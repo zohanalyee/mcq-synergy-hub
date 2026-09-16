@@ -549,10 +549,17 @@ Deno.serve(async (req) => {
           }
         }
 
-        // In-scope near-miss topics first (keeps the exam sprint in front),
-        // then near-miss topics anywhere — the whole set is only ~190 questions.
+        // In-scope near-miss topics first (keeps the exam sprint in front), then
+        // near-miss topics ANYWHERE. The unscoped fallback matters: the sprint
+        // scope (campaign keywords) matched almost none of the near-miss set, so
+        // scoping alone silently sent the run back to the ~430 empty topics and
+        // the threshold sprint barely moved.
         const scoped = applySprintScope(nearMissPool).slice().sort(byCheapest);
         topic = scoped.find((q) => !attemptedTopicIds.has(q.topic_id));
+        if (!topic) {
+          const anyNearMiss = nearMissPool.slice().sort(byCheapest);
+          topic = anyNearMiss.find((q) => !attemptedTopicIds.has(q.topic_id));
+        }
         if (topic) nearMissTopicsProcessed++;
       }
 
