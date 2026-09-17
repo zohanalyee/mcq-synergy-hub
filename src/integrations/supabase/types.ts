@@ -4526,6 +4526,39 @@ export type Database = {
           show_name: boolean
         }[]
       }
+      get_question_explorer: {
+        Args: {
+          p_difficulty?: string
+          p_dir?: string
+          p_limit?: number
+          p_offset?: number
+          p_pool?: string
+          p_relationship?: string
+          p_search?: string
+          p_sort?: string
+          p_status?: string
+          p_subject?: string
+          p_topic?: string
+        }
+        Returns: {
+          created_at: string
+          difficulty: string
+          duplicate_copies: number
+          id: string
+          in_both_pools: boolean
+          last_used_at: string
+          mock_test_count: number
+          mock_test_names: string[]
+          pool: string
+          question_text: string
+          status: string
+          subject: string
+          topic: string
+          total_count: number
+          usage_count: number
+        }[]
+      }
+      get_question_explorer_stats: { Args: never; Returns: Json }
       get_recently_active_users: {
         Args: { minutes_ago?: number }
         Returns: number
