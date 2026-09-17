@@ -47,11 +47,14 @@ const Tenders = () => {
 
   return (
     <>
+      {/* noindex: this listing carries only short scraped tender stubs, which
+          Google reports as a soft 404. Keep it reachable for users, out of the
+          index until the page has substantive per-tender content. */}
       <SEOHead
         title="Government Tenders Pakistan 2026 | PPRA, WAPDA, Railways"
         description="Latest government tenders from PPRA, WAPDA, Pakistan Railways and all major procurement authorities. Find construction, IT, supply and service tenders."
         keywords="Pakistan tenders, PPRA tenders, government tenders, procurement, bid opportunities"
-        url="https://mcq-synergy-hub.lovable.app/tenders"
+        noindex
       />
       <Header>
         <div className="max-w-7xl mx-auto px-4 pt-4 pb-8">
