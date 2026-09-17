@@ -266,11 +266,20 @@ async function buildBoards() {
   // or answer keys.
   const MIN_APPROVED_MCQS = 8;
 
-  const { data: rows, error } = await supabase.rpc("get_indexable_board_topic_paths", {
-    p_min_approved_mcqs: MIN_APPROVED_MCQS,
-  });
-
-  if (error) throw error;
+  // PostgREST caps a single response at 1000 rows. Qualifying topics passed
+  // that cap, so a single call silently dropped everything beyond row 1000 —
+  // those pages stayed out of the sitemap AND noindex. Page through explicitly.
+  const PAGE_SIZE = 1000;
+  const rows = [];
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: MIN_APPROVED_MCQS })
+      .range(from, from + PAGE_SIZE - 1);
+    if (error) throw error;
+    const batch = data || [];
+    rows.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+  }
 
   const all = [];
   const indexablePaths = [];
