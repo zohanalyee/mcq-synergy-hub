@@ -94,6 +94,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       glowColor: "from-emerald-500/20",
       items: [
         { value: "question-bank", label: "Question Bank", icon: Database },
+        { value: "question-explorer", label: "Question Explorer", icon: Layers },
         { value: "review-duplicates", label: "Review Duplicates", icon: AlertTriangle },
         { value: "submit-content", label: "Submit", icon: FileText },
         { value: "bulk-upload", label: "Bulk Upload", icon: Upload },
@@ -284,6 +285,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       </TabsContent>
 
       <TabsContent value="question-bank"><QuestionBankManager /></TabsContent>
+      <TabsContent value="question-explorer"><QuestionExplorer /></TabsContent>
       <TabsContent value="analytics"><AdminAnalyticsDashboard /></TabsContent>
       <TabsContent value="inventory"><ContentInventory /></TabsContent>
       <TabsContent value="documents"><DocumentLibrary /></TabsContent>
