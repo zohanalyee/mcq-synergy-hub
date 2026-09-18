@@ -14,8 +14,12 @@ import {
 } from "@/components/ui/table";
 import {
   ArrowDown, ArrowUp, ChevronLeft, ChevronRight, Database,
-  RefreshCw, Search, Layers, Copy,
+  RefreshCw, Search, Layers, Copy, Download, ShieldAlert, Trash2, EyeOff, Loader2,
 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 interface ExplorerRow {

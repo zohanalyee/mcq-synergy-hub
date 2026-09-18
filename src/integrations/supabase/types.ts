@@ -2557,6 +2557,42 @@ export type Database = {
         }
         Relationships: []
       }
+      question_explorer_audit: {
+        Row: {
+          action: string
+          admin_id: string | null
+          created_at: string
+          details: Json
+          id: string
+          library_affected: number
+          library_ids: string[]
+          mock_affected: number
+          mock_ids: string[]
+        }
+        Insert: {
+          action: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          library_affected?: number
+          library_ids?: string[]
+          mock_affected?: number
+          mock_ids?: string[]
+        }
+        Update: {
+          action?: string
+          admin_id?: string | null
+          created_at?: string
+          details?: Json
+          id?: string
+          library_affected?: number
+          library_ids?: string[]
+          mock_affected?: number
+          mock_ids?: string[]
+        }
+        Relationships: []
+      }
       question_tags: {
         Row: {
           color: string | null
@@ -4695,6 +4731,14 @@ export type Database = {
         }[]
       }
       mock_test_slug: { Args: { p_title: string }; Returns: string }
+      question_explorer_bulk_action: {
+        Args: {
+          p_action: string
+          p_library_ids?: string[]
+          p_mock_ids?: string[]
+        }
+        Returns: Json
+      }
       record_question_usage: {
         Args: { question_ids: string[] }
         Returns: undefined
