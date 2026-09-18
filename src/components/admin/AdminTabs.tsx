@@ -9,6 +9,7 @@ import { DataMigrationUtility } from "./DataMigrationUtility";
 import AdminAnalyticsDashboard from "./analytics/AdminAnalyticsDashboard";
 import ContentInventory from "./analytics/ContentInventory";
 import DuplicateReviewQueue from "./DuplicateReviewQueue";
+import QuestionExplorer from "./QuestionExplorer";
 import { LMSStructureManager } from "./lms-structure/LMSStructureManager";
 import { JobsManager } from "./jobs/JobsManager";
 import { ScholarshipsManager } from "./scholarships/ScholarshipsManager";
