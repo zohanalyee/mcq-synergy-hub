@@ -118,7 +118,7 @@ const QuestionExplorer = () => {
   // reset to first page whenever filters change
   useEffect(() => {
     setPage(0);
-    setSelected(new Set());
+    setSelected(new Map());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pool, status, difficulty, relationship, subject, topic, search]);
 
@@ -127,22 +127,87 @@ const QuestionExplorer = () => {
     else { setSort(key); setDir(key === "question_text" || key === "subject" || key === "topic" ? "asc" : "desc"); }
   };
 
-  const toggleRow = (id: string) => {
+  const toggleRow = (row: ExplorerRow) => {
     setSelected(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      const next = new Map(prev);
+      const key = rowKey(row);
+      next.has(key) ? next.delete(key) : next.set(key, row);
       return next;
     });
   };
 
-  const allOnPageSelected = rows.length > 0 && rows.every(r => selected.has(r.id));
+  const allOnPageSelected = rows.length > 0 && rows.every(r => selected.has(rowKey(r)));
   const toggleAllOnPage = () => {
     setSelected(prev => {
-      const next = new Set(prev);
-      if (allOnPageSelected) rows.forEach(r => next.delete(r.id));
-      else rows.forEach(r => next.add(r.id));
+      const next = new Map(prev);
+      if (allOnPageSelected) rows.forEach(r => next.delete(rowKey(r)));
+      else rows.forEach(r => next.set(rowKey(r), r));
       return next;
     });
+  };
+
+  const selectedRows = useMemo(() => Array.from(selected.values()), [selected]);
+  const libraryIds = useMemo(() => selectedRows.filter(r => r.pool !== "mock").map(r => r.id), [selectedRows]);
+  const mockIds = useMemo(() => selectedRows.filter(r => r.pool === "mock").map(r => r.id), [selectedRows]);
+
+  const holdablePreview = useMemo(() => {
+    const groups = new Map<string, number>();
+    selectedRows.filter(r => r.pool !== "mock").forEach(r => {
+      const k = (r.question_text || "").trim().toLowerCase();
+      groups.set(k, (groups.get(k) || 0) + 1);
+    });
+    let keep = 0, hold = 0;
+    groups.forEach(count => { keep += 1; hold += Math.max(0, count - 1); });
+    return { keep, hold, groups: groups.size };
+  }, [selectedRows]);
+
+  const exportCsv = () => {
+    const source = selectedRows.length > 0 ? selectedRows : rows;
+    if (source.length === 0) { toast.error("Nothing to export"); return; }
+    const headers = [
+      "pool", "id", "question_text", "status", "subject", "topic", "difficulty",
+      "mock_test_count", "mock_test_names", "in_both_pools", "duplicate_copies",
+      "usage_count", "last_used_at", "created_at",
+    ];
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+    const csv = [
+      headers.join(","),
+      ...source.map(r => [
+        r.pool, r.id, r.question_text, r.status, r.subject, r.topic, r.difficulty,
+        r.mock_test_count, (r.mock_test_names || []).join(" | "), r.in_both_pools,
+        r.duplicate_copies, r.usage_count, r.last_used_at, r.created_at,
+      ].map(esc).join(",")),
+    ].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `question-explorer-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${source.length} rows`);
+  };
+
+  const runBulkAction = async () => {
+    if (!pendingAction) return;
+    setRunning(true);
+    const { data, error } = await (supabase as any).rpc("question_explorer_bulk_action", {
+      p_action: pendingAction,
+      p_library_ids: pendingAction === "unapprove_mock" ? [] : libraryIds,
+      p_mock_ids: pendingAction === "keep_one_hold_rest" ? [] : mockIds,
+    });
+    setRunning(false);
+    setPendingAction(null);
+    if (error) {
+      toast.error("Bulk action failed", { description: error.message });
+      return;
+    }
+    const res = data || {};
+    toast.success("Bulk action recorded", {
+      description: `Library: ${res.library_affected ?? 0} · Mock: ${res.mock_affected ?? 0}`,
+    });
+    setSelected(new Map());
+    loadRows();
+    loadStats();
   };
 
   const statCards = useMemo(() => {
