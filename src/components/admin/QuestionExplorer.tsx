@@ -42,6 +42,10 @@ interface ExplorerRow {
 
 const PAGE_SIZE = 50;
 
+type BulkAction = "keep_one_hold_rest" | "unapprove_mock" | "delete";
+
+const rowKey = (row: ExplorerRow) => `${row.pool}:${row.id}`;
+
 const SORTABLE: { key: string; label: string; className?: string }[] = [
   { key: "question_text", label: "Question" },
   { key: "status", label: "Status" },
