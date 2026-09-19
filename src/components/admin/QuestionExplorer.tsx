@@ -413,15 +413,90 @@ const QuestionExplorer = () => {
             </Table>
           </div>
 
-          {selected.size > 0 && (
-            <div className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-2.5 text-xs">
-              <Database className="h-4 w-4 text-cyan-400" />
-              <span>{selected.size} selected. Bulk cleanup actions arrive in the next batch.</span>
-              <Button size="sm" variant="ghost" className="h-7 ml-auto" onClick={() => setSelected(new Set())}>Clear selection</Button>
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-2.5 text-xs">
+            <Database className="h-4 w-4 text-cyan-400" />
+            <span>
+              {selected.size > 0
+                ? `${selected.size} selected · ${libraryIds.length} library · ${mockIds.length} mock`
+                : "Select rows to enable cleanup actions. Export works on this page when nothing is selected."}
+            </span>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="outline" className="h-7" onClick={exportCsv} disabled={running}>
+                <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+              </Button>
+              <Button
+                size="sm" variant="outline" className="h-7"
+                disabled={libraryIds.length === 0 || running}
+                onClick={() => setPendingAction("keep_one_hold_rest")}
+              >
+                <Copy className="h-3.5 w-3.5 mr-1.5" /> Keep one, hold rest
+              </Button>
+              <Button
+                size="sm" variant="outline" className="h-7"
+                disabled={mockIds.length === 0 || running}
+                onClick={() => setPendingAction("unapprove_mock")}
+              >
+                <EyeOff className="h-3.5 w-3.5 mr-1.5" /> Unapprove mock
+              </Button>
+              <Button
+                size="sm" variant="destructive" className="h-7"
+                disabled={selected.size === 0 || running}
+                onClick={() => setPendingAction("delete")}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete selected
+              </Button>
+              {selected.size > 0 && (
+                <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelected(new Map())}>Clear</Button>
+              )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={pendingAction !== null} onOpenChange={open => { if (!open) setPendingAction(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-400" />
+              Confirm bulk action
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                {pendingAction === "keep_one_hold_rest" && (
+                  <>
+                    <p>
+                      {libraryIds.length} selected library questions fall into {holdablePreview.groups} text
+                      {holdablePreview.groups === 1 ? " group" : " groups"}.
+                    </p>
+                    <p>{holdablePreview.keep} will stay live; {holdablePreview.hold} will be held as duplicates and hidden from learners. Nothing is deleted.</p>
+                  </>
+                )}
+                {pendingAction === "unapprove_mock" && (
+                  <p>{mockIds.length} mock-test questions will lose approval and stop appearing in mock tests. Nothing is deleted.</p>
+                )}
+                {pendingAction === "delete" && (
+                  <>
+                    <p>This permanently deletes {libraryIds.length} library and {mockIds.length} mock-test questions.</p>
+                    <p className="text-destructive">This cannot be undone.</p>
+                  </>
+                )}
+                <p className="text-xs text-muted-foreground">Recorded in the admin action log with your account.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={running}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => { e.preventDefault(); runBulkAction(); }}
+              disabled={running}
+              className={pendingAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : undefined}
+            >
+              {running ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              {pendingAction === "delete" ? "Delete permanently" : "Run action"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
