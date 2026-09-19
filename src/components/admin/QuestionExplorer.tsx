@@ -364,7 +364,7 @@ const QuestionExplorer = () => {
                 {rows.map(row => (
                   <TableRow key={`${row.pool}-${row.id}`} className="align-top">
                     <TableCell>
-                      <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleRow(row.id)} aria-label="Select question" />
+                      <Checkbox checked={selected.has(rowKey(row))} onCheckedChange={() => toggleRow(row)} aria-label="Select question" />
                     </TableCell>
                     <TableCell className="max-w-[420px]">
                       <div className="flex items-start gap-2">
