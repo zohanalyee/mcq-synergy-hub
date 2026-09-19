@@ -59,8 +59,10 @@ const QuestionExplorer = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Map<string, ExplorerRow>>(new Map());
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
+  const [running, setRunning] = useState(false);
 
   const [pool, setPool] = useState("all");
   const [status, setStatus] = useState("all");
