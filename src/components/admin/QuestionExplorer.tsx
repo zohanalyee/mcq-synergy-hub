@@ -42,6 +42,10 @@ interface ExplorerRow {
 
 const PAGE_SIZE = 50;
 
+type BulkAction = "keep_one_hold_rest" | "unapprove_mock" | "delete";
+
+const rowKey = (row: ExplorerRow) => `${row.pool}:${row.id}`;
+
 const SORTABLE: { key: string; label: string; className?: string }[] = [
   { key: "question_text", label: "Question" },
   { key: "status", label: "Status" },
@@ -59,8 +63,10 @@ const QuestionExplorer = () => {
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selected, setSelected] = useState<Map<string, ExplorerRow>>(new Map());
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<BulkAction | null>(null);
+  const [running, setRunning] = useState(false);
 
   const [pool, setPool] = useState("all");
   const [status, setStatus] = useState("all");
@@ -116,7 +122,7 @@ const QuestionExplorer = () => {
   // reset to first page whenever filters change
   useEffect(() => {
     setPage(0);
-    setSelected(new Set());
+    setSelected(new Map());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pool, status, difficulty, relationship, subject, topic, search]);
 
@@ -125,22 +131,87 @@ const QuestionExplorer = () => {
     else { setSort(key); setDir(key === "question_text" || key === "subject" || key === "topic" ? "asc" : "desc"); }
   };
 
-  const toggleRow = (id: string) => {
+  const toggleRow = (row: ExplorerRow) => {
     setSelected(prev => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      const next = new Map(prev);
+      const key = rowKey(row);
+      next.has(key) ? next.delete(key) : next.set(key, row);
       return next;
     });
   };
 
-  const allOnPageSelected = rows.length > 0 && rows.every(r => selected.has(r.id));
+  const allOnPageSelected = rows.length > 0 && rows.every(r => selected.has(rowKey(r)));
   const toggleAllOnPage = () => {
     setSelected(prev => {
-      const next = new Set(prev);
-      if (allOnPageSelected) rows.forEach(r => next.delete(r.id));
-      else rows.forEach(r => next.add(r.id));
+      const next = new Map(prev);
+      if (allOnPageSelected) rows.forEach(r => next.delete(rowKey(r)));
+      else rows.forEach(r => next.set(rowKey(r), r));
       return next;
     });
+  };
+
+  const selectedRows = useMemo(() => Array.from(selected.values()), [selected]);
+  const libraryIds = useMemo(() => selectedRows.filter(r => r.pool !== "mock").map(r => r.id), [selectedRows]);
+  const mockIds = useMemo(() => selectedRows.filter(r => r.pool === "mock").map(r => r.id), [selectedRows]);
+
+  const holdablePreview = useMemo(() => {
+    const groups = new Map<string, number>();
+    selectedRows.filter(r => r.pool !== "mock").forEach(r => {
+      const k = (r.question_text || "").trim().toLowerCase();
+      groups.set(k, (groups.get(k) || 0) + 1);
+    });
+    let keep = 0, hold = 0;
+    groups.forEach(count => { keep += 1; hold += Math.max(0, count - 1); });
+    return { keep, hold, groups: groups.size };
+  }, [selectedRows]);
+
+  const exportCsv = () => {
+    const source = selectedRows.length > 0 ? selectedRows : rows;
+    if (source.length === 0) { toast.error("Nothing to export"); return; }
+    const headers = [
+      "pool", "id", "question_text", "status", "subject", "topic", "difficulty",
+      "mock_test_count", "mock_test_names", "in_both_pools", "duplicate_copies",
+      "usage_count", "last_used_at", "created_at",
+    ];
+    const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""').replace(/\r?\n/g, " ")}"`;
+    const csv = [
+      headers.join(","),
+      ...source.map(r => [
+        r.pool, r.id, r.question_text, r.status, r.subject, r.topic, r.difficulty,
+        r.mock_test_count, (r.mock_test_names || []).join(" | "), r.in_both_pools,
+        r.duplicate_copies, r.usage_count, r.last_used_at, r.created_at,
+      ].map(esc).join(",")),
+    ].join("\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `question-explorer-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${source.length} rows`);
+  };
+
+  const runBulkAction = async () => {
+    if (!pendingAction) return;
+    setRunning(true);
+    const { data, error } = await (supabase as any).rpc("question_explorer_bulk_action", {
+      p_action: pendingAction,
+      p_library_ids: pendingAction === "unapprove_mock" ? [] : libraryIds,
+      p_mock_ids: pendingAction === "keep_one_hold_rest" ? [] : mockIds,
+    });
+    setRunning(false);
+    setPendingAction(null);
+    if (error) {
+      toast.error("Bulk action failed", { description: error.message });
+      return;
+    }
+    const res = data || {};
+    toast.success("Bulk action recorded", {
+      description: `Library: ${res.library_affected ?? 0} · Mock: ${res.mock_affected ?? 0}`,
+    });
+    setSelected(new Map());
+    loadRows();
+    loadStats();
   };
 
   const statCards = useMemo(() => {
@@ -293,7 +364,7 @@ const QuestionExplorer = () => {
                 {rows.map(row => (
                   <TableRow key={`${row.pool}-${row.id}`} className="align-top">
                     <TableCell>
-                      <Checkbox checked={selected.has(row.id)} onCheckedChange={() => toggleRow(row.id)} aria-label="Select question" />
+                      <Checkbox checked={selected.has(rowKey(row))} onCheckedChange={() => toggleRow(row)} aria-label="Select question" />
                     </TableCell>
                     <TableCell className="max-w-[420px]">
                       <div className="flex items-start gap-2">
@@ -342,15 +413,90 @@ const QuestionExplorer = () => {
             </Table>
           </div>
 
-          {selected.size > 0 && (
-            <div className="flex items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-2.5 text-xs">
-              <Database className="h-4 w-4 text-cyan-400" />
-              <span>{selected.size} selected. Bulk cleanup actions arrive in the next batch.</span>
-              <Button size="sm" variant="ghost" className="h-7 ml-auto" onClick={() => setSelected(new Set())}>Clear selection</Button>
+          <div className="flex flex-wrap items-center gap-2 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-2.5 text-xs">
+            <Database className="h-4 w-4 text-cyan-400" />
+            <span>
+              {selected.size > 0
+                ? `${selected.size} selected · ${libraryIds.length} library · ${mockIds.length} mock`
+                : "Select rows to enable cleanup actions. Export works on this page when nothing is selected."}
+            </span>
+            <div className="ml-auto flex flex-wrap items-center gap-2">
+              <Button size="sm" variant="outline" className="h-7" onClick={exportCsv} disabled={running}>
+                <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+              </Button>
+              <Button
+                size="sm" variant="outline" className="h-7"
+                disabled={libraryIds.length === 0 || running}
+                onClick={() => setPendingAction("keep_one_hold_rest")}
+              >
+                <Copy className="h-3.5 w-3.5 mr-1.5" /> Keep one, hold rest
+              </Button>
+              <Button
+                size="sm" variant="outline" className="h-7"
+                disabled={mockIds.length === 0 || running}
+                onClick={() => setPendingAction("unapprove_mock")}
+              >
+                <EyeOff className="h-3.5 w-3.5 mr-1.5" /> Unapprove mock
+              </Button>
+              <Button
+                size="sm" variant="destructive" className="h-7"
+                disabled={selected.size === 0 || running}
+                onClick={() => setPendingAction("delete")}
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete selected
+              </Button>
+              {selected.size > 0 && (
+                <Button size="sm" variant="ghost" className="h-7" onClick={() => setSelected(new Map())}>Clear</Button>
+              )}
             </div>
-          )}
+          </div>
         </CardContent>
       </Card>
+
+      <AlertDialog open={pendingAction !== null} onOpenChange={open => { if (!open) setPendingAction(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <ShieldAlert className="h-5 w-5 text-amber-400" />
+              Confirm bulk action
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-2 text-sm">
+                {pendingAction === "keep_one_hold_rest" && (
+                  <>
+                    <p>
+                      {libraryIds.length} selected library questions fall into {holdablePreview.groups} text
+                      {holdablePreview.groups === 1 ? " group" : " groups"}.
+                    </p>
+                    <p>{holdablePreview.keep} will stay live; {holdablePreview.hold} will be held as duplicates and hidden from learners. Nothing is deleted.</p>
+                  </>
+                )}
+                {pendingAction === "unapprove_mock" && (
+                  <p>{mockIds.length} mock-test questions will lose approval and stop appearing in mock tests. Nothing is deleted.</p>
+                )}
+                {pendingAction === "delete" && (
+                  <>
+                    <p>This permanently deletes {libraryIds.length} library and {mockIds.length} mock-test questions.</p>
+                    <p className="text-destructive">This cannot be undone.</p>
+                  </>
+                )}
+                <p className="text-xs text-muted-foreground">Recorded in the admin action log with your account.</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={running}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={e => { e.preventDefault(); runBulkAction(); }}
+              disabled={running}
+              className={pendingAction === "delete" ? "bg-destructive text-destructive-foreground hover:bg-destructive/90" : undefined}
+            >
+              {running ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+              {pendingAction === "delete" ? "Delete permanently" : "Run action"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
