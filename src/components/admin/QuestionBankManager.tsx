@@ -167,6 +167,11 @@ const QuestionBankManager = () => {
         .from('content_items')
         .select('id', { count: 'exact', head: true });
 
+      // Get mock-test question count for combined headline total
+      const { count: mockTestCount } = await supabase
+        .from('job_test_questions')
+        .select('id', { count: 'exact', head: true });
+
       // Get counts by difficulty
       const { count: easyCount } = await supabase
         .from('content_items')
@@ -209,7 +214,7 @@ const QuestionBankManager = () => {
       const mixCount = (totalCount || 0) - (easyCount || 0) - (mediumCount || 0) - (hardCount || 0);
 
       setStats({
-        totalQuestions: totalCount || 0,
+        totalQuestions: (totalCount || 0) + (mockTestCount || 0),
         easyQuestions: easyCount || 0,
         mediumQuestions: mediumCount || 0,
         hardQuestions: hardCount || 0,
