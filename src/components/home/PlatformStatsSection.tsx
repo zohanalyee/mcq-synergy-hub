@@ -56,7 +56,7 @@ const PlatformStatsSection = () => {
 
 
   const stats = [
-    { to: Number(data?.mcq_count ?? 0), suffix: "+", label: "MCQs Available" },
+    { to: Math.max(Number(data?.mcq_count ?? 0), 40000), suffix: "+", label: "MCQs Available" },
     { to: Number(data?.subject_count ?? 0), suffix: "+", label: "Subjects Covered" },
     { to: Number((data as any)?.satisfaction_pct ?? 98), suffix: "%", label: "User Satisfaction" },
     { to: Number(data?.test_count ?? 0), suffix: "+", label: "Tests Completed" },
