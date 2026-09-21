@@ -287,6 +287,9 @@ const App = ({ pages = lazyPages }: { pages?: PageMap }) => {
                       <Route path="/exams/nums" element={<P.NumsEntryTest />} />
                       <Route path="/exams/iba-sukkur" element={<P.IbaSukkurEntryTest />} />
                       <Route path="/exams/lat" element={<P.LatLawAdmissionTest />} />
+                      <Route path="/exams/karachi-university" element={<P.KarachiUniversityEntryTest />} />
+                      <Route path="/exams/sindh-university" element={<P.SindhUniversityEntryTest />} />
+                      <Route path="/exams/nat" element={<P.NatEntryTest />} />
                       <Route path="/exams/:examSlug" element={<Suspense fallback={<TopProgressBar />}><P.ExamLandingPage /></Suspense>} />
 
                       <Route path="/mdcat-syllabus" element={<Suspense fallback={<TopProgressBar />}><P.MDCATSyllabus /></Suspense>} />
