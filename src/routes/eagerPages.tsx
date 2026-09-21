@@ -36,6 +36,9 @@ import ExamLandingPage from "@/pages/exams/ExamLandingPage";
 import NumsEntryTest from "@/pages/exams/NumsEntryTest";
 import IbaSukkurEntryTest from "@/pages/exams/IbaSukkurEntryTest";
 import LatLawAdmissionTest from "@/pages/exams/LatLawAdmissionTest";
+import KarachiUniversityEntryTest from "@/pages/exams/KarachiUniversityEntryTest";
+import SindhUniversityEntryTest from "@/pages/exams/SindhUniversityEntryTest";
+import NatEntryTest from "@/pages/exams/NatEntryTest";
 import ProgrammaticIndex from "@/pages/programmatic/ProgrammaticIndex";
 import ProgrammaticLandingPage from "@/pages/programmatic/ProgrammaticLandingPage";
 import MDCATSyllabus from "@/pages/MDCATSyllabus";
@@ -77,7 +80,8 @@ export const pages: PageMap = {
   PastPapers, Jobs, Scholarships, CustomSyllabus, Reviews, Quizzes, QuestionBank,
   About, Contact, FAQ, StudyGuides, Blog, Announcements, Boards, Tools,
   PrivacyPolicy, TermsOfService, EditorialPolicy, ExamsHub, ExamLandingPage,
-  NumsEntryTest, IbaSukkurEntryTest, LatLawAdmissionTest, ProgrammaticIndex,
+  NumsEntryTest, IbaSukkurEntryTest, LatLawAdmissionTest,
+  KarachiUniversityEntryTest, SindhUniversityEntryTest, NatEntryTest, ProgrammaticIndex,
   ProgrammaticLandingPage, MDCATSyllabus, MDCATPastPapers, PPSCPastPapers,
   FPSCPastPapers, CSSMCQs, ECATPreparation, NUSTEntryTest,
   PunjabUniversityEntryTest, COMSATSEntryTest, SindhUniversitiesEntryTest,
