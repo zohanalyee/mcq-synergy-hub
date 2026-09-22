@@ -6,3 +6,4 @@
 - [x] Add consolidated NTS NAT preparation guide
 - [x] Register and prerender the three routes without sitemap entries
 - [x] Verify rendering and project health
+- [x] Remove Telegram intake (function, buffer tables, tagged rows, storage prefix)
