@@ -5,4 +5,4 @@
 - [x] Add Sindh University admission-test guide
 - [x] Add consolidated NTS NAT preparation guide
 - [x] Register and prerender the three routes without sitemap entries
-- [ ] Verify rendering and project health
+- [x] Verify rendering and project health
