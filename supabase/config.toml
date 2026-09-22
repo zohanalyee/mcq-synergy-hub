@@ -96,6 +96,3 @@ verify_jwt = false
 
 [functions.verify-questions]
 verify_jwt = false
-
-[functions.cleanup-telegram-storage]
-verify_jwt = false
