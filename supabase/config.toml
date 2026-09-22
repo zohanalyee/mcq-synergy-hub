@@ -67,9 +67,6 @@ verify_jwt = false
 [functions.job-test-progress]
 verify_jwt = false
 
-[functions.telegram-webhook]
-verify_jwt = false
-
 [functions.indexnow-ping]
 verify_jwt = false
 
@@ -98,4 +95,7 @@ verify_jwt = false
 
 
 [functions.verify-questions]
+verify_jwt = false
+
+[functions.cleanup-telegram-storage]
 verify_jwt = false
