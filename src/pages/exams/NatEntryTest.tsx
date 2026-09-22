@@ -25,11 +25,11 @@ const NatEntryTest = () => (
       { section: 'Category One (12 years of education)', detail: 'NAT-IE, NAT-IM, NAT-IA, NAT-ICS, NAT-IGS and NAT-ICOM', weight: '90 questions' },
       { section: 'Category One — common sections', detail: 'English 20 + Analytical 20 + Quantitative 20', weight: '60 questions' },
       { section: 'Category One — subject section', detail: 'Content depends on the selected type', weight: '30 questions' },
-      { section: 'Category Two (14 years of education)', detail: 'NAT-IIA and the other Category Two types listed by NTS', weight: '100 questions' },
+      { section: 'Category Two (14 years of education)', detail: 'NAT-IIA, NAT-IIB, NAT-IIM, NAT-IIP and NAT-IIO', weight: '100 questions' },
       { section: 'NAT-IIA — common sections', detail: 'English 20 + Analytical 15 + Quantitative 15', weight: '50 questions' },
       { section: 'NAT-IIA — subject section', detail: 'Arts and Humanities', weight: '50 questions' },
       { section: 'Other Category Two types — common sections', detail: 'English 10 + Analytical 10 + Quantitative 10', weight: '30 questions' },
-      { section: 'Other Category Two types — subject section', detail: 'Content depends on the selected type', weight: '70 questions' },
+      { section: 'Other Category Two types — subject section', detail: 'Biological, Management, Physical, or Oriental and Islamic Studies', weight: '70 questions' },
     ]}
     patternNote="Choose the NAT type that matches your prior subject group and verify its exact subject distribution on the official NTS paper-pattern page. This page intentionally gives a consolidated overview rather than creating unsupported type-specific claims. Test duration is not stated on the official pages reviewed."
     eligibility={[
