@@ -9,11 +9,13 @@ I could not reproduce a set of 12. Measured state right now:
 - 89 published mock tests exist, and **every one of them has a syllabus** (3–9 sections each, weightages summing to exactly 100%). None is empty.
 - 92 test definitions exist behind them. **3 definitions have no published test attached**, so they have no section weightage at all — these are the only ones auto-fill cannot plan against:
 
-| Definition | Area | Questions stored | Status |
-| --- | --- | --- | --- |
-| Subject Specialist – Biology Recruitment Test | Education / Teaching | 0 | empty shell, nothing generated |
-| Subject Specialist – General Science | Education / Teaching | 200 (80 approved) | questions exist, no published test/syllabus |
-| Official AJK MDCAT 2025 Syllabus & SZABMU Entry Test Pattern | Medical Admissions | 200 | duplicate of an already-published AJK MDCAT test |
+
+| Definition                                                   | Area                 | Questions stored  | Status                                           |
+| ------------------------------------------------------------ | -------------------- | ----------------- | ------------------------------------------------ |
+| Subject Specialist – Biology Recruitment Test                | Education / Teaching | 0                 | empty shell, nothing generated                   |
+| Subject Specialist – General Science                         | Education / Teaching | 200 (80 approved) | questions exist, no published test/syllabus      |
+| Official AJK MDCAT 2025 Syllabus & SZABMU Entry Test Pattern | Medical Admissions   | 200               | duplicate of an already-published AJK MDCAT test |
+
 
 Everything else is fine, including approval coverage: only two tests are below full approval (FIA Staff Car Driver 160/200, Vaccinator 195/200).
 
@@ -28,26 +30,30 @@ If the "12" figure came from a specific admin screen, tell me which one and I wi
 
 Spread by how many mock tests share the same text:
 
-| Shared across | Distinct texts | Rows involved |
-| --- | --- | --- |
-| Exactly 2 tests | 1,985 | 4,073 |
-| 3–9 tests | 2,513 | 10,833 |
-| 10–19 tests | 101 | 1,184 |
-| 20+ tests (up to 76 copies) | 45 | 1,097 |
+
+| Shared across               | Distinct texts | Rows involved |
+| --------------------------- | -------------- | ------------- |
+| Exactly 2 tests             | 1,985          | 4,073         |
+| 3–9 tests                   | 2,513          | 10,833        |
+| 10–19 tests                 | 101            | 1,184         |
+| 20+ tests (up to 76 copies) | 45             | 1,097         |
+
 
 So the heavy repetition is concentrated: 146 texts (3%) account for ~2,280 stored rows.
 
 Top repeated texts, with what they are:
 
-| Text | Copies | Tests | Type |
-| --- | --- | --- | --- |
-| "Which of the following sentences is grammatically correct?" | 76 | 69 | English grammar |
-| "Identify the grammatically correct sentence." | 60 | 51 | English grammar |
-| "Which Pakistani city is known as the 'city of gardens'?" | 32 | 22 | General knowledge |
-| "Choose the grammatically correct sentence." / "...:" | 31 / 28 | 25 / 27 | English grammar (same item, two punctuations) |
-| Train 60 km/h in 45 minutes; money doubling at simple interest | 26 each | 26 | Arithmetic aptitude |
-| MS Word undo shortcut | 24 | 24 | Computer basics |
-| 13 further reasoning items (series, coding, age, profit, work-rate, direction) | 23 each | 23 | Reasoning / Aptitude |
+
+| Text                                                                           | Copies  | Tests   | Type                                          |
+| ------------------------------------------------------------------------------ | ------- | ------- | --------------------------------------------- |
+| "Which of the following sentences is grammatically correct?"                   | 76      | 69      | English grammar                               |
+| "Identify the grammatically correct sentence."                                 | 60      | 51      | English grammar                               |
+| "Which Pakistani city is known as the 'city of gardens'?"                      | 32      | 22      | General knowledge                             |
+| "Choose the grammatically correct sentence." / "...:"                          | 31 / 28 | 25 / 27 | English grammar (same item, two punctuations) |
+| Train 60 km/h in 45 minutes; money doubling at simple interest                 | 26 each | 26      | Arithmetic aptitude                           |
+| MS Word undo shortcut                                                          | 24      | 24      | Computer basics                               |
+| 13 further reasoning items (series, coding, age, profit, work-rate, direction) | 23 each | 23      | Reasoning / Aptitude                          |
+
 
 Judgement from these examples: the repetition is **legitimate shared-syllabus content, executed wastefully**. Every one of these sits in English, General Knowledge, Computer or Reasoning sections that genuinely appear in almost all clerical/mid-tier tests — reuse is correct. Two real problems show up though:
 
@@ -71,3 +77,15 @@ Both sampled pages that were previously refused are now fetched and indexed, and
 1. Model the two Subject Specialist syllabi on their published siblings; retire the duplicate AJK MDCAT definition.
 2. Merge the grammar wording variants and rotate the shared aptitude block instead of copying it into every test.
 3. Re-start the 403 validation in Search Console if it is still sitting at "Started".
+
+&nbsp;
+
+Please proceed with:
+
+1. Model the Subject Specialist – Biology and General Science syllabi on the existing 14 published siblings (same 4-section pattern: General/Professional English, Pedagogy, General Knowledge, Subject-Based)
+
+2. Retire the duplicate AJK MDCAT 2025 test definition (the published one already has the correct 5-section pattern)
+
+3. Merge the grammar-question wording variants (76+60+31+28 copies of essentially the same question) into one canonical version, and convert the 23-copy reasoning block into a shared rotating pool instead of a fixed copy per test
+
+Isolation guarantee — no changes to published/approved tests' current content for learners, only the specific duplicate/empty definitions and the shared-pool restructuring.
