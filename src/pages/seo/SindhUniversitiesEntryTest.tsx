@@ -93,7 +93,7 @@ const SindhUniversitiesEntryTest = () => (
         <div className="flex flex-wrap gap-2">
           {[
             { label: 'IBA Sukkur Preparation', url: '/exams/nts' },
-            { label: 'SPSC Test Prep', url: '/exams/spsc' },
+            { label: 'Commission Mock Tests', url: '/mock-tests' },
             { label: 'Sindh Board MCQs', url: '/boards' },
             { label: 'MDCAT Preparation', url: '/exams/mdcat' },
             { label: 'Engineering Entry Tests', url: '/engineering-universities-entry-test' },

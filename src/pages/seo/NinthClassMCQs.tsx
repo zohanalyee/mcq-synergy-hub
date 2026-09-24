@@ -64,9 +64,8 @@ const NinthClassMCQs = () => (
         <div className="flex flex-wrap gap-2">
           {[
             { label: '10th Class MCQs', url: '/board-mcqs' },
-            { label: 'Matric Past Papers', url: '/exams/matric' },
-            { label: 'FSc Pre-Medical', url: '/exams/fsc-pre-medical' },
-            { label: 'FSc Pre-Engineering', url: '/exams/fsc-pre-engineering' },
+            { label: 'FSc Pre-Medical', url: '/exams/mdcat' },
+            { label: 'FSc Pre-Engineering', url: '/ecat-preparation' },
             { label: 'Biology MCQs', url: '/boards' },
             { label: 'Chemistry MCQs', url: '/boards' },
           ].map((link) => (

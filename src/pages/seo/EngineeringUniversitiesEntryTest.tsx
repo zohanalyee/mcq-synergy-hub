@@ -88,7 +88,7 @@ const EngineeringUniversitiesEntryTest = () => (
             { label: 'ECAT Preparation', url: '/ecat-preparation' },
             { label: 'COMSATS Entry Test', url: '/comsats-entry-test' },
             { label: 'Punjab University Test', url: '/punjab-university-entry-test' },
-            { label: 'FSc Pre-Engineering', url: '/exams/fsc-pre-engineering' },
+            { label: 'FSc Pre-Engineering', url: '/exams/ecat' },
           ].map((link) => (
             <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">
               {link.label}
