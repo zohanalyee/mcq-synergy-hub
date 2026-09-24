@@ -4,14 +4,16 @@
 
 All six are still broken today. Unknown exam addresses fall through to the "not found" screen, and none of these six names exists in the exam list (only mdcat, ecat, css, ppsc, fpsc, nts, pms are data-driven, plus the standalone nums, iba-sukkur, lat, karachi-university, sindh-university, nat pages).
 
-| Broken link | Linked from | Proposed fix |
-| --- | --- | --- |
-| /exams/nts-nat | Punjab University Entry Test, ECAT Preparation | point to /exams/nat (built last batch) |
-| /exams/fsc-pre-engineering | 9th Class MCQs, Engineering Universities Entry Test, ECAT Preparation, Board MCQs | point to /ecat-preparation |
-| /exams/fsc-pre-medical | MDCAT Syllabus (2 places), 9th Class MCQs, Board MCQs | point to /exams/mdcat |
-| /exams/matric | 9th Class MCQs | point to /9th-class-mcqs sibling content → /board-mcqs |
-| /exams/educators | PST/SST Test Preparation | point to /pst-sst-test-preparation |
-| /exams/spsc | Sindh Universities Entry Test, PPSC Past Papers | no SPSC page exists. Recommendation: relabel to "Commission Mock Tests" pointing at /mock-tests rather than sending Sindh candidates to the Punjab PPSC page. (Say the word if you'd rather have a real /exams/spsc page built instead.) |
+
+| Broken link                | Linked from                                                                       | Proposed fix                                                                                                                                                                                                                             |
+| -------------------------- | --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| /exams/nts-nat             | Punjab University Entry Test, ECAT Preparation                                    | point to /exams/nat (built last batch)                                                                                                                                                                                                   |
+| /exams/fsc-pre-engineering | 9th Class MCQs, Engineering Universities Entry Test, ECAT Preparation, Board MCQs | point to /ecat-preparation                                                                                                                                                                                                               |
+| /exams/fsc-pre-medical     | MDCAT Syllabus (2 places), 9th Class MCQs, Board MCQs                             | point to /exams/mdcat                                                                                                                                                                                                                    |
+| /exams/matric              | 9th Class MCQs                                                                    | point to /9th-class-mcqs sibling content → /board-mcqs                                                                                                                                                                                   |
+| /exams/educators           | PST/SST Test Preparation                                                          | point to /pst-sst-test-preparation                                                                                                                                                                                                       |
+| /exams/spsc                | Sindh Universities Entry Test, PPSC Past Papers                                   | no SPSC page exists. Recommendation: relabel to "Commission Mock Tests" pointing at /mock-tests rather than sending Sindh candidates to the Punjab PPSC page. (Say the word if you'd rather have a real /exams/spsc page built instead.) |
+
 
 Only the link `url`/`label` values in those seven files change — no layout, no routes, no content rewrites.
 
@@ -47,3 +49,13 @@ Facts will be verified page by page against the official sites before each page 
 - Additive registrations only: `pageMap.ts` PageKey entries, `lazyPages.ts`, `eagerPages.tsx`, eight explicit `<Route>` lines in `App.tsx` placed above the `/exams/:examSlug` catch-all, and `PRERENDER_ROUTES` in `vite.config.ts`.
 - `examData.ts` and `scripts/generate-sitemaps.mjs` stay unchanged.
 - Section 2 touches only the related-link arrays in `PunjabUniversityEntryTest.tsx`, `ECATPreparation.tsx`, `NinthClassMCQs.tsx`, `BoardMCQs.tsx`, `EngineeringUniversitiesEntryTest.tsx`, `MDCATSyllabus.tsx`, `PSTSSTTestPreparation.tsx`, `SindhUniversitiesEntryTest.tsx`, `PPSCPastPapers.tsx`.
+
+&nbsp;
+
+Plan approved for both sections:
+
+Section 2 — proceed with all 6 link fixes as proposed, including relabeling the SPSC link to "Commission Mock Tests" pointing at /mock-tests (no need to build a real /exams/spsc page without genuine SPSC-specific content).
+
+Section 1 — proceed with all 8 pages. Confirmed: UET Lahore should be the admission-route page (who needs ECAT, merit weightage, application window) linking to /exams/ecat for the paper itself — not a duplicate ECAT-pattern page.
+
+Verify after: confirm all 8 new pages render correctly, all 6 link fixes point to working destinations, and existing pages/routes remain untouched.
