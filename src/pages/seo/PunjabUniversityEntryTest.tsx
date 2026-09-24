@@ -63,7 +63,7 @@ const PunjabUniversityEntryTest = () => (
           {[
             { label: 'NUST Entry Test', url: '/nust-entry-test' },
             { label: 'COMSATS Entry Test', url: '/comsats-entry-test' },
-            { label: 'NTS NAT Test', url: '/exams/nts-nat' },
+            { label: 'NTS NAT Test', url: '/exams/nat' },
             { label: 'English MCQs', url: '/subjects' },
             { label: 'General Knowledge', url: '/exams/nts' },
           ].map((link) => (

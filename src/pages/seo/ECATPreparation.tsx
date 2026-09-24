@@ -63,8 +63,8 @@ const ECATPreparation = () => (
           {[
             { label: 'MDCAT Preparation', url: '/exams/mdcat' },
             { label: 'MDCAT Past Papers', url: '/mdcat-past-papers' },
-            { label: 'FSc Pre-Engineering', url: '/exams/fsc-pre-engineering' },
-            { label: 'NTS NAT', url: '/exams/nts-nat' },
+            { label: 'FSc Pre-Engineering', url: '/board-mcqs' },
+            { label: 'NTS NAT', url: '/exams/nat' },
             { label: 'ECAT Aggregate Calculator', url: '/tools/aggregate-calculator' },
             { label: 'Mathematics MCQs', url: '/subjects' },
 

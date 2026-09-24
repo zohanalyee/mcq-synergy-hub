@@ -64,7 +64,7 @@ const PPSCPastPapers = () => (
             { label: 'FPSC Past Papers', url: '/fpsc-past-papers' },
             { label: 'NTS MCQs', url: '/exams/nts' },
             { label: 'CSS MCQs', url: '/css-mcqs-practice' },
-            { label: 'SPSC Past Papers', url: '/exams/spsc' },
+            { label: 'Commission Mock Tests', url: '/mock-tests' },
             { label: 'General Knowledge MCQs', url: '/exams/ppsc' },
           ].map((link) => (
             <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">

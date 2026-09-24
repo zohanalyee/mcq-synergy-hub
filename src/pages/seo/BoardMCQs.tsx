@@ -81,8 +81,8 @@ const BoardMCQs = () => (
             { label: '9th Class MCQs', url: '/9th-class-mcqs' },
             { label: 'MDCAT Preparation', url: '/exams/mdcat' },
             { label: 'ECAT Preparation', url: '/ecat-preparation' },
-            { label: 'FSc Pre-Medical', url: '/exams/fsc-pre-medical' },
-            { label: 'FSc Pre-Engineering', url: '/exams/fsc-pre-engineering' },
+            { label: 'FSc Pre-Medical', url: '/mdcat-syllabus' },
+            { label: 'FSc Pre-Engineering', url: '/exams/ecat' },
             { label: 'Past Papers', url: '/mdcat-past-papers' },
           ].map((link) => (
             <Link key={link.url} to={link.url} className="px-4 py-2 bg-background border rounded-full text-sm hover:bg-primary/5 text-primary">

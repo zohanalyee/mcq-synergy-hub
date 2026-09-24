@@ -77,7 +77,7 @@ const PSTSSTTestPreparation = () => (
           {[
             { label: 'NTS Test Preparation', url: '/exams/nts' },
             { label: 'PPSC Past Papers', url: '/ppsc-past-papers' },
-            { label: 'Educators Test', url: '/exams/educators' },
+            { label: 'Educators Mock Tests', url: '/mock-tests' },
             { label: 'General Knowledge MCQs', url: '/exams/nts' },
             { label: 'English Grammar MCQs', url: '/subjects' },
           ].map((link) => (

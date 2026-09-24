@@ -180,7 +180,7 @@ const MDCATSyllabus = () => {
               free MDCAT mock test
             </Link>{' '}
             or revise{' '}
-            <Link to="/exams/fsc-pre-medical" className="text-purple-700 underline">
+            <Link to="/board-mcqs" className="text-purple-700 underline">
               FSc Pre-Medical MCQs
             </Link>{' '}
             chapter by chapter.
@@ -344,7 +344,7 @@ const MDCATSyllabus = () => {
               { label: 'MDCAT Aggregate Calculator', url: '/tools/aggregate-calculator' },
               { label: 'ECAT Syllabus', url: '/exams/ecat' },
 
-              { label: 'FSc Pre-Medical MCQs', url: '/exams/fsc-pre-medical' },
+              { label: 'FSc Pre-Medical MCQs', url: '/board-mcqs' },
               { label: 'Biology MCQs', url: '/subjects' },
               { label: 'Chemistry MCQs', url: '/subjects' },
               { label: 'Physics MCQs', url: '/subjects' },
