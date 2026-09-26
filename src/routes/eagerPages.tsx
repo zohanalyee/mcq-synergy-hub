@@ -39,6 +39,14 @@ import LatLawAdmissionTest from "@/pages/exams/LatLawAdmissionTest";
 import KarachiUniversityEntryTest from "@/pages/exams/KarachiUniversityEntryTest";
 import SindhUniversityEntryTest from "@/pages/exams/SindhUniversityEntryTest";
 import NatEntryTest from "@/pages/exams/NatEntryTest";
+import LumsAdmissionTest from "@/pages/exams/LumsAdmissionTest";
+import AkuAdmissionTest from "@/pages/exams/AkuAdmissionTest";
+import GikiEntryTest from "@/pages/exams/GikiEntryTest";
+import UetLahoreAdmission from "@/pages/exams/UetLahoreAdmission";
+import AirUniversityEntryTest from "@/pages/exams/AirUniversityEntryTest";
+import PieasEntryTest from "@/pages/exams/PieasEntryTest";
+import GatSubjectTest from "@/pages/exams/GatSubjectTest";
+import UsatEntryTest from "@/pages/exams/UsatEntryTest";
 import ProgrammaticIndex from "@/pages/programmatic/ProgrammaticIndex";
 import ProgrammaticLandingPage from "@/pages/programmatic/ProgrammaticLandingPage";
 import MDCATSyllabus from "@/pages/MDCATSyllabus";
@@ -81,7 +89,9 @@ export const pages: PageMap = {
   About, Contact, FAQ, StudyGuides, Blog, Announcements, Boards, Tools,
   PrivacyPolicy, TermsOfService, EditorialPolicy, ExamsHub, ExamLandingPage,
   NumsEntryTest, IbaSukkurEntryTest, LatLawAdmissionTest,
-  KarachiUniversityEntryTest, SindhUniversityEntryTest, NatEntryTest, ProgrammaticIndex,
+  KarachiUniversityEntryTest, SindhUniversityEntryTest, NatEntryTest,
+  LumsAdmissionTest, AkuAdmissionTest, GikiEntryTest, UetLahoreAdmission,
+  AirUniversityEntryTest, PieasEntryTest, GatSubjectTest, UsatEntryTest, ProgrammaticIndex,
   ProgrammaticLandingPage, MDCATSyllabus, MDCATPastPapers, PPSCPastPapers,
   FPSCPastPapers, CSSMCQs, ECATPreparation, NUSTEntryTest,
   PunjabUniversityEntryTest, COMSATSEntryTest, SindhUniversitiesEntryTest,
