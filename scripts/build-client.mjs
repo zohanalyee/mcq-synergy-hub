@@ -42,11 +42,21 @@ const stop = (reason) => {
   process.exit(0);
 };
 
+let idleTimer = null;
+const armIdleTimer = () => {
+  if (idleTimer) clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => {
+    if (existsSync(distIndex)) stop(`no vite output for ${IDLE_MS / 1000}s`);
+  }, IDLE_MS);
+  idleTimer.unref?.();
+};
+
 const watch = (stream, out) => {
   let buffer = '';
   stream.on('data', (chunk) => {
     const text = chunk.toString();
     out.write(text);
+    armIdleTimer();
     buffer = (buffer + text).slice(-4000);
     if (/Prerendered\s+\d+\s+pages/.test(buffer) && !graceTimer) {
       graceTimer = setTimeout(() => {
@@ -55,6 +65,8 @@ const watch = (stream, out) => {
     }
   });
 };
+
+armIdleTimer();
 
 watch(child.stdout, process.stdout);
 watch(child.stderr, process.stderr);
