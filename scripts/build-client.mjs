@@ -19,6 +19,10 @@ import path from 'node:path';
 const root = process.cwd();
 const distIndex = path.join(root, 'dist', 'index.html');
 const GRACE_MS = 3000;
+// Fallback for builds where vite hangs BEFORE printing the prerender summary:
+// if dist/index.html exists and vite has produced no output for this long, the
+// output is already written and the process is simply idle.
+const IDLE_MS = 90 * 1000;
 const HARD_TIMEOUT_MS = 20 * 60 * 1000;
 
 const child = spawn('npx', ['vite', 'build', ...process.argv.slice(2)], {
