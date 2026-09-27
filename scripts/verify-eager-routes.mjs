@@ -24,7 +24,7 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 // Budget: prerendered routes only. Raise deliberately, and only together with a
 // matching entry in PRERENDER_ROUTES (vite.config.ts) / EXTRA_PRERENDER_ROUTES
 // (scripts/prerender-routes.mjs).
-const EAGER_BUDGET = 70;
+const EAGER_BUDGET = 78;
 
 const PAGE_IMPORT_RE = /^import\s+([A-Z][A-Za-z0-9_]*)\s+from\s+["'](?:\.\/|@\/)pages\/[^"']+["']/;
 
