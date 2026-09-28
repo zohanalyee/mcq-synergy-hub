@@ -526,14 +526,12 @@ async function injectBoardTopicContent() {
 /**
  * Mock-test detail pages ship the homepage shell in <body> (they are not
  * prerenderable — the data is async). This writes the REAL page content into the
- * raw HTML of an explicit slug allow-list so non-JS crawlers and AI answer
- * engines can read the syllabus, past-paper pattern and question preview.
+ * raw HTML of EVERY published mock test so non-JS crawlers and AI answer engines
+ * can read the syllabus, past-paper pattern and question preview.
  *
- * Deliberately allow-listed (gradual rollout): one page can never take the whole
- * /mock-tests/* category down. Never throws — head-only pages still ship.
+ * Per-page try/catch: one bad page can never take the whole /mock-tests/*
+ * category down. Never throws — head-only pages still ship.
  */
-const MOCK_TEST_CONTENT_SLUGS = ["junior-office-associate-bps-13"];
-
 async function injectMockTestContent() {
   const { data } = await supabase
     .from("job_tests")
@@ -541,9 +539,9 @@ async function injectMockTestContent() {
   const all = data || [];
   let injected = 0, skipped = 0;
 
-  for (const slug of MOCK_TEST_CONTENT_SLUGS) {
-    const test = all.find((t) => jobTestSlug(t, all) === slug);
-    if (!test) { console.warn(`[inject-meta] mock-test-content: no test for /${slug}`); skipped++; continue; }
+  for (const test of all) {
+    const slug = jobTestSlug(test, all);
+    if (!slug) { skipped++; continue; }
 
     const file = join(DIST, "mock-tests", slug, "index.html");
     if (!existsSync(file)) { console.warn(`[inject-meta] mock-test-content: missing ${file}`); skipped++; continue; }
