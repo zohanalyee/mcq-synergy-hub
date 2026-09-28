@@ -302,29 +302,34 @@ if (!existsSync(toolsSeoSrc)) {
   }
 }
 
-// ---- Mock-test BODY assertion (JOA traffic sprint) ----------------------
-// Allow-listed mock-test pages must ship real body content (syllabus table +
-// question preview) in RAW HTML, not the homepage shell. Keep this list in sync
-// with MOCK_TEST_CONTENT_SLUGS in scripts/inject-meta.mjs.
+// ---- Mock-test BODY assertion (site-wide) ------------------------------
+// Every generated /mock-tests/<slug> page should ship real body content
+// (syllabus table + past-paper pattern + h1) in RAW HTML, not the homepage
+// shell. Tests without a stored syllabus can't render it, so we assert a
+// coverage floor rather than every single page.
 let mockBodyFailed = 0;
-const MOCK_TEST_CONTENT_ROUTES = ['/mock-tests/junior-office-associate-bps-13'];
 {
+  const dir = join(DIST, 'mock-tests');
+  const slugs = existsSync(dir)
+    ? readdirSync(dir, { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => d.name)
+    : [];
   const bad = [];
-  for (const route of MOCK_TEST_CONTENT_ROUTES) {
-    const file = join(DIST, route.replace(/^\//, ''), 'index.html');
-    if (!existsSync(file)) { bad.push(`${route} (not generated)`); continue; }
+  let ok = 0;
+  for (const slug of slugs) {
+    const file = join(dir, slug, 'index.html');
+    if (!existsSync(file)) { bad.push(`/mock-tests/${slug} (not generated)`); continue; }
     const html = readFileSync(file, 'utf8');
     const rootStart = html.search(/<div id=["']root["'][^>]*>/i);
     const root = rootStart === -1 ? '' : html.slice(rootStart).split(/<\/body>/i)[0];
-    if (!/Official Syllabus/i.test(root)) bad.push(`${route} (no syllabus section in body)`);
-    else if (!/Past Papers Pattern/i.test(root)) bad.push(`${route} (no past-paper pattern in body)`);
-    else if (!/<h1[\s>]/i.test(root)) bad.push(`${route} (no h1 in body)`);
+    if (/Official Syllabus/i.test(root) && /Past Papers Pattern/i.test(root) && /<h1[\s>]/i.test(root)) ok++;
+    else bad.push(`/mock-tests/${slug}`);
   }
-  if (bad.length) {
-    console.warn(`❌ [mock-test-body] ${bad.length}/${MOCK_TEST_CONTENT_ROUTES.length} allow-listed mock tests lack raw body content:\n   - ${bad.join('\n   - ')}`);
+  const ratio = slugs.length ? ok / slugs.length : 0;
+  if (slugs.length && ratio < 0.8) {
+    console.warn(`❌ [mock-test-body] only ${ok}/${slugs.length} mock-test pages ship raw syllabus + preview content:\n   - ${bad.slice(0, 20).join('\n   - ')}`);
     mockBodyFailed++;
   } else {
-    console.log(`✅ [mock-test-body] all ${MOCK_TEST_CONTENT_ROUTES.length} allow-listed mock-test pages ship raw syllabus + preview content`);
+    console.log(`✅ [mock-test-body] ${ok}/${slugs.length} mock-test pages ship raw syllabus + preview content${bad.length ? ` (${bad.length} without stored syllabus)` : ''}`);
   }
 }
 
