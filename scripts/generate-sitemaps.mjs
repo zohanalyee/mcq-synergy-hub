@@ -270,13 +270,26 @@ async function buildBoards() {
   // that cap, so a single call silently dropped everything beyond row 1000 —
   // those pages stayed out of the sitemap AND noindex. Page through explicitly.
   const PAGE_SIZE = 1000;
+  // This RPC occasionally hits a statement timeout. Without a retry the caller
+  // swallows the error and writes an EMPTY boards sitemap, silently dropping
+  // ~1100 indexable topic URLs from a deploy. Retry each page before giving up.
+  const fetchPage = async (from) => {
+    let lastError = null;
+    for (let attempt = 1; attempt <= 3; attempt += 1) {
+      const { data, error } = await supabase
+        .rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: MIN_APPROVED_MCQS })
+        .range(from, from + PAGE_SIZE - 1);
+      if (!error) return data || [];
+      lastError = error;
+      console.warn(`[sitemap] boards page ${from} attempt ${attempt} failed: ${error.message}`);
+      await new Promise((r) => setTimeout(r, attempt * 5000));
+    }
+    throw lastError;
+  };
+
   const rows = [];
   for (let from = 0; ; from += PAGE_SIZE) {
-    const { data, error } = await supabase
-      .rpc("get_indexable_board_topic_paths", { p_min_approved_mcqs: MIN_APPROVED_MCQS })
-      .range(from, from + PAGE_SIZE - 1);
-    if (error) throw error;
-    const batch = data || [];
+    const batch = await fetchPage(from);
     rows.push(...batch);
     if (batch.length < PAGE_SIZE) break;
   }
