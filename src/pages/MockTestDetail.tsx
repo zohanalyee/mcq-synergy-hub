@@ -200,6 +200,12 @@ const MockTestDetail = () => {
             <span>{test.organization}</span>
           </div>
           <p className="text-base text-muted-foreground leading-relaxed">
+            {isIbaNetwork && (
+              <>
+                Official syllabus, paper pattern and past papers for the{" "}
+                <strong>{IBA_NETWORK_LABEL}</strong> ({test.organization}) test.{" "}
+              </>
+            )}
             Practice for the <strong>{test.title}</strong> mock test based on the exam conducted by {test.organization}. This free,
             AI-powered mock test follows the official syllabus and prepares you with realistic, exam-style multiple-choice
             questions written in simple Pakistani exam English. Use it to build speed, check your weak areas, and improve
