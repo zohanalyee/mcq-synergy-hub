@@ -30,6 +30,13 @@ import { QuestionsPreview } from "@/components/mock-tests/QuestionsPreview";
 import { getJobTests, JobTest } from "@/services/jobTestService";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { resolveJobTestBySlug, toJobTestSlug } from "@/lib/jobTestSlug";
+import {
+  IBA_NETWORK_LABEL,
+  isIbaCommunityNetwork,
+  buildIbaMetaTitle,
+  buildIbaMetaDescription,
+  buildIbaKeywords,
+} from "@/lib/mockTestNetwork";
 
 const BASE = "https://mcqsai.com";
 
