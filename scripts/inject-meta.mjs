@@ -204,24 +204,34 @@ function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogTyp
 async function injectMockTests() {
   const { data } = await supabase
     .from("job_tests")
-    .select("id,title,organization,questions,seo_title,meta_description,keywords");
+    .select("id,title,organization,questions,syllabus,seo_title,meta_description,keywords");
   const all = data || [];
   for (const t of all) {
     const slug = jobTestSlug(t, all);
-    const metaTitle = t.seo_title?.trim()
-      ? t.seo_title.trim()
-      : `${t.title} Mock Test — Free Online Preparation`;
-    const metaDescription = t.meta_description?.trim()
-      ? t.meta_description.trim()
-      : `Prepare for the ${t.title} test by ${t.organization} with free AI-powered mock tests. ` +
-        `Official syllabus, subject weightage, and ${t.questions} practice MCQs in simple Pakistani exam English.`;
+    // Sukkur IBA Community Colleges & Schools: exact-phrase title/description so
+    // the advertisement wording candidates search for actually matches this page.
+    const isIba = isIbaCommunityNetwork(t.organization, t.title);
+    const subjects = (Array.isArray(t.syllabus) ? t.syllabus : []).map((s) => s?.topic).filter(Boolean);
+    const metaTitle = isIba
+      ? buildIbaMetaTitle(t.title)
+      : t.seo_title?.trim()
+        ? t.seo_title.trim()
+        : `${t.title} Mock Test — Free Online Preparation`;
+    const metaDescription = isIba
+      ? buildIbaMetaDescription(t.title, t.questions, subjects)
+      : t.meta_description?.trim()
+        ? t.meta_description.trim()
+        : `Prepare for the ${t.title} test by ${t.organization} with free AI-powered mock tests. ` +
+          `Official syllabus, subject weightage, and ${t.questions} practice MCQs in simple Pakistani exam English.`;
     patch({
       path: `/mock-tests/${slug}`,
       title: `${metaTitle} | MCQsAI`,
       description: metaDescription,
-      keywords: Array.isArray(t.keywords) && t.keywords.length
-        ? t.keywords.join(", ")
-        : `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
+      keywords: isIba
+        ? buildIbaKeywords(t.title, Array.isArray(t.keywords) ? t.keywords : []).join(", ")
+        : Array.isArray(t.keywords) && t.keywords.length
+          ? t.keywords.join(", ")
+          : `${t.title} mock test, ${t.title} preparation, ${t.organization || ""} test, Pakistan exam MCQs`,
       ogImage: OG_EXAMS,
       ogType: "article",
       pageType: "mock-tests",
