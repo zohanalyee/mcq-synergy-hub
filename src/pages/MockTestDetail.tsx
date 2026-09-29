@@ -96,16 +96,32 @@ const MockTestDetail = () => {
     ? new Date(test.updated_at).toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" })
     : null;
 
-  const metaTitle = test.seo_title?.trim()
-    ? test.seo_title.trim()
-    : `${test.title} Mock Test — Free Online Preparation`;
-  const metaDescription = test.meta_description?.trim()
-    ? test.meta_description.trim()
-    : `Prepare for the ${test.title} test by ${test.organization} with free AI-powered mock tests. ` +
-      `Official syllabus, subject weightage, and ${test.questions} practice MCQs in simple Pakistani exam English.`;
-
   // Factual FAQs derived from the test's own data (no invented claims).
-  const subjectsList = test.syllabus.map((s) => s.topic).join(", ");
+  const subjects = test.syllabus.map((s) => s.topic);
+  const subjectsList = subjects.join(", ");
+
+  // Sukkur IBA Community Colleges & Schools tests: candidates search the exact
+  // network name printed on the advertisement, which the stored job title never
+  // contains. Applied to that network only — court / STEDA / medical tests keep
+  // their stored metadata untouched.
+  const isIbaNetwork = isIbaCommunityNetwork(test.organization, test.title);
+
+  const metaTitle = isIbaNetwork
+    ? buildIbaMetaTitle(test.title)
+    : test.seo_title?.trim()
+      ? test.seo_title.trim()
+      : `${test.title} Mock Test — Free Online Preparation`;
+  const metaDescription = isIbaNetwork
+    ? buildIbaMetaDescription(test.title, test.questions, subjects)
+    : test.meta_description?.trim()
+      ? test.meta_description.trim()
+      : `Prepare for the ${test.title} test by ${test.organization} with free AI-powered mock tests. ` +
+        `Official syllabus, subject weightage, and ${test.questions} practice MCQs in simple Pakistani exam English.`;
+  const metaKeywords = isIbaNetwork
+    ? buildIbaKeywords(test.title, test.keywords || []).join(", ")
+    : test.keywords?.length
+      ? test.keywords.join(", ")
+      : undefined;
 
   // Contextual in-body links: same-organisation tests first, so authority flows
   // into sibling posts instead of dead-ending on this page.
