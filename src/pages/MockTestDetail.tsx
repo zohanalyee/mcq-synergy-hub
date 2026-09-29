@@ -30,6 +30,13 @@ import { QuestionsPreview } from "@/components/mock-tests/QuestionsPreview";
 import { getJobTests, JobTest } from "@/services/jobTestService";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { resolveJobTestBySlug, toJobTestSlug } from "@/lib/jobTestSlug";
+import {
+  IBA_NETWORK_LABEL,
+  isIbaCommunityNetwork,
+  buildIbaMetaTitle,
+  buildIbaMetaDescription,
+  buildIbaKeywords,
+} from "@/lib/mockTestNetwork";
 
 const BASE = "https://mcqsai.com";
 
@@ -89,16 +96,32 @@ const MockTestDetail = () => {
     ? new Date(test.updated_at).toLocaleDateString("en-PK", { year: "numeric", month: "long", day: "numeric" })
     : null;
 
-  const metaTitle = test.seo_title?.trim()
-    ? test.seo_title.trim()
-    : `${test.title} Mock Test — Free Online Preparation`;
-  const metaDescription = test.meta_description?.trim()
-    ? test.meta_description.trim()
-    : `Prepare for the ${test.title} test by ${test.organization} with free AI-powered mock tests. ` +
-      `Official syllabus, subject weightage, and ${test.questions} practice MCQs in simple Pakistani exam English.`;
-
   // Factual FAQs derived from the test's own data (no invented claims).
-  const subjectsList = test.syllabus.map((s) => s.topic).join(", ");
+  const subjects = test.syllabus.map((s) => s.topic);
+  const subjectsList = subjects.join(", ");
+
+  // Sukkur IBA Community Colleges & Schools tests: candidates search the exact
+  // network name printed on the advertisement, which the stored job title never
+  // contains. Applied to that network only — court / STEDA / medical tests keep
+  // their stored metadata untouched.
+  const isIbaNetwork = isIbaCommunityNetwork(test.organization, test.title);
+
+  const metaTitle = isIbaNetwork
+    ? buildIbaMetaTitle(test.title)
+    : test.seo_title?.trim()
+      ? test.seo_title.trim()
+      : `${test.title} Mock Test — Free Online Preparation`;
+  const metaDescription = isIbaNetwork
+    ? buildIbaMetaDescription(test.title, test.questions, subjects)
+    : test.meta_description?.trim()
+      ? test.meta_description.trim()
+      : `Prepare for the ${test.title} test by ${test.organization} with free AI-powered mock tests. ` +
+        `Official syllabus, subject weightage, and ${test.questions} practice MCQs in simple Pakistani exam English.`;
+  const metaKeywords = isIbaNetwork
+    ? buildIbaKeywords(test.title, test.keywords || []).join(", ")
+    : test.keywords?.length
+      ? test.keywords.join(", ")
+      : undefined;
 
   // Contextual in-body links: same-organisation tests first, so authority flows
   // into sibling posts instead of dead-ending on this page.
@@ -138,7 +161,7 @@ const MockTestDetail = () => {
       <SEOHead
         title={metaTitle}
         description={metaDescription}
-        keywords={test.keywords?.length ? test.keywords.join(", ") : undefined}
+        keywords={metaKeywords}
         url={url}
         type="article"
       />
@@ -166,12 +189,23 @@ const MockTestDetail = () => {
 
         {/* Hero */}
         <motion.header initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+          {isIbaNetwork && (
+            <Badge variant="secondary" className="text-xs font-medium">
+              {IBA_NETWORK_LABEL}
+            </Badge>
+          )}
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{test.title} Mock Test</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Building className="h-4 w-4" />
             <span>{test.organization}</span>
           </div>
           <p className="text-base text-muted-foreground leading-relaxed">
+            {isIbaNetwork && (
+              <>
+                Official syllabus, paper pattern and past papers for the{" "}
+                <strong>{IBA_NETWORK_LABEL}</strong> ({test.organization}) test.{" "}
+              </>
+            )}
             Practice for the <strong>{test.title}</strong> mock test based on the exam conducted by {test.organization}. This free,
             AI-powered mock test follows the official syllabus and prepares you with realistic, exam-style multiple-choice
             questions written in simple Pakistani exam English. Use it to build speed, check your weak areas, and improve
