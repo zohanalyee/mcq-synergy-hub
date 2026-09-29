@@ -23,6 +23,13 @@ import { fileURLToPath } from "node:url";
 import { TOOLS_WITHOUT_SEOHEAD, SUBJECT_CONTENT_META } from "./prerender-routes.mjs";
 import { buildQuizSchema, buildFaqSchema, buildTopicContentHtml, buildTopicTitleBase } from "./topic-content.mjs";
 import { buildMockTestContentHtml } from "./mock-test-content.mjs";
+import {
+  IBA_NETWORK_LABEL,
+  isIbaCommunityNetwork,
+  buildIbaMetaTitle,
+  buildIbaMetaDescription,
+  buildIbaKeywords,
+} from "./mock-test-network.mjs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");

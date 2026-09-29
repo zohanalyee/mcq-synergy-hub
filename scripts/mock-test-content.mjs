@@ -91,6 +91,7 @@ export function buildMockTestContentHtml({
   previewQuestions,
   links,
   path,
+  networkLabel,
 }) {
   const subjects = syllabus.map((s) => s.topic);
   const rows = buildPastPaperRows({ syllabus, questions });
@@ -130,6 +131,10 @@ export function buildMockTestContentHtml({
     `<nav aria-label="Breadcrumb"><a href="/">Home</a> / <a href="/mock-tests">Mock Tests</a> / <span>${esc(title)}</span></nav>` +
     `<h1>${esc(title)} Mock Test</h1>` +
     `<p>${esc(organization)}</p>` +
+    (networkLabel
+      ? `<p>Official syllabus, paper pattern and past papers for the <strong>${esc(networkLabel)}</strong> ` +
+        `(${esc(organization)}) test.</p>`
+      : '') +
     `<p>Practice for the ${esc(title)} mock test based on the exam conducted by ${esc(organization)}. ` +
     `This free mock test follows the official syllabus and prepares you with realistic, exam-style ` +
     `multiple-choice questions written in simple Pakistani exam English. Use it to build speed, check ` +
