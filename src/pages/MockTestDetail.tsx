@@ -161,7 +161,7 @@ const MockTestDetail = () => {
       <SEOHead
         title={metaTitle}
         description={metaDescription}
-        keywords={test.keywords?.length ? test.keywords.join(", ") : undefined}
+        keywords={metaKeywords}
         url={url}
         type="article"
       />
@@ -189,6 +189,11 @@ const MockTestDetail = () => {
 
         {/* Hero */}
         <motion.header initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
+          {isIbaNetwork && (
+            <Badge variant="secondary" className="text-xs font-medium">
+              {IBA_NETWORK_LABEL}
+            </Badge>
+          )}
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{test.title} Mock Test</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Building className="h-4 w-4" />
