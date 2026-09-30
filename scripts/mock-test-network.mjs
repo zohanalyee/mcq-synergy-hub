@@ -7,13 +7,16 @@ export const IBA_NETWORK_LABEL = 'Sukkur IBA Community Colleges & Schools';
 const TEACHING_CADRE =
   /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster)\b/i;
 
+const SCHOOL_CADRE =
+  /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster|lab assistant|library assistant|laboratory|physical training|drawing|computer operator|school)\b/i;
+
 export function isIbaCommunityNetwork(organization, title) {
   const org = String(organization || '');
   if (!/sukkur\s*iba|siba testing/i.test(org)) return false;
   if (/court|judge|steda|pmdc|medical|health|police|revenue|investigation/i.test(`${org} ${title || ''}`)) {
     return false;
   }
-  return true;
+  return SCHOOL_CADRE.test(String(title || ''));
 }
 
 export function cleanTestTitle(title) {
@@ -31,20 +34,34 @@ function withTeacher(clean) {
   return `${clean} Teacher`;
 }
 
+function shortenTitle(clean, budget) {
+  let out = clean.slice(0, budget);
+  const lastSpace = out.lastIndexOf(' ');
+  if (lastSpace > budget * 0.5) out = out.slice(0, lastSpace);
+  const open = out.lastIndexOf('(');
+  if (open > -1 && out.indexOf(')', open) === -1) out = out.slice(0, open);
+  return out.replace(/[\s\-–—,(/]+$/, '').trim();
+}
+
 export function buildIbaMetaTitle(title) {
-  const clean = withTeacher(cleanTestTitle(title));
+  const base = cleanTestTitle(title).replace(/\s*[-–—]\s*(siba|sukkur\s*iba|sts)\b.*$/i, '').trim();
+  const clean = withTeacher(base || cleanTestTitle(title));
   const suffixes = [
     `Syllabus & Mock Test — ${IBA_NETWORK_LABEL}`,
     'Syllabus & Mock Test — IBA Community Colleges (STS)',
+    'Syllabus & Past Papers — IBA Community Colleges',
     'Syllabus & Mock Test — IBA Community Colleges',
-    'Syllabus & Past Papers — IBA Colleges (STS)',
-    'Syllabus — IBA Colleges & Schools',
+    'Syllabus — IBA Community Colleges (STS)',
+    'Syllabus — IBA Community Colleges',
   ];
   for (const suffix of suffixes) {
     const candidate = `${clean} ${suffix}`;
     if (candidate.length <= 65) return candidate;
   }
-  return `${clean} Syllabus — IBA Colleges`;
+  const tail = '— IBA Community Colleges';
+  const budget = 65 - tail.length - 1;
+  const short = clean.length <= budget ? clean : shortenTitle(clean, budget);
+  return `${short} ${tail}`;
 }
 
 export function buildIbaMetaDescription(title, questions, subjects = []) {

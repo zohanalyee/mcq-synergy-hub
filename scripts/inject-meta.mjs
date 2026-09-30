@@ -598,6 +598,7 @@ async function injectMockTestContent() {
       previewQuestions,
       links: siblings,
       path: `/mock-tests/${slug}`,
+      networkLabel: isIbaCommunityNetwork(test.organization, test.title) ? IBA_NETWORK_LABEL : null,
     });
 
     try {

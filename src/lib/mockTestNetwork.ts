@@ -22,6 +22,10 @@ export const IBA_NETWORK_LABEL = "Sukkur IBA Community Colleges & Schools";
 const TEACHING_CADRE =
   /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster)\b/i;
 
+/** School/college cadre posts advertised under the Sukkur IBA schools network. */
+const SCHOOL_CADRE =
+  /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster|lab assistant|library assistant|laboratory|physical training|drawing|computer operator|school)\b/i;
+
 /**
  * True only for the school/college teaching network run by Sukkur IBA.
  * STS also conducts High Court, STEDA licensing and medical (PMDC) tests —
@@ -33,7 +37,9 @@ export function isIbaCommunityNetwork(organization?: string | null, title?: stri
   if (/court|judge|steda|pmdc|medical|health|police|revenue|investigation/i.test(`${org} ${title || ""}`)) {
     return false;
   }
-  return true;
+  // Only posts that belong to the schools/colleges cadre carry the network name,
+  // so no page claims an institution the advertisement did not name.
+  return SCHOOL_CADRE.test(String(title || ""));
 }
 
 /** Strips the "Mock Test" suffix candidates never type into Google. */
@@ -53,24 +59,43 @@ function withTeacher(clean: string): string {
   return `${clean} Teacher`;
 }
 
+/** Cuts on a word boundary and never leaves a half-open bracket behind. */
+function shortenTitle(clean: string, budget: number): string {
+  let out = clean.slice(0, budget);
+  const lastSpace = out.lastIndexOf(" ");
+  if (lastSpace > budget * 0.5) out = out.slice(0, lastSpace);
+  const open = out.lastIndexOf("(");
+  if (open > -1 && out.indexOf(")", open) === -1) out = out.slice(0, open);
+  return out.replace(/[\s\-–—,(/]+$/, "").trim();
+}
+
 /**
  * Meta title for an IBA Community Colleges & Schools test. Picks the most
  * descriptive variant that still fits Google's ~65-character display window.
  */
 export function buildIbaMetaTitle(title?: string | null): string {
-  const clean = withTeacher(cleanTestTitle(title));
+  // The network name is already in the suffix, so a trailing "- SIBA Testing
+  // Services (STS)" inside the job title only wastes the 65-character window.
+  const base = cleanTestTitle(title).replace(/\s*[-–—]\s*(siba|sukkur\s*iba|sts)\b.*$/i, "").trim();
+  const clean = withTeacher(base || cleanTestTitle(title));
   const suffixes = [
     `Syllabus & Mock Test — ${IBA_NETWORK_LABEL}`,
     "Syllabus & Mock Test — IBA Community Colleges (STS)",
+    "Syllabus & Past Papers — IBA Community Colleges",
     "Syllabus & Mock Test — IBA Community Colleges",
-    "Syllabus & Past Papers — IBA Colleges (STS)",
-    "Syllabus — IBA Colleges & Schools",
+    "Syllabus — IBA Community Colleges (STS)",
+    "Syllabus — IBA Community Colleges",
   ];
   for (const suffix of suffixes) {
     const candidate = `${clean} ${suffix}`;
     if (candidate.length <= 65) return candidate;
   }
-  return `${clean} Syllabus — IBA Colleges`;
+  // Long job titles: keep the exact network phrase and shorten the job title,
+  // never the other way round.
+  const tail = "— IBA Community Colleges";
+  const budget = 65 - tail.length - 1;
+  const short = clean.length <= budget ? clean : shortenTitle(clean, budget);
+  return `${short} ${tail}`;
 }
 
 export function buildIbaMetaDescription(
