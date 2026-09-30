@@ -22,6 +22,10 @@ export const IBA_NETWORK_LABEL = "Sukkur IBA Community Colleges & Schools";
 const TEACHING_CADRE =
   /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster)\b/i;
 
+/** School/college cadre posts advertised under the Sukkur IBA schools network. */
+const SCHOOL_CADRE =
+  /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster|lab assistant|library assistant|laboratory|physical training|drawing|computer operator|school)\b/i;
+
 /**
  * True only for the school/college teaching network run by Sukkur IBA.
  * STS also conducts High Court, STEDA licensing and medical (PMDC) tests —
