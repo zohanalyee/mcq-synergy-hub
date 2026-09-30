@@ -58,7 +58,10 @@ function withTeacher(clean: string): string {
  * descriptive variant that still fits Google's ~65-character display window.
  */
 export function buildIbaMetaTitle(title?: string | null): string {
-  const clean = withTeacher(cleanTestTitle(title));
+  // The network name is already in the suffix, so a trailing "- SIBA Testing
+  // Services (STS)" inside the job title only wastes the 65-character window.
+  const base = cleanTestTitle(title).replace(/\s*[-–—]\s*(siba|sukkur\s*iba|sts)\b.*$/i, "").trim();
+  const clean = withTeacher(base || cleanTestTitle(title));
   const suffixes = [
     `Syllabus & Mock Test — ${IBA_NETWORK_LABEL}`,
     "Syllabus & Mock Test — IBA Community Colleges (STS)",
@@ -71,7 +74,15 @@ export function buildIbaMetaTitle(title?: string | null): string {
     const candidate = `${clean} ${suffix}`;
     if (candidate.length <= 65) return candidate;
   }
-  return `${clean} — IBA Community Colleges`;
+  // Long job titles: keep the exact network phrase and shorten the job title,
+  // never the other way round.
+  const tail = "— IBA Community Colleges";
+  const budget = 65 - tail.length - 1;
+  const short =
+    clean.length <= budget
+      ? clean
+      : clean.slice(0, budget).replace(/[\s\-–—,(]+$/, "").trim();
+  return `${short} ${tail}`;
 }
 
 export function buildIbaMetaDescription(
