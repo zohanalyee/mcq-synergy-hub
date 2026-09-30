@@ -7,13 +7,16 @@ export const IBA_NETWORK_LABEL = 'Sukkur IBA Community Colleges & Schools';
 const TEACHING_CADRE =
   /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster)\b/i;
 
+const SCHOOL_CADRE =
+  /\b(ece|est|sst|hst|pst|jst|subject specialist|educator|instructor|teacher|lecturer|principal|headmaster|lab assistant|library assistant|laboratory|physical training|drawing|computer operator|school)\b/i;
+
 export function isIbaCommunityNetwork(organization, title) {
   const org = String(organization || '');
   if (!/sukkur\s*iba|siba testing/i.test(org)) return false;
   if (/court|judge|steda|pmdc|medical|health|police|revenue|investigation/i.test(`${org} ${title || ''}`)) {
     return false;
   }
-  return true;
+  return SCHOOL_CADRE.test(String(title || ''));
 }
 
 export function cleanTestTitle(title) {
