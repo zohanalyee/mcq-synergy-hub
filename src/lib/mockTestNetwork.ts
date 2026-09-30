@@ -33,7 +33,9 @@ export function isIbaCommunityNetwork(organization?: string | null, title?: stri
   if (/court|judge|steda|pmdc|medical|health|police|revenue|investigation/i.test(`${org} ${title || ""}`)) {
     return false;
   }
-  return true;
+  // Only posts that belong to the schools/colleges cadre carry the network name,
+  // so no page claims an institution the advertisement did not name.
+  return SCHOOL_CADRE.test(String(title || ""));
 }
 
 /** Strips the "Mock Test" suffix candidates never type into Google. */
