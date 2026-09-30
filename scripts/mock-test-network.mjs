@@ -36,15 +36,16 @@ export function buildIbaMetaTitle(title) {
   const suffixes = [
     `Syllabus & Mock Test — ${IBA_NETWORK_LABEL}`,
     'Syllabus & Mock Test — IBA Community Colleges (STS)',
+    'Syllabus & Past Papers — IBA Community Colleges',
     'Syllabus & Mock Test — IBA Community Colleges',
-    'Syllabus & Past Papers — IBA Colleges (STS)',
-    'Syllabus — IBA Colleges & Schools',
+    'Syllabus — IBA Community Colleges (STS)',
+    'Syllabus — IBA Community Colleges',
   ];
   for (const suffix of suffixes) {
     const candidate = `${clean} ${suffix}`;
     if (candidate.length <= 65) return candidate;
   }
-  return `${clean} Syllabus — IBA Colleges`;
+  return `${clean} — IBA Community Colleges`;
 }
 
 export function buildIbaMetaDescription(title, questions, subjects = []) {
