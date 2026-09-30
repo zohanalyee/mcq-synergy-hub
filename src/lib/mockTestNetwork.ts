@@ -78,10 +78,7 @@ export function buildIbaMetaTitle(title?: string | null): string {
   // never the other way round.
   const tail = "— IBA Community Colleges";
   const budget = 65 - tail.length - 1;
-  const short =
-    clean.length <= budget
-      ? clean
-      : clean.slice(0, budget).replace(/[\s\-–—,(]+$/, "").trim();
+  const short = clean.length <= budget ? clean : shortenTitle(clean, budget);
   return `${short} ${tail}`;
 }
 
