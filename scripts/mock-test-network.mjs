@@ -46,7 +46,11 @@ export function buildIbaMetaTitle(title) {
     const candidate = `${clean} ${suffix}`;
     if (candidate.length <= 65) return candidate;
   }
-  return `${clean} — IBA Community Colleges`;
+  const tail = '— IBA Community Colleges';
+  const budget = 65 - tail.length - 1;
+  const short =
+    clean.length <= budget ? clean : clean.slice(0, budget).replace(/[\s\-–—,(]+$/, '').trim();
+  return `${short} ${tail}`;
 }
 
 export function buildIbaMetaDescription(title, questions, subjects = []) {
