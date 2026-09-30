@@ -53,6 +53,16 @@ function withTeacher(clean: string): string {
   return `${clean} Teacher`;
 }
 
+/** Cuts on a word boundary and never leaves a half-open bracket behind. */
+function shortenTitle(clean: string, budget: number): string {
+  let out = clean.slice(0, budget);
+  const lastSpace = out.lastIndexOf(" ");
+  if (lastSpace > budget * 0.5) out = out.slice(0, lastSpace);
+  const open = out.lastIndexOf("(");
+  if (open > -1 && out.indexOf(")", open) === -1) out = out.slice(0, open);
+  return out.replace(/[\s\-–—,(/]+$/, "").trim();
+}
+
 /**
  * Meta title for an IBA Community Colleges & Schools test. Picks the most
  * descriptive variant that still fits Google's ~65-character display window.

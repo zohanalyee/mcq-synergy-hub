@@ -31,6 +31,15 @@ function withTeacher(clean) {
   return `${clean} Teacher`;
 }
 
+function shortenTitle(clean, budget) {
+  let out = clean.slice(0, budget);
+  const lastSpace = out.lastIndexOf(' ');
+  if (lastSpace > budget * 0.5) out = out.slice(0, lastSpace);
+  const open = out.lastIndexOf('(');
+  if (open > -1 && out.indexOf(')', open) === -1) out = out.slice(0, open);
+  return out.replace(/[\s\-–—,(/]+$/, '').trim();
+}
+
 export function buildIbaMetaTitle(title) {
   const base = cleanTestTitle(title).replace(/\s*[-–—]\s*(siba|sukkur\s*iba|sts)\b.*$/i, '').trim();
   const clean = withTeacher(base || cleanTestTitle(title));
