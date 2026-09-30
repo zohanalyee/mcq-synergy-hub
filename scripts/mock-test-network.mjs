@@ -32,7 +32,8 @@ function withTeacher(clean) {
 }
 
 export function buildIbaMetaTitle(title) {
-  const clean = withTeacher(cleanTestTitle(title));
+  const base = cleanTestTitle(title).replace(/\s*[-–—]\s*(siba|sukkur\s*iba|sts)\b.*$/i, '').trim();
+  const clean = withTeacher(base || cleanTestTitle(title));
   const suffixes = [
     `Syllabus & Mock Test — ${IBA_NETWORK_LABEL}`,
     'Syllabus & Mock Test — IBA Community Colleges (STS)',
