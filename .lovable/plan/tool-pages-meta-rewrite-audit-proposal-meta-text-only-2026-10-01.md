@@ -18,23 +18,25 @@ gpa calculator 40,500 · cgpa calculator 18,100 · gpa to cgpa 22,200 · percent
 
 Titles = proposed seoTitle (the page then shows "… | MCQsAI"). Descriptions ≤ 155 chars.
 
-| # | Path | Current title | Proposed seoTitle |
-|---|------|--------------|-------------------|
-| 1 | /tools/aggregate-calculator | MDCAT Aggregate Calculator 2026 — NUMS, UHS, ECAT & NUST (66 chars live, truncated) | Aggregate Calculator 2026 — MDCAT, NUMS, UHS, ECAT |
-| 2 | /tools/merit-calculator | Merit Calculator — Free Online Student Tools | Merit Calculator 2026 — MDCAT & University Merit |
-| 3 | /tools/gpa-calculator | GPA Calculator — Free Online Student Tools | GPA Calculator Pakistan — University GPA (4.0) |
-| 4 | /tools/cgpa-calculator | CGPA Calculator — Free Online Student Tools | CGPA Calculator — Semester-wise CGPA (4.0) |
-| 5 | /tools/gpa-to-percentage | GPA to Percentage — Free Online Student Tools | GPA to Percentage Calculator Pakistan (4.0) |
-| 6 | /tools/percentage-to-gpa | Percentage to GPA — Free Online Student Tools | Percentage to GPA Calculator Pakistan (4.0) |
-| 7 | /tools/marks-calculator | Marks Calculator — Free Online Student Tools | Marks Percentage Calculator — Total & Grade |
-| 8 | /tools/result-calculator | Result Calculator — Free Online Student Tools | Result Calculator — Marks, Percentage & Grade |
-| 9 | /tools/attendance-calculator | Attendance Calculator — Free Online Student Tools | Attendance Percentage Calculator — 75% Rule |
-| 10 | /tools/percentage-calculator | Percentage Calculator — Free Online Student Tools | Percentage Calculator — Marks & Change % |
-| 11 | /tools/age-calculator | Age Calculator (hardcoded in prerender-routes.mjs) | Age Calculator — Years, Months & Days |
-| 12 | /tools/periodic-table | Periodic Table — Free Online Student Tools | Periodic Table — Interactive, All 118 Elements |
-| 13 | /tools/pakistan-tax-calculator | Pakistan Income Tax Calculator — Free Online Student Tools | Salary Tax Calculator Pakistan 2025-26 (FBR) |
-| 14 | /tools/zakat-calculator | Zakat Calculator — Free Online Student Tools | Zakat Calculator 2026 — Gold, Cash & Nisab |
-| 15 | /tools/school-attendance-system | School Attendance System — Free Online Student Tools | Free School Attendance System — Staff & Students |
+
+| #   | Path                            | Current title                                                                       | Proposed seoTitle                                  |
+| --- | ------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------- |
+| 1   | /tools/aggregate-calculator     | MDCAT Aggregate Calculator 2026 — NUMS, UHS, ECAT & NUST (66 chars live, truncated) | Aggregate Calculator 2026 — MDCAT, NUMS, UHS, ECAT |
+| 2   | /tools/merit-calculator         | Merit Calculator — Free Online Student Tools                                        | Merit Calculator 2026 — MDCAT & University Merit   |
+| 3   | /tools/gpa-calculator           | GPA Calculator — Free Online Student Tools                                          | GPA Calculator Pakistan — University GPA (4.0)     |
+| 4   | /tools/cgpa-calculator          | CGPA Calculator — Free Online Student Tools                                         | CGPA Calculator — Semester-wise CGPA (4.0)         |
+| 5   | /tools/gpa-to-percentage        | GPA to Percentage — Free Online Student Tools                                       | GPA to Percentage Calculator Pakistan (4.0)        |
+| 6   | /tools/percentage-to-gpa        | Percentage to GPA — Free Online Student Tools                                       | Percentage to GPA Calculator Pakistan (4.0)        |
+| 7   | /tools/marks-calculator         | Marks Calculator — Free Online Student Tools                                        | Marks Percentage Calculator — Total & Grade        |
+| 8   | /tools/result-calculator        | Result Calculator — Free Online Student Tools                                       | Result Calculator — Marks, Percentage & Grade      |
+| 9   | /tools/attendance-calculator    | Attendance Calculator — Free Online Student Tools                                   | Attendance Percentage Calculator — 75% Rule        |
+| 10  | /tools/percentage-calculator    | Percentage Calculator — Free Online Student Tools                                   | Percentage Calculator — Marks & Change %           |
+| 11  | /tools/age-calculator           | Age Calculator (hardcoded in prerender-routes.mjs)                                  | Age Calculator — Years, Months & Days              |
+| 12  | /tools/periodic-table           | Periodic Table — Free Online Student Tools                                          | Periodic Table — Interactive, All 118 Elements     |
+| 13  | /tools/pakistan-tax-calculator  | Pakistan Income Tax Calculator — Free Online Student Tools                          | Salary Tax Calculator Pakistan 2025-26 (FBR)       |
+| 14  | /tools/zakat-calculator         | Zakat Calculator — Free Online Student Tools                                        | Zakat Calculator 2026 — Gold, Cash & Nisab         |
+| 15  | /tools/school-attendance-system | School Attendance System — Free Online Student Tools                                | Free School Attendance System — Staff & Students   |
+
 
 Proposed descriptions (one per tool, in the same order as the table):
 
@@ -62,3 +64,17 @@ Proposed descriptions (one per tool, in the same order as the table):
 4. No ads, sitemap, robots, page-content or route changes. Nothing else touched.
 
 Live visibility requires publish after the change, plus Google re-crawl.
+
+&nbsp;
+
+**Plan approved. Proceed with all 15 meta title/description updates as proposed:**
+
+1. Update src/data/toolsData.ts (seoTitle + seoDescription for all 15 tools)
+
+2. Update scripts/prerender-routes.mjs for age-calculator's hardcoded title/description to match
+
+3. Verify raw HTML output for 3 sample pages (gpa-calculator, zakat-calculator, age-calculator) shows the new title/description correctly
+
+4. Confirm typecheck passes
+
+Isolation guarantee confirmed — no ads, sitemap, robots, page-content, H1, or route changes. Only meta title/description text in these 2 files.
