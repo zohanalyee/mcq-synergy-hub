@@ -94,7 +94,8 @@ export const CATEGORY_COLORS: Record<string, { icon: string; border: string; bg:
 export const ALL_TOOLS: ToolDefinition[] = [
   // === School Attendance System ===
   { id: 'school-attendance-system', name: 'School Attendance System', description: 'School & Staff Attendance Management System with PDF Reports', category: 'Student & Staff', icon: Building2, popular: true, href: '/tools/school-attendance-system',
-    seoDescription: 'School & Staff Attendance Management System with PDF Reports. Free school attendance tool for daily staff attendance tracking, student attendance marking, leave management, and downloadable PDF attendance reports.',
+    seoTitle: 'Free School Attendance System — Staff & Students',
+    seoDescription: 'Free school attendance system for Pakistani schools. Mark student & staff attendance, manage leaves and download PDF reports.',
     howToUse: ['Add your classes, students, and staff members', 'Mark daily student and staff attendance with one click', 'Track leaves, holidays, and generate PDF attendance reports'],
     faq: [
       { q: 'Is this attendance system free for Pakistani schools?', a: 'Yes — marking attendance, managing classes and exporting PDF reports are free, with no per-student licence.' },
@@ -107,7 +108,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
     seoDescription: 'Free online basic and scientific calculator. Perform arithmetic, trigonometry, logarithmic calculations instantly in your browser.',
     howToUse: ['Enter your mathematical expression', 'Use scientific functions for advanced calculations', 'View the result instantly'] },
   { id: 'age-calculator', name: 'Age Calculator', description: 'Calculate exact age from date of birth', category: 'Calculators', icon: Calendar, popular: true, href: '/tools/age-calculator',
-    seoDescription: 'Calculate your exact age in years, months, and days from your date of birth. Free online age calculator with precise results.',
+    seoTitle: 'Age Calculator — Years, Months & Days',
+    seoDescription: 'Free age calculator. Enter your date of birth to get your exact age in years, months and days — useful for job & admission forms.',
     howToUse: ['Enter your date of birth', 'Click Calculate', 'View your exact age in years, months, and days'],
     faq: [
       { q: 'Can I use this to check job or admission age eligibility?', a: 'Yes — enter your date of birth and the closing date to see your exact age in years, months and days on that date, which is how FPSC, PPSC and NTS compute eligibility.' },
@@ -118,7 +120,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
     seoDescription: 'Free Pomodoro study timer with customizable intervals. Boost focus and productivity with timed study sessions and breaks.',
     howToUse: ['Set your study and break duration', 'Click Start to begin the timer', 'Take breaks when prompted and track your sessions'] },
   { id: 'gpa-calculator', name: 'GPA Calculator', description: 'Calculate your GPA easily', category: 'Student Tools', icon: GraduationCap, popular: true, href: '/tools/gpa-calculator',
-    seoDescription: 'Free GPA calculator for students. Enter your grades and credit hours to instantly calculate your Grade Point Average on a 4.0 scale.',
+    seoTitle: 'GPA Calculator Pakistan — University GPA (4.0)',
+    seoDescription: 'Free GPA calculator for Pakistani university students. Enter grades & credit hours to calculate your semester GPA on the 4.0 scale instantly.',
     howToUse: ['Add your courses with grades and credit hours', 'Click Calculate GPA', 'View your GPA on a 4.0 scale'],
     faq: [
       { q: 'Which GPA scale does this use?', a: 'The standard 4.0 scale used by most Pakistani universities (HEC-aligned): A = 4.0, B = 3.0, C = 2.0, D = 1.0.' },
@@ -146,7 +149,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
     seoDescription: 'Free online BMI calculator. Enter your height and weight to calculate your Body Mass Index and check your health category.',
     howToUse: ['Enter your height and weight', 'Select metric or imperial units', 'View your BMI and health category'] },
   { id: 'percentage-calculator', name: 'Percentage Calculator', description: 'Calculate percentages easily', category: 'Calculators', icon: Percent, popular: true, href: '/tools/percentage-calculator',
-    seoDescription: 'Free online percentage calculator. Calculate what percent one number is of another, find percentage increase or decrease instantly.',
+    seoTitle: 'Percentage Calculator — Marks & Change %',
+    seoDescription: 'Free online percentage calculator for students. Find percentage of marks, percentage increase or decrease, and X% of a number instantly.',
     howToUse: ['Enter the value and total', 'View the percentage result instantly', 'Copy the result to clipboard'],
     faq: [
       { q: 'How do I calculate exam percentage?', a: 'Divide marks obtained by total marks and multiply by 100 — e.g. 850 out of 1100 is 77.27%.' },
@@ -195,9 +199,9 @@ export const ALL_TOOLS: ToolDefinition[] = [
 
   // === Pakistan-specific high-intent calculators ===
   { id: 'aggregate-calculator', name: 'Aggregate Calculator', description: 'MDCAT, ECAT, NUST, NUMS & UHS aggregate', category: 'Student Tools', icon: Target, popular: true, href: '/tools/aggregate-calculator',
-    seoTitle: 'MDCAT Aggregate Calculator 2026 — NUMS, UHS, ECAT & NUST',
+    seoTitle: 'Aggregate Calculator 2026 — MDCAT, NUMS, UHS, ECAT',
     h1: 'MDCAT Aggregate Calculator 2026',
-    seoDescription: 'Free MDCAT aggregate calculator for Pakistan — PMC, UHS, NUMS, ECAT and NUST NET formulas. Enter Matric, FSc and entry-test marks to get your aggregate % instantly.',
+    seoDescription: 'Free aggregate calculator for MDCAT, NUMS, UHS, ECAT & NUST 2026. Enter Matric, FSc and entry-test marks to get your admission aggregate % instantly.',
     howToUse: ['Pick your exam (MDCAT / ECAT / NUST / NUMS / UHS)', 'Enter Matric, FSc and entry-test marks', 'View aggregate % and admission-chance band'],
     faq: [
       { q: 'What is the aggregate formula for MDCAT?', a: 'The PMC standard aggregate is 10% Matric + 40% FSc + 50% MDCAT. Each component is converted to a percentage first, then weighted and added.' },
@@ -213,14 +217,16 @@ export const ALL_TOOLS: ToolDefinition[] = [
     ] },
 
   { id: 'merit-calculator', name: 'Merit Calculator', description: 'University merit with hafiz & quota bonuses', category: 'Student Tools', icon: Trophy, popular: true, href: '/tools/merit-calculator',
-    seoDescription: 'Free Pakistani university merit calculator. Apply hafiz-e-Quran bonus, sports, disability, minorities and overseas quotas to your open-merit percentage.',
+    seoTitle: 'Merit Calculator 2026 — MDCAT & University Merit',
+    seoDescription: 'Free merit calculator for Pakistani universities 2026. Add hafiz-e-Quran bonus, sports, disability & overseas quotas to your MDCAT or university merit.',
     howToUse: ['Enter your open-merit percentage', 'Toggle hafiz-e-Quran bonus if applicable', 'Pick your quota / category to see adjusted merit'],
     faq: [
       { q: 'How much is the hafiz bonus?', a: 'Most Pakistani boards award +20 marks (≈ +1.82% on a 1100-mark base) for verified hafiz-e-Quran candidates.' },
       { q: 'Do all universities accept these quotas?', a: 'Quota policies vary by institution and province. Confirm eligibility with the admission office.' },
     ] },
   { id: 'pakistan-tax-calculator', name: 'Pakistan Income Tax Calculator', description: 'FBR 2025-26 salaried income tax', category: 'Calculators', icon: Wallet, popular: true, href: '/tools/pakistan-tax-calculator',
-    seoDescription: 'Free Pakistan income tax calculator using FBR 2025-26 salaried slabs. Get monthly and annual tax, effective rate and slab-wise breakdown in PKR.',
+    seoTitle: 'Salary Tax Calculator Pakistan 2025-26 (FBR)',
+    seoDescription: 'Free Pakistan salary tax calculator 2025-26. Calculate income tax on salary using latest FBR slabs — monthly & annual tax in PKR.',
     howToUse: ['Pick monthly or annual salary', 'Enter your gross salary in PKR', 'View tax, take-home and slab-wise breakdown'],
     faq: [
       { q: 'Which slabs are used?', a: 'FBR 2025-26 salaried-individual slabs: 0% up to 600k, then 5%, 15%, 25%, 30% and 35% on the highest band.' },
@@ -228,7 +234,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
       { q: 'Is this valid for business income?', a: 'No — the slabs used are for salaried individuals. Business and AOP income is taxed on different rates.' },
     ] },
   { id: 'zakat-calculator', name: 'Zakat Calculator', description: '2.5% Zakat on cash, gold & business assets', category: 'Calculators', icon: HandCoins, popular: true, href: '/tools/zakat-calculator',
-    seoDescription: 'Free Zakat calculator for Pakistan. Compute 2.5% Zakat on cash, gold, silver and business assets with editable gold/silver nisab rates in PKR.',
+    seoTitle: 'Zakat Calculator 2026 — Gold, Cash & Nisab',
+    seoDescription: 'Free Zakat calculator for Pakistan 2026. Calculate 2.5% Zakat on gold, silver, cash and business assets with updated nisab rates in PKR.',
     howToUse: ['Update today\'s gold and silver price per gram', 'Enter cash, gold, silver, business assets and liabilities', 'View Zakat due if you exceed nisab'],
     faq: [
       { q: 'Which nisab does the tool use?', a: 'Silver nisab (612.36 g) when you hold any silver, otherwise gold nisab (87.48 g) — the safer scholarly position.' },
@@ -239,7 +246,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
 
   // === Student Tools (10 new) ===
   { id: 'cgpa-calculator', name: 'CGPA Calculator', description: 'Calculate cumulative GPA', category: 'Student Tools', icon: GraduationCap, href: '/tools/cgpa-calculator',
-    seoDescription: 'Free CGPA calculator. Calculate your Cumulative Grade Point Average across multiple semesters with easy semester-by-semester input.',
+    seoTitle: 'CGPA Calculator — Semester-wise CGPA (4.0)',
+    seoDescription: 'Free CGPA calculator for university students in Pakistan. Calculate your cumulative GPA across all semesters with semester-by-semester input.',
     howToUse: ['Add semesters with their GPA and credit hours', 'Click Calculate CGPA', 'View your cumulative GPA across all semesters'],
     faq: [
       { q: 'What is the difference between GPA and CGPA?', a: 'GPA covers one semester; CGPA is the credit-weighted average of every semester you have completed.' },
@@ -247,7 +255,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
       { q: 'Can I add an in-progress semester?', a: 'Yes — enter your expected GPA for it to see the projected CGPA before results are announced.' },
     ] },
   { id: 'gpa-to-percentage', name: 'GPA to Percentage', description: 'Convert GPA to percentage', category: 'Student Tools', icon: TrendingUp, href: '/tools/gpa-to-percentage',
-    seoDescription: 'Free GPA to percentage converter. Convert your GPA on a 4.0 scale to percentage with multiple conversion formulas.',
+    seoTitle: 'GPA to Percentage Calculator Pakistan (4.0)',
+    seoDescription: 'Free GPA to percentage converter for Pakistan. Convert your 4.0-scale GPA to percentage with HEC and university conversion formulas.',
     howToUse: ['Enter your GPA on a 4.0 scale', 'View the converted percentage', 'Copy the result to clipboard'],
     faq: [
       { q: 'Which formula converts GPA to percentage?', a: 'The common HEC-style approximation multiplies GPA by 25 (4.0 = 100%); some universities use their own transcript table, so confirm with yours.' },
@@ -255,7 +264,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
       { q: 'Do foreign universities accept this conversion?', a: 'They usually require the conversion stated on your official transcript or an HEC equivalence letter, not a calculator result.' },
     ] },
   { id: 'percentage-to-gpa', name: 'Percentage to GPA', description: 'Convert percentage to GPA', category: 'Student Tools', icon: TrendingDown, href: '/tools/percentage-to-gpa',
-    seoDescription: 'Free percentage to GPA converter. Convert your percentage score to GPA on a 4.0 scale instantly.',
+    seoTitle: 'Percentage to GPA Calculator Pakistan (4.0)',
+    seoDescription: 'Free percentage to GPA converter for Pakistan. Convert your marks percentage to a 4.0-scale GPA instantly — no signup required.',
     howToUse: ['Enter your percentage score', 'View the converted GPA', 'Copy the result to clipboard'],
     faq: [
       { q: 'How do I convert percentage to GPA?', a: 'Divide your percentage by 25 for the common 4.0-scale approximation — 80% becomes 3.2.' },
@@ -266,7 +276,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
     seoDescription: 'Free grade calculator. Calculate your final grade based on weighted assignments, exams, and coursework.',
     howToUse: ['Add assignments with their scores and weights', 'Click Calculate', 'View your weighted final grade'] },
   { id: 'marks-calculator', name: 'Marks Calculator', description: 'Calculate total marks & percentage', category: 'Student Tools', icon: PenTool, href: '/tools/marks-calculator',
-    seoDescription: 'Free marks calculator. Calculate total marks, percentage, and grade from your subject-wise scores.',
+    seoTitle: 'Marks Percentage Calculator — Total & Grade',
+    seoDescription: 'Free marks percentage calculator. Enter subject-wise marks to get total marks, percentage and grade — works for Matric, FSc & board results.',
     howToUse: ['Enter marks obtained and total marks for each subject', 'View total marks and overall percentage', 'Check your grade based on the percentage'],
     faq: [
       { q: 'Can I calculate Matric or FSc marks with this?', a: 'Yes — enter each subject\'s obtained and total marks (e.g. out of 1100) to get your aggregate and percentage.' },
@@ -274,7 +285,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
       { q: 'Does it handle practical marks?', a: 'Yes — add practicals as a separate subject row with their own obtained and total marks.' },
     ] },
   { id: 'attendance-calculator', name: 'Attendance Calculator', description: 'Track attendance percentage', category: 'Student Tools', icon: UserCheck, href: '/tools/attendance-calculator',
-    seoDescription: 'Free attendance percentage calculator. Track how many classes you can miss and still meet the minimum attendance requirement.',
+    seoTitle: 'Attendance Percentage Calculator — 75% Rule',
+    seoDescription: 'Free attendance percentage calculator. Check if you meet the 75% attendance rule and how many classes you can still miss.',
     howToUse: ['Enter total classes and classes attended', 'View your attendance percentage', 'Check how many more classes you can miss'],
     faq: [
       { q: 'What attendance percentage is required in Pakistan?', a: 'Most colleges and universities require 75% attendance to sit final exams — set that as your target.' },
@@ -282,7 +294,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
       { q: 'Are approved leaves counted?', a: 'Only if your institution excludes them — enter them as attended if they are formally condoned.' },
     ] },
   { id: 'result-calculator', name: 'Result Calculator', description: 'Calculate exam results', category: 'Student Tools', icon: FileCheck, href: '/tools/result-calculator',
-    seoDescription: 'Free exam result calculator. Calculate your exam results, total marks, percentage, and pass/fail status instantly.',
+    seoTitle: 'Result Calculator — Marks, Percentage & Grade',
+    seoDescription: 'Free result calculator for students. Enter obtained and total marks to get your percentage, grade and pass/fail status instantly.',
     howToUse: ['Enter your subject-wise marks', 'Set passing criteria', 'View your result with pass/fail status'],
     faq: [
       { q: 'What are passing marks on Pakistani boards?', a: 'Typically 33% per subject for Matric and Intermediate, though some boards and subjects differ.' },
@@ -293,7 +306,8 @@ export const ALL_TOOLS: ToolDefinition[] = [
     seoDescription: 'Free comprehensive formula sheet for math and science. Quick reference for algebra, geometry, physics, and chemistry formulas.',
     howToUse: ['Browse formulas by subject category', 'Click on any formula to see details', 'Copy formulas for your assignments'] },
   { id: 'periodic-table', name: 'Periodic Table', description: 'Interactive periodic table', category: 'Student Tools', icon: Atom, popular: true, href: '/tools/periodic-table',
-    seoDescription: 'Free interactive periodic table of elements. View atomic number, mass, electron configuration, and properties of all 118 elements.',
+    seoTitle: 'Periodic Table — Interactive, All 118 Elements',
+    seoDescription: 'Free interactive periodic table with all 118 elements. Atomic number, mass, electron configuration and properties at a glance.',
     howToUse: ['Browse the periodic table visually', 'Click on any element for details', 'Search elements by name or symbol'],
     faq: [
       { q: 'Is this useful for MDCAT and ECAT chemistry?', a: 'Yes — atomic number, mass, group, period and electron configuration cover what entry-test and board chemistry questions ask.' },
