@@ -34,7 +34,7 @@ export const ALL_TOOL_PATHS = [
 // prerendering them would emit the homepage's default head. They are given
 // correct, unique head tags by inject-meta.mjs instead.
 export const TOOLS_WITHOUT_SEOHEAD = [
-  { path: "/tools/age-calculator", title: "Age Calculator", description: "Calculate your exact age in years, months, and days from your date of birth. Free online age calculator with precise results — MCQsAI." },
+  { path: "/tools/age-calculator", title: "Age Calculator — Years, Months & Days", description: "Free age calculator. Enter your date of birth to get your exact age in years, months and days — useful for job & admission forms — MCQsAI." },
   { path: "/tools/timer", title: "Study Timer", description: "Free Pomodoro study timer with customizable intervals. Boost focus and productivity with timed study sessions and breaks — MCQsAI." },
   { path: "/tools/units", title: "Unit Converter", description: "Free online unit converter. Convert between length, weight, volume, temperature, and more units instantly — MCQsAI." },
   { path: "/tools/notes", title: "Quick Notes", description: "Free online notepad for quick notes. Write, save, and organize your study notes directly in the browser with no sign-up required — MCQsAI." },
