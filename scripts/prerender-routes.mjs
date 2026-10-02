@@ -1,3 +1,4 @@
+import { PROG_SEO_SLUGS } from "./prog-seo-gate.mjs";
 // Shared, build-time route lists for static prerendering + post-build meta injection.
 // These are SYNCHRONOUS-render pages (no async DB dependency) whose SEOHead/Helmet
 // tags resolve correctly during renderToString — so they can be prerendered directly.
@@ -50,18 +51,7 @@ const TOOLS_WITHOUT_SEOHEAD_SET = new Set(TOOLS_WITHOUT_SEOHEAD.map((t) => t.pat
 export const TOOL_PRERENDER_PATHS = ALL_TOOL_PATHS.filter((p) => !TOOLS_WITHOUT_SEOHEAD_SET.has(p));
 
 // ---- Programmatic SEO /p/:slug --------------------------------------------
-// Mirrors indexableProgSeoSlugs() in src/data/programmaticSeo.ts.
-export const PROG_SEO_SLUGS = [
-  "mdcat-karachi", "mdcat-sindh", "mdcat-islamabad",
-  "nts-karachi", "nts-lahore", "nts-islamabad",
-  "css-islamabad", "css-karachi",
-  "fpsc-islamabad", "fpsc-karachi",
-  "ppsc-lahore", "ppsc-punjab",
-  "ecat-punjab", "ecat-lahore",
-  "mdcat-lahore", "mdcat-punjab",
-  "biology-mcqs-class-12", "biology-mcqs-class-11",
-  "chemistry-mcqs-class-12", "physics-mcqs-class-12",
-];
+export { PROG_SEO_SLUGS };
 
 // ---- Subject content static subjects --------------------------------------
 // Static (non-DB) subject titles from src/data/subjects/*. Slugified to the
