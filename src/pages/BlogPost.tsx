@@ -270,7 +270,8 @@ const BlogPost = () => {
             </BlogErrorBoundary>
           </article>
 
-          <AdSlot surface="blog-post" />
+          {/* Policy guard: no ads on thin-content posts (matches BLOG_MIN_WORDS 80 in sitemap/inject-meta). */}
+          {!isThinBlog && <AdSlot surface="blog-post" />}
 
 
           {/* Related Posts */}
