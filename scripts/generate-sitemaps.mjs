@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { PROG_SEO_SLUGS } from "./prog-seo-gate.mjs";
 // Build-time sitemap generator.
 // Writes same-origin (mcqsai.com) static XML files into public/sitemaps/
 // so Google never sees cross-domain (supabase.co) sitemap URLs.
@@ -126,18 +127,7 @@ const TOOL_PATHS = [
   "/tools/periodic-table","/tools/pakistan-tax-calculator","/tools/zakat-calculator",
 ];
 
-// Programmatic SEO /p/* slugs — mirrors indexableProgSeoSlugs() in src/data/programmaticSeo.ts
-const PROG_SEO_SLUGS = [
-  "mdcat-karachi","mdcat-sindh","mdcat-islamabad",
-  "nts-karachi","nts-lahore","nts-islamabad",
-  "css-islamabad","css-karachi",
-  "fpsc-islamabad","fpsc-karachi",
-  "ppsc-lahore","ppsc-punjab",
-  "ecat-punjab","ecat-lahore",
-  "mdcat-lahore","mdcat-punjab",
-  "biology-mcqs-class-12","biology-mcqs-class-11",
-  "chemistry-mcqs-class-12","physics-mcqs-class-12",
-];
+
 
 // Keep in sync with the "/exams/*" entries of PRERENDER_ROUTES in vite.config.ts.
 const EXAM_SLUGS = ["mdcat","ecat","css","ppsc","fpsc","nts","pms"];

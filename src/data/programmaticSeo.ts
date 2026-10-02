@@ -234,7 +234,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'CSS exam in Islamabad: FPSC headquarters, written test schedule, interview venues, syllabus & free MCQ practice — MCQsAI Pakistan.',
     keywords: 'CSS Islamabad, CSS exam centre Islamabad, FPSC headquarters, CSS interview Islamabad, CSS preparation',
     intro:
-      'CSS (Central Superior Services) competitive examination is administered by the Federal Public Service Commission (FPSC) headquartered in Islamabad. Islamabad serves as both a written-test venue and the sole venue for psychological assessment and viva voce. Aspirants from across Pakistan travel to FPSC HQ for the interview stage — making Islamabad a critical location in every candidate\'s CSS journey.',
+      'CSS (Central Superior Services) competitive examination is administered by the Federal Public Service Commission (FPSC) headquartered in Islamabad. Islamabad serves as both a written-test venue and the sole venue for psychological assessment and viva voce. Aspirants from across Pakistan travel to FPSC HQ for the interview stage — making Islamabad a critical location in every candidate\'s CSS journey. Since CSS 2025, candidates must first clear the MCQ-based Preliminary Test (MPT); only those who pass are allowed to sit the 12 written papers. Applications are submitted online through the FPSC website (fpsc.gov.pk), where the annual notice, fee and test schedule are published. Dates for the next cycle are not yet announced — always confirm on the official site.',
     syllabusOrEligibility: [
       '12 papers: 6 compulsory (Essay, English, GSA, Pakistan Affairs, Islamic/Comparative Studies, Current Affairs) + 6 optional from groups',
       'Age: 21–30 years (relaxation for certain categories)',
@@ -253,6 +253,8 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     faqs: [
       { q: 'Is the CSS interview always held in Islamabad?', a: 'Yes. All psychological and viva voce assessments are conducted at FPSC headquarters in Islamabad regardless of written-test centre.' },
       { q: 'Can I attempt CSS from any Pakistani city?', a: 'Yes. Written paper venues are available across major cities; the interview stage is centralised in Islamabad.' },
+      { q: 'What is the CSS MPT screening test?', a: 'The MPT is an MCQ-based Preliminary Test introduced by FPSC. Only candidates who pass it can appear in the CSS written examination. Its exact pattern and passing marks are published in the official FPSC notice.' },
+      { q: 'What is the CSS application fee and deadline?', a: 'The fee and last date are announced each year in the official FPSC CSS advertisement on fpsc.gov.pk. For the next cycle these are not yet announced — check the official advertisement.' },
     ],
     relatedSlug: 'css',
     indexable: true,
@@ -265,7 +267,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'FPSC jobs and tests in Islamabad: headquarters location, federal recruitment cycles, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'FPSC Islamabad, FPSC headquarters, FPSC federal jobs, FPSC test centre Islamabad',
     intro:
-      'The Federal Public Service Commission (FPSC) headquarters is at F-5/1, Islamabad. FPSC conducts recruitment exams for all federal government grade BS-16 to BS-20 positions, including CSS, Combined Examination for ASOs/PROs, and specialist cadre tests. Islamabad-based candidates have access to the most frequent test schedules due to centralised operations.',
+      'The Federal Public Service Commission (FPSC) headquarters is at F-5/1, Islamabad. FPSC conducts recruitment exams for all federal government grade BS-16 to BS-20 positions, including CSS, Combined Examination for ASOs/PROs, and specialist cadre tests. Islamabad-based candidates have access to the most frequent test schedules due to centralised operations. The usual process is: online application on fpsc.gov.pk, screening or written MCQ test, then interview at FPSC headquarters. Admit cards and test schedules are posted on the official website, so candidates should check their FPSC online account regularly.',
     syllabusOrEligibility: [
       'Job-specific written test: General Knowledge + English + Professional subject',
       'Most posts: 100 MCQs in 90–120 minutes',
@@ -285,6 +287,8 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     faqs: [
       { q: 'Where is the FPSC office in Islamabad?', a: 'FPSC headquarters is located at Aga Khan Road, F-5/1, Islamabad.' },
       { q: 'How often does FPSC announce jobs?', a: 'Consolidated Advertisement is published monthly on fpsc.gov.pk listing all open positions.' },
+      { q: 'How do I apply for an FPSC job?', a: 'Create an account on the FPSC online portal at fpsc.gov.pk, fill the application for the advertised post, and deposit the fee as stated in the advertisement before the closing date.' },
+      { q: 'Is there negative marking in FPSC tests?', a: 'It depends on the post and is stated in the official advertisement or test notice. Check the official advertisement on fpsc.gov.pk before your test.' },
     ],
     relatedSlug: 'fpsc',
     indexable: true,
@@ -297,7 +301,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'PPSC jobs and tests in Lahore: headquarters at Aiwan-e-Iqbal, Punjab recruitment schedule, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'PPSC Lahore, PPSC headquarters, PPSC test centre Lahore, Punjab government jobs, PPSC preparation',
     intro:
-      'The Punjab Public Service Commission (PPSC) headquarters is at Aiwan-e-Iqbal, Egerton Road, Lahore. PPSC conducts recruitment for all BS-11 to BS-20 positions in the Punjab Government. Lahore is the primary venue for both written tests and interviews; written papers may also be held in Rawalpindi, Multan, Faisalabad, Bahawalpur, D.G. Khan, Sargodha and Sahiwal depending on candidate volume.',
+      'The Punjab Public Service Commission (PPSC) headquarters is at Aiwan-e-Iqbal, Egerton Road, Lahore. PPSC conducts recruitment for all BS-11 to BS-20 positions in the Punjab Government. Lahore is the primary venue for both written tests and interviews; written papers may also be held in Rawalpindi, Multan, Faisalabad, Bahawalpur, D.G. Khan, Sargodha and Sahiwal depending on candidate volume. Candidates apply online through the official PPSC website (ppsc.gop.pk), then download their admission letter before the written test. Results and interview schedules are also published on the same official site.',
     syllabusOrEligibility: [
       'Written test: 100 MCQs (English, GK, Islamic Studies, Pakistan Studies, Professional)',
       'Most tests run for 90 minutes with 1-mark per MCQ, no negative marking',
@@ -317,6 +321,8 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     ],
     faqs: [
       { q: 'Where is the PPSC office in Lahore?', a: 'Aiwan-e-Iqbal Complex, Egerton Road, Lahore — accessible via Mall Road.' },
+      { q: 'How do I apply for a PPSC job?', a: 'Register on the official PPSC website (ppsc.gop.pk), submit the online application for the advertised post, and pay the fee as stated in the advertisement before the closing date.' },
+      { q: 'How long after the test are PPSC results announced?', a: 'There is no fixed timeline; results and merit lists are posted on ppsc.gop.pk once ready. Check the official site for your post.' },
       { q: 'Does PPSC have negative marking?', a: 'No. Most PPSC tests carry no negative marking — attempt every MCQ.' },
     ],
     relatedSlug: 'ppsc',
