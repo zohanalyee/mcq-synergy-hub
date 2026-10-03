@@ -148,8 +148,19 @@ function writeExams() {
     ...EXAM_SLUGS.map(s => ({
       loc: `${BASE_URL}/exams/${s}`, lastmod: today, freq: "monthly", priority: "0.8",
     })),
+    // Standalone admission-test guides: lastmod = each page's official verifiedOn date.
+    ...Object.entries(ADMISSION_GUIDE_LASTMOD).map(([s, d]) => ({
+      loc: `${BASE_URL}/exams/${s}`, lastmod: d, freq: "monthly", priority: "0.7",
+    })),
   ]));
 }
+
+// karachi-university intentionally excluded until its paper details are filled in.
+const ADMISSION_GUIDE_LASTMOD = {
+  "usat": "2026-09-25", "pieas": "2026-09-24", "sindh-university": "2026-09-20",
+  "lums": "2026-09-25", "giki": "2026-09-25", "aku": "2026-09-25", "nat": "2026-09-20",
+  "uet-lahore": "2026-09-24", "air-university": "2026-09-24", "hec-gat-subject": "2026-09-25",
+};
 function writeProgSeo() {
   const entries = [
     { loc: `${BASE_URL}/p`, lastmod: today, freq: "weekly", priority: "0.7" },
