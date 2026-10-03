@@ -355,7 +355,12 @@ ${entries.join("\n")}
 </urlset>`;
 }
 
-const EXAM_SLUGS = ["mdcat", "ecat", "css", "ppsc", "fpsc", "nts"];
+const EXAM_SLUGS = [
+  "mdcat", "ecat", "css", "ppsc", "fpsc", "nts", "pms",
+  // Admission-test guides (karachi-university held until content is complete)
+  "usat", "pieas", "sindh-university", "lums", "giki", "aku", "nat",
+  "uet-lahore", "air-university", "hec-gat-subject",
+];
 
 function generateExamsSitemap(): string {
   const now = new Date().toISOString().split("T")[0];
