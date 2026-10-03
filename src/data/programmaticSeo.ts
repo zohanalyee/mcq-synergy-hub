@@ -77,7 +77,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'Complete MDCAT Sindh 2026 guide: STS test on Aug 16, all Sindh medical universities, merit lists, domicile rules & free practice — MCQsAI.',
     keywords: 'MDCAT Sindh, MDCAT Sindh 2026, STS MDCAT, Sindh medical universities, Sindh MDCAT merit',
     intro:
-      'MDCAT Sindh 2026 is the entry test for all public medical and dental colleges across Sindh province, conducted by the Sindh Testing Service (STS) on August 16, 2026. It replaces the older provincial MCAT and follows the unified PMC syllabus. Centres operate in Karachi, Hyderabad, Sukkur, Larkana and Mirpurkhas — every Sindh-domicile candidate competes under the provincial quota for ~3,500 MBBS seats.',
+      'MDCAT Sindh 2026 is the entry test for all public medical and dental colleges across Sindh province, conducted by the Sindh Testing Service (STS) on August 16, 2026. It replaces the older provincial MCAT and follows the unified PMC syllabus. Centres operate in Karachi, Hyderabad, Sukkur, Larkana and Mirpurkhas — every Sindh-domicile candidate competes under the provincial quota for ~3,500 MBBS seats. This guide covers the colleges, test centres, past merit trends and domicile rules, and links to free chapter-wise MCQ practice. Dates, fees and seat numbers change every year, so treat anything not yet announced as provisional and always confirm the final details in the official notification before you apply.',
     universitiesOrInstitutions: [
       { name: 'DUHS, Karachi' },
       { name: 'JSMU, Karachi' },
@@ -110,6 +110,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'Who conducts MDCAT in Sindh?', a: 'The Sindh Testing Service (STS) under the Government of Sindh conducts MDCAT for all Sindh public medical universities.' },
       { q: 'What is the MDCAT Sindh 2026 date?', a: 'August 16, 2026. Admit cards are released ~2 weeks prior on the STS portal.' },
       { q: 'Is MDCAT Sindh easier than federal MDCAT?', a: 'No. Both follow the PMC syllabus and difficulty is comparable. STS papers are independently set.' },
+      { q: 'What is the MDCAT Sindh 2026 merit or cut-off?', a: 'Final 2026 merit lists are not yet announced. The 2024 closing figures above are a guide only; check the official university merit lists once they are published.' },
     ],
     relatedSlug: 'mdcat-syllabus',
     indexable: true,
@@ -379,7 +380,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'Class 12 Biology MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Biology MCQs class 12, FSc Part 2 Biology, class 12 Biology chapter wise MCQs, intermediate biology Pakistan',
     intro:
-      'Class 12 (FSc Part 2) Biology is the gateway subject for MDCAT, university admissions, and the 12th-class board exam. The syllabus across Punjab, Sindh, KP, Balochistan and Federal boards is largely aligned with the National Curriculum, covering Homeostasis, Coordination, Reproduction, Genetics, Evolution, Ecology, and Biotechnology. Practising chapter-wise MCQs is the fastest way to lock in concepts for both your board exam and the MDCAT.',
+      'Class 12 (FSc Part 2) Biology is the gateway subject for MDCAT, university admissions, and the 12th-class board exam. The syllabus across Punjab, Sindh, KP, Balochistan and Federal boards is largely aligned with the National Curriculum, covering Homeostasis, Coordination, Reproduction, Genetics, Evolution, Ecology, and Biotechnology. Practising chapter-wise MCQs is the fastest way to lock in concepts for both your board exam and the MDCAT. This guide covers the colleges, test centres, past merit trends and domicile rules, and links to free chapter-wise MCQ practice. Dates, fees and seat numbers change every year, so treat anything not yet announced as provisional and always confirm the final details in the official notification before you apply.',
     syllabusOrEligibility: [
       'Chapter 15 — Homeostasis',
       'Chapter 16 — Support & Movement',
@@ -405,6 +406,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'Are Class 12 Biology MCQs same for all boards?', a: 'Roughly 90% overlap exists across Punjab, Sindh, KP, Balochistan and Federal boards under the National Curriculum. Chapter order may vary slightly.' },
       { q: 'How many MCQs come from Class 12 Biology in MDCAT?', a: 'About 50% of MDCAT Biology MCQs are pulled from FSc Part 2 chapters — making this the highest-yield study area.' },
       { q: 'Is there negative marking on board MCQs?', a: 'No. Board examinations do not apply negative marking. MDCAT does — be careful there.' },
+      { q: 'How should I practise Class 12 Biology MCQs?', a: 'Go chapter by chapter, review the explanation for every wrong answer, then take mixed timed tests before your board exam or MDCAT.' },
     ],
     relatedSlug: 'board-mcqs',
     indexable: true,
@@ -419,7 +421,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'MDCAT 2026 Lahore guide: UHS test centres, KEMU/AIMC/FJMU merit, Punjab domicile rules, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Lahore, MDCAT 2026 Lahore, KEMU MDCAT, AIMC merit, UHS MDCAT, Punjab MDCAT centres',
     intro:
-      'MDCAT 2026 in Lahore is conducted by the University of Health Sciences (UHS) for admission to Punjab\'s public medical universities. Lahore-domicile candidates compete primarily for seats at King Edward Medical University (KEMU), Allama Iqbal Medical College (AIMC), Fatima Jinnah Medical University (FJMU) and Services Institute of Medical Sciences (SIMS). UHS uses the unified PMC syllabus and runs centres across Lahore, Rawalpindi, Multan, Faisalabad and Bahawalpur.',
+      'MDCAT 2026 in Lahore is conducted by the University of Health Sciences (UHS) for admission to Punjab\'s public medical universities. Lahore-domicile candidates compete primarily for seats at King Edward Medical University (KEMU), Allama Iqbal Medical College (AIMC), Fatima Jinnah Medical University (FJMU) and Services Institute of Medical Sciences (SIMS). UHS uses the unified PMC syllabus and runs centres across Lahore, Rawalpindi, Multan, Faisalabad and Bahawalpur. This guide covers the colleges, test centres, past merit trends and domicile rules, and links to free chapter-wise MCQ practice. Dates, fees and seat numbers change every year, so treat anything not yet announced as provisional and always confirm the final details in the official notification before you apply.',
     universitiesOrInstitutions: [
       { name: 'King Edward Medical University (KEMU)', note: 'Highest merit — historically ~92%+' },
       { name: 'Allama Iqbal Medical College (AIMC)', note: 'Punjab open merit ~91%' },
@@ -451,6 +453,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'What is the KEMU MBBS merit from Lahore?', a: 'KEMU\'s open-merit MBBS closed near 92.4% aggregate in 2024 — the highest in Punjab.' },
       { q: 'Do Lahore candidates compete only against Lahore?', a: 'No. Lahore is part of the Punjab provincial quota; all Punjab-domicile candidates compete in the same merit list.' },
       { q: 'Is MDCAT Lahore conducted by PMC or UHS?', a: 'UHS conducts MDCAT for Punjab on behalf of PMC. The syllabus is unified.' },
+      { q: 'How should I prepare for MDCAT Lahore?', a: 'Cover the official PMDC syllabus chapter by chapter, practise timed MCQs and attempt past papers. The 2026 merit figures are not yet announced, so aim above the past closing merit.' },
     ],
     relatedSlug: 'mdcat-syllabus',
     indexable: true,
@@ -463,7 +466,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'MDCAT Punjab 2026 by UHS: test schedule, all Punjab medical universities, merit lists, domicile & free MCQ practice — MCQsAI.',
     keywords: 'MDCAT Punjab, MDCAT Punjab 2026, UHS MDCAT, Punjab medical universities, KEMU AIMC FJMU merit',
     intro:
-      'MDCAT Punjab 2026 is the entry test for every public medical and dental college in Punjab, conducted by the University of Health Sciences (UHS), Lahore. Punjab has the largest seat allocation of any province with ~5,000 MBBS seats spread across KEMU, AIMC, FJMU, SIMS, Nishtar Medical University (Multan), Rawalpindi Medical University (RMU), QAMC Bahawalpur, Sargodha Medical College, DG Khan Medical College, and several others.',
+      'MDCAT Punjab 2026 is the entry test for every public medical and dental college in Punjab, conducted by the University of Health Sciences (UHS), Lahore. Punjab has the largest seat allocation of any province with ~5,000 MBBS seats spread across KEMU, AIMC, FJMU, SIMS, Nishtar Medical University (Multan), Rawalpindi Medical University (RMU), QAMC Bahawalpur, Sargodha Medical College, DG Khan Medical College, and several others. This guide covers the colleges, test centres, past merit trends and domicile rules, and links to free chapter-wise MCQ practice. Dates, fees and seat numbers change every year, so treat anything not yet announced as provisional and always confirm the final details in the official notification before you apply.',
     universitiesOrInstitutions: [
       { name: 'King Edward Medical University, Lahore' },
       { name: 'Allama Iqbal Medical College, Lahore' },
@@ -498,6 +501,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'Who conducts MDCAT in Punjab?', a: 'The University of Health Sciences (UHS), Lahore conducts MDCAT for all Punjab public medical colleges.' },
       { q: 'How many MBBS seats are in Punjab?', a: 'Punjab offers roughly 5,000 MBBS seats across 14+ public medical universities — the largest provincial allocation in Pakistan.' },
       { q: 'Is the Punjab MDCAT harder than Sindh\'s?', a: 'Both follow the PMC syllabus with similar difficulty. Punjab\'s competitive pressure is higher due to a larger applicant pool.' },
+      { q: 'Where do I check the MDCAT Punjab 2026 date and result?', a: 'Use the official UHS website (uhs.edu.pk). Any date or result not yet posted there should be treated as not yet announced.' },
     ],
     relatedSlug: 'mdcat-syllabus',
     indexable: true,
@@ -547,7 +551,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'ECAT 2026 Lahore: UET-Lahore conducted test, Punjab engineering universities, merit, syllabus & free MCQ practice — MCQsAI.',
     keywords: 'ECAT Lahore, ECAT UET Lahore, UET Lahore admission, Lahore engineering universities, ECAT 2026',
     intro:
-      'ECAT in Lahore is conducted by the University of Engineering & Technology (UET), Lahore — the largest engineering admission test in Punjab. Lahore-based candidates take ECAT for admission to UET Lahore main campus, KSK and Narowal sub-campuses, plus most Punjab-government engineering universities. The test is held annually in mid-August at venues across the city including UET Main, Punjab University, and IT University Lahore.',
+      'ECAT in Lahore is conducted by the University of Engineering & Technology (UET), Lahore — the largest engineering admission test in Punjab. Lahore-based candidates take ECAT for admission to UET Lahore main campus, KSK and Narowal sub-campuses, plus most Punjab-government engineering universities. The test is held annually in mid-August at venues across the city including UET Main, Punjab University, and IT University Lahore. This guide covers the colleges, test centres, past merit trends and domicile rules, and links to free chapter-wise MCQ practice. Dates, fees and seat numbers change every year, so treat anything not yet announced as provisional and always confirm the final details in the official notification before you apply.',
     syllabusOrEligibility: [
       'Mathematics — 30 MCQs',
       'Physics — 30 MCQs',
@@ -583,6 +587,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'Who conducts ECAT in Lahore?', a: 'University of Engineering & Technology (UET), Lahore conducts ECAT for Punjab engineering admissions.' },
       { q: 'What is the ECAT 2026 date?', a: 'UET Lahore typically conducts ECAT in the third week of August. The 2026 schedule is announced on uet.edu.pk by June.' },
       { q: 'Is ECAT Lahore harder than NUST entry test?', a: 'Different formats — ECAT is FSc-aligned; NUST NET tests deeper application. Both are competitive at top programs.' },
+      { q: 'Is there negative marking in ECAT?', a: 'Past ECAT papers deducted marks for wrong answers. The 2026 marking scheme is not yet announced, so confirm it in the official UET admission notice.' },
     ],
     relatedSlug: 'ecat-preparation',
     indexable: true,
@@ -595,7 +600,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'CSS exam in Karachi: FPSC regional centre, written test schedule, syllabus, allocation quotas & free MCQ practice — MCQsAI.',
     keywords: 'CSS Karachi, CSS exam Karachi, FPSC Karachi, CSS Sindh quota, CSS preparation',
     intro:
-      'CSS (Central Superior Services) written examination is offered at FPSC\'s Karachi regional centre annually in February–March. Karachi candidates compete under the Sindh (Urban) provincial quota for allocation to elite occupational groups like Foreign Service, PAS, Police Service and Income Tax. The interview stage is centrally conducted at FPSC HQ Islamabad — all shortlisted Karachi candidates travel there for psychological and viva voce assessment.',
+      'CSS (Central Superior Services) written examination is offered at FPSC\'s Karachi regional centre annually in February–March. Karachi candidates compete under the Sindh (Urban) provincial quota for allocation to elite occupational groups like Foreign Service, PAS, Police Service and Income Tax. The interview stage is centrally conducted at FPSC HQ Islamabad — all shortlisted Karachi candidates travel there for psychological and viva voce assessment. This guide covers the colleges, test centres, past merit trends and domicile rules, and links to free chapter-wise MCQ practice. Dates, fees and seat numbers change every year, so treat anything not yet announced as provisional and always confirm the final details in the official notification before you apply.',
     syllabusOrEligibility: [
       '12 papers total: 6 compulsory + 6 optional from designated groups',
       'Compulsory: Essay, English Précis & Composition, GSA, Pakistan Affairs, Islamic/Comparative Studies, Current Affairs',
@@ -618,6 +623,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
       { q: 'Where is the CSS exam centre in Karachi?', a: 'FPSC operates a regional office in Karachi; the written exam is hosted at FPSC Karachi and partner university venues like UoK and NED.' },
       { q: 'Is the CSS interview held in Karachi?', a: 'No. All psychological assessment and viva voce sessions are centralised at FPSC HQ, F-5/1, Islamabad.' },
       { q: 'What is the Sindh Urban CSS quota?', a: 'Sindh Urban (Karachi-domicile) holds a 7.6% allocation quota in the CSS merit list per Establishment Division rules.' },
+      { q: 'When is CSS 2027 registration?', a: 'The registration dates for the next CSS exam are not yet announced. Check fpsc.gov.pk and the official FPSC advertisement for the schedule and fee.' },
     ],
     relatedSlug: 'css',
     indexable: true,
@@ -703,7 +709,7 @@ export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
     metaDescription: 'Class 12 Chemistry MCQs chapter-wise: FSc Part 2 syllabus, board + MDCAT/ECAT pattern questions with explanations — free on MCQsAI.',
     keywords: 'Chemistry MCQs class 12, FSc Part 2 Chemistry, class 12 Chemistry chapter wise MCQs, intermediate chemistry Pakistan',
     intro:
-      'Class 12 (FSc Part 2) Chemistry is the core subject for MDCAT and ECAT entry tests across Pakistan. The National Curriculum syllabus — implemented by Punjab, Sindh, KP, Balochistan and Federal boards — covers Organic Chemistry, Industrial Chemistry, Periodic Classification, Transition Elements, and Environmental Chemistry. Chapter-wise MCQ practice with explanations is the highest-yield strategy for both your board exam and MDCAT/ECAT.',
+      'Class 12 (FSc Part 2) Chemistry is the core subject for MDCAT and ECAT entry tests across Pakistan. The National Curriculum syllabus — implemented by Punjab, Sindh, KP, Balochistan and Federal boards — covers Organic Chemistry, Industrial Chemistry, Periodic Classification, Transition Elements, and Environmental Chemistry. Chapter-wise MCQ practice with explanations is the highest-yield strategy for both your board exam and MDCAT/ECAT. This guide covers the colleges, test centres, past merit trends and domicile rules, and links to free chapter-wise MCQ practice. Dates, fees and seat numbers change every year, so treat anything not yet announced as provisional and always confirm the final details in the official notification before you apply.',
     syllabusOrEligibility: [
       'Chapter 1 — Periodic Classification of Elements',
       'Chapter 2 — s-Block Elements',
