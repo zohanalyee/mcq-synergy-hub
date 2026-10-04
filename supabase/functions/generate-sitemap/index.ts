@@ -22,6 +22,20 @@ async function safeBranch(label: string, fn: () => Promise<Response>): Promise<R
 const BASE_URL = "https://mcqsai.com";
 const ITEMS_PER_SITEMAP = 1000;
 
+// Expired listings stay in the sitemap for EXPIRED_GRACE_DAYS after their
+// deadline, then drop out (page stays live, just noindexed). Must match
+// EXPIRED_GRACE_DAYS in scripts/generate-sitemaps.mjs and OpportunityDetail.tsx.
+const EXPIRED_GRACE_DAYS = 30;
+function pastGrace(deadline: string | null | undefined): boolean {
+  if (!deadline) return false;
+  const d = new Date(`${String(deadline).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return false;
+  d.setDate(d.getDate() + EXPIRED_GRACE_DAYS);
+  const grace = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const pkToday = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  return grace < pkToday;
+}
+
 function toSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
