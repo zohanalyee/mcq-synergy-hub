@@ -17,6 +17,20 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
 import { sanitizeEmailLinks, mailtoForEmailHref, isBareEmailHref } from "@/lib/markdownSanitize";
+import { isExpired, getPakistanToday } from "@/lib/opportunitySorting";
+
+/** Days past the deadline a listing stays indexable before going noindex + leaving the sitemap. */
+const EXPIRED_GRACE_DAYS = 30;
+
+/** True when the deadline passed more than EXPIRED_GRACE_DAYS ago (Pakistan time). */
+const isExpiredPastGrace = (deadlineDate?: string | null): boolean => {
+  if (!deadlineDate) return false;
+  const d = new Date(`${String(deadlineDate).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return false;
+  d.setDate(d.getDate() + EXPIRED_GRACE_DAYS);
+  const grace = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return grace < getPakistanToday();
+};
 import EngagementSection from "@/components/announcements/EngagementSection";
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -209,6 +223,8 @@ const OpportunityDetail = () => {
     .split(/\s+/)
     .filter(Boolean).length;
   const isThinOpp = oppWordCount < 25;
+  const isExpiredOpp = isExpired({ deadline_date: opportunity.deadline_date });
+  const pastGrace = isExpiredPastGrace(opportunity.deadline_date);
 
   return (
     <>
@@ -217,7 +233,7 @@ const OpportunityDetail = () => {
         description={opportunity.description?.substring(0, 160) || `${opportunity.type} opportunity from ${opportunity.organization || opportunity.source_name}`}
         keywords={keywords?.join(', ') || undefined}
         image={opportunity.image_url || undefined}
-        noindex={isThinOpp}
+        noindex={isThinOpp || pastGrace}
       />
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
@@ -284,6 +300,11 @@ const OpportunityDetail = () => {
                     <Calendar className="h-4 w-4" />
                     Deadline: {new Date(opportunity.deadline_date).toLocaleDateString()}
                   </span>
+                )}
+                {isExpiredOpp && (
+                  <Badge className="bg-red-500/10 text-red-400 border-red-500/20">
+                    Application Closed
+                  </Badge>
                 )}
               </div>
 
@@ -471,7 +492,7 @@ const OpportunityDetail = () => {
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
-                {opportunity.apply_url && (
+                {opportunity.apply_url && !isExpiredOpp && (
                   <a
                     href={mailtoForEmailHref(opportunity.apply_url)}
                     {...(isBareEmailHref(opportunity.apply_url)
@@ -483,6 +504,11 @@ const OpportunityDetail = () => {
                       {opportunity.type === "tender" ? "Visit Official Tender Page" : "Apply on Official Website"}
                     </Button>
                   </a>
+                )}
+                {isExpiredOpp && (
+                  <p className="text-sm text-muted-foreground italic">
+                    Applications for this opportunity have closed.
+                  </p>
                 )}
                 {(hasPdf || hasDocument) && (
                   <a href={opportunity.document_url!} target="_blank" rel="noopener noreferrer">

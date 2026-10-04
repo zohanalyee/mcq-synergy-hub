@@ -22,6 +22,20 @@ async function safeBranch(label: string, fn: () => Promise<Response>): Promise<R
 const BASE_URL = "https://mcqsai.com";
 const ITEMS_PER_SITEMAP = 1000;
 
+// Expired listings stay in the sitemap for EXPIRED_GRACE_DAYS after their
+// deadline, then drop out (page stays live, just noindexed). Must match
+// EXPIRED_GRACE_DAYS in scripts/generate-sitemaps.mjs and OpportunityDetail.tsx.
+const EXPIRED_GRACE_DAYS = 30;
+function pastGrace(deadline: string | null | undefined): boolean {
+  if (!deadline) return false;
+  const d = new Date(`${String(deadline).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return false;
+  d.setDate(d.getDate() + EXPIRED_GRACE_DAYS);
+  const grace = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const pkToday = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  return grace < pkToday;
+}
+
 function toSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
@@ -116,20 +130,20 @@ Deno.serve(async (req) => {
       return await safeBranch("jobs", async () => {
         const { data: ciJobs } = await supabase
           .from("content_items")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline")
           .eq("category", "job")
           .eq("status", "approved");
 
         const { data: eoJobs } = await supabase
           .from("external_opportunities")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline_date")
           .eq("type", "job")
           .eq("status", "approved");
 
         const allJobs = [
-          ...(ciJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
-          ...(eoJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
-        ];
+          ...(ciJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0], deadline: j.deadline })),
+          ...(eoJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0], deadline: j.deadline_date })),
+        ].filter(j => !pastGrace(j.deadline));
         return new Response(generateUrlSetFromSlugs(allJobs, "/opportunity/"), { headers: corsHeaders });
       });
     }
@@ -138,20 +152,20 @@ Deno.serve(async (req) => {
       return await safeBranch("scholarships", async () => {
         const { data: ciSchol } = await supabase
           .from("content_items")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline")
           .eq("category", "scholarship")
           .eq("status", "approved");
 
         const { data: eoSchol } = await supabase
           .from("external_opportunities")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline_date")
           .eq("type", "scholarship")
           .eq("status", "approved");
 
         const allSchol = [
-          ...(ciSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
-          ...(eoSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
-        ];
+          ...(ciSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0], deadline: s.deadline })),
+          ...(eoSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0], deadline: s.deadline_date })),
+        ].filter(s => !pastGrace(s.deadline));
         return new Response(generateUrlSetFromSlugs(allSchol, "/opportunity/"), { headers: corsHeaders });
       });
     }
