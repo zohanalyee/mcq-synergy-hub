@@ -184,19 +184,37 @@ function wordCount(s) {
     .filter(Boolean).length;
 }
 
+// ---------- expired-listing grace period (must match OpportunityDetail.tsx) ----------
+// Listings stay in the sitemap for EXPIRED_GRACE_DAYS after their deadline
+// (candidates still search result/merit-list info), then drop out. Data is
+// never deleted — the page still returns 200, just noindexed.
+const EXPIRED_GRACE_DAYS = 30;
+function pastGrace(deadline) {
+  if (!deadline) return false;
+  const d = new Date(`${String(deadline).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return false;
+  d.setDate(d.getDate() + EXPIRED_GRACE_DAYS);
+  const grace = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const pkToday = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
+  return grace < pkToday;
+}
+
 // ---------- DB-backed sitemaps ----------
 async function buildOpportunitySitemap(category, type, fileName) {
   const [{ data: ci }, { data: eo }] = await Promise.all([
-    supabase.from("content_items").select("id,title,description,updated_at").eq("category", category).eq("status", "approved"),
-    supabase.from("external_opportunities").select("id,title,description,updated_at").eq("type", type).eq("status", "approved"),
+    supabase.from("content_items").select("id,title,description,updated_at,deadline").eq("category", category).eq("status", "approved"),
+    supabase.from("external_opportunities").select("id,title,description,updated_at,deadline_date").eq("type", type).eq("status", "approved"),
   ]);
   const seen = new Set();
   let dropped = 0;
+  let droppedExpired = 0;
   const items = [...(ci || []), ...(eo || [])]
     .filter(r => { if (wordCount(r.description) >= OPPORTUNITY_MIN_WORDS) return true; dropped++; return false; })
+    .filter(r => { if (!pastGrace(r.deadline || r.deadline_date)) return true; droppedExpired++; return false; })
     .map(r => ({ slug: generateSlugUrl(r.title, r.id), lastmod: (r.updated_at || "").split("T")[0] || today }))
     .filter(i => { if (seen.has(i.slug)) return false; seen.add(i.slug); return true; });
   if (dropped) console.log(`[sitemap] ${fileName}: dropped ${dropped} thin opportunity URLs (< ${OPPORTUNITY_MIN_WORDS} words)`);
+  if (droppedExpired) console.log(`[sitemap] ${fileName}: dropped ${droppedExpired} expired URLs (deadline passed > ${EXPIRED_GRACE_DAYS} days ago)`);
   write(fileName, urlSet(items.map(i => ({
     loc: `${BASE_URL}/opportunity/${i.slug}`, lastmod: i.lastmod, freq: "weekly", priority: "0.6",
   }))));
