@@ -17,6 +17,20 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
 import { sanitizeEmailLinks, mailtoForEmailHref, isBareEmailHref } from "@/lib/markdownSanitize";
+import { isExpired, getPakistanToday } from "@/lib/opportunitySorting";
+
+/** Days past the deadline a listing stays indexable before going noindex + leaving the sitemap. */
+const EXPIRED_GRACE_DAYS = 30;
+
+/** True when the deadline passed more than EXPIRED_GRACE_DAYS ago (Pakistan time). */
+const isExpiredPastGrace = (deadlineDate?: string | null): boolean => {
+  if (!deadlineDate) return false;
+  const d = new Date(`${String(deadlineDate).slice(0, 10)}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return false;
+  d.setDate(d.getDate() + EXPIRED_GRACE_DAYS);
+  const grace = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  return grace < getPakistanToday();
+};
 import EngagementSection from "@/components/announcements/EngagementSection";
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -209,6 +223,8 @@ const OpportunityDetail = () => {
     .split(/\s+/)
     .filter(Boolean).length;
   const isThinOpp = oppWordCount < 25;
+  const isExpiredOpp = isExpired(opportunity);
+  const pastGrace = isExpiredPastGrace(opportunity.deadline_date);
 
   return (
     <>
