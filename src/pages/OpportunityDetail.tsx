@@ -223,7 +223,7 @@ const OpportunityDetail = () => {
     .split(/\s+/)
     .filter(Boolean).length;
   const isThinOpp = oppWordCount < 25;
-  const isExpiredOpp = isExpired(opportunity);
+  const isExpiredOpp = isExpired({ deadline_date: opportunity.deadline_date });
   const pastGrace = isExpiredPastGrace(opportunity.deadline_date);
 
   return (
