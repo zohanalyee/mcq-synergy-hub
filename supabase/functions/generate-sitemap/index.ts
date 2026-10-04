@@ -116,20 +116,20 @@ Deno.serve(async (req) => {
       return await safeBranch("jobs", async () => {
         const { data: ciJobs } = await supabase
           .from("content_items")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline")
           .eq("category", "job")
           .eq("status", "approved");
 
         const { data: eoJobs } = await supabase
           .from("external_opportunities")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline_date")
           .eq("type", "job")
           .eq("status", "approved");
 
         const allJobs = [
-          ...(ciJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
-          ...(eoJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0] })),
-        ];
+          ...(ciJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0], deadline: j.deadline })),
+          ...(eoJobs || []).map(j => ({ slug: generateSlugUrl(j.title, j.id), lastmod: j.updated_at.split("T")[0], deadline: j.deadline_date })),
+        ].filter(j => !pastGrace(j.deadline));
         return new Response(generateUrlSetFromSlugs(allJobs, "/opportunity/"), { headers: corsHeaders });
       });
     }
@@ -138,20 +138,20 @@ Deno.serve(async (req) => {
       return await safeBranch("scholarships", async () => {
         const { data: ciSchol } = await supabase
           .from("content_items")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline")
           .eq("category", "scholarship")
           .eq("status", "approved");
 
         const { data: eoSchol } = await supabase
           .from("external_opportunities")
-          .select("id, title, updated_at")
+          .select("id, title, updated_at, deadline_date")
           .eq("type", "scholarship")
           .eq("status", "approved");
 
         const allSchol = [
-          ...(ciSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
-          ...(eoSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0] })),
-        ];
+          ...(ciSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0], deadline: s.deadline })),
+          ...(eoSchol || []).map(s => ({ slug: generateSlugUrl(s.title, s.id), lastmod: s.updated_at.split("T")[0], deadline: s.deadline_date })),
+        ].filter(s => !pastGrace(s.deadline));
         return new Response(generateUrlSetFromSlugs(allSchol, "/opportunity/"), { headers: corsHeaders });
       });
     }
