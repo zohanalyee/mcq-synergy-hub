@@ -233,7 +233,7 @@ const OpportunityDetail = () => {
         description={opportunity.description?.substring(0, 160) || `${opportunity.type} opportunity from ${opportunity.organization || opportunity.source_name}`}
         keywords={keywords?.join(', ') || undefined}
         image={opportunity.image_url || undefined}
-        noindex={isThinOpp}
+        noindex={isThinOpp || pastGrace}
       />
       {jsonLd && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
@@ -300,6 +300,11 @@ const OpportunityDetail = () => {
                     <Calendar className="h-4 w-4" />
                     Deadline: {new Date(opportunity.deadline_date).toLocaleDateString()}
                   </span>
+                )}
+                {isExpiredOpp && (
+                  <Badge className="bg-red-500/10 text-red-400 border-red-500/20">
+                    Application Closed
+                  </Badge>
                 )}
               </div>
 
@@ -487,7 +492,7 @@ const OpportunityDetail = () => {
 
               {/* Action buttons */}
               <div className="flex flex-wrap gap-3 pt-2">
-                {opportunity.apply_url && (
+                {opportunity.apply_url && !isExpiredOpp && (
                   <a
                     href={mailtoForEmailHref(opportunity.apply_url)}
                     {...(isBareEmailHref(opportunity.apply_url)
@@ -499,6 +504,11 @@ const OpportunityDetail = () => {
                       {opportunity.type === "tender" ? "Visit Official Tender Page" : "Apply on Official Website"}
                     </Button>
                   </a>
+                )}
+                {isExpiredOpp && (
+                  <p className="text-sm text-muted-foreground italic">
+                    Applications for this opportunity have closed.
+                  </p>
                 )}
                 {(hasPdf || hasDocument) && (
                   <a href={opportunity.document_url!} target="_blank" rel="noopener noreferrer">
