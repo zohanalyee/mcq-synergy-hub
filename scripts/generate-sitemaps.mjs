@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { PROG_SEO_SLUGS } from "./prog-seo-gate.mjs";
+import { examPassesGate } from "../src/lib/examQualityGate.js";
 // Build-time sitemap generator.
 // Writes same-origin (mcqsai.com) static XML files into public/sitemaps/
 // so Google never sees cross-domain (supabase.co) sitemap URLs.
