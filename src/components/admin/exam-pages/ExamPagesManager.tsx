@@ -249,12 +249,12 @@ function FactField({ name, value, onChange }: { name: string; value: unknown; on
   );
 
   if (typeof value === "string" || value == null) {
-    const long = (value ?? "").length > 90;
+    const str = (value as string | null) ?? ""; const long = str.length > 90;
     return (
       <div className="space-y-1">
         <div className="flex justify-between"><span className="text-xs font-medium text-muted-foreground">{label(name)}</span>{toggle}</div>
-        {long ? <Textarea rows={3} value={value ?? ""} onChange={(e) => onChange(e.target.value)} />
-              : <Input value={value ?? ""} onChange={(e) => onChange(e.target.value)} />}
+        {long ? <Textarea rows={3} value={str} onChange={(e) => onChange(e.target.value)} />
+              : <Input value={str} onChange={(e) => onChange(e.target.value)} />}
       </div>
     );
   }
