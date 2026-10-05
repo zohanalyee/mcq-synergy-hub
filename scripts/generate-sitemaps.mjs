@@ -129,8 +129,9 @@ const TOOL_PATHS = [
 
 
 
-// Keep in sync with the "/exams/*" entries of PRERENDER_ROUTES in vite.config.ts.
-const EXAM_SLUGS = ["mdcat","ecat","css","ppsc","fpsc","nts","pms"];
+// /exams/* entries come from the exam_pages snapshot (refreshed from the DB by
+// fetch-exam-facts.mjs) filtered by the shared examPassesGate() — never a hand list.
+const EXAM_ROWS = JSON.parse(readFileSync(resolve(__dirname, "../src/data/examFactsSnapshot.json"), "utf8"));
 
 function writeStatic() {
   write("static.xml", urlSet(STATIC_PAGES.map(p => ({
@@ -143,24 +144,17 @@ function writeTools() {
   }))));
 }
 function writeExams() {
+  const rows = EXAM_ROWS.filter(examPassesGate);
+  const held = EXAM_ROWS.length - rows.length;
+  if (held) console.log(`[sitemap] exams.xml: ${held} exam page(s) held back by the quality gate`);
   write("exams.xml", urlSet([
     { loc: `${BASE_URL}/exams`, lastmod: today, freq: "weekly", priority: "0.8" },
-    ...EXAM_SLUGS.map(s => ({
-      loc: `${BASE_URL}/exams/${s}`, lastmod: today, freq: "monthly", priority: "0.8",
-    })),
-    // Standalone admission-test guides: lastmod = each page's official verifiedOn date.
-    ...Object.entries(ADMISSION_GUIDE_LASTMOD).map(([s, d]) => ({
-      loc: `${BASE_URL}/exams/${s}`, lastmod: d, freq: "monthly", priority: "0.7",
-    })),
+    ...rows.map(r => r.kind === "generic"
+      ? { loc: `${BASE_URL}/exams/${r.slug}`, lastmod: today, freq: "monthly", priority: "0.8" }
+      // Admission-test guides: lastmod = the page's official verified-on date.
+      : { loc: `${BASE_URL}/exams/${r.slug}`, lastmod: r.verified_on || today, freq: "monthly", priority: "0.7" }),
   ]));
 }
-
-// karachi-university intentionally excluded until its paper details are filled in.
-const ADMISSION_GUIDE_LASTMOD = {
-  "usat": "2026-09-25", "pieas": "2026-09-24", "sindh-university": "2026-09-20",
-  "lums": "2026-09-25", "giki": "2026-09-25", "aku": "2026-09-25", "nat": "2026-09-20",
-  "uet-lahore": "2026-09-24", "air-university": "2026-09-24", "hec-gat-subject": "2026-09-25",
-};
 function writeProgSeo() {
   const entries = [
     { loc: `${BASE_URL}/p`, lastmod: today, freq: "weekly", priority: "0.7" },
