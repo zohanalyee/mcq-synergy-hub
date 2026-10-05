@@ -1508,6 +1508,69 @@ export type Database = {
         }
         Relationships: []
       }
+      exam_pages: {
+        Row: {
+          created_at: string
+          facts: Json
+          include_in_sitemap: boolean
+          kind: string
+          slug: string
+          status: string
+          test_date: string | null
+          updated_at: string
+          updated_by: string | null
+          verified_on: string | null
+        }
+        Insert: {
+          created_at?: string
+          facts?: Json
+          include_in_sitemap?: boolean
+          kind?: string
+          slug: string
+          status?: string
+          test_date?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          verified_on?: string | null
+        }
+        Update: {
+          created_at?: string
+          facts?: Json
+          include_in_sitemap?: boolean
+          kind?: string
+          slug?: string
+          status?: string
+          test_date?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          verified_on?: string | null
+        }
+        Relationships: []
+      }
+      exam_pages_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          id: string
+          old_row: Json
+          slug: string
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          old_row: Json
+          slug: string
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          old_row?: Json
+          slug?: string
+        }
+        Relationships: []
+      }
       external_opportunities: {
         Row: {
           amount: string | null

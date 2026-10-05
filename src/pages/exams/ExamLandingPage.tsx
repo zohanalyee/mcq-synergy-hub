@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
+import { useExamFacts } from '@/lib/examFacts';
 import { examsData } from '@/data/examData';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,7 +16,8 @@ import { MdcatCountdown, MdcatWeightageTable, MdcatContextualLinks, MdcatTestDay
 const ExamLandingPage = () => {
   const { examSlug } = useParams<{ examSlug: string }>();
   const navigate = useNavigate();
-  const exam = examSlug ? examsData[examSlug] : null;
+  // Facts come from exam_pages (snapshot at build, live row after load); code data is the fallback.
+  const exam = useExamFacts(examSlug ?? '', examSlug ? examsData[examSlug] ?? null : null);
 
   if (!exam) return <NotFound />;
 

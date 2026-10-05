@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
+import { getExamTestDate } from '@/lib/examFacts';
 
-/** Official rescheduled MDCAT 2026 test date (PM&DC notice + STS press release). */
-const MDCAT_DATE = new Date('2026-09-20T00:00:00+05:00');
+/** MDCAT test date from the exam_pages row (admin-editable); code fallback = official 2026 date. */
+const MDCAT_DATE = getExamTestDate('mdcat', '2026-09-20');
 
 /** Computed at render time so prerendered HTML never ships a stale number. */
 export const daysUntilMdcat = () =>

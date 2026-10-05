@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.snapshot_exam_page() FROM PUBLIC, anon, authenticated;

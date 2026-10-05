@@ -1,11 +1,12 @@
 import SEOHead from '@/components/SEOHead';
+import { getExamTestDate } from '@/lib/examFacts';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
 import { MdcatContextualLinks, MdcatTestDayBlock } from '@/components/mdcat/MdcatSprintBlocks';
 
 /** Official rescheduled MDCAT 2026 test date (PM&DC notice + STS press release). */
-const MDCAT_DATE = new Date('2026-09-20T00:00:00+05:00');
+const MDCAT_DATE = getExamTestDate('mdcat', '2026-09-20');
 
 const daysUntilMdcat = () => {
   const now = new Date();

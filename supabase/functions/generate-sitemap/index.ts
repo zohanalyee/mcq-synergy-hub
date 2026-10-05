@@ -123,7 +123,7 @@ Deno.serve(async (req) => {
 
     if (type === "exams") {
       return await safeBranch("exams", async () =>
-        new Response(generateExamsSitemap(), { headers: corsHeaders }));
+        new Response(await generateExamsSitemap(supabase), { headers: corsHeaders }));
     }
 
     if (type === "jobs") {
@@ -369,18 +369,28 @@ ${entries.join("\n")}
 </urlset>`;
 }
 
-const EXAM_SLUGS = [
-  "mdcat", "ecat", "css", "ppsc", "fpsc", "nts", "pms",
-  // Admission-test guides (karachi-university held until content is complete)
-  "usat", "pieas", "sindh-university", "lums", "giki", "aku", "nat",
-  "uet-lahore", "air-university", "hec-gat-subject",
-];
+// Must match src/lib/examQualityGate.js (examPassesGate).
+// deno-lint-ignore no-explicit-any
+function examPassesGate(row: any): boolean {
+  if (!row) return false;
+  if ((row.status ?? "published") !== "published") return false;
+  if (row.include_in_sitemap === false) return false;
+  if (row.kind !== "admission") return true;
+  const url = row.facts?.officialUrl;
+  return typeof url === "string" && url.trim().length > 0;
+}
 
-function generateExamsSitemap(): string {
+// deno-lint-ignore no-explicit-any
+async function generateExamsSitemap(supabase: any): Promise<string> {
   const now = new Date().toISOString().split("T")[0];
-  const urls = EXAM_SLUGS.map(
-    (slug) =>
-      `<url><loc>${BASE_URL}/exams/${slug}</loc><lastmod>${now}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>`
+  const { data, error } = await supabase
+    .from("exam_pages")
+    .select("slug,kind,facts,status,include_in_sitemap,verified_on")
+    .eq("status", "published");
+  if (error) throw error;
+  // deno-lint-ignore no-explicit-any
+  const urls = (data || []).filter(examPassesGate).map((r: any) =>
+    `<url><loc>${BASE_URL}/exams/${r.slug}</loc><lastmod>${r.kind === "generic" ? now : (r.verified_on || now)}</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>`
   );
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

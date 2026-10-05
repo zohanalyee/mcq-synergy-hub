@@ -1,0 +1,1649 @@
+[
+ {
+  "slug": "mdcat",
+  "kind": "generic",
+  "facts": {
+   "duration": "3.5 hours",
+   "examBody": "Pakistan Medical Commission (PMC)",
+   "subjects": [
+    "Biology",
+    "Chemistry",
+    "Physics",
+    "English"
+   ],
+   "frequency": "Once a year (August-September)",
+   "metaTitle": "MDCAT Preparation 2025 – Free MCQs & Past Papers",
+   "totalMarks": "200",
+   "eligibility": [
+    "Intermediate (FSc Pre-Medical) with at least 65% marks",
+    "A-Levels with equivalent biology/chemistry subjects",
+    "Pakistani national or overseas Pakistani"
+   ],
+   "officialUrl": "https://www.pmc.gov.pk",
+   "metaDescription": "Prepare for MDCAT with 1000+ MCQs, past papers, study guides, and AI-powered practice tests. Biology, Chemistry, Physics & English prep for Pakistani medical students."
+  },
+  "test_date": "2026-09-20",
+  "verified_on": null,
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "ecat",
+  "kind": "generic",
+  "facts": {
+   "duration": "2 hours",
+   "examBody": "UET Lahore / respective university",
+   "subjects": [
+    "Mathematics",
+    "Physics",
+    "Chemistry",
+    "English"
+   ],
+   "frequency": "Once a year (July-August)",
+   "metaTitle": "ECAT Preparation 2025 – Free MCQs & Tests",
+   "totalMarks": "400",
+   "eligibility": [
+    "Intermediate (FSc Pre-Engineering) with at least 60% marks",
+    "A-Levels with equivalent math/physics subjects",
+    "Pakistani national"
+   ],
+   "metaDescription": "Ace your ECAT exam with free MCQs, past papers, and AI-powered tests. Mathematics, Physics, Chemistry & English preparation for engineering admissions in Pakistan."
+  },
+  "test_date": null,
+  "verified_on": null,
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "css",
+  "kind": "generic",
+  "facts": {
+   "duration": "3 hours per paper",
+   "examBody": "Federal Public Service Commission (FPSC)",
+   "subjects": [
+    "English Essay",
+    "English Precis & Composition",
+    "Current Affairs",
+    "Pakistan Affairs",
+    "Islamic Studies",
+    "Optional Subjects"
+   ],
+   "frequency": "Once a year (February)",
+   "metaTitle": "CSS Preparation 2025 – MCQs & Past Papers",
+   "totalMarks": "1200 (12 papers × 100)",
+   "eligibility": [
+    "Bachelor's degree from a recognized university",
+    "Age 21-30 years (relaxable for government employees)",
+    "Pakistani citizen",
+    "Domicile holder of any province/territory"
+   ],
+   "officialUrl": "https://www.fpsc.gov.pk",
+   "metaDescription": "Prepare for CSS examination with comprehensive MCQs, past papers, and expert tips. Pakistan Affairs, Current Affairs, English, and optional subjects preparation."
+  },
+  "test_date": null,
+  "verified_on": null,
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "ppsc",
+  "kind": "generic",
+  "facts": {
+   "duration": "Varies by test",
+   "examBody": "Punjab Public Service Commission",
+   "subjects": [
+    "General Knowledge",
+    "Pakistan Studies",
+    "Current Affairs",
+    "Islamic Studies",
+    "English",
+    "Subject-specific topics"
+   ],
+   "frequency": "Multiple times a year",
+   "metaTitle": "PPSC Test Prep 2025 – Free MCQs & Past Papers",
+   "totalMarks": "Varies by test",
+   "eligibility": [
+    "Varies by post – typically graduation or above",
+    "Punjab domicile for provincial posts",
+    "Age limits vary by position"
+   ],
+   "officialUrl": "https://www.ppsc.gop.pk",
+   "metaDescription": "Prepare for PPSC tests with free MCQs, past papers, and practice tests. General knowledge, Pakistan studies, current affairs, and subject-specific preparation."
+  },
+  "test_date": null,
+  "verified_on": null,
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "fpsc",
+  "kind": "generic",
+  "facts": {
+   "duration": "Varies by test",
+   "examBody": "Federal Public Service Commission",
+   "subjects": [
+    "General Knowledge",
+    "Current Affairs",
+    "Pakistan Affairs",
+    "English",
+    "Islamic Studies",
+    "Subject-specific topics"
+   ],
+   "frequency": "Multiple times a year",
+   "metaTitle": "FPSC Test Prep 2025 – MCQs & Practice Tests",
+   "totalMarks": "Varies by test",
+   "eligibility": [
+    "Varies by post and exam type",
+    "Pakistani citizen with valid CNIC",
+    "Educational requirements vary by position"
+   ],
+   "officialUrl": "https://www.fpsc.gov.pk",
+   "metaDescription": "Prepare for FPSC exams including CSS, federal government jobs with free MCQs, past papers, and AI-powered practice tests on MCQsAI."
+  },
+  "test_date": null,
+  "verified_on": null,
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "nts",
+  "kind": "generic",
+  "facts": {
+   "duration": "2-3 hours",
+   "examBody": "National Testing Service Pakistan",
+   "subjects": [
+    "Quantitative Reasoning",
+    "Analytical Reasoning",
+    "Verbal Ability",
+    "Subject Knowledge"
+   ],
+   "frequency": "Multiple times a year",
+   "metaTitle": "NTS Test Prep 2025 – Free MCQs & Past Papers",
+   "totalMarks": "100 (typically)",
+   "eligibility": [
+    "NAT: Intermediate or equivalent for undergraduate admissions",
+    "GAT: Bachelor's degree for graduate program admissions",
+    "Job tests: As per hiring organization requirements"
+   ],
+   "officialUrl": "https://www.nts.org.pk",
+   "metaDescription": "Prepare for NTS tests with free MCQs, past papers, and AI practice. GAT, NAT, and job-specific test preparation for Pakistani students and professionals."
+  },
+  "test_date": null,
+  "verified_on": null,
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "pms",
+  "kind": "generic",
+  "facts": {
+   "duration": "3 hours per paper",
+   "examBody": "Punjab Public Service Commission (PPSC)",
+   "subjects": [
+    "English Essay",
+    "English (Precis & Composition)",
+    "General Knowledge",
+    "Islamic Studies",
+    "Pakistan Affairs",
+    "Current Affairs",
+    "Optional Subjects"
+   ],
+   "frequency": "Once a year (announcement-based)",
+   "metaTitle": "PMS Preparation 2025 – MCQs & Past Papers",
+   "totalMarks": "1200 (written) + 300 (interview/psychological)",
+   "eligibility": [
+    "Bachelor's degree (second division or above) from a recognized university",
+    "Age 21-30 years (relaxable as per provincial rules)",
+    "Domicile of the relevant province",
+    "Pakistani citizen with valid CNIC"
+   ],
+   "officialUrl": "https://www.ppsc.gop.pk",
+   "metaDescription": "Prepare for the PMS exam with free MCQs, past papers, and AI practice tests. General Knowledge, Pakistan Affairs, Current Affairs, Islamiat & English preparation."
+  },
+  "test_date": null,
+  "verified_on": null,
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "nums",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "55 MCQs",
+     "weight": "37.0%",
+     "section": "Biology (Paper-I)"
+    },
+    {
+     "detail": "40 MCQs",
+     "weight": "26.5%",
+     "section": "Chemistry (Paper-I)"
+    },
+    {
+     "detail": "40 MCQs",
+     "weight": "26.5%",
+     "section": "Physics (Paper-I)"
+    },
+    {
+     "detail": "15 MCQs",
+     "weight": "10.0%",
+     "section": "English (Paper-I)"
+    },
+    {
+     "detail": "150 MCQs in 2 hours 45 minutes",
+     "weight": "100% of Paper-I",
+     "section": "Paper-I total"
+    },
+    {
+     "detail": "50 MCQs in 15 minutes",
+     "weight": "5% of aggregate",
+     "section": "Psychological Test (Paper-II)"
+    }
+   ],
+   "duration": "Paper-I: 2 hours 45 minutes + Paper-II: 15 minutes",
+   "examBody": "National University of Medical Sciences (NUMS)",
+   "keyDates": [
+    {
+     "event": "Online registration starts",
+     "value": "Monday, 18 May 2026"
+    },
+    {
+     "event": "Online registration ends",
+     "value": "Monday, 22 June 2026 by 1600 hours"
+    },
+    {
+     "event": "Registration with late fee ends",
+     "value": "Wednesday, 19 August 2026 by 1600 hours"
+    },
+    {
+     "event": "Application portal status",
+     "value": "Reopened per the latest NUMS notice — check the official page before applying"
+    },
+    {
+     "event": "NUMS MDCAT-2026 test",
+     "value": "Sunday, 13 September 2026, 10:00 AM"
+    },
+    {
+     "event": "Processing fee (local centres)",
+     "value": "PKR 7,500 regular / PKR 8,500 with late fee (non-refundable, non-transferable)"
+    },
+    {
+     "event": "Processing fee (KSA centre)",
+     "value": "PKR 40,000 regular / PKR 50,000 with late fee"
+    },
+    {
+     "event": "Result / merit list date",
+     "value": "Not yet announced"
+    }
+   ],
+   "subjects": [
+    "Biology",
+    "Chemistry",
+    "Physics",
+    "English",
+    "Psychological Test"
+   ],
+   "testDate": "Sunday, 13 September 2026, 10:00 AM PST (postponed from the earlier date; local centres start simultaneously)",
+   "frequency": "Once a year",
+   "metaTitle": "NUMS MDCAT 2026 – Test Date, Pattern & Free MCQs",
+   "totalMarks": "200 MCQs (150 + 50)",
+   "verifiedOn": "22 August 2026",
+   "eligibility": [
+    "Candidates holding valid Pakistani citizenship, Overseas Pakistanis, dual nationals and foreign nationals may appear.",
+    "FSc / HSSC / A-Levels / 12th Grade candidates, including result-awaiting candidates, can apply.",
+    "Candidates below 18 years of age must hold a valid Juvenile Card issued by NADRA.",
+    "Only NUMS MDCAT-2026 (held 13 September 2026) is valid for MBBS/BDS admission in NUMS constituent, affiliated and Armed Forces administered colleges for Session 2026-27.",
+    "The subject test is mandatory for admission to all the listed medical and dental colleges."
+   ],
+   "officialUrl": "https://numspak.edu.pk",
+   "patternNote": "Format: paper-based MCQs, one best answer. Official difficulty split — 20% easy, 60% moderate, 20% hard. In Biology, Chemistry and Physics, 70% of questions are recall level and 30% application level. Mobile phones, smart watches and other electronic gadgets are not allowed in the examination hall. (Source: NUMS MDCAT-2026 Syllabus / Table of Specifications.)",
+   "metaDescription": "NUMS MDCAT 2026 is on Sunday, 13 September 2026. Official pattern: Paper-I 150 MCQs (Bio 55, Chem 40, Phys 40, Eng 15) + Paper-II 50 psychological MCQs. Free practice MCQs.",
+   "officialSources": [
+    {
+     "url": "https://numspak.edu.pk/news-detail/nums-mdcat-2026-for-admissions-in-mbbs-bds-session-2026-27",
+     "label": "NUMS MDCAT-2026 official notice (test date, schedule, eligibility, fee)"
+    },
+    {
+     "url": "http://numspak.edu.pk/upload/media/2026-NUMS-Updated-MDCAT-TOS-2026_1779075557.pdf",
+     "label": "NUMS MDCAT-2026 Syllabus / Table of Specifications (PDF)"
+    },
+    {
+     "url": "http://numspak.edu.pk/upload/media/2026-Advertisement-for-NUMS-MDCAT-2026_1779075470.pdf",
+     "label": "NUMS MDCAT-2026 advertisement (PDF)"
+    },
+    {
+     "url": "https://numspak.edu.pk/admissions-details",
+     "label": "NUMS admissions announcements"
+    }
+   ]
+  },
+  "test_date": "2026-09-13",
+  "verified_on": "2026-08-22",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "iba-sukkur",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "Assesses analytical skills, logical reasoning, reading comprehension and grammatical range",
+     "weight": "Qualifying stage",
+     "section": "Written aptitude test"
+    },
+    {
+     "detail": "Communication skills, confidence, maturity and leadership qualities are assessed",
+     "weight": "Selection stage",
+     "section": "Group discussion"
+    },
+    {
+     "detail": "Evaluates the applicant's maturity, motivation, interpersonal skills and career focus",
+     "weight": "Selection stage",
+     "section": "Interview"
+    },
+    {
+     "detail": "Qualify the written test, complete six months of classes and maintain a 2.2 CGPA to progress to a degree programme",
+     "weight": "Alternative route",
+     "section": "Foundation Semester route"
+    }
+   ],
+   "duration": "Not officially published — see the official sample papers",
+   "examBody": "Sukkur IBA University (testing by SIBA Testing Services, STS)",
+   "keyDates": [
+    {
+     "event": "Undergraduate Admissions 2026 — Phase-I",
+     "value": "Announced 13 April 2026 (closed)"
+    },
+    {
+     "event": "Undergraduate Admissions 2026 — Phase-II",
+     "value": "Last date 15 June 2026 (closed)"
+    },
+    {
+     "event": "Next phase test date",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Where dates are published",
+     "value": "Official admissions announcements page (linked below)"
+    }
+   ],
+   "subjects": [
+    "Analytical skills",
+    "Logical reasoning",
+    "Reading comprehension",
+    "English grammar / grammatical range"
+   ],
+   "testDate": "Not yet announced for the next phase — Sukkur IBA publishes each test date on its admissions announcements page",
+   "frequency": "Phase-wise with each admission cycle (multiple phases per year)",
+   "metaTitle": "Sukkur IBA Admission Test – Pattern, Eligibility & Free MCQs",
+   "totalMarks": "Not officially published",
+   "verifiedOn": "22 August 2026",
+   "eligibility": [
+    "BBA / BS programmes: Intermediate or F.Sc with a minimum of 50% marks in the annual examination.",
+    "Engineering programmes (e.g. Computer Systems / Electrical): Intermediate or F.Sc in the Pre-Engineering group with a minimum of 60% marks.",
+    "Graduate programmes: 16 years of education from a recognised university with a minimum of 60% marks or 2.2 CGPA.",
+    "Graduate applicants must clear the Sukkur IBA entry test or hold a minimum 50% score in NTS GAT-General.",
+    "A-Levels and American High School Diploma holders are considered with an HEC equivalence certificate.",
+    "Undergraduate applicants must have completed HSC (or equivalent) by the interview stage; result-awaiting applicants must show no shortcoming in the first year and may get provisional admission."
+   ],
+   "officialUrl": "https://www.iba-suk.edu.pk",
+   "patternNote": "Sukkur IBA does not publish a fixed MCQ count, marks breakdown or test duration in its admission procedure document, so those figures are shown as “not officially published” here. The university does publish programme-wise sample papers — use those for the real question style. Selection is strictly on merit and seat availability, and Sukkur IBA does not accept credit transfers from other institutions.",
+   "metaDescription": "Sukkur IBA University aptitude test: analytical skills, logical reasoning, reading comprehension and grammar, followed by group discussion and interview. Eligibility, routes and free practice MCQs.",
+   "officialSources": [
+    {
+     "url": "https://www.iba-suk.edu.pk/admission/under-graduate-program/admission-procedures",
+     "label": "Sukkur IBA — undergraduate admission procedure and policies"
+    },
+    {
+     "url": "https://www.iba-suk.edu.pk/Content/pdf/admissions/Admission%20Proceedures.pdf",
+     "label": "Sukkur IBA — Admission Procedures (official PDF, eligibility and routes)"
+    },
+    {
+     "url": "https://www.iba-suk.edu.pk/CSE/AdmProc",
+     "label": "Sukkur IBA — aptitude test, group discussion and interview (Computer Systems Engineering)"
+    },
+    {
+     "url": "https://iba-suk.edu.pk/admissions/sample-papers",
+     "label": "Sukkur IBA — official sample papers"
+    },
+    {
+     "url": "https://www.iba-suk.edu.pk/admissions/announcements",
+     "label": "Sukkur IBA — admissions announcements (phase dates)"
+    },
+    {
+     "url": "https://sts.net.pk/",
+     "label": "SIBA Testing Services (STS) — official website"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-08-22",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "lat",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "Either in English or Urdu, 200 words maximum",
+     "weight": "15 marks",
+     "section": "Essay"
+    },
+    {
+     "detail": "Either in English or Urdu, 200 words maximum",
+     "weight": "10 marks",
+     "section": "Personal Statement"
+    },
+    {
+     "detail": "Synonyms, antonyms and prepositions",
+     "weight": "20 marks",
+     "section": "MCQs — English"
+    },
+    {
+     "detail": "General awareness MCQs",
+     "weight": "20 marks",
+     "section": "MCQs — General Knowledge"
+    },
+    {
+     "detail": "Islamiyat MCQs",
+     "weight": "10 marks",
+     "section": "MCQs — Islamic Studies"
+    },
+    {
+     "detail": "Pakistan Studies MCQs",
+     "weight": "10 marks",
+     "section": "MCQs — Pakistan Studies"
+    },
+    {
+     "detail": "Vocabulary",
+     "weight": "10 marks",
+     "section": "MCQs — Urdu"
+    },
+    {
+     "detail": "Basic Math",
+     "weight": "05 marks",
+     "section": "MCQs — Math"
+    },
+    {
+     "detail": "Written sections plus MCQ sections",
+     "weight": "100 marks",
+     "section": "Total"
+    }
+   ],
+   "duration": "Not officially stated in the Supreme Court directions or the PBC Legal Education Rules — check the HEC roll-number slip for your session",
+   "examBody": "Higher Education Commission of Pakistan (executing institution) under Supreme Court directions and Pakistan Bar Council rules",
+   "keyDates": [
+    {
+     "event": "LAT 2026 test date",
+     "value": "Not yet announced (no official notice verifiable on 27 Aug 2026)"
+    },
+    {
+     "event": "Registration window",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Test frequency",
+     "value": "Biannually, as directed for all law colleges in Pakistan"
+    },
+    {
+     "event": "Result / validity",
+     "value": "Not officially stated in the PBC rules or the Court directions"
+    }
+   ],
+   "subjects": [
+    "Essay (English or Urdu)",
+    "Personal Statement (English or Urdu)",
+    "English (synonyms, antonyms, prepositions)",
+    "General Knowledge",
+    "Islamic Studies",
+    "Pakistan Studies",
+    "Urdu (vocabulary)",
+    "Basic Mathematics"
+   ],
+   "testDate": "Not yet announced — no official LAT 2026 date could be verified from an official source on 27 August 2026",
+   "frequency": "Biannually (twice a year), as directed for all law colleges in Pakistan",
+   "metaTitle": "LAT 2026 – Law Admission Test Pattern, Marks & Free MCQs",
+   "totalMarks": "100 marks (25 marks written + 75 marks MCQs)",
+   "verifiedOn": "27 August 2026 (Pakistan Bar Council / Directorate of Legal Education as primary source; HEC's own LAT pages were unreachable on that date and will be cross-checked when available)",
+   "eligibility": [
+    "A person who has passed the Higher Secondary Education examination (Intermediate) or an equivalent examination is eligible for admission to the first year of the five-year LL.B. programme — Rule 4(i), Pakistan Bar Council Legal Education Rules, 2015 (as amended 30-06-2017).",
+    "Admission to LL.B. (1st year) is on merit — Rule 4(ii).",
+    "5 percent of seats are reserved for the sons/daughters of advocates, who compete for admission in order of merit inter se — Rule 4(iii).",
+    "A candidate is not eligible for admission to LL.B. if convicted of an offence involving moral turpitude — Rule 4(iv)(i).",
+    "A candidate is not eligible if dismissed or removed from service of Government, a local authority or a statutory institution for corruption or misconduct — Rule 4(iv)(ii).",
+    "Minimum marks percentage for LAT registration and any session-specific age limit are not stated in the PBC rules — individual affiliating universities publish their own merit requirements."
+   ],
+   "officialUrl": "https://www.dle.com.pk/rules",
+   "patternNote": "This table reproduces the LAT outline exactly as formulated in the Supreme Court's directions published by the Pakistan Bar Council's Directorate of Legal Education (2019 SCMR 389). A qualifying/passing score, the paper duration and the fee are not stated in that outline or in the PBC Legal Education Rules, 2015 — universities and HEC announce those per session, so they are deliberately not listed here. MCQ practice on this site covers the 75 MCQ marks; the essay and personal statement must be practised in writing.",
+   "metaDescription": "LAT (Law Admission Test) for 5-year LL.B. admission in Pakistan: official 100-mark outline (essay, personal statement, English, GK, Islamiyat, Pak Studies, Urdu, Math), eligibility under PBC Rules and free practice MCQs.",
+   "officialSources": [
+    {
+     "url": "https://www.dle.com.pk/rules",
+     "label": "Pakistan Bar Council — Directorate of Legal Education: Rules library"
+    },
+    {
+     "url": "https://www.dle.com.pk/storage/rules/Legal-Education.pdf",
+     "label": "Pakistan Bar Council Legal Education Rules, 2015 (PDF) — Rule 4, admission to LL.B."
+    },
+    {
+     "url": "https://www.dle.com.pk/storage/rules/2019%20S%20C%20M%20R%20389%20(1).pdf",
+     "label": "Supreme Court directions formulating the LAT outline, 2019 SCMR 389 (PDF, hosted by DLE)"
+    }
+   ]
+  },
+  "test_date": "2026-08-27",
+  "verified_on": "2026-08-27",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "karachi-university",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "Multiple-choice test for test-based admissions",
+     "weight": "100 marks",
+     "section": "Entrance / aptitude test"
+    },
+    {
+     "detail": "Shown on official test result material",
+     "weight": "50 marks",
+     "section": "Passing score"
+    },
+    {
+     "detail": "Varies by programme; consult the current official sample paper",
+     "weight": "Not yet announced",
+     "section": "Section-wise distribution"
+    },
+    {
+     "detail": "Academic record, aptitude test and interview are assessed",
+     "weight": "20% + 60% + 20%",
+     "section": "Visual Studies selection"
+    }
+   ],
+   "duration": "Not yet announced in the official admissions material reviewed",
+   "examBody": "University of Karachi — Directorate of Admissions",
+   "keyDates": [
+    {
+     "event": "Next application window",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Entrance / aptitude test date",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Admit card / venue",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Result / merit list",
+     "value": "Not yet announced"
+    }
+   ],
+   "subjects": [
+    "English",
+    "Verbal reasoning / analogies",
+    "IQ / General Knowledge",
+    "Programme-specific subjects listed in the current official material"
+   ],
+   "testDate": "Not yet announced",
+   "frequency": "Not officially stated; announced with each admission cycle",
+   "metaTitle": "Karachi University Entrance Test – Pattern, Eligibility & MCQs",
+   "totalMarks": "100 marks; official result material states a 50-mark passing score",
+   "verifiedOn": "20 September 2026",
+   "eligibility": [
+    "Applicants must hold HSC / Intermediate or an officially recognised equivalent qualification in the group required by their chosen programme.",
+    "Applicants must meet the department-specific academic requirement published in the current official prospectus.",
+    "Applicants to a test-based programme must sit and qualify the relevant University of Karachi entrance or aptitude test.",
+    "The definitive programme list and eligibility rules are those in the current official admissions prospectus and portal."
+   ],
+   "officialUrl": "https://www.uok.edu.pk/admissions/",
+   "patternNote": "The University publishes programme-specific eligibility and test material with the relevant admissions cycle. No universal section-by-section distribution or duration was officially stated in the sources reviewed, so none is inferred here.",
+   "metaDescription": "University of Karachi entrance-test guide based on official UoK admissions sources: exam body, verified marks, eligibility, subjects, preparation and official links.",
+   "officialSources": [
+    {
+     "url": "https://www.uok.edu.pk/admissions/",
+     "label": "University of Karachi — official admissions page"
+    },
+    {
+     "url": "https://uokadmission.edu.pk/",
+     "label": "University of Karachi — official admissions portal"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-20",
+  "include_in_sitemap": false
+ },
+ {
+  "slug": "sindh-university",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "Vocabulary and language-use questions shown in the official sample paper",
+     "weight": "30%",
+     "section": "English"
+    },
+    {
+     "detail": "General science MCQs",
+     "weight": "20%",
+     "section": "General Science"
+    },
+    {
+     "detail": "General awareness MCQs",
+     "weight": "20%",
+     "section": "General Knowledge"
+    },
+    {
+     "detail": "Basic arithmetic MCQs",
+     "weight": "20%",
+     "section": "Simple Arithmetic"
+    },
+    {
+     "detail": "Reasoning questions",
+     "weight": "10%",
+     "section": "Intelligence Questions / IQ"
+    },
+    {
+     "detail": "Complete PET paper",
+     "weight": "100 marks",
+     "section": "Total"
+    }
+   ],
+   "duration": "90 minutes",
+   "examBody": "University of Sindh — Sindh University Testing Centre (SUTC)",
+   "keyDates": [
+    {
+     "event": "Next application window",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Pre-Entry Test date",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Admit card / venue",
+     "value": "Not yet announced"
+    },
+    {
+     "event": "Current qualifying threshold",
+     "value": "Confirm in the current official programme advertisement"
+    }
+   ],
+   "subjects": [
+    "English",
+    "General Science",
+    "General Knowledge",
+    "Simple Arithmetic",
+    "Intelligence Questions / IQ"
+   ],
+   "testDate": "Not yet announced",
+   "frequency": "Not officially fixed; announced with each admission cycle",
+   "metaTitle": "Sindh University PET – Pattern, Eligibility & Free MCQs",
+   "totalMarks": "100 marks",
+   "verifiedOn": "20 September 2026",
+   "eligibility": [
+    "Applicants must have passed HSC / Intermediate or an officially recognised equivalent prerequisite examination for the selected programme.",
+    "The official prospectus states that a prerequisite examination passed in Third Division is not eligible.",
+    "Applicants must submit an online application through the official University of Sindh admissions portal.",
+    "Bachelor applicants must appear in and qualify the PET unless the current programme notice explicitly provides another route.",
+    "LLB (Honours) applicants follow the HEC Law Admission Test requirement rather than the PET route.",
+    "Programme-specific subject and academic requirements remain governed by the current official prospectus."
+   ],
+   "officialUrl": "https://admission.usindh.edu.pk/",
+   "patternNote": "Section weightage is taken from the official SUTC bachelor PET sample paper. Official annual advertisements and prospectus text reviewed show different minimum qualifying figures, so this page does not choose one over the other; follow the current programme notice.",
+   "metaDescription": "University of Sindh PET guide from official sources: 90-minute paper, section weightage, eligibility, preparation tips and verified admissions links.",
+   "officialSources": [
+    {
+     "url": "https://admission.usindh.edu.pk/",
+     "label": "University of Sindh — official admissions portal"
+    },
+    {
+     "url": "https://sutc.usindh.edu.pk/",
+     "label": "Sindh University Testing Centre — official website"
+    },
+    {
+     "url": "https://usindh.edu.pk/",
+     "label": "University of Sindh — official website"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-20",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "nat",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "NAT-IE, NAT-IM, NAT-IA, NAT-ICS, NAT-IGS and NAT-ICOM",
+     "weight": "90 questions",
+     "section": "Category One (12 years of education)"
+    },
+    {
+     "detail": "English 20 + Analytical 20 + Quantitative 20",
+     "weight": "60 questions",
+     "section": "Category One — common sections"
+    },
+    {
+     "detail": "Content depends on the selected type",
+     "weight": "30 questions",
+     "section": "Category One — subject section"
+    },
+    {
+     "detail": "NAT-IIA, NAT-IIB, NAT-IIM, NAT-IIP and NAT-IIO",
+     "weight": "100 questions",
+     "section": "Category Two (14 years of education)"
+    },
+    {
+     "detail": "English 20 + Analytical 15 + Quantitative 15",
+     "weight": "50 questions",
+     "section": "NAT-IIA — common sections"
+    },
+    {
+     "detail": "Arts and Humanities",
+     "weight": "50 questions",
+     "section": "NAT-IIA — subject section"
+    },
+    {
+     "detail": "English 10 + Analytical 10 + Quantitative 10",
+     "weight": "30 questions",
+     "section": "Other Category Two types — common sections"
+    },
+    {
+     "detail": "Biological, Management, Physical, or Oriental and Islamic Studies",
+     "weight": "70 questions",
+     "section": "Other Category Two types — subject section"
+    }
+   ],
+   "duration": "Not officially stated on the NTS NAT pages reviewed",
+   "examBody": "National Testing Service Pakistan (NTS)",
+   "keyDates": [
+    {
+     "event": "Current test dates",
+     "value": "See the official NAT schedule"
+    },
+    {
+     "event": "Registration deadline",
+     "value": "See the official NAT schedule for the selected session"
+    },
+    {
+     "event": "Result validity",
+     "value": "One year"
+    },
+    {
+     "event": "Official duration",
+     "value": "Not yet announced on the pages reviewed"
+    }
+   ],
+   "subjects": [
+    "English",
+    "Analytical Reasoning",
+    "Quantitative Reasoning",
+    "Subject Knowledge for the selected NAT type"
+   ],
+   "testDate": "Not yet announced here — check the current official NAT schedule",
+   "frequency": "Not officially fixed on the core NAT pages; use the official NAT schedule",
+   "metaTitle": "NTS NAT Preparation Guide – Types, Pattern & Free MCQs",
+   "totalMarks": "Category One: 90 questions; Category Two: 100 questions",
+   "verifiedOn": "20 September 2026",
+   "eligibility": [
+    "Category One NAT types are organised for candidates with 12 years of education in the corresponding subject group.",
+    "Category Two NAT types are organised for candidates with 14 years of education in the corresponding subject group.",
+    "Candidates must select the NAT type that matches their prior subject group and the requirements of the intended associated university.",
+    "A NAT result is valid for one year according to NTS.",
+    "A candidate can use the relevant NAT result for admission to NTS-associated universities and degree-awarding institutes, subject to each institution’s own admission rules."
+   ],
+   "officialUrl": "https://www.nts.org.pk/Products/NTSNAT/nat-test.php",
+   "patternNote": "Choose the NAT type that matches your prior subject group and verify its exact subject distribution on the official NTS paper-pattern page. This page intentionally gives a consolidated overview rather than creating unsupported type-specific claims. Test duration is not stated on the official pages reviewed.",
+   "metaDescription": "Official-source NTS NAT guide covering Category One and Two test types, 90/100-question patterns, eligibility, one-year result validity and preparation tips.",
+   "officialSources": [
+    {
+     "url": "https://www.nts.org.pk/Products/NTSNAT/nat-test.php",
+     "label": "NTS — National Aptitude Test overview"
+    },
+    {
+     "url": "https://www.nts.org.pk/Products/NTSNAT/nat-paper-pattern.php",
+     "label": "NTS — NAT paper patterns and type-specific distributions"
+    },
+    {
+     "url": "https://www.nts.org.pk/Products/NTSNAT/nat-howto-register.php",
+     "label": "NTS — how to register for NAT"
+    },
+    {
+     "url": "https://www.nts.org.pk/Products/NTSNAT/nat-test-inst.php",
+     "label": "NTS — NAT test-day instructions"
+    },
+    {
+     "url": "https://www.nts.org.pk/Products/NTSNAT/nat-associated-universities.php",
+     "label": "NTS — associated universities and institutes"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-20",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "lums",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "SAT, or ACT, or the LUMS Common Admission Test (LCAT)",
+     "weight": "Any one route",
+     "section": "Accepted tests"
+    },
+    {
+     "detail": "Multiple-choice test, similar to the SAT, with Verbal and Math sections",
+     "weight": "Approx. 3 hours",
+     "section": "LCAT format"
+    },
+    {
+     "detail": "Craft and Structure, Information and Ideas, Standard English Conventions, Expression of Ideas",
+     "weight": "Not stated officially",
+     "section": "Verbal section"
+    },
+    {
+     "detail": "Published in the official LCAT sample questions document",
+     "weight": "Not stated officially",
+     "section": "Math section"
+    },
+    {
+     "detail": "Academic background, performance in the admission test, application review and interview",
+     "weight": "No percentage formula published",
+     "section": "Selection factors"
+    }
+   ],
+   "duration": "Approximately 3 hours, as stated in the official LUMS LCAT sample-test document",
+   "examBody": "Lahore University of Management Sciences (LUMS), Office of Admissions — SAT is conducted by the College Board and ACT by ACT Inc.",
+   "keyDates": [
+    {
+     "event": "LCAT (Fall 2026 cycle)",
+     "value": "15 February 2026"
+    },
+    {
+     "event": "LCAT duration",
+     "value": "Approximately 3 hours"
+    },
+    {
+     "event": "Total marks",
+     "value": "Not officially stated"
+    },
+    {
+     "event": "Next cycle dates",
+     "value": "Not yet announced — check the LUMS critical dates page"
+    }
+   ],
+   "subjects": [
+    "Verbal: Craft and Structure",
+    "Verbal: Information and Ideas",
+    "Verbal: Standard English Conventions",
+    "Verbal: Expression of Ideas",
+    "Math"
+   ],
+   "testDate": "15 February 2026 for the Fall 2026 cycle; the next cycle date is not yet announced",
+   "frequency": "Once per admission cycle",
+   "metaTitle": "LUMS LCAT Guide – Test Options, Sections & Eligibility",
+   "totalMarks": "Not officially stated; LUMS does not publish a total marks or question count for the LCAT",
+   "verifiedOn": "25 September 2026",
+   "eligibility": [
+    "Matriculation with 70% marks or above together with FSc or ICS with 70% marks or above.",
+    "O-level results in at least 8 subjects with an average grade of at least B, together with A-level in at least three full-credit subjects averaging 2 Bs and 1 C.",
+    "American High School Diploma with 70% or above, or a GPA of B or above.",
+    "International Baccalaureate Diploma with at least 28 out of 45 points.",
+    "One of SAT, ACT or LCAT scores must be submitted with the application.",
+    "Programme-specific requirements apply, so confirm the criteria on your own programme page at LUMS."
+   ],
+   "officialUrl": "https://admission.lums.edu.pk/testing-admissions",
+   "patternNote": "LUMS states that the LCAT's time duration and test format may vary from the SAT, so treat the three-hour figure as the officially stated approximation rather than a fixed limit. Marks, question counts and the weightage between test score and academic record are not published on the official LUMS pages.",
+   "metaDescription": "Official-source LUMS undergraduate admission guide: LCAT, SAT and ACT routes, LCAT sections and approximate 3-hour duration, academic eligibility and cycle dates.",
+   "officialSources": [
+    {
+     "url": "https://admission.lums.edu.pk/testing-admissions",
+     "label": "LUMS — testing and admissions (SAT, ACT, LCAT routes)"
+    },
+    {
+     "url": "https://lums.edu.pk/sites/default/files/sample_lcat_2025.pdf",
+     "label": "LUMS — official LCAT sample questions (duration and sections)"
+    },
+    {
+     "url": "https://admission.lums.edu.pk/critical-dates-all-programmes",
+     "label": "LUMS — critical dates for all programmes"
+    },
+    {
+     "url": "https://lums.edu.pk/programmes/bs-computer-science",
+     "label": "LUMS — BS Computer Science admission criteria"
+    }
+   ]
+  },
+  "test_date": "2026-02-15",
+  "verified_on": "2026-09-25",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "aku",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "Required for shortlisting for most applicants from the Pakistani, British, American-Canadian, IB and indigenous high-school systems",
+     "weight": "Shortlisting stage",
+     "section": "AKU Test"
+    },
+    {
+     "detail": "Required for final selection and to meet PMDC requirements",
+     "weight": "Final selection",
+     "section": "MDCAT"
+    },
+    {
+     "detail": "MCAT (AAMC) for candidates with a degree from overseas; AKU Test for candidates with degrees from Pakistan",
+     "weight": "Route dependent",
+     "section": "Overseas degree holders"
+    },
+    {
+     "detail": "Multiple-choice, based on the HSSC curriculum in Pakistan",
+     "weight": "Science achievement plus reasoning",
+     "section": "Test content"
+    },
+    {
+     "detail": "Assessed on scholastic achievements, AKU Admission Test performance, interviews, productive use of time and leadership potential",
+     "weight": "No numeric formula published",
+     "section": "Merit"
+    },
+    {
+     "detail": "AKU states it is likely to administer the University Clinical Aptitude Test (UCAT)",
+     "weight": "Announced as likely",
+     "section": "From the 2027 cycle"
+    }
+   ],
+   "duration": "Not officially stated in the AKU admission information document",
+   "examBody": "Aga Khan University — MDCAT is administered under PMDC requirements, and MCAT by the AAMC for overseas-degree applicants",
+   "keyDates": [
+    {
+     "event": "2026-2027 application deadline",
+     "value": "13 May 2026 (cycle now closed)"
+    },
+    {
+     "event": "Test duration",
+     "value": "Not officially stated"
+    },
+    {
+     "event": "Likely change from 2027 cycle",
+     "value": "University Clinical Aptitude Test (UCAT)"
+    },
+    {
+     "event": "Next cycle dates",
+     "value": "Not yet announced"
+    }
+   ],
+   "subjects": [
+    "Science achievement: Physics",
+    "Science achievement: Chemistry",
+    "Science achievement: Biology",
+    "Science reasoning",
+    "Mathematical reasoning"
+   ],
+   "testDate": "Not yet announced for the next cycle — admissions for 2026-2027 have closed",
+   "frequency": "One admission cycle per year",
+   "metaTitle": "AKU Test Guide – MBBS Admission Sections & Requirements",
+   "totalMarks": "Not officially stated; question count and marks are not published",
+   "verifiedOn": "25 September 2026",
+   "eligibility": [
+    "Candidates prepared in Urdu-medium or English-medium institutions, in Pakistan or overseas, who have completed or are completing HSSC, graduate or postgraduate education and meet the published criteria may apply.",
+    "Applicants from the Pakistani, British, American-Canadian, IB and indigenous high-school systems sit the AKU Test for shortlisting and MDCAT for final selection.",
+    "Degree holders from overseas institutions apply with MCAT; degree holders from Pakistan apply with the AKU Test.",
+    "MDCAT is required in every route for final selection under PMDC requirements.",
+    "The detailed numeric eligibility requirements are set out in the official AKU MBBS Admission Information booklet — confirm them there for your own education system.",
+    "Admissions for the 2026-2027 cycle are closed; the next cycle window is not yet announced."
+   ],
+   "officialUrl": "https://www.aku.edu/admissions/mbbs/Pages/home.aspx",
+   "patternNote": "AKU does not publish the AKU Test duration, question count or marks, and does not publish a percentage merit formula — only the criteria it considers. Because AKU has signalled a likely move to UCAT from the 2027 cycle, confirm the required test in the admission information booklet for the cycle you are applying to.",
+   "metaDescription": "Official-source Aga Khan University MBBS admission guide: the AKU Test for shortlisting, MDCAT for final selection, test sections, merit criteria and the planned move to UCAT.",
+   "officialSources": [
+    {
+     "url": "https://www.aku.edu/admissions/Documents/admission-information-MBBS.pdf",
+     "label": "AKU — MBBS admission information 2026-2027 (test requirements)"
+    },
+    {
+     "url": "https://www.aku.edu/admissions/mbbs/Pages/home.aspx",
+     "label": "AKU — MBBS admissions home"
+    },
+    {
+     "url": "https://www.aku.edu/",
+     "label": "AKU — official university site"
+    },
+    {
+     "url": "https://www.pmdc.pk/",
+     "label": "PMDC — national MDCAT requirements"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-25",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "giki",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "For Engineering, Artificial Intelligence, Computer Science, Cyber Security, Software Engineering and Data Science programmes",
+     "weight": "One of two tracks",
+     "section": "Engineering / Computing exam"
+    },
+    {
+     "detail": "For the BS Management Science programme",
+     "weight": "One of two tracks",
+     "section": "Management exam"
+    },
+    {
+     "detail": "Score in the GIKI admission test",
+     "weight": "85%",
+     "section": "Merit — admission test"
+    },
+    {
+     "detail": "SSC or equivalent; O-level for A-level candidates; last completed qualification for high-school diploma, IB, BSc or DAE",
+     "weight": "15%",
+     "section": "Merit — previous qualification"
+    },
+    {
+     "detail": "Not stated on the official eligibility or syllabus pages",
+     "weight": "Not yet announced here",
+     "section": "Duration and question count"
+    }
+   ],
+   "duration": "Not officially stated on the admission pages; see the official downloadable syllabus and sample paper",
+   "examBody": "Ghulam Ishaq Khan Institute of Engineering Sciences and Technology (GIKI), Office of Admission and Examination",
+   "keyDates": [
+    {
+     "event": "2026 cycle admission test",
+     "value": "6–10 July 2026"
+    },
+    {
+     "event": "Merit weightage",
+     "value": "Test 85% + previous qualification 15%"
+    },
+    {
+     "event": "Test duration",
+     "value": "Not yet announced on the official pages"
+    },
+    {
+     "event": "Next cycle window",
+     "value": "Not yet announced"
+    }
+   ],
+   "subjects": [
+    "Engineering and Computing exam: subjects listed in the official GIKI Engineering/Computing test syllabus",
+    "Management exam: subjects listed in the official Management test material",
+    "Eligibility background: Mathematics, Physics and Chemistry for Pre-Engineering applicants"
+   ],
+   "testDate": "6–10 July 2026 for the 2026 cycle; the next cycle window is not yet announced",
+   "frequency": "Once per admission cycle",
+   "metaTitle": "GIKI Admission Test Guide – Two Exams, Merit Formula & Eligibility",
+   "totalMarks": "Not officially stated as a marks total or question count",
+   "verifiedOn": "25 September 2026",
+   "eligibility": [
+    "BS Engineering programmes: HSSC Pre-Engineering (Mathematics, Physics and Chemistry) with 60% or above marks each in Mathematics, Physics and overall.",
+    "Several other equivalent qualification routes are accepted, including A-level, high-school diploma, IB, BSc and DAE backgrounds, as listed officially.",
+    "A-level and O-level candidates have their O-level result used for the 15% academic component.",
+    "High-school diploma, IB diploma, BSc and DAE candidates have their last completed qualification used for the 15% academic component.",
+    "Candidates choose the Engineering/Computing exam or the Management exam according to the programme applied for.",
+    "Programme-specific criteria apply — confirm them on the official GIKI eligibility criteria page."
+   ],
+   "officialUrl": "https://giki.edu.pk/admissions/admissions-undergraduates/",
+   "patternNote": "GIKI's merit formula is unusually test-heavy at 85%, so your admission-test score matters far more than your academic record. Section-level weightage inside the test is not published on the official pages — download GIKI's own syllabus and sample paper from the admission section for that detail.",
+   "metaDescription": "Official-source GIKI admission guide: Engineering/Computing and Management exam tracks, the 85% test plus 15% SSC merit formula, eligibility and the 2026 test window.",
+   "officialSources": [
+    {
+     "url": "https://giki.edu.pk/admissions/admissions-undergraduates/",
+     "label": "GIKI — undergraduate admissions and important dates"
+    },
+    {
+     "url": "https://giki.edu.pk/admissions/admissions-undergraduates/eligibility-criteria/",
+     "label": "GIKI — eligibility criteria and merit weightage"
+    },
+    {
+     "url": "https://giki.edu.pk/admissions/admissions-undergraduates/undergraduate-admission-test-syllabus/",
+     "label": "GIKI — undergraduate admission test syllabus"
+    },
+    {
+     "url": "https://giki.edu.pk/",
+     "label": "GIKI — official institute site"
+    }
+   ]
+  },
+  "test_date": "2026-07-10",
+  "verified_on": "2026-09-25",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "uet-lahore",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "ECAT 2026 is compulsory",
+     "weight": "Minimum 60% in Intermediate/equivalent",
+     "section": "Engineering, Computing, Architecture and related"
+    },
+    {
+     "detail": "ECAT is not required",
+     "weight": "Minimum 50% in Intermediate/equivalent",
+     "section": "Business and Science programmes marked Non-ECAT Based"
+    },
+    {
+     "detail": "Punjab domicile, including ICT, unless a programme specifies otherwise",
+     "weight": "Domicile condition",
+     "section": "Open merit seats"
+    },
+    {
+     "detail": "Rs. 3000 for the undergraduate application",
+     "weight": "Rs. 3000",
+     "section": "Application fee"
+    },
+    {
+     "detail": "Percentage weightage of HSSC, ECAT and matric is not stated on the official admission pages reviewed",
+     "weight": "Not yet announced here",
+     "section": "Merit formula"
+    }
+   ],
+   "duration": "Not applicable to the admission route itself; ECAT paper timing is published on the official ECAT pages",
+   "examBody": "University of Engineering and Technology (UET) Lahore — which also conducts ECAT for public-sector engineering institutions in Punjab",
+   "keyDates": [
+    {
+     "event": "Fall 2026 application opened",
+     "value": "8 June 2026"
+    },
+    {
+     "event": "Fall 2026 last date to apply",
+     "value": "15 July 2026"
+    },
+    {
+     "event": "Application fee",
+     "value": "Rs. 3000"
+    },
+    {
+     "event": "Next session schedule",
+     "value": "Not yet announced — check the official admission portal"
+    }
+   ],
+   "subjects": [
+    "ECAT-based programmes: Engineering, Computing, Architecture and related disciplines",
+    "Non-ECAT Based programmes: Business and Science programmes listed as Non-ECAT",
+    "ECAT paper subjects are published on the official ECAT pages"
+   ],
+   "testDate": "Not yet announced for the next session — check the official UET admission portal",
+   "frequency": "Once per entry session; the Fall 2026 cycle ran one online application window",
+   "metaTitle": "UET Lahore Admission Guide – ECAT Requirement & Eligibility",
+   "totalMarks": "Not stated as a single admission score on the official admission pages reviewed; merit is determined under UET’s own merit rules",
+   "verifiedOn": "24 September 2026",
+   "eligibility": [
+    "Engineering, Architecture and Computer Engineering (NCEAC) programmes: minimum 60% marks in Intermediate or equivalent.",
+    "Science, Technology and Business programmes: minimum 50% marks in Intermediate or equivalent.",
+    "ECAT 2026 is compulsory for Engineering, Computing, Architecture and related disciplines.",
+    "Business and Science programmes categorised as Non-ECAT Based do not require ECAT.",
+    "Only Punjab domiciled applicants, including ICT, are eligible on open merit seats unless a programme specifies otherwise.",
+    "FSc Pre-Medical students are eligible to apply for Computing programmes.",
+    "Candidates holding qualifications other than Pakistani boards must submit an IBCC equivalence certificate if selected."
+   ],
+   "officialUrl": "https://admission.uet.edu.pk/faqs",
+   "patternNote": "UET states that applications are received online only and that applications sent by post, courier or by hand are not entertained. Candidates with non-Pakistani qualifications must submit an IBCC equivalence certificate if selected. The exact merit-aggregate weightage was not stated on the official admission pages reviewed, so confirm it in the current prospectus before planning your target score.",
+   "metaDescription": "Official-source UET Lahore undergraduate admission guide: which programmes need ECAT, non-ECAT programmes, minimum intermediate marks, domicile rules, fee and application window.",
+   "officialSources": [
+    {
+     "url": "https://admission.uet.edu.pk/faqs",
+     "label": "UET Lahore — admission FAQs (ECAT requirement, marks, fee, dates)"
+    },
+    {
+     "url": "https://admission.uet.edu.pk/news",
+     "label": "UET Lahore — admission news and announcements"
+    },
+    {
+     "url": "https://ecat.uet.edu.pk/General/Ecat",
+     "label": "UET Lahore — ECAT information (conducting authority)"
+    },
+    {
+     "url": "https://uet.edu.pk/",
+     "label": "UET Lahore — official university site"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-24",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "air-university",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "English 20, Analytical 25, Quantitative 25, Physics 10, Chemistry 10, Mathematics 10",
+     "weight": "100%",
+     "section": "Pre-Engineering group"
+    },
+    {
+     "detail": "English 20, Analytical 25, Quantitative 15, Physics 10, Chemistry 10, Biology 20",
+     "weight": "100%",
+     "section": "Pre-Medical group"
+    },
+    {
+     "detail": "English 20, Analytical 25, Quantitative 25, Physics 10, Computer 10, Mathematics 10",
+     "weight": "100%",
+     "section": "Computer Science group"
+    },
+    {
+     "detail": "English 20, Analytical 25, Quantitative 15, Islamiat 10, Pakistan Studies 10, General Knowledge and Current Affairs 20",
+     "weight": "100%",
+     "section": "Arts group"
+    },
+    {
+     "detail": "Published exemptions include NAT-IE, NAT-ICS, USAT-E, USAT-CS and entrance tests of UET Lahore, NED UET Karachi, MUET Jamshoro, NUST and ETEA",
+     "weight": "Minimum score 50 required",
+     "section": "Engineering exemptions"
+    },
+    {
+     "detail": "At least 1100 in SAT-1, or all six NAT types, as published officially",
+     "weight": "Programme specific",
+     "section": "Business and management exemptions"
+    }
+   ],
+   "duration": "Not officially stated on the AU-CBT pages reviewed",
+   "examBody": "Air University (conducted at its own campuses)",
+   "keyDates": [
+    {
+     "event": "Test phases",
+     "value": "Multiple AU-CBT phases per cycle, published per campus"
+    },
+    {
+     "event": "Application processing fee",
+     "value": "Rs. 2500"
+    },
+    {
+     "event": "Official duration",
+     "value": "Not yet announced on the pages reviewed"
+    },
+    {
+     "event": "Next cycle schedule",
+     "value": "Not yet announced — check the campus admission schedule"
+    }
+   ],
+   "subjects": [
+    "English",
+    "Analytical Reasoning",
+    "Quantitative Reasoning",
+    "Subject knowledge for your HSSC group (Physics, Chemistry, Mathematics, Biology, Computer or Arts subjects)"
+   ],
+   "testDate": "Not yet announced for the next cycle — check the official Air University admission schedule",
+   "frequency": "Several phases within each admission cycle, announced in the campus admission schedule",
+   "metaTitle": "Air University AU-CBT Guide – Test Composition & Eligibility",
+   "totalMarks": "Not officially stated as a question count or total marks; the official tables give section percentages totalling 100%",
+   "verifiedOn": "24 September 2026",
+   "eligibility": [
+    "Eligibility is programme-specific; several bachelor programmes require at least 50% marks in Intermediate or an equivalent qualification.",
+    "Candidates with A-level or other foreign qualifications must provide an IBCC equivalence certificate.",
+    "Engineering applicants may claim exemption from AU-CBT with a qualifying NAT-IE, NAT-ICS, USAT-E, USAT-CS or a recognised university entrance test as published by Air University.",
+    "A pre-qualified NAT must relate to the candidate’s HSSC qualification and a minimum score of 50 is required for exemption.",
+    "Business and management applicants may qualify with at least 1100 in SAT-1 or all six NAT types.",
+    "The application processing fee published officially is Rs. 2500."
+   ],
+   "officialUrl": "https://au.edu.pk/",
+   "patternNote": "The values above are percentage weightages from Air University’s official AU-CBT composition tables, not question counts — the total duration and number of questions are not stated on the pages reviewed. Exemption rules require the pre-qualified test to relate to your HSSC qualification, and campus tables differ, so verify your own campus and programme page.",
+   "metaDescription": "Official-source Air University AU-CBT guide covering section weightage for each HSSC group, test-exemption options, eligibility and admission phases.",
+   "officialSources": [
+    {
+     "url": "https://webdata.au.edu.pk/Pages/Admission/prepare_adm_test.aspx",
+     "label": "Air University — prepare for the admission test (AU-CBT composition)"
+    },
+    {
+     "url": "https://khi.au.edu.pk/Pages/Admission/prepare_adm_test.aspx",
+     "label": "Air University Karachi campus — AU-CBT composition"
+    },
+    {
+     "url": "https://webdata.au.edu.pk/Pages/Admission/newpages/Bachelor_programs.aspx",
+     "label": "Air University — bachelor programmes and eligibility"
+    },
+    {
+     "url": "https://webdata.au.edu.pk/Pages/Admission/admission_schedule.aspx",
+     "label": "Air University — admission schedule"
+    },
+    {
+     "url": "https://au.edu.pk/",
+     "label": "Air University — official site"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-24",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "pieas",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "English 10, Mathematics (HSSC) 30, Physics (HSSC) 30, Chemistry (HSSC) 30",
+     "weight": "100 questions",
+     "section": "Pre-Engineering paper"
+    },
+    {
+     "detail": "English 10, Mathematics (SSC level) 30, Physics (HSSC) 30, Chemistry (HSSC) 30",
+     "weight": "100 questions",
+     "section": "Pre-Medical paper"
+    },
+    {
+     "detail": "English 10, Mathematics (HSSC) 30, Physics (HSSC) 30, Computer Science (HSSC) 30",
+     "weight": "100 questions",
+     "section": "ICS paper"
+    },
+    {
+     "detail": "English 10, Mathematics (HSSC) 60, Physics (SSC level) 30",
+     "weight": "100 questions",
+     "section": "Science general paper"
+    },
+    {
+     "detail": "All questions are MCQs with four options and there is no negative marking",
+     "weight": "No negative marking",
+     "section": "Marking"
+    },
+    {
+     "detail": "The percentage weightage of test score against academic marks is not stated on the official pages reviewed",
+     "weight": "Not yet announced here",
+     "section": "Merit formula"
+    }
+   ],
+   "duration": "3 hours (180 minutes)",
+   "examBody": "Pakistan Institute of Engineering and Applied Sciences (PIEAS)",
+   "keyDates": [
+    {
+     "event": "Test duration",
+     "value": "3 hours (180 minutes)"
+    },
+    {
+     "event": "Question count",
+     "value": "100 MCQs, no negative marking"
+    },
+    {
+     "event": "Application processing fee",
+     "value": "Rs. 3500 on time, Rs. 4000 late"
+    },
+    {
+     "event": "Next test dates",
+     "value": "Not yet announced — check the official PIEAS admission schedule"
+    }
+   ],
+   "subjects": [
+    "English",
+    "Mathematics",
+    "Physics",
+    "Chemistry (Pre-Engineering and Pre-Medical papers)",
+    "Computer Science (ICS paper)"
+   ],
+   "testDate": "Not yet announced for the next cycle — check the official PIEAS admission schedule",
+   "frequency": "Two written tests per undergraduate cycle (Test 1 and Test 2)",
+   "metaTitle": "PIEAS Written Test Guide – 100 MCQs, Pattern & Eligibility",
+   "totalMarks": "100 multiple-choice questions, four options each, with no negative marking",
+   "verifiedOn": "24 September 2026",
+   "eligibility": [
+    "At least 60% marks or equivalent in both Matriculation or O-level and Intermediate (HSSC Part I/II) or A-level or equivalent.",
+    "Engineering programmes require Pre-Engineering (Physics, Chemistry, Mathematics) or ICS backgrounds as specified officially.",
+    "Computer and information sciences and physics programmes accept PCM, Pre-Medical or ICS backgrounds as specified officially.",
+    "Candidates with less than 60% in SSC or HSSC Part I/II, or who failed or did not appear in any HSSC Part I/II subject, are not eligible.",
+    "Some seats are reserved for admission through SAT-II or ACT: PIEAS states SAT-II in Physics, Chemistry and Mathematics Level II with a score of at least 2000, or an ACT score of at least 26.",
+    "Application processing fee is Rs. 3500 within the due date, or Rs. 4000 within one week after the due date."
+   ],
+   "officialUrl": "https://admissions.pieas.edu.pk/Admissions/schedule.html",
+   "patternNote": "Note the paper difference that catches candidates out: Pre-Medical candidates answer Mathematics at SSC level, while the science general paper carries 60 Mathematics questions and Physics at SSC level. Choose the paper matching your intermediate background and confirm it in the current official pattern document.",
+   "metaDescription": "Official-source PIEAS BS admission guide: 3-hour 100-MCQ written test, subject split for Pre-Engineering, Pre-Medical, ICS and general science, 60% eligibility bar and fee.",
+   "officialSources": [
+    {
+     "url": "https://admissions.pieas.edu.pk/Admissions/schedule.html",
+     "label": "PIEAS — admission schedule for BS programmes"
+    },
+    {
+     "url": "https://admissions.pieas.edu.pk/Admissions/Contents/WrittenTestPatternforBSPrograms2025.pdf",
+     "label": "PIEAS — written test pattern for BS programmes"
+    },
+    {
+     "url": "https://admissions.pieas.edu.pk/Admissions/Contents/Information%20leaflet%20BS-Programs-Updated_02012026.pdf",
+     "label": "PIEAS — information leaflet for BS admissions"
+    },
+    {
+     "url": "https://admissions.pieas.edu.pk/Admissions/FAQs.pdf",
+     "label": "PIEAS — admission FAQs (SAT-II and ACT route)"
+    },
+    {
+     "url": "https://www.pieas.edu.pk/",
+     "label": "PIEAS — official site"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-24",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "hec-gat-subject",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "A subject test in the chosen area of specialisation must be cleared before PhD admission",
+     "weight": "Mandatory for PhD",
+     "section": "Requirement"
+    },
+    {
+     "detail": "National Testing Service (NTS) or ETS, USA (GRE Subject)",
+     "weight": "Not HEC / not ETC",
+     "section": "Conducting body"
+    },
+    {
+     "detail": "Minimum 60% marks in the case of the GAT-Subject test",
+     "weight": "60%",
+     "section": "Qualifying score"
+    },
+    {
+     "detail": "Not stated on any official HEC or ETC page",
+     "weight": "Not yet announced here",
+     "section": "Duration, question count, sections"
+    },
+    {
+     "detail": "HAT Regular Streams — 100 MCQs in 120 minutes across English/Verbal Reasoning, Analytical Reasoning and Quantitative Reasoning, with weights varying by stream",
+     "weight": "Separate test",
+     "section": "HEC ETC’s own test (HAT)"
+    },
+    {
+     "detail": "ETC publishes separate HAT sample papers for the MS and PhD overseas scholarship programmes",
+     "weight": "Programme specific",
+     "section": "HAT scholarship variants"
+    }
+   ],
+   "duration": "Not stated on HEC's official pages, because HEC does not conduct this test",
+   "examBody": "National Testing Service (NTS) or ETS, USA — HEC sets the requirement and the 60% threshold but does not conduct GAT-Subject",
+   "keyDates": [
+    {
+     "event": "Qualifying requirement",
+     "value": "Minimum 60% marks"
+    },
+    {
+     "event": "When it must be cleared",
+     "value": "Before PhD admission"
+    },
+    {
+     "event": "Duration and question count",
+     "value": "Not stated on HEC official pages"
+    },
+    {
+     "event": "HEC’s own test at this level",
+     "value": "HAT — 100 MCQs in 120 minutes"
+    }
+   ],
+   "subjects": [
+    "The candidate’s chosen area of specialisation at PhD level",
+    "Section-level breakdown is not published on HEC’s official pages"
+   ],
+   "testDate": "Not yet announced here — check the conducting body's own test schedule",
+   "frequency": "Not stated on HEC's official pages — scheduled by the conducting body",
+   "metaTitle": "GAT-Subject Guide – HEC PhD Requirement & 60% Pass Mark",
+   "totalMarks": "Not stated officially by HEC; the qualifying requirement is a minimum of 60% marks",
+   "verifiedOn": "25 September 2026",
+   "eligibility": [
+    "Applies to candidates seeking PhD admission under HEC’s minimum criteria for MS/MPhil and PhD programmes.",
+    "The subject test must be in the area of specialisation chosen at PhD level.",
+    "The test must be cleared prior to admission to the PhD programme.",
+    "A minimum of 60% marks is required to pass in the case of the GAT-Subject test.",
+    "Candidates may alternatively present an ETS (GRE) subject test in the area of specialisation, as stated in HEC’s criteria document.",
+    "Registration, fee and scheduling are handled by the conducting body, not by HEC."
+   ],
+   "officialUrl": "https://www.hec.gov.pk/english/scholarshipsgrants/Documents/MPHIL_Phd_Criteria.pdf",
+   "patternNote": "Two things are commonly confused here. GAT-Subject is an NTS or ETS subject test that HEC requires at 60% for PhD admission. HAT is HEC's own aptitude test, conducted by its Education Testing Council, with 100 MCQs in 120 minutes and no subject-knowledge component in its published weightage table. Confirm which one your university asks for before you register.",
+   "metaDescription": "Official-source guide to GAT-Subject: conducted by NTS or ETS, required at 60% for PhD admission under HEC criteria, plus how HEC's own HAT test differs.",
+   "officialSources": [
+    {
+     "url": "https://www.hec.gov.pk/english/scholarshipsgrants/Documents/MPHIL_Phd_Criteria.pdf",
+     "label": "HEC — Minimum Criteria for MS/MPhil and PhD Programs (GAT-Subject requirement and 60% pass mark)"
+    },
+    {
+     "url": "https://www.hec.gov.pk/english/services/students/etc/Documents/Approved%20Content%20Weightages%20for%20HEC%20HAT%20Regular%20Streams.pdf",
+     "label": "HEC ETC — approved content weightages for HAT Regular Streams"
+    },
+    {
+     "url": "https://www.hec.gov.pk/english/services/students/etc/Pages/HAT-Sample-Papers.aspx",
+     "label": "HEC ETC — HAT sample papers"
+    },
+    {
+     "url": "https://etc.hec.gov.pk/",
+     "label": "HEC ETC — candidate portal"
+    }
+   ]
+  },
+  "test_date": null,
+  "verified_on": "2026-09-25",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "usat",
+  "kind": "admission",
+  "facts": {
+   "pattern": [
+    {
+     "detail": "Analogy 5, Synonym/Antonym 4, Sentence Completion 6, Comprehension 5",
+     "weight": "20 MCQs",
+     "section": "Part I — Verbal Reasoning"
+    },
+    {
+     "detail": "Arithmetic 6, Algebra and functions 4, Geometry 3, Equations 3, Statistics 3, Scenario-based mental mathematics 6",
+     "weight": "25 MCQs",
+     "section": "Part I — Quantitative Reasoning"
+    },
+    {
+     "detail": "Physics 10, Chemistry 10, Mathematics 10",
+     "weight": "30 MCQs",
+     "section": "USAT-E (Pre-Engineering) subjects"
+    },
+    {
+     "detail": "Physics 8, Chemistry 8, Biology 14",
+     "weight": "30 MCQs",
+     "section": "USAT-M (Pre-Medical) subjects"
+    },
+    {
+     "detail": "Physics 8, Computer Science 14, Mathematics 8",
+     "weight": "30 MCQs",
+     "section": "USAT-CS (Computer Science) subjects"
+    },
+    {
+     "detail": "Islamiat/Ethics 10, Pakistan Studies 10, General Knowledge 10",
+     "weight": "30 MCQs",
+     "section": "USAT-A (Arts and Humanities) subjects"
+    },
+    {
+     "detail": "USAT General Science and USAT Commerce also have official sample papers published by ETC",
+     "weight": "Stream specific",
+     "section": "Other streams"
+    },
+    {
+     "detail": "Argument-based essay (1 of 3 choices) and narrative-based essay (1 of 3 choices), in English or Urdu",
+     "weight": "25 marks / 40 minutes",
+     "section": "Part II — Essay writing"
+    }
+   ],
+   "duration": "Part I: 100 minutes for 75 MCQs. Part II: 40 minutes for essay writing",
+   "examBody": "Education Testing Council (ETC), Higher Education Commission of Pakistan",
+   "keyDates": [
+    {
+     "event": "Fourth 2026 cycle — announcement",
+     "value": "6 September 2026"
+    },
+    {
+     "event": "Last date for online registration",
+     "value": "2 October 2026"
+    },
+    {
+     "event": "Roll number slip issue date",
+     "value": "16 October 2026"
+    },
+    {
+     "event": "Test date",
+     "value": "25 October 2026"
+    },
+    {
+     "event": "Result announcement",
+     "value": "16 November 2026"
+    }
+   ],
+   "subjects": [
+    "Verbal Reasoning (analogy, synonym/antonym, sentence completion, comprehension)",
+    "Quantitative Reasoning (arithmetic, algebra and functions, geometry, equations, statistics, scenario-based mental mathematics)",
+    "Subject sections by stream: Physics, Chemistry, Mathematics, Biology, Computer Science, Islamiat/Ethics, Pakistan Studies, General Knowledge",
+    "Essay writing in English or Urdu"
+   ],
+   "testDate": "25 October 2026 for the fourth 2026 cycle; other 2026 test dates are 1 February, 19 April, 5 July and 13 December",
+   "frequency": "Several cycles per year — the official 2026 test calendar lists five USAT test dates",
+   "metaTitle": "USAT Guide – HEC Test Pattern, Categories & 2026 Dates",
+   "totalMarks": "75 MCQs in Part I; Part II essays carry 25 marks (argument-based 15, narrative-based 10). A single overall marks total is not stated officially",
+   "verifiedOn": "25 September 2026",
+   "eligibility": [
+    "12 years of education or an equivalent qualification, across the disciplines and streams covered by the official USAT category list.",
+    "Choose the category stream matching your intermediate background: Pre-Engineering, Pre-Medical, Computer Science, Arts and Humanities, General Science or Commerce.",
+    "Registration is completed online on the ETC portal using a CNIC, NADRA Juvenile Card or B-Form number, with the name exactly as on the Matric certificate and a photo uploaded.",
+    "The candidate profile is locked after registration, so verify every detail before submitting.",
+    "A processing and test fee must be deposited at a bank using the downloadable challan, and the deposit slip uploaded with the application; the amount is not stated on the official pages reviewed.",
+    "Detailed eligibility conditions and the qualifying score are not stated on the official HEC and ETC pages reviewed — confirm them in the current USAT advertisement on the ETC portal."
+   ],
+   "officialUrl": "https://www.hec.gov.pk/english/services/students/etc/Pages/Content-WeightagesSyllabus.aspx",
+   "patternNote": "The Verbal and Quantitative sections are identical across streams — 45 of the 75 MCQs — so aptitude preparation counts for more than subject revision. The passing or qualifying score, the result validity period and the registration fee amount are not stated on the official HEC and ETC pages reviewed; HEC's official documents confirm a processing and test fee exists and is deposited by bank challan, without publishing the amount.",
+   "metaDescription": "Official-source USAT guide from HEC's Education Testing Council: 75 MCQs in 100 minutes plus a 40-minute essay, six category streams, content weightage and 2026 cycle dates.",
+   "officialSources": [
+    {
+     "url": "https://www.hec.gov.pk/english/services/students/etc/PublishingImages/Content%20Weightages%20for%20%28USAT%29.pdf",
+     "label": "HEC ETC — official USAT content weightages (pattern and section counts)"
+    },
+    {
+     "url": "https://www.hec.gov.pk/english/services/students/etc/Pages/Content-WeightagesSyllabus.aspx",
+     "label": "HEC ETC — content weightages and syllabus page"
+    },
+    {
+     "url": "https://www.hec.gov.pk/english/services/students/etc/Documents/Test%20Calendar%20for%20Year%202026%20-%20Revsied%20on%2025.08.2026.pdf",
+     "label": "HEC ETC — test calendar for 2026 (revised 25.08.2026)"
+    },
+    {
+     "url": "https://www.hec.gov.pk/english/services/students/etc/Pages/HAT-Sample-Papers.aspx",
+     "label": "HEC ETC — sample papers"
+    },
+    {
+     "url": "https://www.hec.gov.pk/english/news/news/Pages/USAT-HEC.aspx",
+     "label": "HEC — statement that USAT is recommended but not mandatory for universities"
+    },
+    {
+     "url": "https://etc.hec.gov.pk/",
+     "label": "HEC ETC — candidate registration portal"
+    }
+   ]
+  },
+  "test_date": "2026-10-25",
+  "verified_on": "2026-09-25",
+  "include_in_sitemap": true
+ }
+]

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
+import { useExamFacts } from '@/lib/examFacts';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { safeJsonLd } from '@/lib/jsonLd';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,9 @@ export interface AdmissionTestPageProps {
   mockTest?: { label: string; to: string; note: string };
 }
 
-const AdmissionTestPage = (p: AdmissionTestPageProps) => {
+const AdmissionTestPage = (props: AdmissionTestPageProps) => {
+  // Facts (dates, eligibility, sources…) come from exam_pages; code props are the fallback.
+  const p = useExamFacts(props.slug, props);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Course',
