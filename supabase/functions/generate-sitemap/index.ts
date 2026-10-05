@@ -375,6 +375,7 @@ function examPassesGate(row: any): boolean {
   if (!row) return false;
   if ((row.status ?? "published") !== "published") return false;
   if (row.include_in_sitemap === false) return false;
+  if (row.kind !== "admission") return true;
   const url = row.facts?.officialUrl;
   return typeof url === "string" && url.trim().length > 0;
 }
