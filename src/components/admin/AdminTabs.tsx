@@ -29,6 +29,7 @@ import NavigationManager from "./NavigationManager";
 import BlogManager from "./BlogManager";
 import AnnouncementsManager from "./announcements/AnnouncementsManager";
 import FAQManager from "./FAQManager";
+import ExamPagesManager from "./exam-pages/ExamPagesManager";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
         { value: "blog-manager", label: "Blog", icon: PenSquare },
         { value: "announcements", label: "Announcements", icon: Megaphone },
         { value: "faq-manager", label: "FAQ", icon: HelpCircle },
+        { value: "exam-pages", label: "Exam Pages", icon: GraduationCap },
       ],
     },
     {
@@ -308,6 +310,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
       <TabsContent value="blog-manager"><BlogManager /></TabsContent>
       <TabsContent value="announcements"><AnnouncementsManager /></TabsContent>
+      <TabsContent value="exam-pages"><ExamPagesManager /></TabsContent>
       <TabsContent value="faq-manager"><FAQManager /></TabsContent>
       <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
       <TabsContent value="content-health"><ContentHealthDashboard /></TabsContent>

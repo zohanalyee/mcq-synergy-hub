@@ -313,7 +313,7 @@
   },
   "test_date": "2026-09-13",
   "verified_on": "2026-08-22",
-  "include_in_sitemap": false
+  "include_in_sitemap": true
  },
  {
   "slug": "iba-sukkur",
@@ -412,7 +412,7 @@
   },
   "test_date": null,
   "verified_on": "2026-08-22",
-  "include_in_sitemap": false
+  "include_in_sitemap": true
  },
  {
   "slug": "lat",
@@ -528,7 +528,7 @@
   },
   "test_date": "2026-08-27",
   "verified_on": "2026-08-27",
-  "include_in_sitemap": false
+  "include_in_sitemap": true
  },
  {
   "slug": "karachi-university",
