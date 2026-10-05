@@ -4,19 +4,23 @@
 
 There are two separate kinds of exam pages, both with facts hardcoded:
 
-| Group | Pages | Where facts live |
-|---|---|---|
-| Generic exam pages | mdcat, ecat, css, ppsc, fpsc, nts, pms (7) | One shared data file, rendered by one shared template |
+
+| Group                 | Pages                                                                                                                                            | Where facts live                                                                                                                                                                                                                                                                  |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Generic exam pages    | mdcat, ecat, css, ppsc, fpsc, nts, pms (7)                                                                                                       | One shared data file, rendered by one shared template                                                                                                                                                                                                                             |
 | Admission-test guides | nums, iba-sukkur, lat, karachi-university, sindh-university, nat, lums, aku, giki, uet-lahore, air-university, pieas, hec-gat-subject, usat (14) | Each page is its own small file passing ~20 fields to one shared template (name, meta title/description, intro, exam body, duration, total marks, test date, subjects, pattern table, eligibility, key dates, tips, official sources, verified-on, related links, mock-test link) |
-| MDCAT extras | MDCAT countdown, test-day block | A separate hardcoded test date (still 20 Sep 2026) |
+| MDCAT extras          | MDCAT countdown, test-day block                                                                                                                  | A separate hardcoded test date (still 20 Sep 2026)                                                                                                                                                                                                                                |
+
 
 Other places that copy these facts:
+
 - Exam sitemap: slug list + a hand-maintained "verified-on" lastmod map (karachi-university excluded by hand).
 - Prerendering: pages are prerendered with a synchronous renderer that **cannot wait for database reads**. This is the main technical constraint.
 
 ## 1. Can the facts move to the database? Yes
 
 All 21 pages already funnel through two shared templates, so the fields map cleanly to one table. One new table `exam_pages`, one row per slug:
+
 - Simple fields: slug, name, full name, meta title, meta description, keywords, intro, exam body, duration, total marks, frequency, test date (display text), test date (real date, for countdowns), registration opens/closes, admit-slip info, result date, pattern note, official URL, verified-on date, status (draft / published), include-in-sitemap flag.
 - List fields (stored as structured lists): subjects, pattern rows, eligibility points, key dates, tips, official sources, related links, mock-test link.
 - Every fact field can be left empty or set to "Not yet announced", shown as a "Not yet announced" label on the page.
@@ -25,6 +29,7 @@ All 21 pages already funnel through two shared templates, so the fields map clea
 ## 2. Admin UI
 
 New "Exam Pages" tab in the existing admin panel:
+
 - **List view:** all exam pages with slug, test date, verified-on date, status, an "in sitemap" indicator, and a warning badge if verified-on is older than 6 months or the test date has passed (shows which pages need a yearly update).
 - **Edit view:** form sections for Basics/SEO, Key facts (test date, duration, marks, registration window, admit slip, result), Subjects and pattern table (add/remove/reorder rows), Eligibility, Key dates, Tips, Official sources (label + link, at least one required), Related links.
 - "Mark as not yet announced" toggle next to each fact field.
@@ -65,3 +70,17 @@ Rough size: about 3 to 4 build rounds. Steps 1–4 can ship first, keeping today
 - Client: React Query hook `useExamPage(slug)` with `initialData` = current static props, so the first render (and renderToString) matches today's output and no layout shift happens.
 - Build: extend `scripts/inject-meta.mjs` / prerender to fetch published rows with the anon key and inject content + meta; `scripts/generate-sitemaps.mjs` and the `generate-sitemap` edge function derive `/exams/*` from rows passing a shared `examQualityGate()` module.
 - Verification: snapshot diff of prerendered HTML for all 21 routes pre/post; sitemap URL set diff must equal today's 18 entries.
+
+&nbsp;
+
+Plan approved. Decisions:
+
+1. Test dates get a real calendar date (not just display text) — enables auto "Test held on..." switching for all exams, like MDCAT already has
+
+2. Facts only are editable for now (intro/tips/FAQs stay in code) — revisit in the cleanup phase later
+
+3. Direct save, no approval workflow — I'm the only admin currently
+
+&nbsp;
+
+Proceed with phases 1-4 first (database table, data import with row-by-row verification against current pages, page wiring with fallback, build-time bake-in + shared quality checker + sitemap switch) — stop after Phase 4 and show me the pre/post prerendered-HTML diff for all 21 routes before we touch anything visible to Google. Phase 5 (admin tab) comes after Phase 4 is verified stable.
