@@ -57,7 +57,9 @@ export interface AdmissionTestPageProps {
   mockTest?: { label: string; to: string; note: string };
 }
 
-const AdmissionTestPage = (p: AdmissionTestPageProps) => {
+const AdmissionTestPage = (props: AdmissionTestPageProps) => {
+  // Facts (dates, eligibility, sources…) come from exam_pages; code props are the fallback.
+  const p = useExamFacts(props.slug, props);
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Course',

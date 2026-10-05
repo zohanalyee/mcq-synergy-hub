@@ -15,7 +15,8 @@ import { MdcatCountdown, MdcatWeightageTable, MdcatContextualLinks, MdcatTestDay
 const ExamLandingPage = () => {
   const { examSlug } = useParams<{ examSlug: string }>();
   const navigate = useNavigate();
-  const exam = examSlug ? examsData[examSlug] : null;
+  // Facts come from exam_pages (snapshot at build, live row after load); code data is the fallback.
+  const exam = useExamFacts(examSlug ?? '', examSlug ? examsData[examSlug] ?? null : null);
 
   if (!exam) return <NotFound />;
 
