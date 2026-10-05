@@ -1,4 +1,5 @@
 import SEOHead from '@/components/SEOHead';
+import { getExamTestDate } from '@/lib/examFacts';
 import { ExamPageSchema } from '@/components/StructuredData';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { Link } from 'react-router-dom';
