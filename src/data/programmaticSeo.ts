@@ -29,7 +29,7 @@ export interface ProgSeoEntry {
 export const PROGRAMMATIC_SEO: Record<string, ProgSeoEntry> = {
   'mdcat-karachi': {
     slug: 'mdcat-karachi',
-    title: 'MDCAT Karachi 2026 Prep – Free MCQs, Past Papers & Mock Tests',
+    title: 'Karachi MDCAT Past Papers & MCQs – DUHS, JSMU & SMBBMU',
     metaDescription: 'Karachi students: practice 10,000+ MDCAT MCQs free. Past papers, aggregate calculator & full mock tests for the 20 Sep 2026 exam. Start now.',
     keywords: 'MDCAT Karachi, MDCAT 2026 Karachi, DUHS MDCAT, SMBBMU admission, JSMU merit, Sindh MDCAT centres',
     intro:

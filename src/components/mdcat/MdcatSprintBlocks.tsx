@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
-import { getExamTestDate } from '@/lib/examFacts';
+import { getExamSnapshot, getExamTestDate } from '@/lib/examFacts';
 
 /** MDCAT test date from the exam_pages row (admin-editable); code fallback = official 2026 date. */
 const MDCAT_DATE = getExamTestDate('mdcat', '2026-09-20');
+const MDCAT_STATUS_FALLBACK = getExamSnapshot('mdcat')?.facts?.countdownText;
+const DEFAULT_MDCAT_STATUS = 'MDCAT 2026 was held on 20 September 2026. MDCAT 2027 dates have not yet been announced.';
 
 /** Computed at render time so prerendered HTML never ships a stale number. */
 export const daysUntilMdcat = () =>
@@ -17,9 +19,18 @@ export const MDCAT_WEIGHTAGE = [
   { subject: 'Logical Reasoning', mcqs: 6, pct: '3%', time: '~3 min' },
 ];
 
-export const MdcatCountdown = () => {
+export const MdcatCountdown = ({ statusText }: { statusText?: string } = {}) => {
   const daysLeft = daysUntilMdcat();
-  if (daysLeft <= 0) return null;
+  if (daysLeft <= 0) {
+    return (
+      <div className="border border-border bg-muted/30 rounded-xl p-4 mb-8">
+        <p className="text-sm font-semibold text-foreground">MDCAT date update</p>
+        <p className="text-sm text-muted-foreground mt-1">
+          {statusText || (typeof MDCAT_STATUS_FALLBACK === 'string' ? MDCAT_STATUS_FALLBACK : DEFAULT_MDCAT_STATUS)}
+        </p>
+      </div>
+    );
+  }
   const unit = daysLeft === 1 ? 'day' : 'days';
 
   return (
@@ -94,27 +105,37 @@ export const MdcatWeightageTable = () => (
  */
 export const MdcatContextualLinks = () => (
   <section className="mb-10 rounded-xl border bg-muted/30 p-4">
-    <h2 className="text-base font-semibold mb-2">Plan the rest of your MDCAT route</h2>
+    <h2 className="text-base font-semibold mb-2">Continue your MDCAT preparation</h2>
     <p className="text-sm text-muted-foreground">
-      Once you know your score range, check where you actually stand with the{' '}
+      Review the{' '}
+      <Link to="/mdcat-syllabus" className="text-primary underline">
+        MDCAT syllabus
+      </Link>
+      , solve{' '}
+      <Link to="/mdcat-past-papers" className="text-primary underline">
+        MDCAT past papers
+      </Link>
+      , or take a timed{' '}
+      <Link to="/mock-tests" className="text-primary underline">
+        MDCAT mock test
+      </Link>
+      . Karachi candidates can use the{' '}
+      <Link to="/p/mdcat-karachi" className="text-primary underline">
+        Karachi MDCAT past papers and MCQs guide
+      </Link>
+      , while Punjab candidates can check the{' '}
+      <Link to="/p/mdcat-punjab" className="text-primary underline">
+        Punjab MDCAT guide
+      </Link>
+      . Once you know your score range, check where you stand with the{' '}
       <Link to="/tools/aggregate-calculator" className="text-purple-700 underline">
         MDCAT aggregate calculator
       </Link>{' '}
-      — it weighs your FSc marks and MDCAT score the way public medical colleges do. Keep the
-      daily habit going with{' '}
-      <Link to="/exams/mdcat" className="text-purple-700 underline">
-        free MDCAT MCQ practice
-      </Link>
-      , and if you are also applying to army medical colleges, the{' '}
+      and, if you are also applying to army medical colleges, use the{' '}
       <Link to="/exams/nums" className="text-purple-700 underline">
         NUMS entry test preparation
       </Link>{' '}
-      shares most of the Biology and Chemistry syllabus. Engineering aspirants keeping a backup
-      option should start{' '}
-      <Link to="/ecat-preparation" className="text-purple-700 underline">
-        ECAT preparation
-      </Link>{' '}
-      alongside, since Physics and Maths overlap heavily.
+      guide.
     </p>
   </section>
 );

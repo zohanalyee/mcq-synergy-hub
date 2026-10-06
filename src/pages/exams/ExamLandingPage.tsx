@@ -83,7 +83,7 @@ const ExamLandingPage = () => {
 
         {exam.slug === 'mdcat' && (
           <>
-            <MdcatCountdown />
+            <MdcatCountdown statusText={typeof exam.countdownText === 'string' ? exam.countdownText : undefined} />
             <MdcatWeightageTable />
             <MdcatTestDayBlock />
             <MdcatContextualLinks />
