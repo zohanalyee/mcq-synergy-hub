@@ -53,7 +53,7 @@ const MockTestDetail = () => {
   const [questionCount, setQuestionCount] = useState<number>(20);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const { data: dbJobTests = [], isLoading } = useQuery({
+  const { data: dbJobTests = [], isLoading, refetch } = useQuery({
     queryKey: ["job-tests"],
     queryFn: getJobTests,
   });
@@ -69,6 +69,26 @@ const MockTestDetail = () => {
       <Header>
         <div className="flex items-center justify-center min-h-[40vh] gap-2 text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin" /> Loading mock test…
+        </div>
+      </Header>
+    );
+  }
+
+  // SEO safety rule: noindex ONLY when the database positively answered and the
+  // slug is genuinely absent. If the load failed or came back empty (network,
+  // 403, timeout during a crawler render), we must NOT touch SEO metadata — the
+  // prerendered head (index,follow) stays in force. getJobTests returns [] on
+  // error, so an empty result is treated as "unknown", never as "not found".
+  const dbAnswered = dbJobTests.length > 0;
+
+  if (!test && !dbAnswered) {
+    return (
+      <Header>
+        <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-3">
+          <p className="text-foreground font-medium">This mock test couldn't load right now.</p>
+          <button onClick={() => refetch()} className="text-primary font-medium">
+            Try again →
+          </button>
         </div>
       </Header>
     );
