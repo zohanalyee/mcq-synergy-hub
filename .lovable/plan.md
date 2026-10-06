@@ -1,79 +1,150 @@
-# GSC Performance audit + mock-test landing pages (6 Oct 2026, audit only)
+# August winners + recovery status (6 Oct 2026, audit only, no changes made)
 
-Source: Search Console, property `sc-domain:mcqsai.com`, 7 Sep – 4 Oct 2026 (last 28 complete days). No changes made.
+Source: Search Console `sc-domain:mcqsai.com`, live Googlebot fetches, and Google's stored per-page record (URL Inspection).
 
-## 0. The headline finding: there is almost no data to tier
+## 1. August 2026: where the traffic actually came from
 
-The last 28 days total only **155 impressions and 32 clicks across 45 pages**. 31 of those clicks are the homepage, from people searching the brand name ("mcqs ai", "mcq ai").
+Total for 1–31 Aug: **1,282 clicks, 11,703 impressions across 215 pages.**
 
-This is a collapse, not a ranking problem:
+**One page drove nearly all of it:** `/mock-tests/junior-office-associate-bps-13` had **1,173 clicks (91.5%)** and **9,173 impressions (78%)**, at average position 5.5 and 12.8% CTR.
 
-| Period | Clicks | Impressions |
-|---|---|---|
-| 1–15 Jul | 28 | 413 |
-| 16–31 Jul | 175 | 2,141 |
-| 1–15 Aug | 701 | 7,168 |
-| 16–31 Aug | 578 | 4,399 |
-| 1–15 Sep | 17 | 61 |
-| 16–30 Sep | 20 | 69 |
-| 1–3 Oct | 3 | 9 |
+Top pages by clicks:
 
-Visibility fell about 98% at the start of September. The fall lines up with the time Google was getting "access forbidden (403)" errors from the old Cloudflare challenge rule, and with the MDCAT exam season ending. Pages that were dropped while blocked haven't come back yet. A position 8–30 list can't fix this. Getting pages re-crawled and back into Google's index has to come first.
+| Page | Clicks | Impr | CTR | Pos |
+|---|---|---|---|---|
+| /mock-tests/junior-office-associate-bps-13 | 1,173 | 9,173 | 12.8% | 5.5 |
+| / (homepage) | 55 | 233 | 23.6% | 4.2 |
+| /mock-tests | 12 | 303 | 4.0% | 6.8 |
+| /p/mdcat-karachi | 6 | 510 | 1.2% | 6.5 |
+| /boards/aku-eb/class-11/biology/biological-molecules | 5 | 13 | 38% | 3.1 |
+| /boards/sindh/class-9/chemistry/solutions | 2 | 4 | 50% | 6.3 |
+| /exams/mdcat | 2 | 8 | 25% | 11.8 |
+| /p/mdcat-punjab | 2 | 31 | 6.5% | 7.1 |
+| www /quizzes | 2 | 11 | 18% | 11.9 |
 
-## 1. Every page ranking at position 8–30 (by impressions)
+Top pages by impressions, beyond the ones above: SAFCO BDO job listing (262 impr, 0 clicks, pos 8.0), /tools/aggregate-calculator (82 impr, pos 57.6), /boards/sindh/class-10/english/the-voice-of-god (52 impr, 1 click), /exams/nts (36 impr, pos 22.1), /nust-entry-test (35 impr, pos 31.2), /punjab-university-entry-test (35 impr, pos 7.7), Meezan Bank blog post (34 impr), /pak-army-test (28 impr, pos 10.8), Jamshoro Junior Clerk mock test (22 impr, pos 6.4), Sindh SST mock test (16 impr).
 
-| Page | Impr | Clicks | Avg pos |
+Top search terms (all of them are JOA except the brand name):
+
+| Search term | Clicks | Impr | Pos |
 |---|---|---|---|
-| /exams/mdcat | 5 | 0 | 15.8 |
-| /p/mdcat-karachi | 3 | 0 | 10.7 |
-| /boards/punjab.../class-7/mathematics/fundamentals-of-geometry | 2 | 0 | 8.5 |
-| /boards/sindh.../class-10/mathematics/sets-and-functions | 2 | 0 | 22.5 |
-| /mdcat-syllabus | 1 | 0 | 9 |
-| /blog/meezan-bank-personal-banking-officer-jobs-2026 | 1 | 0 | 10 |
-| /editorial-policy | 1 | 0 | 10 |
-| www.mcqsai.com/boards/aga-khan-...-aku-eb | 1 | 0 | 10 |
-| /forces-jobs-tests | 1 | 0 | 20 |
+| junior office associate high court past papers | 68 | 672 | 5.9 |
+| junior office associate bps 13 past papers | 39 | 168 | 2.1 |
+| junior office associate past papers | 37 | 328 | 5.0 |
+| nts junior office associate past papers | 29 | 198 | 5.4 |
+| junior office associate mock test | 17 | 33 | 1.2 |
+| mcqs ai (brand) | 14 | 26 | 1.4 |
+| past papers of junior office associate | 13 | 87 | 4.9 |
+| junior office associate sindh high court past papers | 12 | 95 | 6.4 |
+| junior office associate test preparation | 11 | 28 | 1.8 |
+| junior office associate high court | 9 | 279 | 9.7 |
+| junior office associate high court syllabus | 6 | 161 | 6.2 |
 
-Search terms behind these: "mdcat mcqs test" (pos 17.5), "mdcat test mcqs" (14), "mcqs mdcat entry test preparation" (15), "mdcat test practice" (15), "government job test" (20).
+Search terms grouped by exam:
 
-## 2. Tiers
+| Exam | Search terms | Clicks | Impr |
+|---|---|---|---|
+| JOA / Sindh High Court | 60 | 319 | 3,314 |
+| NTS (mostly "nts junior office associate") | 23 | 36 | 414 |
+| Sindh EST/SST teaching licence | ~57 | 42 | 250 |
+| LAT | 19 | 0 | 63 |
+| MDCAT | 11 | 0 | 41 |
+| ECAT | 8 | 0 | 8 |
+| PPSC / FPSC / SPSC / Biology | 0–1 | 0 | 0–1 |
 
-- **Tier A (pos 1–10, protect):** homepage (95 impr, pos 1.3), /mock-tests, /exams, /exams/css, /exams/ppsc, /mdcat-past-papers, /quizzes, /subjects, /sindh-universities-entry-test, /tenders, 3 mock tests (Security Officer Sindh High Court, Punjab MDCAT, Sindh EST), a few board topics. Each has 1–3 impressions.
-- **Tier B (pos 11–20, opportunity):** only 3 pages: /exams/mdcat, /p/mdcat-karachi (10.7, on the edge) and /forces-jobs-tests.
-- **Tier C (pos 21–50):** /exams/ecat (43, "ecat test preparation mcqs" at 78), ~12 board topic pages (pos 22–47), the Jamshoro Junior Clerk mock test (35), two opportunity pages (39–41), four old /subject-content/<id> addresses (31–33), and two www /subject?topic= test-start links (45–46).
-- **Tier D (no impressions):** nearly all of the ~1,480 sitemap pages, including 86 of the 90 mock tests and all 21 exam guides except mdcat/ecat/css/ppsc. With this little data, that reflects the drop in what Google has indexed. It doesn't prove these pages are weak, so I'm not recommending a hard stop on any page type yet.
+**What this means:** the drop from August to September is mostly the JOA exam window closing. The test was on 23 Aug and the re-test on 4 Oct. Outside JOA, August had about 110 clicks across all other pages, so the "normal" baseline is roughly 100–150 clicks a month. September's 37 clicks is still below that, so recovery is real work, but the 98% headline drop is mostly the exam ending.
 
-## 3. Priority list (only 3 real Tier B pages, plus the gaps the data shows)
+## 2. Roadmap based on what won in August
 
-1. **/exams/mdcat (pos 15.8):** people search "mdcat mcqs test" and "mdcat test practice". Add "MCQs Test & Practice" to the title and first heading. Add a section linking straight to the MDCAT mock tests and subject MCQs. Also, the exam is over now, so swap the countdown for "MDCAT 2027" planning content.
-2. **/p/mdcat-karachi (10.7):** link to it from /exams/mdcat and /mdcat-past-papers. Make sure its title says "Karachi MDCAT MCQs".
-3. **/forces-jobs-tests (20, "government job test"):** add a "government job tests" section that links to the mock tests for FPSC, PPSC, SPSC and the court jobs.
-4. **Recovery (more important than 1–3):** use Search Console's URL Inspection → Request Indexing on the top ~20 pages that earned the August traffic. Then check the Page indexing report to confirm the 403 count is going down.
-5. **Clean-up:** old /subject-content/<id> and www /subject?topic=... links still show in results. Check that they send visitors to the proper page address, so ranking signals aren't split.
+**Proven winners to protect first:**
+1. /mock-tests/junior-office-associate-bps-13 (see the alarm in section 3)
+2. Homepage (brand searches)
+3. /mock-tests hub
+4. /p/mdcat-karachi and /p/mdcat-punjab
+5. Sindh EST / SST mock tests
 
-Before working down a full top-10, we should re-run this audit in 2–3 weeks once pages are re-indexed. The August data (when the site was healthy) is the better guide, and I can pull an Aug 1–31 page/query list if you want to plan from that instead.
+**Clusters with real demand:**
+- Sindh court and government job tests (JOA, Junior Clerk Jamshoro, Security Officer)
+- Sindh teaching licence (EST/SST)
+- Exam-specific "past papers" searches. "Past papers" appears in 70%+ of the clicked terms.
+- Sindh board topics (small but steady)
 
-## 4. Mock tests as dedicated SEO landing pages: current state
+**Clusters that would justify subject-mock pages later:** only Sindh court-job tests and EST/SST show demand. MDCAT, ECAT and the PPSC/FPSC subject levels showed close to no August demand, so they're held, as you asked.
 
-They already are individual pages Google can index:
-- All 90 published mock tests have their own address (/mock-tests/<slug>), are in mock-tests.xml (90 entries), and are index,follow.
-- At build time, each page gets its real content written into the HTML: intro, test pattern, official syllabus with weightage, past-paper pattern, a question preview without answers, related tests and FAQ. Crawlers that don't run JavaScript can read it too.
-- What's missing is the **subject level**. There's no "MDCAT Biology Mock Test" page. Exam → mock test links exist, but mock test → subject mock → topic MCQs doesn't. Subjects only show up inside a test.
+**Top 20 pages to request indexing for, most important first:**
+1. https://mcqsai.com/mock-tests/junior-office-associate-bps-13
+2. https://mcqsai.com/
+3. https://mcqsai.com/mock-tests
+4. https://mcqsai.com/p/mdcat-karachi
+5. https://mcqsai.com/p/mdcat-punjab
+6. https://mcqsai.com/mock-tests/sindh-teaching-license-exam-elementary-school-teacher-est
+7. https://mcqsai.com/mock-tests/sindh-teaching-license-exam-secondary-school-teacher-sst
+8. https://mcqsai.com/mock-tests/junior-clerk-bps-11-district-sessions-court-jamshoro
+9. https://mcqsai.com/mock-tests/security-officer-bps-17-bps-17-high-court-of-sindh
+10. https://mcqsai.com/mock-tests/hec-law-admission-test-lat
+11. https://mcqsai.com/boards/sindh-text-book-board/class-10/english/the-voice-of-god
+12. https://mcqsai.com/boards/aga-khan-university-examination-board-aku-eb/class-11/biology/biological-molecules
+13. https://mcqsai.com/boards/sindh-text-book-board/class-9/chemistry/solutions
+14. https://mcqsai.com/boards/punjab-curriculum-and-textbook-board/class-4/general-science/human-health
+15. https://mcqsai.com/exams/mdcat
+16. https://mcqsai.com/exams/nts
+17. https://mcqsai.com/punjab-university-entry-test
+18. https://mcqsai.com/pak-army-test
+19. https://mcqsai.com/quizzes
+20. https://mcqsai.com/boards/federal-board-of-intermediate-and-secondary-education-fbise
 
-### What building the hierarchy would take
+Google doesn't allow "Request Indexing" through its API, so I can't press it for you. You'll need to click it in Search Console → URL Inspection for each page. #1 is the most urgent.
 
-```text
-/exams/mdcat -> /mock-tests/mdcat (exam hub) -> /mock-tests/mdcat/biology (subject mock) -> /boards/.../biology/<topic> (topic MCQs)
-```
+## 3. Recovery status
 
-- New subject-mock page type built from existing syllabus weightage plus the approved question bank. It needs its own quality bar (for example, at least 50 approved questions, at least 60 words of intro, at least 3 FAQs) so thin subjects stay noindex and out of the sitemap. Same rule-driven approach as /p/ and /exams.
-- Links between levels with breadcrumbs, plus build-time content like the existing mock-test pages.
-- A new sitemap section driven by that quality bar.
-- Rough size: MDCAT, ECAT, NTS-GAT, FPSC/PPSC/SPSC general and EST/SST give about 40–70 subject pages that would pass the bar.
-- Effort: about 2–3 build turns.
-- Timing: I'd start this after the recovery in step 4. New pages won't get traffic while Google is still re-indexing the existing ones.
+**Alarm: the August winner is excluded in Google's stored record.** For /mock-tests/junior-office-associate-bps-13, Google says "Excluded by 'noindex' tag". Its last crawl was 28 Aug 2026, more than 5 weeks ago, and it hasn't been re-crawled since.
+- Live today, the page is index,follow, has the correct canonical and is in the sitemap. So Google is acting on an old crawl.
+- A likely cause, not confirmed: the page has a "Mock test not found" fallback that adds noindex. If the question data didn't load during Google's 28 Aug render, it would have shown that fallback (for example, while the Cloudflare 403 problem was active). Any mock test can fall into this.
+- Proposed fix, for approval later: never add noindex when the data fails to load. Only add it when we know for sure the test doesn't exist.
 
-## Decisions for you
+**Google's stored record for the other key pages:**
 
-- Plan from August's healthy-period data instead (I can pull it), or act on the 3 Tier B items now?
-- Go ahead with the subject-mock hierarchy now, or after re-indexing recovers?
+| Page | Google's state | Last crawl |
+|---|---|---|
+| /p/mdcat-karachi | Submitted and indexed | 6 Oct (today) |
+| /mock-tests | Indexed | 4 Oct |
+| /exams/nts | Indexed | 26 Sep |
+| /mock-tests/...-est | Indexed | 15 Aug (stale) |
+| /boards/sindh/class-10/english/the-voice-of-god | Crawled – currently not indexed | 4 Oct |
+
+Your recovery chain (403 ↓ → crawled ↑ → indexed ↑ → impressions ↑ → clicks ↑), step by step:
+- **403 count going down?** Not measurable from here. Google's API doesn't expose the Page indexing report totals or the progress of a validation run. Read the "Blocked due to access forbidden (403)" count in Search Console, today and then weekly, to track this.
+- **How many previously blocked pages are still not indexed?** Same limit: that count lives only in the Search Console report.
+- **Crawling resumed?** Yes, partly. Three pages were crawled 4–6 Oct with successful fetches, and live Googlebot gets 200 everywhere. But winners crawled before September (JOA, EST) haven't been re-crawled, which is why Request Indexing matters.
+- **Indexed / impressions / clicks:** September was 37 clicks and 130 impressions; 1–3 Oct was 3 clicks and 9 impressions. The upturn hasn't started yet.
+
+**Old subject addresses (a real problem):**
+- `/subject/<id>` and `/subject-content/<id>` return 200, but what Google sees is a copy of the **homepage**: homepage title, index,follow, and a canonical pointing to `https://mcqsai.com/`. Google sees them as duplicates of the homepage. Seven of these showed up in search in Aug/Sep.
+- `www.mcqsai.com/...` addresses correctly 301 redirect to the non-www version, query strings included. That part is fine.
+- `/subject?topic=…&count=…&timed=…` practice links are blocked in robots.txt by design. Google only shows them because they're linked.
+- Proposed fix, for approval later: give `/subject/<id>` and `/subject-content/<id>` their own title and canonical at build time. Or, if the ID points to a board subject, add noindex,follow with a canonical to that subject's real page.
+
+## 4. Review of the 3 pages (exact fixes, not implemented)
+
+**/exams/mdcat** (live title: "MDCAT Preparation **2025** – Free MCQs & Past Papers | MCQsAI")
+- The title still says 2025. Change it to "MDCAT 2027 Preparation – MCQs Test, Past Papers & Practice | MCQsAI". That matches the searches "mdcat mcqs test" (pos 17.5) and "mdcat test practice" (15).
+- The first heading should say "MDCAT 2027". The 2026 test (20 Sep) is over, so turn the countdown into a "2026 test held, 2027 dates not yet announced" panel. That can be edited from the admin Exam Pages tab, no code change needed.
+- Add a links block to /p/mdcat-karachi, /p/mdcat-punjab, /mdcat-past-papers, /mdcat-syllabus and the MDCAT mock tests.
+
+**/p/mdcat-karachi** (510 impressions in Aug, only 1.2% CTR at pos 6.5, so the title isn't earning clicks)
+- Rewrite the title around "Karachi MDCAT Past Papers & MCQs (DUHS/SMBBMU)". Check the exact university names against the page's own facts before writing it.
+- Link to it from /exams/mdcat and /mdcat-past-papers. Google currently finds it only through the sitemap.
+
+**/forces-jobs-tests** ("government job test", pos 20)
+- Add a short "Government job tests in Pakistan" section that links to the court-job mock tests (JOA, Junior Clerk, Security Officer), FPSC, PPSC, SPSC and NTS.
+- Add "Government Job Tests" to the title.
+
+## 5. Held, as you asked
+- The subject-mock pages are not being built.
+- The JOA Larkana re-test was 4 Oct and has passed. The JOA page's long-term traffic depends on how well it ranks for "past papers".
+
+## Next steps on your approval (separate build turns)
+1. You: request indexing for the 20 pages above, starting with #1, and note today's 403 count.
+2. Me: stop mock-test pages from showing noindex when data fails to load.
+3. Me: fix the `/subject/<id>` and `/subject-content/<id>` homepage-duplicate problem.
+4. Me: the title, content and link fixes in section 4.
