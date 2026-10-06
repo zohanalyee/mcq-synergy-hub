@@ -59,7 +59,7 @@ const ForcesJobsTests = () => (
       ]}
     />
     <div className="container mx-auto px-4 py-8 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-2">Pakistan Forces & Government Jobs Tests 2026</h1>
+      <h1 className="text-3xl font-bold mb-2">Government Job Tests in Pakistan 2026</h1>
       <p className="text-muted-foreground mb-6">Complete preparation for Navy, Rangers, FIA, Police, WAPDA, PIA and all government forces recruitment tests.</p>
 
       <div className="mb-10 flex flex-wrap gap-3">
