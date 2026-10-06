@@ -40,7 +40,7 @@ const related = [
 const ForcesJobsTests = () => (
   <>
     <SEOHead
-      title="Pakistan Forces & Government Jobs Tests 2026 | Free MCQs | MCQsAI"
+      title="Government Job Tests in Pakistan – Free MCQs & Practice | MCQsAI"
       description="Free preparation for Pakistan Navy, Rangers, FIA, Police, WAPDA, PIA, ANF and NAB recruitment tests. Intelligence, GK, English and Maths MCQs."
       keywords="Pakistan Navy test, Rangers test, FIA test preparation, Police Pakistan test, WAPDA test, PIA test"
     />
@@ -77,6 +77,33 @@ const ForcesJobsTests = () => (
                 {f.monthly && <span className="text-xs text-muted-foreground">{f.monthly}</span>}
               </div>
               <p className="text-sm text-muted-foreground mt-1">{f.detail}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="mb-10 border-y border-border py-6">
+        <h2 className="text-xl font-semibold mb-3">Government Job Tests in Pakistan</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+          Government recruitment tests in Pakistan vary by department and post, but many share a
+          core paper of General Knowledge, Pakistan Studies, Current Affairs, English, basic
+          Mathematics, Computer Science and analytical reasoning. Technical and uniformed posts
+          may add subject knowledge, intelligence or physical screening, so candidates should
+          always match their preparation to the official advertisement and syllabus.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[
+            { title: 'Federal recruitment tests', text: 'Prepare for FPSC, FIA, NAB and other federal vacancies with current affairs, English, Pakistan Affairs and post-specific MCQs.', to: '/fpsc-past-papers' },
+            { title: 'Provincial recruitment tests', text: 'Build the shared GK and aptitude base used in PPSC, SPSC and provincial police recruitment papers.', to: '/ppsc-past-papers' },
+            { title: 'Armed forces tests', text: 'Practise intelligence, English, Mathematics and science for Army, Navy, PAF, Rangers and related entry tests.', to: '/pak-army-test' },
+            { title: 'Timed mock practice', text: 'Use full mock tests to improve pace, accuracy and question selection before test day.', to: '/mock-tests' },
+          ].map((item) => (
+            <div key={item.title} className="border border-border rounded-lg p-4">
+              <h3 className="font-semibold text-foreground">{item.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{item.text}</p>
+              <Link to={item.to} className="mt-3 inline-flex text-sm font-medium text-primary hover:underline">
+                View preparation resources
+              </Link>
             </div>
           ))}
         </div>

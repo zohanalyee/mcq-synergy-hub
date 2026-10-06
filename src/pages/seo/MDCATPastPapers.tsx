@@ -181,6 +181,7 @@ const MDCATPastPapers = () => (
             { label: 'PPSC Past Papers', url: '/ppsc-past-papers' },
             { label: 'FPSC Past Papers', url: '/fpsc-past-papers' },
             { label: 'MDCAT MCQs Practice', url: '/exams/mdcat' },
+            { label: 'Karachi MDCAT Past Papers & MCQs', url: '/p/mdcat-karachi' },
             { label: 'NUMS Preparation', url: '/exams/nums' },
 
           ].map((link) => (
