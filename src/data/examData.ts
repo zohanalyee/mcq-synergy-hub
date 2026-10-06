@@ -14,6 +14,7 @@ export interface ExamData {
   duration: string;
   totalMarks: string;
   officialUrl?: string;
+  countdownText?: string;
 }
 
 export const examsData: Record<string, ExamData> = {
