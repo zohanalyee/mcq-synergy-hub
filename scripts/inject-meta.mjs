@@ -172,8 +172,8 @@ function wordCount(s) {
     .filter(Boolean).length;
 }
 
-function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false, pageType = "other" }) {
-  const url = `${BASE_URL}${path}`;
+function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogType = "website", robots = "index,follow", inPlace = false, pageType = "other", canonical = null }) {
+  const url = canonical || `${BASE_URL}${path}`;
   const desc = clamp(description, 165);
   // For prerendered routes (inPlace) keep the real page body and only correct the
   // <head>; otherwise build a fresh shell from dist/index.html.
@@ -205,6 +205,60 @@ function patch({ path, title, description, keywords, ogImage = OG_DEFAULT, ogTyp
   mkdirSync(outDir, { recursive: true });
   writeFileSync(join(outDir, "index.html"), html, "utf8");
   MANIFEST.push({ path, type: pageType, title, canonical: url, generatedAt: new Date().toISOString() });
+}
+
+// C3: legacy /subject/<uuid> and /subject-content/<uuid> addresses used to ship
+// the homepage shell (homepage title + canonical → "/"). Give each its own head.
+// Canonical → the real board subject hub when that hub is indexable, otherwise
+// the legacy address itself. No redirects. GlobalCanonical skips these paths so
+// the browser keeps this static canonical.
+async function injectLegacySubjects() {
+  const topicRows = await getIndexableTopicRows();
+  const liveHubs = new Set();
+  for (const r of topicRows || []) {
+    if (Number(r.approved_count || 0) < 8) continue;
+    const parts = String(r.path || "").split("/").filter(Boolean);
+    if (parts.length >= 5) liveHubs.add(`/boards/${parts[1]}/${parts[2]}/${parts[3]}`);
+  }
+  const [{ data: systems }, { data: levels }] = await Promise.all([
+    supabase.from("educational_systems").select("id,name"),
+    supabase.from("levels").select("id,name,system_id"),
+  ]);
+  const sysById = new Map((systems || []).map((s) => [s.id, s]));
+  const lvlById = new Map((levels || []).map((l) => [l.id, l]));
+  const subjects = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from("subjects").select("id,name,level_id").range(from, from + 999);
+    if (error) throw error;
+    subjects.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  let count = 0, toHub = 0;
+  for (const s of subjects) {
+    if (!s.id || !s.name) continue;
+    const lvl = lvlById.get(s.level_id);
+    const sys = lvl ? sysById.get(lvl.system_id) : null;
+    const hub = lvl && sys ? `/boards/${pageToSlug(sys.name)}/${pageClassSeg(lvl.name)}/${pageToSlug(s.name)}` : null;
+    const canonical = hub && liveHubs.has(hub) ? `${BASE_URL}${hub}` : null;
+    if (canonical) toHub++;
+    const ctx = [lvl?.name, sys?.name].filter(Boolean).join(", ");
+    const label = ctx ? `${s.name} (${ctx})` : s.name;
+    for (const prefix of ["/subject", "/subject-content"]) {
+      patch({
+        path: `${prefix}/${s.id}`,
+        title: `${label} MCQs with Answers — Free Practice | MCQsAI`,
+        description: `Free ${s.name} MCQs with answers and explanations${ctx ? ` for ${ctx}` : ""}. AI-powered practice questions — MCQsAI Pakistan.`,
+        keywords: `${s.name} MCQs, ${s.name} MCQs with answers, ${s.name} quiz, ${s.name} practice questions Pakistan`,
+        ogImage: OG_DEFAULT,
+        ogType: "article",
+        canonical,
+        pageType: "legacy-subject",
+      });
+      count++;
+    }
+  }
+  console.log(`[inject-meta] legacy-subjects: ${subjects.length} subjects, ${toHub} canonical → board subject page`);
+  return count;
 }
 
 // ---------- generators ----------
@@ -853,9 +907,9 @@ function verifyRequiredRoutes() {
   }
 
   const results = await Promise.allSettled([
-    injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(), injectBoardHubs(),
+    injectMockTests(), injectOpportunities(), injectBlog(), injectBoards(), injectBoardHubs(), injectLegacySubjects(),
   ]);
-  const labels = ["mock-tests", "opportunities", "blog", "boards", "board-hubs"];
+  const labels = ["mock-tests", "opportunities", "blog", "boards", "board-hubs", "legacy-subjects"];
   const counts = {};
   results.forEach((r, i) => {
     if (r.status === "fulfilled") {

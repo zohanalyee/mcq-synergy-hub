@@ -41,6 +41,10 @@ const GlobalCanonical = () => {
     }
   }
 
+  // Legacy /subject/<uuid> & /subject-content/<uuid>: the build writes a static
+  // canonical (board subject page or self). Don't override it here.
+  if (/^\/subject(-content)?\/[0-9a-f]{8}-[0-9a-f]{4}-/i.test(p)) return null;
+
   const canonical = `${SITE_ORIGIN}${p}`;
 
   return (
