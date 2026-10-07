@@ -4154,6 +4154,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_merge_duplicate_clusters: {
+        Args: { _dry_run?: boolean }
+        Returns: {
+          copies_hidden: number
+          groups_merged: number
+        }[]
+      }
       backfill_topic_ids: {
         Args: never
         Returns: {
