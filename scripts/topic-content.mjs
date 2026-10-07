@@ -144,9 +144,16 @@ export function buildTopicContentHtml({ topicName, subjectName, classN, boardNam
 // description, H1 context, breadcrumb, and canonical). A truncation safeguard
 // trims the topic portion for long topic/subject names. Keep this identical to
 // src/lib/topicTitle.ts (buildTopicTitleBase) to avoid raw vs rendered cloaking.
+// Mirror of TOPIC_TITLE_OVERRIDES in src/lib/topicTitle.ts.
+const TOPIC_TITLE_OVERRIDES = {
+  'stoichiometry advanced calculations': 'Stoichiometry Calculations',
+};
+
 export function buildTopicTitleBase(topic, subject, classN) {
   const MAX = 51; // 51 + " | MCQsAI" (9) = 60
   const tail = ` MCQs - Class ${classN} ${subject}`;
+  const override = TOPIC_TITLE_OVERRIDES[String(topic).trim().toLowerCase()];
+  if (override) return `${override}${tail}`;
   let base = `${topic}${tail}`;
   if (base.length > MAX) {
     const available = MAX - tail.length;
