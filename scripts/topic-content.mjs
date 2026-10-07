@@ -29,8 +29,39 @@ export function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
+// Normalise every stored option shape to [{key, text}]:
+//   ["a","b",...]            -> keys A, B, C, D
+//   [{key,text}, ...]        -> unchanged
+//   {A:"a", B:"b", ...}      -> entries
 function optionsOf(m) {
-  return Array.isArray(m.options) ? m.options : [];
+  const o = m.options;
+  const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
+  if (Array.isArray(o)) {
+    return o
+      .map((v, i) =>
+        v && typeof v === 'object'
+          ? { key: String(v.key || KEYS[i] || ''), text: String(v.text ?? v.value ?? '') }
+          : { key: KEYS[i] || String(i + 1), text: String(v ?? '') },
+      )
+      .filter((x) => x.text.trim());
+  }
+  if (o && typeof o === 'object') {
+    return Object.entries(o)
+      .map(([k, v]) => ({ key: String(k).toUpperCase(), text: String(v ?? '') }))
+      .filter((x) => x.text.trim());
+  }
+  return [];
+}
+
+// correct_option may be a letter ("B") or the answer text itself ("56.7g").
+function correctOf(m, opts) {
+  const c = String(m.correct_option ?? '').trim();
+  if (!c) return null;
+  return (
+    opts.find((o) => o.key.toUpperCase() === c.toUpperCase()) ||
+    opts.find((o) => o.text.trim().toLowerCase() === c.toLowerCase()) ||
+    null
+  );
 }
 
 // Quiz schema — identical shape to BoardTopicPage quizSchema.
