@@ -214,6 +214,21 @@ const MockTestDetail = () => {
               {IBA_NETWORK_LABEL}
             </Badge>
           )}
+          {/junior office associate/i.test(test.title) && Date.now() < Date.parse("2026-10-12T00:00:00+05:00") && (
+            <div role="note" className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
+              <strong>NTS Larkana test: Sunday, 11 October 2026.</strong> Sindh High Court JOA (BPS-13) candidates can
+              search their roll number slip on the{" "}
+              <a
+                href="https://nts.org.pk/Test&Products/Lists/08_26/SHC_23Aug26_FL/Search.php"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                official NTS page
+              </a>
+              . Practise the mock test below before test day.
+            </div>
+          )}
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{test.title} Mock Test</h1>
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Building className="h-4 w-4" />
