@@ -47,6 +47,14 @@ const CompetitiveExams = () => {
     return true;
   });
 
+  // High-demand tests pinned to the top (lower index = higher). JOA drove most traffic.
+  const PINNED = [/junior office associate/i];
+  const pinRank = (title: string) => {
+    const i = PINNED.findIndex(r => r.test(title));
+    return i === -1 ? PINNED.length : i;
+  };
+  const sortedTests = [...filteredTests].sort((a, b) => pinRank(a.title) - pinRank(b.title));
+
   return (
     <Header>
       <SEOHead
@@ -77,11 +85,12 @@ const CompetitiveExams = () => {
             jobTests={jobTests}
           />
 
-          <AdSlot surface="hub" />
-
           <div className="mt-6">
-            <JobTestsTab jobTests={filteredTests} />
+            <JobTestsTab jobTests={sortedTests} />
           </div>
+
+          {/* Ad sits below the list so an unfilled unit never pushes tests off-screen. */}
+          <AdSlot surface="hub" />
         </div>
       </div>
     </Header>
