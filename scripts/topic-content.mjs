@@ -111,7 +111,7 @@ export function buildTopicContentHtml({ topicName, subjectName, classN, boardNam
       .map((o) => `<li>${esc(o.key)}. ${esc(o.text)}</li>`)
       .join('');
     const answer = correct?.text
-      ? `${esc(m.correct_option)}. ${esc(correct.text)}`
+      ? `${esc(correct.key)}. ${esc(correct.text)}`
       : esc(m.correct_option);
     return (
       `<article>` +
