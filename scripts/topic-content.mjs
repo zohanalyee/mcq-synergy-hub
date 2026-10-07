@@ -85,7 +85,7 @@ export function buildFaqSchema(mcqs) {
     .slice(0, 10)
     .map((m) => {
       const opts = optionsOf(m);
-      const correct = opts.find((o) => (o.key || '') === m.correct_option);
+      const correct = correctOf(m, opts);
       const answerText = [
         correct?.text ? `Correct answer: ${correct.text}.` : `Correct answer: ${m.correct_option}.`,
         m.explanation ? String(m.explanation).trim() : '',
@@ -106,7 +106,7 @@ export function buildFaqSchema(mcqs) {
 export function buildTopicContentHtml({ topicName, subjectName, classN, boardName, mcqs, links }) {
   const items = (mcqs || []).map((m, i) => {
     const opts = optionsOf(m);
-    const correct = opts.find((o) => (o.key || '') === m.correct_option);
+    const correct = correctOf(m, opts);
     const optionsHtml = opts
       .map((o) => `<li>${esc(o.key)}. ${esc(o.text)}</li>`)
       .join('');
