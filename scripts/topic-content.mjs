@@ -29,8 +29,39 @@ export function esc(s) {
     .replace(/'/g, '&#39;');
 }
 
+// Normalise every stored option shape to [{key, text}]:
+//   ["a","b",...]            -> keys A, B, C, D
+//   [{key,text}, ...]        -> unchanged
+//   {A:"a", B:"b", ...}      -> entries
 function optionsOf(m) {
-  return Array.isArray(m.options) ? m.options : [];
+  const o = m.options;
+  const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
+  if (Array.isArray(o)) {
+    return o
+      .map((v, i) =>
+        v && typeof v === 'object'
+          ? { key: String(v.key || KEYS[i] || ''), text: String(v.text ?? v.value ?? '') }
+          : { key: KEYS[i] || String(i + 1), text: String(v ?? '') },
+      )
+      .filter((x) => x.text.trim());
+  }
+  if (o && typeof o === 'object') {
+    return Object.entries(o)
+      .map(([k, v]) => ({ key: String(k).toUpperCase(), text: String(v ?? '') }))
+      .filter((x) => x.text.trim());
+  }
+  return [];
+}
+
+// correct_option may be a letter ("B") or the answer text itself ("56.7g").
+function correctOf(m, opts) {
+  const c = String(m.correct_option ?? '').trim();
+  if (!c) return null;
+  return (
+    opts.find((o) => o.key.toUpperCase() === c.toUpperCase()) ||
+    opts.find((o) => o.text.trim().toLowerCase() === c.toLowerCase()) ||
+    null
+  );
 }
 
 // Quiz schema — identical shape to BoardTopicPage quizSchema.
@@ -54,7 +85,7 @@ export function buildFaqSchema(mcqs) {
     .slice(0, 10)
     .map((m) => {
       const opts = optionsOf(m);
-      const correct = opts.find((o) => (o.key || '') === m.correct_option);
+      const correct = correctOf(m, opts);
       const answerText = [
         correct?.text ? `Correct answer: ${correct.text}.` : `Correct answer: ${m.correct_option}.`,
         m.explanation ? String(m.explanation).trim() : '',
@@ -75,12 +106,12 @@ export function buildFaqSchema(mcqs) {
 export function buildTopicContentHtml({ topicName, subjectName, classN, boardName, mcqs, links }) {
   const items = (mcqs || []).map((m, i) => {
     const opts = optionsOf(m);
-    const correct = opts.find((o) => (o.key || '') === m.correct_option);
+    const correct = correctOf(m, opts);
     const optionsHtml = opts
       .map((o) => `<li>${esc(o.key)}. ${esc(o.text)}</li>`)
       .join('');
     const answer = correct?.text
-      ? `${esc(m.correct_option)}. ${esc(correct.text)}`
+      ? `${esc(correct.key)}. ${esc(correct.text)}`
       : esc(m.correct_option);
     return (
       `<article>` +
@@ -113,9 +144,16 @@ export function buildTopicContentHtml({ topicName, subjectName, classN, boardNam
 // description, H1 context, breadcrumb, and canonical). A truncation safeguard
 // trims the topic portion for long topic/subject names. Keep this identical to
 // src/lib/topicTitle.ts (buildTopicTitleBase) to avoid raw vs rendered cloaking.
+// Mirror of TOPIC_TITLE_OVERRIDES in src/lib/topicTitle.ts.
+const TOPIC_TITLE_OVERRIDES = {
+  'stoichiometry advanced calculations': 'Stoichiometry Calculations',
+};
+
 export function buildTopicTitleBase(topic, subject, classN) {
   const MAX = 51; // 51 + " | MCQsAI" (9) = 60
   const tail = ` MCQs - Class ${classN} ${subject}`;
+  const override = TOPIC_TITLE_OVERRIDES[String(topic).trim().toLowerCase()];
+  if (override) return `${override}${tail}`;
   let base = `${topic}${tail}`;
   if (base.length > MAX) {
     const available = MAX - tail.length;

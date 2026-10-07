@@ -8,6 +8,12 @@
  * MUST stay identical to buildTopicTitleBase in scripts/topic-content.mjs so
  * the JS-rendered <title> matches the prerendered raw HTML (no cloaking).
  */
+// Hand-picked short topic names for titles that would otherwise be cut
+// mid-word. Keyed by lowercased topic name. Mirror in scripts/topic-content.mjs.
+const TOPIC_TITLE_OVERRIDES: Record<string, string> = {
+  'stoichiometry advanced calculations': 'Stoichiometry Calculations',
+};
+
 export function buildTopicTitleBase(
   topic: string,
   subject: string,
@@ -15,6 +21,8 @@ export function buildTopicTitleBase(
 ): string {
   const MAX = 51; // 51 + " | MCQsAI" (9) = 60
   const tail = ` MCQs - Class ${classN} ${subject}`;
+  const override = TOPIC_TITLE_OVERRIDES[String(topic).trim().toLowerCase()];
+  if (override) return `${override}${tail}`;
   let base = `${topic}${tail}`;
   if (base.length > MAX) {
     const available = MAX - tail.length;
