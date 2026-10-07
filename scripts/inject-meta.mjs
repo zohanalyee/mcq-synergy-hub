@@ -310,25 +310,39 @@ async function injectBlog() {
 let indexableTopicRowsPromise = null;
 async function getIndexableTopicRows() {
   if (!indexableTopicRowsPromise) {
-    indexableTopicRowsPromise = (async () => {
+    // PostgREST caps every response at 1000 rows. Without paging, topics past
+    // row 1000 got the generic homepage shell (homepage title + canonical "/")
+    // in raw HTML. Page through explicitly, like generate-sitemaps.mjs does.
+    const PAGE_SIZE = 1000;
+    const fetchPage = async (from) => {
       let lastError = null;
       for (let attempt = 1; attempt <= 3; attempt++) {
-        const { data, error } = await supabase.rpc("get_indexable_board_topic_paths", {
-          // Fetch EVERY topic that has at least one approved MCQ. Consumers gate
-          // on r.approved_count: >= 8 → indexable (matches sitemap), 5-7 → gets
-          // static content but noindex, < 5 → noindex, no content injection.
-          // Without the thin rows the SPA shell's "index,follow" leaked onto
-          // thin topic URLs (AdSense low-value-content risk).
-          p_min_approved_mcqs: 1,
-        });
+        const { data, error } = await supabase
+          .rpc("get_indexable_board_topic_paths", {
+            // Fetch EVERY topic that has at least one approved MCQ. Consumers gate
+            // on r.approved_count: >= 8 → indexable (matches sitemap), 5-7 → gets
+            // static content but noindex, < 5 → noindex, no content injection.
+            p_min_approved_mcqs: 1,
+          })
+          .range(from, from + PAGE_SIZE - 1);
         if (!error) return data || [];
         lastError = error;
         console.warn(
-          `[inject-meta] get_indexable_board_topic_paths attempt ${attempt}/3 failed: ${error.message}`,
+          `[inject-meta] get_indexable_board_topic_paths page ${from} attempt ${attempt}/3 failed: ${error.message}`,
         );
         if (attempt < 3) await new Promise((r) => setTimeout(r, attempt * 5000));
       }
       throw lastError;
+    };
+    indexableTopicRowsPromise = (async () => {
+      const rows = [];
+      for (let from = 0; ; from += PAGE_SIZE) {
+        const page = await fetchPage(from);
+        rows.push(...page);
+        if (page.length < PAGE_SIZE) break;
+      }
+      console.log(`[inject-meta] indexable topic rows: ${rows.length}`);
+      return rows;
     })();
   }
   return indexableTopicRowsPromise;
