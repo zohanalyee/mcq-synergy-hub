@@ -376,6 +376,37 @@ const DuplicateReviewQueue = () => {
             )}
             Scan Library
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={scanning}
+            className="min-h-[44px] sm:min-h-0"
+            onClick={async () => {
+              const { data: preview, error: pErr } = await (supabase as any).rpc(
+                "auto_merge_duplicate_clusters",
+                { _dry_run: true }
+              );
+              if (pErr) return toast.error("Could not check duplicates");
+              const p = preview?.[0];
+              if (!p?.copies_hidden) return toast.success("No exact duplicates left");
+              if (
+                !window.confirm(
+                  `${p.groups_merged} groups mein exact same sawal (same options) mile. Har group ki 1 approved copy rahegi, ${p.copies_hidden} extra copies hide hongi (delete nahi, Question Explorer se wapas la sakte hain). Continue?`
+                )
+              )
+                return;
+              setScanning(true);
+              const { data, error } = await (supabase as any).rpc("auto_merge_duplicate_clusters", {
+                _dry_run: false,
+              });
+              setScanning(false);
+              if (error) return toast.error("Auto clean failed");
+              toast.success(`${data?.[0]?.copies_hidden ?? 0} extra copies hidden`);
+              refresh(true);
+            }}
+          >
+            Auto Clean Exact Duplicates
+          </Button>
           <div className="flex flex-wrap gap-2 text-xs">
             <Badge variant="outline">Groups: {stats?.total_groups ?? 0}</Badge>
             <Badge variant="outline">Extra copies: {stats?.extra_copies ?? 0}</Badge>
