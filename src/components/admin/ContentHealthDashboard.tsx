@@ -187,11 +187,11 @@ const ContentHealthDashboard = () => {
             </div>
             <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
               <div className="text-2xl font-bold text-primary">{summary.filled}</div>
-              <div className="text-xs text-muted-foreground">Filled (≥5)</div>
+              <div className="text-xs text-muted-foreground">Filled (≥8 · indexable)</div>
             </div>
             <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
               <div className="text-2xl font-bold text-amber-500">{summary.thin}</div>
-              <div className="text-xs text-muted-foreground">Thin (1–4)</div>
+              <div className="text-xs text-muted-foreground">Thin (1–7 · not indexed)</div>
             </div>
             <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-3">
               <div className="text-2xl font-bold text-destructive">{summary.empty}</div>
