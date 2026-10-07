@@ -249,7 +249,7 @@ async function injectLegacySubjects() {
         title: `${label} MCQs with Answers — Free Practice | MCQsAI`,
         description: `Free ${s.name} MCQs with answers and explanations${ctx ? ` for ${ctx}` : ""}. AI-powered practice questions — MCQsAI Pakistan.`,
         keywords: `${s.name} MCQs, ${s.name} MCQs with answers, ${s.name} quiz, ${s.name} practice questions Pakistan`,
-        ogImage: OG_BOARDS,
+        ogImage: OG_DEFAULT,
         ogType: "article",
         canonical,
         pageType: "legacy-subject",
