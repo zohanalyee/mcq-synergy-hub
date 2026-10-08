@@ -3,6 +3,7 @@ import { Mail, Clock, MapPin, Facebook, Instagram, Twitter, Youtube } from 'luci
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { useSocialLinks } from '@/hooks/useSocialLinks';
+import { WhatsAppIcon } from '@/components/WhatsAppChannelCTA';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -11,6 +12,7 @@ const Footer = () => {
   const { data: socialLinks } = useSocialLinks();
 
   const activeSocials = [
+    { key: 'whatsapp', url: socialLinks?.whatsapp, icon: WhatsAppIcon, label: 'WhatsApp Channel' },
     { key: 'facebook', url: socialLinks?.facebook, icon: Facebook, label: 'Facebook' },
     { key: 'instagram', url: socialLinks?.instagram, icon: Instagram, label: 'Instagram' },
     { key: 'tiktok', url: socialLinks?.tiktok, icon: null, label: 'TikTok' },

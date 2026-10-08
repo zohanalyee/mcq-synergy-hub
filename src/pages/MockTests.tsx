@@ -12,6 +12,7 @@ import ExamFiltersBar, { ExamFilters } from "@/components/mock-tests/ExamFilters
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { getJobTests } from "@/services/jobTestService";
 import AdSlot from "@/components/ads/AdSlot";
+import WhatsAppChannelCTA from "@/components/WhatsAppChannelCTA";
 
 const CompetitiveExams = () => {
   const [searchParams] = useSearchParams();
@@ -84,6 +85,8 @@ const CompetitiveExams = () => {
             onFiltersChange={setFilters}
             jobTests={jobTests}
           />
+
+          <WhatsAppChannelCTA message="📢 Daily past papers, answer keys aur test updates ke liye hamara WhatsApp Channel follow karein." />
 
           <div className="mt-6">
             <JobTestsTab jobTests={sortedTests} />

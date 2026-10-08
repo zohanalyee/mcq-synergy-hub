@@ -10,7 +10,7 @@ const SocialLinksManager = () => {
   const { data: links, isLoading } = useSocialLinks();
   const updateMutation = useUpdateSocialLinks();
   const [form, setForm] = useState<SocialLinks>({
-    facebook: '', instagram: '', tiktok: '', twitter: '', youtube: '',
+    facebook: '', instagram: '', tiktok: '', twitter: '', youtube: '', whatsapp: '',
   });
 
   useEffect(() => {
@@ -22,6 +22,7 @@ const SocialLinksManager = () => {
   if (isLoading) return <div className="flex justify-center p-8"><Loader2 className="h-6 w-6 animate-spin" /></div>;
 
   const fields = [
+    { key: 'whatsapp' as const, label: 'WhatsApp Channel', icon: null, placeholder: 'https://whatsapp.com/channel/...' },
     { key: 'facebook' as const, label: 'Facebook', icon: Facebook, placeholder: 'https://facebook.com/mcqsai' },
     { key: 'instagram' as const, label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/mcqsai' },
     { key: 'tiktok' as const, label: 'TikTok', icon: null, placeholder: 'https://tiktok.com/@mcqsai' },
@@ -39,7 +40,7 @@ const SocialLinksManager = () => {
         {fields.map(({ key, label, icon: Icon, placeholder }) => (
           <div key={key} className="space-y-1.5">
             <Label className="flex items-center gap-2">
-              {Icon ? <Icon className="h-4 w-4" /> : <span className="text-sm">🎵</span>}
+              {Icon ? <Icon className="h-4 w-4" /> : <span className="text-sm">{key === 'whatsapp' ? '💬' : '🎵'}</span>}
               {label}
             </Label>
             <Input
