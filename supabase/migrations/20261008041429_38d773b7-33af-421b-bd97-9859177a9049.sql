@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.reuse_existing_mcq_on_insert() FROM PUBLIC, anon, authenticated;
