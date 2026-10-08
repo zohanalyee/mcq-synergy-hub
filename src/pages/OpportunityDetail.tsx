@@ -32,6 +32,7 @@ const isExpiredPastGrace = (deadlineDate?: string | null): boolean => {
   return grace < getPakistanToday();
 };
 import EngagementSection from "@/components/announcements/EngagementSection";
+import WhatsAppChannelCTA from "@/components/WhatsAppChannelCTA";
 
 const typeIcons: Record<string, React.ElementType> = {
   scholarship: GraduationCap,
@@ -539,6 +540,8 @@ const OpportunityDetail = () => {
               </div>
             </CardContent>
           </Card>
+
+          <WhatsAppChannelCTA message="🔔 Har nayi job, scholarship aur roll number slip ki update WhatsApp par pane ke liye channel join karein." />
 
           <EngagementSection
             targetType={opportunity.type === 'scholarship' ? 'scholarship' : 'job'}

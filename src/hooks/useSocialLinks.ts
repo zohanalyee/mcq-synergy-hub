@@ -8,7 +8,10 @@ export interface SocialLinks {
   tiktok: string;
   twitter: string;
   youtube: string;
+  whatsapp: string;
 }
+
+export const DEFAULT_WHATSAPP_CHANNEL = 'https://whatsapp.com/channel/0029Vb9DgAk8KMqkSpdiWV32';
 
 const defaultLinks: SocialLinks = {
   facebook: '',
@@ -16,6 +19,7 @@ const defaultLinks: SocialLinks = {
   tiktok: '',
   twitter: '',
   youtube: '',
+  whatsapp: DEFAULT_WHATSAPP_CHANNEL,
 };
 
 export const useSocialLinks = () => {
