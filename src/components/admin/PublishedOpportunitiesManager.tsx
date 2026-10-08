@@ -170,6 +170,15 @@ export default function PublishedOpportunitiesManager() {
                 <div><Label className="text-xs">Amount</Label><Input value={editItem.amount || ''} onChange={(e) => set("amount", e.target.value)} className="h-8 text-xs" /></div>
                 <div><Label className="text-xs">Positions</Label><Input type="number" value={editItem.positions || ''} onChange={(e) => set("positions", parseInt(e.target.value) || null)} className="h-8 text-xs" /></div>
               </div>
+              <div>
+                <Label className="text-xs">More image pages (one URL per line)</Label>
+                <Textarea
+                  rows={3}
+                  className="text-xs"
+                  value={Array.isArray(editItem.metadata?.image_urls) ? editItem.metadata.image_urls.join("\n") : ""}
+                  onChange={(e) => setEditItem((p: any) => ({ ...p, metadata: { ...(p.metadata || {}), image_urls: e.target.value.split("\n").map((u) => u.trim()).filter(Boolean) } }))}
+                />
+              </div>
               {editItem.image_url && (
                 <div><Label className="text-xs">Image Preview</Label><img src={editItem.image_url} alt="" className="max-h-32 rounded border border-border/30 mt-1" /></div>
               )}

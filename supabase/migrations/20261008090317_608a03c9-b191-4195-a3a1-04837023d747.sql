@@ -1,0 +1,2 @@
+ALTER TABLE public.external_opportunities DROP CONSTRAINT IF EXISTS external_opportunities_apply_url_key;
+CREATE INDEX IF NOT EXISTS idx_external_opportunities_apply_url ON public.external_opportunities(apply_url);
