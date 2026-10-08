@@ -21,6 +21,7 @@ const initialForm = {
   apply_url: "",
   deadline_date: "",
   image_url: "",
+  extra_images: "",
   document_url: "",
   location: "",
   sector: "government",
@@ -118,6 +119,7 @@ export default function ManualOpportunityCreator({ onSuccess }: { onSuccess: () 
         ai_enhanced: true,
         keywords: form.keywords,
         source_url: form.sourceUrl || null,
+        image_urls: form.extra_images.split(/\s+/).map((u) => u.trim()).filter((u) => /^https?:\/\//i.test(u)),
         created_at: new Date().toISOString(),
       };
       const insertData: Record<string, unknown> = {
@@ -236,6 +238,8 @@ export default function ManualOpportunityCreator({ onSuccess }: { onSuccess: () 
                 {form.image_url && (
                   <img src={form.image_url} alt="Preview" className="mt-2 w-full h-24 object-cover rounded border" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 )}
+                <Label className="text-xs font-medium mt-2 block">More image pages (one URL per line)</Label>
+                <Textarea rows={3} className="text-xs" value={form.extra_images} onChange={(e) => set("extra_images", e.target.value)} placeholder={"https://.../page2.jpg\nhttps://.../page3.jpg"} />
               </div>
               <div>
                 <Label className="text-xs font-medium">Source Reference URL</Label>
@@ -459,6 +463,8 @@ The AI will automatically extract:
                 {form.image_url && (
                   <img src={form.image_url} alt="Preview" className="mt-1 w-full h-20 object-cover rounded border" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
                 )}
+                <Label className="text-xs mt-2 block">More image pages (one URL per line)</Label>
+                <Textarea rows={3} className="text-xs" value={form.extra_images} onChange={(e) => set("extra_images", e.target.value)} placeholder={"https://.../page2.jpg\nhttps://.../page3.jpg"} />
               </div>
               <div>
                 <Label className="text-xs">Document URL</Label>

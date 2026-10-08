@@ -198,6 +198,10 @@ const OpportunityDetail = () => {
   const TypeIcon = typeIcons[opportunity.type] || FileText;
   const heroImage = opportunity.image_url || placeholderImages[opportunity.type] || placeholderImages.job;
   const hasRealImage = !!opportunity.image_url && !Object.values(placeholderImages).includes(opportunity.image_url);
+  const extraImages: string[] = Array.isArray((opportunity as any).metadata?.image_urls)
+    ? ((opportunity as any).metadata.image_urls as unknown[]).filter((u): u is string => typeof u === "string" && /^https?:\/\//i.test(u))
+    : [];
+  const adImages = Array.from(new Set([...(hasRealImage ? [opportunity.image_url!] : []), ...extraImages]));
   const hasPdf = !!opportunity.document_url && isPdfUrl(opportunity.document_url);
   const hasDocument = !!opportunity.document_url && !hasPdf;
   const keywords = (opportunity.metadata as any)?.keywords as string[] | undefined;
@@ -462,19 +466,24 @@ const OpportunityDetail = () => {
               )}
 
               {/* ========== NATIVE IMAGE VIEWER (Original Ad) ========== */}
-              {hasRealImage && (
+              {adImages.length > 0 && (
                 <div className="space-y-2">
                   <h2 className="text-base font-semibold flex items-center gap-2">
                     📰 Original Advertisement
                   </h2>
-                  <div className="rounded-lg border border-border/40 overflow-hidden bg-muted/20 p-2">
-                    <img
-                      src={opportunity.image_url!}
-                      alt={`${opportunity.title} - Original Notice`}
-                      className="w-full rounded-md"
-                      loading="lazy"
-                    />
-                  </div>
+                  {adImages.map((src, i) => (
+                    <div key={src + i} className="rounded-lg border border-border/40 overflow-hidden bg-muted/20 p-2">
+                      {adImages.length > 1 && (
+                        <p className="text-xs text-muted-foreground mb-1">Page {i + 1} of {adImages.length}</p>
+                      )}
+                      <img
+                        src={src}
+                        alt={`${opportunity.title} - Original Notice${adImages.length > 1 ? ` page ${i + 1}` : ""}`}
+                        className="w-full rounded-md"
+                        loading="lazy"
+                      />
+                    </div>
+                  ))}
                   <p className="text-[10px] text-muted-foreground">
                     This is the original advertisement as published. Read all details above before applying.
                   </p>
