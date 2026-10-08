@@ -71,6 +71,31 @@
       })();
     </script>
 
+    <!-- Microsoft Clarity — session recordings & heatmaps. The stub installs
+         immediately so early events queue; the library itself is fetched on the
+         first interaction (or an idle fallback) exactly like GA4 above, so it
+         never competes with first paint / main-thread startup. -->
+    <script>
+      (function () {
+        window.clarity = window.clarity || function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
+        var loaded = false;
+        function loadClarity() {
+          if (loaded) return; loaded = true;
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.clarity.ms/tag/yugr76iqr3';
+          document.head.appendChild(s);
+        }
+        ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'].forEach(function (e) {
+          window.addEventListener(e, loadClarity, { once: true, passive: true });
+        });
+        // Idle fallback for passive readers (matches GA4's deferred pattern).
+        function fallback() { setTimeout(loadClarity, 12000); }
+        if (document.readyState === 'complete') fallback();
+        else window.addEventListener('load', fallback, { once: true });
+      })();
+    </script>
+
 
 
     <!-- Non-blocking Google Fonts (trimmed weights, font-display: swap) -->
