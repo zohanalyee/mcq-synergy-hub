@@ -96,6 +96,33 @@
       })();
     </script>
 
+    <!-- OneSignal Web Push — live domain only (never in preview), loaded on
+         first interaction so it never slows first paint. -->
+    <script>
+      (function () {
+        var h = location.hostname;
+        if (h !== 'mcqsai.com' && h !== 'www.mcqsai.com') return;
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        window.OneSignalDeferred.push(function (OneSignal) {
+          return OneSignal.init({ appId: 'e9602eac-3cf8-4b17-a8e3-8aa58c184660' });
+        });
+        var loaded = false;
+        function loadOS() {
+          if (loaded) return; loaded = true;
+          var s = document.createElement('script');
+          s.defer = true;
+          s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
+          document.head.appendChild(s);
+        }
+        ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function (e) {
+          window.addEventListener(e, loadOS, { once: true, passive: true });
+        });
+        function fallback() { setTimeout(loadOS, 15000); }
+        if (document.readyState === 'complete') fallback();
+        else window.addEventListener('load', fallback, { once: true });
+      })();
+    </script>
+
 
 
     <!-- Non-blocking Google Fonts (trimmed weights, font-display: swap) -->
