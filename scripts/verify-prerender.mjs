@@ -156,7 +156,10 @@ for (const { type, prefix, minExtraSegments = 1 } of pageTypeChecks) {
     // Legacy numeric board paths (/boards/<board>/9/<subject>/<topic>) are
     // intentionally noindex with canonical → the /class-N/ page, so they must
     // not be sampled as indexable board topics.
-    if (prefix === '/boards/' && /^\d+$/.test(segs[1])) return false;
+    if (prefix === '/boards/' && segs.some((s) => /^\d+$/.test(s))) return false;
+    // Any intentionally noindex page (legacy alias, thin) canonicalises
+    // elsewhere by design — never sample it as a self-canonical page.
+    if (/<meta\b[^>]*name=["']robots["'][^>]*content=["'][^"']*noindex/i.test(readFileSync(f, 'utf8'))) return false;
     return true;
   });
   if (matches.length === 0) {
