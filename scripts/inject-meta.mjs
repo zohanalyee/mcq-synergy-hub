@@ -261,6 +261,36 @@ async function injectLegacySubjects() {
   return count;
 }
 
+// C2: old numeric board topic paths (/boards/<b>/9/<s>/<t>) used to ship the
+// homepage shell in raw HTML. Give each its own head with canonical → the
+// /class-N/ page (noindex,follow so it never competes). No Cloudflare redirect.
+async function injectLegacyNumericBoards() {
+  const rows = await getIndexableTopicRows();
+  let count = 0;
+  const seen = new Set();
+  for (const r of rows || []) {
+    if (Number(r.approved_count || 0) < 8) continue;
+    const parts = String(r.path || "").split("/").filter(Boolean);
+    if (parts.length < 5 || !/^class-\d+$/.test(parts[2])) continue;
+    const n = parts[2].slice(6);
+    const oldPath = `/boards/${parts[1]}/${n}/${parts[3]}/${parts[4]}`;
+    if (seen.has(oldPath)) continue;
+    seen.add(oldPath);
+    const topic = humanize(parts[4]), subject = humanize(parts[3]), board = humanize(parts[1]);
+    patch({
+      path: oldPath,
+      title: `${topic} MCQs — Class ${n} ${subject} (${board}) | MCQsAI`,
+      description: `Free ${topic} MCQs with answers for Class ${n} ${subject}, ${board}. Practice online at MCQsAI.`,
+      ogImage: OG_BOARDS,
+      robots: "noindex,follow",
+      canonical: `${BASE_URL}${r.path}`,
+      pageType: "legacy-numeric-board",
+    });
+    count++;
+  }
+  return count;
+}
+
 // ---------- generators ----------
 async function injectMockTests() {
   const { data } = await supabase
