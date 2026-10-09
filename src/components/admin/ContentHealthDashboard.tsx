@@ -35,9 +35,9 @@ interface ProgressRow {
 const FILL_COUNT = 20;
 
 const statusMeta = {
-  filled: { label: "Filled", className: "bg-primary/15 text-primary border-primary/30", barClass: "bg-primary" },
-  thin: { label: "Thin", className: "bg-amber-500/15 text-amber-500 border-amber-500/30", barClass: "bg-amber-500" },
-  empty: { label: "Empty", className: "bg-destructive/15 text-destructive border-destructive/30", barClass: "bg-destructive" },
+  filled: { label: "Indexed", className: "bg-primary/15 text-primary border-primary/30", barClass: "bg-primary" },
+  thin: { label: "Not indexed · Thin", className: "bg-amber-500/15 text-amber-500 border-amber-500/30", barClass: "bg-amber-500" },
+  empty: { label: "Not indexed · Empty", className: "bg-destructive/15 text-destructive border-destructive/30", barClass: "bg-destructive" },
 } as const;
 
 const ContentHealthDashboard = () => {
@@ -46,6 +46,7 @@ const ContentHealthDashboard = () => {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"not_indexed" | "thin" | "empty" | "indexed" | "all">("not_indexed");
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["content-health"],
@@ -73,9 +74,20 @@ const ContentHealthDashboard = () => {
     return { total, filled, thin, empty };
   }, [rows]);
 
-  // Priority worklist: only thin/empty, already sorted by views (RPC), keep order
+  // Worklist: default = only NOT indexed topics, closest to the 8-MCQ gate first
   const worklist = useMemo(() => {
-    const list = (rows ?? []).filter((r) => r.status !== "filled");
+    let list = (rows ?? []).filter((r) =>
+      view === "not_indexed" ? r.status !== "filled"
+        : view === "thin" ? r.status === "thin"
+        : view === "empty" ? r.status === "empty"
+        : view === "indexed" ? r.status === "filled"
+        : true,
+    );
+    if (view !== "indexed" && view !== "all") {
+      list = [...list].sort(
+        (a, b) => Number(b.approved_count) - Number(a.approved_count) || b.view_count - a.view_count,
+      );
+    }
     if (!search.trim()) return list;
     const q = search.toLowerCase();
     return list.filter(
@@ -84,7 +96,7 @@ const ContentHealthDashboard = () => {
         r.subject_name.toLowerCase().includes(q) ||
         r.board_name.toLowerCase().includes(q),
     );
-  }, [rows, search]);
+  }, [rows, search, view]);
 
   const weeklyProgress = progress ?? [];
   const filledThisWeek = weeklyProgress[0]?.filled_this_week ?? 0;
@@ -241,13 +253,32 @@ const ContentHealthDashboard = () => {
       {/* Priority worklist */}
       <Card className="border-border/60">
         <CardHeader className="pb-3 flex flex-row items-center justify-between gap-3 flex-wrap">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-amber-500" />
-            Priority Worklist
-            <span className="text-xs font-normal text-muted-foreground">
-              ({worklist.length} thin/empty · highest traffic first)
-            </span>
-          </CardTitle>
+          <div className="space-y-2">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <AlertTriangle className="h-4 w-4 text-amber-500" />
+              {view === "indexed" ? "Indexed Topics" : view === "all" ? "All Topics" : "Not Indexed — Action Needed"}
+              <span className="text-xs font-normal text-muted-foreground">({worklist.length})</span>
+            </CardTitle>
+            <div className="flex flex-wrap gap-1.5">
+              {([
+                ["not_indexed", `Not indexed (${summary.thin + summary.empty})`],
+                ["thin", `Thin 1–7 (${summary.thin})`],
+                ["empty", `Empty 0 (${summary.empty})`],
+                ["indexed", `Indexed ≥8 (${summary.filled})`],
+                ["all", `All (${summary.total})`],
+              ] as const).map(([key, label]) => (
+                <Button
+                  key={key}
+                  size="sm"
+                  variant={view === key ? "default" : "outline"}
+                  className="h-7 text-xs"
+                  onClick={() => setView(key)}
+                >
+                  {label}
+                </Button>
+              ))}
+            </div>
+          </div>
           <div className="flex items-center gap-2">
             <Input
               placeholder="Search topics…"
@@ -255,11 +286,11 @@ const ContentHealthDashboard = () => {
               onChange={(e) => setSearch(e.target.value)}
               className="h-8 w-40"
             />
-            <Button size="sm" onClick={() => fillTopN(5)} disabled={bulkRunning || worklist.length === 0}>
+            <Button size="sm" onClick={() => fillTopN(5)} disabled={bulkRunning || worklist.length === 0 || view === "indexed" || view === "all"}>
               {bulkRunning ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Zap className="h-4 w-4 mr-1" />}
               Fill top 5
             </Button>
-            <Button size="sm" variant="outline" onClick={() => fillTopN(10)} disabled={bulkRunning || worklist.length === 0}>
+            <Button size="sm" variant="outline" onClick={() => fillTopN(10)} disabled={bulkRunning || worklist.length === 0 || view === "indexed" || view === "all"}>
               Fill top 10
             </Button>
           </div>
@@ -270,25 +301,37 @@ const ContentHealthDashboard = () => {
               <thead>
                 <tr className="border-b border-border/60 text-left text-xs text-muted-foreground">
                   <th className="px-4 py-2 font-medium">Topic</th>
-                  <th className="px-4 py-2 font-medium">Subject / Board</th>
-                  <th className="px-4 py-2 font-medium text-center">Current Qs</th>
+                  <th className="px-4 py-2 font-medium">Subject / Board · Class</th>
+                  <th className="px-4 py-2 font-medium text-center">MCQs / 8</th>
                   <th className="px-4 py-2 font-medium text-center">Status</th>
                   <th className="px-4 py-2 font-medium text-center">Views</th>
                   <th className="px-4 py-2 font-medium text-right">Action</th>
                 </tr>
               </thead>
               <tbody>
-                {worklist.slice(0, 200).map((row) => {
+                {worklist.slice(0, 500).map((row) => {
                   const meta = statusMeta[row.status];
                   const isGen = generating.has(row.topic_id);
                   const isDone = completed.has(row.topic_id);
+                  const count = Number(row.approved_count);
+                  const need = Math.max(0, 8 - count);
                   return (
                     <tr key={row.topic_id} className="border-b border-border/40 hover:bg-muted/30">
-                      <td className="px-4 py-2 font-medium">{row.topic_name}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
-                        {row.subject_name} · {row.board_name}
+                      <td className="px-4 py-2 font-medium">
+                        <a href={row.path} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">
+                          {row.topic_name}
+                        </a>
                       </td>
-                      <td className="px-4 py-2 text-center">{row.approved_count}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {row.subject_name} · {row.board_name} · Class {row.class_number}
+                      </td>
+                      <td className="px-4 py-2 text-center">
+                        <div className="font-medium">{count} / 8</div>
+                        <div className="mx-auto mt-1 h-1.5 w-16 overflow-hidden rounded-full bg-muted">
+                          <div className={meta.barClass} style={{ width: `${Math.min(100, (count / 8) * 100)}%`, height: "100%" }} />
+                        </div>
+                        {need > 0 && <div className="text-[11px] text-muted-foreground mt-0.5">needs {need} more</div>}
+                      </td>
                       <td className="px-4 py-2 text-center">
                         <Badge variant="outline" className={meta.className}>
                           {row.status === "empty" ? <CircleSlash className="h-3 w-3 mr-1" /> : null}
