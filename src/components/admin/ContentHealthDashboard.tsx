@@ -35,9 +35,9 @@ interface ProgressRow {
 const FILL_COUNT = 20;
 
 const statusMeta = {
-  filled: { label: "Filled", className: "bg-primary/15 text-primary border-primary/30", barClass: "bg-primary" },
-  thin: { label: "Thin", className: "bg-amber-500/15 text-amber-500 border-amber-500/30", barClass: "bg-amber-500" },
-  empty: { label: "Empty", className: "bg-destructive/15 text-destructive border-destructive/30", barClass: "bg-destructive" },
+  filled: { label: "Indexed", className: "bg-primary/15 text-primary border-primary/30", barClass: "bg-primary" },
+  thin: { label: "Not indexed · Thin", className: "bg-amber-500/15 text-amber-500 border-amber-500/30", barClass: "bg-amber-500" },
+  empty: { label: "Not indexed · Empty", className: "bg-destructive/15 text-destructive border-destructive/30", barClass: "bg-destructive" },
 } as const;
 
 const ContentHealthDashboard = () => {
