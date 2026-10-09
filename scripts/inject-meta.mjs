@@ -264,30 +264,52 @@ async function injectLegacySubjects() {
 // C2: old numeric board topic paths (/boards/<b>/9/<s>/<t>) used to ship the
 // homepage shell in raw HTML. Give each its own head with canonical → the
 // /class-N/ page (noindex,follow so it never competes). No Cloudflare redirect.
+// Covers EVERY topic in the LMS hierarchy (no approved-count filter), so no
+// old-format URL ever falls back to the homepage shell. Never added to sitemaps.
 async function injectLegacyNumericBoards() {
-  const rows = await getIndexableTopicRows();
+  const toSlug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  const [{ data: systems }, { data: levels }, { data: subjects }] = await Promise.all([
+    supabase.from("educational_systems").select("id,name").eq("is_active", true),
+    supabase.from("levels").select("id,name,system_id"),
+    supabase.from("subjects").select("id,name,level_id"),
+  ]);
+  const topics = [];
+  for (let from = 0; ; from += 1000) {
+    const { data, error } = await supabase.from("topics").select("id,name,subject_id").range(from, from + 999);
+    if (error) throw error;
+    topics.push(...(data || []));
+    if (!data || data.length < 1000) break;
+  }
+  const sysById = new Map((systems || []).map((s) => [s.id, s.name]));
+  const levelById = new Map((levels || []).map((l) => [l.id, l]));
+  const subjectById = new Map((subjects || []).map((s) => [s.id, s]));
   let count = 0;
   const seen = new Set();
-  for (const r of rows || []) {
-    if (Number(r.approved_count || 0) < 8) continue;
-    const parts = String(r.path || "").split("/").filter(Boolean);
-    if (parts.length < 5 || !/^class-\d+$/.test(parts[2])) continue;
-    const n = parts[2].slice(6);
-    const oldPath = `/boards/${parts[1]}/${n}/${parts[3]}/${parts[4]}`;
+  for (const t of topics) {
+    const sub = subjectById.get(t.subject_id);
+    const lvl = sub && levelById.get(sub.level_id);
+    const sysName = lvl && sysById.get(lvl.system_id);
+    if (!sysName) continue;
+    const n = (String(lvl.name).match(/\d+/) || [""])[0];
+    if (!n) continue;
+    const b = toSlug(sysName), sj = toSlug(sub.name), tp = toSlug(t.name);
+    if (!b || !sj || !tp) continue;
+    const oldPath = `/boards/${b}/${n}/${sj}/${tp}`;
     if (seen.has(oldPath)) continue;
     seen.add(oldPath);
-    const topic = humanize(parts[4]), subject = humanize(parts[3]), board = humanize(parts[1]);
+    const topic = humanize(tp), subject = humanize(sj), board = humanize(b);
     patch({
       path: oldPath,
       title: `${topic} MCQs — Class ${n} ${subject} (${board}) | MCQsAI`,
       description: `Free ${topic} MCQs with answers for Class ${n} ${subject}, ${board}. Practice online at MCQsAI.`,
       ogImage: OG_BOARDS,
       robots: "noindex,follow",
-      canonical: `${BASE_URL}${r.path}`,
+      canonical: `${BASE_URL}/boards/${b}/class-${n}/${sj}/${tp}`,
       pageType: "legacy-numeric-board",
     });
     count++;
   }
+  console.log(`[inject-meta] legacy numeric board pages: ${count}`);
   return count;
 }
 
