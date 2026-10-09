@@ -151,7 +151,13 @@ for (const { type, prefix, minExtraSegments = 1 } of pageTypeChecks) {
   const matches = files.filter((f) => {
     const route = f.replace(DIST, '').replace(/\/index\.html$/, '');
     if (!route.startsWith(prefix)) return false;
-    return route.slice(prefix.length).split('/').filter(Boolean).length >= minExtraSegments;
+    const segs = route.slice(prefix.length).split('/').filter(Boolean);
+    if (segs.length < minExtraSegments) return false;
+    // Legacy numeric board paths (/boards/<board>/9/<subject>/<topic>) are
+    // intentionally noindex with canonical → the /class-N/ page, so they must
+    // not be sampled as indexable board topics.
+    if (prefix === '/boards/' && /^\d+$/.test(segs[1])) return false;
+    return true;
   });
   if (matches.length === 0) {
     console.warn(`❌ [type:${type}] no prerendered/injected pages found under ${prefix}`);
@@ -252,7 +258,10 @@ if (!staticSitemap) {
 let contentFailed = 0;
 const topicFiles = files.filter((f) => {
   const route = f.replace(DIST, '').replace(/\/index\.html$/, '');
-  return route.startsWith('/boards/') && route.slice('/boards/'.length).split('/').filter(Boolean).length >= 4;
+  if (!route.startsWith('/boards/')) return false;
+  const segs = route.slice('/boards/'.length).split('/').filter(Boolean);
+  // Exclude legacy numeric paths (/boards/<board>/9/...) — head-only, no body content.
+  return segs.length >= 4 && !/^\d+$/.test(segs[1]);
 });
 if (topicFiles.length > 0) {
   const withContent = topicFiles.filter((f) => {
