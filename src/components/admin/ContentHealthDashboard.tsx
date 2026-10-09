@@ -46,6 +46,7 @@ const ContentHealthDashboard = () => {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
   const [search, setSearch] = useState("");
+  const [view, setView] = useState<"not_indexed" | "thin" | "empty" | "indexed" | "all">("not_indexed");
 
   const { data: rows, isLoading } = useQuery({
     queryKey: ["content-health"],
@@ -73,9 +74,20 @@ const ContentHealthDashboard = () => {
     return { total, filled, thin, empty };
   }, [rows]);
 
-  // Priority worklist: only thin/empty, already sorted by views (RPC), keep order
+  // Worklist: default = only NOT indexed topics, closest to the 8-MCQ gate first
   const worklist = useMemo(() => {
-    const list = (rows ?? []).filter((r) => r.status !== "filled");
+    let list = (rows ?? []).filter((r) =>
+      view === "not_indexed" ? r.status !== "filled"
+        : view === "thin" ? r.status === "thin"
+        : view === "empty" ? r.status === "empty"
+        : view === "indexed" ? r.status === "filled"
+        : true,
+    );
+    if (view !== "indexed" && view !== "all") {
+      list = [...list].sort(
+        (a, b) => Number(b.approved_count) - Number(a.approved_count) || b.view_count - a.view_count,
+      );
+    }
     if (!search.trim()) return list;
     const q = search.toLowerCase();
     return list.filter(
@@ -84,7 +96,7 @@ const ContentHealthDashboard = () => {
         r.subject_name.toLowerCase().includes(q) ||
         r.board_name.toLowerCase().includes(q),
     );
-  }, [rows, search]);
+  }, [rows, search, view]);
 
   const weeklyProgress = progress ?? [];
   const filledThisWeek = weeklyProgress[0]?.filled_this_week ?? 0;
