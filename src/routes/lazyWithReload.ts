@@ -8,10 +8,11 @@ export function lazyWithReload<T extends { default: ComponentType<any> }>(
     try {
       return await factory();
     } catch (err) {
-      const key = "chunk-reloaded";
+      const key = "mcqsai:chunk-reload-at";
       try {
-        if (!sessionStorage.getItem(key)) {
-          sessionStorage.setItem(key, "1");
+        const last = Number(sessionStorage.getItem(key) || 0);
+        if (Date.now() - last > 30000) {
+          sessionStorage.setItem(key, String(Date.now()));
           window.location.reload();
           return await new Promise<T>(() => {});
         }
