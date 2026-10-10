@@ -400,7 +400,7 @@ const DuplicateReviewQueue = () => {
                 _dry_run: false,
               });
               setScanning(false);
-              if (error) return toast.error("Auto clean failed");
+              if (error) return toast.error(`Auto clean failed: ${error.message}`);
               toast.success(`${data?.[0]?.copies_hidden ?? 0} extra copies hidden`);
               refresh(true);
             }}
