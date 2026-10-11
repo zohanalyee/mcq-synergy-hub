@@ -1088,7 +1088,7 @@ async function logAIUsage(supabase: any, entry: UsageLogEntry): Promise<void> {
 }
 
 // Check if a question is a duplicate (exact + prefix + keyword-signature match)
-async function checkDuplicate(supabase: any, questionText: string): Promise<{ isDuplicate: boolean; originalId?: string; originalTitle?: string }> {
+async function checkDuplicate(supabase: any, questionText: string): Promise<{ isDuplicate: boolean; originalId?: string; originalTitle?: string; matchType?: string }> {
   return await checkLibraryDuplicate(supabase, questionText);
 }
 
