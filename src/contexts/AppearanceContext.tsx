@@ -365,3 +365,6 @@ export const useAppearance = (): AppearanceContextType => {
   }
   return context;
 };
+
+/** Non-throwing variant for shared UI (e.g. Card) that may render outside the provider. */
+export const useAppearanceSafe = (): AppearanceContextType | undefined => useContext(AppearanceContext);
