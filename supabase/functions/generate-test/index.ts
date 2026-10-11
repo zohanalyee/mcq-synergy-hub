@@ -2026,7 +2026,7 @@ Write the advice now:`;
       let failedCount = 0;
 
       // Helper function to force-save a question (ALWAYS succeeds)
-      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged' | 'failed'> => {
+      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged' | 'failed' | 'skipped'> => {
         const maxRetries = 3;
         const shortId = crypto.randomUUID().slice(0, 8);
         
@@ -2036,6 +2036,14 @@ Write the advice now:`;
         // Check for duplicates in existing DB
         const dupCheck = await checkDuplicate(supabase, q.question);
         const isDuplicate = isIntraBatchDuplicate || dupCheck.isDuplicate;
+
+        // CLONE GUARD: an exact/prefix repeat of a question already in the
+        // library is never inserted again — the original is reused instead.
+        // This stops the review queue filling with 20-30 copies of one question.
+        if (retryAttempt === 0 && (isIntraBatchDuplicate || dupCheck.matchType === 'exact' || dupCheck.matchType === 'prefix')) {
+          return 'skipped';
+        }
+        
         
         // Never mutate the learner-visible title with admin-only debug tags.
         // Duplicate / retry state is tracked via `status` + `show_in_subjects` below.
@@ -2125,6 +2133,9 @@ Write the advice now:`;
           const result = await forceSaveQuestion(q);
           if (result === 'approved') {
             savedCount++;
+          } else if (result === 'skipped') {
+            genStats.duplicate_skipped++;
+            console.log(`♻️ Skipped clone (already in library): "${q.question.slice(0, 40)}..."`);
           } else if (result === 'flagged') {
             flaggedCount++;
             console.log(`🚩 Saved as flagged: "${q.question.slice(0, 40)}..."`);
