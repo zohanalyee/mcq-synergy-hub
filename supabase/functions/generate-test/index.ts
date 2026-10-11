@@ -780,11 +780,14 @@ async function generateQuestionsInBatches(
 
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       // Build avoid list: existing DB questions + already generated in this run (last 30)
-      const avoidList = [...existingQuestions.slice(-15), ...generatedInThisRun.slice(-15)];
+      // SMART NEGATIVE PROMPT: show the AI the topic's real existing bank (up to 45)
+      // so it stops re-producing the same classic questions that the dedupe
+      // guard then throws away (main source of wasted generations).
+      const avoidList = [...existingQuestions.slice(0, 45), ...generatedInThisRun.slice(-20)];
 
       const avoidSection = avoidList.length > 0
-        ? `\n\n⚠️ AVOID THESE EXISTING QUESTIONS (do NOT repeat similar concepts):\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 100)}${q.length > 100 ? '...' : ''}`).join('\n')}`
-        : '';
+        ? `\n\n⛔ STRICTLY FORBIDDEN — these questions ALREADY EXIST. Do NOT repeat, reword or ask the same fact in another form:\n${avoidList.map((q, i) => `${i + 1}. ${q.slice(0, 90)}${q.length > 90 ? '...' : ''}`).join('\n')}\n\n✅ To stay unique, spread questions across DIFFERENT angles: (a) numerical/formula application, (b) conceptual difference between two terms, (c) textbook example/real-life application, (d) exceptions, causes/effects or less-common facts of this topic. Avoid generic clichés like "What is the unit of..." or the most famous textbook fact unless it is missing above.`
+        : `\n\n✅ Spread questions across DIFFERENT angles: numerical application, conceptual difference, textbook application, exceptions and cause/effect. Never ask the same fact twice.`;
 
       const weakSection = weakTopics.length > 0
         ? `\n\n🎯 CRITICAL — focus 70% of questions on these weak topics the user struggles with:\n${weakTopics.map((t) => `- ${t}`).join('\n')}\nMake questions progressively harder within these topics.`
@@ -1085,7 +1088,7 @@ async function logAIUsage(supabase: any, entry: UsageLogEntry): Promise<void> {
 }
 
 // Check if a question is a duplicate (exact + prefix + keyword-signature match)
-async function checkDuplicate(supabase: any, questionText: string): Promise<{ isDuplicate: boolean; originalId?: string; originalTitle?: string }> {
+async function checkDuplicate(supabase: any, questionText: string): Promise<{ isDuplicate: boolean; originalId?: string; originalTitle?: string; matchType?: string }> {
   return await checkLibraryDuplicate(supabase, questionText);
 }
 
@@ -1947,16 +1950,36 @@ Write the advice now:`;
       // This prevents the AI from generating duplicates of existing DB content
       let existingTitlesForDedup: string[] = [];
       try {
-        const { data: recentQuestions } = await supabase
-          .from('content_items')
-          .select('title')
-          .eq('category', 'mcq')
-          .eq('status', 'approved')
-          .or(`topic.ilike.*${escapePostgrestValue(sanitizedTopic)}*,subject.ilike.*${escapePostgrestValue(sanitizedTopic)}*`)
-          .order('created_at', { ascending: false })
-          .limit(100);
-        
-        existingTitlesForDedup = recentQuestions?.map(q => q.title).filter(Boolean) || [];
+        // Prefer the exact topic (and its canonical cross-board twin) so the
+        // negative prompt lists the questions that really live on this page.
+        const linkedTopicId = (lmsLinkageFields as any)?.topic_id || topic_id || null;
+        const canonical = (lmsLinkageFields as any)?.canonical_topic_name || null;
+        if (linkedTopicId || canonical) {
+          const orParts = [
+            linkedTopicId ? `topic_id.eq.${linkedTopicId}` : null,
+            canonical ? `canonical_topic_name.eq.${escapePostgrestValue(canonical)}` : null,
+          ].filter(Boolean).join(',');
+          const { data: scoped } = await supabase
+            .from('content_items')
+            .select('title')
+            .eq('category', 'mcq')
+            .neq('status', 'flagged_duplicate')
+            .or(orParts)
+            .limit(200);
+          existingTitlesForDedup = scoped?.map(q => q.title).filter(Boolean) || [];
+        }
+        if (existingTitlesForDedup.length < 20) {
+          const { data: recentQuestions } = await supabase
+            .from('content_items')
+            .select('title')
+            .eq('category', 'mcq')
+            .eq('status', 'approved')
+            .or(`topic.ilike.*${escapePostgrestValue(sanitizedTopic)}*,subject.ilike.*${escapePostgrestValue(sanitizedTopic)}*`)
+            .order('created_at', { ascending: false })
+            .limit(100);
+          const extra = recentQuestions?.map(q => q.title).filter(Boolean) || [];
+          existingTitlesForDedup = Array.from(new Set([...existingTitlesForDedup, ...extra]));
+        }
         console.log(`🧠 Loaded ${existingTitlesForDedup.length} existing questions for deduplication`);
       } catch (err) {
         console.error('Failed to load existing questions for dedup:', err);
@@ -2003,7 +2026,7 @@ Write the advice now:`;
       let failedCount = 0;
 
       // Helper function to force-save a question (ALWAYS succeeds)
-      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged' | 'failed'> => {
+      const forceSaveQuestion = async (q: Question, retryAttempt: number = 0): Promise<'approved' | 'flagged' | 'failed' | 'skipped'> => {
         const maxRetries = 3;
         const shortId = crypto.randomUUID().slice(0, 8);
         
@@ -2013,6 +2036,14 @@ Write the advice now:`;
         // Check for duplicates in existing DB
         const dupCheck = await checkDuplicate(supabase, q.question);
         const isDuplicate = isIntraBatchDuplicate || dupCheck.isDuplicate;
+
+        // CLONE GUARD: an exact/prefix repeat of a question already in the
+        // library is never inserted again — the original is reused instead.
+        // This stops the review queue filling with 20-30 copies of one question.
+        if (retryAttempt === 0 && (isIntraBatchDuplicate || dupCheck.matchType === 'exact' || dupCheck.matchType === 'prefix')) {
+          return 'skipped';
+        }
+        
         
         // Never mutate the learner-visible title with admin-only debug tags.
         // Duplicate / retry state is tracked via `status` + `show_in_subjects` below.
@@ -2102,6 +2133,9 @@ Write the advice now:`;
           const result = await forceSaveQuestion(q);
           if (result === 'approved') {
             savedCount++;
+          } else if (result === 'skipped') {
+            genStats.duplicate_skipped++;
+            console.log(`♻️ Skipped clone (already in library): "${q.question.slice(0, 40)}..."`);
           } else if (result === 'flagged') {
             flaggedCount++;
             console.log(`🚩 Saved as flagged: "${q.question.slice(0, 40)}..."`);
