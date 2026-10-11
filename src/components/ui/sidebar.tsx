@@ -5,7 +5,7 @@ import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { useDeviceCapability } from "@/hooks/useDeviceCapability"
-import { useAppearance } from "@/contexts/AppearanceContext"
+import { useAppearanceSafe } from "@/contexts/AppearanceContext"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -215,10 +215,10 @@ const Sidebar = React.forwardRef<
     // eslint-disable-next-line react-hooks/rules-of-hooks
     const { isLowEnd } = useDeviceCapability();
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    const { settings } = useAppearance();
+    const appearance = useAppearanceSafe();
     
     // Calculate sidebar opacity from settings
-    const sidebarOpacity = settings.sidebarOpacity / 100;
+    const sidebarOpacity = (appearance?.settings.sidebarOpacity ?? 90) / 100;
     
     // Adaptive blur: full blur on high-end, reduced on low-end
     const sidebarBlurClass = isLowEnd

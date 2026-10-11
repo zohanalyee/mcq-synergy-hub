@@ -1,13 +1,13 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { useAppearance } from "@/contexts/AppearanceContext"
+import { useAppearanceSafe } from "@/contexts/AppearanceContext"
 
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
 >(({ className, style, ...props }, ref) => {
-  const { settings } = useAppearance();
-  const opacity = settings.cardsOpacity / 100;
+  const appearance = useAppearanceSafe();
+  const opacity = (appearance?.settings.cardsOpacity ?? 90) / 100;
 
   return (
     <div
