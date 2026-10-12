@@ -258,31 +258,27 @@ const DuplicateReviewQueue = () => {
   };
 
   // Keep the chosen copy, discard the rest of the group
+  // Server-side resolve: groups by smart fingerprint (ignores punctuation/spacing),
+  // keeps one master approved, hides (never deletes) every other active copy.
+  const resolveOnServer = async (cluster: DuplicateCluster, keepId: string | null) => {
+    const { data, error } = await (supabase as any).rpc("resolve_duplicate_cluster", {
+      _cluster_key: cluster.cluster_key,
+      _keep_id: keepId,
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    return Number(row?.copies_hidden ?? 0);
+  };
+
   const handleKeepOne = async (cluster: DuplicateCluster, keepId: string) => {
     setActionLoading(cluster.cluster_key);
     try {
-      const allIds = await fetchLiveMembers(cluster);
-
-      const { error: upErr } = await supabase
-        .from("content_items")
-        .update({ status: "approved", show_in_subjects: true, show_in_mock_tests: true })
-        .eq("id", keepId);
-      if (upErr) throw upErr;
-
-      const others = allIds.filter((id) => id !== keepId);
-      if (others.length > 0) {
-        const { error: delErr } = await supabase
-          .from("content_items")
-          .delete()
-          .in("id", others);
-        if (delErr) throw delErr;
-      }
-
+      const hidden = await resolveOnServer(cluster, keepId);
       await finishCluster(cluster);
-      toast.success(`Kept 1 question, removed ${others.length} duplicate copies`);
-    } catch (err) {
+      toast.success(`Kept 1 master question, hid ${hidden} duplicate copies (restorable)`);
+    } catch (err: any) {
       console.error("Error keeping one:", err);
-      toast.error("Failed to resolve this group — nothing was marked reviewed");
+      toast.error(`Failed to resolve this group: ${err?.message || "unknown error"}`);
     } finally {
       setActionLoading(null);
     }
@@ -292,7 +288,7 @@ const DuplicateReviewQueue = () => {
   const handleKeepAll = async (cluster: DuplicateCluster) => {
     setActionLoading(cluster.cluster_key);
     try {
-      const allIds = await fetchLiveMembers(cluster);
+      const allIds = cluster.members.map((m) => m.id);
       const { error } = await supabase
         .from("content_items")
         .update({ status: "approved", show_in_subjects: true, show_in_mock_tests: true })
@@ -301,33 +297,24 @@ const DuplicateReviewQueue = () => {
 
       await finishCluster(cluster);
       toast.success(`Approved all ${allIds.length} questions in this group`);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error keeping all:", err);
-      toast.error("Failed to approve this group — nothing was marked reviewed");
+      toast.error(`Failed to approve this group: ${err?.message || "unknown error"}`);
     } finally {
       setActionLoading(null);
     }
   };
 
-  // Discard newer copies, keep the oldest approved (or oldest) one untouched
+  // Keep the best (approved/oldest) copy as master, hide the rest
   const handleDiscardGroup = async (cluster: DuplicateCluster) => {
     setActionLoading(cluster.cluster_key);
     try {
-      const keeper =
-        cluster.members.find((m) => m.status === "approved") || cluster.members[0];
-      const allIds = await fetchLiveMembers(cluster);
-      const removeIds = allIds.filter((id) => id !== keeper.id);
-
-      if (removeIds.length > 0) {
-        const { error } = await supabase.from("content_items").delete().in("id", removeIds);
-        if (error) throw error;
-      }
-
+      const hidden = await resolveOnServer(cluster, null);
       await finishCluster(cluster);
-      toast.success(`Removed ${removeIds.length} extra copies`);
-    } catch (err) {
+      toast.success(`Hid ${hidden} extra copies — 1 master question kept`);
+    } catch (err: any) {
       console.error("Error discarding group:", err);
-      toast.error("Failed to discard this group — nothing was marked reviewed");
+      toast.error(`Failed to discard this group: ${err?.message || "unknown error"}`);
     } finally {
       setActionLoading(null);
     }
