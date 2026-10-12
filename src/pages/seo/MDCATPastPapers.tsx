@@ -40,8 +40,8 @@ const mostRepeated = [
 const MDCATPastPapers = () => (
   <>
     <SEOHead
-      title="MDCAT Past Papers 2020-2025 | Free MCQ Practice"
-      description="Solve MDCAT past papers online free. MDCAT 2025, 2024, 2023 past papers with answers plus the 200-MCQ paper pattern for MDCAT 2026 on 20 September."
+      title="MDCAT Past Papers Solved (2020–2025) with Answers | MCQsAI"
+      description="Solve MDCAT past papers 2020–2025 online free with answers and explanations. 200-MCQ PMDC pattern, topic-wise breakdown — best practice for MDCAT 2027."
       keywords="MDCAT past papers, MDCAT past papers 2025, MDCAT past papers with answers, MDCAT paper pattern, MDCAT MCQs Pakistan"
     />
     <ExamPageSchema
