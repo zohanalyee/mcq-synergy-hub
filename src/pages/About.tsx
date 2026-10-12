@@ -22,6 +22,7 @@ const aboutJsonLd = {
     name: 'MCQsAI',
     url: 'https://mcqsai.com',
     foundingCountry: 'PK',
+    sameAs: ['https://www.linkedin.com/company/mcqsai/', 'https://whatsapp.com/channel/0029Vb9DgAk8KMqkSpdiWV32'],
     description: "Pakistan's premier AI-powered educational platform",
     founder: {
       '@type': 'Person',
@@ -29,6 +30,7 @@ const aboutJsonLd = {
       jobTitle: 'Founder & Developer',
       worksFor: { '@type': 'Organization', name: 'MCQsAI' },
       url: 'https://mcqsai.com/about',
+      sameAs: ['https://www.linkedin.com/in/zohaibalichanna/'],
     },
     contactPoint: {
       '@type': 'ContactPoint',
@@ -46,6 +48,7 @@ const personJsonLd = {
   jobTitle: 'Founder & Developer',
   worksFor: { '@type': 'Organization', name: 'MCQsAI', url: 'https://mcqsai.com' },
   url: 'https://mcqsai.com/about',
+  sameAs: ['https://www.linkedin.com/in/zohaibalichanna/'],
   nationality: { '@type': 'Country', name: 'Pakistan' },
 };
 

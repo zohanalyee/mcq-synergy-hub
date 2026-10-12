@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, Clock, MapPin, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
+import { Mail, Clock, MapPin, Facebook, Instagram, Twitter, Youtube, Linkedin } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { useSocialLinks } from '@/hooks/useSocialLinks';
@@ -18,6 +18,7 @@ const Footer = () => {
     { key: 'tiktok', url: socialLinks?.tiktok, icon: null, label: 'TikTok' },
     { key: 'twitter', url: socialLinks?.twitter, icon: Twitter, label: 'Twitter' },
     { key: 'youtube', url: socialLinks?.youtube, icon: Youtube, label: 'YouTube' },
+    { key: 'linkedin', url: socialLinks?.linkedin, icon: Linkedin, label: 'LinkedIn' },
   ].filter(s => s.url);
 
   return (

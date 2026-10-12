@@ -4,13 +4,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSocialLinks, useUpdateSocialLinks, SocialLinks } from '@/hooks/useSocialLinks';
-import { Facebook, Instagram, Twitter, Youtube, Loader2 } from 'lucide-react';
+import { Facebook, Instagram, Twitter, Youtube, Linkedin, Loader2 } from 'lucide-react';
 
 const SocialLinksManager = () => {
   const { data: links, isLoading } = useSocialLinks();
   const updateMutation = useUpdateSocialLinks();
   const [form, setForm] = useState<SocialLinks>({
-    facebook: '', instagram: '', tiktok: '', twitter: '', youtube: '', whatsapp: '',
+    facebook: '', instagram: '', tiktok: '', twitter: '', youtube: '', whatsapp: '', linkedin: '',
   });
 
   useEffect(() => {
@@ -23,6 +23,7 @@ const SocialLinksManager = () => {
 
   const fields = [
     { key: 'whatsapp' as const, label: 'WhatsApp Channel', icon: null, placeholder: 'https://whatsapp.com/channel/...' },
+    { key: 'linkedin' as const, label: 'LinkedIn', icon: Linkedin, placeholder: 'https://www.linkedin.com/company/mcqsai/' },
     { key: 'facebook' as const, label: 'Facebook', icon: Facebook, placeholder: 'https://facebook.com/mcqsai' },
     { key: 'instagram' as const, label: 'Instagram', icon: Instagram, placeholder: 'https://instagram.com/mcqsai' },
     { key: 'tiktok' as const, label: 'TikTok', icon: null, placeholder: 'https://tiktok.com/@mcqsai' },

@@ -9,9 +9,11 @@ export interface SocialLinks {
   twitter: string;
   youtube: string;
   whatsapp: string;
+  linkedin: string;
 }
 
 export const DEFAULT_WHATSAPP_CHANNEL = 'https://whatsapp.com/channel/0029Vb9DgAk8KMqkSpdiWV32';
+export const DEFAULT_LINKEDIN_PAGE = 'https://www.linkedin.com/company/mcqsai/';
 
 const defaultLinks: SocialLinks = {
   facebook: '',
@@ -20,6 +22,7 @@ const defaultLinks: SocialLinks = {
   twitter: '',
   youtube: '',
   whatsapp: DEFAULT_WHATSAPP_CHANNEL,
+  linkedin: DEFAULT_LINKEDIN_PAGE,
 };
 
 export const useSocialLinks = () => {
