@@ -126,12 +126,18 @@ const MockTestDetail = () => {
   // their stored metadata untouched.
   const isIbaNetwork = isIbaCommunityNetwork(test.organization, test.title);
 
-  const metaTitle = isIbaNetwork
+  // STHP: "past papers" intent (SERP shows only PDFs/Facebook). Mirrors scripts/inject-meta.mjs.
+  const isSthp = /talent hunt program \(sthp\)/i.test(test.title);
+  const metaTitle = isSthp
+    ? "Sukkur IBA STHP Past Papers & Online Mock Test 2027 (Solved MCQs)"
+    : isIbaNetwork
     ? buildIbaMetaTitle(test.title)
     : test.seo_title?.trim()
       ? test.seo_title.trim()
       : `${test.title} Mock Test — Free Online Preparation`;
-  const metaDescription = isIbaNetwork
+  const metaDescription = isSthp
+    ? "Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. Apply by 29 Oct; test on 8 Nov 2026."
+    : isIbaNetwork
     ? buildIbaMetaDescription(test.title, test.questions, subjects)
     : test.meta_description?.trim()
       ? test.meta_description.trim()
@@ -213,6 +219,20 @@ const MockTestDetail = () => {
             <Badge variant="secondary" className="text-xs font-medium">
               {IBA_NETWORK_LABEL}
             </Badge>
+          )}
+          {isSthp && Date.now() < Date.parse("2026-11-09T00:00:00+05:00") && (
+            <div role="note" className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
+              <strong>STHP 2027: apply by 29 October 2026, test on 8 November 2026.</strong> Apply on the{" "}
+              <a
+                href="https://applyadmission.iba-suk.edu.pk"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-primary hover:underline"
+              >
+                official Sukkur IBA admission portal
+              </a>
+              . Practise the solved mock test below before test day.
+            </div>
           )}
           {/junior office associate/i.test(test.title) && Date.now() < Date.parse("2026-10-12T00:00:00+05:00") && (
             <div role="note" className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">

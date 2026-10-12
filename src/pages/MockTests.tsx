@@ -48,8 +48,8 @@ const CompetitiveExams = () => {
     return true;
   });
 
-  // High-demand tests pinned to the top (lower index = higher). JOA drove most traffic.
-  const PINNED = [/junior office associate/i];
+  // High-demand / upcoming tests pinned to the top (lower index = higher).
+  const PINNED = [/talent hunt program \(sthp\)/i, /teaching license exam - elementary/i, /junior office associate/i];
   const pinRank = (title: string) => {
     const i = PINNED.findIndex(r => r.test(title));
     return i === -1 ? PINNED.length : i;

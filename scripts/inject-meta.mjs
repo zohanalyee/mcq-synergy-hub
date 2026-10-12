@@ -325,12 +325,18 @@ async function injectMockTests() {
     // the advertisement wording candidates search for actually matches this page.
     const isIba = isIbaCommunityNetwork(t.organization, t.title);
     const subjects = (Array.isArray(t.syllabus) ? t.syllabus : []).map((s) => s?.topic).filter(Boolean);
-    const metaTitle = isIba
+    // STHP override — mirrors src/pages/MockTestDetail.tsx.
+    const isSthp = /talent hunt program \(sthp\)/i.test(t.title || "");
+    const metaTitle = isSthp
+      ? "Sukkur IBA STHP Past Papers & Online Mock Test 2027 (Solved MCQs)"
+      : isIba
       ? buildIbaMetaTitle(t.title)
       : t.seo_title?.trim()
         ? t.seo_title.trim()
         : `${t.title} Mock Test — Free Online Preparation`;
-    const metaDescription = isIba
+    const metaDescription = isSthp
+      ? "Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. Apply by 29 Oct; test on 8 Nov 2026."
+      : isIba
       ? buildIbaMetaDescription(t.title, t.questions, subjects)
       : t.meta_description?.trim()
         ? t.meta_description.trim()
