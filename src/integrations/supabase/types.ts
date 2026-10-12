@@ -4193,6 +4193,7 @@ export type Database = {
             }
             Returns: Json
           }
+      dup_norm: { Args: { _t: string }; Returns: string }
       get_ai_usage_today: {
         Args: never
         Returns: {
@@ -4763,6 +4764,13 @@ export type Database = {
         Returns: undefined
       }
       refresh_platform_stats_snapshot: { Args: never; Returns: undefined }
+      resolve_duplicate_cluster: {
+        Args: { _cluster_key: string; _keep_id?: string }
+        Returns: {
+          copies_hidden: number
+          kept_id: string
+        }[]
+      }
       run_duplicate_scan: {
         Args: { _trigger_source?: string }
         Returns: {
