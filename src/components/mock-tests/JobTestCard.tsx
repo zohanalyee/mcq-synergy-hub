@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useAuthSafe } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,6 +54,7 @@ export const JobTestCard = ({
   detailHref,
 }: JobTestCardProps) => {
   const navigate = useNavigate();
+  const isGuest = !useAuthSafe()?.user;
   const [customSettings, setCustomSettings] = useState<{ 
     difficulty: "easy" | "medium" | "hard";
     questionCount: number;
@@ -148,6 +150,11 @@ export const JobTestCard = ({
             >
               {test.syllabus.length} Subj
             </Badge>
+            {isGuest && (
+              <Badge className="text-[8px] h-4 px-1.5 bg-brand-gradient text-primary-foreground border-0">
+                Free Demo: {Math.min(15, test.questions)} Qs · Sign in for full {test.questions}
+              </Badge>
+            )}
           </div>
 
           {/* Action Buttons Row — both navigate to the detail page where the
