@@ -235,6 +235,29 @@ export interface JobTestGenerationLog {
   created_at: string;
 }
 
+/** Normalize legacy flat-array syllabi ([{topic, percentage}]) into { sections }. */
+export const normalizeDefinition = <T extends { syllabus?: any } | null>(d: T): T => {
+  if (!d) return d;
+  const syl: any = (d as any).syllabus;
+  if (Array.isArray(syl)) {
+    (d as any).syllabus = {
+      sections: syl
+        .filter((i: any) => i && (i.topic || i.subject))
+        .map((i: any) => ({
+          subject: String(i.subject || i.topic),
+          percentage: Number(i.percentage || 0),
+          question_count: Number(i.question_count || 0),
+          topics: Array.isArray(i.topics) ? i.topics : [],
+          style_guide: i.style_guide || "",
+          forbidden: Array.isArray(i.forbidden) ? i.forbidden : [],
+        })),
+    };
+  } else if (!syl || !Array.isArray(syl.sections)) {
+    (d as any).syllabus = { ...(syl || {}), sections: [] };
+  }
+  return d;
+};
+
 export const getJobTestDefinitions = async (): Promise<JobTestDefinition[]> => {
   const { data, error } = await (supabase as any)
     .from("job_test_definitions")
@@ -244,7 +267,7 @@ export const getJobTestDefinitions = async (): Promise<JobTestDefinition[]> => {
     console.error("Error loading job test definitions:", error);
     return [];
   }
-  return (data || []) as JobTestDefinition[];
+  return ((data || []) as JobTestDefinition[]).map(normalizeDefinition);
 };
 
 export const getJobTestDefinition = async (id: string): Promise<JobTestDefinition | null> => {
@@ -257,7 +280,7 @@ export const getJobTestDefinition = async (id: string): Promise<JobTestDefinitio
     console.error("Error loading definition:", error);
     return null;
   }
-  return data as JobTestDefinition;
+  return normalizeDefinition(data as JobTestDefinition);
 };
 
 export const findDefinitionByTitle = async (title: string): Promise<JobTestDefinition | null> => {
@@ -273,7 +296,7 @@ export const findDefinitionByTitle = async (title: string): Promise<JobTestDefin
     console.error("Error finding definition:", error);
     return null;
   }
-  return (data as JobTestDefinition) || null;
+  return normalizeDefinition((data as JobTestDefinition) || null);
 };
 
 /**
