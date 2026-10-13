@@ -612,14 +612,19 @@ const TestSession = () => {
                   {syllabusMap.map((subject) => {
                     const pct = subject.total > 0 ? Math.round((subject.attempted / subject.total) * 100) : 0;
                     return (
-                      <div key={subject.name} className={`p-2.5 rounded-lg border transition-colors ${subject.isCurrent ? "border-primary/50 bg-primary/5" : "border-border/30"}`}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium truncate">{subject.name}</span>
-                          {subject.isCurrent && (
-                            <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4">Now</Badge>
+                      <div key={subject.name} className={`relative overflow-hidden p-2.5 rounded-xl border transition-all ${subject.isCurrent ? "border-primary/50 bg-primary/5 shadow-[0_0_16px_hsl(var(--primary)/0.15)]" : "border-border/40 bg-card/60"}`}>
+                        {subject.isCurrent && <span className="absolute left-0 top-0 bottom-0 w-1 bg-brand-gradient" />}
+                        <div className="flex items-center justify-between mb-1.5">
+                          <span className={`text-sm font-semibold truncate ${subject.isCurrent ? "text-brand-gradient" : "text-foreground"}`}>{subject.name}</span>
+                          {subject.isCurrent ? (
+                            <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-brand-gradient text-primary-foreground">Now</span>
+                          ) : (
+                            <span className="text-[10px] font-semibold text-muted-foreground">{pct}%</span>
                           )}
                         </div>
-                        <Progress value={pct} className="h-1.5" />
+                        <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                          <div className="h-full rounded-full bg-brand-gradient transition-all duration-500" style={{ width: `${pct}%` }} />
+                        </div>
                         <p className="text-xs text-muted-foreground mt-1">{subject.attempted}/{subject.total} done</p>
                       </div>
                     );
@@ -642,14 +647,19 @@ const TestSession = () => {
                       {syllabusMap.map((subject) => {
                         const pct = subject.total > 0 ? Math.round((subject.attempted / subject.total) * 100) : 0;
                         return (
-                          <div key={subject.name} className={`p-2 rounded-lg border transition-colors ${subject.isCurrent ? "border-primary/50 bg-primary/5" : "border-border/30"}`}>
-                            <div className="flex items-center justify-between mb-1">
-                              <span className="text-xs font-medium truncate">{subject.name}</span>
-                              {subject.isCurrent && (
-                                <Badge variant="default" className="text-[9px] px-1.5 py-0 h-4">Now</Badge>
+                          <div key={subject.name} className={`relative overflow-hidden p-2.5 rounded-xl border transition-all ${subject.isCurrent ? "border-primary/50 bg-primary/5 shadow-[0_0_16px_hsl(var(--primary)/0.15)]" : "border-border/40 bg-card/60"}`}>
+                            {subject.isCurrent && <span className="absolute left-0 top-0 bottom-0 w-1 bg-brand-gradient" />}
+                            <div className="flex items-center justify-between mb-1.5">
+                              <span className={`text-xs font-semibold truncate ${subject.isCurrent ? "text-brand-gradient" : "text-foreground"}`}>{subject.name}</span>
+                              {subject.isCurrent ? (
+                                <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-brand-gradient text-primary-foreground">Now</span>
+                              ) : (
+                                <span className="text-[10px] font-semibold text-muted-foreground">{pct}%</span>
                               )}
                             </div>
-                            <Progress value={pct} className="h-1.5" />
+                            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                              <div className="h-full rounded-full bg-brand-gradient transition-all duration-500" style={{ width: `${pct}%` }} />
+                            </div>
                             <p className="text-[10px] text-muted-foreground mt-1">{subject.attempted}/{subject.total} done</p>
                           </div>
                         );

@@ -102,27 +102,33 @@ const QuestionCard = ({
                   aria-checked={isSelected}
                   onClick={() => onSelectAnswer(questionIndex, option)}
                   className={cn(
-                    "w-full text-left rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all duration-200 min-h-11 bg-card/60",
-                    "border hover:border-primary/40 hover:bg-primary/5",
+                    "group relative overflow-hidden w-full text-left rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all duration-200 min-h-11",
+                    "border hover:-translate-y-px hover:border-primary/40 hover:bg-primary/5 hover:shadow-sm",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     isSelected
-                      ? "border-primary bg-primary/10 shadow-[0_0_16px_hsl(var(--primary)/0.18)]"
-                      : "border-border/60"
+                      ? "border-primary/60 bg-primary/10 shadow-[0_6px_20px_-6px_hsl(var(--primary)/0.35)]"
+                      : "border-border/60 bg-card/60"
                   )}
                 >
+                  {isSelected && <span className="absolute left-0 top-0 bottom-0 w-1 bg-brand-gradient" aria-hidden />}
                   <div className="flex items-center gap-3">
                     <Badge
                       variant={isSelected ? "default" : "secondary"}
                       className={cn(
-                        "h-7 w-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold",
-                        isSelected && "bg-brand-gradient text-primary-foreground border-0"
+                        "h-7 w-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold transition-all",
+                        isSelected
+                          ? "bg-brand-gradient text-primary-foreground border-0 scale-110 shadow-md"
+                          : "group-hover:bg-primary/15 group-hover:text-primary"
                       )}
                     >
                       {String.fromCharCode(65 + idx)}
                     </Badge>
-                    <span className={cn("text-xs sm:text-sm leading-tight text-foreground", isRTL && "rtl-text font-nastaliq")}>
+                    <span className={cn("flex-1 text-xs sm:text-sm leading-tight", isSelected ? "font-semibold text-foreground" : "text-foreground", isRTL && "rtl-text font-nastaliq")}>
                       {option}
                     </span>
+                    {isSelected && (
+                      <span className="h-5 w-5 shrink-0 rounded-full bg-brand-gradient text-primary-foreground flex items-center justify-center text-[10px] font-bold" aria-hidden>✓</span>
+                    )}
                   </div>
                 </button>
               );
