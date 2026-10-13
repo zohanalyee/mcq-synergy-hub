@@ -16,6 +16,7 @@ import {
 import { useNavigate, useLocation } from 'react-router-dom';
 import { saveIntentRaw } from '@/hooks/useAuthIntent';
 import BrandMark from '@/components/BrandMark';
+import WhatsAppChannelCTA from '@/components/WhatsAppChannelCTA';
 
 interface FreeExplanation {
   question: string;
@@ -171,6 +172,10 @@ export const GuestResultGate = ({
               </div>
             ))}
           </div>
+        </div>
+
+        <div className="px-5">
+          <WhatsAppChannelCTA message="📢 Daily solved papers, merit lists aur roll no slips WhatsApp par hasil karein." />
         </div>
 
         {/* Try Again */}
