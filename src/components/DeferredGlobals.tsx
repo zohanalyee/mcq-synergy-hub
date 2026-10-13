@@ -18,6 +18,7 @@ const FloatingToolsRenderer = lazy(() => import("./tools/FloatingToolsRenderer")
 const GlobalCreditExhaustedListener = lazy(() => import("./credits/GlobalCreditExhaustedListener"));
 const GuestResultCarryForward = lazy(() => import("./GuestResultCarryForward"));
 const CookieConsent = lazy(() => import("./CookieConsent"));
+const WhatsAppFloatingButton = lazy(() => import("./WhatsAppFloatingButton"));
 
 const isPrerender = typeof window === "undefined" || (globalThis as any).__PRERENDER__;
 
@@ -73,6 +74,7 @@ const DeferredGlobals = () => {
           <EmailPrefSync />
           <FloatingToolsRenderer />
           <CookieConsent />
+          <WhatsAppFloatingButton />
         </>
       )}
     </Suspense>

@@ -30,6 +30,7 @@ import { JobTestRewardDialog } from "@/components/jobs/JobTestRewardDialog";
 import { recordJobTestProgress, jobTestIdFromTitle } from "@/services/jobTestProgressService";
 import { useAuth } from "@/contexts/AuthContext";
 import { GuestResultGate } from "@/components/quiz/GuestResultGate";
+import WhatsAppChannelCTA from "@/components/WhatsAppChannelCTA";
 import { loadGuestSession } from "@/lib/guestSession";
 import { savePendingGuestResult } from "@/lib/guestResultCarry";
 
@@ -833,6 +834,8 @@ const TestSession = () => {
                     </Card>
                   ))}
                 </div>
+
+                <WhatsAppChannelCTA message="📢 Daily solved papers, answer keys aur test updates ke liye WhatsApp Channel join karein." />
 
                 {/* Ustaad Ki Advice + primary next-step actions (above Focus Areas) */}
                 <div className="space-y-2">
