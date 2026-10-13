@@ -1072,7 +1072,7 @@ export const getAllTestsCoverage = async (): Promise<TestCoverageSummary[]> => {
         });
         if (!def) return { test: t, hasDefinition: false, coverage: null };
         const sections = def.syllabus?.sections || [];
-        const coverage = await getSectionCoverage(def.id, sections);
+        const coverage = await getSectionCoverage(def.id, sections, Number((t as any).questions) || 0);
         return { test: t, hasDefinition: true, coverage };
       } catch {
         return { test: t, hasDefinition: false, coverage: null };
