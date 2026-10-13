@@ -41,7 +41,7 @@ export function useJobTestReadiness(jobTests: JobTest[], refreshKey = 0) {
               return [t.id, { state: "no-definition", approved: 0, target: 0, incompleteSections: 0 }] as const;
             }
             const sections = def.syllabus?.sections || [];
-            const coverage = await getSectionCoverage(def.id, sections);
+            const coverage = await getSectionCoverage(def.id, sections, Number((t as any).questions) || 0);
             const info: ReadinessInfo = {
               state: coverage.ready ? "ready" : "incomplete",
               approved: coverage.totalApproved,
