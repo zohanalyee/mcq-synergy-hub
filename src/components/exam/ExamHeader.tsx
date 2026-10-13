@@ -100,8 +100,20 @@ const ExamHeader = ({
         )}
       </div>
 
-      {/* Progress bar */}
-      <Progress value={progress} className="h-1.5" />
+      {/* Progress bar — brand gradient */}
+      <div
+        className="h-1.5 w-full rounded-full bg-muted overflow-hidden"
+        role="progressbar"
+        aria-valuenow={Math.round(progress)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Test progress"
+      >
+        <div
+          className="h-full rounded-full bg-brand-gradient transition-all duration-500"
+          style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+        />
+      </div>
     </div>
   );
 };
