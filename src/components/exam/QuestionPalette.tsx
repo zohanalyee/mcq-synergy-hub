@@ -35,11 +35,11 @@ const PaletteGrid = ({
             aria-label={`Question ${index + 1}${isAnswered ? ", answered" : ", unanswered"}${isFlagged ? ", flagged for review" : ""}${isCurrent ? ", current" : ""}`}
             aria-current={isCurrent ? "true" : undefined}
             className={cn(
-              "relative h-10 w-10 sm:h-9 sm:w-9 p-0 text-xs font-medium rounded-lg transition-all",
-              isCurrent && "ring-2 ring-info",
-              isFlagged && !isCurrent && "bg-warning text-warning-foreground hover:bg-warning/90",
-              isAnswered && !isFlagged && !isCurrent && "bg-success text-success-foreground hover:bg-success/90",
-              !isAnswered && !isFlagged && !isCurrent && "bg-destructive/20 text-destructive border border-destructive/30 hover:bg-destructive/30"
+              "relative h-10 w-10 sm:h-9 sm:w-9 p-0 text-xs font-semibold rounded-lg transition-all",
+              isCurrent && "bg-brand-gradient text-primary-foreground shadow-md",
+              isFlagged && !isCurrent && "bg-warning/15 text-warning border border-warning/40 hover:bg-warning/25",
+              isAnswered && !isFlagged && !isCurrent && "bg-success/15 text-success border border-success/40 hover:bg-success/25",
+              !isAnswered && !isFlagged && !isCurrent && "bg-muted/60 text-muted-foreground border border-border/60 hover:bg-muted"
             )}
             onClick={() => onNavigate(index)}
           >
@@ -55,19 +55,19 @@ const PaletteGrid = ({
     {/* Legend */}
     <div className="flex flex-wrap gap-3 text-[10px] text-muted-foreground pt-2 border-t border-border/50">
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-success" />
+        <div className="h-3 w-3 rounded bg-success/15 border border-success/40" />
         <span>Answered</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-destructive/20 border border-destructive/30" />
+        <div className="h-3 w-3 rounded bg-muted/60 border border-border/60" />
         <span>Unanswered</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded bg-warning" />
+        <div className="h-3 w-3 rounded bg-warning/15 border border-warning/40" />
         <span>Review</span>
       </div>
       <div className="flex items-center gap-1">
-        <div className="h-3 w-3 rounded ring-2 ring-info" />
+        <div className="h-3 w-3 rounded bg-brand-gradient" />
         <span>Current</span>
       </div>
     </div>

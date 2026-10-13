@@ -102,12 +102,12 @@ const QuestionCard = ({
                   aria-checked={isSelected}
                   onClick={() => onSelectAnswer(questionIndex, option)}
                   className={cn(
-                    "w-full text-left glass-card rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all duration-200 min-h-11",
-                    "border hover:border-primary/30 hover:shadow-md",
+                    "w-full text-left rounded-xl p-2.5 sm:p-3 cursor-pointer transition-all duration-200 min-h-11 bg-card/60",
+                    "border hover:border-primary/40 hover:bg-primary/5",
                     "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                     isSelected
-                      ? "ring-2 ring-info bg-info/10 border-info/50 shadow-[0_0_15px_hsl(var(--info)/0.15)]"
-                      : "border-border/50"
+                      ? "border-primary bg-primary/10 shadow-[0_0_16px_hsl(var(--primary)/0.18)]"
+                      : "border-border/60"
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -115,7 +115,7 @@ const QuestionCard = ({
                       variant={isSelected ? "default" : "secondary"}
                       className={cn(
                         "h-7 w-7 rounded-lg shrink-0 flex items-center justify-center text-xs font-bold",
-                        isSelected && "bg-info text-info-foreground"
+                        isSelected && "bg-brand-gradient text-primary-foreground border-0"
                       )}
                     >
                       {String.fromCharCode(65 + idx)}

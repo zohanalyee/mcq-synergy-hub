@@ -661,24 +661,14 @@ const TestSession = () => {
               {/* Main question area */}
               <div className="flex-1 min-w-0 flex flex-col">
                 <div className="flex-1 overflow-y-auto min-h-0 pb-2 scrollbar-thin">
-                  {(() => {
-                    const blurbSubject =
-                      questions[currentQuestion]?.subject ||
-                      questions[currentQuestion]?.topic ||
-                      testData?.session_name ||
-                      'these';
-                    return (
-                      <p className="text-sm text-muted-foreground mb-3 ml-1 leading-relaxed max-w-3xl">
-                        You are practicing {blurbSubject} multiple-choice questions designed for
-                        Pakistani competitive and board exam preparation. Each question includes the
-                        correct answer and explanation so you can learn as you go. Use this practice
-                        test to assess your knowledge and track your progress.
-                      </p>
-                    );
-                  })()}
-                  <Badge variant="secondary" className="mb-2 ml-1">
-                    Section: {questions[currentQuestion]?.subject || questions[currentQuestion]?.topic || 'General'}
-                  </Badge>
+                  <div className="flex items-center justify-between gap-2 mb-2 px-1">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-brand-gradient truncate">
+                      {questions[currentQuestion]?.subject || questions[currentQuestion]?.topic || 'General'}
+                    </span>
+                    <span className="text-[11px] font-semibold text-muted-foreground shrink-0">
+                      Question {currentQuestion + 1} of {questions.length}
+                    </span>
+                  </div>
                   <QuestionCard
                     question={questions[currentQuestion]}
                     questionIndex={currentQuestion}
