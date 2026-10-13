@@ -803,6 +803,7 @@ export interface TestCoverage {
 export const getSectionCoverage = async (
   jobTestId: string,
   sections: JobSyllabusSection[],
+  totalQuestions = 0,
 ): Promise<TestCoverage> => {
   const questions = await getQuestionsForDefinition(jobTestId);
 
@@ -816,7 +817,10 @@ export const getSectionCoverage = async (
 
   const sectionCoverage: SectionCoverage[] = sections.map((s) => {
     const counts = bySubject.get(s.subject) || { approved: 0, pending: 0 };
-    const target = s.question_count || 0;
+    // Fallback: legacy syllabi store only percentages — derive the target.
+    const target =
+      s.question_count ||
+      (totalQuestions > 0 && s.percentage > 0 ? Math.round((totalQuestions * s.percentage) / 100) : 0);
     const deficit = Math.max(0, target - counts.approved);
     return {
       subject: s.subject,
@@ -1068,7 +1072,7 @@ export const getAllTestsCoverage = async (): Promise<TestCoverageSummary[]> => {
         });
         if (!def) return { test: t, hasDefinition: false, coverage: null };
         const sections = def.syllabus?.sections || [];
-        const coverage = await getSectionCoverage(def.id, sections);
+        const coverage = await getSectionCoverage(def.id, sections, Number((t as any).questions) || 0);
         return { test: t, hasDefinition: true, coverage };
       } catch {
         return { test: t, hasDefinition: false, coverage: null };
