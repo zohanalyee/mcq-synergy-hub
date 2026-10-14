@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useSocialLinks } from '@/hooks/useSocialLinks';
@@ -6,14 +6,26 @@ import { WhatsAppIcon } from '@/components/WhatsAppChannelCTA';
 
 const HIDDEN_PREFIXES = ['/test-session', '/quiz-player', '/admin', '/auth', '/sign-in', '/sign-up'];
 const DISMISS_KEY = 'mcqsai_wa_fab_dismissed';
+const HEADLINES = [
+  '📢 Daily Govt Jobs & Alerts',
+  '🎓 Sukkur IBA STHP & Scholarships',
+  '⚡ MDCAT & Past Paper Mock Tests',
+  '📝 Daily Solved MCQs & Answer Keys',
+];
 
-/** Floating "Join WhatsApp Channel" button; hidden during tests and admin. */
+/** Floating "Join WhatsApp Channel" button with rotating headlines; hidden during tests and admin. */
 const WhatsAppFloatingButton = () => {
   const { pathname } = useLocation();
   const { data } = useSocialLinks();
+  const [idx, setIdx] = useState(0);
   const [dismissed, setDismissed] = useState(() => {
     try { return sessionStorage.getItem(DISMISS_KEY) === '1'; } catch { return false; }
   });
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    const t = setInterval(() => setIdx((i) => (i + 1) % HEADLINES.length), 3500);
+    return () => clearInterval(t);
+  }, []);
   const url = data?.whatsapp;
   if (!url || dismissed || HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
@@ -35,8 +47,8 @@ const WhatsAppFloatingButton = () => {
           <span className="absolute inset-0 rounded-full bg-background/30 animate-ping" aria-hidden="true" />
           <WhatsAppIcon className="relative h-5 w-5" />
         </span>
-        <span className="text-xs font-semibold leading-tight">
-          Daily Papers<span className="hidden sm:inline"> & Answer Keys</span>
+        <span className="text-xs font-semibold leading-tight min-w-[150px] sm:min-w-[190px]" aria-live="off">
+          <span key={idx} className="block animate-fade-in whitespace-nowrap">{HEADLINES[idx]}</span>
           <span className="block text-[10px] font-normal opacity-90">Join WhatsApp</span>
         </span>
       </a>
