@@ -573,12 +573,27 @@ async function injectBoardTopicContent() {
   // Build path -> topic_id map so content linked by topic_id (not just
   // canonical_topic_name) is also fetched — mirrors BoardTopicPage which passes
   // BOTH p_topic_id and p_canonical_slug.
-  const [{ data: systems }, { data: levels }, { data: subjects }, { data: topics }] = await Promise.all([
-    supabase.from("educational_systems").select("id,name").eq("is_active", true),
-    supabase.from("levels").select("id,name,system_id"),
-    supabase.from("subjects").select("id,name,level_id"),
-    supabase.from("topics").select("id,name,subject_id"),
+  // PostgREST caps responses at 1000 rows — page every table (topics > 1000
+  // previously left ~855 topics without an id, starving 158 indexable pages).
+  const fetchAll = async (table, cols, active = false) => {
+    const out = [];
+    for (let from = 0; ; from += 1000) {
+      let q = supabase.from(table).select(cols).order("id").range(from, from + 999);
+      if (active) q = q.eq("is_active", true);
+      const { data, error } = await q;
+      if (error) throw error;
+      out.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    return out;
+  };
+  const [systems, levels, subjects, topics] = await Promise.all([
+    fetchAll("educational_systems", "id,name", true),
+    fetchAll("levels", "id,name,system_id"),
+    fetchAll("subjects", "id,name,level_id"),
+    fetchAll("topics", "id,name,subject_id"),
   ]);
+  console.log(`[inject-meta] topic-content id map: ${topics.length} topics loaded`);
   const sysById = new Map((systems || []).map((s) => [s.id, s.name]));
   const levelById = new Map((levels || []).map((l) => [l.id, l]));
   const subjectById = new Map((subjects || []).map((s) => [s.id, s]));
@@ -595,6 +610,10 @@ async function injectBoardTopicContent() {
     // toSlug here matches the SQL slug (regexp_replace [^a-z0-9]+ -> '-').
     const p = `/boards/${toSlug(sysName)}/class-${classN}/${toSlug(sub.name)}/${toSlug(t.name)}`;
     pathToTopicId.set(p, t.id);
+  }
+  const unmapped = rows.filter((r) => (r.approved_count ?? 0) >= 8 && !pathToTopicId.has(r.path));
+  if (unmapped.length) {
+    throw new Error(`[inject-meta] ${unmapped.length} indexable topic paths have no topic_id (e.g. ${unmapped[0].path}) — id map incomplete`);
   }
 
   // Sibling-topic map (subjectHubKey -> [{name, path}]) for crawlable link equity.
