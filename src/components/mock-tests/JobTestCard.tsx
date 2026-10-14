@@ -150,11 +150,6 @@ export const JobTestCard = ({
             >
               {test.syllabus.length} Subj
             </Badge>
-            {isGuest && (
-              <Badge className="text-[8px] h-4 px-1.5 bg-brand-gradient text-primary-foreground border-0">
-                Free Demo: {Math.min(15, test.questions)} Qs · Sign in for full {test.questions}
-              </Badge>
-            )}
           </div>
 
           {/* Action Buttons Row — both navigate to the detail page where the
