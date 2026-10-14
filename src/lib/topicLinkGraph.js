@@ -30,7 +30,7 @@ export function topicLinks(order, topicPath) {
   const siblings = [];
   const half = SIBLING_WINDOW / 2;
   for (let k = 1; k <= half; k++) {
-    for (const j of [(i + k) % n, (i - k + n) % n]) {
+    for (const j of [(i + k) % n, (((i - k) % n) + n) % n]) {
       const p = list[j];
       if (p !== topicPath && !siblings.includes(p)) siblings.push(p);
     }
