@@ -30,6 +30,9 @@ import { useUserRole } from '@/contexts/UserRoleContext';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import indexableTopics from '@/generated/indexableTopics.json';
+import topicOrder from '@/generated/topicOrder.json';
+import { topicLinks, humanizeSlug } from '@/lib/topicLinkGraph';
+import TopicPrevNext from '@/components/board-topic/TopicPrevNext';
 
 // Build-time set of indexable board topic paths (topics with >= 8 approved
 // MCQs — I-6 tightening). Same source as the sitemap. Used for a deterministic
@@ -123,7 +126,8 @@ const BoardTopicPage = () => {
       }
 
       // 5. Sibling topics (extra candidates so we can prefer indexable ones)
-      const relatedTopics = (allTopics || []).filter(t => t.id !== topic?.id).slice(0, 24);
+      // Names only — which links render is decided by the shared topicLinks() rule.
+      const relatedTopics = (allTopics || []).filter(t => t.id !== topic?.id);
 
 
       const resolvedNames = {
@@ -180,15 +184,19 @@ const BoardTopicPage = () => {
   // `isLoading`/approvedCount check that never resolved at SSR time.
   const canonicalPath = `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${topicSlug}`;
   const isThin = !INDEXABLE_TOPIC_PATHS.has(canonicalPath);
-  // I-6: sibling internal links prefer siblings that are themselves indexable
-  // (>= 8 approved MCQs), so link equity and crawl budget flow to substantive
-  // pages instead of thin ones. Thin siblings are only used as filler.
-  const allSiblings = data?.relatedTopics || [];
-  const siblingPath = (name: string) =>
-    `/boards/${boardSlug}/${canonicalClassSeg}/${subjectSlug}/${toSlug(name)}`;
-  const richSiblings = allSiblings.filter((t: any) => INDEXABLE_TOPIC_PATHS.has(siblingPath(t.name)));
-  const thinSiblings = allSiblings.filter((t: any) => !INDEXABLE_TOPIC_PATHS.has(siblingPath(t.name)));
-  const relatedTopics = [...richSiblings, ...thinSiblings].slice(0, 6);
+  // Shared deterministic link rule (src/lib/topicLinkGraph.js) — identical to
+  // the static HTML written by scripts/inject-meta.mjs.
+  const nameBySlug = new Map<string, string>(
+    (data?.relatedTopics || []).map((t: any) => [toSlug(t.name), t.name]),
+  );
+  const linkGraph = topicLinks(topicOrder as Record<string, string[]>, canonicalPath);
+  const itemFor = (path: string) => {
+    const slug = path.split('/').pop() || '';
+    return { id: path, href: path, name: nameBySlug.get(slug) || humanizeSlug(slug) };
+  };
+  const relatedTopics = linkGraph.siblings.map(itemFor);
+  const prevTopic = linkGraph.prev ? itemFor(linkGraph.prev) : null;
+  const nextTopic = linkGraph.next ? itemFor(linkGraph.next) : null;
 
   const names = data?.resolvedNames || { board: boardName, subject: subjectName, topic: topicName };
   const debugInfo = data?.debug;
@@ -308,6 +316,7 @@ const BoardTopicPage = () => {
               {/* AdSense policy: never serve ads on pages we ourselves mark
                   noindex for thin content. */}
               {!isThin && <AdSlot surface="board-topic" />}
+            <TopicPrevNext prev={prevTopic} next={nextTopic} hubHref={linkGraph.hub} subjectName={names.subject} />
             <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
               <ExploreMore boardName={names.board} subjectName={names.subject} classNumber={resolvedClassNumber || classNumber || ''} boardSlug={boardSlug || ''} classSeg={canonicalClassSeg} subjectSlug={subjectSlug || ''} />
               <RelatedExamsTools subjectName={names.subject} />
@@ -345,6 +354,7 @@ const BoardTopicPage = () => {
                 );
               })}
             </div>
+            <TopicPrevNext prev={prevTopic} next={nextTopic} hubHref={linkGraph.hub} subjectName={names.subject} />
             <RelatedTopics topics={relatedTopics} boardSlug={boardSlug || ''} classNumber={resolvedClassNumber || classNumber || ''} subjectSlug={subjectSlug || ''} />
             <ExploreMore boardName={names.board} subjectName={names.subject} classNumber={resolvedClassNumber || classNumber || ''} boardSlug={boardSlug || ''} classSeg={canonicalClassSeg} subjectSlug={subjectSlug || ''} />
             <RelatedExamsTools subjectName={names.subject} />
