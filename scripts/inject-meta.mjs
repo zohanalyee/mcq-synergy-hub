@@ -611,6 +611,10 @@ async function injectBoardTopicContent() {
     const p = `/boards/${toSlug(sysName)}/class-${classN}/${toSlug(sub.name)}/${toSlug(t.name)}`;
     pathToTopicId.set(p, t.id);
   }
+  const unmapped = rows.filter((r) => (r.approved_count ?? 0) >= 8 && !pathToTopicId.has(r.path));
+  if (unmapped.length) {
+    throw new Error(`[inject-meta] ${unmapped.length} indexable topic paths have no topic_id (e.g. ${unmapped[0].path}) — id map incomplete`);
+  }
 
   // Sibling-topic map (subjectHubKey -> [{name, path}]) for crawlable link equity.
   const siblings = new Map();
