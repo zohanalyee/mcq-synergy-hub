@@ -22,6 +22,19 @@ import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { TOOLS_WITHOUT_SEOHEAD, SUBJECT_CONTENT_META } from "./prerender-routes.mjs";
 import { buildQuizSchema, buildFaqSchema, buildTopicContentHtml, buildTopicTitleBase } from "./topic-content.mjs";
+
+// Subject → flagship mock-test bridges for static topic HTML.
+// Mirrors the sthp / sts-jobs / mdcat-hub rules in src/components/board-topic/RelatedExamsTools.tsx.
+const STHP = { href: "/mock-tests/sukkur-iba-sindh-talent-hunt-program-sthp-2027", label: "Sukkur IBA STHP 2027 Mock Test" };
+const STS = { href: "/mock-tests", label: "IBA STS & Sindh Govt Jobs Mock Tests" };
+const MDCAT = { href: "/exams/mdcat", label: "MDCAT 2026 Preparation & Mock Tests" };
+function examBridgesFor(subject) {
+  const s = String(subject || "");
+  if (/biolog|chemist|physic/i.test(s)) return [MDCAT];
+  if (/math|english/i.test(s)) return [STHP];
+  if (/comput|general|science|pak.?stud|urdu|islam|social|civic/i.test(s)) return [STS];
+  return [];
+}
 import { buildMockTestContentHtml } from "./mock-test-content.mjs";
 import { topicLinks, humanizeSlug } from "../src/lib/topicLinkGraph.js";
 import {
