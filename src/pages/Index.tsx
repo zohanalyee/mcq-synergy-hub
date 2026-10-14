@@ -1,3 +1,4 @@
+import PopularSubjectHubs from '@/components/seo/PopularSubjectHubs';
 import { useState, useEffect, lazy, Suspense } from 'react';
 import SEOHead from '@/components/SEOHead';
 import Header from '@/components/Header';
@@ -314,7 +315,13 @@ const Home = () => {
                 ))}
               </div>
               
-              {/* Stats Section */}
+              <section className="py-5">
+        <div className="container px-4 mx-auto">
+          <PopularSubjectHubs />
+        </div>
+      </section>
+
+      {/* Stats Section */}
               <HeroStatsSection />
             </motion.div>
             
