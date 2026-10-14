@@ -338,9 +338,21 @@ const BoardTopicPage = () => {
             <div className="space-y-4">
               <p className="text-sm text-muted-foreground">{mcqs.length} question{mcqs.length !== 1 ? 's' : ''} found</p>
               {mcqs.map((mcq: any, index: number) => {
-                const options: MCQOption[] = Array.isArray(mcq.options)
-                  ? (mcq.options as any[]).map((o: any) => ({ key: o.key || '', text: o.text || '' }))
-                  : [];
+                const KEYS = ['A', 'B', 'C', 'D', 'E', 'F'];
+                const rawOpts = mcq.options;
+                const options: MCQOption[] = (Array.isArray(rawOpts)
+                  ? (rawOpts as any[]).map((o: any, i: number) =>
+                      o && typeof o === 'object'
+                        ? { key: String(o.key || KEYS[i] || ''), text: String(o.text ?? o.value ?? '') }
+                        : { key: KEYS[i] || String(i + 1), text: String(o ?? '') })
+                  : rawOpts && typeof rawOpts === 'object'
+                    ? Object.entries(rawOpts).map(([k, v]) => ({ key: k.toUpperCase(), text: String(v ?? '') }))
+                    : []).filter((o) => o.text.trim());
+                const rawCorrect = String(mcq.correct_option ?? '').trim();
+                const correctKey =
+                  options.find((o) => o.key === rawCorrect.toUpperCase())?.key ||
+                  options.find((o) => o.text.trim().toLowerCase() === rawCorrect.toLowerCase())?.key ||
+                  '';
                 const statusLabel = mcq.status !== 'approved' ? mcq.status : null;
                 return (
                   <div key={mcq.id} className="relative">
@@ -349,7 +361,7 @@ const BoardTopicPage = () => {
                         {statusLabel}
                       </Badge>
                     )}
-                    <PracticeMCQCard id={mcq.id} title={`Q${index + 1}`} question={cleanQuestionText(mcq.title)} options={options} correctOption={mcq.correct_option || ''} explanation={mcq.explanation || ''} difficulty={(mcq.difficulty as 'Easy' | 'Medium' | 'Hard') || 'Medium'} mode="practice" index={index} />
+                    <PracticeMCQCard id={mcq.id} title={`Q${index + 1}`} question={cleanQuestionText(mcq.title)} options={options} correctOption={correctKey} explanation={mcq.explanation || ''} difficulty={(mcq.difficulty as 'Easy' | 'Medium' | 'Hard') || 'Medium'} mode="practice" index={index} />
                   </div>
                 );
               })}
