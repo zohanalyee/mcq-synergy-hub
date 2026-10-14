@@ -35,6 +35,16 @@ export interface Relation {
  * (use the route segment, e.g. 'mdcat', 'ecat', 'nust-entry-test').
  */
 export const semanticGraph: Record<string, Relation[]> = {
+  // Board-topic → flagship mock test bridges (keep in sync with EXAM_BRIDGES in scripts/inject-meta.mjs).
+  sthp: [
+    { kind: 'seo-page', path: '/mock-tests/sukkur-iba-sindh-talent-hunt-program-sthp-2027', label: 'Sukkur IBA STHP 2027 Mock Test', reason: 'related-exam', priority: 'high' },
+  ],
+  'sts-jobs': [
+    { kind: 'seo-page', path: '/mock-tests', label: 'IBA STS & Sindh Govt Jobs Mock Tests', reason: 'related-exam', priority: 'high' },
+  ],
+  'mdcat-hub': [
+    { kind: 'exam', path: '/exams/mdcat', label: 'MDCAT 2026 Preparation & Mock Tests', reason: 'related-exam', priority: 'high' },
+  ],
   mdcat: [
     { kind: 'seo-page', path: '/mdcat-past-papers', label: 'MDCAT Past Papers', reason: 'past-papers', priority: 'high' },
     { kind: 'seo-page', path: '/mdcat-syllabus', label: 'MDCAT Syllabus 2026', reason: 'syllabus', priority: 'high' },

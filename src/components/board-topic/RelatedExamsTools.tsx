@@ -15,12 +15,13 @@ interface RelatedExamsToolsProps {
  * <Link> anchors. Returns null when nothing curated matches.
  */
 const SUBJECT_EXAM_KEYS: Array<{ test: RegExp; keys: string[] }> = [
-  { test: /biolog/i, keys: ['mdcat'] },
-  { test: /chemist/i, keys: ['mdcat', 'ecat'] },
-  { test: /physic/i, keys: ['ecat', 'mdcat'] },
-  { test: /math/i, keys: ['ecat'] },
-  { test: /comput/i, keys: ['ecat', 'nts'] },
-  { test: /english|urdu|islam|pak.?stud|general|social|civic/i, keys: ['css', 'nts'] },
+  { test: /biolog/i, keys: ['mdcat-hub', 'mdcat'] },
+  { test: /chemist/i, keys: ['mdcat-hub', 'mdcat', 'ecat'] },
+  { test: /physic/i, keys: ['mdcat-hub', 'ecat', 'mdcat'] },
+  { test: /math/i, keys: ['sthp', 'ecat'] },
+  { test: /english/i, keys: ['sthp', 'css', 'nts'] },
+  { test: /comput|general|science|pak.?stud/i, keys: ['sts-jobs', 'nts'] },
+  { test: /urdu|islam|social|civic/i, keys: ['sts-jobs', 'css', 'nts'] },
 ];
 
 export function getSubjectExamRelations(subjectName: string): Relation[] {

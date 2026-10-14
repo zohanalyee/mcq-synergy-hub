@@ -674,6 +674,7 @@ async function injectBoardTopicContent() {
       { href: `/boards/${boardSlug}/${classSeg}`, label: `Class ${classN} subjects` },
       { href: `/boards/${boardSlug}`, label: `${boardName} home` },
       { href: `/boards`, label: "Browse all boards" },
+      ...examBridgesFor(subjectName),
     ];
 
     const contentHtml = buildTopicContentHtml({ topicName, subjectName, classN, boardName, mcqs, links });
