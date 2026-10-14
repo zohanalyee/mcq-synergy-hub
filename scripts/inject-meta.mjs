@@ -23,6 +23,7 @@ import { fileURLToPath } from "node:url";
 import { TOOLS_WITHOUT_SEOHEAD, SUBJECT_CONTENT_META } from "./prerender-routes.mjs";
 import { buildQuizSchema, buildFaqSchema, buildTopicContentHtml, buildTopicTitleBase } from "./topic-content.mjs";
 import { buildMockTestContentHtml } from "./mock-test-content.mjs";
+import { topicLinks, humanizeSlug } from "../src/lib/topicLinkGraph.js";
 import {
   IBA_NETWORK_LABEL,
   isIbaCommunityNetwork,
@@ -563,6 +564,9 @@ function injectContentIntoHtml(html, contentHtml, schemas) {
 
 async function injectBoardTopicContent() {
   const topicRows = await getIndexableTopicRows();
+  let topicOrder = {};
+  try { topicOrder = JSON.parse(readFileSync(resolve(ROOT, "src/generated/topicOrder.json"), "utf8")); }
+  catch (e) { console.warn(`[inject-meta] topicOrder.json missing: ${e?.message || e}`); }
 
   const rows = (topicRows || []).filter((r) => r.path);
 
@@ -639,13 +643,15 @@ async function injectBoardTopicContent() {
     const quizSchema = buildQuizSchema({ seoTitle, topicName, classN, count: mcqs.length });
     const faqSchema = buildFaqSchema(mcqs);
 
-    // Crawlable links: sibling topics (up to 8) + parents (subject/class/board).
-    const sibs = (siblings.get(`${boardSlug}/${classSeg}/${subjectSlug}`) || [])
-      .filter((s) => s.path !== path).slice(0, 8)
-      .map((s) => ({ href: s.path, label: `${s.name} MCQs` }));
+    // Crawlable links: shared deterministic rule (src/lib/topicLinkGraph.js) —
+    // same hrefs as the client page. prev/next + sibling window + parents.
+    const g = topicLinks(topicOrder, path);
+    const nm = (p) => humanizeSlug(p.split("/").pop());
     const links = [
-      ...sibs,
-      { href: `/boards/${boardSlug}/${classSeg}/${subjectSlug}`, label: `All ${subjectName} topics` },
+      ...(g.prev ? [{ href: g.prev, label: `Previous topic: ${nm(g.prev)} MCQs` }] : []),
+      ...(g.next ? [{ href: g.next, label: `Next topic: ${nm(g.next)} MCQs` }] : []),
+      ...g.siblings.map((p) => ({ href: p, label: `${nm(p)} MCQs` })),
+      { href: `/boards/${boardSlug}/${classSeg}/${subjectSlug}`, label: `View all ${subjectName} topics` },
       { href: `/boards/${boardSlug}/${classSeg}`, label: `Class ${classN} subjects` },
       { href: `/boards/${boardSlug}`, label: `${boardName} home` },
       { href: `/boards`, label: "Browse all boards" },

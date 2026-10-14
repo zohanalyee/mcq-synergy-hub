@@ -5,6 +5,8 @@ import { ArrowRight } from 'lucide-react';
 interface RelatedTopic {
   id: string;
   name: string;
+  /** Explicit target; when set it wins over the name-derived slug. */
+  href?: string;
 }
 
 interface RelatedTopicsProps {
@@ -24,7 +26,7 @@ const RelatedTopics = ({ topics, boardSlug, classNumber, subjectSlug }: RelatedT
         {topics.map((topic) => (
           <Link
             key={topic.id}
-            to={`/boards/${boardSlug}/${toClassSegment(classNumber)}/${subjectSlug}/${toSlug(topic.name)}`}
+            to={topic.href || `/boards/${boardSlug}/${toClassSegment(classNumber)}/${subjectSlug}/${toSlug(topic.name)}`}
             className="flex items-center justify-between p-3 rounded-lg border border-border bg-card hover:bg-accent/50 transition-colors group"
           >
             <span className="text-sm font-medium text-foreground">{topic.name}</span>

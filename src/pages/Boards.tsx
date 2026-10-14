@@ -1,3 +1,4 @@
+import PopularSubjectHubs from '@/components/seo/PopularSubjectHubs';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Link } from 'react-router-dom';
@@ -61,6 +62,8 @@ const Boards = () => {
           tagline="Practice by board & class"
           description="Browse MCQs organized by board and class level."
         />
+
+        <PopularSubjectHubs className="mb-8" />
 
         {isLoading ? (
           <div className="flex justify-center py-20">
