@@ -315,13 +315,7 @@ const Home = () => {
                 ))}
               </div>
               
-              <section className="py-5">
-        <div className="container px-4 mx-auto">
-          <PopularSubjectHubs />
-        </div>
-      </section>
-
-      {/* Stats Section */}
+              {/* Stats Section */}
               <HeroStatsSection />
             </motion.div>
             
@@ -448,6 +442,12 @@ const Home = () => {
         </div>
       </motion.section>
       
+      <section className="py-5">
+        <div className="container px-4 mx-auto">
+          <PopularSubjectHubs />
+        </div>
+      </section>
+
       {/* Stats Section */}
       <DeferredSection minHeight={190}>
         <PlatformStatsSection />
