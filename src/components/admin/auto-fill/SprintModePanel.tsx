@@ -15,9 +15,11 @@ import {
   getQualityGateStats,
   runQualityGate,
   previewSprintScope,
+  EXAM_SPRINT_PRESETS,
   type SprintConfig,
   type RunSummary,
   type SprintScopePreview,
+  type SprintScopeInput,
 } from "@/services/autoFillService";
 
 
@@ -40,10 +42,10 @@ const SprintModePanel = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
-  const refreshScope = async (keywords: string[]) => {
+  const refreshScope = async (input: SprintScopeInput) => {
     setIsPreviewing(true);
     try {
-      setScope(await previewSprintScope(keywords));
+      setScope(await previewSprintScope(input));
     } finally {
       setIsPreviewing(false);
     }
@@ -61,7 +63,11 @@ const SprintModePanel = () => {
       setKeywordText((cfg?.scope_keywords || []).join(", "));
       setRuns(recentRuns);
       setQuality(qStats);
-      refreshScope(cfg?.scope_keywords || []);
+      refreshScope({
+        keywords: cfg?.scope_keywords || [],
+        subjects: cfg?.scope_subjects || [],
+        levels: cfg?.scope_levels || [],
+      });
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +92,7 @@ const SprintModePanel = () => {
   // Safety: never save a scope silently when it targets zero queued topics —
   // that is what made earlier sprint runs stop with "no topics match".
   const saveKeywords = async (keywords: string[]) => {
-    const preview = await previewSprintScope(keywords);
+    const preview = await previewSprintScope({ keywords });
     setScope(preview);
     if (preview.total === 0) {
       toast.error("This scope matches 0 queued topics", {
@@ -94,8 +100,39 @@ const SprintModePanel = () => {
       });
       return;
     }
-    await save({ scope_keywords: keywords });
+    await save({ scope_keywords: keywords, scope_subjects: [], scope_levels: [], exam_preset: null });
     toast.message(`Scope covers ${preview.total} topics needing questions`);
+  };
+
+  // Exam target: translate an exam into its real curriculum subjects/classes.
+  const applyExamPreset = async (presetId: string) => {
+    const preset = EXAM_SPRINT_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    const input: SprintScopeInput = {
+      keywords: preset.keywords || [],
+      subjects: preset.subjects,
+      levels: preset.levels || [],
+    };
+    const preview = await previewSprintScope(input);
+    setScope(preview);
+    if (preview.total === 0) {
+      toast.message(`${preset.label}: every mapped topic is already filled`, {
+        description: "Nothing to generate — no AI quota will be spent on this target.",
+      });
+    }
+    setKeywordText((preset.keywords || []).join(", "));
+    await save({
+      enabled: true,
+      exam_preset: preset.id,
+      scope_keywords: preset.keywords || [],
+      scope_subjects: preset.subjects,
+      scope_levels: preset.levels || [],
+      target_per_topic: preset.target_per_topic,
+      daily_budget: preset.daily_budget,
+    });
+    toast.success(`${preset.label} target active`, {
+      description: `${preview.total} topic(s) need questions · ${preset.daily_budget}/day safe budget`,
+    });
   };
 
   const applyKeywords = () => {
@@ -158,7 +195,47 @@ const SprintModePanel = () => {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Priority keywords (comma separated)</Label>
+            <Label className="text-xs text-muted-foreground">Target by exam / mock test</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {EXAM_SPRINT_PRESETS.map((p) => {
+                const active = config?.exam_preset === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => applyExamPreset(p.id)}
+                    className={`text-left rounded-lg border p-2.5 transition-colors min-h-11 ${
+                      active
+                        ? "border-primary bg-primary/10"
+                        : "border-border/60 hover:border-primary/50 hover:bg-muted/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium">{p.label}</span>
+                      {active && <Badge className="text-[10px]">Active</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{p.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {p.target_per_topic}/topic · {p.daily_budget}/day safe budget
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+            {scope && scope.bySubject.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {scope.bySubject.map((s) => (
+                  <Badge key={s.subject} variant="secondary" className="text-[11px]">
+                    {s.subject}: {s.count}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Extra keywords (optional, comma separated)</Label>
             <div className="flex gap-2">
               <Input
                 value={keywordText}
@@ -201,9 +278,11 @@ const SprintModePanel = () => {
                   className="min-h-9"
                   disabled={isPreviewing}
                   onClick={() =>
-                    refreshScope(
-                      keywordText.split(",").map((k) => k.trim()).filter((k) => k.length > 1)
-                    )
+                    refreshScope({
+                      keywords: keywordText.split(",").map((k) => k.trim()).filter((k) => k.length > 1),
+                      subjects: config?.scope_subjects || [],
+                      levels: config?.scope_levels || [],
+                    })
                   }
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${isPreviewing ? "animate-spin" : ""}`} />
