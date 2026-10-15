@@ -238,9 +238,11 @@ const SprintModePanel = () => {
                   className="min-h-9"
                   disabled={isPreviewing}
                   onClick={() =>
-                    refreshScope(
-                      keywordText.split(",").map((k) => k.trim()).filter((k) => k.length > 1)
-                    )
+                    refreshScope({
+                      keywords: keywordText.split(",").map((k) => k.trim()).filter((k) => k.length > 1),
+                      subjects: config?.scope_subjects || [],
+                      levels: config?.scope_levels || [],
+                    })
                   }
                 >
                   <RefreshCw className={`h-3.5 w-3.5 ${isPreviewing ? "animate-spin" : ""}`} />
