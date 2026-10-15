@@ -36,6 +36,6 @@ export function sthpMetaSentence(now = Date.now()) {
   const { applyBy, testDate } = getSthpFacts();
   if (!testDate) return '';
   return sthpIsUpcoming(now)
-    ? `Apply by ${applyBy.replace(/ber 2026$/, ' 2026')}; test on ${testDate}.`
+    ? `Apply by ${applyBy}; test on ${testDate}.`
     : `Test held on ${testDate}.`;
 }
