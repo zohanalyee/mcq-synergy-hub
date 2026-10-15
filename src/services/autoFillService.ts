@@ -381,9 +381,74 @@ export async function backfillTopicIds(): Promise<{
 export interface SprintConfig {
   enabled: boolean;
   scope_keywords: string[];
+  /** Real curriculum subjects an exam is built from (exam names are not in the taxonomy). */
+  scope_subjects?: string[];
+  /** Optional class/board filter, e.g. ['class 9', 'class 10']. */
+  scope_levels?: string[];
+  /** Id of the EXAM_SPRINT_PRESETS entry currently applied, for UI highlight. */
+  exam_preset?: string | null;
   target_per_topic: number;
   daily_budget: number;
 }
+
+/**
+ * Exam → curriculum mapping.
+ * Typing "sthp" or "sts" matched nothing because the taxonomy only stores
+ * board / class / subject / topic. These presets translate an exam into the
+ * subjects and classes it is actually built from.
+ *
+ * target_per_topic stays <= 20 and daily_budget well under the daily quota
+ * guard so a sprint can run every day without exhausting the free keys.
+ */
+export interface ExamSprintPreset {
+  id: string;
+  label: string;
+  description: string;
+  subjects: string[];
+  levels?: string[];
+  keywords?: string[];
+  target_per_topic: number;
+  daily_budget: number;
+}
+
+export const EXAM_SPRINT_PRESETS: ExamSprintPreset[] = [
+  {
+    id: 'sthp-2027',
+    label: 'Sukkur IBA STHP 2027',
+    description: 'Maths 40% · English 40% · Science/GK 20% (Class 9–10)',
+    subjects: ['mathematics', 'math', 'english', 'general science', 'science'],
+    levels: ['class 9', 'class 10', 'matric', 'ix', 'x'],
+    keywords: ['sindh'],
+    target_per_topic: 20,
+    daily_budget: 400,
+  },
+  {
+    id: 'sts-sindh-jobs',
+    label: 'STS Sindh Jobs (SSU / Clerk)',
+    description: 'Computer & ICT · English · Maths · General Knowledge',
+    subjects: ['computer', 'information', 'ict', 'english', 'mathematics', 'math', 'general knowledge', 'general science'],
+    target_per_topic: 15,
+    daily_budget: 400,
+  },
+  {
+    id: 'mdcat-2026',
+    label: 'MDCAT 2026',
+    description: 'Biology · Chemistry · Physics (Class 11–12)',
+    subjects: ['biology', 'chemistry', 'physics'],
+    levels: ['class 11', 'class 12', 'xi', 'xii', 'inter'],
+    target_per_topic: 20,
+    daily_budget: 500,
+  },
+  {
+    id: 'boards-core',
+    label: 'Board Exams (Class 9–12)',
+    description: 'Core board subjects across Sindh & Punjab',
+    subjects: ['mathematics', 'math', 'english', 'physics', 'chemistry', 'biology', 'computer', 'general science'],
+    levels: ['class 9', 'class 10', 'class 11', 'class 12'],
+    target_per_topic: 15,
+    daily_budget: 500,
+  },
+];
 
 export async function getSprintConfig(): Promise<SprintConfig | null> {
   return getSystemSetting<SprintConfig>('content_fill_sprint');
@@ -394,6 +459,9 @@ export async function updateSprintConfig(config: Partial<SprintConfig>): Promise
   const merged: SprintConfig = {
     enabled: false,
     scope_keywords: [],
+    scope_subjects: [],
+    scope_levels: [],
+    exam_preset: null,
     target_per_topic: 15,
     daily_budget: 600,
     ...(current || {}),
@@ -403,24 +471,66 @@ export async function updateSprintConfig(config: Partial<SprintConfig>): Promise
 }
 
 // Sprint scope preview — mirrors the edge function's matching rules
-// (direct keyword hit + subject-level inheritance) so admins can see exactly
-// which topics a preset would target before saving it.
+// (exam preset subjects/levels + direct keyword hit + subject inheritance)
+// so admins can see exactly which topics a scope targets before saving it.
 export interface SprintScopePreview {
   total: number;
   sample: AutoFillQueueItem[];
+  bySubject: { subject: string; count: number }[];
 }
 
-export async function previewSprintScope(keywords: string[]): Promise<SprintScopePreview> {
-  const cleaned = keywords.map((k) => k.trim().toLowerCase()).filter((k) => k.length > 1);
+export interface SprintScopeInput {
+  keywords?: string[];
+  subjects?: string[];
+  levels?: string[];
+}
+
+const clean = (arr?: string[]) =>
+  (arr || []).map((k) => k.trim().toLowerCase()).filter((k) => k.length > 1);
+
+export async function previewSprintScope(
+  input: string[] | SprintScopeInput,
+): Promise<SprintScopePreview> {
+  const scopeInput: SprintScopeInput = Array.isArray(input) ? { keywords: input } : input;
+  const keywords = clean(scopeInput.keywords);
+  const subjects = clean(scopeInput.subjects);
+  const levels = clean(scopeInput.levels);
+
   const queue = await getAutoFillQueue(400);
-  if (cleaned.length === 0) return { total: queue.length, sample: queue.slice(0, 10) };
+  const summarise = (rows: AutoFillQueueItem[]): SprintScopePreview => {
+    const counts = new Map<string, number>();
+    rows.forEach((r) => {
+      const key = r.subject_name || 'Other';
+      counts.set(key, (counts.get(key) || 0) + 1);
+    });
+    return {
+      total: rows.length,
+      sample: rows.slice(0, 10),
+      bySubject: [...counts.entries()]
+        .map(([subject, count]) => ({ subject, count }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6),
+    };
+  };
+
+  if (keywords.length === 0 && subjects.length === 0) return summarise(queue);
+
+  const matchesPreset = (item: AutoFillQueueItem) => {
+    if (subjects.length === 0) return false;
+    const subj = String(item.subject_name || '').toLowerCase();
+    if (!subjects.some((s) => subj.includes(s))) return false;
+    if (levels.length === 0) return true;
+    const lvl = `${item.level_name || ''} ${item.system_name || ''}`.toLowerCase();
+    return levels.some((l) => lvl.includes(l));
+  };
 
   const matches = (item: AutoFillQueueItem) => {
+    if (matchesPreset(item)) return true;
     const haystack = [item.system_name, item.level_name, item.subject_name, item.topic_name]
       .filter(Boolean)
       .join(' ')
       .toLowerCase();
-    return cleaned.some((k) => haystack.includes(k));
+    return keywords.some((k) => haystack.includes(k));
   };
 
   const scopedSubjects = new Set<string>();
@@ -428,8 +538,7 @@ export async function previewSprintScope(keywords: string[]): Promise<SprintScop
     if (matches(item) && item.subject_id) scopedSubjects.add(item.subject_id);
   });
 
-  const scoped = queue.filter((item) => matches(item) || scopedSubjects.has(item.subject_id));
-  return { total: scoped.length, sample: scoped.slice(0, 10) };
+  return summarise(queue.filter((item) => matches(item) || scopedSubjects.has(item.subject_id)));
 }
 
 
