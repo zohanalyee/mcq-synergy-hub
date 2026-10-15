@@ -15,9 +15,11 @@ import {
   getQualityGateStats,
   runQualityGate,
   previewSprintScope,
+  EXAM_SPRINT_PRESETS,
   type SprintConfig,
   type RunSummary,
   type SprintScopePreview,
+  type SprintScopeInput,
 } from "@/services/autoFillService";
 
 
