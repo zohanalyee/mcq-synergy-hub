@@ -1,10 +1,9 @@
 // Shared STHP date wording. Facts come from the exam_pages row (slug "sthp"),
-// baked into src/data/examFactsSnapshot.json at build time — never hardcoded.
+// baked into (and passed in from) src/data/examFactsSnapshot.json at build time — never hardcoded.
 // Plain JS so the prerender scripts (node) and the app use identical text.
-import snapshot from '../data/examFactsSnapshot.json';
 
 /** @returns {{applyBy: string, testDate: string, testDateIso: string|null, applyUrl: string}} */
-export function getSthpFacts() {
+export function getSthpFacts(snapshot) {
   const row = (snapshot || []).find((r) => r.slug === 'sthp');
   const f = (row && row.facts) || {};
   return {
@@ -16,26 +15,26 @@ export function getSthpFacts() {
 }
 
 /** True until the day after the official test date (Pakistan time). */
-export function sthpIsUpcoming(now = Date.now()) {
-  const { testDateIso } = getSthpFacts();
+export function sthpIsUpcoming(snapshot, now = Date.now()) {
+  const { testDateIso } = getSthpFacts(snapshot);
   if (!testDateIso) return false;
   return now < Date.parse(`${testDateIso}T00:00:00+05:00`) + 24 * 60 * 60 * 1000;
 }
 
 /** Sentence used on the mock-test page and in its meta description. */
-export function sthpStatusSentence(now = Date.now()) {
-  const { applyBy, testDate } = getSthpFacts();
+export function sthpStatusSentence(snapshot, now = Date.now()) {
+  const { applyBy, testDate } = getSthpFacts(snapshot);
   if (!testDate) return '';
-  return sthpIsUpcoming(now)
+  return sthpIsUpcoming(snapshot, now)
     ? `STHP 2027: apply by ${applyBy}, test on ${testDate}.`
     : `STHP 2027 test was held on ${testDate}.`;
 }
 
 /** Short form for meta descriptions. */
-export function sthpMetaSentence(now = Date.now()) {
-  const { applyBy, testDate } = getSthpFacts();
+export function sthpMetaSentence(snapshot, now = Date.now()) {
+  const { applyBy, testDate } = getSthpFacts(snapshot);
   if (!testDate) return '';
-  return sthpIsUpcoming(now)
+  return sthpIsUpcoming(snapshot, now)
     ? `Apply by ${applyBy}; test on ${testDate}.`
     : `Test held on ${testDate}.`;
 }
