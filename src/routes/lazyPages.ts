@@ -37,6 +37,7 @@ export const pages: PageMap = {
   ExamLandingPage: lazyWithReload(() => import("@/pages/exams/ExamLandingPage")),
   NumsEntryTest: lazyWithReload(() => import("@/pages/exams/NumsEntryTest")),
   IbaSukkurEntryTest: lazyWithReload(() => import("@/pages/exams/IbaSukkurEntryTest")),
+  SthpGuide: lazyWithReload(() => import("@/pages/exams/SthpGuide")),
   LatLawAdmissionTest: lazyWithReload(() => import("@/pages/exams/LatLawAdmissionTest")),
   KarachiUniversityEntryTest: lazyWithReload(() => import("@/pages/exams/KarachiUniversityEntryTest")),
   SindhUniversityEntryTest: lazyWithReload(() => import("@/pages/exams/SindhUniversityEntryTest")),
