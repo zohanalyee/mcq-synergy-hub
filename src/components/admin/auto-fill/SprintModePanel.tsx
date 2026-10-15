@@ -195,7 +195,47 @@ const SprintModePanel = () => {
           </div>
 
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">Priority keywords (comma separated)</Label>
+            <Label className="text-xs text-muted-foreground">Target by exam / mock test</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {EXAM_SPRINT_PRESETS.map((p) => {
+                const active = config?.exam_preset === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    disabled={isSaving}
+                    onClick={() => applyExamPreset(p.id)}
+                    className={`text-left rounded-lg border p-2.5 transition-colors min-h-11 ${
+                      active
+                        ? "border-primary bg-primary/10"
+                        : "border-border/60 hover:border-primary/50 hover:bg-muted/40"
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-sm font-medium">{p.label}</span>
+                      {active && <Badge className="text-[10px]">Active</Badge>}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{p.description}</p>
+                    <p className="text-[11px] text-muted-foreground mt-1">
+                      {p.target_per_topic}/topic · {p.daily_budget}/day safe budget
+                    </p>
+                  </button>
+                );
+              })}
+            </div>
+            {scope && scope.bySubject.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {scope.bySubject.map((s) => (
+                  <Badge key={s.subject} variant="secondary" className="text-[11px]">
+                    {s.subject}: {s.count}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-xs text-muted-foreground">Extra keywords (optional, comma separated)</Label>
             <div className="flex gap-2">
               <Input
                 value={keywordText}
