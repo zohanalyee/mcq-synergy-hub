@@ -63,22 +63,11 @@ const TestimonialsSection = () => {
     staleTime: 60_000,
   });
 
-  // Fallback: no reviews yet – show a CTA
+  // No approved reviews yet – render nothing (homepage already has a main CTA)
   if (!isLoading && (!reviews || reviews.length === 0)) {
-    return (
-      <section className="py-8">
-        <div className="container px-4 mx-auto text-center">
-          <h2 className="text-lg font-bold mb-2">Join Our Community</h2>
-          <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
-            Be among the first to share your experience and help shape our platform
-          </p>
-          <Button asChild size="sm">
-            <Link to="/boards">Get Started Free</Link>
-          </Button>
-        </div>
-      </section>
-    );
+    return null;
   }
+
 
   return (
     <section className="py-5">
