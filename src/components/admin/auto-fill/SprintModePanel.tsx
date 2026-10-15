@@ -42,10 +42,10 @@ const SprintModePanel = () => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isPreviewing, setIsPreviewing] = useState(false);
 
-  const refreshScope = async (keywords: string[]) => {
+  const refreshScope = async (input: SprintScopeInput) => {
     setIsPreviewing(true);
     try {
-      setScope(await previewSprintScope(keywords));
+      setScope(await previewSprintScope(input));
     } finally {
       setIsPreviewing(false);
     }
@@ -63,7 +63,11 @@ const SprintModePanel = () => {
       setKeywordText((cfg?.scope_keywords || []).join(", "));
       setRuns(recentRuns);
       setQuality(qStats);
-      refreshScope(cfg?.scope_keywords || []);
+      refreshScope({
+        keywords: cfg?.scope_keywords || [],
+        subjects: cfg?.scope_subjects || [],
+        levels: cfg?.scope_levels || [],
+      });
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +92,7 @@ const SprintModePanel = () => {
   // Safety: never save a scope silently when it targets zero queued topics —
   // that is what made earlier sprint runs stop with "no topics match".
   const saveKeywords = async (keywords: string[]) => {
-    const preview = await previewSprintScope(keywords);
+    const preview = await previewSprintScope({ keywords });
     setScope(preview);
     if (preview.total === 0) {
       toast.error("This scope matches 0 queued topics", {
@@ -96,8 +100,39 @@ const SprintModePanel = () => {
       });
       return;
     }
-    await save({ scope_keywords: keywords });
+    await save({ scope_keywords: keywords, scope_subjects: [], scope_levels: [], exam_preset: null });
     toast.message(`Scope covers ${preview.total} topics needing questions`);
+  };
+
+  // Exam target: translate an exam into its real curriculum subjects/classes.
+  const applyExamPreset = async (presetId: string) => {
+    const preset = EXAM_SPRINT_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    const input: SprintScopeInput = {
+      keywords: preset.keywords || [],
+      subjects: preset.subjects,
+      levels: preset.levels || [],
+    };
+    const preview = await previewSprintScope(input);
+    setScope(preview);
+    if (preview.total === 0) {
+      toast.message(`${preset.label}: every mapped topic is already filled`, {
+        description: "Nothing to generate — no AI quota will be spent on this target.",
+      });
+    }
+    setKeywordText((preset.keywords || []).join(", "));
+    await save({
+      enabled: true,
+      exam_preset: preset.id,
+      scope_keywords: preset.keywords || [],
+      scope_subjects: preset.subjects,
+      scope_levels: preset.levels || [],
+      target_per_topic: preset.target_per_topic,
+      daily_budget: preset.daily_budget,
+    });
+    toast.success(`${preset.label} target active`, {
+      description: `${preview.total} topic(s) need questions · ${preset.daily_budget}/day safe budget`,
+    });
   };
 
   const applyKeywords = () => {
