@@ -98,6 +98,8 @@ const IbaSukkurEntryTest = () => (
     ]}
     verifiedOn="22 August 2026"
     relatedLinks={[
+      { label: 'Sukkur IBA STHP 2027 guide', to: '/exams/sthp' },
+      { label: 'Sukkur IBA STHP 2027 mock test', to: '/mock-tests/sukkur-iba-sindh-talent-hunt-program-sthp-2027' },
       { label: 'All admission tests in Pakistan', to: '/exams' },
       { label: 'Sindh universities entry test guide', to: '/sindh-universities-entry-test' },
       { label: 'NTS practice (NAT / GAT)', to: '/exams/nts' },

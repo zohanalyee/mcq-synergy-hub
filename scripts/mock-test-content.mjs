@@ -140,6 +140,9 @@ export function buildMockTestContentHtml({
     `multiple-choice questions written in simple Pakistani exam English. Use it to build speed, check ` +
     `your weak areas, and improve your score before the real test.</p>` +
 
+    (/talent hunt program \(sthp\)/i.test(title)
+      ? `<p>Verified dates, eligibility and official sources: <a href="/exams/sthp">Sukkur IBA STHP 2027 Guide</a>.</p>`
+      : '') +
     `<section><h2>Test Pattern</h2><ul>` +
     `<li>Duration: ${esc(duration)} minutes</li>` +
     `<li>Questions: ${esc(questions)}</li>` +

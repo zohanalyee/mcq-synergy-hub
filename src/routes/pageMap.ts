@@ -42,6 +42,7 @@ export type PageKey =
   | "ExamLandingPage"
   | "NumsEntryTest"
   | "IbaSukkurEntryTest"
+  | "SthpGuide"
   | "LatLawAdmissionTest"
   | "KarachiUniversityEntryTest"
   | "SindhUniversityEntryTest"

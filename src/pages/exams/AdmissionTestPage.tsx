@@ -56,6 +56,10 @@ export interface AdmissionTestPageProps {
   verifiedOn: string;
   relatedLinks: { label: string; to: string }[];
   mockTest?: { label: string; to: string; note: string };
+  /** Optional H1 override (defaults to name). */
+  h1?: string;
+  /** Optional FAQs; renders a section + one FAQPage schema. */
+  faqs?: { question: string; answer: string }[];
 }
 
 const AdmissionTestPage = (props: AdmissionTestPageProps) => {
@@ -87,6 +91,22 @@ const AdmissionTestPage = (props: AdmissionTestPageProps) => {
         url={`https://mcqsai.com/exams/${p.slug}`}
       />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />
+      {p.faqs && p.faqs.length > 0 && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: safeJsonLd({
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: p.faqs.map((f) => ({
+                '@type': 'Question',
+                name: f.question,
+                acceptedAnswer: { '@type': 'Answer', text: f.answer },
+              })),
+            }),
+          }}
+        />
+      )}
       <BreadcrumbSchema
         items={[
           { name: 'Home', path: '/' },
@@ -107,7 +127,7 @@ const AdmissionTestPage = (props: AdmissionTestPageProps) => {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
             <GraduationCap className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{p.name}</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">{p.h1 || p.name}</h1>
           </div>
           <p className="text-lg text-muted-foreground max-w-3xl">{p.fullName}</p>
           <p className="mt-4 text-muted-foreground leading-relaxed">{p.intro}</p>
@@ -254,6 +274,26 @@ const AdmissionTestPage = (props: AdmissionTestPageProps) => {
                 </ol>
               </CardContent>
             </Card>
+
+            {p.faqs && p.faqs.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lightbulb className="w-5 h-5 text-primary" />
+                    Frequently Asked Questions
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {p.faqs.map((f) => (
+                    <div key={f.question}>
+                      <h3 className="text-sm font-semibold text-foreground">{f.question}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{f.answer}</p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
 
             <Card>
               <CardHeader>

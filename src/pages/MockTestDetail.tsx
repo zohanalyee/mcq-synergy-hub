@@ -28,6 +28,8 @@ import { PeopleAlsoPrepareFor } from "@/components/mock-tests/PeopleAlsoPrepareF
 import { CustomSyllabusGuideModal } from "@/components/mock-tests/CustomSyllabusGuideModal";
 import { QuestionsPreview } from "@/components/mock-tests/QuestionsPreview";
 import { getJobTests, JobTest } from "@/services/jobTestService";
+import examSnapshot from "@/data/examFactsSnapshot.json";
+import { getSthpFacts, sthpIsUpcoming, sthpStatusSentence, sthpMetaSentence } from "@/lib/sthpStatus";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { resolveJobTestBySlug, toJobTestSlug } from "@/lib/jobTestSlug";
 import {
@@ -136,7 +138,7 @@ const MockTestDetail = () => {
       ? test.seo_title.trim()
       : `${test.title} Mock Test — Free Online Preparation`;
   const metaDescription = isSthp
-    ? "Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. Apply by 29 Oct; test on 8 Nov 2026."
+    ? `Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. ${sthpMetaSentence(examSnapshot)}`.trim()
     : isIbaNetwork
     ? buildIbaMetaDescription(test.title, test.questions, subjects)
     : test.meta_description?.trim()
@@ -220,18 +222,28 @@ const MockTestDetail = () => {
               {IBA_NETWORK_LABEL}
             </Badge>
           )}
-          {isSthp && Date.now() < Date.parse("2026-11-09T00:00:00+05:00") && (
+          {isSthp && sthpStatusSentence(examSnapshot) && (
             <div role="note" className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
-              <strong>STHP 2027: apply by 29 October 2026, test on 8 November 2026.</strong> Apply on the{" "}
-              <a
-                href="https://applyadmission.iba-suk.edu.pk"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="font-medium text-primary hover:underline"
-              >
-                official Sukkur IBA admission portal
-              </a>
-              . Practise the solved mock test below before test day.
+              <strong>{sthpStatusSentence(examSnapshot)}</strong>{" "}
+              {sthpIsUpcoming(examSnapshot) && (
+                <>
+                  Apply on the{" "}
+                  <a
+                    href={getSthpFacts(examSnapshot).applyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-medium text-primary hover:underline"
+                  >
+                    official Sukkur IBA admission portal
+                  </a>
+                  .{" "}
+                </>
+              )}
+              Read the{" "}
+              <Link to="/exams/sthp" className="font-medium text-primary hover:underline">
+                STHP 2027 guide
+              </Link>{" "}
+              for verified dates, eligibility and official sources.
             </div>
           )}
           {/junior office associate/i.test(test.title) && Date.now() < Date.parse("2026-10-12T00:00:00+05:00") && (

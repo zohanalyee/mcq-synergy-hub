@@ -37,6 +37,8 @@ function examBridgesFor(subject) {
 }
 import { buildMockTestContentHtml } from "./mock-test-content.mjs";
 import { topicLinks, humanizeSlug } from "../src/lib/topicLinkGraph.js";
+import { sthpMetaSentence } from "../src/lib/sthpStatus.js";
+const EXAM_SNAPSHOT = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../src/data/examFactsSnapshot.json"), "utf8"));
 import {
   IBA_NETWORK_LABEL,
   isIbaCommunityNetwork,
@@ -349,7 +351,7 @@ async function injectMockTests() {
         ? t.seo_title.trim()
         : `${t.title} Mock Test — Free Online Preparation`;
     const metaDescription = isSthp
-      ? "Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. Apply by 29 Oct; test on 8 Nov 2026."
+      ? `Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. ${sthpMetaSentence(EXAM_SNAPSHOT)}`.trim()
       : isIba
       ? buildIbaMetaDescription(t.title, t.questions, subjects)
       : t.meta_description?.trim()

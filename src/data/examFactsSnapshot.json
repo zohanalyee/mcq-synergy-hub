@@ -1647,5 +1647,42 @@
   "test_date": "2026-10-25",
   "verified_on": "2026-09-25",
   "include_in_sitemap": true
+ },
+ {
+  "slug": "sthp",
+  "kind": "admission",
+  "facts": {
+   "applyBy": "29 October 2026",
+   "applyUrl": "https://applyadmission.iba-suk.edu.pk",
+   "keyDates": [
+    {
+     "event": "Last date to apply",
+     "value": "29 October 2026"
+    },
+    {
+     "event": "Admission test",
+     "value": "8 November 2026"
+    },
+    {
+     "event": "Application fee",
+     "value": "Check the official announcement"
+    },
+    {
+     "event": "Test centres",
+     "value": "Check the official announcement"
+    }
+   ],
+   "testDate": "8 November 2026",
+   "verifiedOn": "15 October 2026",
+   "eligibility": [
+    "Sindh domicile is required.",
+    "Intermediate or equivalent passed in 2024, 2025 or 2026.",
+    "Application fee, test centres, minimum marks percentage, negative marking and passing marks: check the official announcement."
+   ],
+   "officialUrl": "https://www.iba-suk.edu.pk/admissions/announcements"
+  },
+  "test_date": "2026-11-08",
+  "verified_on": "2026-10-15",
+  "include_in_sitemap": true
  }
 ]
