@@ -30,11 +30,13 @@ export function sthpStatusSentence(snapshot, now = Date.now()) {
     : `STHP 2027 test was held on ${testDate}.`;
 }
 
-/** Short form for meta descriptions. */
+const short = (d) => d.replace(/\b(Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\b/g, '$1');
+
+/** Short form for meta descriptions (e.g. "Apply by 29 Oct; test on 8 Nov 2026."). */
 export function sthpMetaSentence(snapshot, now = Date.now()) {
   const { applyBy, testDate } = getSthpFacts(snapshot);
   if (!testDate) return '';
   return sthpIsUpcoming(snapshot, now)
-    ? `Apply by ${applyBy}; test on ${testDate}.`
-    : `Test held on ${testDate}.`;
+    ? `Apply by ${short(applyBy).replace(/ \d{4}$/, '')}; test on ${short(testDate)}.`
+    : `Test held on ${short(testDate)}.`;
 }
