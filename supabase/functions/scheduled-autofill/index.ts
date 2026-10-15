@@ -18,6 +18,9 @@ interface AutoFillConfig {
 interface SprintConfig {
   enabled: boolean;
   scope_keywords?: string[];
+  scope_subjects?: string[];
+  scope_levels?: string[];
+  exam_preset?: string | null;
   target_per_topic?: number;
   daily_budget?: number;
 }
@@ -341,8 +344,24 @@ Deno.serve(async (req) => {
     ];
     let difficultyIndex = 0;
 
+    // Exam preset scope: real curriculum subjects (+ optional classes/boards),
+    // because exam names like "STHP" never appear in the topic taxonomy.
+    const norm = (arr?: string[]) =>
+      (arr || []).map((k) => String(k).trim().toLowerCase()).filter((k) => k.length > 1);
+    const scopeSubjects = norm(sprint?.scope_subjects);
+    const scopeLevels = norm(sprint?.scope_levels);
+    const matchesExamPreset = (item: AutoFillQueueItem): boolean => {
+      if (scopeSubjects.length === 0) return false;
+      const subj = String(item.subject_name || '').toLowerCase();
+      if (!scopeSubjects.some((s) => subj.includes(s))) return false;
+      if (scopeLevels.length === 0) return true;
+      const lvl = `${item.level_name || ''} ${item.system_name || ''}`.toLowerCase();
+      return scopeLevels.some((l) => lvl.includes(l));
+    };
+
     // Sprint scope: does this topic match one of the configured priority keywords?
     const matchesKeyword = (item: AutoFillQueueItem): boolean => {
+      if (matchesExamPreset(item)) return true;
       const haystack = [item.system_name, item.level_name, item.subject_name, item.topic_name]
         .filter(Boolean)
         .join(' ')
@@ -360,7 +379,7 @@ Deno.serve(async (req) => {
      * and the rest of the queue follows, so the daily budget is always spent.
      */
     const applySprintScope = (rows: AutoFillQueueItem[]): AutoFillQueueItem[] => {
-      if (!sprintOn || sprintKeywords.length === 0) return rows;
+      if (!sprintOn || (sprintKeywords.length === 0 && scopeSubjects.length === 0)) return rows;
       const scopedSubjects = new Set<string>();
       for (const row of rows) {
         if (matchesKeyword(row) && row.subject_id) scopedSubjects.add(row.subject_id);
