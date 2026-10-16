@@ -113,10 +113,10 @@ const StsHub = () => {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
             <GraduationCap className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">SIBA Testing Services (STS) Test Preparation Hub</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">SIBA Testing Services (STS) Test Preparation – Mock Tests</h1>
           </div>
           <p className="text-muted-foreground leading-relaxed max-w-3xl">
-            SIBA Testing Services (STS) is the testing service of Sukkur IBA University. It conducts recruitment and screening tests for Sindh government bodies such as the Sindh High Court and Sindh Police, and for the Sukkur IBA Community Colleges &amp; Schools network (20+ colleges and schools with 50+ cluster schools), which operates separately under the same university.
+            SIBA Testing Services (STS) is the testing service of Sukkur IBA University. It conducts recruitment and screening tests for Sindh government bodies such as the Sindh High Court and Sindh Police, and for the Sukkur IBA Community Colleges &amp; Schools network, which operates separately under the same university.
           </p>
           <p className="text-muted-foreground leading-relaxed max-w-3xl mt-3">
             Every free STS-style mock test on MCQsAI is in one place — {TOTAL} timed tests for courts, police, the schools network, teaching licence and admission tests. Pick your post, practise under a real countdown, and check the official STS announcement for dates, fees and rules.
@@ -174,6 +174,7 @@ const StsHub = () => {
             <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><ShieldCheck className="w-5 h-5 text-primary" />Paper pattern</CardTitle></CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
               <p>STS papers are MCQ-based. The subjects and their weightage are set separately for each post in its official advertisement — commonly English, General Knowledge / Pakistan Affairs, Islamiat, Mathematics or analytical reasoning, and a post-specific subject portion.</p>
+              <p className="font-medium text-foreground">Syllabus as per STS announcement — see each test page. Source: <a href="https://sts.net.pk" target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">sts.net.pk</a>.</p>
               <p>Each MCQsAI mock test uses the subject weightage stored for that post. Test dates, fees, negative marking and passing marks: check the official STS announcement.</p>
             </CardContent>
           </Card>
@@ -205,6 +206,7 @@ const StsHub = () => {
           <CardContent className="pt-6 flex flex-wrap gap-3 items-center justify-between">
             <div className="text-sm text-muted-foreground">
               Official sources:{' '}
+              <span className="block mb-2">MCQsAI is an independent practice platform and is not affiliated with STS or Sukkur IBA University.</span>
               <a href="https://www.sts.net.pk" target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline inline-flex items-center gap-1">STS website <ExternalLink className="w-3 h-3" /></a>{' · '}
               <a href="https://apply.sts.net.pk" target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline inline-flex items-center gap-1">apply.sts.net.pk <ExternalLink className="w-3 h-3" /></a>
             </div>
