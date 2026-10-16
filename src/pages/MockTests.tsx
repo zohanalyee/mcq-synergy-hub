@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import SEOHead from '@/components/SEOHead';
 import PageBreadcrumb from "@/components/PageBreadcrumb";
