@@ -1,0 +1,2000 @@
+{
+ "-fia-assistant": [
+  {
+   "topic": "General Knowledge",
+   "percentage": 45
+  },
+  {
+   "topic": "English",
+   "percentage": 30
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 15
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 5
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 5
+  }
+ ],
+ "academic-coordinator": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Academic Management",
+   "percentage": 30
+  },
+  {
+   "topic": "General Administration",
+   "percentage": 30
+  }
+ ],
+ "accountant": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Accounting",
+   "percentage": 60
+  }
+ ],
+ "accounts-officer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Accounting",
+   "percentage": 60
+  }
+ ],
+ "administrative-accounts-officer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Office Management",
+   "percentage": 10
+  },
+  {
+   "topic": "General Administration",
+   "percentage": 20
+  },
+  {
+   "topic": "Accounting",
+   "percentage": 30
+  }
+ ],
+ "administrative-officer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Academic Management",
+   "percentage": 10
+  },
+  {
+   "topic": "General Administration",
+   "percentage": 30
+  },
+  {
+   "topic": "Accounting",
+   "percentage": 20
+  }
+ ],
+ "admission-examination-officer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Lab Management",
+   "percentage": 20
+  },
+  {
+   "topic": "Academic Management",
+   "percentage": 10
+  },
+  {
+   "topic": "Office Management",
+   "percentage": 30
+  }
+ ],
+ "assistant-accountant-bps-15": [
+  {
+   "topic": "Financial Accounting",
+   "percentage": 40
+  },
+  {
+   "topic": "Cost Accounting",
+   "percentage": 10
+  },
+  {
+   "topic": "Islamic Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 10
+  },
+  {
+   "topic": "English Language",
+   "percentage": 10
+  },
+  {
+   "topic": "Business Mathematics",
+   "percentage": 5
+  },
+  {
+   "topic": "Statistics",
+   "percentage": 5
+  },
+  {
+   "topic": "Economics",
+   "percentage": 5
+  },
+  {
+   "topic": "Information Technology",
+   "percentage": 5
+  }
+ ],
+ "assistant-hostel-warden-female": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Hostel Management & Student Welfare)",
+   "percentage": 60
+  }
+ ],
+ "assistant-hostel-warden-male": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Hostel Management & Student Welfare)",
+   "percentage": 60
+  }
+ ],
+ "auditor": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Auditing & Finance)",
+   "percentage": 60
+  }
+ ],
+ "bsc-nursing-4-years-generic-program-entrance-exam-sts": [
+  {
+   "topic": "Biology (IX & XII STB)",
+   "percentage": 40
+  },
+  {
+   "topic": "Chemistry (IX & XII STB)",
+   "percentage": 20
+  },
+  {
+   "topic": "Physics (IX & XII STB)",
+   "percentage": 20
+  },
+  {
+   "topic": "English",
+   "percentage": 20
+  }
+ ],
+ "caretaker-bps-14": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Islamic Knowledge",
+   "percentage": 20
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 20
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 20
+  },
+  {
+   "topic": "Social Studies",
+   "percentage": 20
+  }
+ ],
+ "district-coordinator": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Public Private Partnership",
+   "percentage": 30
+  },
+  {
+   "topic": "EMOs KPIs",
+   "percentage": 30
+  }
+ ],
+ "ece-female": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Early Childhood Education)",
+   "percentage": 60
+  }
+ ],
+ "electrician-bps-06": [
+  {
+   "topic": "Electrician Trade Related",
+   "percentage": 30
+  },
+  {
+   "topic": "English",
+   "percentage": 15
+  },
+  {
+   "topic": "Mother Tongue (Sindhi/Urdu)",
+   "percentage": 15
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 15
+  },
+  {
+   "topic": "General Awareness / IQ",
+   "percentage": 15
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  }
+ ],
+ "elementary-school-teacher-biology": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Biology)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-chemistry": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Chemistry)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-computer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Computer)",
+   "percentage": 70
+  }
+ ],
+ "elementary-school-teacher-english": [
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (English)",
+   "percentage": 80
+  }
+ ],
+ "elementary-school-teacher-islamiat": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Islamiat)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-mathematics": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Mathematics)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-physics": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Physics)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-science": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Science)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-sindhi": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Sindhi)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-social-studies": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Social Studies)",
+   "percentage": 60
+  }
+ ],
+ "elementary-school-teacher-urdu": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Urdu)",
+   "percentage": 60
+  }
+ ],
+ "fbr-appraising-valuation-officer-goods-evaluator-bps-16": [
+  {
+   "topic": "English Grammar and Comprehension",
+   "percentage": 20
+  },
+  {
+   "topic": "Basic Arithmetic and Quantitative Reasoning",
+   "percentage": 20
+  },
+  {
+   "topic": "General Knowledge and Current Affairs",
+   "percentage": 20
+  },
+  {
+   "topic": "Customs Act 1969 and FBR Regulations",
+   "percentage": 40
+  }
+ ],
+ "fia-assistant": [
+  {
+   "topic": "General Knowledge",
+   "percentage": 45
+  },
+  {
+   "topic": "English",
+   "percentage": 30
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 15
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 5
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 5
+  }
+ ],
+ "fia-assistant-sub-inspector-asi-bps-14-bs-09": [
+  {
+   "topic": "General Knowledge & Everyday Science",
+   "percentage": 30
+  },
+  {
+   "topic": "English",
+   "percentage": 25
+  },
+  {
+   "topic": "Basic Mathematics & IQ",
+   "percentage": 15
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 10
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 10
+  },
+  {
+   "topic": "FIA Act & Job Related",
+   "percentage": 10
+  }
+ ],
+ "fia-constable-bps-05": [
+  {
+   "topic": "General Knowledge & Everyday Science",
+   "percentage": 30
+  },
+  {
+   "topic": "Basic English",
+   "percentage": 20
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 15
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 15
+  },
+  {
+   "topic": "Basic Mathematics & IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "Job Related / FIA Awareness",
+   "percentage": 10
+  }
+ ],
+ "fia-constable-driver-bps-05": [
+  {
+   "topic": "Traffic Rules, Road Signs & Driving Safety",
+   "percentage": 30
+  },
+  {
+   "topic": "Basic Vehicle Maintenance & Mechanics",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge & Everyday Science",
+   "percentage": 20
+  },
+  {
+   "topic": "Basic English",
+   "percentage": 15
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 15
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 10
+  }
+ ],
+ "fia-lower-division-clerk-ldc-bps-11": [
+  {
+   "topic": "Computer Literacy / MS Office",
+   "percentage": 30
+  },
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "General Knowledge & Current Affairs",
+   "percentage": 20
+  },
+  {
+   "topic": "Basic Mathematics",
+   "percentage": 10
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 10
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 10
+  }
+ ],
+ "fia-staff-car-driver-bps-04": [
+  {
+   "topic": "Traffic Rules & Vehicle Maintenance",
+   "percentage": 50
+  },
+  {
+   "topic": "General Knowledge & Pak Studies",
+   "percentage": 30
+  },
+  {
+   "topic": "Islamic Studies / Ethics",
+   "percentage": 20
+  }
+ ],
+ "fia-sub-inspector-bps-14": [
+  {
+   "topic": "General Knowledge & Everyday Science",
+   "percentage": 45
+  },
+  {
+   "topic": "English",
+   "percentage": 30
+  },
+  {
+   "topic": "Mathematics & Analytical Reasoning",
+   "percentage": 15
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 5
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 5
+  }
+ ],
+ "fia-upper-division-clerk-udc-bps-13": [
+  {
+   "topic": "Computer Literacy / MS Office",
+   "percentage": 30
+  },
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "General Knowledge & Current Affairs",
+   "percentage": 20
+  },
+  {
+   "topic": "Basic Mathematics",
+   "percentage": 10
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 10
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 10
+  }
+ ],
+ "hec-law-admission-test-lat": [
+  {
+   "topic": "English (MCQs)",
+   "percentage": 20
+  },
+  {
+   "topic": "General Knowledge (MCQs)",
+   "percentage": 20
+  },
+  {
+   "topic": "Pakistan Studies (MCQs)",
+   "percentage": 10
+  },
+  {
+   "topic": "Islamic Studies / Ethics (MCQs)",
+   "percentage": 10
+  },
+  {
+   "topic": "Urdu (MCQs)",
+   "percentage": 10
+  },
+  {
+   "topic": "Basic Mathematics (MCQs)",
+   "percentage": 5
+  },
+  {
+   "topic": "Essay Writing (Subjective)",
+   "percentage": 15
+  },
+  {
+   "topic": "Personal Statement (Subjective)",
+   "percentage": 10
+  }
+ ],
+ "hst-biology": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Biology)",
+   "percentage": 60
+  }
+ ],
+ "hst-chemistry": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Chemistry)",
+   "percentage": 60
+  }
+ ],
+ "hst-computer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Computer)",
+   "percentage": 70
+  }
+ ],
+ "hst-english": [
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (English)",
+   "percentage": 80
+  }
+ ],
+ "hst-physics": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Physics)",
+   "percentage": 60
+  }
+ ],
+ "inspector-customs-intelligence-officer-bps-16-fbr-fpsc": [
+  {
+   "topic": "English Language",
+   "percentage": 20
+  },
+  {
+   "topic": "General Intelligence and Everyday Science",
+   "percentage": 20
+  },
+  {
+   "topic": "Pakistan Affairs and Islamic Studies",
+   "percentage": 20
+  },
+  {
+   "topic": "Basic Arithmetic",
+   "percentage": 20
+  },
+  {
+   "topic": "Basic Computer Knowledge (MS Office)",
+   "percentage": 20
+  }
+ ],
+ "junior-clerk-bps-11-district-sessions-court-jamshoro": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 40
+  },
+  {
+   "topic": "Mathematics (Basic Arithmetic)",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge (Pakistan & Current Affairs)",
+   "percentage": 10
+  }
+ ],
+ "junior-clerk-bps-11-dscb": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 15
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 20
+  },
+  {
+   "topic": "Windows Ms Word, Excel, Power Point",
+   "percentage": 15
+  }
+ ],
+ "junior-clerk-bps-11-siba-testing-services-sts": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 40
+  },
+  {
+   "topic": "Mathematics (Basic Arithmetic)",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge (Pakistan & Current Affairs)",
+   "percentage": 10
+  }
+ ],
+ "junior-clerk-bps-11-sts": [
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 30
+  },
+  {
+   "topic": "English",
+   "percentage": 15
+  },
+  {
+   "topic": "Mother Tongue (Sindhi/Urdu)",
+   "percentage": 15
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 15
+  },
+  {
+   "topic": "General Awareness / IQ",
+   "percentage": 15
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  }
+ ],
+ "junior-office-associate-bps-13": [
+  {
+   "topic": "English",
+   "percentage": 30
+  },
+  {
+   "topic": "Analytical Reasoning",
+   "percentage": 10
+  },
+  {
+   "topic": "Basic Computer & MS Office",
+   "percentage": 30
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 15
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 15
+  }
+ ],
+ "junior-translator-bps-15": [
+  {
+   "topic": "English (Grammar)",
+   "percentage": 30
+  },
+  {
+   "topic": "English (Vocabulary)",
+   "percentage": 10
+  },
+  {
+   "topic": "Islamic Knowledge (General)",
+   "percentage": 5
+  },
+  {
+   "topic": "Basic Computer (MS Office)",
+   "percentage": 5
+  },
+  {
+   "topic": "Social Studies (Basic)",
+   "percentage": 5
+  },
+  {
+   "topic": "General Knowledge (General)",
+   "percentage": 5
+  },
+  {
+   "topic": "Translation",
+   "percentage": 20
+  },
+  {
+   "topic": "Essay/Precis Writing",
+   "percentage": 20
+  }
+ ],
+ "lab-assistant-biology": [
+  {
+   "topic": "English",
+   "percentage": 10
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Biology)",
+   "percentage": 60
+  },
+  {
+   "topic": "Lab Management",
+   "percentage": 10
+  }
+ ],
+ "lab-assistant-chemistry": [
+  {
+   "topic": "English",
+   "percentage": 10
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Chemistry)",
+   "percentage": 60
+  },
+  {
+   "topic": "Lab Management",
+   "percentage": 10
+  }
+ ],
+ "lab-assistant-computer": [
+  {
+   "topic": "English",
+   "percentage": 10
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Computer)",
+   "percentage": 70
+  },
+  {
+   "topic": "Lab Management",
+   "percentage": 10
+  }
+ ],
+ "lab-assistant-electrical-electronics": [
+  {
+   "topic": "English",
+   "percentage": 10
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Electrical / Electronics)",
+   "percentage": 60
+  },
+  {
+   "topic": "Lab Management",
+   "percentage": 10
+  }
+ ],
+ "lab-assistant-physics": [
+  {
+   "topic": "English",
+   "percentage": 10
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Physics)",
+   "percentage": 60
+  },
+  {
+   "topic": "Lab Management",
+   "percentage": 10
+  }
+ ],
+ "library-assistant": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Library & Information Science)",
+   "percentage": 60
+  }
+ ],
+ "library-associate-bps-13": [
+  {
+   "topic": "English",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer (MS Office & Basic)",
+   "percentage": 15
+  },
+  {
+   "topic": "Position Specific",
+   "percentage": 75
+  }
+ ],
+ "nts-gat-general-mock-test": [
+  {
+   "topic": "Verbal Reasoning (English Vocabulary, Synonyms, Antonyms & Comprehension)",
+   "percentage": 50
+  },
+  {
+   "topic": "Quantitative Reasoning (Basic Math, Algebra, Geometry & Arithmetic Shortcuts)",
+   "percentage": 30
+  },
+  {
+   "topic": "Analytical Reasoning (Logical Deductions, Critical Thinking & Scenario Puzzles)",
+   "percentage": 20
+  }
+ ],
+ "nurse-male-female": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Nursing & Healthcare)",
+   "percentage": 60
+  }
+ ],
+ "office-assistant": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Office Management",
+   "percentage": 60
+  }
+ ],
+ "office-assistant-admission-examination": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Office Management",
+   "percentage": 60
+  }
+ ],
+ "office-assistant-p-a-cum-computer-operator": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Secretarial & Computer Operations)",
+   "percentage": 60
+  }
+ ],
+ "office-assistant-pa-cum-computer-operator": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Secretarial & Computer Operations)",
+   "percentage": 60
+  }
+ ],
+ "official-ajk-mdcat-2025-syllabus-szabmu-entry-test-pattern": [
+  {
+   "topic": "Biology (Federal Textbook Board Alignment - Physiology, Cells & Genetics)",
+   "percentage": 45
+  },
+  {
+   "topic": "Chemistry (SZABMU Organic Chemistry, Hydrocarbons & Kinetics)",
+   "percentage": 25
+  },
+  {
+   "topic": "Physics (FTB Fluids, Alternating Current, Vectors & Modern Physics)",
+   "percentage": 20
+  },
+  {
+   "topic": "English (Tenses, Prepositions, Word Choice & Grammar Correction)",
+   "percentage": 5
+  },
+  {
+   "topic": "Logical Reasoning (SZABMU Pattern Critical Thinking & Coding Puzzles)",
+   "percentage": 5
+  }
+ ],
+ "official-balochistan-mdcat-2025-syllabus-bmc-entry-test-pattern": [
+  {
+   "topic": "Biology (Balochistan Textbook Board Alignment - Physiology & Diversity)",
+   "percentage": 45
+  },
+  {
+   "topic": "Chemistry (BMC Physical, Inorganic & Industrial Chemistry Principles)",
+   "percentage": 25
+  },
+  {
+   "topic": "Physics (BTB Vectors, Static Equilibrium, Work & Modern Physics)",
+   "percentage": 20
+  },
+  {
+   "topic": "English (Contextual Vocabulary, Grammar Rules & Sentence Errors)",
+   "percentage": 5
+  },
+  {
+   "topic": "Logical Reasoning (BMC Pattern Puzzles, Analogy & Mental Ability)",
+   "percentage": 5
+  }
+ ],
+ "official-federal-territory-islamabad-mdcat-2025-syllabus-guide": [
+  {
+   "topic": "Biology (Federal Textbook Board Alignment - Core Human Systems & Cells)",
+   "percentage": 45
+  },
+  {
+   "topic": "Chemistry (SZABMU Inorganic, Physical, Organic & Industrial Mechanics)",
+   "percentage": 25
+  },
+  {
+   "topic": "Physics (FTB Mechanics, Waves, AC Circuits & Radiation Physics)",
+   "percentage": 20
+  },
+  {
+   "topic": "English (Vocabulary Lists, Grammar Tenses & Sentence Spotting Errors)",
+   "percentage": 5
+  },
+  {
+   "topic": "Logical Reasoning (Critical Thinking Puzzles & Code-Decoding Drills)",
+   "percentage": 5
+  }
+ ],
+ "official-kpk-mdcat-2025-syllabus-kmu-entry-test-pattern": [
+  {
+   "topic": "Biology (KP Textbook Board Alignment - Homeostasis & Biotechnology)",
+   "percentage": 45
+  },
+  {
+   "topic": "Chemistry (KMU Organic Chemistry, Hydrocarbons & Reaction Kinetics)",
+   "percentage": 25
+  },
+  {
+   "topic": "Physics (KPTB Fluid Dynamics, Alternating Current & Electromagnetism)",
+   "percentage": 20
+  },
+  {
+   "topic": "English (Tenses, Prepositions, Word Choice & Vocabulary)",
+   "percentage": 5
+  },
+  {
+   "topic": "Logical Reasoning (KMU Critical Thinking, Code-Decoding & Number Series)",
+   "percentage": 5
+  }
+ ],
+ "official-punjab-mdcat-2025-syllabus-uhs-entry-test-pattern": [
+  {
+   "topic": "Biology (Punjab Textbook Board Alignment - PTB Cell & Human Systems)",
+   "percentage": 45
+  },
+  {
+   "topic": "Chemistry (UHS Physical, Inorganic, Organic & Applied Chemistry)",
+   "percentage": 25
+  },
+  {
+   "topic": "Physics (PTB Mechanics, Waves, Electrostatics & Nuclear Physics)",
+   "percentage": 20
+  },
+  {
+   "topic": "English (Grammar Spotting, Sentence Completion & Synonyms)",
+   "percentage": 5
+  },
+  {
+   "topic": "Logical Reasoning (UHS Pattern Analytical Reasoning & Syllogisms)",
+   "percentage": 5
+  }
+ ],
+ "official-sindh-mdcat-2025-syllabus-entry-test-pattern": [
+  {
+   "topic": "Biology",
+   "percentage": 45
+  },
+  {
+   "topic": "Chemistry",
+   "percentage": 25
+  },
+  {
+   "topic": "Physics",
+   "percentage": 20
+  },
+  {
+   "topic": "English",
+   "percentage": 5
+  },
+  {
+   "topic": "Logical Reasoning",
+   "percentage": 5
+  }
+ ],
+ "personal-assistant-to-judge-personal-assistant-to-officer-bps-17-high-court-of-sindh": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 20
+  },
+  {
+   "topic": "Analytical / IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "Post Related",
+   "percentage": 20
+  }
+ ],
+ "personal-assistant-to-judge-personal-assistant-to-officer-bps-17-high-court-of-sindh-": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 20
+  },
+  {
+   "topic": "Analytical / IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "Post Related",
+   "percentage": 20
+  }
+ ],
+ "physical-training-instructor": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Physical Education & Sports Sciences)",
+   "percentage": 60
+  }
+ ],
+ "police-constable-commandos-driver-police-constable-bps-07": [
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 30
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 20
+  },
+  {
+   "topic": "General Awareness / IQ",
+   "percentage": 20
+  },
+  {
+   "topic": "Mother Tongue (Sindhi/Urdu)",
+   "percentage": 20
+  },
+  {
+   "topic": "English",
+   "percentage": 10
+  }
+ ],
+ "private-secretary-protocol-bps-18-high-court-of-sindh": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 20
+  },
+  {
+   "topic": "Analytical / IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "Post Related",
+   "percentage": 20
+  }
+ ],
+ "procurement-officer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Procurement",
+   "percentage": 60
+  }
+ ],
+ "receptionist-female": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Office Management",
+   "percentage": 10
+  },
+  {
+   "topic": "General Administration",
+   "percentage": 30
+  },
+  {
+   "topic": "HR",
+   "percentage": 20
+  }
+ ],
+ "school-manager": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Public Private Partnership",
+   "percentage": 30
+  },
+  {
+   "topic": "EMOs KPIs",
+   "percentage": 30
+  }
+ ],
+ "security-officer-bps-17-bps-17-high-court-of-sindh": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 20
+  },
+  {
+   "topic": "Analytical / IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "Post Related",
+   "percentage": 20
+  }
+ ],
+ "sindh-teaching-license-exam-elementary-school-teacher-est": [
+  {
+   "topic": "Part I: English",
+   "percentage": 8
+  },
+  {
+   "topic": "Part I: Mathematics",
+   "percentage": 8
+  },
+  {
+   "topic": "Part I: General Science",
+   "percentage": 8
+  },
+  {
+   "topic": "Part I: Social Studies",
+   "percentage": 8
+  },
+  {
+   "topic": "Part I: Mother Tongue (Urdu/Sindhi)",
+   "percentage": 8
+  },
+  {
+   "topic": "Part II: Child Development & Theories",
+   "percentage": 15
+  },
+  {
+   "topic": "Part II: Teaching Methodologies",
+   "percentage": 15
+  },
+  {
+   "topic": "Part II: Classroom Management",
+   "percentage": 15
+  },
+  {
+   "topic": "Part II: Assessment and Evaluation",
+   "percentage": 15
+  }
+ ],
+ "sindh-teaching-license-exam-secondary-school-teacher-sst": [
+  {
+   "topic": "Advanced Pedagogy & Curriculum Planning",
+   "percentage": 30
+  },
+  {
+   "topic": "Educational Philosophy & History",
+   "percentage": 20
+  },
+  {
+   "topic": "ICT in Education & Digital Learning",
+   "percentage": 20
+  },
+  {
+   "topic": "English Grammar & Content Knowledge",
+   "percentage": 15
+  },
+  {
+   "topic": "Analytical Reasoning & Math",
+   "percentage": 15
+  }
+ ],
+ "stenographer-bps-16-district-sessions-court-jamshoro": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 40
+  },
+  {
+   "topic": "Mathematics (Basic Arithmetic)",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge (Pakistan & Current Affairs)",
+   "percentage": 10
+  }
+ ],
+ "stenotypist-bps-14": [
+  {
+   "topic": "English Language",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office & Typing Theory)",
+   "percentage": 40
+  },
+  {
+   "topic": "General Knowledge & IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "Job Specific (Shorthand Basics & Secretarial Practice)",
+   "percentage": 10
+  }
+ ],
+ "sub-inspector-investigation-bps-14-fia-fpsc": [
+  {
+   "topic": "English Language",
+   "percentage": 20
+  },
+  {
+   "topic": "General Knowledge & Current Affairs",
+   "percentage": 20
+  },
+  {
+   "topic": "Computer / IT Knowledge",
+   "percentage": 20
+  },
+  {
+   "topic": "IQ & Basic Arithmetic",
+   "percentage": 20
+  },
+  {
+   "topic": "Pakistan Studies & Islamic Studies / Ethics",
+   "percentage": 20
+  }
+ ],
+ "subject-specialist-biology": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Biology)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-business-administration": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Business Administration)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-chemistry": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Chemistry)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-computer": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Computer)",
+   "percentage": 70
+  }
+ ],
+ "subject-specialist-english": [
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (English)",
+   "percentage": 80
+  }
+ ],
+ "subject-specialist-general-science": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (General Science)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-islamiat": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Islamiat)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-mathematics": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Mathematics)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-pakistan-studies": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Pakistan Studies)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-physics": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Physics)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-sindhi": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Sindhi)",
+   "percentage": 60
+  }
+ ],
+ "subject-specialist-urdu": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Urdu)",
+   "percentage": 60
+  }
+ ],
+ "sukkur-iba-sindh-talent-hunt-program-sthp-2027": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 40
+  },
+  {
+   "topic": "ICT",
+   "percentage": 20
+  }
+ ],
+ "telephone-operator-bps-14": [
+  {
+   "topic": "Job Description",
+   "percentage": 20
+  },
+  {
+   "topic": "Verbal Reasoning",
+   "percentage": 15
+  },
+  {
+   "topic": "Analytical Reasoning",
+   "percentage": 15
+  },
+  {
+   "topic": "Basic Computer Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "Communication Skills",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "Quantitative",
+   "percentage": 10
+  }
+ ],
+ "vaccinator-bps-06-health-department-sindh": [
+  {
+   "topic": "General Knowledge & Current Affairs",
+   "percentage": 30
+  },
+  {
+   "topic": "Post/Field Related (Vaccination/EPI)",
+   "percentage": 20
+  },
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "General Science",
+   "percentage": 15
+  },
+  {
+   "topic": "Analytical Reasoning, Quantitative & IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "Islamiat / Ethics",
+   "percentage": 5
+  }
+ ]
+}

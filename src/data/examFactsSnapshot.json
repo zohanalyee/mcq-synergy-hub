@@ -1669,7 +1669,7 @@
     },
     {
      "event": "Test centres",
-     "value": "Check the official announcement"
+     "value": "• Sukkur • Karachi • Hyderabad • Larkana • Mirpurkhas • Naushahro Feroze"
     }
    ],
    "testDate": "8 November 2026",
@@ -1683,6 +1683,19 @@
   },
   "test_date": "2026-11-08",
   "verified_on": "2026-10-15",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "sts",
+  "kind": "admission",
+  "facts": {
+   "applyUrl": "https://apply.sts.net.pk",
+   "testDate": "Varies by advertisement — check the official STS announcement",
+   "verifiedOn": "16 October 2026",
+   "officialUrl": "https://www.sts.net.pk"
+  },
+  "test_date": null,
+  "verified_on": "2026-10-16",
   "include_in_sitemap": true
  }
 ]

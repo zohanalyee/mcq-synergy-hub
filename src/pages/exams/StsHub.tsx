@@ -6,6 +6,7 @@ import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { safeJsonLd } from '@/lib/jsonLd';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import stsSyllabus from '@/generated/stsSyllabus.json';
 import { ArrowRight, BookOpen, ExternalLink, GraduationCap, Lightbulb, ShieldCheck, Timer } from 'lucide-react';
 
 /**
@@ -72,6 +73,11 @@ const GROUPS: { title: string; note: string; tests: T[] }[] = [
   },
 ];
 
+type SyllabusItem = { topic: string; percentage: number | null };
+const SYLLABUS = stsSyllabus as Record<string, SyllabusItem[]>;
+/** Hub-level verification date (owner-confirmed). Set as 'D Month YYYY'; line hidden while null. */
+const SYLLABUS_VERIFIED_ON: string | null = null;
+
 const TOTAL = GROUPS.reduce((n, g) => n + g.tests.length, 0);
 
 const FAQS = [
@@ -87,8 +93,8 @@ const StsHub = () => {
   return (
     <Header>
       <SEOHead
-        title="STS Test Preparation 2026 – Free Mock Tests & Syllabus | MCQsAI"
-        description={`Prepare for SIBA Testing Services (STS) tests with ${TOTAL} free timed mock tests: Junior Office Associate, Police Constable, Junior Clerk, EST, HST, Subject Specialist and Sukkur IBA Schools posts.`}
+        title="STS Test Preparation 2026-27 – Syllabus & Mock Tests | MCQsAI"
+        description="STS syllabus and free mock tests for IBA Community Colleges & Schools, Sindh High Court, Sindh Police and STEDA posts. Practice MCQs by post."
         keywords="STS test preparation, SIBA Testing Services mock test, STS past papers, STS test syllabus, Sukkur IBA community colleges test, junior office associate mock test, STS police constable test, EST HST STS test"
         url={url}
       />
@@ -113,7 +119,7 @@ const StsHub = () => {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-3">
             <GraduationCap className="w-8 h-8 text-primary" />
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">SIBA Testing Services (STS) Test Preparation – Mock Tests</h1>
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">SIBA Testing Services (STS) Test Preparation – Syllabus &amp; Mock Tests</h1>
           </div>
           <p className="text-muted-foreground leading-relaxed max-w-3xl">
             SIBA Testing Services (STS) is the testing service of Sukkur IBA University. It conducts recruitment and screening tests for Sindh government bodies such as the Sindh High Court and Sindh Police, and for the Sukkur IBA Community Colleges &amp; Schools network, which operates separately under the same university.
@@ -169,12 +175,39 @@ const StsHub = () => {
           ))}
         </div>
 
+        <section className="mb-10" aria-labelledby="sts-syllabus-by-cadre">
+          <h2 id="sts-syllabus-by-cadre" className="text-xl font-semibold text-foreground mb-1">Syllabus by cadre</h2>
+          <p className="text-sm text-muted-foreground mb-1">Syllabus as per STS announcement. Subjects and weightage for each post, as stored for its mock test.</p>
+          {SYLLABUS_VERIFIED_ON && <p className="text-sm font-medium text-foreground mb-1">Syllabus verified on {SYLLABUS_VERIFIED_ON}</p>}
+          <p className="text-xs text-muted-foreground mb-4">Test dates, fees, negative marking and passing marks: check the STS portal at <a href="https://sts.net.pk" target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">sts.net.pk</a>.</p>
+          <div className="space-y-6">
+            {GROUPS.map((g) => (
+              <Card key={`syl-${g.title}`}>
+                <CardHeader><CardTitle className="text-lg">{g.title} – Syllabus</CardTitle></CardHeader>
+                <CardContent className="grid sm:grid-cols-2 gap-3">
+                  {g.tests.filter(([, slug]) => SYLLABUS[slug]?.length).map(([label, slug]) => (
+                    <div key={slug} className="p-3 rounded-lg bg-muted/50">
+                      <h3 className="text-sm font-semibold text-foreground mb-1.5">{label}</h3>
+                      <ul className="text-sm text-muted-foreground space-y-0.5 mb-2">
+                        {SYLLABUS[slug].map((i) => (
+                          <li key={i.topic}>{i.topic}{i.percentage != null ? ` – ${i.percentage}%` : ''}</li>
+                        ))}
+                      </ul>
+                      <Link to={`/mock-tests/${slug}`} className="text-xs text-primary hover:underline inline-flex items-center gap-1">Practice {label} mock test <ArrowRight className="w-3 h-3" /></Link>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
         <div className="grid md:grid-cols-2 gap-6 mb-10">
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2 text-lg"><ShieldCheck className="w-5 h-5 text-primary" />Paper pattern</CardTitle></CardHeader>
             <CardContent className="text-sm text-muted-foreground space-y-2">
               <p>STS papers are MCQ-based. The subjects and their weightage are set separately for each post in its official advertisement — commonly English, General Knowledge / Pakistan Affairs, Islamiat, Mathematics or analytical reasoning, and a post-specific subject portion.</p>
-              <p className="font-medium text-foreground">Syllabus as per STS announcement — see each test page. Source: <a href="https://sts.net.pk" target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">sts.net.pk</a>.</p>
+              <p className="font-medium text-foreground">Syllabus as per STS announcement — see “Syllabus by cadre” above. Source: <a href="https://sts.net.pk" target="_blank" rel="noopener noreferrer nofollow" className="text-primary hover:underline">sts.net.pk</a>.</p>
               <p>Each MCQsAI mock test uses the subject weightage stored for that post. Test dates, fees, negative marking and passing marks: check the official STS announcement.</p>
             </CardContent>
           </Card>
