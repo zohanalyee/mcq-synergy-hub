@@ -563,6 +563,28 @@
    "percentage": 40
   }
  ],
+ "fia-assistant": [
+  {
+   "topic": "General Knowledge",
+   "percentage": 45
+  },
+  {
+   "topic": "English",
+   "percentage": 30
+  },
+  {
+   "topic": "Mathematics",
+   "percentage": 15
+  },
+  {
+   "topic": "Pakistan Studies",
+   "percentage": 5
+  },
+  {
+   "topic": "Islamiat",
+   "percentage": 5
+  }
+ ],
  "fia-assistant-sub-inspector-asi-bps-14-bs-09": [
   {
    "topic": "General Knowledge & Everyday Science",
@@ -1213,6 +1235,24 @@
    "percentage": 60
   }
  ],
+ "office-assistant-p-a-cum-computer-operator": [
+  {
+   "topic": "English",
+   "percentage": 20
+  },
+  {
+   "topic": "Reasoning / Aptitude",
+   "percentage": 10
+  },
+  {
+   "topic": "Computer / MS Office",
+   "percentage": 10
+  },
+  {
+   "topic": "Subject-Based (Secretarial & Computer Operations)",
+   "percentage": 60
+  }
+ ],
  "office-assistant-pa-cum-computer-operator": [
   {
    "topic": "English",
@@ -1361,6 +1401,28 @@
   {
    "topic": "Logical Reasoning",
    "percentage": 5
+  }
+ ],
+ "personal-assistant-to-judge-personal-assistant-to-officer-bps-17-high-court-of-sindh": [
+  {
+   "topic": "English",
+   "percentage": 40
+  },
+  {
+   "topic": "Computer (MS Office)",
+   "percentage": 20
+  },
+  {
+   "topic": "Analytical / IQ",
+   "percentage": 10
+  },
+  {
+   "topic": "General Knowledge",
+   "percentage": 10
+  },
+  {
+   "topic": "Post Related",
+   "percentage": 20
   }
  ],
  "personal-assistant-to-judge-personal-assistant-to-officer-bps-17-high-court-of-sindh-": [

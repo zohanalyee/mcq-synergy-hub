@@ -63,7 +63,12 @@ try {
     const clean = items
       .filter((i) => i && typeof i.topic === "string" && i.topic.trim())
       .map((i) => ({ topic: i.topic.trim(), percentage: typeof i.percentage === "number" ? i.percentage : null }));
-    if (clean.length) map[slugFor(t, rows)] = clean;
+    if (!clean.length) continue;
+    const k = slugFor(t, rows);
+    map[k] = clean;
+    // Sitemap/hub slugs also exist in a punctuation-to-hyphen form (e.g. "p-a", trailing ")").
+    const alt = k === toSlug(t.title) ? t.title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") : k.replace(/-+$/, "");
+    if (!map[alt]) map[alt] = clean;
   }
   const sorted = Object.fromEntries(Object.keys(map).sort().map((k) => [k, map[k]]));
   writeFileSync(out, JSON.stringify(sorted, null, 1) + "\n");
