@@ -143,6 +143,9 @@ export function buildMockTestContentHtml({
     (/talent hunt program \(sthp\)/i.test(title)
       ? `<p>Verified dates, eligibility and official sources: <a href="/exams/sthp">Sukkur IBA STHP 2027 Guide</a>.</p>`
       : '') +
+    (/sts|siba|sukkur iba|high court of sindh/i.test(`${organization} ${title}`)
+      ? `<p>More STS tests by department: <a href="/exams/sts">STS Test Preparation Hub</a>.</p>`
+      : '') +
     `<section><h2>Test Pattern</h2><ul>` +
     `<li>Duration: ${esc(duration)} minutes</li>` +
     `<li>Questions: ${esc(questions)}</li>` +

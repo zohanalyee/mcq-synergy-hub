@@ -246,6 +246,15 @@ const MockTestDetail = () => {
               for verified dates, eligibility and official sources.
             </div>
           )}
+          {/sts|siba|sukkur iba|high court of sindh/i.test(`${test.organization || ""} ${test.title}`) && (
+            <p className="text-sm text-muted-foreground">
+              Part of the{" "}
+              <Link to="/exams/sts" className="font-medium text-primary hover:underline">
+                STS Test Preparation Hub
+              </Link>{" "}
+              — all STS mock tests by department.
+            </p>
+          )}
           {/junior office associate/i.test(test.title) && Date.now() < Date.parse("2026-10-12T00:00:00+05:00") && (
             <div role="note" className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
               <strong>NTS Larkana test: Sunday, 11 October 2026.</strong> Sindh High Court JOA (BPS-13) candidates can

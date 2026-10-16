@@ -31,6 +31,7 @@ const PRERENDER_ROUTES = [
   "/exams/nums",
   "/exams/iba-sukkur",
   "/exams/sthp",
+  "/exams/sts",
   "/exams/lat",
   "/exams/karachi-university",
   "/exams/sindh-university",
