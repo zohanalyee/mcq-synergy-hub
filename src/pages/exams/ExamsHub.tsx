@@ -200,8 +200,10 @@ const GROUPS: ExamGroup[] = [
         name: 'HEC LAT',
         description:
           'Law Admission Test practice covering English, Pakistan Studies, Islamic Studies, basic mathematics and general knowledge.',
-        path: '/mock-tests',
+        path: '/exams/lat',
+        mockPath: '/mock-tests',
         mockLabel: 'Find the LAT mock test',
+
       },
     ],
   },
