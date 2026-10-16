@@ -116,7 +116,10 @@ const StsHub = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">SIBA Testing Services (STS) Test Preparation Hub</h1>
           </div>
           <p className="text-muted-foreground leading-relaxed max-w-3xl">
-            Every free STS-style mock test on MCQsAI in one place — {TOTAL} timed tests for Sindh High Court, Sindh Police, the Sukkur IBA Community Colleges &amp; Schools network, teaching licence and admission tests. Pick your post, practise under a real countdown, and check the official STS announcement for dates, fees and rules.
+            SIBA Testing Services (STS) is the testing service of Sukkur IBA University. It conducts recruitment and screening tests for Sindh government bodies such as the Sindh High Court and Sindh Police, and for the Sukkur IBA Community Colleges &amp; Schools network (20+ colleges and schools with 50+ cluster schools), which operates separately under the same university.
+          </p>
+          <p className="text-muted-foreground leading-relaxed max-w-3xl mt-3">
+            Every free STS-style mock test on MCQsAI is in one place — {TOTAL} timed tests for courts, police, the schools network, teaching licence and admission tests. Pick your post, practise under a real countdown, and check the official STS announcement for dates, fees and rules.
           </p>
           <div className="flex flex-wrap gap-2 mt-4">
             {[`${TOTAL} free mock tests`, 'Timed like the real test', 'Solved preview MCQs'].map((t) => (
