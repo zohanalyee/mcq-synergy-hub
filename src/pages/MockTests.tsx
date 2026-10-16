@@ -86,6 +86,24 @@ const CompetitiveExams = () => {
             jobTests={jobTests}
           />
 
+          <Link
+            to="/exams/sts"
+            className="group mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-primary/30 bg-primary/5 p-3 hover:border-primary transition-colors"
+          >
+            <div className="flex items-start gap-3">
+              <Landmark className="w-6 h-6 text-primary shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-foreground">STS (SIBA Testing Services) Test Hub</p>
+                <p className="text-xs text-muted-foreground">
+                  Preparing for Sindh Police, Sindh High Court or Sukkur IBA Community Colleges &amp; Schools posts (EST, HST, support staff)? All STS-conducted mock tests in one place.
+                </p>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-primary whitespace-nowrap">
+              Explore STS Hub <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            </span>
+          </Link>
+
           <WhatsAppChannelCTA message="📢 Daily past papers, answer keys aur test updates ke liye hamara WhatsApp Channel follow karein." />
 
           <div className="mt-6">
