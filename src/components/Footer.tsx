@@ -135,7 +135,9 @@ const Footer = () => {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Exam Preparation</h4>
             <ul className="space-y-2 text-sm">
               {[
+                { label: 'All Exams & Universities', path: '/exams', badge: 'All' },
                 { label: 'NUST Entry Test', path: '/nust-entry-test' },
+
                 { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
                 { label: 'PPSC Past Papers', path: '/ppsc-past-papers' },
                 { label: 'FPSC Past Papers', path: '/fpsc-past-papers' },
@@ -145,10 +147,16 @@ const Footer = () => {
                 { label: '9th Class MCQs', path: '/9th-class-mcqs' },
               ].map(link => (
                 <li key={link.path}>
-                  <Link to={link.path} className="text-white/80 hover:text-white transition-colors">
+                  <Link to={link.path} className="text-white/80 hover:text-white transition-colors inline-flex items-center gap-1.5">
                     {link.label}
+                    {'badge' in link && link.badge && (
+                      <span className="text-[10px] font-bold bg-white/20 text-white px-1.5 py-0.5 rounded-full leading-none">
+                        {link.badge}
+                      </span>
+                    )}
                   </Link>
                 </li>
+
               ))}
             </ul>
           </div>

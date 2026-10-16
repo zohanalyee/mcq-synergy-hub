@@ -107,8 +107,90 @@ const GROUPS: ExamGroup[] = [
         description: 'IBA Sukkur, MUET, LUMHS, University of Sindh and Mehran UET admission test preparation.',
         path: '/sindh-universities-entry-test',
       },
+      {
+        name: 'HEC USAT',
+        description: 'Undergraduate Studies Admission Test used by several HEC-affiliated universities for undergraduate entry.',
+        path: '/exams/usat',
+      },
+      {
+        name: 'HEC GAT Subject',
+        description: 'Graduate Assessment Test (Subject) for MS/MPhil and PhD admissions at Pakistani universities.',
+        path: '/exams/hec-gat-subject',
+      },
     ],
   },
+  {
+    title: 'University Admission Guides',
+    blurb:
+      'Individual university entry test guides — pattern, eligibility, subjects and preparation notes for each institution.',
+    icon: Building2,
+    items: [
+      {
+        name: 'Sukkur IBA University Entry Test',
+        description: 'Entry test guide for undergraduate admissions at Sukkur IBA University.',
+        path: '/exams/iba-sukkur',
+      },
+      {
+        name: 'Sukkur IBA STHP',
+        description:
+          'Sindh Talent Hunt Program guide — eligibility, test pattern and free full-length mock test practice.',
+        path: '/exams/sthp',
+        mockPath: '/mock-tests/sukkur-iba-sindh-talent-hunt-program-sthp-2027',
+        mockLabel: 'STHP mock test',
+      },
+      {
+        name: 'LUMS Admission Test',
+        description: 'LUMS undergraduate admission assessment — pattern, eligibility and preparation guidance.',
+        path: '/exams/lums',
+      },
+      {
+        name: 'Aga Khan University (AKU)',
+        description: 'AKU admission test guide for medical and nursing programme applicants.',
+        path: '/exams/aku',
+      },
+      {
+        name: 'GIKI Entry Test',
+        description: 'Ghulam Ishaq Khan Institute engineering admission test pattern and subject breakdown.',
+        path: '/exams/giki',
+      },
+      {
+        name: 'UET Lahore Admission',
+        description: 'UET Lahore engineering admission route, merit basis and ECAT-linked preparation.',
+        path: '/exams/uet-lahore',
+      },
+      {
+        name: 'NUMS Entry Test',
+        description: 'National University of Medical Sciences admission test guide for MBBS/BDS applicants.',
+        path: '/exams/nums',
+      },
+      {
+        name: 'PIEAS Entry Test',
+        description: 'PIEAS engineering and applied sciences admission test pattern and preparation notes.',
+        path: '/exams/pieas',
+      },
+      {
+        name: 'Air University Entry Test',
+        description: 'Air University admission test guide for engineering, computing and business programmes.',
+        path: '/exams/air-university',
+      },
+      {
+        name: 'University of Karachi',
+        description: 'Karachi University admission test guide covering eligibility and subject coverage.',
+        path: '/exams/karachi-university',
+      },
+      {
+        name: 'University of Sindh',
+        description: 'University of Sindh Jamshoro admission test guide — pattern, eligibility and practice.',
+        path: '/exams/sindh-university',
+      },
+      {
+        name: 'NTS NAT',
+        description: 'National Aptitude Test guide for undergraduate admissions at NTS-affiliated universities.',
+        path: '/exams/nat',
+      },
+    ],
+  },
+
   {
     title: 'Law Admission Test',
     blurb: 'The HEC-mandated law admission test required before LLB enrolment.',
@@ -118,8 +200,10 @@ const GROUPS: ExamGroup[] = [
         name: 'HEC LAT',
         description:
           'Law Admission Test practice covering English, Pakistan Studies, Islamic Studies, basic mathematics and general knowledge.',
-        path: '/mock-tests',
+        path: '/exams/lat',
+        mockPath: '/mock-tests',
         mockLabel: 'Find the LAT mock test',
+
       },
     ],
   },
