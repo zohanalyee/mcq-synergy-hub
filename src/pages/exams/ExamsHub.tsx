@@ -149,6 +149,14 @@ const GROUPS: ExamGroup[] = [
         path: '/exams/fpsc',
       },
       {
+        name: 'STS (SIBA Testing Services)',
+        description:
+          'Tests conducted by SIBA Testing Services, the testing service of Sukkur IBA University, for Sindh Police, Sindh High Court and the Sukkur IBA Community Colleges & Schools network.',
+        path: '/exams/sts',
+        mockPath: '/exams/sts',
+        mockLabel: 'Browse STS mock tests',
+      },
+      {
         name: 'Forces Jobs Tests',
         description: 'Initial tests for Pakistan Army, Navy and Air Force recruitment.',
         path: '/forces-jobs-tests',

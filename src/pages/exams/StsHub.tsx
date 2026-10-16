@@ -75,7 +75,7 @@ const GROUPS: { title: string; note: string; tests: T[] }[] = [
 const TOTAL = GROUPS.reduce((n, g) => n + g.tests.length, 0);
 
 const FAQS = [
-  { question: 'What is STS?', answer: 'STS (SIBA Testing Services) is the testing service of Sukkur IBA University. It conducts recruitment and admission screening tests for Sindh government departments, courts, police and the Sukkur IBA Community Colleges & Schools network.' },
+  { question: 'What is STS and how is it related to Sukkur IBA University?', answer: 'Sukkur IBA University is the parent institution. STS (SIBA Testing Services) is its testing service and conducts recruitment and admission screening tests. The Sukkur IBA Community Colleges & Schools network — 20+ colleges and schools along with 50+ cluster schools — operates separately under the same university, and STS conducts its recruitment tests too.' },
   { question: 'Does the STS test have negative marking?', answer: 'It depends on the advertisement. Some STS tests state negative marking and some do not, so read the official advertisement and roll number slip for your post. This page does not publish a single figure.' },
   { question: 'What are the passing marks in an STS test?', answer: 'Passing marks are set per post and are given in the official STS advertisement. Check the official STS website for your test.' },
   { question: 'Where do I apply and download my STS roll number slip?', answer: 'Applications and roll number slips are handled on the official STS portal, apply.sts.net.pk. Always confirm dates there.' },
@@ -116,7 +116,10 @@ const StsHub = () => {
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">SIBA Testing Services (STS) Test Preparation Hub</h1>
           </div>
           <p className="text-muted-foreground leading-relaxed max-w-3xl">
-            Every free STS-style mock test on MCQsAI in one place — {TOTAL} timed tests for Sindh High Court, Sindh Police, the Sukkur IBA Community Colleges &amp; Schools network, teaching licence and admission tests. Pick your post, practise under a real countdown, and check the official STS announcement for dates, fees and rules.
+            SIBA Testing Services (STS) is the testing service of Sukkur IBA University. It conducts recruitment and screening tests for Sindh government bodies such as the Sindh High Court and Sindh Police, and for the Sukkur IBA Community Colleges &amp; Schools network (20+ colleges and schools with 50+ cluster schools), which operates separately under the same university.
+          </p>
+          <p className="text-muted-foreground leading-relaxed max-w-3xl mt-3">
+            Every free STS-style mock test on MCQsAI is in one place — {TOTAL} timed tests for courts, police, the schools network, teaching licence and admission tests. Pick your post, practise under a real countdown, and check the official STS announcement for dates, fees and rules.
           </p>
           <div className="flex flex-wrap gap-2 mt-4">
             {[`${TOTAL} free mock tests`, 'Timed like the real test', 'Solved preview MCQs'].map((t) => (
