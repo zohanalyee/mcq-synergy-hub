@@ -135,7 +135,9 @@ const Footer = () => {
             <h4 className="text-sm font-semibold text-white uppercase tracking-wide">Exam Preparation</h4>
             <ul className="space-y-2 text-sm">
               {[
+                { label: 'All Exams & Universities', path: '/exams', badge: 'All' },
                 { label: 'NUST Entry Test', path: '/nust-entry-test' },
+
                 { label: 'MDCAT Past Papers', path: '/mdcat-past-papers' },
                 { label: 'PPSC Past Papers', path: '/ppsc-past-papers' },
                 { label: 'FPSC Past Papers', path: '/fpsc-past-papers' },
