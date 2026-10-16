@@ -41,9 +41,8 @@ const GlobalCanonical = () => {
     }
   }
 
-  // Legacy /subject/<uuid> & /subject-content/<uuid>: the build writes a static
-  // canonical (board subject page or self). Don't override it here.
-  if (/^\/subject(-content)?\/[0-9a-f]{8}-[0-9a-f]{4}-/i.test(p)) return null;
+  // Legacy /subject/<uuid> & /subject-content/<uuid>: emit apex canonical with
+  // the query (?topic=&count=&timed=&lang=) stripped, so variants consolidate.
 
   const canonical = `${SITE_ORIGIN}${p}`;
 
