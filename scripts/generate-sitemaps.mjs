@@ -183,7 +183,7 @@ function wordCount(s) {
 // ---------- expiry: shared rule in src/lib/opportunityExpiry.js ----------
 // Fail-safe: a failed DB read must never blank a sitemap. Keep the previous file.
 function keepPrevious(fileName, err) {
-  const path = resolve(OUT_DIR, fileName);
+  const path = resolve(SITEMAPS_DIR, fileName);
   if (existsSync(path)) {
     console.warn(`[sitemap] WARNING ${fileName}: DB read failed (${err?.message || err}); KEEPING PREVIOUS FILE unchanged.`);
   } else {
@@ -220,8 +220,8 @@ async function buildOpportunitySitemap(category, type, fileName) {
 }
 
 async function buildBlog() {
-  const { data: posts } = await supabase
-    .from("blog_posts").select("slug,content,excerpt,updated_at").eq("status", "published");
+  const posts = must(await supabase
+    .from("blog_posts").select("slug,content,excerpt,updated_at").eq("status", "published"), "blog_posts");
   let dropped = 0;
   const kept = (posts || []).filter(p => {
     if (wordCount(p.content) >= BLOG_MIN_WORDS) return true;
@@ -257,9 +257,9 @@ function jobTestSlug(test, all) {
 }
 
 async function buildMockTests() {
-  const { data: tests } = await supabase
+  const tests = must(await supabase
     .from("job_tests")
-    .select("id,title,organization,updated_at");
+    .select("id,title,organization,updated_at"), "job_tests");
   const all = tests || [];
   write("mock-tests.xml", urlSet(all.map((t) => ({
     loc: `${BASE_URL}/mock-tests/${jobTestSlug(t, all)}`,
@@ -393,13 +393,9 @@ ${entries.join("\n")}
   let boardPages = 1;
 
   if (!supabase) {
-    console.warn("[sitemap] No Supabase credentials; writing minimal placeholder DB sitemaps.");
-    write("jobs.xml", urlSet([]));
-    write("scholarships.xml", urlSet([]));
-    write("blog.xml", urlSet([]));
-    write("mock-tests.xml", urlSet([]));
-    write("boards-1.xml", urlSet([]));
-    writeIndex(1);
+    const err = new Error("no Supabase credentials");
+    for (const f of ["jobs.xml", "scholarships.xml", "blog.xml", "mock-tests.xml", "boards-1.xml"]) keepPrevious(f, err);
+    writeIndex(existsSync(resolve(SITEMAPS_DIR, "boards-2.xml")) ? 2 : 1);
     return;
   }
 
@@ -420,7 +416,7 @@ ${entries.join("\n")}
   try {
     boardPages = await buildBoards();
   } catch (e) {
-    keepPrevious("boards-1.xml", e); boardPages = existsSync(resolve(OUT_DIR, "boards-2.xml")) ? 2 : 1;
+    keepPrevious("boards-1.xml", e); boardPages = existsSync(resolve(SITEMAPS_DIR, "boards-2.xml")) ? 2 : 1;
   }
 
   writeIndex(boardPages);
