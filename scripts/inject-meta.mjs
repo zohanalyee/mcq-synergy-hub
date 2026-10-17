@@ -38,6 +38,7 @@ function examBridgesFor(subject) {
 import { buildMockTestContentHtml } from "./mock-test-content.mjs";
 import { topicLinks, humanizeSlug } from "../src/lib/topicLinkGraph.js";
 import { sthpMetaSentence } from "../src/lib/sthpStatus.js";
+import { isNthpTest, isStsTest } from "../src/lib/programStatus.js";
 const EXAM_SNAPSHOT = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../src/data/examFactsSnapshot.json"), "utf8"));
 import {
   IBA_NETWORK_LABEL,
@@ -747,7 +748,9 @@ async function injectMockTestContent() {
       }
     }
 
-    const siblings = all
+    // NTHP (IBA Karachi): never list STS-conducted tests as siblings. Mirrors MockTestDetail.tsx.
+    const siblingPool = isNthpTest(test.organization, test.title) ? all.filter((t) => !isStsTest(t.organization, t.title)) : all;
+    const siblings = siblingPool
       .filter((t) => t.id !== test.id)
       .sort((a, b) => Number(b.organization === test.organization) - Number(a.organization === test.organization))
       .slice(0, 8)
