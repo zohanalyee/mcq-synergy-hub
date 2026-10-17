@@ -30,6 +30,7 @@ import { QuestionsPreview } from "@/components/mock-tests/QuestionsPreview";
 import { getJobTests, JobTest } from "@/services/jobTestService";
 import examSnapshot from "@/data/examFactsSnapshot.json";
 import { getSthpFacts, sthpIsUpcoming, sthpStatusSentence, sthpMetaSentence } from "@/lib/sthpStatus";
+import { isNthpTest, isStsTest } from "@/lib/programStatus";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { resolveJobTestBySlug, toJobTestSlug } from "@/lib/jobTestSlug";
 import {
@@ -153,7 +154,10 @@ const MockTestDetail = () => {
 
   // Contextual in-body links: same-organisation tests first, so authority flows
   // into sibling posts instead of dead-ending on this page.
-  const siblingLinks = allTests
+  const isNthp = isNthpTest(test.organization, test.title);
+  // NTHP is IBA Karachi: never surface STS-conducted tests as its related tests.
+  const relatedPool = isNthp ? allTests.filter((t) => !isStsTest(t.organization, t.title)) : allTests;
+  const siblingLinks = relatedPool
     .filter((t) => t.id !== test.id)
     .sort(
       (a, b) =>
@@ -246,7 +250,15 @@ const MockTestDetail = () => {
               for verified dates, eligibility and official sources.
             </div>
           )}
-          {/sts|siba|sukkur iba|high court of sindh/i.test(`${test.organization || ""} ${test.title}`) && (
+          {isNthp && (
+            <div role="note" className="rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
+              Independent practice test based on the published NTHP syllabus, not an official IBA paper.{" "}
+              <Link to="/exams/nthp" className="font-medium text-primary hover:underline">
+                NTHP dates, districts &amp; syllabus
+              </Link>
+            </div>
+          )}
+          {isStsTest(test.organization, test.title) && (
             <p className="text-sm text-muted-foreground">
               Part of the{" "}
               <Link to="/exams/sts" className="font-medium text-primary hover:underline">
