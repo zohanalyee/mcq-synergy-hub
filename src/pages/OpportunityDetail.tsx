@@ -17,7 +17,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
 import { sanitizeEmailLinks, mailtoForEmailHref, isBareEmailHref } from "@/lib/markdownSanitize";
-import { isExpired, getPakistanToday } from "@/lib/opportunitySorting";
+import { isExpired } from "@/lib/opportunitySorting";
 
 // Shared expiry rule (also used by inject-meta + sitemap generator).
 import { isListingExpired } from "@/lib/opportunityExpiry";
@@ -177,6 +177,7 @@ const OpportunityDetail = () => {
     return (
       <Header>
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+          <SEOHead title="Opportunity not found" noindex />
           <h2 className="text-xl font-semibold mb-4">Opportunity not found</h2>
           <Button onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
@@ -219,7 +220,7 @@ const OpportunityDetail = () => {
     .filter(Boolean).length;
   const isThinOpp = oppWordCount < 25;
   const isExpiredOpp = isExpired({ deadline_date: opportunity.deadline_date });
-  const pastGrace = isExpiredPastGrace(opportunity.deadline_date);
+  const pastGrace = isListingExpired({ deadline: opportunity.deadline_date, created_at: opportunity.created_at });
 
   return (
     <>
