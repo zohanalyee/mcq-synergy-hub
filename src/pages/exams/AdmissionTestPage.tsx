@@ -60,6 +60,8 @@ export interface AdmissionTestPageProps {
   h1?: string;
   /** Optional FAQs; renders a section + one FAQPage schema. */
   faqs?: { question: string; answer: string }[];
+  /** Optional "not to be confused with" box shown under the intro. */
+  notice?: { text: string; label: string; to: string };
 }
 
 const AdmissionTestPage = (props: AdmissionTestPageProps) => {
@@ -134,6 +136,14 @@ const AdmissionTestPage = (props: AdmissionTestPageProps) => {
           <p className="mt-4 text-sm font-medium text-foreground">
             Test date: <span className="text-primary">{p.testDate}</span>
           </p>
+          {props.notice && (
+            <div role="note" className="mt-4 rounded-lg border border-primary/30 bg-primary/10 p-3 text-sm text-foreground">
+              {props.notice.text}{' '}
+              <Link to={props.notice.to} className="font-medium text-primary hover:underline">
+                {props.notice.label}
+              </Link>
+            </div>
+          )}
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
