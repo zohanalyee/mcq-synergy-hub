@@ -359,7 +359,7 @@ const NthpGuide = () => {
         </section>
 
         <p className="text-xs text-muted-foreground border-t pt-4">
-          MCQsAI is an independent practice platform, not affiliated with IBA Karachi, Sukkur IBA University, STS, OGDC, Mari Energies, Ihsan Trust or Meezan Bank.
+          MCQsAI is an independent practice platform, not affiliated with IBA Karachi, Sukkur IBA University, OGDC, Mari Energies, Ihsan Trust or Meezan Bank.
         </p>
       </div>
       <Footer />
