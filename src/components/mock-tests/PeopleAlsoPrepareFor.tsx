@@ -6,6 +6,7 @@ import { toJobTestSlug } from "@/lib/jobTestSlug";
 interface PeopleAlsoPrepareForProps {
   current: JobTest;
   allTests: JobTest[];
+  pool?: JobTest[];
   limit?: number;
 }
 
@@ -15,8 +16,9 @@ interface PeopleAlsoPrepareForProps {
  * then fills with other popular mock tests. Anchor text intentionally appends
  * "Mock Test" for SEO consistency while preserving each test's own keywords.
  */
-export const PeopleAlsoPrepareFor = ({ current, allTests, limit = 8 }: PeopleAlsoPrepareForProps) => {
-  const others = allTests.filter((t) => t.id !== current.id);
+export const PeopleAlsoPrepareFor = ({ current, allTests, pool, limit = 8 }: PeopleAlsoPrepareForProps) => {
+  // Optional narrower candidate pool (slugs still resolve against allTests).
+  const others = (pool ?? allTests).filter((t) => t.id !== current.id);
   const sameOrg = others.filter((t) => t.organization === current.organization);
   const restOrg = others.filter((t) => t.organization !== current.organization);
   const items = [...sameOrg, ...restOrg].slice(0, limit);

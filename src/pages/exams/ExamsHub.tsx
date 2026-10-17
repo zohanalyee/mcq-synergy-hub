@@ -139,6 +139,14 @@ const GROUPS: ExamGroup[] = [
         mockLabel: 'STHP mock test',
       },
       {
+        name: 'IBA Karachi NTHP 2027–28',
+        description:
+          'IBA Karachi National Talent Hunt Program — round dates, eligible districts, NTHP test syllabus and official sample papers.',
+        path: '/exams/nthp',
+        mockPath: '/mock-tests/iba-karachi-nthp-mock-test-2027-english-mathematics-practice',
+        mockLabel: 'NTHP mock test',
+      },
+      {
         name: 'LUMS Admission Test',
         description: 'LUMS undergraduate admission assessment — pattern, eligibility and preparation guidance.',
         path: '/exams/lums',

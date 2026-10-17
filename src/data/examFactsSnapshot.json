@@ -413,7 +413,7 @@
    ]
   },
   "test_date": null,
-  "verified_on": "2026-08-22",
+  "verified_on": "2026-10-16",
   "include_in_sitemap": true
  },
  {
@@ -1693,6 +1693,55 @@
    "testDate": "Varies by advertisement — check the official STS announcement",
    "verifiedOn": "16 October 2026",
    "officialUrl": "https://www.sts.net.pk"
+  },
+  "test_date": null,
+  "verified_on": "2026-10-16",
+  "include_in_sitemap": true
+ },
+ {
+  "slug": "nthp",
+  "kind": "admission",
+  "facts": {
+   "programs": [
+    {
+     "url": "https://talenthunt.iba.edu.pk/program/details/27",
+     "name": "Fall 2027",
+     "next": "Shortlisted students emailed 1 February 2027; online classes start 15 February 2027.",
+     "opens": "12 October 2026",
+     "closes": "15 December 2026",
+     "sponsor": "OGDC",
+     "closesIso": "2026-12-15"
+    },
+    {
+     "url": "https://talenthunt.iba.edu.pk/program/details/28",
+     "name": "Fall 2028",
+     "next": "Stage 1 results 30 March 2027; Stage 2 form (selected only) 15 January – 30 April 2027; final notification 30 June 2027.",
+     "opens": "12 October 2026",
+     "closes": "1 February 2027",
+     "sponsor": "Ihsan Trust + Meezan Bank",
+     "closesIso": "2027-02-01"
+    },
+    {
+     "url": "https://talenthunt.iba.edu.pk/program/details/29",
+     "name": "Fall 2028",
+     "next": "Stage 1 results 30 March 2027; Stage 2 form (selected only) 15 January – 30 April 2027; final notification 30 June 2027.",
+     "opens": "12 October 2026",
+     "closes": "1 February 2027",
+     "sponsor": "Mari Energies",
+     "closesIso": "2027-02-01"
+    },
+    {
+     "url": "https://talenthunt.iba.edu.pk/program/details/30",
+     "name": "Fall 2028",
+     "next": "Stage 1 results 30 March 2027; Stage 2 form (selected only) 15 January – 30 April 2027; final notification 30 June 2027.",
+     "opens": "12 October 2026",
+     "closes": "1 February 2027",
+     "sponsor": "OGDC",
+     "closesIso": "2027-02-01"
+    }
+   ],
+   "verifiedOn": "16 October 2026",
+   "officialUrl": "https://talenthunt.iba.edu.pk"
   },
   "test_date": null,
   "verified_on": "2026-10-16",

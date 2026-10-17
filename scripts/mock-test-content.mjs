@@ -1,3 +1,4 @@
+import { isNthpTest, isStsTest } from '../src/lib/programStatus.js';
 // Build-time builders for STATIC (non-JS-crawler-visible) mock-test detail
 // content.
 //
@@ -143,7 +144,10 @@ export function buildMockTestContentHtml({
     (/talent hunt program \(sthp\)/i.test(title)
       ? `<p>Verified dates, eligibility and official sources: <a href="/exams/sthp">Sukkur IBA STHP 2027 Guide</a>.</p>`
       : '') +
-    (/sts|siba|sukkur iba|high court of sindh/i.test(`${organization} ${title}`)
+    (isNthpTest(organization, title)
+      ? `<p>Independent practice test based on the published NTHP syllabus, not an official IBA paper. <a href="/exams/nthp">NTHP dates, districts &amp; syllabus</a>.</p>`
+      : '') +
+    (isStsTest(organization, title)
       ? `<p>More STS tests by department: <a href="/exams/sts">STS Test Preparation Hub</a>.</p>`
       : '') +
     `<section><h2>Test Pattern</h2><ul>` +

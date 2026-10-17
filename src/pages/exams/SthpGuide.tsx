@@ -76,6 +76,11 @@ const SthpGuide = () => (
       },
     ]}
     officialUrl="https://www.iba-suk.edu.pk/admissions/announcements"
+    notice={{
+      text: "Looking for IBA Karachi's National Talent Hunt (NTHP)? That is a different program from Sukkur IBA.",
+      label: 'IBA Karachi NTHP guide',
+      to: '/exams/nthp',
+    }}
     officialSources={[
       {
         label: 'Sukkur IBA — official admissions announcements (STHP notice, dates and eligibility)',

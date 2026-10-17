@@ -6,11 +6,13 @@ import { toJobTestSlug } from "@/lib/jobTestSlug";
 interface RelatedMockTestsProps {
   current: JobTest;
   allTests: JobTest[];
+  pool?: JobTest[];
   limit?: number;
 }
 
-export const RelatedMockTests = ({ current, allTests, limit = 6 }: RelatedMockTestsProps) => {
-  const others = allTests.filter((t) => t.id !== current.id);
+export const RelatedMockTests = ({ current, allTests, pool, limit = 6 }: RelatedMockTestsProps) => {
+  // Optional narrower candidate pool (slugs still resolve against allTests).
+  const others = (pool ?? allTests).filter((t) => t.id !== current.id);
   // Prioritise same organisation, then fill with the rest.
   const sameOrg = others.filter((t) => t.organization === current.organization);
   const restOrg = others.filter((t) => t.organization !== current.organization);
