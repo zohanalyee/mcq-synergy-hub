@@ -39,6 +39,7 @@ import { buildMockTestContentHtml } from "./mock-test-content.mjs";
 import { topicLinks, humanizeSlug } from "../src/lib/topicLinkGraph.js";
 import { sthpMetaSentence } from "../src/lib/sthpStatus.js";
 import { isNthpTest, isStsTest } from "../src/lib/programStatus.js";
+import { isListingExpired } from "../src/lib/opportunityExpiry.js";
 const EXAM_SNAPSHOT = JSON.parse(readFileSync(resolve(dirname(fileURLToPath(import.meta.url)), "../src/data/examFactsSnapshot.json"), "utf8"));
 import {
   IBA_NETWORK_LABEL,
@@ -376,6 +377,7 @@ async function injectMockTests() {
   return all.length;
 }
 
+const oppStats = { indexable: 0, expired: 0 };
 async function injectOpportunities() {
   // Same source + URL form as the sitemap (/opportunity/<title-slug>-<id>).
   let count = 0;
@@ -384,8 +386,8 @@ async function injectOpportunities() {
     { category: "scholarship", type: "scholarship", og: OG_SCHOLAR },
   ]) {
     const [{ data: ci }, { data: eo }] = await Promise.all([
-      supabase.from("content_items").select("id,title,description").eq("category", cfg.category).eq("status", "approved"),
-      supabase.from("external_opportunities").select("id,title,description,organization,source_name").eq("type", cfg.type).eq("status", "approved"),
+      supabase.from("content_items").select("id,title,description,deadline,created_at").eq("category", cfg.category).eq("status", "approved"),
+      supabase.from("external_opportunities").select("id,title,description,organization,source_name,deadline_date,created_at").eq("type", cfg.type).eq("status", "approved"),
     ]);
     const seen = new Set();
     for (const r of [...(ci || []), ...(eo || [])]) {
@@ -394,6 +396,8 @@ async function injectOpportunities() {
       seen.add(slug);
       const fallback = `${cfg.type} opportunity from ${r.organization || r.source_name || "MCQsAI"}`;
       const thin = wordCount(r.description) < OPPORTUNITY_MIN_WORDS;
+      const expired = isListingExpired({ deadline: r.deadline || r.deadline_date, created_at: r.created_at });
+      if (expired) oppStats.expired++; else if (!thin) oppStats.indexable++;
       patch({
         path: `/opportunity/${slug}`,
         // SEOHead strips any brand suffix the page passes, then appends " | MCQsAI".
@@ -401,12 +405,13 @@ async function injectOpportunities() {
         description: clamp(r.description || fallback, 160),
         ogImage: cfg.og,
         ogType: "article",
-        robots: thin ? "noindex,follow" : "index,follow",
+        robots: thin || expired ? "noindex,follow" : "index,follow",
         pageType: "opportunity",
       });
       count++;
     }
   }
+  console.log(`[inject-meta] opportunities: ${oppStats.indexable} indexable, ${oppStats.expired} expired → noindex,follow`);
   return count;
 }
 
