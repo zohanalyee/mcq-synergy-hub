@@ -153,7 +153,7 @@ const AnnouncementDetail = () => {
         }
         image={announcement.og_image_url || undefined}
         type="article"
-        noindex={!announcement.is_indexable}
+        noindex
       />
       {jsonLd && announcement.is_indexable && (
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: safeJsonLd(jsonLd) }} />

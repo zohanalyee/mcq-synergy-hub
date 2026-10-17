@@ -17,20 +17,10 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { SafeMarkdownLink } from "@/components/SafeMarkdownLink";
 import { sanitizeEmailLinks, mailtoForEmailHref, isBareEmailHref } from "@/lib/markdownSanitize";
-import { isExpired, getPakistanToday } from "@/lib/opportunitySorting";
+import { isExpired } from "@/lib/opportunitySorting";
 
-/** Days past the deadline a listing stays indexable before going noindex + leaving the sitemap. */
-const EXPIRED_GRACE_DAYS = 30;
-
-/** True when the deadline passed more than EXPIRED_GRACE_DAYS ago (Pakistan time). */
-const isExpiredPastGrace = (deadlineDate?: string | null): boolean => {
-  if (!deadlineDate) return false;
-  const d = new Date(`${String(deadlineDate).slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return false;
-  d.setDate(d.getDate() + EXPIRED_GRACE_DAYS);
-  const grace = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  return grace < getPakistanToday();
-};
+// Shared expiry rule (also used by inject-meta + sitemap generator).
+import { isListingExpired } from "@/lib/opportunityExpiry";
 import EngagementSection from "@/components/announcements/EngagementSection";
 import WhatsAppChannelCTA from "@/components/WhatsAppChannelCTA";
 
@@ -187,6 +177,7 @@ const OpportunityDetail = () => {
     return (
       <Header>
         <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+          <SEOHead title="Opportunity not found" noindex />
           <h2 className="text-xl font-semibold mb-4">Opportunity not found</h2>
           <Button onClick={() => navigate(-1)}>
             <ArrowLeft className="h-4 w-4 mr-2" /> Go Back
@@ -229,7 +220,7 @@ const OpportunityDetail = () => {
     .filter(Boolean).length;
   const isThinOpp = oppWordCount < 25;
   const isExpiredOpp = isExpired({ deadline_date: opportunity.deadline_date });
-  const pastGrace = isExpiredPastGrace(opportunity.deadline_date);
+  const pastGrace = isListingExpired({ deadline: opportunity.deadline_date, created_at: opportunity.created_at });
 
   return (
     <>
