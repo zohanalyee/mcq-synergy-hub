@@ -519,10 +519,10 @@ const MockTestDetail = () => {
 
 
         {/* People also prepare for — contextual internal linking */}
-        <PeopleAlsoPrepareFor current={test} allTests={allTests} />
+        <PeopleAlsoPrepareFor current={test} allTests={allTests} pool={relatedPool} />
 
         {/* Related */}
-        <RelatedMockTests current={test} allTests={allTests} />
+        <RelatedMockTests current={test} allTests={allTests} pool={relatedPool} />
 
         {/* FAQ */}
         <section aria-labelledby="faq-heading" className="space-y-3">
