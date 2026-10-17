@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { PROG_SEO_SLUGS } from "./prog-seo-gate.mjs";
 import { examPassesGate } from "../src/lib/examQualityGate.js";
+import { isListingExpired, EXPIRED_GRACE_DAYS, NO_DEADLINE_MAX_AGE_DAYS } from "../src/lib/opportunityExpiry.js";
 // Build-time sitemap generator.
 // Writes same-origin (mcqsai.com) static XML files into public/sitemaps/
 // so Google never sees cross-domain (supabase.co) sitemap URLs.
@@ -179,37 +180,40 @@ function wordCount(s) {
     .filter(Boolean).length;
 }
 
-// ---------- expired-listing grace period (must match OpportunityDetail.tsx) ----------
-// Listings stay in the sitemap for EXPIRED_GRACE_DAYS after their deadline
-// (candidates still search result/merit-list info), then drop out. Data is
-// never deleted — the page still returns 200, just noindexed.
-const EXPIRED_GRACE_DAYS = 30;
-function pastGrace(deadline) {
-  if (!deadline) return false;
-  const d = new Date(`${String(deadline).slice(0, 10)}T00:00:00`);
-  if (Number.isNaN(d.getTime())) return false;
-  d.setDate(d.getDate() + EXPIRED_GRACE_DAYS);
-  const grace = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-  const pkToday = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Karachi" });
-  return grace < pkToday;
+// ---------- expiry: shared rule in src/lib/opportunityExpiry.js ----------
+// Fail-safe: a failed DB read must never blank a sitemap. Keep the previous file.
+function keepPrevious(fileName, err) {
+  const path = resolve(OUT_DIR, fileName);
+  if (existsSync(path)) {
+    console.warn(`[sitemap] WARNING ${fileName}: DB read failed (${err?.message || err}); KEEPING PREVIOUS FILE unchanged.`);
+  } else {
+    console.warn(`[sitemap] WARNING ${fileName}: DB read failed (${err?.message || err}) and no previous file exists; writing empty sitemap.`);
+    write(fileName, urlSet([]));
+  }
+}
+function must(res, label) {
+  if (res?.error) throw new Error(`${label}: ${res.error.message}`);
+  return res?.data || [];
 }
 
 // ---------- DB-backed sitemaps ----------
 async function buildOpportunitySitemap(category, type, fileName) {
-  const [{ data: ci }, { data: eo }] = await Promise.all([
-    supabase.from("content_items").select("id,title,description,updated_at,deadline").eq("category", category).eq("status", "approved"),
-    supabase.from("external_opportunities").select("id,title,description,updated_at,deadline_date").eq("type", type).eq("status", "approved"),
+  const [ciRes, eoRes] = await Promise.all([
+    supabase.from("content_items").select("id,title,description,updated_at,created_at,deadline").eq("category", category).eq("status", "approved"),
+    supabase.from("external_opportunities").select("id,title,description,updated_at,created_at,deadline_date").eq("type", type).eq("status", "approved"),
   ]);
+  const ci = must(ciRes, "content_items");
+  const eo = must(eoRes, "external_opportunities");
   const seen = new Set();
   let dropped = 0;
   let droppedExpired = 0;
   const items = [...(ci || []), ...(eo || [])]
     .filter(r => { if (wordCount(r.description) >= OPPORTUNITY_MIN_WORDS) return true; dropped++; return false; })
-    .filter(r => { if (!pastGrace(r.deadline || r.deadline_date)) return true; droppedExpired++; return false; })
+    .filter(r => { if (!isListingExpired({ deadline: r.deadline || r.deadline_date, created_at: r.created_at })) return true; droppedExpired++; return false; })
     .map(r => ({ slug: generateSlugUrl(r.title, r.id), lastmod: (r.updated_at || "").split("T")[0] || today }))
     .filter(i => { if (seen.has(i.slug)) return false; seen.add(i.slug); return true; });
   if (dropped) console.log(`[sitemap] ${fileName}: dropped ${dropped} thin opportunity URLs (< ${OPPORTUNITY_MIN_WORDS} words)`);
-  if (droppedExpired) console.log(`[sitemap] ${fileName}: dropped ${droppedExpired} expired URLs (deadline passed > ${EXPIRED_GRACE_DAYS} days ago)`);
+  if (droppedExpired) console.log(`[sitemap] ${fileName}: dropped ${droppedExpired} expired URLs (deadline + ${EXPIRED_GRACE_DAYS}d passed, or no deadline and > ${NO_DEADLINE_MAX_AGE_DAYS}d old)`);
   write(fileName, urlSet(items.map(i => ({
     loc: `${BASE_URL}/opportunity/${i.slug}`, lastmod: i.lastmod, freq: "weekly", priority: "0.6",
   }))));
@@ -401,22 +405,22 @@ ${entries.join("\n")}
 
   await Promise.all([
     buildOpportunitySitemap("job", "job", "jobs.xml").catch(e => {
-      console.warn("[sitemap] jobs failed:", e?.message); write("jobs.xml", urlSet([]));
+      keepPrevious("jobs.xml", e);
     }),
     buildOpportunitySitemap("scholarship", "scholarship", "scholarships.xml").catch(e => {
-      console.warn("[sitemap] scholarships failed:", e?.message); write("scholarships.xml", urlSet([]));
+      keepPrevious("scholarships.xml", e);
     }),
     buildBlog().catch(e => {
-      console.warn("[sitemap] blog failed:", e?.message); write("blog.xml", urlSet([]));
+      keepPrevious("blog.xml", e);
     }),
     buildMockTests().catch(e => {
-      console.warn("[sitemap] mock-tests failed:", e?.message); write("mock-tests.xml", urlSet([]));
+      keepPrevious("mock-tests.xml", e);
     }),
   ]);
   try {
     boardPages = await buildBoards();
   } catch (e) {
-    console.warn("[sitemap] boards failed:", e?.message); write("boards-1.xml", urlSet([])); boardPages = 1;
+    keepPrevious("boards-1.xml", e); boardPages = existsSync(resolve(OUT_DIR, "boards-2.xml")) ? 2 : 1;
   }
 
   writeIndex(boardPages);
