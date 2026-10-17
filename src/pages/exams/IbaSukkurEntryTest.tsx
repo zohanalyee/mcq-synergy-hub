@@ -73,6 +73,11 @@ const IbaSukkurEntryTest = () => (
       'If your marks are borderline, study the Foundation Semester route: qualifying the written test and holding a 2.2 CGPA for six months is a legitimate path into a degree programme.',
     ]}
     officialUrl="https://www.iba-suk.edu.pk"
+    notice={{
+      text: "Looking for IBA Karachi's National Talent Hunt (NTHP)? That is a different program from Sukkur IBA.",
+      label: 'IBA Karachi NTHP guide',
+      to: '/exams/nthp',
+    }}
     officialSources={[
       {
         label: 'Sukkur IBA — undergraduate admission procedure and policies',
