@@ -181,7 +181,7 @@ const OG_EXAMS = `${BASE_URL}/og/exams-og.jpg`;
 // page components so the static robots tag, the sitemap, and the client-side
 // SEOHead all agree on which pages are indexable.
 const OPPORTUNITY_MIN_WORDS = 25;
-const BLOG_MIN_WORDS = 80;
+import { BLOG_MIN_WORDS } from "../src/lib/blogIndexability.js";
 function wordCount(s) {
   return String(s || "")
     .replace(/<[^>]+>/g, " ")

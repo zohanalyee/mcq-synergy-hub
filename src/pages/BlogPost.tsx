@@ -33,6 +33,7 @@ import { BlogErrorBoundary } from "@/components/blog/BlogErrorBoundary";
 
 import { calculateReadingTime, autoLinkMarkdown, extractHowToSteps } from "@/lib/blogContentUtils";
 import { useMemo } from "react";
+import { isBlogIndexable } from "@/lib/blogIndexability";
 
 const BlogPost = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -111,14 +112,8 @@ const BlogPost = () => {
 
   const articleUrl = `https://mcqsai.com/blog/${post.slug}`;
 
-  // Thin-content gate — must match BLOG_MIN_WORDS in the sitemap/inject-meta
-  // scripts (80 words). Near-empty posts ship robots=noindex.
-  const blogWordCount = rawContent
-    .replace(/<[^>]+>/g, " ")
-    .replace(/[#*_>`~\-!\[\]()]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean).length;
-  const isThinBlog = blogWordCount < 80;
+  // Thin-content gate — shared rule in src/lib/blogIndexability.js.
+  const isThinBlog = !isBlogIndexable(rawContent);
 
   return (
     <>

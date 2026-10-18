@@ -171,7 +171,7 @@ function writeProgSeo() {
 // Opportunities are time-sensitive (jobs/scholarships) so the bar is low — only
 // near-empty listings are excluded. Blog posts need real body copy to index.
 const OPPORTUNITY_MIN_WORDS = 25;
-const BLOG_MIN_WORDS = 80;
+import { BLOG_MIN_WORDS } from "../src/lib/blogIndexability.js";
 function wordCount(s) {
   return String(s || "")
     .replace(/<[^>]+>/g, " ")        // strip HTML tags
