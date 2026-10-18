@@ -11,3 +11,4 @@
 - [x] Turn 3: retarget Karachi MDCAT page and strengthen inbound links
 - [x] Turn 3: expand the government job tests landing page
 - [x] Verify Turn 3 page metadata, links, rendering, and project health
+- [x] Batch 4A-2: blog 300-word indexability gate (shared rule)
