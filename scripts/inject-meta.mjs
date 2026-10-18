@@ -181,7 +181,7 @@ const OG_EXAMS = `${BASE_URL}/og/exams-og.jpg`;
 // page components so the static robots tag, the sitemap, and the client-side
 // SEOHead all agree on which pages are indexable.
 const OPPORTUNITY_MIN_WORDS = 25;
-import { BLOG_MIN_WORDS } from "../src/lib/blogIndexability.js";
+import { isBlogIndexable } from "../src/lib/blogIndexability.js";
 function wordCount(s) {
   return String(s || "")
     .replace(/<[^>]+>/g, " ")
@@ -423,7 +423,7 @@ async function injectBlog() {
   const all = data || [];
   for (const p of all) {
     const t = (p.meta_title || p.title || "").trim();
-    const thin = wordCount(p.content) < BLOG_MIN_WORDS;
+    const thin = !isBlogIndexable(p.content);
     patch({
       path: `/blog/${p.slug}`,
       title: `${t} | MCQsAI`,
