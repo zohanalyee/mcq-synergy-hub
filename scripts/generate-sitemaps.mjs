@@ -171,7 +171,7 @@ function writeProgSeo() {
 // Opportunities are time-sensitive (jobs/scholarships) so the bar is low — only
 // near-empty listings are excluded. Blog posts need real body copy to index.
 const OPPORTUNITY_MIN_WORDS = 25;
-import { BLOG_MIN_WORDS } from "../src/lib/blogIndexability.js";
+import { BLOG_MIN_WORDS, isBlogIndexable } from "../src/lib/blogIndexability.js";
 function wordCount(s) {
   return String(s || "")
     .replace(/<[^>]+>/g, " ")        // strip HTML tags
@@ -224,7 +224,7 @@ async function buildBlog() {
     .from("blog_posts").select("slug,content,excerpt,updated_at").eq("status", "published"), "blog_posts");
   let dropped = 0;
   const kept = (posts || []).filter(p => {
-    if (wordCount(p.content) >= BLOG_MIN_WORDS) return true;
+    if (isBlogIndexable(p.content)) return true;
     dropped++; return false;
   });
   if (dropped) console.log(`[sitemap] blog.xml: dropped ${dropped} thin blog URLs (< ${BLOG_MIN_WORDS} words)`);
