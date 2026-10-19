@@ -9,3 +9,4 @@
 - Mock-test STS/NTHP membership (isStsTest/isNthpTest) and per-round open/closed status come only from src/lib/programStatus.js, used by the app and build scripts — so IBA Karachi NTHP never links to or lists STS tests, and each round closes on its own deadline.
 - Job/scholarship expiry (noindex + sitemap removal) comes only from src/lib/opportunityExpiry.js, used by OpportunityDetail, inject-meta and generate-sitemaps — so browser HTML, prerendered HTML and sitemaps never disagree. Sitemap generator keeps the previous file when a DB read fails, so an outage never blanks a sitemap.
 - Blog indexability (noindex + blog.xml removal) comes only from src/lib/blogIndexability.js, used by BlogPost, inject-meta and generate-sitemaps — so browser HTML, prerendered HTML and blog.xml never disagree.
+- Third-party startup libraries use the shared inline load-then-delay idle scheduler in index.html, with a bounded timer fallback — so user input never initiates these downloads.
