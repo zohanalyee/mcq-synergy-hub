@@ -42,6 +42,7 @@ const Footer = () => {
                   <a
                     key={key}
                     href={url}
+                    onClick={key === 'whatsapp' ? () => trackWhatsAppJoin('footer_social') : undefined}
                     target="_blank"
                     rel="noopener noreferrer"
                     aria-label={label}

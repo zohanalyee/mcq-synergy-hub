@@ -124,6 +124,7 @@ const NthpGuide = () => {
           <p className="text-sm text-muted-foreground">
             Facts verified on {f.verifiedOn} from the official IBA Karachi Talent Hunt portal, the NTHP website and the official 2027 cycle flyer.
           </p>
+          <JoinAlertsLink placement="nthp" />
         </header>
 
         <section aria-labelledby="what">
@@ -363,7 +364,6 @@ const NthpGuide = () => {
           MCQsAI is an independent practice platform, not affiliated with IBA Karachi, Sukkur IBA University, OGDC, Mari Energies, Ihsan Trust or Meezan Bank.
         </p>
       </div>
-      <JoinAlertsLink placement="nthp" />
       <Footer />
     </Header>
   );

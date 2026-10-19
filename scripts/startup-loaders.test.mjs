@@ -94,3 +94,15 @@ test('OneSignal stays disabled in preview; GA4 and Clarity retain queue stubs', 
   h.window.clarity('event', 'queued');
   assert.equal(h.window.clarity.q.length, 1);
 });
+
+test('notification opt-in sends no token or identifier and ignores token refresh', () => {
+  const h = harness();
+  let listener;
+  const sdk = { User: { PushSubscription: { addEventListener: (event, fn) => { listener = fn; } } }, init: () => {} };
+  h.window.OneSignalDeferred[0](sdk);
+  listener({ previous: { optedIn: false }, current: { optedIn: true, token: 'private-token', id: 'private-id' } });
+  listener({ previous: { optedIn: true }, current: { optedIn: true, token: 'new-token' } });
+  const events = h.window.dataLayer.filter(x => x[1] === 'notification_optin');
+  assert.equal(events.length, 1);
+  assert.equal(events[0].length, 2);
+});
