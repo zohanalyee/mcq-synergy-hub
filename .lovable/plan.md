@@ -1,158 +1,137 @@
-# Growth, Reach and Zero-Budget Monetization Audit (report only)
+# Batch 6: Free practice PDF pages for NTHP and STHP, plus small fixes
 
-Nothing was changed. Each item is marked **Verified** (checked today in files or data) or **To measure** (needs a read-only script run; I have not checked it yet, so no number is given).
+No code has been changed yet. This plan replaces the growth audit report (that report was never shown; I can show it again on request).
 
-## A. Growth and indexing
+## (a) What the audit found
 
-### 1. Counts per page type (sitemap: Verified today, files in `public/sitemaps/`)
+**Part A: landing pages**
+- No `/pdf/*` routes or `public/downloads/` folder exist today.
+- The STHP mock test page is `/mock-tests/sukkur-iba-sindh-talent-hunt-program-sthp-2027`. The NTHP mock test page is the one you gave me.
+- The STHP guide title contains "Past Papers". It will stay unchanged (`src/pages/exams/SthpGuide.tsx`).
+- Canonical tags already drop the query string on every page (`GlobalCanonical.tsx`). Hub URLs with `?utm_source=pdf` already point to the clean apex URL. Nothing needs changing for that.
+- `robots.txt` does not block `/downloads/`. That is correct: Google must be able to fetch the files to see the noindex header.
 
-| Type | In sitemap | Notes |
-|---|---|---|
-| Board topics | 1,335 (`boards-1.xml` 1,000 + `boards-2.xml` 335) | 1,249 indexable topics found in the last build; the gap of about 86 is hubs and class pages. To measure |
-| Mock tests | 95 | 94 tests + `/mock-tests` |
-| Exam pages | 24 | includes `/exams`, `/exams/sts`, `/exams/nthp`, `/exams/sthp` |
-| Blog | 30 | 35 published; 5 have noindex under the 300-word rule (`src/lib/blogIndexability.js`) |
-| Jobs | 69 | expiry rule in `src/lib/opportunityExpiry.js` |
-| Scholarships | 8 | same rule |
-| Announcements | 0 detail pages | detail pages have noindex on purpose; only `/announcements` is listed |
-| Tools | 15 | `public/sitemaps/tools.xml` |
-| Programmatic `/p/*` | 21 | from the quality gate in `scripts/prog-seo-gate.mjs` |
-| Static/hubs | 26 | `static.xml` |
-| **Total** | **1,623** | Search Console shows about 1,420 submitted and 172 indexed |
+**Part C: Batch 6 items**
+- **Share links:** the result share (`src/lib/growthRules.js` `whatsappResultUrl`) already links to the test's own page, never the homepage. It adds only `?utm_source=whatsapp`. The change is to add `&utm_medium=result_share`. Session pages still never get a share link.
+- **"Job Test:" label:** it is added to every mock test's session name (`src/components/mock-tests/JobTestsTab.tsx` lines 224/241/318). That name is also used as a hidden key for saving progress (`TestSession.tsx` 363/461, `jobTestService.ts` 417, `useTestGrowth.ts`). So the fix should change only the **shown** text: drop the prefix when the test is not a job test (for example NTHP, STHP and university admission tests). The saved key stays the same, so nobody loses progress.
+- **Analytics:** `src/utils/analytics.ts` sends the full path, so every `/test-session/<id>` becomes a new page in GA4. Nothing stops GA4 or Clarity from loading on `/admin` today. Both are in `index.html`, in the idle loader.
 
-- Search Console's 1,420 is older than the current files. After you publish, the submitted count should go up to about 1,623.
-- With only 172 indexed (about 11%), the bottleneck is **getting Google to see the pages as worth indexing**, not adding more pages. 1,335 of the URLs are board topics with thin or overlapping content.
+## (b) Files and routes
 
-### 2. Internal links
-- Topic pages link to previous/next pages, a group of nearby topics and their subject hub (`src/lib/topicLinkGraph.js`). These links are in the static HTML.
-- Hubs: `PopularSubjectHubs.tsx` appears on `/boards` and the homepage. `/exams` links to the STS, STHP, NTHP and university guides. The footer links to `/exams`.
-- In the last audit, 35 topics had 2 or fewer static inbound links.
-- To measure: a link graph built from the `dist/` HTML (inbound links per page, orphan pages, click depth from `/` and `/exams`, anchor text). This is step 1 of the roadmap. It's a free, local, read-only script.
-- Risk: blog posts and jobs/scholarships get most of their links from list pages that load with JavaScript. Whether those links are in the static HTML is To measure.
+New files:
+- `src/data/practicePdfs.ts`: one entry per exam. Each entry holds the slug, title, meta, H1, intro, set table, 5 preview questions, FAQs, official links, mock test link, hub link, PDF file name, and `verifiedOn` (empty means hidden; you set the date).
+- `src/pages/pdf/PracticePdfLanding.tsx`: one shared page design for every exam.
+- `src/components/PracticePdfBox.tsx`: a "Free practice PDF" box for hub and mock test pages.
+- `src/lib/practicePdf.test.mjs`: checks the rules (see the Technical section).
+- `public/downloads/NTHP-Free-Practice-Set-50-Questions-MCQsAI-v3.pdf` and `public/downloads/STHP-Free-Practice-Set-50-Questions-MCQsAI-v3.pdf`: your attached files, copied in unchanged.
+- Public URLs: `https://mcqsai.com/downloads/NTHP-Free-Practice-Set-50-Questions-MCQsAI-v3.pdf` and `https://mcqsai.com/downloads/STHP-Free-Practice-Set-50-Questions-MCQsAI-v3.pdf`.
 
-### 3. Top opportunity pages (upcoming events first)
-Order: `/exams/nthp` (deadline 15 Dec 2027 on the poster), `/exams/sthp`, `/exams/sts` with the 70 cadre tests, the NTHP mock test, `/exams/mdcat`, `/mdcat-syllabus`, `/mdcat-past-papers`, `/exams/ecat`, `/exams/nts`, `/exams/ppsc`, `/exams/fpsc`, `/exams/css`, `/exams/iba-sukkur`, `/exams/nums`, `/exams/usat`, `/exams/hec-gat-subject`, `/mock-tests`, `/boards`, `/`, `/announcements`.
-- The checklist for each page (title, meta, H1, word count, FAQ count, schema, links in and out, mock test link, Join Alerts link, share link) is To measure with one script over `dist/`.
-- Already known gaps: the Join Alerts link is hidden on every page until you set `whatsapp_channel_url`. The STS "Syllabus verified on" date is hidden until you give the date.
+New routes: `/pdf/nthp-practice-questions` and `/pdf/sthp-practice-questions`.
 
-### 4. Event coverage
-To measure: compare `job_tests`, `exam_pages` and `educational_systems`. The output is a list of exams with no guide page, no mock test or no hub link. The last audit already found police and judiciary hubs missing, and these exams have no mock test today. No search volumes will be made up.
+Files to edit:
+- `src/App.tsx`, `src/routes/lazyPages.ts`, `src/routes/eagerPages.tsx`, `src/routes/pageMap.ts`: register the page.
+- `scripts/prerender-routes.mjs`: add the 2 routes.
+- `scripts/inject-meta.mjs`: static title, meta, robots and canonical for the 2 routes.
+- `scripts/generate-sitemaps.mjs`: add the 2 URLs to `exams.xml`.
+- `src/pages/exams/NthpGuide.tsx` and `SthpGuide.tsx`: add the PDF box. On STHP only, also add the official sample papers block and 2 FAQs.
+- `src/pages/MockTestDetail.tsx`: show the PDF box only on the NTHP and STHP mock tests.
+- `src/pages/exams/ExamsHub.tsx` and `src/pages/MockTests.tsx`: add a small "Free practice PDFs" link row.
+- `src/lib/growthRules.js` and its test: add `utm_medium` to the result share link.
+- `src/lib/growthEvents.ts`: add the `pdf_download`, `pdf_share` and `channel_join_click` events.
+- `src/components/mock-tests/JobTestsTab.tsx`, or the session header: change only the shown label.
+- `src/utils/analytics.ts`: turn `/test-session/<id>` into `/test-session/:id`, and skip `/admin`.
+- `index.html`: the idle loader skips GA4 and Clarity when the path starts with `/admin`. The delays stay the same.
+- `scripts/startup-loaders.test.mjs`: add an admin-skip check.
 
-### 5. Near-duplicate risk
-- Canonical topic linking lets boards share the same questions (`canonical_topic_name`). The same topic across boards can show very similar question sets.
-- To measure: count title/meta duplicates across `dist/`, and how much the question sets overlap per canonical topic.
-- **Risk flag:** merging or noindexing duplicates could lower impressions. A merge should be tested on a small sample first.
+## Page wording (proposed)
 
-### 6. Structured data (Verified, where found)
-- Pages with schema: JobPosting (`JobDetailPage.tsx:83`, `OpportunityDetail.tsx:126`, optional in `BlogPost.tsx`), FAQPage, BreadcrumbList, Course on exam pages, Quiz on topic pages, WebApplication on tools.
-- **Risk:** JobPosting on pages we copied from other sites, or on expired listings, goes against Google's job guidelines. Google can take action for this. Proposal: emit JobPosting only for original, non-expired listings that have the required fields. This is safe because it removes no pages.
+**NTHP page**
+- Title (59 characters): NTHP Practice Questions PDF – Free Unofficial MCQs | MCQsAI
+- Meta (about 150 characters): Free NTHP practice questions PDF: 50 original MCQs (Maths, English) based on the published syllabus, with answer key and explanations. Unofficial.
+- H1: NTHP Practice Questions PDF (Free, Unofficial)
 
-### 7. Sitemaps
-- The sitemap index shows lastmod 2026-10-18 for every child file. Many board URLs share the build date, which makes lastmod less trustworthy to Google.
-- To measure: fetch a sample of live URLs and check for redirects and 4xx/5xx errors (free).
+**STHP page**
+- Title (57 characters): STHP Test Preparation PDF – Free Sample Questions | MCQsAI
+- Meta (about 152 characters): Free STHP test preparation PDF: 50 original sample questions MCQs PDF (English, Maths, ICT) from the published syllabus. Answer key + explanations. Unofficial.
+- H1: STHP Test Preparation PDF – Free Sample Questions (Unofficial)
 
-### 8. OG and WhatsApp previews
-Titles and descriptions are set for each page. Previews use one shared site-wide image, not an image per page. A free improvement: a generated OG image for each exam page, made at build time.
+**Both pages**
+- Each page has these sections, in this order:
+  - an intro of more than 120 words, with your honest label
+  - the set table (NTHP: Maths 26, English 24; STHP: English 20, Maths 20, ICT 10; answer key and explanations; about 60 minutes)
+  - your 5 preview questions with answers and explanations
+  - the 4 buttons
+  - 6 FAQs
+  - official links
+  - "Verified on", shown only when you have set the date
+  - the disclaimer
+- All content is in the static HTML.
+- Schema: BreadcrumbList (Home > Exams > NTHP/STHP > Practice Questions PDF) and FAQPage only.
+- The NTHP page never shows the word "STS". The disclaimer you asked for names STS, so it will be shortened on the NTHP page: "MCQsAI is an independent practice platform, not affiliated with IBA Karachi, Sukkur IBA University, OGDC, Mari Energies, Ihsan Trust or Meezan Bank." This follows your earlier rule. Please confirm.
 
-## B. Retention and engagement
+**Buttons**
+1. Download: a plain `<a href download>` link that works without JavaScript and sends `pdf_download {exam, placement}`.
+2. Online test: links to the mock test.
+3. Join channel: uses `whatsapp_channel_url`; if that is empty, it uses your fallback URL and sends `channel_join_click {placement}`.
+4. Share on WhatsApp: shares the landing page with `?utm_source=whatsapp&utm_medium=pdf_share` and sends `pdf_share {exam, placement}`. It never shares the PDF file.
 
-### 9. Flow
-- Guests can open content freely. Actions are gated, with a 15-question mock demo cap.
-- A login prompt appears via `GuestChoiceModal` when a guest saves, goes past the cap, or opens the AI Coach.
-- Results are shown to guests, and their score carries forward after signup (`GuestResultCarryForward.tsx`).
-- Settings are in `src/config/features.ts`.
+## (c) Sitemap change
 
-### 10. AI Coach
-Results come from saved attempts (`user_performance`, `user_question_mastery`) and are shown on the dashboard. Remedial tests are stored in `recommended_tests`. To measure: AI calls per use and limits per user (`src/lib/aiCoach.ts`, coach edge functions).
+- `exams.xml`: +2 URLs, `/pdf/nthp-practice-questions` and `/pdf/sthp-practice-questions`.
+- All other sitemap files stay the same, except for changes caused by new data (which I will report separately).
+- PDF files: 0 sitemap entries.
+- The 2 new URLs get no lastmod, because no page-specific date exists. Existing lastmod values stay untouched.
+- Expected result: total pages built goes up by exactly 2.
 
-### 11. Notifications
-- OneSignal push works on the live domain and fires `notification_optin`.
-- Streak emails are sent by `send-streak-reminders` on a schedule.
-- No event measures opens or clicks for streak emails yet.
+## (d) Internal links into the new pages (static `<a href>`)
 
-## C. Monetization at zero budget
+- `/exams/nthp` → NTHP PDF page.
+- `/exams/sthp` → STHP PDF page.
+- The NTHP mock test → NTHP PDF page.
+- The STHP mock test → STHP PDF page.
+- `/exams` → both PDF pages.
+- `/mock-tests` → both PDF pages.
+- From the PDF pages: links back to their hub, their mock test, and `/exams`. The NTHP page has no STS link.
 
-### 12. What exists (Verified)
-- AdSense client `ca-pub-4978762286882236` and `ads.txt` are set up.
-- 4 ad units are placed, one per page: board topic (not on thin pages), blog post (not on thin posts), `/mock-tests` hub, and the test results screen (`src/config/ads.ts`).
-- Ads only load on mcqsai.com.
-- No consent banner, child-directed setting or non-personalized ads flag was found in the code.
-- No payment provider, subscription table or entitlement table was found. The word "premium" in the code is only labels.
-- Credits exist (`user_credits`, `deduct_credits`), which helps.
+## (e) Risks and what I recommend not doing
 
-### 13. Manual-payment "Plus" design
-- New table `entitlements` (user_id, plan, starts_at, expires_at, source='manual', receipt_ref, status, approved_by).
-- New table `plus_receipts`, plus a private storage bucket for receipt images.
-- Security rules: users can read their own rows and add receipts. Only admins can approve or revoke, using `is_admin()`.
-- A `has_plus()` database function and a `usePlus()` hook in the app.
-- An admin "Plus approvals" tab.
-- Payment by JazzCash/Easypaisa/bank transfer to your account, by hand, with no fee to us.
-- Effort: about 1 to 2 days. Risk: low. Exam fact pages are never paywalled.
+- Low risk: new pages only. Hub titles, meta and H1s stay the same.
+- **Mock test page links are client-side today.** If a mock test's static HTML comes from `inject-meta`, I will add the link there as well. Otherwise it is only visible after the page loads in the browser. I will report which.
+- **Do not** rename the hidden "Job Test:" session key. That would break saved progress and resume.
+- **Do not** put the PDFs in storage, in a sitemap, or behind `robots.txt` blocking.
+- `channel_join_click` duplicates the existing `whatsapp_join_click`. I suggest sending `channel_join_click` only on the new PDF buttons. The existing event stays on the current buttons, so earlier reports remain comparable.
+- If you change the WhatsApp channel later, the fallback URL in the code goes stale. Setting the admin value avoids this.
 
-### 14. Plus features, best value for lowest cost first
-1. Ad-free: no AI cost, easy.
-2. Unlimited mocks and full review: no AI cost.
-3. Paper Builder: no AI cost.
-4. Detailed analytics: no AI cost.
-5. Higher AI Coach limit: costs AI calls, so it needs a cap.
+## (f) Your checklist after publishing
 
-### 15. Paper Builder
-- Possible using only approved questions from `content_items`, with filters for topic, difficulty and count.
-- PDF made in the browser with an answer key. Free users get a watermark and 2 papers a day; Plus users get no watermark.
-- Needs one table, `generated_papers`, to count use against the limit.
-- Zero AI cost. The PDF library is free.
+1. In the Cloudflare dashboard, go to Rules → Transform Rules → Modify Response Header → Create rule.
+   - Name: Noindex downloads.
+   - Custom filter: Field URI Path, operator "starts with", value `/downloads/`.
+   - Choose Set static, header `X-Robots-Tag`, value `noindex`.
+   - Click Deploy.
+2. Go to Caching → Purge Cache, and purge these URLs: the 2 PDF pages, `/exams/nthp`, `/exams/sthp`, `/sitemap.xml`, `/sitemaps/exams.xml`, and the 2 PDF files.
+3. Check the header with `curl -I https://mcqsai.com/downloads/NTHP-Free-Practice-Set-50-Questions-MCQsAI-v3.pdf`. You should see `x-robots-tag: noindex`.
+4. In Search Console, use URL Inspection → Request indexing for the 2 pages, then resubmit `sitemap.xml`.
+5. In GA4, go to Admin → Events. After the events show up (usually within 24 hours), turn on "Mark as key event" for `pdf_download`, `channel_join_click` and `pdf_share`. Custom events can be marked as key events. Register `exam` and `placement` as custom dimensions.
+6. Recheck in 30 days: are the PDFs not indexed and the pages indexed?
 
-### 16. Ad risks
-- The results-screen ad is right after test content. It is allowed but sits close to policy limits. Never put ads inside the live test (already enforced).
-- Your audience includes students under 18. You should consider marking the site child-directed or serving non-personalized ads, and a consent tool is required for visitors from the EEA/UK. AdSense's own consent tool is free.
-- Trade-off: both lower ad earnings.
+## Technical section
 
-### 17. Events to add
-`plus_view`, `plus_click`, `receipt_submitted`, `receipt_approved`, `paper_generated`, `ad_free_active`.
+Tests (`node --test`):
+- titles are 60 characters or less
+- meta descriptions are 155 characters or less
+- the NTHP page data has no "STS"
+- the share URL has the right UTM tags and the apex domain
+- the session path is normalised
+- admin paths skip analytics
+- the quality gate passes (60 or more words, 3 or more FAQs)
 
-## D. Operations and risk
+After the build:
+- check the raw HTML of both pages (title, meta, H1, canonical, robots, JSON-LD types)
+- check the `exams.xml` diff
+- check that the two files under `/downloads/` load
 
-### 18. Manual admin time
-These take your time over and over:
-- duplicate review
-- content approval
-- entering exam facts
-- checking expired listings (now automatic)
-- publishing so sitemaps refresh
+## Open questions
 
-Candidates to automate: a daily sitemap edge function (`generate-sitemap` already exists), a weekly digest email of queue and failure counts, and auto-flagging of empty topics.
-
-### 19. Reliability
-- Backup status can't be seen from here. You should check it in Cloud settings.
-- There are no alerts for failures or a stuck queue.
-- The three riskiest security items:
-  1. Leaked-password protection is off.
-  2. Many public database functions can be called by anyone.
-  3. Public read access to `system_settings` is now limited to one setting. This is safe, but every new public policy should be checked.
-
-## (a) Priority table
-
-| Item | Traffic/rank | Revenue | Effort | Risk | Depends on |
-|---|---|---|---|---|---|
-| Publish pending batches | High | Med | 0 | Low | you |
-| Link graph and page checklist script | High (insight) | - | 0.5 day | None | - |
-| Limit JobPosting to eligible listings | Protects rank | - | 0.5 day | Low | - |
-| Cut thin/duplicate board topics | Med+ | - | 1 day | **May lower impressions** | sample test |
-| Police and judiciary hubs | Med | Low | 1 day | Low | official sources |
-| Daily dynamic sitemap | Med | - | 0.5 day | Low | - |
-| Ad consent and child-directed setting | - | -/policy safe | 0.5 day | Lowers ad earnings | your choice |
-| Plus manual payments | - | High | 1-2 days | Low | payment account |
-| Paper Builder | Low | High | 2 days | Low | Plus |
-| Failure alerts digest | - | Protects | 0.5 day | Low | email setup |
-
-## (b) 30/60/90 days
-- **Days 1-30:** publish, run the measurement scripts, fix JobPosting, set the WhatsApp URL, add the STS verified date, NTHP push, keep the cutoff ready for MDCAT 2027 content, add the consent setting.
-- **Days 31-60:** Plus MVP, funnel events, police and judiciary hubs, daily sitemap, alerts digest.
-- **Days 61-90:** Paper Builder, a sample test of duplicate merging, OG images per exam page, an outreach plan using the free link list in `docs/link-building-plan.md`.
-
-## (c) Open questions
-1. Which payment accounts can receive Plus payments (JazzCash, Easypaisa, bank)? What price?
-2. Should we treat the audience as under 18 for ads?
-3. May I run the read-only measurement scripts (no changes) to fill the "To measure" cells?
-4. What is the STS verified-on date, and what is the WhatsApp channel URL?
-5. Should you test removing duplicate topics on a small sample, accepting some risk to impressions?
+1. Should the NTHP page use the disclaimer without STS? (My recommendation is yes.)
+2. What date should go in "Verified on"?
