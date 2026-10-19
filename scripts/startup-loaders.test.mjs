@@ -12,7 +12,7 @@ const delays = new Map([
   ['OneSignalSDK.page.js', 15000],
 ]);
 
-function harness({ idle = true, ready = 'loading', hostname = 'mcqsai.com' } = {}) {
+function harness({ idle = true, ready = 'loading', hostname = 'mcqsai.com', pathname = '/' } = {}) {
   let now = 0;
   let id = 0;
   const timers = new Map();
@@ -30,7 +30,7 @@ function harness({ idle = true, ready = 'loading', hostname = 'mcqsai.com' } = {
     createElement: () => ({}),
     head: { appendChild: element => appended.push({ src: element.src, at: now }) },
   };
-  Object.assign(window, { window, document, location: { hostname }, Date });
+  Object.assign(window, { window, document, location: { hostname, pathname, search: '', origin: 'https://' + hostname }, Date });
   const context = vm.createContext(window);
   for (const script of scripts) vm.runInContext(script, context);
   function advance(target) {
@@ -105,4 +105,12 @@ test('notification opt-in sends no token or identifier and ignores token refresh
   const events = h.window.dataLayer.filter(x => x[1] === 'notification_optin');
   assert.equal(events.length, 1);
   assert.equal(events[0].length, 2);
+});
+test('admin routes never load GA4 or Clarity; session IDs collapse in the GA4 page path', () => {
+  const admin = harness({ ready: 'complete', pathname: '/admin/content' });
+  admin.advance(40000); admin.flushIdle();
+  assert.equal(admin.appended.some(item => item.src.includes('gtag/js') || item.src.includes('clarity.ms')), false);
+  const session = harness({ ready: 'complete', pathname: '/test-session/guest-abc' });
+  const config = session.window.dataLayer.find(x => x[0] === 'config');
+  assert.equal(config[2].page_path, '/test-session/:id');
 });
