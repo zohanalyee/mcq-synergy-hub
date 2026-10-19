@@ -135,3 +135,8 @@ After the build:
 
 1. Should the NTHP page use the disclaimer without STS? (My recommendation is yes.)
 2. What date should go in "Verified on"?
+
+## Files received (19 Oct)
+- Both PDFs arrived: NTHP (132 KB) and STHP (129 KB).
+- At Build, they are copied byte-for-byte into `public/downloads/`. They will not go into the asset library: you want them served from mcqsai.com itself, and the asset library would serve them from a different web address.
+- Live addresses after you publish: https://mcqsai.com/downloads/NTHP-Free-Practice-Set-50-Questions-MCQsAI-v3.pdf and https://mcqsai.com/downloads/STHP-Free-Practice-Set-50-Questions-MCQsAI-v3.pdf

@@ -1,3 +1,4 @@
+import { displaySessionName } from "@/lib/sessionLabel";
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import AdSlot from "@/components/ads/AdSlot";
@@ -851,7 +852,7 @@ const TestSession = () => {
                   <ResultAdviceCard
                     name={(user?.user_metadata as any)?.full_name || user?.email?.split('@')[0]}
                     score={percentage}
-                    subject={(testData as any)?.subject || (testData as any)?.session_name}
+                    subject={(testData as any)?.subject || displaySessionName((testData as any)?.session_name)}
                     topic={(testData as any)?.topic}
                     isGuest={!user}
                     hideDashboardLink={!!user}

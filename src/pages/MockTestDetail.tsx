@@ -31,6 +31,7 @@ import { getJobTests, JobTest } from "@/services/jobTestService";
 import examSnapshot from "@/data/examFactsSnapshot.json";
 import { getSthpFacts, sthpIsUpcoming, sthpStatusSentence, sthpMetaSentence } from "@/lib/sthpStatus";
 import { isNthpTest, isStsTest } from "@/lib/programStatus";
+import PracticePdfBox from "@/components/PracticePdfBox";
 import { jobTests as initialJobTests } from "@/data/jobTestsData";
 import { resolveJobTestBySlug, toJobTestSlug } from "@/lib/jobTestSlug";
 import {
@@ -258,6 +259,8 @@ const MockTestDetail = () => {
               </Link>
             </div>
           )}
+          {isNthp && <PracticePdfBox exam="nthp" placement="mock_test" />}
+          {isSthp && <PracticePdfBox exam="sthp" placement="mock_test" />}
           {isStsTest(test.organization, test.title) && (
             <p className="text-sm text-muted-foreground">
               Part of the{" "}

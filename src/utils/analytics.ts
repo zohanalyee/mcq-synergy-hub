@@ -1,3 +1,4 @@
+import { normalizeGaPath, isAdminPath } from '@/lib/growthRules';
 // Google Analytics 4 utility
 const GA_MEASUREMENT_ID = 'G-92HVL8ZQFC';
 const isDev = import.meta.env.DEV;
@@ -13,10 +14,14 @@ const debugLog = (...args: any[]) => {
   if (isDev) console.log('[GA4]', ...args);
 };
 
-export const trackPageView = (url: string) => {
+export const trackPageView = (rawUrl: string) => {
+  // No analytics on admin routes; session IDs collapse to one GA4 page path.
+  if (isAdminPath(rawUrl)) return;
+  const url = normalizeGaPath(rawUrl);
   if (typeof window.gtag === 'function') {
     window.gtag('config', GA_MEASUREMENT_ID, {
       page_path: url,
+      page_location: `${window.location.origin}${url}`,
       send_page_view: true,
     });
     debugLog('page_view', url);

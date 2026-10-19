@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
+import PracticePdfLinks from '@/components/PracticePdfLinks';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { safeJsonLd } from '@/lib/jsonLd';
@@ -363,6 +364,8 @@ const ExamsHub = () => {
             </section>
           ))}
         </div>
+
+        <PracticePdfLinks className="mt-8" />
 
         <RelatedContent entitySlug="exams" title="Continue Preparing" />
       </div>

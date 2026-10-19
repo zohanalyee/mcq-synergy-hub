@@ -1,4 +1,21 @@
 import AdmissionTestPage from './AdmissionTestPage';
+import PracticePdfBox from '@/components/PracticePdfBox';
+import { STHP_OFFICIAL_SAMPLES } from '@/lib/practicePdfs';
+
+const SthpExtra = () => (
+  <>
+    <PracticePdfBox exam="sthp" placement="hub" />
+    <section className="rounded-lg border p-4">
+      <h2 className="text-base font-semibold text-foreground mb-2">Official STHP sample papers (by Sukkur IBA)</h2>
+      <ul className="space-y-1 text-sm">
+        {STHP_OFFICIAL_SAMPLES.map((s) => (
+          <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{s.label}</a></li>
+        ))}
+      </ul>
+      <p className="mt-2 text-xs text-muted-foreground">Links open the official Sukkur IBA website. MCQsAI does not copy or host these papers.</p>
+    </section>
+  </>
+);
 
 /**
  * Sukkur IBA Sindh Talent Hunt Program (STHP) 2027 guide.
@@ -74,7 +91,16 @@ const SthpGuide = () => (
         question: 'Where can I practise an STHP-style test for free?',
         answer: 'Our free timed STHP 2027 mock test covers English, Mathematics and ICT with solved MCQs. It uses the MCQsAI practice pattern, not an official weightage.',
       },
+      {
+        question: 'Where can I find official STHP sample papers?',
+        answer: 'Sukkur IBA publishes sample papers on its official admissions sample papers page, including an STHP sample paper and a Foundation sample paper. The links are listed on this page; MCQsAI does not copy them.',
+      },
+      {
+        question: 'Is there a free STHP sample questions PDF with answers?',
+        answer: 'Yes. MCQsAI offers a free, unofficial STHP test preparation PDF with 50 original sample questions (English, Mathematics, ICT), an answer key and explanations. It is not a Sukkur IBA paper.',
+      },
     ]}
+    extra={<SthpExtra />}
     officialUrl="https://www.iba-suk.edu.pk/admissions/announcements"
     notice={{
       text: "Looking for IBA Karachi's National Talent Hunt (NTHP)? That is a different program from Sukkur IBA.",

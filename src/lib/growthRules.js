@@ -11,7 +11,7 @@ export function whatsappChannelUrl(value) {
 export function whatsappResultUrl(testName, percentage, path) {
   if (!path || !path.startsWith('/') || path.startsWith('//') || /^\/(test-session|quiz-player)\//.test(path)) return null;
   const url = new URL(path, 'https://mcqsai.com');
-  url.search = '?utm_source=whatsapp';
+  url.search = '?utm_source=whatsapp&utm_medium=result_share';
   url.hash = '';
   const text = `${testName}: I scored ${Math.round(percentage)}%. ${url.href}`;
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -33,3 +33,9 @@ export function createAttemptTracker(params, emit) {
     resume() { abandoned = false; },
   };
 }
+/** GA4 page path: collapse session IDs so they never create unique pages. */
+export function normalizeGaPath(path) {
+  return String(path || '/').replace(/^\/test-session\/[^/?#]+/, '/test-session/:id');
+}
+/** No analytics on admin routes. */
+export const isAdminPath = (path) => /^\/admin(\/|$|\?)/.test(String(path || ''));

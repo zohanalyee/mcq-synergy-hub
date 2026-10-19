@@ -97,6 +97,8 @@
           idle time, at least 10 seconds after load. -->
     <script>
       (function () {
+        // No Clarity on admin routes.
+        if (/^\/admin(\/|$)/.test(location.pathname || '/')) return;
         window.clarity = window.clarity || function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
         var loaded = false;
         function loadClarity() {
@@ -184,8 +186,12 @@
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-92HVL8ZQFC');
       (function () {
+        // No GA4 on admin routes; /test-session/<id> collapses to one page path.
+        var path = (location.pathname || '/');
+        if (/^\/admin(\/|$)/.test(path)) return;
+        var pp = path.replace(/^\/test-session\/[^/]+/, '/test-session/:id') + (location.search || '');
+        gtag('config', 'G-92HVL8ZQFC', { page_path: pp, page_location: location.origin + pp });
         var loaded = false;
         function loadGA() {
           if (loaded) return; loaded = true;

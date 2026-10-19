@@ -38,6 +38,7 @@ import IbaSukkurEntryTest from "@/pages/exams/IbaSukkurEntryTest";
 import SthpGuide from "@/pages/exams/SthpGuide";
 import StsHub from "@/pages/exams/StsHub";
 import NthpGuide from "@/pages/exams/NthpGuide";
+import PracticePdfLanding from "@/pages/pdf/PracticePdfLanding";
 import LatLawAdmissionTest from "@/pages/exams/LatLawAdmissionTest";
 import KarachiUniversityEntryTest from "@/pages/exams/KarachiUniversityEntryTest";
 import SindhUniversityEntryTest from "@/pages/exams/SindhUniversityEntryTest";
@@ -91,7 +92,7 @@ export const pages: PageMap = {
   PastPapers, Jobs, Scholarships, CustomSyllabus, Reviews, Quizzes, QuestionBank,
   About, Contact, FAQ, StudyGuides, Blog, Announcements, Boards, Tools,
   PrivacyPolicy, TermsOfService, EditorialPolicy, ExamsHub, ExamLandingPage,
-  NumsEntryTest, IbaSukkurEntryTest, SthpGuide, StsHub, NthpGuide, LatLawAdmissionTest,
+  NumsEntryTest, IbaSukkurEntryTest, SthpGuide, StsHub, NthpGuide, PracticePdfLanding, LatLawAdmissionTest,
   KarachiUniversityEntryTest, SindhUniversityEntryTest, NatEntryTest,
   LumsAdmissionTest, AkuAdmissionTest, GikiEntryTest, UetLahoreAdmission,
   AirUniversityEntryTest, PieasEntryTest, GatSubjectTest, UsatEntryTest, ProgrammaticIndex,

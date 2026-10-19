@@ -771,7 +771,12 @@ async function injectMockTestContent() {
       questions: test.questions,
       syllabus,
       previewQuestions,
-      links: siblings,
+      // Free practice PDF landing pages (NTHP / STHP only), as static links.
+      links: (isNthpTest(test.organization, test.title)
+        ? [{ href: "/pdf/nthp-practice-questions", label: "NTHP practice questions PDF (free)" }]
+        : /talent hunt program \(sthp\)/i.test(test.title || "")
+          ? [{ href: "/pdf/sthp-practice-questions", label: "STHP test preparation PDF (free)" }]
+          : []).concat(siblings),
       path: `/mock-tests/${slug}`,
       networkLabel: isIbaCommunityNetwork(test.organization, test.title) ? IBA_NETWORK_LABEL : null,
     });

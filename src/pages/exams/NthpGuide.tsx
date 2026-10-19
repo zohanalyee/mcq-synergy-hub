@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import JoinAlertsLink from '@/components/JoinAlertsLink';
+import PracticePdfBox from '@/components/PracticePdfBox';
 import SEOHead from '@/components/SEOHead';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { safeJsonLd } from '@/lib/jsonLd';
@@ -125,6 +126,7 @@ const NthpGuide = () => {
             Facts verified on {f.verifiedOn} from the official IBA Karachi Talent Hunt portal, the NTHP website and the official 2027 cycle flyer.
           </p>
           <JoinAlertsLink placement="nthp" />
+          <div className="mt-4"><PracticePdfBox exam="nthp" placement="hub" /></div>
         </header>
 
         <section aria-labelledby="what">
