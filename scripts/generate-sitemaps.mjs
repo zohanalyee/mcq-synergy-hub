@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { PROG_SEO_SLUGS } from "./prog-seo-gate.mjs";
 import { examPassesGate } from "../src/lib/examQualityGate.js";
+import { PRACTICE_PDF_PATHS } from "../src/lib/practicePdfs.js";
 import { isListingExpired, EXPIRED_GRACE_DAYS, NO_DEADLINE_MAX_AGE_DAYS } from "../src/lib/opportunityExpiry.js";
 // Build-time sitemap generator.
 // Writes same-origin (mcqsai.com) static XML files into public/sitemaps/
@@ -73,7 +74,7 @@ function extractClassNumber(levelName) {
 }
 function urlSet(urls) {
   const entries = urls.map(u =>
-    `<url><loc>${u.loc}</loc><lastmod>${u.lastmod || today}</lastmod><changefreq>${u.freq || "weekly"}</changefreq><priority>${u.priority || "0.6"}</priority></url>`
+    `<url><loc>${u.loc}</loc>${u.lastmod === null ? "" : `<lastmod>${u.lastmod || today}</lastmod>`}<changefreq>${u.freq || "weekly"}</changefreq><priority>${u.priority || "0.6"}</priority></url>`
   );
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -155,6 +156,8 @@ function writeExams() {
       ? { loc: `${BASE_URL}/exams/${r.slug}`, lastmod: today, freq: "monthly", priority: "0.8" }
       // Admission-test guides: lastmod = the page's official verified-on date.
       : { loc: `${BASE_URL}/exams/${r.slug}`, lastmod: r.verified_on || today, freq: "monthly", priority: "0.7" }),
+    // Free practice PDF landing pages: no page-specific date exists, so no lastmod.
+    ...PRACTICE_PDF_PATHS.map(p => ({ loc: `${BASE_URL}${p}`, lastmod: null, freq: "monthly", priority: "0.7" })),
   ]));
 }
 function writeProgSeo() {
