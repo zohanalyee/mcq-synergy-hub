@@ -2,6 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { User, Session } from "@supabase/supabase-js";
 import { trackSignUp } from "@/utils/analytics";
+import { trackGuestSignup } from '@/lib/growthEvents';
 
 // Auth redirects always follow the origin the user is actually on (production
 // domain in production, preview domain in Lovable previews). The only
@@ -34,6 +35,8 @@ export const signUp = async (email: string, password: string, captchaToken?: str
     }
 
     trackSignUp('email');
+    // Supabase obscures an existing account behind an empty identities array.
+    if (data.user?.identities?.length) trackGuestSignup();
     return { data, error: null };
   } catch (error) {
     console.error('Failed to sign up:', error);

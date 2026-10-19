@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { X } from 'lucide-react';
 import { useSocialLinks } from '@/hooks/useSocialLinks';
 import { WhatsAppIcon } from '@/components/WhatsAppChannelCTA';
+import { trackWhatsAppJoin } from '@/lib/growthEvents';
 
 const HIDDEN_PREFIXES = ['/test-session', '/quiz-player', '/admin', '/auth', '/sign-in', '/sign-up'];
 const DISMISS_KEY = 'mcqsai_wa_fab_dismissed';
@@ -38,6 +39,7 @@ const WhatsAppFloatingButton = () => {
     <div className="fixed right-3 bottom-20 lg:bottom-6 lg:right-6 z-40 flex items-center gap-1.5">
       <a
         href={url}
+        onClick={() => trackWhatsAppJoin('floating')}
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Join MCQsAI WhatsApp Channel for daily papers and answer keys"

@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button';
 import { useSocialLinks } from '@/hooks/useSocialLinks';
+import { trackWhatsAppJoin } from '@/lib/growthEvents';
 
 export const WhatsAppIcon = ({ className = 'h-5 w-5' }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -21,7 +22,7 @@ const WhatsAppChannelCTA = ({ message }: Props) => {
         <span>{message}</span>
       </div>
       <Button asChild size="sm" className="shrink-0">
-        <a href={url} target="_blank" rel="noopener noreferrer">Join Channel</a>
+        <a href={url} target="_blank" rel="noopener noreferrer" onClick={() => trackWhatsAppJoin('channel_cta')}>Join Channel</a>
       </Button>
     </div>
   );

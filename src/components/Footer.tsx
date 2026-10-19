@@ -4,6 +4,8 @@ import { useLanguage } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { useSocialLinks } from '@/hooks/useSocialLinks';
 import { WhatsAppIcon } from '@/components/WhatsAppChannelCTA';
+import JoinAlertsLink from '@/components/JoinAlertsLink';
+import { trackWhatsAppJoin } from '@/lib/growthEvents';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -158,6 +160,7 @@ const Footer = () => {
                 </li>
 
               ))}
+              <li><JoinAlertsLink placement="footer" className="text-inherit opacity-80 hover:opacity-100 transition-colors" /></li>
             </ul>
           </div>
 

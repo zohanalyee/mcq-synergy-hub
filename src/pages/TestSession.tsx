@@ -36,6 +36,9 @@ import { savePendingGuestResult } from "@/lib/guestResultCarry";
 
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 import BrandMark from "@/components/BrandMark";
+import { useTestGrowth } from '@/hooks/useTestGrowth';
+import WhatsAppResultShare from '@/components/WhatsAppResultShare';
+import { trackResultShare } from '@/lib/growthEvents';
 
 type LastUsedTestContext = {
   subject?: string;
@@ -105,6 +108,8 @@ const TestSession = () => {
 
   const questions = testData?.questions || [];
   const displayTotal = questions.length;
+  const growth = useTestGrowth({ ready: !isLoading && displayTotal > 0, finished: isSubmitted, guest: !user,
+    sessionName: testData?.session_name, returnPath: locationState?.returnPath, kind: 'practice' });
 
   // Hooks
   const { onAnswer, markQuestionArrival, resetMotivation } = useExamMotivation({
@@ -513,14 +518,17 @@ const TestSession = () => {
     try {
       if (typeof navigator !== "undefined" && navigator.share) {
         await navigator.share({ title: "My MCQSAI Score", text: shareText, url: shareUrl });
+        trackResultShare('native');
         return;
       }
       await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+      trackResultShare('clipboard');
       toast.success("Score copied to clipboard!", { description: "Paste it anywhere to share." });
     } catch (err: any) {
       if (err?.name === "AbortError") return; // user dismissed the share sheet
       try {
         await navigator.clipboard.writeText(`${shareText} ${shareUrl}`);
+        trackResultShare('clipboard');
         toast.success("Score copied to clipboard!");
       } catch {
         toast.error("Couldn't share your score. Please try again.");
@@ -785,6 +793,7 @@ const TestSession = () => {
                   returnPath={lastUsedContext.returnPath || "/mock-tests"}
                   freeExplanation={freeExplanation}
                   lockedExplanationCount={Math.max(0, withExplanation.length - 1)}
+                  shareTest={growth ? { name: growth.name, path: growth.path } : undefined}
                 />
               );
             }
@@ -985,6 +994,7 @@ const TestSession = () => {
                     <Share2 className="h-3.5 w-3.5 mr-1.5" />
                     Share my score
                   </Button>
+                  <WhatsAppResultShare testName={growth?.name || 'Practice Test'} percentage={percentage} path={growth?.path || null} />
                 </div>
               </div>
             );

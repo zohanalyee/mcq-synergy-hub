@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import JoinAlertsLink from '@/components/JoinAlertsLink';
 import SEOHead from '@/components/SEOHead';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { safeJsonLd } from '@/lib/jsonLd';
@@ -362,6 +363,7 @@ const NthpGuide = () => {
           MCQsAI is an independent practice platform, not affiliated with IBA Karachi, Sukkur IBA University, OGDC, Mari Energies, Ihsan Trust or Meezan Bank.
         </p>
       </div>
+      <JoinAlertsLink placement="nthp" />
       <Footer />
     </Header>
   );

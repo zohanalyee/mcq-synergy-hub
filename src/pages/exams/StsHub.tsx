@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import JoinAlertsLink from '@/components/JoinAlertsLink';
 import SEOHead from '@/components/SEOHead';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { safeJsonLd } from '@/lib/jsonLd';
@@ -250,6 +251,7 @@ const StsHub = () => {
           </CardContent>
         </Card>
       </div>
+      <JoinAlertsLink placement="sts" />
       <Footer />
     </Header>
   );

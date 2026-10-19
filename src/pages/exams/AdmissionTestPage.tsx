@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import JoinAlertsLink from '@/components/JoinAlertsLink';
 import SEOHead from '@/components/SEOHead';
 import { useExamFacts } from '@/lib/examFacts';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
@@ -399,6 +400,7 @@ const AdmissionTestPage = (props: AdmissionTestPageProps) => {
           </div>
         </div>
       </div>
+      {p.slug === 'sthp' && <JoinAlertsLink placement="sthp" />}
       <Footer />
     </Header>
   );
