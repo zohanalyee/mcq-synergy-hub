@@ -24,10 +24,18 @@ export const trackPageView = (url: string) => {
 };
 
 export const trackEvent = (eventName: string, params?: Record<string, any>) => {
+  if (typeof window === 'undefined') return;
   if (typeof window.gtag === 'function') {
     window.gtag('event', eventName, params);
-    debugLog('event', eventName, params);
+  } else {
+    window.dataLayer = window.dataLayer || [];
+    // gtag.js consumes Arguments objects, including hits queued before loading.
+    (function (..._args: unknown[]) {
+      // eslint-disable-next-line prefer-rest-params
+      window.dataLayer.push(arguments);
+    })('event', eventName, params);
   }
+  debugLog('event', eventName, params);
 };
 
 export const trackSignUp = (method = 'email') => {

@@ -7,8 +7,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cleanQuestionText } from "@/lib/questionUtils";
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
 import { useAuth } from "@/contexts/AuthContext";
+import WhatsAppResultShare from '@/components/WhatsAppResultShare';
 
 interface QuizResultScreenProps {
+  shareTest?: { name: string; path: string | null };
   title: string;
   score: number;
   totalQuestions: number;
@@ -38,6 +40,7 @@ const QuizResultScreen = ({
   answers,
   onPlayAgain,
   onTryAnother,
+  shareTest,
 }: QuizResultScreenProps) => {
   const [showReview, setShowReview] = useState(false);
   const navigate = useNavigate();
@@ -134,6 +137,7 @@ const QuizResultScreen = ({
               <Home className="mr-2 h-4 w-4" />
               Exit to Home
             </Button>
+            <WhatsAppResultShare testName={shareTest?.name || 'Quiz'} percentage={accuracy} path={shareTest?.path || null} />
 
             <button
               type="button"

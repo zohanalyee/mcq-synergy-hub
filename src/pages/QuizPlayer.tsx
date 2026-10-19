@@ -25,6 +25,7 @@ import { GuestResultGate } from "@/components/quiz/GuestResultGate";
 import { loadGuestSession } from "@/lib/guestSession";
 import { useAuth } from "@/contexts/AuthContext";
 import ResultAdviceCard from "@/components/shared/ResultAdviceCard";
+import { useTestGrowth } from '@/hooks/useTestGrowth';
 
 const LETTERS = ["A", "B", "C", "D", "E", "F"];
 const AUTO_ADVANCE_MS = 4000;
@@ -68,6 +69,8 @@ const QuizPlayer = () => {
   const total = questions.length;
   const currentQ = questions[currentIdx];
   const subjectName = testData?.subjects?.[0] || "";
+  const growth = useTestGrowth({ ready: !isLoading && total > 0, finished: isFinished, guest: !user,
+    sessionName: testData?.session_name, returnPath: locationState?.returnPath, kind: 'quiz' });
 
   // Fetch session
   useEffect(() => {
@@ -310,6 +313,7 @@ const QuizPlayer = () => {
             total={total}
             correctCount={correctCount}
             returnPath={returnPath}
+            shareTest={growth ? { name: growth.name, path: growth.path } : undefined}
           />
         </div>
       );
@@ -318,6 +322,7 @@ const QuizPlayer = () => {
       <div className="min-h-dvh bg-gradient-to-b from-background via-background to-primary/5">
         <QuizResultScreen
           title={testData.session_name || "Quiz"}
+          shareTest={growth ? { name: growth.name, path: growth.path } : undefined}
           score={score}
           totalQuestions={total}
           correctCount={correctCount}

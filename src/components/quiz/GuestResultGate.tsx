@@ -17,6 +17,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { saveIntentRaw } from '@/hooks/useAuthIntent';
 import BrandMark from '@/components/BrandMark';
 import WhatsAppChannelCTA from '@/components/WhatsAppChannelCTA';
+import WhatsAppResultShare from '@/components/WhatsAppResultShare';
 
 interface FreeExplanation {
   question: string;
@@ -25,6 +26,7 @@ interface FreeExplanation {
 }
 
 interface GuestResultGateProps {
+  shareTest?: { name: string; path: string | null };
   open: boolean;
   onClose: () => void;
   score: number;
@@ -52,6 +54,7 @@ export const GuestResultGate = ({
   lockedExplanationCount = 0,
   guestCap = 20,
   memberCap = 100,
+  shareTest,
 }: GuestResultGateProps) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -180,6 +183,7 @@ export const GuestResultGate = ({
 
         {/* Try Again */}
         <div className="px-5 pb-3">
+          <WhatsAppResultShare testName={shareTest?.name || 'Practice Test'} percentage={percentage} path={shareTest?.path || null} />
           <Button variant="outline" size="sm" className="w-full h-9" onClick={handleTryAgain}>
             <RefreshCw className="h-3.5 w-3.5 mr-1.5" />
             Try Again

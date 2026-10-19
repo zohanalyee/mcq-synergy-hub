@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import JoinAlertsLink from '@/components/JoinAlertsLink';
 import SEOHead from '@/components/SEOHead';
 import { useExamFacts } from '@/lib/examFacts';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
@@ -131,6 +132,7 @@ const AdmissionTestPage = (props: AdmissionTestPageProps) => {
             <GraduationCap className="w-8 h-8 text-primary" />
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">{p.h1 || p.name}</h1>
           </div>
+          {p.slug === 'sthp' && <JoinAlertsLink placement="sthp" />}
           <p className="text-lg text-muted-foreground max-w-3xl">{p.fullName}</p>
           <p className="mt-4 text-muted-foreground leading-relaxed">{p.intro}</p>
           <p className="mt-4 text-sm font-medium text-foreground">

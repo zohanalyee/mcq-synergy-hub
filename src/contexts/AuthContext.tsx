@@ -4,6 +4,7 @@ import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { signOut as authSignOut, signIn as authSignIn, signUp as authSignUp } from '@/services/authService';
 import { getIntentRaw, clearIntentRaw } from '@/hooks/useAuthIntent';
+import { trackGuestOAuthSignup } from '@/lib/growthEvents';
 
 interface AuthContextType {
   user: User | null;
@@ -61,6 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         
         // Fetch profile data when user signs in
         if (session?.user && event === 'SIGNED_IN') {
+          trackGuestOAuthSignup(session.user.created_at, session.user.app_metadata?.provider);
           // Check for saved auth intent (e.g. from Google OAuth redirect)
           const savedRedirect = localStorage.getItem('redirect_after_auth');
           if (savedRedirect) {

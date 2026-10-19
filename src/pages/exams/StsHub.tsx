@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import JoinAlertsLink from '@/components/JoinAlertsLink';
 import SEOHead from '@/components/SEOHead';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import { safeJsonLd } from '@/lib/jsonLd';
@@ -121,6 +122,7 @@ const StsHub = () => {
             <GraduationCap className="w-8 h-8 text-primary" />
             <h1 className="text-3xl md:text-4xl font-bold text-foreground">SIBA Testing Services (STS) Test Preparation – Syllabus &amp; Mock Tests</h1>
           </div>
+          <JoinAlertsLink placement="sts" />
           <p className="text-muted-foreground leading-relaxed max-w-3xl">
             SIBA Testing Services (STS) is the testing service of Sukkur IBA University. It conducts recruitment and screening tests for Sindh government bodies such as the Sindh High Court and Sindh Police, and for the Sukkur IBA Community Colleges &amp; Schools network, which operates separately under the same university.
           </p>

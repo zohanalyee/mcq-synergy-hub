@@ -5,10 +5,15 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useSocialLinks, useUpdateSocialLinks, SocialLinks } from '@/hooks/useSocialLinks';
 import { Facebook, Instagram, Twitter, Youtube, Linkedin, Loader2 } from 'lucide-react';
+import { useWhatsAppChannel, useUpdateWhatsAppChannel } from '@/hooks/useWhatsAppChannel';
 
 const SocialLinksManager = () => {
   const { data: links, isLoading } = useSocialLinks();
   const updateMutation = useUpdateSocialLinks();
+  const { data: channel } = useWhatsAppChannel();
+  const channelMutation = useUpdateWhatsAppChannel();
+  const [alertsUrl, setAlertsUrl] = useState('');
+  useEffect(() => { setAlertsUrl(channel || ''); }, [channel]);
   const [form, setForm] = useState<SocialLinks>({
     facebook: '', instagram: '', tiktok: '', twitter: '', youtube: '', whatsapp: '', linkedin: '',
   });
@@ -38,6 +43,11 @@ const SocialLinksManager = () => {
         <CardDescription>Add your social media profile URLs. They will appear in the website footer.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="join-alerts-url">Join Alerts — WhatsApp Channel URL</Label>
+          <Input id="join-alerts-url" value={alertsUrl} onChange={e => setAlertsUrl(e.target.value)} placeholder="https://whatsapp.com/channel/..." />
+          <Button onClick={() => channelMutation.mutate(alertsUrl)} disabled={channelMutation.isPending}>Save Join Alerts Link</Button>
+        </div>
         {fields.map(({ key, label, icon: Icon, placeholder }) => (
           <div key={key} className="space-y-1.5">
             <Label className="flex items-center gap-2">

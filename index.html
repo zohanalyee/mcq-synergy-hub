@@ -94,7 +94,7 @@
 
     <!-- Microsoft Clarity — session recordings & heatmaps. The stub installs
          immediately so early events queue; the library is fetched only during
-         idle time, at least 12 seconds after load. -->
+          idle time, at least 10 seconds after load. -->
     <script>
       (function () {
         window.clarity = window.clarity || function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
@@ -106,7 +106,8 @@
           s.src = 'https://www.clarity.ms/tag/yugr76iqr3';
           document.head.appendChild(s);
         }
-        window.mcqsaiLoadAfterIdle(loadClarity, 12000);
+        // Short visits were being missed: shorten the delay, never load on input.
+        window.mcqsaiLoadAfterIdle(loadClarity, 10000);
       })();
     </script>
 
@@ -118,6 +119,12 @@
         if (h !== 'mcqsai.com' && h !== 'www.mcqsai.com') return;
         window.OneSignalDeferred = window.OneSignalDeferred || [];
         window.OneSignalDeferred.push(function (OneSignal) {
+          OneSignal.User.PushSubscription.addEventListener('change', function (event) {
+            if (event.current.optedIn && !event.previous.optedIn) {
+              // Never send subscription IDs, tokens or other personal data.
+              window.gtag('event', 'notification_optin');
+            }
+          });
           return OneSignal.init({ appId: 'e9602eac-3cf8-4b17-a8e3-8aa58c184660' });
         });
         var loaded = false;
@@ -171,7 +178,7 @@
     <!-- Google Analytics 4 — the dataLayer/gtag stub is installed immediately so
          every event (page_view, heartbeats, scroll depth) is queued with its real
          timestamp; the gtag.js library is fetched during idle time, at least
-         12 seconds after load, not by user input or page exit.
+          4 seconds after load, not by user input or page exit.
          Queued hits are flushed unchanged once the library loads. -->
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -187,7 +194,8 @@
           s.src = 'https://www.googletagmanager.com/gtag/js?id=G-92HVL8ZQFC';
           document.head.appendChild(s);
         }
-        window.mcqsaiLoadAfterIdle(loadGA, 12000);
+        // Short visits were being missed: shorten the delay, never load on input.
+        window.mcqsaiLoadAfterIdle(loadGA, 4000);
       })();
     </script>
 
