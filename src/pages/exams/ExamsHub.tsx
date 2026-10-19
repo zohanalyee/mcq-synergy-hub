@@ -365,6 +365,8 @@ const ExamsHub = () => {
           ))}
         </div>
 
+        <PracticePdfLinks className="mt-8" />
+
         <RelatedContent entitySlug="exams" title="Continue Preparing" />
       </div>
       <Footer />
