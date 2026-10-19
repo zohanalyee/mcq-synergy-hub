@@ -10,7 +10,7 @@ test('empty channel has no link; unsafe URL is rejected', () => {
 test('result contains public name, percentage, apex own-page URL and WhatsApp UTM only', () => {
   const result = whatsappResultUrl('NTHP Mock Test', 80, '/mock-tests/nthp?lang=ur');
   assert.ok(result);
-  assert.equal(new URL(result).searchParams.get('text'), 'NTHP Mock Test: I scored 80%. https://mcqsai.com/mock-tests/nthp?utm_source=whatsapp');
+  assert.equal(new URL(result).searchParams.get('text'), 'NTHP Mock Test: I scored 80%. https://mcqsai.com/mock-tests/nthp?utm_source=whatsapp&utm_medium=result_share');
   assert.equal(whatsappResultUrl('Test', 80, '/test-session/guest-123'), null);
 });
 test('start once; visibility/pagehide dedupe; completed attempts never abandon', () => {
