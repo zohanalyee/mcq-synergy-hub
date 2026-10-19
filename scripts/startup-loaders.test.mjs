@@ -30,7 +30,8 @@ function harness({ idle = true, ready = 'loading', hostname = 'mcqsai.com' } = {
     createElement: () => ({}),
     head: { appendChild: element => appended.push({ src: element.src, at: now }) },
   };
-  const context = vm.createContext({ window, document, location: { hostname }, Date });
+  Object.assign(window, { window, document, location: { hostname }, Date });
+  const context = vm.createContext(window);
   for (const script of scripts) vm.runInContext(script, context);
   function advance(target) {
     for (;;) {
