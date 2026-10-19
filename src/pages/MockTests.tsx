@@ -12,6 +12,7 @@ import ExamFiltersBar, { ExamFilters } from "@/components/mock-tests/ExamFilters
 import { JobTestsTab } from "@/components/mock-tests/JobTestsTab";
 import { getJobTests } from "@/services/jobTestService";
 import AdSlot from "@/components/ads/AdSlot";
+import PracticePdfLinks from "@/components/PracticePdfLinks";
 import WhatsAppChannelCTA from "@/components/WhatsAppChannelCTA";
 
 const CompetitiveExams = () => {
@@ -103,6 +104,8 @@ const CompetitiveExams = () => {
               Explore STS Hub <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
             </span>
           </Link>
+
+          <PracticePdfLinks className="mt-3" />
 
           <WhatsAppChannelCTA message="📢 Daily past papers, answer keys aur test updates ke liye hamara WhatsApp Channel follow karein." />
 
