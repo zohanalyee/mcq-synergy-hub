@@ -63,6 +63,8 @@ export interface AdmissionTestPageProps {
   faqs?: { question: string; answer: string }[];
   /** Optional "not to be confused with" box shown under the intro. */
   notice?: { text: string; label: string; to: string };
+  /** Optional extra static block shown under the intro (e.g. practice PDF box). */
+  extra?: React.ReactNode;
 }
 
 const AdmissionTestPage = (props: AdmissionTestPageProps) => {
@@ -146,6 +148,7 @@ const AdmissionTestPage = (props: AdmissionTestPageProps) => {
               </Link>
             </div>
           )}
+          {props.extra && <div className="mt-4 space-y-4">{props.extra}</div>}
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
