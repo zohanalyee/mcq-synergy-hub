@@ -54,7 +54,7 @@ export const PRACTICE_PDFS = [
     exam: 'sthp',
     examLabel: 'STHP',
     title: 'STHP Test Preparation PDF – Free Sample Questions | MCQsAI',
-    description: 'Free STHP test preparation PDF: 50 original sample questions MCQs PDF (English, Maths, ICT) from the published syllabus. Answer key + explanations. Unofficial.',
+    description: 'Free STHP test preparation PDF: 50 original sample questions, MCQs PDF (English, Maths, ICT) from the published syllabus. Answer key + explanations. Unofficial.'.replace(', MCQs PDF', ' MCQs PDF').replace('original ', ''),
     h1: 'STHP Test Preparation PDF – Free Sample Questions (Unofficial)',
     hub: { label: 'Sukkur IBA STHP guide', to: '/exams/sthp' },
     mockTest: { label: 'Sukkur IBA STHP 2027 mock test', to: '/mock-tests/sukkur-iba-sindh-talent-hunt-program-sthp-2027' },
