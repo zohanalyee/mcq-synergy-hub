@@ -10,3 +10,5 @@
 - Job/scholarship expiry (noindex + sitemap removal) comes only from src/lib/opportunityExpiry.js, used by OpportunityDetail, inject-meta and generate-sitemaps — so browser HTML, prerendered HTML and sitemaps never disagree. Sitemap generator keeps the previous file when a DB read fails, so an outage never blanks a sitemap.
 - Blog indexability (noindex + blog.xml removal) comes only from src/lib/blogIndexability.js, used by BlogPost, inject-meta and generate-sitemaps — so browser HTML, prerendered HTML and blog.xml never disagree.
 - Third-party startup libraries use the shared inline load-then-delay idle scheduler in index.html, with a bounded timer fallback — so user input never initiates these downloads.
+- Growth lifecycle hooks resolve only public test metadata and deduplicate lifecycle signals; never send session IDs or user-provided session names to analytics or result shares.
+- Join Alerts uses a dedicated system_settings key, fetched into a build-time snapshot for static anchors and refreshed client-side; missing values stay hidden without a default.

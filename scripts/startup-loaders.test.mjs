@@ -7,8 +7,8 @@ const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
 const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(match => match[1]);
 const delays = new Map([
   ['adsbygoogle.js', 6000],
-  ['clarity.ms', 12000],
-  ['gtag/js', 12000],
+  ['clarity.ms', 10000],
+  ['gtag/js', 4000],
   ['OneSignalSDK.page.js', 15000],
 ]);
 
