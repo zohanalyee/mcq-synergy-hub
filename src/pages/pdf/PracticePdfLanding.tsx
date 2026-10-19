@@ -11,7 +11,7 @@ import { trackPdfDownload, trackPdfShare, trackChannelJoin } from '@/lib/growthE
 import { Button } from '@/components/ui/button';
 import { FileDown, PlayCircle, MessageCircle, Share2, ExternalLink } from 'lucide-react';
 
-const H2 = ({ children }: { children: React.ReactNode }) => (
+const H2 = ({ children }: { children: import("react").ReactNode }) => (
   <h2 className="text-xl md:text-2xl font-semibold text-foreground mb-3">{children}</h2>
 );
 

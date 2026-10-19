@@ -64,7 +64,7 @@ export interface AdmissionTestPageProps {
   /** Optional "not to be confused with" box shown under the intro. */
   notice?: { text: string; label: string; to: string };
   /** Optional extra static block shown under the intro (e.g. practice PDF box). */
-  extra?: React.ReactNode;
+  extra?: import("react").ReactNode;
 }
 
 const AdmissionTestPage = (props: AdmissionTestPageProps) => {
