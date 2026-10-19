@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { whatsappChannelUrl, whatsappResultUrl, createAttemptTracker } from './growthRules.js';
+import { whatsappChannelUrl, whatsappResultUrl, createAttemptTracker, normalizeGaPath, isAdminPath } from './growthRules.js';
 
 test('empty channel has no link; unsafe URL is rejected', () => {
   assert.equal(whatsappChannelUrl(''), '');
@@ -21,4 +21,11 @@ test('start once; visibility/pagehide dedupe; completed attempts never abandon',
   assert.deepEqual(events[0].params, { test_slug: 'nthp', exam_category: 'nthp' });
   tracker.resume(); tracker.finish(); tracker.abandon();
   assert.equal(events.length, 2);
+});
+test('GA4 path collapses session IDs; admin paths are excluded', () => {
+  assert.equal(normalizeGaPath('/test-session/guest-abc123?x=1'), '/test-session/:id?x=1');
+  assert.equal(normalizeGaPath('/mock-tests/nthp'), '/mock-tests/nthp');
+  assert.ok(isAdminPath('/admin'));
+  assert.ok(isAdminPath('/admin/content'));
+  assert.ok(!isAdminPath('/administration-guide'));
 });

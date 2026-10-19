@@ -33,3 +33,9 @@ export function createAttemptTracker(params, emit) {
     resume() { abandoned = false; },
   };
 }
+/** GA4 page path: collapse session IDs so they never create unique pages. */
+export function normalizeGaPath(path) {
+  return String(path || '/').replace(/^\/test-session\/[^/?#]+/, '/test-session/:id');
+}
+/** No analytics on admin routes. */
+export const isAdminPath = (path) => /^\/admin(\/|$|\?)/.test(String(path || ''));
