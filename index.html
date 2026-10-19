@@ -43,14 +43,40 @@
     <!-- Preconnect to critical third-party origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2" crossorigin>
     <link rel="preconnect" href="https://www.googletagmanager.com">
     <link rel="preconnect" href="https://pzhvipkcssxrsxxljbbz.supabase.co" crossorigin>
 
-    <!-- Google AdSense — loaded on the first real user interaction (tap, key,
-         scroll) so it never competes with first paint / main-thread startup.
-         A long idle fallback keeps fill behaviour unchanged for visitors who
-         never interact. AdSlot pushes into window.adsbygoogle (a plain array),
-         so slots queued before the script arrives still fill normally. -->
+    <!-- Wait for window load, then the service delay, then browser idle.
+         A bounded timer also runs the callback when idle never arrives. -->
+    <script>
+      window.mcqsaiLoadAfterIdle = function (callback, delay) {
+        function afterLoad() {
+          window.setTimeout(function () {
+            var done = false;
+            var fallback;
+            function run() {
+              if (done) return;
+              done = true;
+              window.clearTimeout(fallback);
+              callback();
+            }
+            fallback = window.setTimeout(run, 2000);
+            if (window.requestIdleCallback) {
+              window.requestIdleCallback(run, { timeout: 2000 });
+            } else {
+              window.clearTimeout(fallback);
+              fallback = window.setTimeout(run, 0);
+            }
+          }, delay);
+        }
+        if (document.readyState === 'complete') afterLoad();
+        else window.addEventListener('load', afterLoad, { once: true });
+      };
+    </script>
+
+    <!-- AdSense — idle-only, at least 6 seconds after load. Queued ad slots
+         remain in window.adsbygoogle until the unchanged library arrives. -->
     <script>
       (function () {
         var loaded = false;
@@ -62,20 +88,13 @@
           s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4978762286882236';
           document.head.appendChild(s);
         }
-        ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'].forEach(function (e) {
-          window.addEventListener(e, loadAds, { once: true, passive: true });
-        });
-        // Safety net: idle visitors still get ads, just much later.
-        function fallback() { setTimeout(loadAds, 6000); }
-        if (document.readyState === 'complete') fallback();
-        else window.addEventListener('load', fallback, { once: true });
+        window.mcqsaiLoadAfterIdle(loadAds, 6000);
       })();
     </script>
 
     <!-- Microsoft Clarity — session recordings & heatmaps. The stub installs
-         immediately so early events queue; the library itself is fetched on the
-         first interaction (or an idle fallback) exactly like GA4 above, so it
-         never competes with first paint / main-thread startup. -->
+         immediately so early events queue; the library is fetched only during
+         idle time, at least 12 seconds after load. -->
     <script>
       (function () {
         window.clarity = window.clarity || function () { (window.clarity.q = window.clarity.q || []).push(arguments); };
@@ -87,18 +106,12 @@
           s.src = 'https://www.clarity.ms/tag/yugr76iqr3';
           document.head.appendChild(s);
         }
-        ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'].forEach(function (e) {
-          window.addEventListener(e, loadClarity, { once: true, passive: true });
-        });
-        // Idle fallback for passive readers (matches GA4's deferred pattern).
-        function fallback() { setTimeout(loadClarity, 12000); }
-        if (document.readyState === 'complete') fallback();
-        else window.addEventListener('load', fallback, { once: true });
+        window.mcqsaiLoadAfterIdle(loadClarity, 12000);
       })();
     </script>
 
-    <!-- OneSignal Web Push — live domain only (never in preview), loaded on
-         first interaction so it never slows first paint. -->
+    <!-- OneSignal Web Push — live domain only (never in preview), idle-only,
+         at least 15 seconds after load. -->
     <script>
       (function () {
         var h = location.hostname;
@@ -115,12 +128,7 @@
           s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';
           document.head.appendChild(s);
         }
-        ['pointerdown', 'touchstart', 'keydown', 'scroll'].forEach(function (e) {
-          window.addEventListener(e, loadOS, { once: true, passive: true });
-        });
-        function fallback() { setTimeout(loadOS, 15000); }
-        if (document.readyState === 'complete') fallback();
-        else window.addEventListener('load', fallback, { once: true });
+        window.mcqsaiLoadAfterIdle(loadOS, 15000);
       })();
     </script>
 
@@ -162,8 +170,8 @@
 
     <!-- Google Analytics 4 — the dataLayer/gtag stub is installed immediately so
          every event (page_view, heartbeats, scroll depth) is queued with its real
-         timestamp; the gtag.js library itself is fetched on the first interaction
-         (or a short idle fallback) so it never lands inside the startup task.
+         timestamp; the gtag.js library is fetched during idle time, at least
+         12 seconds after load, not by user input or page exit.
          Queued hits are flushed unchanged once the library loads. -->
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -179,18 +187,7 @@
           s.src = 'https://www.googletagmanager.com/gtag/js?id=G-92HVL8ZQFC';
           document.head.appendChild(s);
         }
-        ['pointerdown', 'touchstart', 'keydown', 'scroll', 'wheel', 'mousemove'].forEach(function (e) {
-          window.addEventListener(e, loadGA, { once: true, passive: true });
-        });
-        // Flush before the visitor leaves, and after a short idle window for
-        // passive readers, so no session goes unreported.
-        window.addEventListener('pagehide', loadGA, { once: true });
-        document.addEventListener('visibilitychange', function () {
-          if (document.visibilityState === 'hidden') loadGA();
-        }, { once: true });
-        function fallback() { setTimeout(loadGA, 12000); }
-        if (document.readyState === 'complete') fallback();
-        else window.addEventListener('load', fallback, { once: true });
+        window.mcqsaiLoadAfterIdle(loadGA, 12000);
       })();
     </script>
 

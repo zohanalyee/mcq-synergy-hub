@@ -104,7 +104,7 @@ const buildJsonLd = (op: any) => {
     "@context": "https://schema.org",
     name: op.title,
     description: op.description || `${op.type} opportunity from ${op.organization || op.source_name || "MCQsAI"}`,
-    url: typeof window !== "undefined" ? window.location.href : `https://mcqsai.com/opportunity/${op.id}`,
+    url: typeof window !== "undefined" ? `https://mcqsai.com${window.location.pathname}` : `https://mcqsai.com/opportunity/${op.id}`,
     datePosted: op.created_at,
     ...(op.deadline_date && { validThrough: op.deadline_date }),
   };

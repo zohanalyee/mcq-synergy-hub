@@ -14,7 +14,7 @@ type ECL = 'L' | 'M' | 'Q' | 'H';
 
 const QRGenerator = () => {
   const [params, setParams] = useSearchParams();
-  const [text, setText] = useState(params.get('t') || 'https://www.mcqsai.com');
+  const [text, setText] = useState(params.get('t') || 'https://mcqsai.com');
   const [size, setSize] = useState(Number(params.get('s')) || 320);
   const [ecl, setEcl] = useState<ECL>((params.get('e') as ECL) || 'M');
   const [fg, setFg] = useState(params.get('fg') || '#0f172a');
@@ -46,7 +46,7 @@ const QRGenerator = () => {
 
   const copyShareLink = async () => {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(`https://mcqsai.com${window.location.pathname}${window.location.search}${window.location.hash}`);
       toast.success('Link copied — share to reproduce this QR');
     } catch { toast.error('Could not copy link'); }
   };
