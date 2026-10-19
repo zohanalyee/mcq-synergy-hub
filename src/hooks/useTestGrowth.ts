@@ -23,7 +23,7 @@ export function useTestGrowth({ ready, finished, guest, sessionName, returnPath,
     const resolve = async () => {
       let value: Identity = { name: kind === 'quiz' ? 'Quiz' : 'Practice Test', path: null, test_slug: kind, exam_category: kind };
       if (sessionName?.startsWith('Job Test:')) {
-        const rows = await getJobTests();
+        const rows = await getJobTests().catch(() => []);
         const tests = rows.length ? rows : fallbackTests;
         const title = sessionName.replace(/^Job Test:\s*/, '');
         const test = tests.find(row => row.title === title);
@@ -45,6 +45,7 @@ export function useTestGrowth({ ready, finished, guest, sessionName, returnPath,
         if (guest) markGuestAttempt();
       }
       if (finishedRef.current) trackerRef.current.finish();
+      else if (document.hidden) trackerRef.current.abandon();
     };
     void resolve();
     return () => { cancelled = true; };

@@ -16,5 +16,15 @@ export function trackGuestSignup() {
   } catch { /* optional measurement */ }
 }
 
+/** OAuth new-account success only; a returning user's login is not signup. */
+export function trackGuestOAuthSignup(createdAt: string, provider?: string) {
+  if (provider !== 'google' && provider !== 'facebook') return;
+  try {
+    const guestAt = Number(sessionStorage.getItem(GUEST_KEY));
+    const created = Date.parse(createdAt);
+    if (guestAt && created >= guestAt && Date.now() - created < 5 * 60 * 1000) trackGuestSignup();
+  } catch { /* optional measurement */ }
+}
+
 export const trackWhatsAppJoin = (placement: string) => trackEvent('whatsapp_join_click', { placement });
 export const trackResultShare = (method: string) => trackEvent('result_share', { method });
