@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import BrandMark from "@/components/BrandMark";
+import { displaySessionName } from "@/lib/sessionLabel";
 
 interface ExamHeaderProps {
   sessionName: string;
@@ -47,7 +48,7 @@ const ExamHeader = ({
         <div className="flex items-center gap-2 min-w-0 flex-1">
           <BrandMark iconOnly className="shrink-0" />
           <h1 className="text-sm sm:text-base font-bold text-foreground truncate">
-            {sessionName}
+            {displaySessionName(sessionName)}
           </h1>
         </div>
 
