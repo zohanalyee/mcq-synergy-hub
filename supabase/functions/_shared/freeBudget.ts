@@ -87,3 +87,15 @@ export async function checkFreeBudget(client: any, group: AIGroup): Promise<{ al
     return { allowed: false, reason: `budget check failed: ${String(e).slice(0, 80)}` };
   }
 }
+
+// How callAIWithAutoSwitch behaves for a group. When the budget is disabled,
+// every caller gets today's (pre-budget) behaviour back.
+export function switchPolicy(group: AIGroup, budgetEnabled: boolean) {
+  const guarded = budgetEnabled && isBackgroundGroup(group);
+  return {
+    checkBudget: guarded,
+    forceFreeOnly: guarded,
+    retryAfterAll429: !guarded,
+    skipCoolingKeys: budgetEnabled,
+  };
+}

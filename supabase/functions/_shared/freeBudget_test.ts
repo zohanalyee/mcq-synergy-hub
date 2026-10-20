@@ -39,3 +39,24 @@ Deno.test('Google day starts at 08:00 UTC', () => {
   assertEquals(googleDayStart(new Date('2026-10-20T06:00:00Z')).toISOString(), '2026-10-19T08:00:00.000Z');
   assertEquals(googleDayStart(new Date('2026-10-20T09:00:00Z')).toISOString(), '2026-10-20T08:00:00.000Z');
 });
+
+import { switchPolicy } from './freeBudget.ts';
+
+Deno.test('learner call keeps paid fallback and the retry pass', () => {
+  const p = switchPolicy('user', true);
+  assertEquals(p.forceFreeOnly, false);
+  assertEquals(p.checkBudget, false);
+  assertEquals(p.retryAfterAll429, true);
+});
+
+Deno.test('background call is free-only, budget-checked, no retry', () => {
+  for (const g of ['quality_gate', 'auto_fill', 'admin_bulk'] as const) {
+    const p = switchPolicy(g, true);
+    assertEquals([p.forceFreeOnly, p.checkBudget, p.retryAfterAll429], [true, true, false]);
+  }
+});
+
+Deno.test('budget disabled restores previous behaviour', () => {
+  const p = switchPolicy('auto_fill', false);
+  assertEquals([p.forceFreeOnly, p.checkBudget, p.retryAfterAll429, p.skipCoolingKeys], [false, false, true, false]);
+});
