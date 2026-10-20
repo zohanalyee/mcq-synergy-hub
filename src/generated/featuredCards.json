@@ -1,0 +1,48 @@
+{
+ "generatedAt": 1792481286863,
+ "enabled": true,
+ "cards": [
+  {
+   "id": "3732e422-742f-4c36-9e38-68fb10899541",
+   "title": "Sukkur IBA STHP 2027",
+   "subtitle": "Free practice PDF + full mock test. Apply before the deadline.",
+   "badge": "APPLY NOW",
+   "href": "/exams/sthp",
+   "deadline_date": null,
+   "exam_slug": "sthp",
+   "closed_days": 0,
+   "sort_order": 1,
+   "is_active": true,
+   "icon": "GraduationCap",
+   "placements": "both"
+  },
+  {
+   "id": "a717c11d-8fa0-434c-8ec5-63901626a306",
+   "title": "IBA Karachi NTHP (OGDC)",
+   "subtitle": "Free practice PDF and mock test for the NTHP round.",
+   "badge": "APPLY NOW",
+   "href": "/exams/nthp",
+   "deadline_date": null,
+   "exam_slug": "nthp",
+   "closed_days": 0,
+   "sort_order": 2,
+   "is_active": true,
+   "icon": "Building2",
+   "placements": "both"
+  },
+  {
+   "id": "c0b7117a-0187-4e61-892e-c680e6aabf3a",
+   "title": "IBA Community Colleges & Schools (STS)",
+   "subtitle": "Mock tests for all announced posts are ready. Get a WhatsApp alert for the next announcement.",
+   "badge": "PRACTICE NOW",
+   "href": "/exams/sts",
+   "deadline_date": null,
+   "exam_slug": null,
+   "closed_days": 0,
+   "sort_order": 3,
+   "is_active": true,
+   "icon": "Timer",
+   "placements": "both"
+  }
+ ]
+}
