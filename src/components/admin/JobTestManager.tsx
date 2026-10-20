@@ -4,6 +4,7 @@ import { useJobTestManagement } from "@/hooks/useJobTestManagement";
 import MockTestEditor from "./job-test/MockTestEditor";
 import JobTestTable from "./job-test/JobTestTable";
 import { BulkJobTestImportDialog } from "./job-test/BulkJobTestImportDialog";
+import QualityGatePanel from "./job-test/QualityGatePanel";
 import { Button } from "@/components/ui/button";
 import { FileJson, Plus, Sparkles, Loader2 } from "lucide-react";
 import { JobTest } from "@/services/jobTestService";
@@ -91,6 +92,7 @@ const JobTestManager = () => {
           onSuccess={handleBulkImportSuccess}
         />
       </section>
+      <QualityGatePanel />
     </div>
   );
 };
