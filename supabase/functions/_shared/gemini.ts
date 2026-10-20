@@ -1,7 +1,15 @@
 // Shared Gemini API helper with Auto-Switcher (Gemini Free → Lovable Gateway Fallback)
 
 import { recordAIAttempt } from './quotaManager.ts';
-import { checkFreeBudget, isBackgroundGroup, isKeyCooling, type AIGroup } from './freeBudget.ts';
+import { checkFreeBudget, isKeyCooling, readFreeBudget, switchPolicy, type AIGroup, type FreeBudgetConfig } from './freeBudget.ts';
+
+let _budgetCache: { at: number; cfg: FreeBudgetConfig | null } | null = null;
+async function getBudgetCached(client: any): Promise<FreeBudgetConfig | null> {
+  if (_budgetCache && Date.now() - _budgetCache.at < 60_000) return _budgetCache.cfg;
+  const cfg = await readFreeBudget(client).catch(() => null);
+  _budgetCache = { at: Date.now(), cfg };
+  return cfg;
+}
 export type { AIGroup } from './freeBudget.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
