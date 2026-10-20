@@ -1,0 +1,1 @@
+UPDATE public.featured_cards SET subtitle = 'Apply by 29 Oct 2026 · Free practice PDF + full mock test.' WHERE href = '/exams/sthp';
