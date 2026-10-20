@@ -629,13 +629,34 @@ export async function callAIWithAutoSwitch(
   checkDailyReset();
 
   const sourceType = logCtx?.sourceType;
+  const group: AIGroup = logCtx?.group ?? 'user';
+  const background = isBackgroundGroup(group);
   const client = logCtx?.supabaseClient ?? getLogClient();
   const record = (provider: 'gemini' | 'lovable' | 'none', key_index: number, outcome: string, status: number) =>
-    recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType });
+    recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType, group });
+
+  // Owner rule: background jobs use free keys only — never the paid gateway.
+  if (background && logCtx) logCtx.allowPaidFallback = false;
+  const allowPaid = background ? false : logCtx?.allowPaidFallback;
+
+  // Daily free-quota budget per job group (background only; learners never blocked).
+  if (background) {
+    const b = await checkFreeBudget(client, group);
+    if (!b.allowed) {
+      console.warn(`[AI-Switch] 🧮 Free budget refused for ${group}: ${b.reason}`);
+      await record('none', -1, 'budget_exhausted', 429);
+      throw createCodedError(`FREE_ONLY_EXHAUSTED: BUDGET_EXHAUSTED — ${b.reason}`, 429, 'FREE_ONLY_EXHAUSTED');
+    }
+  }
 
   // Free key rotation: #1 → #2 → #3 (shared order), paid gateway last.
-  const geminiKeys = getFreeGeminiKeys();
-
+  // Keys parked in free_key_health cooldown are skipped (no wasted 429s).
+  const health = await getKeyHealthCached(client);
+  const allKeys = getFreeGeminiKeys();
+  const geminiKeys = allKeys.filter(({ index }) => !isKeyCooling(health, index));
+  if (geminiKeys.length < allKeys.length) {
+    console.log(`[AI-Switch] Skipping ${allKeys.length - geminiKeys.length} key(s) in cooldown`);
+  }
 
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
 
@@ -656,6 +677,7 @@ export async function callAIWithAutoSwitch(
           anyGeminiRateLimited = true;
           console.warn(`[AI-Switch] ⚠️ Gemini key #${index + 1} rate limited (429), trying next...`);
           await record('gemini', index, 'rate_limited', 429);
+          await parkKey(client, index, error?.daily === true);
           continue;
         }
         if (isAuthError(error)) {
@@ -675,10 +697,10 @@ export async function callAIWithAutoSwitch(
     const res = await tryGeminiKeys();
     if (res) return res;
 
-    // All keys failed this pass. If it was rate limiting, Gemini per-minute
-    // limits clear quickly — back off once and retry the whole rotation before
-    // burning paid Gateway credits.
-    if (anyGeminiRateLimited) {
+    // All keys failed this pass. Learner calls get one short back-off retry
+    // (per-minute limits clear quickly). Background jobs stop immediately so
+    // they never feed a retry storm.
+    if (anyGeminiRateLimited && !background) {
       console.warn('[AI-Switch] ⏳ All Gemini keys 429 — backing off 8s before one retry...');
       await new Promise((r) => setTimeout(r, 8000));
       anyGeminiRateLimited = false;
@@ -691,8 +713,10 @@ export async function callAIWithAutoSwitch(
       providers.gemini.lastError = 'All keys quota exhausted - resets at midnight UTC';
       providers.gemini.lastChecked = Date.now();
     }
-  } else if (geminiKeys.length === 0) {
+  } else if (allKeys.length === 0) {
     console.warn('[AI-Switch] No Gemini keys configured');
+  } else if (geminiKeys.length === 0) {
+    console.log('[AI-Switch] All free keys in cooldown — no Gemini request made');
   } else {
     console.log('[AI-Switch] Gemini marked unavailable, skipping to Lovable...');
   }
