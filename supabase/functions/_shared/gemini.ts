@@ -724,7 +724,7 @@ export async function callAIWithAutoSwitch(
   // COST GUARD 2: hard daily ceiling on PAID gateway calls across the whole
   // app (learner-facing included). Free keys are always tried first above, so
   // this only ever blocks paid top-ups once the day's ceiling is reached.
-  if (logCtx?.allowPaidFallback !== false && lovableKey) {
+  if (allowPaid !== false && lovableKey) {
     const ceiling = await checkPaidDailyCeiling(client);
     if (!ceiling.allowed) {
       console.warn(`[AI-Switch] 🚫 Paid daily ceiling reached (${ceiling.used}/${ceiling.limit}) — refusing paid call`);
@@ -739,7 +739,7 @@ export async function callAIWithAutoSwitch(
 
   // COST GUARD: callers that opt out of paid usage stop here instead of
   // silently burning credits when the free keys are down.
-  if (logCtx?.allowPaidFallback === false) {
+  if (allowPaid === false) {
     console.warn('[AI-Switch] 🚫 Paid fallback disabled for this caller — skipping Lovable Gateway');
     await record('none', -1, 'free_only_exhausted', 429);
     throw createCodedError(
