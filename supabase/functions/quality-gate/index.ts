@@ -18,7 +18,6 @@ const json = (b: unknown, status = 200) =>
 
 const PER_RUN = 30;
 const AI_BATCH = 10;
-const DEFAULT_BANNED = ['politics', 'political party', 'sectarian', 'religious controversy'];
 
 const SYSTEM = `You are an independent exam-question solver for Pakistani competitive and admission tests.
 For each numbered MCQ, solve it yourself and choose the single best option letter.
@@ -101,7 +100,7 @@ Deno.serve(async (req) => {
       if (!pending.length) continue;
       budget -= pending.length;
 
-      const banned = [...DEFAULT_BANNED, ...(topics ?? []).filter((x: any) => x.is_banned).map((x: any) => x.topic)];
+      const banned = [...(topics ?? []).filter((x: any) => x.is_banned).map((x: any) => x.topic)]; // per-test bans only
       const topicList = (topics ?? []).filter((x: any) => !x.is_banned);
       const tierOf = (name?: string) => topicList.find((x: any) => x.topic === name)?.source_tier ?? null;
       const dups = findDuplicates(qs ?? []);
