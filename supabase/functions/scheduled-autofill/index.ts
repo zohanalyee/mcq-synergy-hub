@@ -628,10 +628,10 @@ Deno.serve(async (req) => {
       const remainingQuota = HARD_NIGHTLY_LIMIT - totalQuestionsSaved;
       const questionsToRequest = Math.min(batchSize, topic.questions_needed, remainingQuota);
 
-      // Call the appropriate function with retryWithBackoff
+      // Single call — no 429 retry wrapper (it fed retry storms on dead keys).
+      // Free keys only: background jobs never use the paid gateway.
       try {
-        const generateResponse = await retryWithBackoff(
-          () => fetch(`${supabaseUrl}/functions/v1/${endpoint}`, {
+        const generateResponse = await fetch(`${supabaseUrl}/functions/v1/${endpoint}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -647,13 +647,10 @@ Deno.serve(async (req) => {
               count: questionsToRequest,
               mode: 'bank_only',
               source: 'auto_fill',
-              free_only: !paidMode,
+              free_only: true,
               forceNew: true
             })
-          }),
-          2, // max 2 retries for auto-fill
-          `auto-fill ${topic.topic_name}`
-        );
+          });
 
         totalQuestionsRequested += questionsToRequest;
         if (paidMode) paidCallsUsed++;

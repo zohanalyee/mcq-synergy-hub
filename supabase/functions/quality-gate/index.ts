@@ -146,7 +146,7 @@ Deno.serve(async (req) => {
             if (calls + aiCalls >= cap) { pauseReason = `daily cap ${cap} reached`; break; }
             try {
               const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 2048 },
-                { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false });
+                { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' });
               aiCalls++;
               answers.push(parseArray(r.text));
             } catch (e: any) {

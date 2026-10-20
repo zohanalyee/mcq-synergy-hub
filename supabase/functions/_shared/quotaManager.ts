@@ -10,10 +10,13 @@ export const DAILY_QUOTA_LIMIT = 1400;
 export async function checkQuota(supabaseClient: any): Promise<{ remaining: number; used: number }> {
   const today = new Date().toISOString().split('T')[0];
 
+  // Count only real Gemini requests (attempt rows), not run-summary rows.
   const { count, error } = await supabaseClient
     .from('ai_usage_logs')
-    .select('*', { count: 'exact', head: true })
-    .gte('created_at', `${today}T00:00:00Z`);
+    .select('id', { count: 'exact', head: true })
+    .gte('created_at', `${today}T00:00:00Z`)
+    .eq('metadata->>ai_attempt', 'true')
+    .eq('metadata->>provider', 'gemini');
 
   if (error) {
     console.warn('[QuotaManager] ⚠️ Could not check quota:', error.message);
