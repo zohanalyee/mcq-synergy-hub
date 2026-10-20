@@ -163,7 +163,7 @@ const QualityGatePanel = () => {
                   <Badge variant="destructive">Fail {s.fail}</Badge>
                   <Badge variant="outline">Review {s.review}</Badge>
                   <Badge variant="outline">Pending {s.pending}</Badge>
-                  <Badge variant={skew ? "destructive" : "outline"}>Letters {LETTERS.map((l) => `${l}${s.letters[l]}`).join(" ")}</Badge>
+                  <Badge variant={skew ? "destructive" : "outline"}>{skew ? "Warning: letters " : "Letters "}{LETTERS.map((l) => `${l}${s.letters[l]}`).join(" ")}</Badge>
                 </div>
                 {open === s.definition_id && (
                   <div className="space-y-2 pt-1">
