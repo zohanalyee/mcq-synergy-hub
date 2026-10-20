@@ -667,17 +667,20 @@ export async function callAIWithAutoSwitch(
 
   const sourceType = logCtx?.sourceType;
   const group: AIGroup = logCtx?.group ?? 'user';
-  const background = isBackgroundGroup(group);
   const client = logCtx?.supabaseClient ?? getLogClient();
+  // All new guards are switched by system_settings.ai_free_budget.enabled;
+  // false restores the previous behaviour for every caller.
+  const policy = switchPolicy(group, (await getBudgetCached(client))?.enabled === true);
+  const background = !policy.retryAfterAll429;
   const record = (provider: 'gemini' | 'lovable' | 'none', key_index: number, outcome: string, status: number) =>
     recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType, group });
 
   // Owner rule: background jobs use free keys only — never the paid gateway.
-  if (background && logCtx) logCtx.allowPaidFallback = false;
-  const allowPaid = background ? false : logCtx?.allowPaidFallback;
+  if (policy.forceFreeOnly && logCtx) logCtx.allowPaidFallback = false;
+  const allowPaid = policy.forceFreeOnly ? false : logCtx?.allowPaidFallback;
 
   // Daily free-quota budget per job group (background only; learners never blocked).
-  if (background) {
+  if (policy.checkBudget) {
     const b = await checkFreeBudget(client, group);
     if (!b.allowed) {
       console.warn(`[AI-Switch] 🧮 Free budget refused for ${group}: ${b.reason}`);
@@ -688,7 +691,7 @@ export async function callAIWithAutoSwitch(
 
   // Free key rotation: #1 → #2 → #3 (shared order), paid gateway last.
   // Keys parked in free_key_health cooldown are skipped (no wasted 429s).
-  const health = await getKeyHealthCached(client);
+  const health = policy.skipCoolingKeys ? await getKeyHealthCached(client) : {};
   const allKeys = getFreeGeminiKeys();
   const geminiKeys = allKeys.filter(({ index }) => !isKeyCooling(health, index));
   if (geminiKeys.length < allKeys.length) {
