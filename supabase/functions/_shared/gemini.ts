@@ -1,6 +1,8 @@
 // Shared Gemini API helper with Auto-Switcher (Gemini Free → Lovable Gateway Fallback)
 
 import { recordAIAttempt } from './quotaManager.ts';
+import { checkFreeBudget, isBackgroundGroup, isKeyCooling, type AIGroup } from './freeBudget.ts';
+export type { AIGroup } from './freeBudget.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Lazy service-role client used ONLY for logging AI attempt outcomes, so deep
@@ -59,6 +61,12 @@ export interface AILogContext {
    * silently spending credits. Background/bulk jobs pass false.
    */
   allowPaidFallback?: boolean;
+  /**
+   * Job group for the free-quota budget (system_settings.ai_free_budget).
+   * Background groups are budget-checked, never use the paid gateway and
+   * never retry after an all-keys 429. Defaults to 'user'.
+   */
+  group?: AIGroup;
 }
 
 /**
@@ -252,6 +260,32 @@ async function writeKeyHealthCache(client: any, keys: CachedKeyHealth): Promise<
   } catch (error) {
     console.warn('[Gemini] Could not persist free_key_health:', String(error).substring(0, 120));
   }
+}
+
+// Cooldown cache shared by every caller of callAIWithAutoSwitch (60 s per isolate).
+const PER_MINUTE_COOLDOWN_MS = 5 * 60 * 1000;
+let _healthCache: { at: number; keys: CachedKeyHealth } | null = null;
+
+async function getKeyHealthCached(client: any): Promise<CachedKeyHealth> {
+  if (_healthCache && Date.now() - _healthCache.at < 60_000) return _healthCache.keys;
+  const keys = await readKeyHealthCache(client);
+  _healthCache = { at: Date.now(), keys };
+  return keys;
+}
+
+// Park a key after a 429: daily quota → until the next Google reset; per-minute → 5 min.
+async function parkKey(client: any, index: number, daily: boolean): Promise<void> {
+  const now = Date.now();
+  const keys = await readKeyHealthCache(client);
+  keys[String(index)] = {
+    ok: false,
+    status: 429,
+    reason: daily ? 'GEMINI_RATE_LIMIT (daily)' : 'GEMINI_RATE_LIMIT (per-minute)',
+    checked_at: now,
+    cooldown_until: daily ? nextFreeTierReset() : now + PER_MINUTE_COOLDOWN_MS,
+  };
+  _healthCache = { at: now, keys };
+  await writeKeyHealthCache(client, keys);
 }
 
 export async function probeFreeGeminiKeys(client?: any): Promise<{
@@ -521,7 +555,10 @@ async function callGeminiTextOnce(
   if (!response.ok) {
     const errText = await response.text();
     if (response.status === 429) {
-      throw createGeminiError("GEMINI_RATE_LIMIT: Rate limit exceeded. Please try again later.", 429);
+      const err = createGeminiError("GEMINI_RATE_LIMIT: Rate limit exceeded. Please try again later.", 429);
+      // Google names the exhausted quota (e.g. "...PerDay..."): daily vs per-minute.
+      (err as any).daily = /per\s?day|PerDay|daily/i.test(errText);
+      throw err;
     }
     if (response.status === 403 || response.status === 401) {
       throw createGeminiError("GEMINI_AUTH_ERROR: API key invalid or unauthorized.", response.status);
@@ -629,13 +666,34 @@ export async function callAIWithAutoSwitch(
   checkDailyReset();
 
   const sourceType = logCtx?.sourceType;
+  const group: AIGroup = logCtx?.group ?? 'user';
+  const background = isBackgroundGroup(group);
   const client = logCtx?.supabaseClient ?? getLogClient();
   const record = (provider: 'gemini' | 'lovable' | 'none', key_index: number, outcome: string, status: number) =>
-    recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType });
+    recordAIAttempt(client, { provider, key_index, outcome, status, source_type: sourceType, group });
+
+  // Owner rule: background jobs use free keys only — never the paid gateway.
+  if (background && logCtx) logCtx.allowPaidFallback = false;
+  const allowPaid = background ? false : logCtx?.allowPaidFallback;
+
+  // Daily free-quota budget per job group (background only; learners never blocked).
+  if (background) {
+    const b = await checkFreeBudget(client, group);
+    if (!b.allowed) {
+      console.warn(`[AI-Switch] 🧮 Free budget refused for ${group}: ${b.reason}`);
+      await record('none', -1, 'budget_exhausted', 429);
+      throw createCodedError(`FREE_ONLY_EXHAUSTED: BUDGET_EXHAUSTED — ${b.reason}`, 429, 'FREE_ONLY_EXHAUSTED');
+    }
+  }
 
   // Free key rotation: #1 → #2 → #3 (shared order), paid gateway last.
-  const geminiKeys = getFreeGeminiKeys();
-
+  // Keys parked in free_key_health cooldown are skipped (no wasted 429s).
+  const health = await getKeyHealthCached(client);
+  const allKeys = getFreeGeminiKeys();
+  const geminiKeys = allKeys.filter(({ index }) => !isKeyCooling(health, index));
+  if (geminiKeys.length < allKeys.length) {
+    console.log(`[AI-Switch] Skipping ${allKeys.length - geminiKeys.length} key(s) in cooldown`);
+  }
 
   const lovableKey = Deno.env.get('LOVABLE_API_KEY');
 
@@ -656,6 +714,7 @@ export async function callAIWithAutoSwitch(
           anyGeminiRateLimited = true;
           console.warn(`[AI-Switch] ⚠️ Gemini key #${index + 1} rate limited (429), trying next...`);
           await record('gemini', index, 'rate_limited', 429);
+          await parkKey(client, index, error?.daily === true);
           continue;
         }
         if (isAuthError(error)) {
@@ -675,10 +734,10 @@ export async function callAIWithAutoSwitch(
     const res = await tryGeminiKeys();
     if (res) return res;
 
-    // All keys failed this pass. If it was rate limiting, Gemini per-minute
-    // limits clear quickly — back off once and retry the whole rotation before
-    // burning paid Gateway credits.
-    if (anyGeminiRateLimited) {
+    // All keys failed this pass. Learner calls get one short back-off retry
+    // (per-minute limits clear quickly). Background jobs stop immediately so
+    // they never feed a retry storm.
+    if (anyGeminiRateLimited && !background) {
       console.warn('[AI-Switch] ⏳ All Gemini keys 429 — backing off 8s before one retry...');
       await new Promise((r) => setTimeout(r, 8000));
       anyGeminiRateLimited = false;
@@ -691,8 +750,10 @@ export async function callAIWithAutoSwitch(
       providers.gemini.lastError = 'All keys quota exhausted - resets at midnight UTC';
       providers.gemini.lastChecked = Date.now();
     }
-  } else if (geminiKeys.length === 0) {
+  } else if (allKeys.length === 0) {
     console.warn('[AI-Switch] No Gemini keys configured');
+  } else if (geminiKeys.length === 0) {
+    console.log('[AI-Switch] All free keys in cooldown — no Gemini request made');
   } else {
     console.log('[AI-Switch] Gemini marked unavailable, skipping to Lovable...');
   }
@@ -700,7 +761,7 @@ export async function callAIWithAutoSwitch(
   // COST GUARD 2: hard daily ceiling on PAID gateway calls across the whole
   // app (learner-facing included). Free keys are always tried first above, so
   // this only ever blocks paid top-ups once the day's ceiling is reached.
-  if (logCtx?.allowPaidFallback !== false && lovableKey) {
+  if (allowPaid !== false && lovableKey) {
     const ceiling = await checkPaidDailyCeiling(client);
     if (!ceiling.allowed) {
       console.warn(`[AI-Switch] 🚫 Paid daily ceiling reached (${ceiling.used}/${ceiling.limit}) — refusing paid call`);
@@ -715,7 +776,7 @@ export async function callAIWithAutoSwitch(
 
   // COST GUARD: callers that opt out of paid usage stop here instead of
   // silently burning credits when the free keys are down.
-  if (logCtx?.allowPaidFallback === false) {
+  if (allowPaid === false) {
     console.warn('[AI-Switch] 🚫 Paid fallback disabled for this caller — skipping Lovable Gateway');
     await record('none', -1, 'free_only_exhausted', 429);
     throw createCodedError(

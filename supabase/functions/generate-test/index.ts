@@ -93,6 +93,7 @@ const genStats = {
  * never used — the request fails instead of quietly spending credits.
  */
 let freeOnlyMode = false;
+let aiGroup: 'user' | 'auto_fill' | 'admin_bulk' = 'user';
 
 async function callGeminiForBatch(
   _apiKey: string,
@@ -104,7 +105,7 @@ async function callGeminiForBatch(
     const { text, provider, cost } = await callAIWithAutoSwitch('', promptText, {
       temperature: generationConfig?.temperature || 0.7,
       maxOutputTokens: generationConfig?.maxOutputTokens || 8000,
-    }, { supabaseClient: null, sourceType: 'generate-test', allowPaidFallback: !freeOnlyMode });
+    }, { supabaseClient: null, sourceType: 'generate-test', allowPaidFallback: !freeOnlyMode, group: aiGroup });
     console.log(`✅ Success with ${provider} (cost: ${cost})`);
     return { success: true, text, modelUsed: provider === 'gemini' ? 'gemini-2.0-flash' : 'lovable-gateway', provider, cost };
   } catch (err: any) {
@@ -1334,7 +1335,10 @@ serve(async (req) => {
     genStats.ai_returned = 0;
     genStats.topic_rejected = 0;
     genStats.duplicate_skipped = 0;
-    freeOnlyMode = free_only === true;
+    // Free-budget job group: auto-fill / admin bulk are background (free keys only,
+    // budget-checked, stop on first all-keys 429); everything else is learner traffic.
+    aiGroup = source === 'auto_fill' ? 'auto_fill' : (mode === 'bank_only' ? 'admin_bulk' : 'user');
+    freeOnlyMode = free_only === true || aiGroup !== 'user';
     if (freeOnlyMode) {
       console.log('[generate-test] 💰 free_only=true — paid AI gateway fallback is disabled for this request');
     }

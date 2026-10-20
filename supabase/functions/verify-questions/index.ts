@@ -227,7 +227,7 @@ Marked correct: ${correctText || '-'}`;
         const result = await callAIWithAutoSwitch(SYSTEM_PROMPT, userPrompt, {
           temperature: 0.1,
           maxOutputTokens: 4096,
-        }, { sourceType: 'quality_gate', supabaseClient: admin, allowPaidFallback: false });
+        }, { sourceType: 'quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' });
         verdicts = parseVerdicts(result.text);
       } catch (err: any) {
         stopReason = `AI review failed: ${String(err?.message).substring(0, 160)}`;
