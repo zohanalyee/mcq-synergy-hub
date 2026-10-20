@@ -2620,6 +2620,102 @@ export type Database = {
         }
         Relationships: []
       }
+      quality_job_runs: {
+        Row: {
+          calls_today: number
+          day: string
+          id: string
+          last_run_at: string | null
+          last_summary: Json | null
+          lease_until: string | null
+          pause_reason: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          calls_today?: number
+          day?: string
+          id?: string
+          last_run_at?: string | null
+          last_summary?: Json | null
+          lease_until?: string | null
+          pause_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          calls_today?: number
+          day?: string
+          id?: string
+          last_run_at?: string | null
+          last_summary?: Json | null
+          lease_until?: string | null
+          pause_reason?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      quality_syllabus_topics: {
+        Row: {
+          created_at: string
+          definition_id: string
+          id: string
+          is_banned: boolean
+          section: string | null
+          source_tier: string
+          source_url: string | null
+          topic: string
+          updated_at: string
+          weight: number | null
+        }
+        Insert: {
+          created_at?: string
+          definition_id: string
+          id?: string
+          is_banned?: boolean
+          section?: string | null
+          source_tier?: string
+          source_url?: string | null
+          topic: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Update: {
+          created_at?: string
+          definition_id?: string
+          id?: string
+          is_banned?: boolean
+          section?: string | null
+          source_tier?: string
+          source_url?: string | null
+          topic?: string
+          updated_at?: string
+          weight?: number | null
+        }
+        Relationships: []
+      }
+      quality_wave_tests: {
+        Row: {
+          created_at: string
+          definition_id: string
+          label: string | null
+          wave: number
+        }
+        Insert: {
+          created_at?: string
+          definition_id: string
+          label?: string | null
+          wave?: number
+        }
+        Update: {
+          created_at?: string
+          definition_id?: string
+          label?: string | null
+          wave?: number
+        }
+        Relationships: []
+      }
       question_explorer_audit: {
         Row: {
           action: string
@@ -2653,6 +2749,87 @@ export type Database = {
           library_ids?: string[]
           mock_affected?: number
           mock_ids?: string[]
+        }
+        Relationships: []
+      }
+      question_quality_reviews: {
+        Row: {
+          ai_answers: Json | null
+          ai_difficulty: string | null
+          ai_topic: string | null
+          ai_topic_tier: string | null
+          ai_verdict: string
+          checked_at: string
+          checker_version: number
+          created_at: string
+          definition_id: string
+          deterministic_ok: boolean
+          id: string
+          owner_decision: string | null
+          question_id: string
+          reasons: string[]
+          relevant: boolean | null
+          signal_flags: string[]
+          updated_at: string
+        }
+        Insert: {
+          ai_answers?: Json | null
+          ai_difficulty?: string | null
+          ai_topic?: string | null
+          ai_topic_tier?: string | null
+          ai_verdict?: string
+          checked_at?: string
+          checker_version?: number
+          created_at?: string
+          definition_id: string
+          deterministic_ok?: boolean
+          id?: string
+          owner_decision?: string | null
+          question_id: string
+          reasons?: string[]
+          relevant?: boolean | null
+          signal_flags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          ai_answers?: Json | null
+          ai_difficulty?: string | null
+          ai_topic?: string | null
+          ai_topic_tier?: string | null
+          ai_verdict?: string
+          checked_at?: string
+          checker_version?: number
+          created_at?: string
+          definition_id?: string
+          deterministic_ok?: boolean
+          id?: string
+          owner_decision?: string | null
+          question_id?: string
+          reasons?: string[]
+          relevant?: boolean | null
+          signal_flags?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      question_reports: {
+        Row: {
+          created_at: string
+          id: string
+          question_id: string
+          reason: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          question_id: string
+          reason?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          question_id?: string
+          reason?: string | null
         }
         Relationships: []
       }
