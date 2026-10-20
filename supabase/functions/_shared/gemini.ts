@@ -1,6 +1,8 @@
 // Shared Gemini API helper with Auto-Switcher (Gemini Free → Lovable Gateway Fallback)
 
 import { recordAIAttempt } from './quotaManager.ts';
+import { checkFreeBudget, isBackgroundGroup, isKeyCooling, type AIGroup } from './freeBudget.ts';
+export type { AIGroup } from './freeBudget.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 // Lazy service-role client used ONLY for logging AI attempt outcomes, so deep
@@ -59,6 +61,12 @@ export interface AILogContext {
    * silently spending credits. Background/bulk jobs pass false.
    */
   allowPaidFallback?: boolean;
+  /**
+   * Job group for the free-quota budget (system_settings.ai_free_budget).
+   * Background groups are budget-checked, never use the paid gateway and
+   * never retry after an all-keys 429. Defaults to 'user'.
+   */
+  group?: AIGroup;
 }
 
 /**
@@ -252,6 +260,32 @@ async function writeKeyHealthCache(client: any, keys: CachedKeyHealth): Promise<
   } catch (error) {
     console.warn('[Gemini] Could not persist free_key_health:', String(error).substring(0, 120));
   }
+}
+
+// Cooldown cache shared by every caller of callAIWithAutoSwitch (60 s per isolate).
+const PER_MINUTE_COOLDOWN_MS = 5 * 60 * 1000;
+let _healthCache: { at: number; keys: CachedKeyHealth } | null = null;
+
+async function getKeyHealthCached(client: any): Promise<CachedKeyHealth> {
+  if (_healthCache && Date.now() - _healthCache.at < 60_000) return _healthCache.keys;
+  const keys = await readKeyHealthCache(client);
+  _healthCache = { at: Date.now(), keys };
+  return keys;
+}
+
+// Park a key after a 429: daily quota → until the next Google reset; per-minute → 5 min.
+async function parkKey(client: any, index: number, daily: boolean): Promise<void> {
+  const now = Date.now();
+  const keys = await readKeyHealthCache(client);
+  keys[String(index)] = {
+    ok: false,
+    status: 429,
+    reason: daily ? 'GEMINI_RATE_LIMIT (daily)' : 'GEMINI_RATE_LIMIT (per-minute)',
+    checked_at: now,
+    cooldown_until: daily ? nextFreeTierReset() : now + PER_MINUTE_COOLDOWN_MS,
+  };
+  _healthCache = { at: now, keys };
+  await writeKeyHealthCache(client, keys);
 }
 
 export async function probeFreeGeminiKeys(client?: any): Promise<{
@@ -521,7 +555,10 @@ async function callGeminiTextOnce(
   if (!response.ok) {
     const errText = await response.text();
     if (response.status === 429) {
-      throw createGeminiError("GEMINI_RATE_LIMIT: Rate limit exceeded. Please try again later.", 429);
+      const err = createGeminiError("GEMINI_RATE_LIMIT: Rate limit exceeded. Please try again later.", 429);
+      // Google names the exhausted quota (e.g. "...PerDay..."): daily vs per-minute.
+      (err as any).daily = /per\s?day|PerDay|daily/i.test(errText);
+      throw err;
     }
     if (response.status === 403 || response.status === 401) {
       throw createGeminiError("GEMINI_AUTH_ERROR: API key invalid or unauthorized.", response.status);

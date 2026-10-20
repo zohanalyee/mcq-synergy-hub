@@ -148,6 +148,7 @@ export interface AIAttemptRecord {
   outcome: string;          // success | rate_limited | credits_exhausted | auth_error | error | all_failed | bad_request
   status: number;           // HTTP-ish status
   source_type?: string;     // calling feature, e.g. generate-test
+  group?: string;           // free-budget job group (user | quality_gate | auto_fill | admin_bulk)
 }
 
 export async function recordAIAttempt(
@@ -169,6 +170,7 @@ export async function recordAIAttempt(
           key_index: record.key_index,
           outcome: record.outcome,
           status: record.status,
+          group: record.group || 'user',
         },
       });
   } catch (err) {
