@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import AIQuotaToday from "./AIQuotaToday";
 
 const DAILY_QUOTA_LIMIT = 1400;
 
@@ -142,6 +143,7 @@ const QuotaMonitor = () => {
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.15 }}
     >
+      <AIQuotaToday />
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div className="relative overflow-hidden rounded-xl border border-violet-500/15 bg-gradient-to-r from-slate-900/95 via-slate-900/90 to-violet-950/30 dark:from-slate-950 dark:via-slate-950/95 dark:to-violet-950/20 backdrop-blur-xl shadow-lg shadow-violet-500/5">
           {/* Animated gradient line at top */}
