@@ -1,0 +1,115 @@
+// Pure, deterministic quality rules for mock-test questions (no AI, no DB).
+// Used by the quality-gate edge function; covered by qualityChecks_test.ts.
+
+export const CHECKER_VERSION = 1;
+export const LETTERS = ['A', 'B', 'C', 'D'] as const;
+
+export interface QuestionLike {
+  id: string;
+  question: string;
+  options: unknown;
+  correct_answer: string;
+  explanation?: string | null;
+  subject?: string | null;
+  topic?: string | null;
+}
+
+export function normalizeOptions(raw: unknown): string[] {
+  if (Array.isArray(raw)) return raw.map((o) => String(o ?? '').trim());
+  if (raw && typeof raw === 'object') {
+    const o = raw as Record<string, unknown>;
+    return LETTERS.map((k) => String(o[k] ?? o[k.toLowerCase()] ?? '').trim());
+  }
+  return [];
+}
+
+/** Returns the correct letter (A-D) or null when the key is not among the options. */
+export function correctLetter(q: QuestionLike): string | null {
+  const opts = normalizeOptions(q.options);
+  const key = String(q.correct_answer ?? '').trim();
+  const up = key.toUpperCase();
+  if (LETTERS.includes(up as any) && opts[LETTERS.indexOf(up as any)]) return up;
+  const idx = opts.findIndex((o) => o.toLowerCase() === key.toLowerCase());
+  return idx >= 0 && idx < 4 ? LETTERS[idx] : null;
+}
+
+const FIGURE_RE = /\b(see|refer to|shown in|given in|look at|in) (the )?(figure|diagram|graph|image|picture|table below|chart)\b|\bfigure \d|\bdiagram below\b/i;
+
+export function normText(s: string): string {
+  return String(s ?? '').toLowerCase().replace(/[^a-z0-9\u0600-\u06ff]+/g, ' ').trim();
+}
+
+export interface DetResult { ok: boolean; reasons: string[]; }
+
+export function deterministicCheck(q: QuestionLike, bannedTopics: string[] = []): DetResult {
+  const reasons: string[] = [];
+  const opts = normalizeOptions(q.options);
+  if (opts.length !== 4 || opts.some((o) => !o)) reasons.push('not_4_options');
+  else if (new Set(opts.map((o) => o.toLowerCase())).size !== 4) reasons.push('duplicate_options');
+  if (!correctLetter(q)) reasons.push('key_not_in_options');
+  if (!String(q.explanation ?? '').trim()) reasons.push('missing_explanation');
+  const text = String(q.question ?? '');
+  if (FIGURE_RE.test(text)) reasons.push('figure_dependency');
+  if (text.trim().length < 8) reasons.push('question_too_short');
+  if (text.length > 600) reasons.push('question_too_long');
+  if (opts.some((o) => o.length > 200)) reasons.push('option_too_long');
+  const hay = normText(`${text} ${q.topic ?? ''}`);
+  for (const b of bannedTopics) {
+    const n = normText(b);
+    if (n && hay.includes(n)) { reasons.push(`banned_topic:${b}`); break; }
+  }
+  return { ok: reasons.length === 0, reasons };
+}
+
+/** Ids of questions whose normalized text repeats an earlier one in the same test. */
+export function findDuplicates(qs: QuestionLike[]): Set<string> {
+  const seen = new Set<string>();
+  const dup = new Set<string>();
+  for (const q of qs) {
+    const n = normText(q.question);
+    if (!n) continue;
+    if (seen.has(n)) dup.add(q.id); else seen.add(n);
+  }
+  return dup;
+}
+
+/** Answer-letter skew: flagged when any letter is >40% or <10% of a pool of 20+. */
+export function letterSkew(counts: Record<string, number>): { skewed: boolean; shares: Record<string, number> } {
+  const total = LETTERS.reduce((s, l) => s + (counts[l] || 0), 0);
+  const shares: Record<string, number> = {};
+  let skewed = false;
+  for (const l of LETTERS) {
+    shares[l] = total ? (counts[l] || 0) / total : 0;
+    if (total >= 20 && (shares[l] > 0.4 || shares[l] < 0.1)) skewed = true;
+  }
+  return { skewed, shares };
+}
+
+export function isNumericSubject(subject?: string | null, topic?: string | null): boolean {
+  return /math|quant|arith|algebra|geometry|numer|statistic|accounting/i.test(`${subject ?? ''} ${topic ?? ''}`);
+}
+
+export type Verdict = 'pass' | 'fail' | 'needs_review';
+
+/**
+ * Combine blind AI answers with the key.
+ * Numeric: one solve; disagree -> fail, unsure -> needs_review.
+ * Factual: two answers must both match; any disagreement/unsure -> needs_review.
+ */
+export function combineVerdict(key: string, answers: (string | null)[], numeric: boolean): Verdict {
+  const clean = answers.map((a) => (a ? a.trim().toUpperCase() : null));
+  if (clean.length === 0 || clean.some((a) => !a || !LETTERS.includes(a as any))) return 'needs_review';
+  if (numeric) return clean[0] === key ? 'pass' : 'fail';
+  return clean.every((a) => a === key) ? 'pass' : 'needs_review';
+}
+
+/**
+ * Pool floor: strict filtering may never leave fewer than ceil(1.5 x session).
+ * Returns how many non-pass questions must be kept back and the shortfall.
+ */
+export function poolFloor(sessionSize: number, passCount: number, totalCount: number) {
+  const floor = Math.ceil(sessionSize * 1.5);
+  const keepExtra = Math.max(0, Math.min(floor - passCount, totalCount - passCount));
+  const shortfall = Math.max(0, floor - passCount);
+  return { floor, keepExtra, shortfall };
+}
