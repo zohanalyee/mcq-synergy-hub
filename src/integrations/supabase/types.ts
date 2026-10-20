@@ -4371,6 +4371,7 @@ export type Database = {
             Returns: Json
           }
       dup_norm: { Args: { _t: string }; Returns: string }
+      get_ai_quota_today: { Args: never; Returns: Json }
       get_ai_usage_today: {
         Args: never
         Returns: {
