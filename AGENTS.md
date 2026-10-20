@@ -13,3 +13,4 @@
 - Growth lifecycle hooks resolve only public test metadata and deduplicate lifecycle signals; never send session IDs or user-provided session names to analytics or result shares.
 - Join Alerts uses a dedicated system_settings key, fetched into a build-time snapshot for static anchors and refreshed client-side; missing values stay hidden without a default.
 - Free practice PDF landing pages (/pdf/:slug) come only from src/lib/practicePdfs.js (pages, hub/mock-test boxes, exams.xml entries) — so a new exam PDF is added by data only; PDFs live in public/downloads/ on the apex domain and never enter a sitemap.
+- Mock-test question quality is judged only by the quality-gate edge function into question_quality_reviews (rules in supabase/functions/_shared/qualityChecks.ts); it never edits live questions, uses free Gemini keys only, and is a no-op when system_settings.quality_mode is off — so it is fully reversible and cannot spend paid credits.
