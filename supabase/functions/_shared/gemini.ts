@@ -725,7 +725,7 @@ export async function callAIWithAutoSwitch(
           anyGeminiRateLimited = true;
           console.warn(`[AI-Switch] ⚠️ Gemini key #${index + 1} rate limited (429), trying next...`);
           await record('gemini', index, 'rate_limited', 429);
-          await parkKey(client, index, error?.daily === true);
+          if (policy.skipCoolingKeys) await parkKey(client, index, error?.daily === true);
           continue;
         }
         if (isAuthError(error)) {
