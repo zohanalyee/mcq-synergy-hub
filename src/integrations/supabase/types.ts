@@ -1712,6 +1712,57 @@ export type Database = {
         }
         Relationships: []
       }
+      featured_cards: {
+        Row: {
+          badge: string
+          closed_days: number
+          created_at: string
+          deadline_date: string | null
+          exam_slug: string | null
+          href: string
+          icon: string | null
+          id: string
+          is_active: boolean
+          placements: string
+          sort_order: number
+          subtitle: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          badge?: string
+          closed_days?: number
+          created_at?: string
+          deadline_date?: string | null
+          exam_slug?: string | null
+          href: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          placements?: string
+          sort_order?: number
+          subtitle?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          badge?: string
+          closed_days?: number
+          created_at?: string
+          deadline_date?: string | null
+          exam_slug?: string | null
+          href?: string
+          icon?: string | null
+          id?: string
+          is_active?: boolean
+          placements?: string
+          sort_order?: number
+          subtitle?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       feedback: {
         Row: {
           created_at: string | null

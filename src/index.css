@@ -884,3 +884,23 @@ html {
     background-position: 100% 50%;
   }
 }
+
+/* === Featured Exams block (CSS-only, transform/opacity animations) === */
+.fe-card { position: relative; border-radius: 0.75rem; padding: 1px; background: var(--gradient-brand); box-shadow: var(--shadow-brand); height: 64px; }
+.fe-link { display: flex; align-items: center; gap: 0.625rem; height: 100%; border-radius: calc(0.75rem - 1px); background: hsl(var(--card)); padding: 0 0.75rem; overflow: hidden; position: relative; }
+.fe-icon { display: inline-flex; height: 2rem; width: 2rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 0.5rem; background: var(--gradient-brand); color: hsl(var(--primary-foreground)); }
+.fe-badge { color: hsl(var(--primary)); }
+.fe-badge-closed { color: hsl(var(--muted-foreground)); }
+.fe-dot { position: relative; height: 6px; width: 6px; border-radius: 9999px; background: hsl(var(--destructive)); }
+.fe-dot::after { content: ''; position: absolute; inset: 0; border-radius: 9999px; background: hsl(var(--destructive)); animation: fe-pulse 1.6s ease-out infinite; }
+.fe-cta { position: relative; display: inline-flex; height: 2rem; width: 2rem; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 9999px; background: var(--gradient-brand); color: hsl(var(--primary-foreground)); overflow: hidden; }
+.fe-cta::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, hsl(0 0% 100% / 0.45) 50%, transparent 70%); transform: translateX(-120%); animation: fe-shine 3.2s ease-in-out infinite; }
+.fe-soon .fe-link { padding-right: 8.5rem; }
+.fe-soon .fe-link::before { content: ''; position: absolute; inset: -50%; background: var(--gradient-brand); opacity: 0.08; animation: fe-drift 9s ease-in-out infinite alternate; pointer-events: none; }
+.fe-wa { position: absolute; right: 0.6rem; top: 50%; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 0.25rem; border-radius: 9999px; padding: 0.35rem 0.6rem; font-size: 11px; font-weight: 600; background: var(--gradient-brand); color: hsl(var(--primary-foreground)); }
+@keyframes fe-pulse { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(2.6); opacity: 0; } }
+@keyframes fe-shine { 0%, 60% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+@keyframes fe-drift { from { transform: translateX(-10%) rotate(0deg); } to { transform: translateX(10%) rotate(8deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .fe-dot::after, .fe-cta::after, .fe-soon .fe-link::before { animation: none; }
+}

@@ -30,6 +30,7 @@ import BlogManager from "./BlogManager";
 import AnnouncementsManager from "./announcements/AnnouncementsManager";
 import FAQManager from "./FAQManager";
 import ExamPagesManager from "./exam-pages/ExamPagesManager";
+import FeaturedCardsManager from "./FeaturedCardsManager";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -310,7 +311,7 @@ const AdminTabs = ({ activeTab, setActiveTab }: AdminTabsProps) => {
       <TabsContent value="feedback-analytics"><AdminFeedbackPanel /></TabsContent>
       <TabsContent value="blog-manager"><BlogManager /></TabsContent>
       <TabsContent value="announcements"><AnnouncementsManager /></TabsContent>
-      <TabsContent value="exam-pages"><ExamPagesManager /></TabsContent>
+      <TabsContent value="exam-pages"><FeaturedCardsManager /><ExamPagesManager /></TabsContent>
       <TabsContent value="faq-manager"><FAQManager /></TabsContent>
       <TabsContent value="social-links"><SocialLinksManager /></TabsContent>
       <TabsContent value="content-health"><ContentHealthDashboard /></TabsContent>

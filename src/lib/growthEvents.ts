@@ -30,4 +30,5 @@ export const trackWhatsAppJoin = (placement: string) => trackEvent('whatsapp_joi
 export const trackResultShare = (method: string) => trackEvent('result_share', { method });
 export const trackPdfDownload = (exam: string, placement: string) => trackEvent('pdf_download', { exam, placement });
 export const trackPdfShare = (exam: string, placement: string) => trackEvent('pdf_share', { exam, placement });
-export const trackChannelJoin = (placement: string) => trackEvent('channel_join_click', { placement });
+export const trackChannelJoin = (placement: string) => trackEvent('channel_join_click', { placement });export const trackFeaturedClick = (slot: string, label: string, badge: string) => trackEvent('featured_click', { slot, label, badge });
+export const trackFeaturedWhatsApp = (slot: string) => trackEvent('featured_whatsapp_click', { slot });
