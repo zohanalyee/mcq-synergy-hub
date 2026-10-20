@@ -3,6 +3,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import SEOHead from '@/components/SEOHead';
 import PracticePdfLinks from '@/components/PracticePdfLinks';
+import FeaturedExams from '@/components/home/FeaturedExams';
 import BreadcrumbSchema from '@/components/seo/BreadcrumbSchema';
 import RelatedContent from '@/components/seo/related/RelatedContent';
 import { safeJsonLd } from '@/lib/jsonLd';
@@ -312,6 +313,7 @@ const ExamsHub = () => {
             free MCQs with AI-generated tests. Coverage spans medical and engineering admission tests, university
             aptitude papers, the HEC law admission test, and federal and provincial commission exams.
           </p>
+          <FeaturedExams placement="exams" className="mt-6" />
           <div className="mt-6 flex flex-wrap gap-3">
             <Button asChild>
               <Link to="/mock-tests">

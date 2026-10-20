@@ -19,6 +19,7 @@ import { cn } from '@/lib/utils';
 import { getLocalizedGreeting } from '@/lib/greetings';
 import TypewriterText from '@/components/TypewriterText';
 import UpcomingFreeBanner from '@/components/home/UpcomingFreeBanner';
+import FeaturedExams from '@/components/home/FeaturedExams';
 
 // Below-the-fold / post-idle only — kept out of the initial homepage bundle.
 const TestimonialsSection = lazy(() => import('@/components/reviews/TestimonialsSection'));
@@ -293,6 +294,9 @@ const Home = () => {
             >
               {tr('hero.subtitle')}
             </motion.p>
+
+            <FeaturedExams placement="home" className="mb-3 md:mb-6" />
+            
             
             <motion.div
               initial={{ opacity: 0, y: 20 }}
