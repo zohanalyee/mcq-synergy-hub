@@ -6,6 +6,13 @@ import { Badge } from "@/components/ui/badge";
 import { Loader2, Play, Download, ShieldCheck, ScanSearch } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { REASON_LABELS } from "@/lib/contentSafety";
+
+/** v2 and v3 rows can coexist while the v3 re-check runs: keep only the newest per question. */
+function newestPerQuestion<T extends { question_id: string; checker_version?: number }>(rows: T[]): T[] {
+  const m = new Map<string, T>();
+  rows.forEach((r) => { const p = m.get(r.question_id); if (!p || (r.checker_version ?? 0) > (p.checker_version ?? 0)) m.set(r.question_id, r); });
+  return [...m.values()];
+}
 import { toast } from "sonner";
 
 const db = supabase as any;
@@ -75,11 +82,11 @@ const QualityGatePanel = () => {
     setNeed(Object.fromEntries((jts ?? []).filter((j: any) => j.definition_id).map((j: any) => [j.definition_id, Number(j.questions) || 0])));
     const rows: any[] = [];
     for (let from = 0; ; from += 1000) {
-      const { data } = await db.from("question_quality_reviews").select("definition_id,ai_verdict,deterministic_ok,reasons").eq("checker_version", 2).order("id").range(from, from + 999);
+      const { data } = await db.from("question_quality_reviews").select("question_id,checker_version,definition_id,ai_verdict,deterministic_ok,reasons").in("checker_version", [2, 3]).order("id").range(from, from + 999);
       rows.push(...(data ?? []));
       if (!data || data.length < 1000) break;
     }
-    setAllRows(rows);
+    setAllRows(newestPerQuestion(rows));
     const tot: Record<string, number> = {};
     for (let from = 0; ; from += 1000) {
       const { data } = await db.from("job_test_questions").select("job_test_id").order("id").range(from, from + 999);
@@ -91,11 +98,11 @@ const QualityGatePanel = () => {
     if (!ids.length) return;
     const all: Review[] = [];
     for (let from = 0; ; from += 1000) {
-      const { data } = await db.from("question_quality_reviews").select("question_id,definition_id,ai_verdict,deterministic_ok,reasons,ai_answers,ai_topic,ai_difficulty,signal_flags,owner_decision").in("definition_id", ids).eq("checker_version", 2).order("id").range(from, from + 999);
+      const { data } = await db.from("question_quality_reviews").select("question_id,definition_id,ai_verdict,deterministic_ok,reasons,ai_answers,ai_topic,ai_difficulty,signal_flags,owner_decision,checker_version").in("definition_id", ids).in("checker_version", [2, 3]).order("id").range(from, from + 999);
       all.push(...(data ?? []));
       if (!data || data.length < 1000) break;
     }
-    setReviews(all);
+    setReviews(newestPerQuestion(all));
     const qs: Q[] = [];
     for (let from = 0; ; from += 1000) {
       const { data } = await db.from("job_test_questions").select("id,job_test_id,question,options,correct_answer,difficulty").in("job_test_id", ids).range(from, from + 999);
