@@ -1,7 +1,9 @@
 // Pure, deterministic quality rules for mock-test questions (no AI, no DB).
 // Used by the quality-gate edge function; covered by qualityChecks_test.ts.
 
-export const CHECKER_VERSION = 1;
+import { safetyReasons, nearDuplicateIds } from './contentSafety.js';
+
+export const CHECKER_VERSION = 2;
 export const LETTERS = ['A', 'B', 'C', 'D'] as const;
 
 export interface QuestionLike {
@@ -112,4 +114,26 @@ export function poolFloor(sessionSize: number, passCount: number, totalCount: nu
   const keepExtra = Math.max(0, Math.min(floor - passCount, totalCount - passCount));
   const shortfall = Math.max(0, floor - passCount);
   return { floor, keepExtra, shortfall };
+}
+
+/** Reasons from v1 that mean "broken" (fail); safety-rule reasons only mean needs_review. */
+const SAFETY = new Set(['options_not_distinct', 'option_repeats_question', 'doubtful_explanation', 'copied_from_source', 'final_number_not_in_options', 'explanation_letter_unclear', 'near_duplicate']);
+
+/**
+ * Checker v2 no-AI result for every question of one test.
+ * verdict: 'pending' (AI still to check), 'needs_review' (safety rules only) or 'fail'.
+ */
+export function noAiReview(qs: QuestionLike[], bannedTopics: string[] = []) {
+  const dups = nearDuplicateIds(qs as any);
+  return qs.map((q) => {
+    const d = deterministicCheck(q, bannedTopics);
+    const reasons = [...d.reasons.filter((r) => r !== 'duplicate_options'), ...safetyReasons(q as any)];
+    if (d.reasons.includes('duplicate_options') && !reasons.includes('options_not_distinct')) reasons.push('options_not_distinct');
+    if (dups.has(q.id)) reasons.push('near_duplicate');
+    const uniq = [...new Set(reasons)];
+    // A missing explanation is noted but does not block (the PDF has its own explanation switch).
+    const ok = uniq.every((r) => r === 'missing_explanation');
+    const verdict = ok ? 'pending' : uniq.every((r) => SAFETY.has(r) || r === 'missing_explanation') ? 'needs_review' : 'fail';
+    return { question_id: q.id, deterministic_ok: ok, reasons: uniq, ai_verdict: verdict };
+  });
 }

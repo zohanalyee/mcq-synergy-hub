@@ -13,10 +13,13 @@ import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Loader2, FileDown, RefreshCw, Trash2, Shuffle, ArrowLeft } from 'lucide-react';
 import * as R from '@/lib/pdfBuilder/rules';
+import * as S from '@/lib/contentSafety';
+import { toJobTestSlug } from '@/lib/jobTestSlug';
 
 const db = supabase as any;
 type Q = { id: string; subject: string; topic: string | null; question: string; options: any; correct_answer: string; explanation: string | null; difficulty: string | null; admin_approved: boolean };
-type Def = { id: string; job_title: string; syllabus: any };
+type Def = { id: string; job_title: string; syllabus: any; department: string | null; status: string | null; created_at: string; n?: number };
+type JT = { id: string; title: string; organization: string | null; definition_id: string | null };
 type Sec = { subject: string; picked: Q[]; reserve: Q[]; wanted: number; short: number };
 
 async function pageAll(build: (from: number, to: number) => any) {
@@ -61,16 +64,39 @@ const PdfBuilder = () => {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState<{ bytes: Uint8Array; name: string } | null>(null);
   const [history, setHistory] = useState<any[]>([]);
+  const [jobTests, setJobTests] = useState<JT[]>([]);
+  const [search, setSearch] = useState('');
+  const [titleEdited, setTitleEdited] = useState(false);
 
   useEffect(() => {
     if (!isAdmin) return;
-    db.from('job_test_definitions').select('id, job_title, syllabus').order('job_title').then(({ data }: any) => setDefs(data || []));
+    (async () => {
+      const [{ data: d }, ids, { data: jt }] = await Promise.all([
+        db.from('job_test_definitions').select('id, job_title, syllabus, department, status, created_at').order('job_title'),
+        pageAll((f, t) => db.from('job_test_questions').select('job_test_id').order('id').range(f, t)),
+        db.from('job_tests').select('id, title, organization, definition_id'),
+      ]);
+      const n: Record<string, number> = {};
+      ids.forEach((r: any) => { n[r.job_test_id] = (n[r.job_test_id] || 0) + 1; });
+      setDefs((d || []).map((x: Def) => ({ ...x, job_title: (x.job_title || '').replace(/\s+/g, ' ').trim(), n: n[x.id] || 0 })));
+      setJobTests(jt || []);
+    })().catch((e) => toast.error('Could not load tests', { description: e.message }));
     db.from('exam_pages').select('slug').eq('status', 'published').order('slug').then(({ data }: any) => setSlugs((data || []).map((r: any) => r.slug)));
   }, [isAdmin]);
 
   const def = defs.find((d) => d.id === defId);
-  const kind = R.examKind(def?.job_title || '', hub);
-  const examLabel = kind !== 'generic' ? kind.toUpperCase() : (hub || 'Exam').toUpperCase();
+  const hubSlug = hub && hub !== R.NO_HUB ? hub : '';
+  const kind = R.examKind(def?.job_title || '', hubSlug);
+  const cleanName = R.cleanTestName(def?.job_title || '');
+  const examLabel = cleanName || 'Exam';
+  const labels = useMemo(() => R.testLabels(defs), [defs]);
+  const shownDefs = useMemo(() => defs.map((d, i) => ({ d, label: labels[i] }))
+    .filter((x) => !search.trim() || x.label.toLowerCase().includes(search.trim().toLowerCase())), [defs, labels, search]);
+  const mockSlug = useMemo(() => {
+    const jt = jobTests.find((t) => t.definition_id === defId);
+    return jt ? toJobTestSlug(jt as any, jobTests as any) : '';
+  }, [jobTests, defId]);
+  const campaign = R.campaignOf(hubSlug || cleanName);
 
   const sections = useMemo(() => {
     const list: { subject: string; percentage: number }[] = (def?.syllabus?.sections || []).map((s: any) => ({ subject: s.subject, percentage: Number(s.percentage) || 0 }));
@@ -80,19 +106,31 @@ const PdfBuilder = () => {
     return list;
   }, [def, questions]);
 
-  const pools = useMemo(() => {
+  // Content-safety exclusions (rules 5, 6, 9, 10 + test-wide duplicates), counted per reason.
+  const { pools, excluded } = useMemo(() => {
     const p: Record<string, Q[]> = {};
+    const ex: Record<string, number> = {};
+    const bump = (r: string) => { ex[r] = (ex[r] || 0) + 1; };
     sections.forEach((s) => { p[s.subject] = []; });
+    const dupIds = S.nearDuplicateIds(questions);
     questions.forEach((q) => {
       const s = sections.find((x) => x.subject.toLowerCase() === (q.subject || '').toLowerCase());
-      if (s && R.isEligible(q, reviews[q.id], { gateOnly, requireExplanation: needExp })) p[s.subject].push(q);
+      if (!s) return;
+      const rv = reviews[q.id];
+      const own = [...S.safetyReasons(q), ...(dupIds.has(q.id) ? ['near_duplicate'] : [])];
+      if (own.length) { bump(own[0]); return; }
+      if (R.reviewStatus(rv) === 'blocked') { bump(rv?.reasons?.[0] && S.REASON_LABELS[rv.reasons[0]] ? rv.reasons[0] : 'gate_review'); return; }
+      if (R.isEligible(q, rv, { gateOnly, requireExplanation: needExp })) p[s.subject].push(q);
     });
-    return p;
+    return { pools: p, excluded: ex };
   }, [questions, reviews, sections, gateOnly, needExp]);
+  const aiReviewed = useMemo(() => Object.values(reviews).filter((r) => r.ai_verdict && r.ai_verdict !== 'pending').length, [reviews]);
+  const reasonLabel = (r: string) => S.REASON_LABELS[r] || (r === 'gate_review' ? 'Quality Gate: needs review / failed' : r);
 
   const loadHistory = async (id: string) => {
     const { data } = await db.from('pdf_practice_sets').select('*').eq('definition_id', id).order('created_at', { ascending: false }).limit(20);
     setHistory(data || []);
+    setSetNo(R.nextSetNumber(data || []));
   };
 
   const pickTest = async (id: string) => {
@@ -102,26 +140,42 @@ const PdfBuilder = () => {
     try {
       const [qs, rv] = await Promise.all([
         pageAll((f, t) => db.from('job_test_questions').select('id, subject, topic, question, options, correct_answer, explanation, difficulty, admin_approved').eq('job_test_id', id).order('id').range(f, t)),
-        pageAll((f, t) => db.from('question_quality_reviews').select('question_id, deterministic_ok, ai_verdict, checked_at').eq('definition_id', id).order('checked_at', { ascending: false }).range(f, t)),
+        pageAll((f, t) => db.from('question_quality_reviews').select('question_id, deterministic_ok, ai_verdict, checked_at, checker_version, reasons').eq('definition_id', id).order('id').range(f, t)),
       ]);
-      const latest: Record<string, R.Review> = {};
-      rv.forEach((r: any) => { if (!latest[r.question_id]) latest[r.question_id] = r; });
-      setQuestions(qs); setReviews(latest);
+      setQuestions(qs); setReviews(R.latestReviews(rv));
       const d = defs.find((x) => x.id === id);
-      const h = R.defaultHubSlug(d?.job_title || '', slugs);
-      setHub(h);
-      const k = R.examKind(d?.job_title || '', h);
-      setTitle(`${k !== 'generic' ? k.toUpperCase() : h.toUpperCase()} Free Practice Set – ${count} Questions`);
-      loadHistory(id);
+      setHub(R.defaultHubSlug(d?.job_title || '', slugs));
+      setTitleEdited(false);
+      setTitle(R.setTitle(R.cleanTestName(d?.job_title || ''), count));
+      const { data: hs } = await db.from('pdf_practice_sets').select('*').eq('definition_id', id).order('created_at', { ascending: false }).limit(50);
+      setHistory(hs || []);
+      setSetNo(R.nextSetNumber(hs || []));
     } catch (e: any) { toast.error('Could not load questions', { description: e.message }); }
     setLoading(false);
   };
 
   useEffect(() => { setSplit(R.splitCounts(sections, count)); }, [sections, count]);
+  useEffect(() => { if (def && !titleEdited) setTitle(R.setTitle(cleanName, count)); }, [count, def, cleanName, titleEdited]);
+
+  /** Rule 8: never two near-same questions in one set (swaps also skip them). */
+  const dedupe = (list: Sec[]) => {
+    const chosen: Q[] = [];
+    const clash = (q: Q) => chosen.some((c) => S.isNearDuplicate(c, q));
+    return list.map((s) => {
+      const reserve = [...s.reserve];
+      const picked: Q[] = [];
+      for (const q of s.picked) {
+        let cand: Q | undefined = q;
+        while (cand && clash(cand)) cand = reserve.shift();
+        if (cand) { picked.push(cand); chosen.push(cand); }
+      }
+      return { ...s, picked, reserve, short: Math.max(0, s.wanted - picked.length) };
+    });
+  };
 
   const build = (s = seed) => {
     setSeed(s); setFixedPerms(null); setRebuildOf(null); setReady(null);
-    setSecs(R.pickSet(pools, split, s) as Sec[]);
+    setSecs(dedupe(R.pickSet(pools, split, s) as Sec[]));
   };
 
   const rebuild = (row: any) => {
@@ -132,7 +186,7 @@ const PdfBuilder = () => {
     let i = 0;
     const s: Sec[] = sp.map((x) => { const picked = row.question_ids.slice(i, i + x.count).map((id: string) => byId.get(id)!); i += x.count; return { subject: x.subject, picked, reserve: [], wanted: x.count, short: 0 }; });
     setSecs(s); setSplit(sp); setSeed(Number(row.seed)); setFixedPerms(row.options_order); setRebuildOf(row.id);
-    setTitle(row.title); setSetNo(row.set_number); setHub(row.hub_slug); setGateOnly(row.gate_passed_only); setNeedExp(row.require_explanation); setReady(null);
+    setTitle(row.title); setTitleEdited(true); setSetNo(row.set_number); setHub(row.hub_slug === 'none' ? R.NO_HUB : row.hub_slug); setGateOnly(row.gate_passed_only); setNeedExp(row.require_explanation); setReady(null);
     toast.success('Set loaded exactly as saved. Tap Generate PDF.');
   };
 
@@ -140,7 +194,13 @@ const PdfBuilder = () => {
     if (!secs) return;
     const next = secs.map((s) => ({ ...s, picked: [...s.picked], reserve: [...s.reserve] }));
     const sec = next[si];
-    if (swap) { const r = sec.reserve.shift(); if (!r) { toast.error('No more eligible questions in this section.'); return; } sec.picked[qi] = r; }
+    if (swap) {
+      const others = next.flatMap((x, i) => x.picked.filter((_, j) => !(i === si && j === qi)));
+      let r = sec.reserve.shift();
+      while (r && others.some((o) => S.isNearDuplicate(o, r!))) r = sec.reserve.shift();
+      if (!r) { toast.error('No more eligible questions in this section.'); return; }
+      sec.picked[qi] = r;
+    }
     else sec.picked.splice(qi, 1);
     setSecs(next); setFixedPerms(null); setRebuildOf(null); setReady(null);
   };
@@ -148,9 +208,12 @@ const PdfBuilder = () => {
   const flat = secs?.flatMap((s) => s.picked) || [];
   const passedCount = flat.filter((q) => R.reviewStatus(reviews[q.id]) === 'passed').length;
   const banned = R.hasBannedWording(title);
+  const primaryUrl = mockSlug ? R.mockTestUrl(mockSlug, flat.length || count, campaign) : hubSlug ? R.hubUrl(hubSlug, flat.length || count) : '';
+  const guideUrl = mockSlug && hubSlug ? R.hubUrl(hubSlug, flat.length || count) : null;
+  const blockReason = !hub ? 'Choose a hub page (or "No hub page") first.' : !primaryUrl ? 'This test has no live mock test page; choose a hub page.' : '';
 
   const generate = async () => {
-    if (!secs || !flat.length || !hub) return;
+    if (!secs || !flat.length || blockReason) return;
     if (banned) { toast.error('Remove "official" / "past paper" from the title.'); return; }
     setBusy(true); setReady(null);
     try {
@@ -158,7 +221,7 @@ const PdfBuilder = () => {
       let n = 0;
       const pdfSections = secs.filter((s) => s.picked.length).map((s) => ({
         subject: s.subject,
-        items: s.picked.map((q) => { const idx = flat.indexOf(q); const r = R.applyPerm(q, perms[idx]); n++; return { num: n, question: q.question, options: r.options, answer: r.answer, explanation: q.explanation, topic: q.topic, difficulty: q.difficulty }; }),
+        items: s.picked.map((q) => { const idx = flat.indexOf(q); const r = R.applyPerm(q, perms[idx]); n++; return { num: n, question: q.question, options: r.options, answer: r.answer, explanation: q.explanation ? S.remapExplanation(q.explanation, perms[idx]) : q.explanation, topic: S.displayTopic(q.topic), difficulty: q.difficulty }; }),
       }));
       const N = flat.length;
       const subjects = pdfSections.map((s) => s.subject).join(' & ');
@@ -175,14 +238,15 @@ const PdfBuilder = () => {
         ],
         disclaimer: R.disclaimerFor(kind),
         sections: pdfSections,
-        hubUrl: R.hubUrl(hub, N),
+        hubUrl: mockSlug ? R.mockTestUrl(mockSlug, N, campaign) : R.hubUrl(hubSlug, N),
+        guideUrl: mockSlug && hubSlug ? R.hubUrl(hubSlug, N) : null,
         channelUrl: channel || R.CHANNEL_FALLBACK,
-        shareUrl: R.shareUrl(hub, examLabel),
+        shareUrl: R.shareLanding(mockSlug ? `${R.SITE}/mock-tests/${mockSlug}` : `${R.SITE}/exams/${hubSlug}`, examLabel),
       });
       const name = R.fileName(examLabel, N, setNo);
       if (!rebuildOf) {
         const { error } = await db.from('pdf_practice_sets').insert({
-          definition_id: defId, title, set_number: setNo, hub_slug: hub, question_count: N,
+          definition_id: defId, title, set_number: setNo, hub_slug: hubSlug || 'none', question_count: N,
           section_split: secs.map((s) => ({ subject: s.subject, count: s.picked.length })), seed,
           question_ids: flat.map((q) => q.id), options_order: perms, require_explanation: needExp,
           gate_passed_only: gateOnly, gate_passed_count: passedCount, file_name: name, created_by: user?.id,
@@ -208,10 +272,17 @@ const PdfBuilder = () => {
 
         <Card><CardHeader className="p-3"><CardTitle className="text-base">1. Test</CardTitle></CardHeader>
           <CardContent className="p-3 pt-0 space-y-3">
+            <Input placeholder="Search tests…" value={search} onChange={(e) => setSearch(e.target.value)} />
             <select className={sel} value={defId} onChange={(e) => pickTest(e.target.value)}>
-              <option value="">Choose a test…</option>
-              {defs.map((d) => <option key={d.id} value={d.id}>{d.job_title}</option>)}
+              <option value="">Choose a test… ({shownDefs.length})</option>
+              <optgroup label="Published">
+                {shownDefs.filter((x) => x.d.status === 'published').map((x) => <option key={x.d.id} value={x.d.id}>{x.label}</option>)}
+              </optgroup>
+              <optgroup label="Drafts — no live page yet">
+                {shownDefs.filter((x) => x.d.status !== 'published').map((x) => <option key={x.d.id} value={x.d.id}>{x.label}</option>)}
+              </optgroup>
             </select>
+            {def && def.status !== 'published' && <p className="text-xs text-destructive">This test is a draft. Its mock test page may not be live, so PDF links could not work yet.</p>}
             {loading && <Loader2 className="w-4 h-4 animate-spin" />}
           </CardContent>
         </Card>
@@ -220,6 +291,7 @@ const PdfBuilder = () => {
           <Card><CardHeader className="p-3"><CardTitle className="text-base">2. Questions and split</CardTitle></CardHeader>
             <CardContent className="p-3 pt-0 space-y-3">
               <label className="flex items-center justify-between text-sm">Gate-passed only<Switch checked={gateOnly} onCheckedChange={(v) => { setGateOnly(v); setSecs(null); }} /></label>
+              {gateOnly && aiReviewed === 0 && <p className="text-xs text-destructive">The Quality Gate has not checked any question of this test yet, so no question is Gate-passed.</p>}
               <label className="flex items-center justify-between text-sm">Only questions with an explanation<Switch checked={needExp} onCheckedChange={(v) => { setNeedExp(v); setSecs(null); }} /></label>
               <label className="block text-sm">Total questions
                 <Input type="number" min={4} max={200} value={count} onChange={(e) => setCount(Math.max(1, Number(e.target.value) || 0))} />
@@ -236,6 +308,12 @@ const PdfBuilder = () => {
                   );
                 })}
                 {split.some((s) => (pools[s.subject]?.length || 0) < s.count) && <p className="text-xs text-destructive">A section is short. It will not be filled with unchecked questions.</p>}
+                {Object.keys(excluded).length > 0 && (
+                  <div className="rounded-md border p-2 text-xs space-y-1">
+                    <p className="font-medium text-foreground">Excluded automatically: {Object.values(excluded).reduce((a, b) => a + b, 0)}</p>
+                    <div className="flex flex-wrap gap-1">{Object.entries(excluded).sort((a, b) => b[1] - a[1]).map(([r, n]) => <Badge key={r} variant="outline">{reasonLabel(r)} {n}</Badge>)}</div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -244,15 +322,20 @@ const PdfBuilder = () => {
         {defId && !loading && (
           <Card><CardHeader className="p-3"><CardTitle className="text-base">3. Title and links</CardTitle></CardHeader>
             <CardContent className="p-3 pt-0 space-y-3">
-              <label className="block text-sm">Title<Input value={title} onChange={(e) => setTitle(e.target.value)} /></label>
+              <label className="block text-sm">Title<Input value={title} onChange={(e) => { setTitle(e.target.value); setTitleEdited(true); }} /></label>
               {banned && <p className="text-xs text-destructive">Don't use "official" or "past paper".</p>}
               <label className="block text-sm">Set number<Input type="number" min={1} value={setNo} onChange={(e) => setSetNo(Math.max(1, Number(e.target.value) || 1))} /></label>
               <label className="block text-sm">Hub page (QR and links)
                 <select className={sel} value={hub} onChange={(e) => setHub(e.target.value)}>
+                  <option value="">Choose…</option>
+                  <option value={R.NO_HUB}>No hub page — use mock test link</option>
                   {slugs.map((s) => <option key={s} value={s}>/exams/{s}</option>)}
                 </select>
               </label>
-              <p className="text-xs text-muted-foreground break-all">QR: {R.hubUrl(hub, flat.length || count)}</p>
+              <p className="text-xs text-muted-foreground break-all">QR and link 1: {primaryUrl || '—'}</p>
+              {guideUrl && <p className="text-xs text-muted-foreground break-all">Second link: {guideUrl}</p>}
+              <p className="text-xs text-muted-foreground">File: {R.fileName(examLabel, flat.length || count, setNo)}</p>
+              {blockReason && <p className="text-xs text-destructive">{blockReason}</p>}
               <p className="text-xs text-muted-foreground">Disclaimer: {R.disclaimerFor(kind)}</p>
               <Button onClick={() => build(R.newSeed())} className="w-full"><Shuffle className="w-4 h-4 mr-2" />Build preview list</Button>
             </CardContent>
@@ -281,7 +364,7 @@ const PdfBuilder = () => {
                   </ol>
                 </div>
               ))}
-              <Button className="w-full" onClick={generate} disabled={busy || banned || !flat.length || !hub}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}Generate PDF</Button>
+              <Button className="w-full" onClick={generate} disabled={busy || banned || !flat.length || !!blockReason}>{busy ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileDown className="w-4 h-4 mr-2" />}Generate PDF</Button>
               {ready && <Button variant="outline" className="w-full" onClick={() => deliver(ready.bytes, ready.name)}><FileDown className="w-4 h-4 mr-2" />Download {ready.name}</Button>}
             </CardContent>
           </Card>

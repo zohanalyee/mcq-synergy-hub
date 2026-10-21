@@ -80,3 +80,35 @@ test('split follows section ratio exactly (NTHP 53/47 → 26/24 of 50... largest
   assert.deepEqual(R.splitCounts([{ subject: 'M', percentage: 53 }, { subject: 'E', percentage: 47 }], 50).map((s) => s.count), [27, 23]);
   assert.deepEqual(R.splitCounts([{ subject: 'E', percentage: 40 }, { subject: 'M', percentage: 40 }, { subject: 'I', percentage: 20 }], 50).map((s) => s.count), [20, 20, 10]);
 });
+test('A1: no confident hub match leaves hub empty (JOA never gets air-university)', () => {
+  const slugs = ['air-university', 'aku', 'nthp', 'sthp', 'sts'];
+  assert.equal(R.defaultHubSlug('Junior Office Associate (BPS-13)', slugs), '');
+  assert.equal(R.defaultHubSlug('IBA Karachi NTHP Mock Test 2027', slugs), 'nthp');
+});
+test('A2: clean test names', () => {
+  assert.equal(R.cleanTestName('Junior Office Associate (BPS-13)'), 'Junior Office Associate (BPS-13)');
+  assert.equal(R.cleanTestName(' FIA Assistant'), 'FIA Assistant');
+  assert.equal(R.cleanTestName('IBA Karachi NTHP Mock Test 2027 – English & Mathematics Practice'), 'IBA Karachi NTHP');
+  assert.equal(R.cleanTestName('Official ECAT Syllabus & Entry Test Pattern'), 'ECAT');
+  assert.equal(R.setTitle('Junior Office Associate (BPS-13)', 50), 'Junior Office Associate (BPS-13) Free Practice Set – 50 Questions');
+});
+test('A2: next set number and mock test link', () => {
+  assert.equal(R.nextSetNumber([]), 1);
+  assert.equal(R.nextSetNumber([{ set_number: 1 }, { set_number: 3 }]), 4);
+  assert.equal(R.mockTestUrl('junior-office-associate-bps-13', 50, 'joa'), 'https://mcqsai.com/mock-tests/junior-office-associate-bps-13?utm_source=pdf&utm_medium=free_pdf&utm_campaign=joa_50q');
+});
+test('A3: duplicate names get department added', () => {
+  const l = R.testLabels([{ job_title: 'Assistant ', department: 'FIA', status: 'published', n: 300 }, { job_title: 'Assistant', department: 'SPSC', status: 'draft', n: 200 }]);
+  assert.deepEqual(l, ['Assistant (FIA) · published · 300 Q', 'Assistant (SPSC) · draft · 200 Q']);
+});
+test('sweep rows: no-AI OK + AI pending is eligible, needs_review/fail/deterministic fail blocked; Gate-only needs AI pass', () => {
+  const q = { admin_approved: true, options: { A: '1', B: '2', C: '3', D: '4' }, correct_answer: 'A' };
+  assert.equal(R.isEligible(q, { deterministic_ok: true, ai_verdict: 'pending' }), true);
+  assert.equal(R.isEligible(q, { deterministic_ok: true, ai_verdict: 'pending' }, { gateOnly: true }), false);
+  assert.equal(R.isEligible(q, { deterministic_ok: true, ai_verdict: 'fail' }), false);
+  assert.equal(R.isEligible(q, { deterministic_ok: false, ai_verdict: 'pending' }), false);
+});
+test('latest review prefers the higher checker version', () => {
+  const r = R.latestReviews([{ question_id: 'a', checker_version: 2, checked_at: '2026-01-01', deterministic_ok: true, ai_verdict: 'pending' }, { question_id: 'a', checker_version: 1, checked_at: '2026-02-01', deterministic_ok: true, ai_verdict: 'pass' }]);
+  assert.equal(r.a.checker_version, 2);
+});

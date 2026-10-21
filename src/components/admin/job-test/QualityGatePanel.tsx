@@ -3,12 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Play, Download, ShieldCheck } from "lucide-react";
+import { Loader2, Play, Download, ShieldCheck, ScanSearch } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { REASON_LABELS } from "@/lib/contentSafety";
 import { toast } from "sonner";
 
 const db = supabase as any;
 type Review = {
-  question_id: string; definition_id: string; ai_verdict: string; reasons: string[];
+  question_id: string; definition_id: string; ai_verdict: string; reasons: string[]; deterministic_ok: boolean | null;
   ai_answers: string[] | null; ai_topic: string | null; ai_difficulty: string | null;
   signal_flags: string[]; owner_decision: string | null;
 };
@@ -45,23 +47,51 @@ const QualityGatePanel = () => {
   const [questions, setQuestions] = useState<Q[]>([]);
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<string | null>(null);
+  const [sweep, setSweep] = useState<any>(null);
+  const [sweeping, setSweeping] = useState(false);
+  const [allRows, setAllRows] = useState<{ definition_id: string; ai_verdict: string; deterministic_ok: boolean | null; reasons: string[] }[]>([]);
+  const [defNames, setDefNames] = useState<Record<string, string>>({});
+  const [need, setNeed] = useState<Record<string, number>>({});
+  const [totals, setTotals] = useState<Record<string, number>>({});
+  const [hide, setHide] = useState<{ enabled: boolean; owner_approved: boolean }>({ enabled: false, owner_approved: false });
 
   const load = useCallback(async () => {
-    const [{ data: s }, { data: r }, { data: t }] = await Promise.all([
-      db.from("system_settings").select("key,value").in("key", ["quality_mode", "quality_wave"]),
+    const [{ data: s }, { data: r }, { data: t }, { data: sw }, { data: defs }, { data: jts }] = await Promise.all([
+      db.from("system_settings").select("key,value").in("key", ["quality_mode", "quality_wave", "quality_hide_needs_review"]),
       db.from("quality_job_runs").select("*").eq("id", "quality-gate").maybeSingle(),
       db.from("quality_wave_tests").select("definition_id,label,wave").order("label"),
+      db.from("quality_job_runs").select("*").eq("id", "det-sweep").maybeSingle(),
+      db.from("job_test_definitions").select("id, job_title"),
+      db.from("job_tests").select("definition_id, questions"),
     ]);
     const m = Object.fromEntries((s ?? []).map((x: any) => [x.key, x.value]));
     setMode(String(m.quality_mode ?? "off"));
     setWave(Number(m.quality_wave ?? 0));
+    if (m.quality_hide_needs_review) setHide(m.quality_hide_needs_review);
     setRun(r);
+    setSweep(sw);
     setTests(t ?? []);
+    setDefNames(Object.fromEntries((defs ?? []).map((d: any) => [d.id, String(d.job_title || "").trim()])));
+    setNeed(Object.fromEntries((jts ?? []).filter((j: any) => j.definition_id).map((j: any) => [j.definition_id, Number(j.questions) || 0])));
+    const rows: any[] = [];
+    for (let from = 0; ; from += 1000) {
+      const { data } = await db.from("question_quality_reviews").select("definition_id,ai_verdict,deterministic_ok,reasons").eq("checker_version", 2).order("id").range(from, from + 999);
+      rows.push(...(data ?? []));
+      if (!data || data.length < 1000) break;
+    }
+    setAllRows(rows);
+    const tot: Record<string, number> = {};
+    for (let from = 0; ; from += 1000) {
+      const { data } = await db.from("job_test_questions").select("job_test_id").order("id").range(from, from + 999);
+      (data ?? []).forEach((x: any) => { tot[x.job_test_id] = (tot[x.job_test_id] || 0) + 1; });
+      if (!data || data.length < 1000) break;
+    }
+    setTotals(tot);
     const ids = (t ?? []).map((x: any) => x.definition_id);
     if (!ids.length) return;
     const all: Review[] = [];
     for (let from = 0; ; from += 1000) {
-      const { data } = await db.from("question_quality_reviews").select("question_id,definition_id,ai_verdict,reasons,ai_answers,ai_topic,ai_difficulty,signal_flags,owner_decision").in("definition_id", ids).range(from, from + 999);
+      const { data } = await db.from("question_quality_reviews").select("question_id,definition_id,ai_verdict,deterministic_ok,reasons,ai_answers,ai_topic,ai_difficulty,signal_flags,owner_decision").in("definition_id", ids).eq("checker_version", 2).order("id").range(from, from + 999);
       all.push(...(data ?? []));
       if (!data || data.length < 1000) break;
     }
@@ -91,6 +121,20 @@ const QualityGatePanel = () => {
     load();
   };
 
+  const runSweep = async (restart = false) => {
+    setSweeping(true);
+    let first = restart;
+    try {
+      for (let i = 0; i < 200; i++) {
+        const { data, error } = await supabase.functions.invoke("quality-gate", { body: { action: "sweep", restart: first } });
+        first = false;
+        if (error || !data?.success) { toast.error(`Sweep stopped: ${error?.message ?? data?.error}`); break; }
+        setSweep((p: any) => ({ ...(p ?? {}), cursor: { index: data.index, total: data.total, last_test: data.test } }));
+        if (data.done) { toast.success("No-AI sweep finished"); break; }
+      }
+    } finally { setSweeping(false); load(); }
+  };
+
   const decide = async (qid: string, decision: "ok" | "exclude") => {
     const { error } = await db.from("question_quality_reviews").update({ owner_decision: decision }).eq("question_id", qid);
     if (error) toast.error(error.message); else load();
@@ -108,8 +152,26 @@ const QualityGatePanel = () => {
     rs.forEach((r) => { if (r.ai_topic) topics[r.ai_topic] = (topics[r.ai_topic] || 0) + 1; });
     const diff: Record<string, number> = {};
     rs.forEach((r) => { if (r.ai_difficulty) diff[r.ai_difficulty] = (diff[r.ai_difficulty] || 0) + 1; });
-    return { ...t, total: qs.length, pass: c("pass"), fail: c("fail"), review: c("needs_review"), pending: qs.length - rs.length, letters, topics, diff };
+    return { ...t, total: qs.length, pass: c("pass"), fail: c("fail"), review: c("needs_review"), pending: c("pending") + Math.max(0, qs.length - rs.length), letters, topics, diff };
   }), [tests, reviews, questions]);
+
+  // Per-test report over the whole bank (checker v2, no AI).
+  const report = useMemo(() => {
+    const by: Record<string, { checked: number; review: number; reasons: Record<string, number> }> = {};
+    allRows.forEach((r) => {
+      const b = (by[r.definition_id] ||= { checked: 0, review: 0, reasons: {} });
+      b.checked++;
+      const blocked = r.deterministic_ok === false || r.ai_verdict === "needs_review" || r.ai_verdict === "fail";
+      if (blocked) { b.review++; (r.reasons?.length ? r.reasons : ["ai_review"]).forEach((x) => { b.reasons[x] = (b.reasons[x] || 0) + 1; }); }
+    });
+    return Object.keys({ ...totals, ...by }).map((id) => ({ id, name: defNames[id] || id.slice(0, 8), total: totals[id] || 0, ...(by[id] || { checked: 0, review: 0, reasons: {} }), need: need[id] || 0 }))
+      .sort((a, b) => b.review - a.review);
+  }, [allRows, totals, defNames, need]);
+  const leaseStale = run?.status === "running" && (!run?.lease_until || new Date(run.lease_until) < new Date());
+  const lastOk = run?.last_success_at ? new Date(run.last_success_at) : null;
+  const stalled = mode !== "off" && wave > 0 && (!lastOk || Date.now() - lastOk.getTime() > 6 * 3600_000);
+  const shownStatus = leaseStale ? "stopped unexpectedly" : run?.status ?? "-";
+  const ago = (d: Date | null) => (d ? `${Math.round((Date.now() - d.getTime()) / 60000)} min ago` : "never");
 
   const exportRow = (r: Review) => {
     const q = qById.get(r.question_id);
@@ -142,13 +204,52 @@ const QualityGatePanel = () => {
             </select>
           </label>
           <div className="space-y-1">AI calls today<div className="font-semibold text-sm">{run?.calls_today ?? 0} / 300</div></div>
-          <div className="space-y-1">Status<div className="font-semibold text-sm">{run?.status ?? "-"}</div></div>
+          <div className="space-y-1">Status<div className="font-semibold text-sm">{stalled ? <Badge variant="destructive">Stalled</Badge> : shownStatus}</div></div>
         </div>
-        {run?.pause_reason && <p className="text-xs text-destructive">Paused: {run.pause_reason}</p>}
+        <div className="text-xs text-muted-foreground space-y-0.5">
+          <p>Last AI review saved: {lastOk ? `${lastOk.toLocaleString()} (${ago(lastOk)})` : "never"}{stalled ? " — no review in 6+ hours" : ""}</p>
+          <p>Last run: {run?.last_run_at ? new Date(run.last_run_at).toLocaleString() : "-"}{run?.last_summary ? ` · reviewed ${run.last_summary.reviewed ?? 0}, AI calls ${run.last_summary.ai_calls ?? 0}${run.last_summary.test ? `, ${run.last_summary.test}` : ""}` : ""}</p>
+          {run?.pause_reason && <p className="text-destructive">Now: {run.pause_reason}</p>}
+          {run?.last_error && <p className="text-destructive">Last error ({run.last_error_at ? new Date(run.last_error_at).toLocaleString() : "?"}): {run.last_error}</p>}
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={runNow} disabled={busy}>{busy ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Play className="h-4 w-4 mr-1" />}Run now</Button>
           <Button size="sm" variant="outline" onClick={() => download("quality-report.csv", csv(reviews.map(exportRow)))}><Download className="h-4 w-4 mr-1" />Export CSV</Button>
           <Button size="sm" variant="outline" onClick={calibration}><Download className="h-4 w-4 mr-1" />Calibration 40</Button>
+          <Button size="sm" variant="outline" onClick={() => runSweep(false)} disabled={sweeping}>{sweeping ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <ScanSearch className="h-4 w-4 mr-1" />}Run full no-AI sweep</Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          No-AI sweep: {sweep?.cursor ? `${sweep.cursor.index} / ${sweep.cursor.total} tests${sweep.cursor.index >= sweep.cursor.total ? " — finished" : ""}${sweep.cursor.last_test ? ` (last: ${sweep.cursor.last_test})` : ""}` : "not run yet"}
+          {sweep?.cursor?.index >= sweep?.cursor?.total && !sweeping && <button className="ml-2 underline" onClick={() => runSweep(true)}>Run again from start</button>}
+          {sweep?.last_error && <span className="text-destructive"> · error: {sweep.last_error}</span>}
+        </p>
+
+        <div className="rounded-lg border p-2.5 text-xs space-y-1.5">
+          <label className="flex items-center justify-between gap-2 font-medium text-sm">
+            Hide needs_review questions from live mock tests
+            <Switch checked={hide.enabled} disabled onCheckedChange={() => {}} aria-label="Hide needs_review questions from live mock tests" />
+          </label>
+          <p className="text-muted-foreground">Off and locked. Students see no change until you approve this separately. Below: how many questions per test it would hide.</p>
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border">
+          <table className="w-full text-xs">
+            <thead className="bg-muted"><tr><th className="p-1.5 text-left">Test</th><th className="p-1.5">Total</th><th className="p-1.5">Checked</th><th className="p-1.5">Needs review (would hide)</th><th className="p-1.5">Left / test size</th></tr></thead>
+            <tbody>
+              {report.map((r) => {
+                const left = r.total - r.review;
+                return (
+                  <tr key={r.id} className="border-t align-top">
+                    <td className="p-1.5">{r.name}<div className="text-muted-foreground">{Object.entries(r.reasons).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${REASON_LABELS[k] ?? k} ${v}`).join(" · ")}</div></td>
+                    <td className="p-1.5 text-center">{r.total}</td>
+                    <td className="p-1.5 text-center">{r.checked}</td>
+                    <td className="p-1.5 text-center">{r.review}</td>
+                    <td className={`p-1.5 text-center ${r.need && left < r.need * 1.5 ? "text-destructive font-semibold" : ""}`}>{left} / {r.need || "-"}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
         <div className="space-y-2">
