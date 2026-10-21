@@ -1,0 +1,26 @@
+export const SITE: string;
+export const CHANNEL_FALLBACK: string;
+export const LETTERS: string[];
+export type ExamKind = 'nthp' | 'sthp' | 'sts' | 'generic';
+export interface Review { question_id?: string; deterministic_ok: boolean | null; ai_verdict: string | null }
+export function rng(seed: number): () => number;
+export function shuffle<T>(arr: T[], rand: () => number): T[];
+export function newSeed(): number;
+export function examKind(title: string, hubSlug: string): ExamKind;
+export function disclaimerFor(kind: ExamKind): string;
+export function programLine(kind: ExamKind): string;
+export function defaultHubSlug(title: string, slugs: string[]): string;
+export function hasBannedWording(text: string): boolean;
+export function fileName(examLabel: string, n: number, setNo: number): string;
+export function hubUrl(slug: string, n: number): string;
+export function shareUrl(slug: string, label: string): string;
+export function suggestedMinutes(n: number): number;
+export function reviewStatus(review: Review | null | undefined): 'passed' | 'blocked' | 'unreviewed';
+export function isEligible(q: any, review: Review | null | undefined, opts?: { gateOnly?: boolean; requireExplanation?: boolean }): boolean;
+export function optionTexts(options: any): string[];
+export function correctLetter(q: any): string | null;
+export function splitCounts(sections: { subject: string; percentage?: number }[], n: number): { subject: string; count: number }[];
+export function pickSet<T>(pools: Record<string, T[]>, split: { subject: string; count: number }[], seed: number): { subject: string; wanted: number; picked: T[]; reserve: T[]; short: number }[];
+export function balanceOptions(questions: any[], seed: number): string[][];
+export function applyPerm(q: any, perm: string[]): { options: string[]; answer: string };
+export function letterCounts(answers: string[]): Record<string, number>;
