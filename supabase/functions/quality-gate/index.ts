@@ -177,7 +177,7 @@ Deno.serve(async (req) => {
       for (let p = 0; p < passes && aiCalls < MAX_AI_CALLS; p++) {
         if (calls + aiCalls >= cap) { waiting = `daily cap ${cap} reached`; break; }
         try {
-          const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 2048 },
+          const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 3072 },
             { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' });
           aiCalls++;
           answers.push(parseArray(r.text));
