@@ -1,4 +1,41 @@
-# Mega Audit, 21 Oct 2026 (plan only, nothing changed)
+# Batch 9: Crawl safety (plan only, waits for owner approval)
+
+## What we found
+- **Wrong addresses look like the homepage.** Unknown pages are sent as the homepage with "OK" and "index". Google runs our code and does see a "not found" page marked noindex. That page exists, but its only next steps are 4 small links. Simple crawlers and share previews still see the homepage.
+- **Unknown mock tests:** the "Mock test not found" page is already noindex and has one link back. If the question bank cannot be reached, a "couldn't load" message appears instead, and the page is not marked noindex. That is intentional, so a bad moment never deindexes a real test.
+- **Unknown exam guides** (`/exams/<wrong>`) show the same general not-found page.
+- **Junior Office Associate:** `/mock-tests/junior-office-associate` does not exist. The real page is `/mock-tests/junior-office-associate-bps-13`.
+- **Internal links in our code:** I checked every mock-test link written into the site's code against the sitemap and found none to a missing test. Links stored in the database (featured cards, exam pages, blog posts) are not checked yet; this batch checks them.
+
+## Can we send a real "404 Not Found"?
+- **Our host:** no. It always sends the homepage file with "OK" for unknown addresses, and it ignores our redirect file.
+- **Cloudflare Free:** Cache and Transform rules cannot change the status. A Cloudflare Worker could, but that is a new moving part on your account. It is not proposed; your decision.
+- **So:** use the Google-approved alternative, a "not found" page marked noindex. Google treats it as a "soft 404" and drops it, just more slowly than a real 404.
+
+## What we will build
+1. **Better not-found page** for unknown pages, mock tests and exam guides: noindex, a search box, 6 popular mock tests, and links to the STS, STHP, NTHP and all-exams hubs. One Urdu line, same look as the rest of the site. The "couldn't load" case keeps its current safe behaviour.
+2. **Old addresses forward to the right page:** a small list of known old addresses that forward instantly to the real page. First entry: Junior Office Associate → `...-bps-13`. Google follows these forwards; the old address drops out over time.
+3. **Safety test:** every address in all 10 sitemaps (about 1,638) runs through the page matcher. The build fails if any real page would show "not found" or forward somewhere. A second test confirms the forward list never points to a missing test.
+4. **Database link check:** a build-time report of featured-card, exam-page and blog links that point to a missing mock test or guide. Report only; you fix them in the admin panel.
+5. **After you publish:** I check that the live pages send `no-cache` (your Cloudflare rule), that code files keep the 1-year setting, that the blank-page safety net is in the live page, and that a wrong address shows the new page.
+
+## Not changed
+Titles, descriptions, H1s, sitemaps, real pages, test behaviour, questions and timings for outside services.
+
+## Expected Google effect, risk, undo
+- **Effect:** wrong addresses gradually drop out as soft 404s, so fewer fake homepage copies get indexed. The old Junior Office Associate address passes to the real test. No ranking promise.
+- **Risk:** a real page could wrongly show "not found". The sitemap safety test blocks that before publish.
+- **Undo:** restore the previous version in Lovable history. The forward list is one small file.
+
+## Technical details
+- Files: `src/pages/NotFound.tsx` (adds next steps; keeps `SEOHead noindex`); `src/pages/MockTestDetail.tsx` (the `!test` branch reuses the richer not-found block, and the `!dbAnswered` branch is unchanged); new `src/lib/legacyRedirects.js`, applied in a route wrapper with `<Navigate replace>`, before the `/mock-tests/:slug` lookup.
+- Tests: `scripts/route-coverage.test.mjs` parses the sitemaps, matches each URL against the `App.tsx` route list plus the slug sets (job_tests snapshot, exam pages, topic order), and checks the redirect targets exist.
+- `scripts/check-db-links.mjs` uses paged `.range()` reads (1,000-row cap) and prints a warning only; it never fails the build.
+- On approval, this audit report is saved as `docs/mega-audit-2026-10-21.md`.
+
+---
+
+# Mega Audit, 21 Oct 2026 (report, kept unchanged except the batch order)
 
 Checked today: the code, the database (read-only) and the live site.
 "Not measured" means no evidence was collected this turn. Treat those items as open questions, not findings.
@@ -57,10 +94,14 @@ Keep visible on every page: a real timed test, instant score, explanations, the 
 ## Recommended batch order
 - **Batch 9, crawl safety (S1):** being planned separately.
 - **Batch 10, mock-test titles for clicks (S2) + NTHP/STHP linking (S3):** small change, quick traffic test.
-- **Batch 11, test fairness and data:** answer-option shuffle at display time, usage counters, saving the finished state and the last question reached.
+- **Batch 11, test fairness, data and quota:**
+  - Shuffle answer options when a test is shown. "All/None/Both of the above" options keep their position (the 8.2 rule).
+  - Usage counters, and saving the finished state plus the last question reached.
+  - Compare "9 sessions in 30 days" with GA4 `test_start` counts, to tell low traffic apart from broken tracking.
+  - Merge the two Quality Gate schedules into one and slow `nightly-auto-fill` (now every 30 minutes). The free keys run out daily, so only 36 questions have passed the Gate.
 - **Batch 12, IBA CC&S STS hub + test timeline (S4, S5):** needs your verified dates.
 - **Batch 13, PDF and quality:** PDF Builder fixes, NTHP PDF regeneration, near-duplicate split per test.
-- **Batch 14, Teaching License hub (S6) + wording review (S8) + quota cleanup.**
+- **Batch 14, Teaching License hub (S6) + wording review (S8).**
 - **Then:** STS subject hubs (S7) once enough questions pass the Gate, and the measurement audit (Lighthouse, security warnings, cards, tools).
 
 ## Technical appendix
