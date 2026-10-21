@@ -75,7 +75,7 @@ export function mathsIssues(q) {
   return hit ? [] : ['final_number_not_in_options'];
 }
 
-const LETTER_RE = /\b(?:option|choice|answer)\s*\(?([A-D])\)?(?![a-z])|\(([A-D])\)/g;
+const LETTER_RE = /\b(?:[Oo]ption|[Cc]hoice|[Aa]nswer)\s*\(?([A-D])\)?(?![a-z])|\(([A-D])\)/g;
 
 /** Distinct option letters an explanation mentions ("option C", "(C)"). */
 export function letterRefs(explanation) {
