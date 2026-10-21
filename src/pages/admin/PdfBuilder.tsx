@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import Header from '@/components/Header';
@@ -67,6 +67,9 @@ const PdfBuilder = () => {
   const [jobTests, setJobTests] = useState<JT[]>([]);
   const [search, setSearch] = useState('');
   const [titleEdited, setTitleEdited] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(true);
+  const [setStats, setSetStats] = useState<{ topicCap: number; dup: number }>({ topicCap: 0, dup: 0 });
+  const loadToken = useRef(0);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -86,16 +89,15 @@ const PdfBuilder = () => {
 
   const def = defs.find((d) => d.id === defId);
   const hubSlug = hub && hub !== R.NO_HUB ? hub : '';
-  const kind = R.examKind(def?.job_title || '', hubSlug);
+  const jtRow = useMemo(() => jobTests.find((t) => t.definition_id === defId) || null, [jobTests, defId]);
+  const kind = R.examKind(jtRow?.title || def?.job_title || '', hubSlug, jtRow?.organization || '');
   const cleanName = R.cleanTestName(def?.job_title || '');
   const examLabel = cleanName || 'Exam';
   const labels = useMemo(() => R.testLabels(defs), [defs]);
   const shownDefs = useMemo(() => defs.map((d, i) => ({ d, label: labels[i] }))
     .filter((x) => !search.trim() || x.label.toLowerCase().includes(search.trim().toLowerCase())), [defs, labels, search]);
-  const mockSlug = useMemo(() => {
-    const jt = jobTests.find((t) => t.definition_id === defId);
-    return jt ? toJobTestSlug(jt as any, jobTests as any) : '';
-  }, [jobTests, defId]);
+  const mockSlug = useMemo(() => (jtRow ? toJobTestSlug(jtRow as any, jobTests as any) : ''), [jobTests, jtRow]);
+  const hasPage = R.hasPublicPage(defId, jobTests);
   const campaign = R.campaignOf(hubSlug || cleanName);
 
   const sections = useMemo(() => {
@@ -134,7 +136,11 @@ const PdfBuilder = () => {
   };
 
   const pickTest = async (id: string) => {
+    // Clear everything from the previous test at once, so no stale hub/title/link is ever shown.
+    const token = ++loadToken.current;
     setDefId(id); setSecs(null); setReady(null); setRebuildOf(null); setFixedPerms(null);
+    setQuestions([]); setReviews({}); setHistory([]); setHub(''); setTitle(''); setTitleEdited(false);
+    setPickerOpen(!id);
     if (!id) return;
     setLoading(true);
     try {
@@ -142,35 +148,41 @@ const PdfBuilder = () => {
         pageAll((f, t) => db.from('job_test_questions').select('id, subject, topic, question, options, correct_answer, explanation, difficulty, admin_approved').eq('job_test_id', id).order('id').range(f, t)),
         pageAll((f, t) => db.from('question_quality_reviews').select('question_id, deterministic_ok, ai_verdict, checked_at, checker_version, reasons').eq('definition_id', id).order('id').range(f, t)),
       ]);
-      setQuestions(qs); setReviews(R.latestReviews(rv));
-      const d = defs.find((x) => x.id === id);
-      setHub(R.defaultHubSlug(d?.job_title || '', slugs));
-      setTitleEdited(false);
-      setTitle(R.setTitle(R.cleanTestName(d?.job_title || ''), count));
       const { data: hs } = await db.from('pdf_practice_sets').select('*').eq('definition_id', id).order('created_at', { ascending: false }).limit(50);
+      if (token !== loadToken.current) return; // a newer test was picked meanwhile
+      const d = defs.find((x) => x.id === id);
+      const jt = jobTests.find((t) => t.definition_id === id);
+      setQuestions(qs); setReviews(R.latestReviews(rv));
+      setHub(R.defaultHubSlug(jt?.title || d?.job_title || '', slugs, jt?.organization || ''));
+      setTitle(R.setTitle(R.cleanTestName(d?.job_title || ''), count));
       setHistory(hs || []);
       setSetNo(R.nextSetNumber(hs || []));
-    } catch (e: any) { toast.error('Could not load questions', { description: e.message }); }
-    setLoading(false);
+    } catch (e: any) { if (token === loadToken.current) toast.error('Could not load questions', { description: e.message }); }
+    if (token === loadToken.current) setLoading(false);
   };
 
   useEffect(() => { setSplit(R.splitCounts(sections, count)); }, [sections, count]);
-  useEffect(() => { if (def && !titleEdited) setTitle(R.setTitle(cleanName, count)); }, [count, def, cleanName, titleEdited]);
+  useEffect(() => { if (def && !loading && !titleEdited) setTitle(R.setTitle(cleanName, count)); }, [count, def, cleanName, titleEdited, loading]);
 
-  /** Rule 8: never two near-same questions in one set (swaps also skip them). */
+  /** In one set: no near-same questions, no same answer + shared key term, max 2 per known topic (swaps also skip them). */
+  const clashWhy = (chosen: Q[], q: Q): 'dup' | 'topicCap' | null =>
+    chosen.some((c) => S.isNearDuplicate(c, q) || R.sameAnswerAndTerm(c, q)) ? 'dup' : R.overTopicCap(chosen, q) ? 'topicCap' : null;
   const dedupe = (list: Sec[]) => {
     const chosen: Q[] = [];
-    const clash = (q: Q) => chosen.some((c) => S.isNearDuplicate(c, q));
-    return list.map((s) => {
+    const st = { topicCap: 0, dup: 0 };
+    const out = list.map((s) => {
       const reserve = [...s.reserve];
       const picked: Q[] = [];
       for (const q of s.picked) {
         let cand: Q | undefined = q;
-        while (cand && clash(cand)) cand = reserve.shift();
+        let why: 'dup' | 'topicCap' | null;
+        while (cand && (why = clashWhy(chosen, cand))) { st[why]++; cand = reserve.shift(); }
         if (cand) { picked.push(cand); chosen.push(cand); }
       }
       return { ...s, picked, reserve, short: Math.max(0, s.wanted - picked.length) };
     });
+    setSetStats(st);
+    return out;
   };
 
   const build = (s = seed) => {
@@ -197,7 +209,7 @@ const PdfBuilder = () => {
     if (swap) {
       const others = next.flatMap((x, i) => x.picked.filter((_, j) => !(i === si && j === qi)));
       let r = sec.reserve.shift();
-      while (r && others.some((o) => S.isNearDuplicate(o, r!))) r = sec.reserve.shift();
+      while (r && clashWhy(others, r)) r = sec.reserve.shift();
       if (!r) { toast.error('No more eligible questions in this section.'); return; }
       sec.picked[qi] = r;
     }
@@ -224,8 +236,8 @@ const PdfBuilder = () => {
         items: s.picked.map((q) => { const idx = flat.indexOf(q); const r = R.applyPerm(q, perms[idx]); n++; return { num: n, question: q.question, options: r.options, answer: r.answer, explanation: q.explanation ? S.remapExplanation(q.explanation, perms[idx]) : q.explanation, topic: S.displayTopic(q.topic), difficulty: q.difficulty }; }),
       }));
       const N = flat.length;
-      const subjects = pdfSections.map((s) => s.subject).join(' & ');
-      const site = { nthp: ' at nthp.iba.edu.pk', sthp: ' at iba-suk.edu.pk', sts: ' at sts.net.pk' }[kind as string] || '';
+      const subjects = R.joinSections(pdfSections.map((s) => s.subject));
+      const site = R.announcementSite(kind) ? ` at ${R.announcementSite(kind)}` : '';
       const hasExp = flat.some((q) => String(q.explanation || '').trim());
       const { renderPracticePdf } = await import('@/lib/pdfBuilder/render');
       const bytes = await renderPracticePdf({
@@ -272,18 +284,28 @@ const PdfBuilder = () => {
 
         <Card><CardHeader className="p-3"><CardTitle className="text-base">1. Test</CardTitle></CardHeader>
           <CardContent className="p-3 pt-0 space-y-3">
-            <Input placeholder="Search tests…" value={search} onChange={(e) => setSearch(e.target.value)} />
-            <select className={sel} value={defId} onChange={(e) => pickTest(e.target.value)}>
-              <option value="">Choose a test… ({shownDefs.length})</option>
-              <optgroup label="Published">
-                {shownDefs.filter((x) => x.d.status === 'published').map((x) => <option key={x.d.id} value={x.d.id}>{x.label}</option>)}
-              </optgroup>
-              <optgroup label="Drafts — no live page yet">
-                {shownDefs.filter((x) => x.d.status !== 'published').map((x) => <option key={x.d.id} value={x.d.id}>{x.label}</option>)}
-              </optgroup>
-            </select>
-            {def && def.status !== 'published' && <p className="text-xs text-destructive">This test is a draft. Its mock test page may not be live, so PDF links could not work yet.</p>}
-            {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+            {def && !pickerOpen ? (
+              <div className="flex items-center gap-2 rounded-md border p-2 text-sm">
+                <span className="flex-1 min-w-0 break-words text-foreground">{labels[defs.indexOf(def)]}</span>
+                <Button size="sm" variant="outline" onClick={() => setPickerOpen(true)}>Change</Button>
+              </div>
+            ) : (
+              <>
+                <Input placeholder="Type to search tests…" value={search} onChange={(e) => setSearch(e.target.value)} autoComplete="off" />
+                <div role="listbox" aria-label="Tests" className="max-h-72 overflow-y-auto overscroll-contain rounded-md border divide-y">
+                  {shownDefs.length === 0 && <p className="p-3 text-xs text-muted-foreground">No test matches.</p>}
+                  {shownDefs.map((x) => (
+                    <button key={x.d.id} type="button" role="option" aria-selected={x.d.id === defId}
+                      onClick={() => pickTest(x.d.id)}
+                      className={`w-full text-left px-3 py-2.5 text-sm hover:bg-muted ${x.d.id === defId ? 'bg-muted font-medium' : ''}`}>
+                      {x.label}{!R.hasPublicPage(x.d.id, jobTests) && <span className="text-xs text-destructive"> · no public page</span>}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {def && !loading && !hasPage && <p className="text-xs text-destructive">This test has no public mock test page yet, so PDF links could not work.</p>}
+            {loading && <p className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin" />Loading questions, hub and links…</p>}
           </CardContent>
         </Card>
 
@@ -333,6 +355,7 @@ const PdfBuilder = () => {
                 </select>
               </label>
               <p className="text-xs text-muted-foreground break-all">QR and link 1: {primaryUrl || '—'}</p>
+              {R.announcementSite(kind) && <p className="text-xs text-muted-foreground">Announcement site: {R.announcementSite(kind)}</p>}
               {guideUrl && <p className="text-xs text-muted-foreground break-all">Second link: {guideUrl}</p>}
               <p className="text-xs text-muted-foreground">File: {R.fileName(examLabel, flat.length || count, setNo)}</p>
               {blockReason && <p className="text-xs text-destructive">{blockReason}</p>}
@@ -349,6 +372,7 @@ const PdfBuilder = () => {
                 <Badge>Gate-passed {passedCount} / {flat.length}</Badge>
                 <Badge variant="secondary">Only admin-approved {flat.length - passedCount}</Badge>
                 <Badge variant="outline">Seed {seed}</Badge>
+                <Badge variant="outline">Skipped: topic cap {setStats.topicCap} · duplicates {setStats.dup}</Badge>
               </div>
               {secs.map((s, si) => (
                 <div key={s.subject} className="space-y-1">

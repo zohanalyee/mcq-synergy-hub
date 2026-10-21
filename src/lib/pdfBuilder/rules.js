@@ -23,14 +23,23 @@ export function shuffle(arr, rand) {
 }
 export const newSeed = () => Math.floor(Math.random() * 2 ** 31);
 
-/** Exam identity — STHP is checked before STS (STHP titles say "Sukkur IBA"). */
-export function examKind(title, hubSlug) {
-  const t = `${title || ''}`;
-  if (hubSlug === 'nthp' || isNthpTest('', t)) return 'nthp';
-  if (hubSlug === 'sthp' || /\bsthp\b|sindh talent hunt/i.test(t)) return 'sthp';
-  if (hubSlug === 'sts' || isStsTest('', t)) return 'sts';
+/**
+ * Exam identity from the public test's organization + title (same rule the
+ * public mock-test page uses), STHP checked before STS (STHP says "Sukkur IBA").
+ */
+export function examKind(title, hubSlug, organization = '') {
+  const t = `${title || ''}`, o = `${organization || ''}`;
+  if (hubSlug === 'nthp' || isNthpTest(o, t)) return 'nthp';
+  if (hubSlug === 'sthp' || /\bsthp\b|sindh talent hunt/i.test(`${o} ${t}`)) return 'sthp';
+  if (hubSlug === 'sts' || isStsTest(o, t)) return 'sts';
   return 'generic';
 }
+/** Announcement website named in "Please read first". */
+export function announcementSite(kind) {
+  return { nthp: 'nthp.iba.edu.pk', sthp: 'iba-suk.edu.pk', sts: 'sts.net.pk' }[kind] || '';
+}
+/** Section names joined for cover/readFirst (names may contain "/" and "&"). */
+export const joinSections = (names) => names.filter(Boolean).join(' · ');
 
 const ORIGINAL = 'Questions are original and were not copied from any official document.';
 export function disclaimerFor(kind) {
@@ -44,10 +53,41 @@ export function disclaimerFor(kind) {
 export function programLine(kind) {
   return { nthp: 'IBA Karachi National Talent Hunt Program', sthp: 'Sukkur IBA Sindh Talent Hunt Program', sts: 'SIBA Testing Service (STS)' }[kind] || '';
 }
+/** Draft warning only when no public mock-test page exists (site publishes every job_tests row). */
+export const hasPublicPage = (defId, jobTests) => !!defId && (jobTests || []).some((t) => t.definition_id === defId);
+/** Footer line that always keeps the suffix (site name): title is shortened with "…". */
+export function fitFooter(prefix, title, suffix, measure, max) {
+  const full = `${prefix}${title}${suffix}`;
+  if (measure(full) <= max) return full;
+  let t = String(title);
+  while (t.length > 1 && measure(`${prefix}${t}…${suffix}`) > max) t = t.slice(0, -1);
+  return `${prefix}${t.trimEnd()}…${suffix}`;
+}
+/** Options that refer to other options: keep original order (never shuffle). */
+const LOCK_RE = /\b(all|none|both|neither)\s+of\s+(the\s+)?(above|these|them)\b|\b(both|either|neither|only)\s+\(?[a-d]\)?\s+(and|or|&|nor)\s+\(?[a-d]\)?(?![a-z])|^\(?[a-d]\)?\s*(,|&|and)\s*\(?[a-d]\)?(\s*(both|only))?$/i;
+export function isOrderLocked(q) {
+  return optionTexts(q.options).some((o) => LOCK_RE.test(String(o).trim()));
+}
+const STOP = new Set('which what where when following about their there these those would could should between other under after before during'.split(' '));
+const keyTerms = (s) => new Set(String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length >= 5 && !STOP.has(w)));
+/** Same correct-answer text + at least one shared key term = duplicate inside one set. */
+export function sameAnswerAndTerm(a, b) {
+  const ans = (q) => { const l = correctLetter(q); return l ? String(optionTexts(q.options)[LETTERS.indexOf(l)] || '').trim().toLowerCase() : ''; };
+  const x = ans(a);
+  if (!x || x.length < 3 || x !== ans(b)) return false;
+  const B = keyTerms(b.question);
+  return [...keyTerms(a.question)].some((w) => B.has(w));
+}
+const topicKey = (t) => { const s = String(t || '').trim().toLowerCase(); return s && !/^(unknown|general|n\/?a|none|-)$/.test(s) ? s : ''; };
+/** True when adding q would exceed `cap` questions of the same known topic. */
+export function overTopicCap(chosen, q, cap = 2) {
+  const k = topicKey(q.topic);
+  return !!k && chosen.filter((c) => topicKey(c.topic) === k).length >= cap;
+}
 
 /** Default hub slug from the test identity, only if that slug exists. */
-export function defaultHubSlug(title, slugs) {
-  const kind = examKind(title, '');
+export function defaultHubSlug(title, slugs, organization = '') {
+  const kind = examKind(title, '', organization);
   if (kind !== 'generic' && slugs.includes(kind)) return kind;
   const t = (title || '').toLowerCase();
   const hit = slugs.find((s) => s.length >= 3 && new RegExp(`\\b${s.replace(/-/g, '[ -]')}\\b`).test(t));
@@ -70,7 +110,8 @@ export const setTitle = (clean, n) => `${clean} Free Practice Set – ${n} Quest
 export function nextSetNumber(saved) {
   return (saved || []).reduce((m, r) => Math.max(m, Number(r.set_number) || 0), 0) + 1;
 }
-export const mockTestUrl = (slug, n, campaign) => `${SITE}/mock-tests/${slug}?utm_source=pdf&utm_medium=free_pdf&utm_campaign=${campaign}_${n}q`;
+/** QR / link 1: starts the test directly (?start=1); canonical page stays parameter-free. */
+export const mockTestUrl = (slug, n, campaign) => `${SITE}/mock-tests/${slug}?start=1&utm_source=pdf&utm_medium=free_pdf&utm_campaign=${campaign}_${n}q`;
 export const campaignOf = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'pdf';
 /** Test list label + duplicate disambiguation. */
 export function testLabels(defs) {
@@ -169,8 +210,23 @@ export function pickSet(poolsBySubject, split, seed) {
 export function balanceOptions(questions, seed) {
   const rand = rng(seed ^ 0x5bd1e995);
   const n = questions.length;
-  const targets = shuffle(Array.from({ length: n }, (_, i) => LETTERS[i % 4]), rand);
+  const locked = questions.map(isOrderLocked);
+  let targets;
+  if (!locked.some(Boolean)) targets = shuffle(Array.from({ length: n }, (_, i) => LETTERS[i % 4]), rand);
+  else {
+    // Locked questions keep their letter; the rest fill each letter up to an even share.
+    const have = { A: 0, B: 0, C: 0, D: 0 };
+    questions.forEach((q, i) => { if (locked[i]) have[correctLetter(q)]++; });
+    const free = [];
+    for (let k = 0; free.length < n - locked.filter(Boolean).length; k++) {
+      const l = [...LETTERS].sort((a, b) => have[a] - have[b] || LETTERS.indexOf(a) - LETTERS.indexOf(b))[0];
+      free.push(l); have[l]++;
+    }
+    const pool = shuffle(free, rand);
+    targets = questions.map((q, i) => (locked[i] ? null : pool.pop()));
+  }
   return questions.map((q, i) => {
+    if (locked[i]) return [...LETTERS];
     const orig = correctLetter(q);
     const others = shuffle(LETTERS.filter((l) => l !== orig), rand);
     const pos = LETTERS.indexOf(targets[i]);

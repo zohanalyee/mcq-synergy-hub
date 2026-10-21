@@ -25,7 +25,7 @@ import RouteErrorBoundary from "./components/RouteErrorBoundary";
 import StructuredData from "./components/StructuredData";
 import GA4PageTracker from "./components/GA4PageTracker";
 // Lazy: not in the prerender whitelist (transactional email landing page).
-const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
+const Unsubscribe = lazyWithReload(() => import("./pages/Unsubscribe"));
 
 import TopProgressBar from "./components/TopProgressBar";
 import ToolRouteSEO from "./components/seo/ToolRouteSEO";
@@ -43,10 +43,10 @@ import NavigationLoader from "./components/NavigationLoader";
 import InstantAuthGuard from "./components/auth/InstantAuthGuard";
 import ProfileCompletionGuard from "./components/ProfileCompletionGuard";
 // Lazy: auth flows are not prerendered and are never the first paint for crawlers.
-const SignIn = lazy(() => import("./pages/SignIn"));
-const SignUp = lazy(() => import("./pages/SignUp"));
-const Auth = lazy(() => import("./pages/Auth"));
-const GetStarted = lazy(() => import("./pages/GetStarted"));
+const SignIn = lazyWithReload(() => import("./pages/SignIn"));
+const SignUp = lazyWithReload(() => import("./pages/SignUp"));
+const Auth = lazyWithReload(() => import("./pages/Auth"));
+const GetStarted = lazyWithReload(() => import("./pages/GetStarted"));
 
 // Lazy: large feature pages (code-split for mobile performance)
 const MockTestDetail = lazyWithReload(() => import("./pages/MockTestDetail"));
@@ -61,84 +61,84 @@ const PdfBuilder = lazyWithReload(() => import("./pages/admin/PdfBuilder"));
 
 import MobileBottomNav from "@/components/MobileBottomNav";
 
-const Profile = lazy(() => import("./pages/Profile"));
-const Feedback = lazy(() => import("./pages/Feedback"));
-const Achievements = lazy(() => import("./pages/Achievements"));
-const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
-const ResetPassword = lazy(() => import("./pages/ResetPassword"));
-const VerifyEmailSent = lazy(() => import("./pages/VerifyEmailSent"));
-const VerifyEmail = lazy(() => import("./pages/VerifyEmail"));
-const CompleteProfile = lazy(() => import("./pages/CompleteProfile"));
+const Profile = lazyWithReload(() => import("./pages/Profile"));
+const Feedback = lazyWithReload(() => import("./pages/Feedback"));
+const Achievements = lazyWithReload(() => import("./pages/Achievements"));
+const ForgotPassword = lazyWithReload(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazyWithReload(() => import("./pages/ResetPassword"));
+const VerifyEmailSent = lazyWithReload(() => import("./pages/VerifyEmailSent"));
+const VerifyEmail = lazyWithReload(() => import("./pages/VerifyEmail"));
+const CompleteProfile = lazyWithReload(() => import("./pages/CompleteProfile"));
 
-const QuizPlayer = lazy(() => import("./pages/QuizPlayer"));
-const SubmitContent = lazy(() => import("./pages/SubmitContent"));
+const QuizPlayer = lazyWithReload(() => import("./pages/QuizPlayer"));
+const SubmitContent = lazyWithReload(() => import("./pages/SubmitContent"));
 
 // Lazy: /tools/age-calculator is in TOOLS_WITHOUT_SEOHEAD, so it is NOT
 // prerendered — its head is injected post-build by scripts/inject-meta.mjs.
-const AgeCalculator = lazy(() => import("./pages/tools/AgeCalculator"));
+const AgeCalculator = lazyWithReload(() => import("./pages/tools/AgeCalculator"));
 // Ask-Document is temporarily disabled — the route renders a Coming Soon page.
-const AskDocument = lazy(() => import("./pages/AskDocumentComingSoon"));
-const TestSession = lazy(() => import("./pages/TestSession"));
-const Notifications = lazy(() => import("./pages/Notifications"));
+const AskDocument = lazyWithReload(() => import("./pages/AskDocumentComingSoon"));
+const TestSession = lazyWithReload(() => import("./pages/TestSession"));
+const Notifications = lazyWithReload(() => import("./pages/Notifications"));
 
 // Tool Pages — all lazy (rarely on initial load)
-const CalendarTool = lazy(() => import("./pages/tools/CalendarTool"));
-const IslamicCalendar = lazy(() => import("./pages/tools/IslamicCalendar"));
-const InternationalCalendar = lazy(() => import("./pages/tools/InternationalCalendar"));
-const MathTool = lazy(() => import("./pages/tools/MathTool"));
-const TimerTool = lazy(() => import("./pages/tools/TimerTool"));
-const UnitConverter = lazy(() => import("./pages/tools/UnitConverter"));
-const NotesTool = lazy(() => import("./pages/tools/NotesTool"));
+const CalendarTool = lazyWithReload(() => import("./pages/tools/CalendarTool"));
+const IslamicCalendar = lazyWithReload(() => import("./pages/tools/IslamicCalendar"));
+const InternationalCalendar = lazyWithReload(() => import("./pages/tools/InternationalCalendar"));
+const MathTool = lazyWithReload(() => import("./pages/tools/MathTool"));
+const TimerTool = lazyWithReload(() => import("./pages/tools/TimerTool"));
+const UnitConverter = lazyWithReload(() => import("./pages/tools/UnitConverter"));
+const NotesTool = lazyWithReload(() => import("./pages/tools/NotesTool"));
 
 // Lazy-loaded new tool pages
-const BMICalculator = lazy(() => import("./pages/tools/BMICalculator"));
-const SalaryCalculator = lazy(() => import("./pages/tools/SalaryCalculator"));
-const EMICalculator = lazy(() => import("./pages/tools/EMICalculator"));
-const TipCalculator = lazy(() => import("./pages/tools/TipCalculator"));
-const LoanCalculator = lazy(() => import("./pages/tools/LoanCalculator"));
-const DiscountCalculator = lazy(() => import("./pages/tools/DiscountCalculator"));
-const BMRCalculator = lazy(() => import("./pages/tools/BMRCalculator"));
-const DurationCalculator = lazy(() => import("./pages/tools/DurationCalculator"));
-const RatioCalculator = lazy(() => import("./pages/tools/RatioCalculator"));
-const SpeedCalculator = lazy(() => import("./pages/tools/SpeedCalculator"));
-const AreaCalculator = lazy(() => import("./pages/tools/AreaCalculator"));
-const FractionCalculator = lazy(() => import("./pages/tools/FractionCalculator"));
-const DateCalculator = lazy(() => import("./pages/tools/DateCalculator"));
-const FuelCalculator = lazy(() => import("./pages/tools/FuelCalculator"));
-const GradeCalculator = lazy(() => import("./pages/tools/GradeCalculator"));
-const FormulaSheet = lazy(() => import("./pages/tools/FormulaSheet"));
-const MultiplicationTable = lazy(() => import("./pages/tools/MultiplicationTable"));
-const CurrencyConverter = lazy(() => import("./pages/tools/CurrencyConverter"));
-const TemperatureConverter = lazy(() => import("./pages/tools/TemperatureConverter"));
-const RomanConverter = lazy(() => import("./pages/tools/RomanConverter"));
-const BinaryConverter = lazy(() => import("./pages/tools/BinaryConverter"));
-const CaseConverter = lazy(() => import("./pages/tools/CaseConverter"));
-const ImageResizer = lazy(() => import("./pages/tools/ImageResizer"));
-const ImageCompressor = lazy(() => import("./pages/tools/ImageCompressor"));
-const PDFCompressor = lazy(() => import("./pages/tools/PDFCompressor"));
-const PDFMerger = lazy(() => import("./pages/tools/PDFMerger"));
-const ImageConverter = lazy(() => import("./pages/tools/ImageConverter"));
-const PDFToText = lazy(() => import("./pages/tools/PDFToText"));
-const PDFSplitter = lazy(() => import("./pages/tools/PDFSplitter"));
-const Stopwatch = lazy(() => import("./pages/tools/Stopwatch"));
-const WorldClock = lazy(() => import("./pages/tools/WorldClock"));
-const WordCounter = lazy(() => import("./pages/tools/WordCounter"));
-const CharacterCounter = lazy(() => import("./pages/tools/CharacterCounter"));
-const QRGenerator = lazy(() => import("./pages/tools/QRGenerator"));
-const QRScanner = lazy(() => import("./pages/tools/QRScanner"));
-const PasswordGenerator = lazy(() => import("./pages/tools/PasswordGenerator"));
-const NameGenerator = lazy(() => import("./pages/tools/NameGenerator"));
-const ColorPicker = lazy(() => import("./pages/tools/ColorPicker"));
-const RandomNumber = lazy(() => import("./pages/tools/RandomNumber"));
-const EquationSolver = lazy(() => import("./pages/tools/EquationSolver"));
-const StudentAttendancePage = lazy(() => import("./pages/tools/StudentAttendancePage"));
-const StaffAttendancePage = lazy(() => import("./pages/tools/StaffAttendancePage"));
-const HRSetupPage = lazy(() => import("./pages/tools/HRSetupPage"));
-const LeavesPage = lazy(() => import("./pages/tools/LeavesPage"));
-const HolidaysPage = lazy(() => import("./pages/tools/HolidaysPage"));
-const AttendanceReportsPage = lazy(() => import("./pages/tools/AttendanceReportsPage"));
-const QuickManualEntry = lazy(() => import("./pages/tools/QuickManualEntry"));
-const AttendanceAnalytics = lazy(() => import("./pages/tools/AttendanceAnalytics"));
+const BMICalculator = lazyWithReload(() => import("./pages/tools/BMICalculator"));
+const SalaryCalculator = lazyWithReload(() => import("./pages/tools/SalaryCalculator"));
+const EMICalculator = lazyWithReload(() => import("./pages/tools/EMICalculator"));
+const TipCalculator = lazyWithReload(() => import("./pages/tools/TipCalculator"));
+const LoanCalculator = lazyWithReload(() => import("./pages/tools/LoanCalculator"));
+const DiscountCalculator = lazyWithReload(() => import("./pages/tools/DiscountCalculator"));
+const BMRCalculator = lazyWithReload(() => import("./pages/tools/BMRCalculator"));
+const DurationCalculator = lazyWithReload(() => import("./pages/tools/DurationCalculator"));
+const RatioCalculator = lazyWithReload(() => import("./pages/tools/RatioCalculator"));
+const SpeedCalculator = lazyWithReload(() => import("./pages/tools/SpeedCalculator"));
+const AreaCalculator = lazyWithReload(() => import("./pages/tools/AreaCalculator"));
+const FractionCalculator = lazyWithReload(() => import("./pages/tools/FractionCalculator"));
+const DateCalculator = lazyWithReload(() => import("./pages/tools/DateCalculator"));
+const FuelCalculator = lazyWithReload(() => import("./pages/tools/FuelCalculator"));
+const GradeCalculator = lazyWithReload(() => import("./pages/tools/GradeCalculator"));
+const FormulaSheet = lazyWithReload(() => import("./pages/tools/FormulaSheet"));
+const MultiplicationTable = lazyWithReload(() => import("./pages/tools/MultiplicationTable"));
+const CurrencyConverter = lazyWithReload(() => import("./pages/tools/CurrencyConverter"));
+const TemperatureConverter = lazyWithReload(() => import("./pages/tools/TemperatureConverter"));
+const RomanConverter = lazyWithReload(() => import("./pages/tools/RomanConverter"));
+const BinaryConverter = lazyWithReload(() => import("./pages/tools/BinaryConverter"));
+const CaseConverter = lazyWithReload(() => import("./pages/tools/CaseConverter"));
+const ImageResizer = lazyWithReload(() => import("./pages/tools/ImageResizer"));
+const ImageCompressor = lazyWithReload(() => import("./pages/tools/ImageCompressor"));
+const PDFCompressor = lazyWithReload(() => import("./pages/tools/PDFCompressor"));
+const PDFMerger = lazyWithReload(() => import("./pages/tools/PDFMerger"));
+const ImageConverter = lazyWithReload(() => import("./pages/tools/ImageConverter"));
+const PDFToText = lazyWithReload(() => import("./pages/tools/PDFToText"));
+const PDFSplitter = lazyWithReload(() => import("./pages/tools/PDFSplitter"));
+const Stopwatch = lazyWithReload(() => import("./pages/tools/Stopwatch"));
+const WorldClock = lazyWithReload(() => import("./pages/tools/WorldClock"));
+const WordCounter = lazyWithReload(() => import("./pages/tools/WordCounter"));
+const CharacterCounter = lazyWithReload(() => import("./pages/tools/CharacterCounter"));
+const QRGenerator = lazyWithReload(() => import("./pages/tools/QRGenerator"));
+const QRScanner = lazyWithReload(() => import("./pages/tools/QRScanner"));
+const PasswordGenerator = lazyWithReload(() => import("./pages/tools/PasswordGenerator"));
+const NameGenerator = lazyWithReload(() => import("./pages/tools/NameGenerator"));
+const ColorPicker = lazyWithReload(() => import("./pages/tools/ColorPicker"));
+const RandomNumber = lazyWithReload(() => import("./pages/tools/RandomNumber"));
+const EquationSolver = lazyWithReload(() => import("./pages/tools/EquationSolver"));
+const StudentAttendancePage = lazyWithReload(() => import("./pages/tools/StudentAttendancePage"));
+const StaffAttendancePage = lazyWithReload(() => import("./pages/tools/StaffAttendancePage"));
+const HRSetupPage = lazyWithReload(() => import("./pages/tools/HRSetupPage"));
+const LeavesPage = lazyWithReload(() => import("./pages/tools/LeavesPage"));
+const HolidaysPage = lazyWithReload(() => import("./pages/tools/HolidaysPage"));
+const AttendanceReportsPage = lazyWithReload(() => import("./pages/tools/AttendanceReportsPage"));
+const QuickManualEntry = lazyWithReload(() => import("./pages/tools/QuickManualEntry"));
+const AttendanceAnalytics = lazyWithReload(() => import("./pages/tools/AttendanceAnalytics"));
 
 // Lazy: DB-driven detail pages — heads are patched post-build by
 // scripts/inject-meta.mjs, so they never need to render during prerender.
@@ -149,11 +149,11 @@ const BoardClassPage = lazyWithReload(() => import("./pages/BoardClassPage"));
 const BoardSubjectPage = lazyWithReload(() => import("./pages/BoardSubjectPage"));
 const BoardTopicPage = lazyWithReload(() => import("./pages/BoardTopicPage"));
 
-const JobDetailPage = lazy(() => import("./pages/JobDetailPage"));
-const ScholarshipDetailPage = lazy(() => import("./pages/ScholarshipDetailPage"));
-const Tenders = lazy(() => import("./pages/Tenders"));
-const BoardResults = lazy(() => import("./pages/BoardResults"));
-const OpportunityDetail = lazy(() => import("./pages/OpportunityDetail"));
+const JobDetailPage = lazyWithReload(() => import("./pages/JobDetailPage"));
+const ScholarshipDetailPage = lazyWithReload(() => import("./pages/ScholarshipDetailPage"));
+const Tenders = lazyWithReload(() => import("./pages/Tenders"));
+const BoardResults = lazyWithReload(() => import("./pages/BoardResults"));
+const OpportunityDetail = lazyWithReload(() => import("./pages/OpportunityDetail"));
 
 const App = ({ pages = lazyPages }: { pages?: PageMap }) => {
   const P = pages;

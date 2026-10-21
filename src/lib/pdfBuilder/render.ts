@@ -5,6 +5,7 @@ import QRCode from 'qrcode';
 import regularUrl from '@/assets/fonts/DejaVuSans.ttf?url';
 import boldUrl from '@/assets/fonts/DejaVuSans-Bold.ttf?url';
 import logoUrl from '@/assets/pdf-logo.png?url';
+import { fitFooter } from './rules.js';
 
 export type PdfQuestion = { num: number; question: string; options: string[]; answer: string; explanation?: string | null; topic?: string | null; difficulty?: string | null };
 export type PdfInput = {
@@ -222,9 +223,9 @@ export async function renderPracticePdf(input: PdfInput): Promise<Uint8Array> {
   }
 
   // ---------- Footers ----------
-  const foot = `MCQsAI · ${input.title} · Unofficial practice set — original questions by MCQsAI · mcqsai.com`;
+  // Title is shortened with "…" so "· mcqsai.com" always fits beside the page number.
+  const fl = fitFooter('MCQsAI · ', tidy(input.title), ' · Unofficial practice set — original questions by MCQsAI · mcqsai.com', (s) => F.widthOfTextAtSize(s, 6.6), 440);
   pages.forEach((p, i) => {
-    const fl = wrap(foot, F, 6.6, 440)[0];
     p.drawText(fl, { x: L - 5, y: 22, size: 6.6, font: F, color: C.light });
     const pn = `Page ${i + 1}`;
     p.drawText(pn, { x: W - L + 5 - F.widthOfTextAtSize(pn, 6.6), y: 22, size: 6.6, font: F, color: C.light });

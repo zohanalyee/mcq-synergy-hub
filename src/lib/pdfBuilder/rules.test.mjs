@@ -95,7 +95,7 @@ test('A2: clean test names', () => {
 test('A2: next set number and mock test link', () => {
   assert.equal(R.nextSetNumber([]), 1);
   assert.equal(R.nextSetNumber([{ set_number: 1 }, { set_number: 3 }]), 4);
-  assert.equal(R.mockTestUrl('junior-office-associate-bps-13', 50, 'joa'), 'https://mcqsai.com/mock-tests/junior-office-associate-bps-13?utm_source=pdf&utm_medium=free_pdf&utm_campaign=joa_50q');
+  assert.equal(R.mockTestUrl('junior-office-associate-bps-13', 50, 'joa'), 'https://mcqsai.com/mock-tests/junior-office-associate-bps-13?start=1&utm_source=pdf&utm_medium=free_pdf&utm_campaign=joa_50q');
 });
 test('A3: duplicate names get department added', () => {
   const l = R.testLabels([{ job_title: 'Assistant ', department: 'FIA', status: 'published', n: 300 }, { job_title: 'Assistant', department: 'SPSC', status: 'draft', n: 200 }]);
@@ -111,4 +111,60 @@ test('sweep rows: no-AI OK + AI pending is eligible, needs_review/fail/determini
 test('latest review prefers the higher checker version', () => {
   const r = R.latestReviews([{ question_id: 'a', checker_version: 2, checked_at: '2026-01-01', deterministic_ok: true, ai_verdict: 'pending' }, { question_id: 'a', checker_version: 1, checked_at: '2026-02-01', deterministic_ok: true, ai_verdict: 'pass' }]);
   assert.equal(r.a.checker_version, 2);
+});
+
+// ---- Batch 8.2 ----
+test('identity from organization: Admission & Examination Officer is STS', () => {
+  const org = 'SIBA Testing Services (STS) / Sukkur IBA University';
+  assert.equal(R.examKind('Admission & Examination Officer', '', org), 'sts');
+  assert.equal(R.defaultHubSlug('Admission & Examination Officer', ['air-university', 'sts'], org), 'sts');
+  assert.equal(R.announcementSite('sts'), 'sts.net.pk');
+  assert.match(R.disclaimerFor(R.examKind('Admission & Examination Officer', '', org)), /SIBA Testing Service/);
+});
+test('identity: NTHP from organization never STS; STHP; generic', () => {
+  assert.equal(R.examKind('Fall 2027 test', '', 'IBA Karachi National Talent Hunt Program'), 'nthp');
+  assert.doesNotMatch(R.disclaimerFor('nthp'), /STS|Sukkur/);
+  assert.equal(R.examKind('Entry test', '', 'Sukkur IBA Sindh Talent Hunt Program (STHP)'), 'sthp');
+  assert.equal(R.examKind('Assistant', '', 'Election Commission'), 'generic');
+  assert.equal(R.announcementSite('generic'), '');
+});
+test('draft warning only when no public mock-test page exists', () => {
+  const jt = [{ definition_id: 'd1' }];
+  assert.equal(R.hasPublicPage('d1', jt), true);
+  assert.equal(R.hasPublicPage('d2', jt), false);
+});
+test('footer keeps the site name with a long title', () => {
+  const m = (s) => s.length;
+  const f = R.fitFooter('MCQsAI · ', 'A'.repeat(200), ' · mcqsai.com', m, 80);
+  assert.ok(f.endsWith(' · mcqsai.com') && f.length <= 80 && f.includes('…'));
+  assert.equal(R.fitFooter('x ', 'short', ' y', m, 80), 'x short y');
+});
+test('sections joined with " · "', () => assert.equal(R.joinSections(['English', 'Computer / ICT', 'Admin & Office']), 'English · Computer / ICT · Admin & Office'));
+test('all/none of the above and "both A and B" keep original order; letters stay balanced', () => {
+  const lockedQs = [
+    mkQ(1, 'M', { options: { A: 'x', B: 'y', C: 'z', D: 'All of the above' }, correct_answer: 'D' }),
+    mkQ(2, 'M', { options: { A: 'x', B: 'y', C: 'Both A and B', D: 'w' }, correct_answer: 'C' }),
+    mkQ(3, 'M', { options: { A: 'x', B: 'y', C: 'z', D: 'None of these' }, correct_answer: 'A' }),
+    mkQ(4, 'M', { options: { A: 'x', B: 'y', C: 'z', D: 'A and C' }, correct_answer: 'D' }),
+  ];
+  lockedQs.forEach((q) => assert.equal(R.isOrderLocked(q), true));
+  assert.equal(R.isOrderLocked(mkQ(9, 'M')), false);
+  const qs = [...lockedQs, ...Array.from({ length: 36 }, (_, i) => mkQ(i + 10, 'M'))];
+  const perms = R.balanceOptions(qs, 5);
+  lockedQs.forEach((_, i) => assert.deepEqual(perms[i], ['A', 'B', 'C', 'D']));
+  const c = Object.values(R.letterCounts(qs.map((q, i) => R.applyPerm(q, perms[i]).answer)));
+  assert.ok(Math.max(...c) - Math.min(...c) <= 1, JSON.stringify(c));
+});
+test('topic cap: at most 2 per known topic, unknown topics not capped', () => {
+  const t = (topic) => ({ topic });
+  assert.equal(R.overTopicCap([t('Mail Merge'), t('mail merge')], t('Mail Merge')), true);
+  assert.equal(R.overTopicCap([t('Mail Merge')], t('Mail Merge')), false);
+  assert.equal(R.overTopicCap([t('General'), t('General')], t('General')), false);
+});
+test('same answer text + shared key term counts as duplicate', () => {
+  const a = mkQ(1, 'M', { question: 'Outgoing letters are entered in which register?', options: { A: 'Dispatch register', B: 'x', C: 'y', D: 'z' } });
+  const b = mkQ(2, 'M', { question: 'Which register records letters sent out of the office?', options: { A: 'p', B: 'Dispatch register', C: 'y', D: 'z' }, correct_answer: 'B' });
+  const c = mkQ(3, 'M', { question: 'Name the book kept for visitors', options: { A: 'Dispatch register', B: 'x', C: 'y', D: 'z' } });
+  assert.equal(R.sameAnswerAndTerm(a, b), true);
+  assert.equal(R.sameAnswerAndTerm(a, c), false);
 });

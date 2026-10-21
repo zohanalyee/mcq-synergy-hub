@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import BrandMark from '@/components/BrandMark';
+import { isChunkLoadError, reloadOnce } from '@/lib/chunkErrors';
 
 interface Props {
   children: ReactNode;
@@ -37,6 +38,10 @@ class GlobalErrorBoundary extends Component<Props, State> {
       error,
       info?.componentStack,
     );
+    // A file from an older/newer deploy is missing: one guarded reload before showing this screen.
+    if (typeof window !== 'undefined' && isChunkLoadError(error)) {
+      try { reloadOnce(sessionStorage, () => window.location.reload()); } catch { /* ignore */ }
+    }
   }
 
   componentDidUpdate(prevProps: Props) {

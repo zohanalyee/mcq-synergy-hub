@@ -8,7 +8,7 @@
 //    10 questions / 2 AI calls / ~60 s, rotating across Wave tests.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
-import { CHECKER_VERSION, LETTERS, correctLetter, normalizeOptions, isNumericSubject, combineVerdict, noAiReview } from '../_shared/qualityChecks.ts';
+import { CHECKER_VERSION, LETTERS, correctLetter, normalizeOptions, isNumericSubject, strictVerdict, noAiReview } from '../_shared/qualityChecks.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,11 +23,15 @@ const TIME_BUDGET_MS = 60_000;
 const LEASE_MS = 5 * 60_000;
 
 const SYSTEM = `You are an independent exam-question solver for Pakistani competitive and admission tests.
-For each numbered MCQ, solve it yourself and choose the single best option letter.
+For each numbered MCQ, first solve it yourself WITHOUT looking at the stated key, and choose the single best option letter.
 If you are not confident or the question is defective, use "?" as the answer.
+Then check every option: list ALL option letters that are correct or acceptable ("correct_options").
+Exactly one option should be correct; list more than one if two or more are defensibly correct (e.g. several synonyms/antonyms, two grammatical sentences, "data was/were").
+Then compare with the stated key: "key_matches" is true only if the stated key is the one correct option.
+Then read the explanation: "explanation_agrees" is false if its own reasoning points to a different option than the stated key, or if it is factually wrong.
 Also choose the closest topic from the provided topic list (exact text), a difficulty (easy|medium|hard),
 and whether the question is relevant to that syllabus (true|false).
-Return ONLY a JSON array: [{"index":1,"answer":"B","topic":"...","difficulty":"medium","relevant":true}]`;
+Return ONLY a JSON array: [{"index":1,"answer":"B","correct_options":["B"],"key_matches":true,"explanation_agrees":true,"topic":"...","difficulty":"medium","relevant":true}]`;
 
 async function getSetting(admin: any, key: string, fallback: any) {
   const { data } = await admin.from('system_settings').select('value').eq('key', key).maybeSingle();
@@ -64,8 +68,9 @@ async function ensureNoAi(admin: any, def: string) {
   const rows = noAiReview(qs, banned).filter((r) => !have.has(r.question_id)).map((r) => {
     const row: any = { ...r, definition_id: def, checker_version: CHECKER_VERSION, signal_flags: [], checked_at: now };
     const o: any = old.get(r.question_id);
-    // Carry an earlier AI verdict over so quota is never spent twice on the same question.
-    if (r.ai_verdict === 'pending' && o && ['pass', 'needs_review', 'fail'].includes(o.ai_verdict) && o.ai_answers) {
+    // Carry an earlier needs_review/fail verdict over (still bad under v3). Earlier passes are
+    // re-checked with the stricter v3 prompt — free keys only, inside the quality_gate budget.
+    if (r.ai_verdict === 'pending' && o && ['needs_review', 'fail'].includes(o.ai_verdict) && o.ai_answers) {
       Object.assign(row, { ai_verdict: o.ai_verdict, ai_answers: o.ai_answers, ai_topic: o.ai_topic, ai_topic_tier: o.ai_topic_tier, ai_difficulty: o.ai_difficulty, relevant: o.relevant });
     }
     return row;
@@ -167,12 +172,12 @@ Deno.serve(async (req) => {
       const topicList = (topics ?? []).filter((x: any) => !x.is_banned);
       const tierOf = (name?: string) => topicList.find((x: any) => x.topic === name)?.source_tier ?? null;
       const prompt = `Test: ${t.label}\nTopic list: ${topicList.map((x: any) => x.topic).join(' | ') || '(none)'}\n\n` +
-        group.map((c: any, i: number) => `#${i + 1}\nQ: ${c.q.question}\n${normalizeOptions(c.q.options).map((o, j) => `${LETTERS[j]}) ${o}`).join('\n')}`).join('\n\n');
+        group.map((c: any, i: number) => `#${i + 1}\nQ: ${c.q.question}\n${normalizeOptions(c.q.options).map((o, j) => `${LETTERS[j]}) ${o}`).join('\n')}\nStated key: ${correctLetter(c.q) ?? '?'}\nExplanation: ${String(c.q.explanation ?? '').slice(0, 600) || '(none)'}`).join('\n\n');
       const answers: any[][] = [];
       for (let p = 0; p < passes && aiCalls < MAX_AI_CALLS; p++) {
         if (calls + aiCalls >= cap) { waiting = `daily cap ${cap} reached`; break; }
         try {
-          const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 2048 },
+          const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 3072 },
             { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' });
           aiCalls++;
           answers.push(parseArray(r.text));
@@ -188,14 +193,14 @@ Deno.serve(async (req) => {
         for (let i = 0; i < group.length; i++) {
           const c: any = group[i];
           const per = answers.map((a) => a.find((x: any) => Number(x?.index) === i + 1) ?? null);
-          const verdict = combineVerdict(correctLetter(c.q)!, per.map((x) => x?.answer ?? null), passes === 1);
+          const { verdict, reasons: aiReasons } = strictVerdict(correctLetter(c.q)!, per, passes === 1);
           const first = per[0] ?? {};
           const { error: ue } = await admin.from('question_quality_reviews').update({
             ai_verdict: first.relevant === false && verdict === 'pass' ? 'needs_review' : verdict,
             ai_answers: per.map((x) => x?.answer ?? null), ai_topic: first.topic ?? null, ai_topic_tier: tierOf(first.topic),
             ai_difficulty: ['easy', 'medium', 'hard'].includes(String(first.difficulty)) ? first.difficulty : null,
             relevant: typeof first.relevant === 'boolean' ? first.relevant : null,
-            reasons: first.relevant === false ? ['not_relevant_to_syllabus'] : [], checked_at: now,
+            reasons: [...aiReasons, ...(first.relevant === false ? ['not_relevant_to_syllabus'] : [])], checked_at: now,
           }).eq('id', c.p.id);
           if (ue) { error = `save failed: ${ue.message}`; break; }
           reviewed++;

@@ -22,9 +22,10 @@ import UpcomingFreeBanner from '@/components/home/UpcomingFreeBanner';
 import FeaturedExams from '@/components/home/FeaturedExams';
 
 // Below-the-fold / post-idle only — kept out of the initial homepage bundle.
-const TestimonialsSection = lazy(() => import('@/components/reviews/TestimonialsSection'));
-const PlatformStatsSection = lazy(() => import('@/components/home/PlatformStatsSection'));
-const UserSatisfactionPopup = lazy(() => import('@/components/UserSatisfactionPopup'));
+import { safeImport } from '@/lib/chunkErrors';
+const TestimonialsSection = lazy(() => safeImport(() => import('@/components/reviews/TestimonialsSection')));
+const PlatformStatsSection = lazy(() => safeImport(() => import('@/components/home/PlatformStatsSection')));
+const UserSatisfactionPopup = lazy(() => safeImport(() => import('@/components/UserSatisfactionPopup')));
 import { 
   BookOpen, 
   Brain,
