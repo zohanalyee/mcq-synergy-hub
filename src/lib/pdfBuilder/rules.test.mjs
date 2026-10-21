@@ -95,7 +95,7 @@ test('A2: clean test names', () => {
 test('A2: next set number and mock test link', () => {
   assert.equal(R.nextSetNumber([]), 1);
   assert.equal(R.nextSetNumber([{ set_number: 1 }, { set_number: 3 }]), 4);
-  assert.equal(R.mockTestUrl('junior-office-associate-bps-13', 50, 'joa'), 'https://mcqsai.com/mock-tests/junior-office-associate-bps-13?utm_source=pdf&utm_medium=free_pdf&utm_campaign=joa_50q');
+  assert.equal(R.mockTestUrl('junior-office-associate-bps-13', 50, 'joa'), 'https://mcqsai.com/mock-tests/junior-office-associate-bps-13?start=1&utm_source=pdf&utm_medium=free_pdf&utm_campaign=joa_50q');
 });
 test('A3: duplicate names get department added', () => {
   const l = R.testLabels([{ job_title: 'Assistant ', department: 'FIA', status: 'published', n: 300 }, { job_title: 'Assistant', department: 'SPSC', status: 'draft', n: 200 }]);

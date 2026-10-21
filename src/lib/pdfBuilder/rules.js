@@ -110,7 +110,8 @@ export const setTitle = (clean, n) => `${clean} Free Practice Set – ${n} Quest
 export function nextSetNumber(saved) {
   return (saved || []).reduce((m, r) => Math.max(m, Number(r.set_number) || 0), 0) + 1;
 }
-export const mockTestUrl = (slug, n, campaign) => `${SITE}/mock-tests/${slug}?utm_source=pdf&utm_medium=free_pdf&utm_campaign=${campaign}_${n}q`;
+/** QR / link 1: starts the test directly (?start=1); canonical page stays parameter-free. */
+export const mockTestUrl = (slug, n, campaign) => `${SITE}/mock-tests/${slug}?start=1&utm_source=pdf&utm_medium=free_pdf&utm_campaign=${campaign}_${n}q`;
 export const campaignOf = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'pdf';
 /** Test list label + duplicate disambiguation. */
 export function testLabels(defs) {
