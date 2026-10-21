@@ -17,3 +17,9 @@
 - [x] Batch 5: admin-controlled static join links and WhatsApp result sharing (URL intentionally empty until owner sets it)
 - [x] Batch 5: read-only question-report/session SEO audit and verification (no publish)
 - [x] Batch 8 Phase 1: admin PDF Builder (owner side-by-side check pending)
+- [x] Batch 8.1: PDF Builder hub/title/link auto-fill, test search, safety filters (rules 5–10)
+- [x] Batch 8.1: Quality Gate checker v2, small resumable runs, truthful panel
+- [x] Batch 8.1: one-time full-bank no-AI sweep + per-test report
+- [x] Batch 8.1: locked "hide needs_review" switch (off; owner approval pending)
+- [ ] Plan only: one Gate verdict per question group + reuse instead of copy (awaiting owner approval)
+- [ ] Plan only: batched AI Gate (5–10 per call) after calibration (awaiting free quota + approval)
