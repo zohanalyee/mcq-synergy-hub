@@ -130,6 +130,7 @@ const PdfBuilder = () => {
   const loadHistory = async (id: string) => {
     const { data } = await db.from('pdf_practice_sets').select('*').eq('definition_id', id).order('created_at', { ascending: false }).limit(20);
     setHistory(data || []);
+    setSetNo(R.nextSetNumber(data || []));
   };
 
   const pickTest = async (id: string) => {
