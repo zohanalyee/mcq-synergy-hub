@@ -97,6 +97,11 @@ export function shareUrl(slug, label) {
   const url = `${SITE}/exams/${slug}?utm_source=whatsapp&utm_medium=pdf_share`;
   return `https://wa.me/?text=${encodeURIComponent(`Free ${label} practice set with answer key: ${url}`)}`;
 }
+/** WhatsApp share of any landing URL (mock test or hub). */
+export function shareLanding(url, label) {
+  const u = `${url.split('?')[0]}?utm_source=whatsapp&utm_medium=pdf_share`;
+  return `https://wa.me/?text=${encodeURIComponent(`Free ${label} practice set with answer key: ${u}`)}`;
+}
 export const suggestedMinutes = (n) => Math.max(10, Math.round(n * 1.2));
 
 /** Latest-review status. "passed" = deterministic OK + AI pass; any other review = blocked. */

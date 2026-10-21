@@ -1,0 +1,18 @@
+export type SafetyQ = { id?: string; question: string; options: any; correct_answer: string; explanation?: string | null; subject?: string | null; topic?: string | null };
+export const SAFETY_LETTERS: string[];
+export function safetyOptions(raw: any): string[];
+export function normStem(s: string): string;
+export function optionIssues(q: SafetyQ): string[];
+export function explanationIssues(q: SafetyQ): string[];
+export function isMathsLike(q: SafetyQ): boolean;
+export function finalNumber(e: string | null | undefined): number | null;
+export function mathsIssues(q: SafetyQ): string[];
+export function letterRefs(e: string | null | undefined): string[];
+export function letterIssues(q: SafetyQ): string[];
+export function remapExplanation(e: string | null | undefined, perm: string[]): string;
+export function safetyReasons(q: SafetyQ): string[];
+export function overlap(a: string, b: string): number;
+export function isNearDuplicate(a: SafetyQ, b: SafetyQ): boolean;
+export function nearDuplicateIds<T extends SafetyQ & { id: string }>(qs: T[]): Set<string>;
+export function displayTopic(t: string | null | undefined): string | null;
+export const REASON_LABELS: Record<string, string>;

@@ -2,7 +2,7 @@ export const SITE: string;
 export const CHANNEL_FALLBACK: string;
 export const LETTERS: string[];
 export type ExamKind = 'nthp' | 'sthp' | 'sts' | 'generic';
-export interface Review { question_id?: string; deterministic_ok: boolean | null; ai_verdict: string | null }
+export interface Review { question_id?: string; deterministic_ok: boolean | null; ai_verdict: string | null; checker_version?: number; checked_at?: string; reasons?: string[] }
 export function rng(seed: number): () => number;
 export function shuffle<T>(arr: T[], rand: () => number): T[];
 export function newSeed(): number;
@@ -24,3 +24,12 @@ export function pickSet<T>(pools: Record<string, T[]>, split: { subject: string;
 export function balanceOptions(questions: any[], seed: number): string[][];
 export function applyPerm(q: any, perm: string[]): { options: string[]; answer: string };
 export function letterCounts(answers: string[]): Record<string, number>;
+export const NO_HUB: string;
+export function cleanTestName(name: string): string;
+export function setTitle(clean: string, n: number): string;
+export function nextSetNumber(saved: { set_number: number }[]): number;
+export function mockTestUrl(slug: string, n: number, campaign: string): string;
+export function campaignOf(s: string): string;
+export function testLabels(defs: { job_title: string; department?: string | null; created_at?: string; status?: string; n?: number }[]): string[];
+export function shareLanding(url: string, label: string): string;
+export function latestReviews(rows: Review[]): Record<string, Review>;
