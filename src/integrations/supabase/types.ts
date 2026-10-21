@@ -2492,6 +2492,66 @@ export type Database = {
           },
         ]
       }
+      pdf_practice_sets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          definition_id: string
+          file_name: string
+          gate_passed_count: number
+          gate_passed_only: boolean
+          hub_slug: string
+          id: string
+          options_order: Json
+          question_count: number
+          question_ids: string[]
+          require_explanation: boolean
+          section_split: Json
+          seed: number
+          set_number: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          definition_id: string
+          file_name: string
+          gate_passed_count?: number
+          gate_passed_only?: boolean
+          hub_slug: string
+          id?: string
+          options_order?: Json
+          question_count: number
+          question_ids?: string[]
+          require_explanation?: boolean
+          section_split?: Json
+          seed: number
+          set_number?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          definition_id?: string
+          file_name?: string
+          gate_passed_count?: number
+          gate_passed_only?: boolean
+          hub_slug?: string
+          id?: string
+          options_order?: Json
+          question_count?: number
+          question_ids?: string[]
+          require_explanation?: boolean
+          section_split?: Json
+          seed?: number
+          set_number?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       pdf_processing_queue: {
         Row: {
           created_at: string
