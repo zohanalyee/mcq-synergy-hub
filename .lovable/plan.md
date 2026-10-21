@@ -37,12 +37,31 @@ Checked today: the code, the database (read-only) and the live site.
 20. **Coverage:** next are IBA Community Colleges & Schools (STS) cadres, using only facts from official STS ads.
 21. **Pending:** "Report this question" (none exists), usage counters (#4), the `/pdf/` Cloudflare allowlist (owner step), "Verified on" dates (owner supplies), and Audits 2 and 3 (ready to plan after #6).
 
-## Recommended next 5 batches
-- **Batch 9, crawl safety:** publish Fix A. Return real 404s for unknown addresses. Add a redirect from the short Junior Office Associate address.
-- **Batch 10, test fairness and data:** shuffle answer options at display time (questions unchanged). Update usage counters. Save the "finished" state and the last question reached.
-- **Batch 11, PDF and quality:** PDF Builder fixes, regenerate the NTHP PDF, and split the near-duplicate count per test (Audit 2).
-- **Batch 12, wording and quota:** review the "official" wording, merge the two Quality Gate schedules, slow auto-fill, and run the Flash-Lite comparison.
-- **Batch 13, measurement audit:** Lighthouse mobile on 3 pages, the 127 security warnings, the clickable-card sweep, and the tools review.
+## SEO priorities (merged with the 20 Oct keyword and competitor addendum)
+Search positions come from your own 20 Oct Search Console notes; I did not re-check them. Nothing is copied from competitors.
+
+| # | Priority | Evidence | Impact | Effort | Risk |
+|---|---|---|---|---|---|
+| S1 | **Crawl safety first:** fake "OK" pages, Fix A live, short Junior Office Associate address | Audit #1, #2 | Indexing | M | Low |
+| S2 | **Click-through on the 95 mock-test titles and descriptions.** Proposed pattern: "[Post] BPS-[n] [Organisation] MCQs – Free Online Test & Past Papers \| MCQsAI". Description: "[n] free MCQs for [Post] BPS-[n]. Timed online test, instant score and answer explanations." Keep "Past Papers". Show it as a proposal before changing anything. | Assistant Accountant BPS-15 position 5, 16 impressions, 0 clicks; /mock-tests position 5, 0 clicks; Teaching License EST position 2.3, 0 clicks | Traffic | S | Low |
+| S3 | **NTHP / STHP to #1.** Two-way links: hub ↔ mock test ↔ /pdf page. Add a short "how to prepare" section with original text. No STS on NTHP. | Search results show only IBA's own PDFs; STHP mock test is at about position 2.9 | Traffic | S | Low |
+| S4 | **IBA Community Colleges & Schools (STS) hub + per-post pages**, built from the existing mock tests and the stored STS syllabus | One thin competitor whose page says "MCQs will be added soon" | Traffic | M | Low |
+| S5 | **Test timeline block** on /exams/sts, /sthp and /nthp: verified dates, official links only, "Verified on" date, hides itself when out of date. Never host results or lists. | News sites take "result / roll number slip / answer key" searches | Traffic, trust | M | Med (stale facts) |
+| S6 | **Sindh Teaching License (EST/SST) pedagogy hub + syllabus guide** linking to the STEDA document. "Verified on" date, original text. | Search results show only STEDA PDFs and news | Traffic | M | Low |
+| S7 | **STS subject hubs** (Pak Studies, GK, Computer, English, Everyday Science, Pedagogy). Gate-passed questions only, so they wait until the Gate has passed enough questions (only 36 pass today). Thin-content check first. | Audit #6 | Traffic | M | Med (thin pages) |
+| S8 | **"Official" wording review** (about 33 places). List only, keep "Past Papers". | Audit #7 | Trust | S | Low |
+| S9 | **Later:** IBA admission test, MDCAT, ECAT (strong competitors) | Addendum item 7 | – | L | – |
+
+Keep visible on every page: a real timed test, instant score, explanations, the correct names (SIBA Testing Service, not "Sindh Testing Service") and our own branded PDFs. Never ask for recalled exam questions, and never link to other sites' PDFs or books.
+
+## Recommended batch order
+- **Batch 9, crawl safety (S1):** being planned separately.
+- **Batch 10, mock-test titles for clicks (S2) + NTHP/STHP linking (S3):** small change, quick traffic test.
+- **Batch 11, test fairness and data:** answer-option shuffle at display time, usage counters, saving the finished state and the last question reached.
+- **Batch 12, IBA CC&S STS hub + test timeline (S4, S5):** needs your verified dates.
+- **Batch 13, PDF and quality:** PDF Builder fixes, NTHP PDF regeneration, near-duplicate split per test.
+- **Batch 14, Teaching License hub (S6) + wording review (S8) + quota cleanup.**
+- **Then:** STS subject hubs (S7) once enough questions pass the Gate, and the measurement audit (Lighthouse, security warnings, cards, tools).
 
 ## Technical appendix
 - Soft 404: SPA fallback serves `index.html` with 200. Option: a client NotFound route plus a `noindex` meta (the host cannot send a real 404 status). A true 404 needs the host or a Cloudflare rule.
