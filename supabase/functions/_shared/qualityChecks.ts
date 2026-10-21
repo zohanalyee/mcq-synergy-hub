@@ -131,8 +131,9 @@ export function noAiReview(qs: QuestionLike[], bannedTopics: string[] = []) {
     if (d.reasons.includes('duplicate_options') && !reasons.includes('options_not_distinct')) reasons.push('options_not_distinct');
     if (dups.has(q.id)) reasons.push('near_duplicate');
     const uniq = [...new Set(reasons)];
-    const ok = uniq.length === 0;
-    const verdict = ok ? 'pending' : uniq.every((r) => SAFETY.has(r)) ? 'needs_review' : 'fail';
+    // A missing explanation is noted but does not block (the PDF has its own explanation switch).
+    const ok = uniq.every((r) => r === 'missing_explanation');
+    const verdict = ok ? 'pending' : uniq.every((r) => SAFETY.has(r) || r === 'missing_explanation') ? 'needs_review' : 'fail';
     return { question_id: q.id, deterministic_ok: ok, reasons: uniq, ai_verdict: verdict };
   });
 }

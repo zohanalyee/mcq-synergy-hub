@@ -22,4 +22,5 @@ Deno.test('v2: doubtful explanation -> needs_review', () => assertEquals(noAiRev
 Deno.test('v2: maths answer not in options -> needs_review', () => assertEquals(noAiReview([{ ...base, subject: 'Mathematics', explanation: 'So the sum = 4.25' }])[0].reasons, ['final_number_not_in_options']));
 Deno.test('v2: second copy marked near_duplicate', () => assertEquals(noAiReview([base, { ...base, id: '2' }])[1].reasons, ['near_duplicate']));
 Deno.test('v2: clean question stays pending for AI', () => assertEquals(noAiReview([base])[0], { question_id: '1', deterministic_ok: true, reasons: [], ai_verdict: 'pending' }));
-Deno.test('v2: missing explanation still fail', () => assertEquals(noAiReview([{ ...base, explanation: '' }])[0].ai_verdict, 'fail'));
+Deno.test('v2: missing explanation noted but not blocking', () => assertEquals(noAiReview([{ ...base, explanation: '' }])[0].deterministic_ok, true));
+Deno.test('v2: key not in options -> fail', () => assertEquals(noAiReview([{ ...base, correct_answer: 'seven' }])[0].ai_verdict, 'fail'));
