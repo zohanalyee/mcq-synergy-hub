@@ -11,6 +11,8 @@ export type PdfInput = {
   title: string; subtitle: string; readFirst: string[]; disclaimer: string;
   sections: { subject: string; items: PdfQuestion[] }[];
   hubUrl: string; channelUrl: string; shareUrl: string;
+  /** Optional exam guide page shown as a second text link. */
+  guideUrl?: string | null;
 };
 
 const hex = (h: string): RGB => rgb(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255);
@@ -168,7 +170,7 @@ export async function renderPracticePdf(input: PdfInput): Promise<Uint8Array> {
   ];
   const nsW = R - L - qrS - 30;
   const lines = ns.map((n) => ({ n, l: wrap(`${n.pre}${n.link}${n.post}`, F, 8.8, nsW) }));
-  const nsH = Math.max(qrS + 18, 30 + lines.reduce((s, x) => s + x.l.length, 0) * 13);
+  const nsH = Math.max(qrS + 18, 30 + lines.reduce((s, x) => s + x.l.length, 0) * 13 + (input.guideUrl ? 12 : 0));
   ensure(nsH + 4);
   const nTop = y;
   page.drawRectangle({ x: L, y: nTop - nsH, width: R - L + 5, height: nsH, color: C.box, borderColor: C.purple, borderWidth: 0.9 });
@@ -192,6 +194,13 @@ export async function renderPracticePdf(input: PdfInput): Promise<Uint8Array> {
       y -= 13;
     });
   });
+  if (input.guideUrl) {
+    const g = 'Exam guide: ' + input.guideUrl.split('?')[0].replace(/^https?:\/\//, '');
+    const gw = Math.min(F.widthOfTextAtSize(g, 8), nsW);
+    page.drawText(g, { x: L + 11, y, size: 8, font: F, color: C.purple });
+    addLink(doc, page, L + 11, y - 3, gw, 11, input.guideUrl);
+    y -= 12;
+  }
   page.drawRectangle({ x: R - qrS - 3, y: nTop - 10 - qrS - 2, width: qrS + 4, height: qrS + 4, color: rgb(1, 1, 1) });
   page.drawImage(qr, { x: R - qrS - 1, y: nTop - 10 - qrS, width: qrS, height: qrS });
   addLink(doc, page, R - qrS - 1, nTop - 10 - qrS, qrS, qrS, input.hubUrl);
