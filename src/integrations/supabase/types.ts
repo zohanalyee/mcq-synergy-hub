@@ -2734,9 +2734,13 @@ export type Database = {
       quality_job_runs: {
         Row: {
           calls_today: number
+          cursor: Json | null
           day: string
           id: string
+          last_error: string | null
+          last_error_at: string | null
           last_run_at: string | null
+          last_success_at: string | null
           last_summary: Json | null
           lease_until: string | null
           pause_reason: string | null
@@ -2745,9 +2749,13 @@ export type Database = {
         }
         Insert: {
           calls_today?: number
+          cursor?: Json | null
           day?: string
           id?: string
+          last_error?: string | null
+          last_error_at?: string | null
           last_run_at?: string | null
+          last_success_at?: string | null
           last_summary?: Json | null
           lease_until?: string | null
           pause_reason?: string | null
@@ -2756,9 +2764,13 @@ export type Database = {
         }
         Update: {
           calls_today?: number
+          cursor?: Json | null
           day?: string
           id?: string
+          last_error?: string | null
+          last_error_at?: string | null
           last_run_at?: string | null
+          last_success_at?: string | null
           last_summary?: Json | null
           lease_until?: string | null
           pause_reason?: string | null
