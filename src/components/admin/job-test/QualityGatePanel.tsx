@@ -152,7 +152,7 @@ const QualityGatePanel = () => {
     rs.forEach((r) => { if (r.ai_topic) topics[r.ai_topic] = (topics[r.ai_topic] || 0) + 1; });
     const diff: Record<string, number> = {};
     rs.forEach((r) => { if (r.ai_difficulty) diff[r.ai_difficulty] = (diff[r.ai_difficulty] || 0) + 1; });
-    return { ...t, total: qs.length, pass: c("pass"), fail: c("fail"), review: c("needs_review"), pending: qs.length - rs.length, letters, topics, diff };
+    return { ...t, total: qs.length, pass: c("pass"), fail: c("fail"), review: c("needs_review"), pending: c("pending") + Math.max(0, qs.length - rs.length), letters, topics, diff };
   }), [tests, reviews, questions]);
 
   // Per-test report over the whole bank (checker v2, no AI).
