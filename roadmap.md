@@ -23,3 +23,4 @@
 - [x] Batch 8.1: locked "hide needs_review" switch (off; owner approval pending)
 - [ ] Plan only: one Gate verdict per question group + reuse instead of copy (awaiting owner approval)
 - [ ] Plan only: batched AI Gate (5–10 per call) after calibration (awaiting free quota + approval)
+- [ ] Batch 8.2: PDF Builder identity/draft/footer/shuffle/dupes, Gate one-correct prompt, ?start=1, mobile picker, chunk-crash safety
