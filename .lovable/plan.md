@@ -1,89 +1,73 @@
-# Batch 8, Phase 1 — Admin "PDF Builder" (plan only)
+# Batch 8.1 — PDF Builder fixes, content safety, Quality Gate stall
 
-## What the owner gets
-A new **Admin → PDF Builder** screen (works on a phone). Pick a test, pick how many questions and the section split, check the list, tap **Generate PDF**, and the branded file downloads. It looks like the two v3 reference PDFs: same A4 layout, header, gradient line, watermark, cover table, questions, answer key and "Next step" box.
+Plain summary: the builder will stop guessing the hub, fill everything from the test itself, and throw out broken questions on its own. The Quality Gate gets the same rules and a panel that tells the truth.
 
-## What I found in the reference PDFs
-- Both are 10 A4 pages, made with ReportLab, using **DejaVu Sans** and **DejaVu Sans Bold** (embedded), plus the logo image (512×512) used twice per page (header + faint background) and a QR image on the cover/last page.
-- Every page: "MCQSAI" header + "mcqsai.com", gradient rule, diagonal "mcqsai.com" watermark, footer line "MCQsAI · {set name} · Independent practice set, not an official paper · mcqsai.com" and "Page N".
-- Cover: title, subtitle line, "Please read first" box (3 bullets), section/questions table with Total, disclaimer, "Found a mistake?" line.
-- **Issue to flag:** the NTHP v3 reference cover disclaimer says "...not affiliated with IBA Karachi, Sukkur IBA University **or STS**". Your rule says no STS on NTHP sets. The builder will use the NTHP disclaimer already approved for the website (no STS). So the generated NTHP set will differ from the reference in that one line — on purpose.
+## C first — why the Quality Gate stopped (checked in the database today)
 
-## Answers to your 5 questions
+What the data shows right now:
+- Settings are fine: mode = report, wave = 1, daily cap 300, budget on (quality_gate 100).
+- Only NTHP has reviews (30 of 201). The other 10 Wave 1 tests have 0.
+- Last run 05:10 UTC today: status "paused", reason "FREE_ONLY_EXHAUSTED: no usable free Gemini key". 3 calls today.
 
-**1. Library: pdf-lib (+ its font helper "fontkit") and qrcode.** pdf-lib, jsPDF and qrcode are already in the project, so nothing new is bought or loaded from a CDN.
-- Gradient line: drawn as many thin coloured strips from purple to magenta to cyan. It looks smooth when printed, the same way ReportLab draws it.
-- Transparent watermark and faint logo: pdf-lib supports opacity (about 7%) and rotated text.
-- Unicode font: DejaVu Sans and DejaVu Sans Bold files go into the project. Only the letters a set actually uses are embedded, so files stay small (about 100–200 KB, like the reference).
-- QR: qrcode makes a PNG that is placed in the PDF.
-- No split questions: each question's height is measured before drawing. If it doesn't fit, it moves to the next page.
-- Why not jsPDF: its font and transparency support is weaker, and it embeds whole fonts (bigger files). Why not @react-pdf/renderer: it's a new, heavy library and gives less control over the exact layout.
-- Loaded only when the PDF Builder opens: about 1.5–2 MB in total (pdf-lib about 0.5 MB, fontkit about 0.7 MB, the two fonts about 1.4 MB, qrcode about 0.05 MB), before compression. **Public pages (homepage, /exams, hubs, mock tests) load nothing new.** I'll confirm this by comparing the public build files before and after.
+Cause (confirmed from code + data):
+1. Every run starts with NTHP again and takes the same 30 waiting questions. It asks the AI first and only saves when the AI finishes. When all free keys are cooling, the first call fails, the run stops, and **nothing is saved** — not even the no-AI checks. So the same 30 are retried forever: "Req 0, Saved 0".
+2. The 546 errors (11:00, 13:00 yesterday): one run did 30 questions with up to 6 AI calls in a row plus a large answer-history read. That is too long for one run, so the worker was killed before it could clear its lock or status. That is why the panel kept saying "running".
+3. The panel shows only the last status word. It never shows when a review was last saved.
 
-**2. Question bank audit**
-- Questions are in `job_test_questions`: `question`, `options` (list of 4), `correct_answer`, `explanation`, `subject` (used as the section), `topic`, `admin_approved`. They link to the test through `job_test_id` → `job_test_definitions`.
-- Section ratio: taken from the definition's `syllabus`. If the syllabus has no ratio, the split follows how many questions each subject has.
-- Quality Gate results are in `question_quality_reviews` (the latest row per question). "Passed" = deterministic check OK **and** AI verdict "pass". Today there are only 30 reviews: 18 pass and 12 "needs_review", all for NTHP.
-- Filter: show questions that **passed** or are **admin-approved**, but never one whose latest review is "needs_review" or failed. Each section shows its eligible count. If a section is short, the builder says so and doesn't fill the gap.
-- Top 10 tests today (approved questions / with explanation / Gate-passed):
+Fix:
+- Save the no-AI check result straight away for every question (verdict "pending AI"). AI fills in later. Progress never resets.
+- Small runs: 10 questions, at most 2 AI calls, stop after ~60 seconds. Read only the answer history of those 10 questions.
+- Rotate across tests (oldest-checked test first) so one stuck test cannot block the rest.
+- If no free key is usable: do the no-AI checks only and end cleanly ("waiting for free quota"). No paid fallback, same quality_gate budget of 100.
+- Lock expires after 5 minutes, so a killed run cannot leave "running" behind.
+- Panel shows: last successful review time, reviews today, last error in plain words, and a red "Stalled" when no review for 6 hours while mode is on.
 
-| Test | Approved | With explanation | Passed |
-|---|---|---|---|
-| IBA Karachi NTHP Mock Test 2027 | 201 | 201 | 18 |
-| AJK MDCAT 2025 | 740 | 740 | 0 |
-| Federal/Islamabad MDCAT 2025 | 540 | 540 | 0 |
-| Balochistan MDCAT 2025 | 540 | 540 | 0 |
-| Punjab MDCAT 2025 | 540 | 540 | 0 |
-| KPK MDCAT 2025 | 540 | 540 | 0 |
-| Sindh MDCAT 2025 | 540 | 540 | 0 |
-| Junior Office Associate (BPS-13) | 500 | 500 | 0 |
-| Junior Clerk BPS 11 | 319 | 319 | 0 |
-| Stenotypist (BPS-14) | 310 | 310 | 0 |
+## A. PDF Builder screen
 
-- Note: several MDCAT test names start with "Official ...". The PDF title will be typed by the admin, and the builder will **block "official" and "past paper"** in the title and set name.
+1. Hub default: no more first-in-list fallback. Default only for a confident match (NTHP, STHP, STS, or the test name containing a hub name). Otherwise empty, and Generate is blocked until the admin picks a hub or "No hub page — use mock test link".
+2. Auto-fill on test select (all editable):
+   - Clean name: strips "Official", "Mock Test 20xx – …", "Syllabus & … Entry Test Pattern", extra spaces. Title = "<clean name> Free Practice Set – <N> Questions"; updates when count changes, unless the admin typed their own.
+   - File name, footer and "Please read first" use the clean name, never the hub.
+   - Set number = highest saved set for this test + 1.
+   - Mock test link: built from the same rule the public mock-test pages use (`mock_test_slug` in the database). QR and link 1 open that exact page with the same utm tags; the hub becomes a second text link when chosen.
+3. Test list: search box; each line "Name · published/draft · 500 Q"; published group first, drafts in a separate group with "Draft — no live page, links will not work yet" warning; names trimmed; duplicate names get the department or created date added.
+4. Gate-passed only ON with 0 reviewed: message "The Quality Gate has not checked any question of this test yet."
 
-**3. Logo:** the file is `src/assets/logo.png` (the same one used in the site header). The builder loads it as a normal image and embeds it twice per page: once in the header and once as a faint background. The site logo itself is not changed.
+## B. Content safety (no AI, each rule tested)
 
-**4. Side-by-side check:** after the build, I'll generate a 50-question NTHP set (26 Maths / 24 English, explanations on) in the preview. I'll turn each page into an image and compare it with the v3 reference, then fix anything that differs. You get the file to send for review. Phase 1 counts as done only after you confirm it matches.
+The screen shows "Excluded: 12 — same options 3, doubtful explanation 5, duplicate 3, wrong maths answer 1". Questions are never edited or deleted.
 
-**5. Risks / what can't match exactly**
-- The NTHP disclaimer line will have no STS mention (see above).
-- Line breaks and page count can differ slightly, because the questions are different from the reference.
-- The gradient is drawn as strips. It looks the same on screen and in print, but a very close zoom may show tiny bands.
-- iPhone: the file may open in the share sheet. Use "Save to Files".
-- Only 18 Gate-passed questions exist today, so most sets will rely on admin-approved questions until the Gate has checked more.
+5. Options: exclude if not 4 different options (ignoring case/spaces) or an option repeats the whole question.
+6. Doubtful/copied explanation: exclude if it contains any phrase on your list (wait, let me, re-evaluate, re-reading, recheck, recalculate, contradicts, question is flawed, assuming the intent, options are not/incorrect, none of the options, not among the options, closest option, the document states, according to the document/passage/text, it states that). "According to the passage" is allowed only when the question itself contains a passage.
+7. "Unknown" topic: hidden in the explanations header.
+8. Duplicates in one set: same normalised question, or same correct answer + very similar question (word overlap ≥ 80%). Pick and Swap both skip these.
+9. Maths check (conservative): only for maths-type questions whose explanation ends with a plain number (like "= 4.25" or "answer is 50"). If that number is not in any option, exclude. Fractions, units and text answers are not judged. This catches Q42 and Q39. It cannot catch Q24 (spreadsheet formula), Q16 (logic puzzle) or Q47 (false fact) — those need the AI Gate or a human.
+10. Option letters in explanations ("option C", "(C)"): **remap** to the shuffled letter in the PDF only. If the letter is unclear (for example two letters mentioned), exclude.
+11. Rules 5, 6, 8, 9 and 10's "unclear" case also go into the Quality Gate no-AI checks as "needs_review" (checker version 2). Mock tests are not filtered by this yet (mode stays "report").
 
-## Rules kept
-Questions are only read, never edited or deleted. Answer options are shuffled with a saved seed, then rebalanced so A–D appear evenly. "Rebuild" recreates the same set exactly. There are no AI calls, no server step and no paid services. Titles, meta, sitemaps, the Quality Gate and AI budget code stay unchanged. NTHP/STHP/STS names are never mixed.
+## D. Unchanged
 
-## Technical section
-- **Migration:** new table `pdf_practice_sets` (`id`, `definition_id`, `title`, `set_number`, `hub_slug`, `question_count`, `section_split` jsonb, `seed` bigint, `question_ids` uuid[], `options_order` jsonb, `require_explanation` bool, `file_name`, `created_by`, `created_at`, `updated_at`). Access is granted to the logged-in role and the service role, RLS is on, and one policy allows everything only for `is_admin()`. It also gets the `updated_at` trigger.
-- **New files:**
-  - `src/lib/pdfBuilder/selection.ts`: picks eligible questions, splits sections and handles swap/remove.
-  - `src/lib/pdfBuilder/shuffle.ts`: seeded shuffle (mulberry32) and letter balancing.
-  - `src/lib/pdfBuilder/wording.ts`: banned words, plus a disclaimer per exam (reused from `practicePdfs.js`).
-  - `src/lib/pdfBuilder/render.ts`: pdf-lib layout (header, rule, watermark, cover, questions, key, next step, footer).
-  - `src/pages/admin/PdfBuilder.tsx`: the screen, lazy-loaded.
-  - `src/assets/fonts/DejaVuSans*.ttf`.
-- **Edited files:** the admin route/menu entry (one link) and `src/routes/lazyPages.ts`. If `@pdf-lib/fontkit` is missing, it gets added (the only new package).
-- **Links:**
-  - Hub: `https://mcqsai.com/exams/{slug}?utm_source=pdf&utm_medium=free_pdf&utm_campaign={slug}_{N}q`.
-  - WhatsApp channel: `whatsapp_channel_url` setting, with fallback `CHANNEL_FALLBACK`.
-  - Share: wa.me text pointing to the hub with `utm_source=whatsapp&utm_medium=pdf_share`.
-- **Tests:**
-  - The same seed gives the same order.
-  - Answer letters stay balanced within ±1.
-  - A short section is reported and never filled.
-  - "needs_review" questions are excluded.
-  - The banned-word check works.
-  - The NTHP disclaimer has no "STS".
-  - The file name format is correct.
-- **Bundle check:** compare the public route files before and after, and confirm pdf-lib, fontkit and fonts appear only in the PDF Builder file.
+PDF design/branding, browser-only, lazy loading (public bundle unchanged), no AI in the builder, questions read-only, no title/meta/sitemap changes, NTHP/STHP/STS naming rules.
 
-## Mobile owner checklist
-1. Admin → PDF Builder.
-2. Pick a test, then check the section counts.
-3. Set the count, split, title, set number and hub slug.
-4. Review the list, then remove or swap questions.
-5. Generate PDF, then save it.
-6. Old sets are listed below with a "Rebuild".
+## Expected result if you regenerate the same JOA set
+
+- Hub empty until you pick one; title "Junior Office Associate (BPS-13) Free Practice Set – 50 Questions"; QR opens the JOA mock test page; no AIR-UNIVERSITY anywhere. The JOA test is draft, so you will see the draft warning.
+- Removed automatically: Q10, Q16, Q45, Q46 (explanation phrases), Q39, Q42 (maths), duplicates Q28, Q29, Q31, and Q24 for its identical options A/D. Replaced from the pool.
+- Still possible: false facts like Q47 — rule-based checks cannot know facts. The Gate's AI review is the only automatic guard; until it has run, check fact questions by eye.
+
+## Tests to add
+
+- Hub: no confident match = empty; NTHP/STHP/STS defaults.
+- Clean name: 3 real test names, incl. " FIA Assistant".
+- Next set number; mock-test link + utm.
+- Each safety rule 5, 6, 8, 9, 10 (pass case and fail case), using your JOA examples.
+- Gate: same rules give needs_review; a run with no free key still saves no-AI results; stalled after 6 hours.
+
+## Technical details
+
+- Files: `src/lib/pdfBuilder/rules.js` (+ .d.ts, tests), `src/lib/pdfBuilder/render.ts` (letter remap, hide Unknown, primary/secondary link), `src/pages/admin/PdfBuilder.tsx`, `supabase/functions/_shared/qualityChecks.ts` (+ tests, CHECKER_VERSION 2), `supabase/functions/quality-gate/index.ts`, `src/components/admin/job-test/QualityGatePanel.tsx`.
+- Shared rule text lives in one plain JS module copied into the edge helper (tests guard both copies stay equal).
+- Migration: add `last_success_at`, `last_error`, `last_error_at` to `quality_job_runs`; allow `ai_verdict = 'pending'` rows to be stored. No change to questions or student tables.
+- Mock-test link uses the existing `mock_test_slug` database function; verify it during build against 3 live URLs.
+- Risk: rule 6 may drop some fine questions (~154 of 24,669); counts are visible on screen.
+- Rollback: Gate stays in report mode; builder rules are local to the admin page.
