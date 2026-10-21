@@ -40,6 +40,19 @@ export function announcementSite(kind) {
 }
 /** Section names joined for cover/readFirst (names may contain "/" and "&"). */
 export const joinSections = (names) => names.filter(Boolean).join(' · ');
+
+const ORIGINAL = 'Questions are original and were not copied from any official document.';
+export function disclaimerFor(kind) {
+  switch (kind) {
+    case 'nthp': return `MCQsAI is an independent practice platform, not affiliated with IBA Karachi. ${ORIGINAL}`;
+    case 'sthp': return `MCQsAI is an independent practice platform, not affiliated with Sukkur IBA University. ${ORIGINAL}`;
+    case 'sts': return `MCQsAI is an independent practice platform, not affiliated with SIBA Testing Service (STS). ${ORIGINAL}`;
+    default: return `MCQsAI is an independent practice platform and is not affiliated with any examining body. ${ORIGINAL}`;
+  }
+}
+export function programLine(kind) {
+  return { nthp: 'IBA Karachi National Talent Hunt Program', sthp: 'Sukkur IBA Sindh Talent Hunt Program', sts: 'SIBA Testing Service (STS)' }[kind] || '';
+}
 /** Draft warning only when no public mock-test page exists (site publishes every job_tests row). */
 export const hasPublicPage = (defId, jobTests) => !!defId && (jobTests || []).some((t) => t.definition_id === defId);
 /** Footer line that always keeps the suffix (site name): title is shortened with "…". */
