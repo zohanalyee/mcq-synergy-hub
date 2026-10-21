@@ -1,73 +1,51 @@
-# Batch 8.1 — PDF Builder fixes, content safety, Quality Gate stall
+# Batch 8.2 — PDF Builder fixes, AI check, QR start, crash safety
 
-Plain summary: the builder will stop guessing the hub, fill everything from the test itself, and throw out broken questions on its own. The Quality Gate gets the same rules and a panel that tells the truth.
+Plain summary: fix exam detection, the draft warning, the footer, option shuffling for "All of the above", repeated topics, a stricter AI check, a QR that starts the test, a smoother phone picker, and stop one missing file from crashing a page.
 
-## C first — why the Quality Gate stopped (checked in the database today)
+## What I found (checked in code)
+- The builder decides STS/NTHP/STHP from the test **title only**. The public page decides it from the **organization + title** of the `job_tests` row.
+- The draft warning uses the definition's "draft" status. The public site publishes `/mock-tests/{slug}` for **every** `job_tests` row, whatever its status, so the warning is wrong.
+- Section names are joined with " & " on the cover and in "Please read first".
+- The AI check asks only for "the single best option". It never asks whether more than one option is correct, or whether the key and explanation agree.
+- Cookie banner, WhatsApp button, widgets etc. are lazy-loaded with no fallback. If their file is missing, the whole page shows the error screen.
+- Old files in `/assets/` are cached for a year. Whether old files stay on the server after a publish depends on Lovable hosting and Cloudflare. I can't see that from code, so I will test it, not assume it.
 
-What the data shows right now:
-- Settings are fine: mode = report, wave = 1, daily cap 300, budget on (quality_gate 100).
-- Only NTHP has reviews (30 of 201). The other 10 Wave 1 tests have 0.
-- Last run 05:10 UTC today: status "paused", reason "FREE_ONLY_EXHAUSTED: no usable free Gemini key". 3 calls today.
-
-Cause (confirmed from code + data):
-1. Every run starts with NTHP again and takes the same 30 waiting questions. It asks the AI first and only saves when the AI finishes. When all free keys are cooling, the first call fails, the run stops, and **nothing is saved** — not even the no-AI checks. So the same 30 are retried forever: "Req 0, Saved 0".
-2. The 546 errors (11:00, 13:00 yesterday): one run did 30 questions with up to 6 AI calls in a row plus a large answer-history read. That is too long for one run, so the worker was killed before it could clear its lock or status. That is why the panel kept saying "running".
-3. The panel shows only the last status word. It never shows when a review was last saved.
-
-Fix:
-- Save the no-AI check result straight away for every question (verdict "pending AI"). AI fills in later. Progress never resets.
-- Small runs: 10 questions, at most 2 AI calls, stop after ~60 seconds. Read only the answer history of those 10 questions.
-- Rotate across tests (oldest-checked test first) so one stuck test cannot block the rest.
-- If no free key is usable: do the no-AI checks only and end cleanly ("waiting for free quota"). No paid fallback, same quality_gate budget of 100.
-- Lock expires after 5 minutes, so a killed run cannot leave "running" behind.
-- Panel shows: last successful review time, reviews today, last error in plain words, and a red "Stalled" when no review for 6 hours while mode is on.
-
-## A. PDF Builder screen
-
-1. Hub default: no more first-in-list fallback. Default only for a confident match (NTHP, STHP, STS, or the test name containing a hub name). Otherwise empty, and Generate is blocked until the admin picks a hub or "No hub page — use mock test link".
-2. Auto-fill on test select (all editable):
-   - Clean name: strips "Official", "Mock Test 20xx – …", "Syllabus & … Entry Test Pattern", extra spaces. Title = "<clean name> Free Practice Set – <N> Questions"; updates when count changes, unless the admin typed their own.
-   - File name, footer and "Please read first" use the clean name, never the hub.
-   - Set number = highest saved set for this test + 1.
-   - Mock test link: built from the same rule the public mock-test pages use (`mock_test_slug` in the database). QR and link 1 open that exact page with the same utm tags; the hub becomes a second text link when chosen.
-3. Test list: search box; each line "Name · published/draft · 500 Q"; published group first, drafts in a separate group with "Draft — no live page, links will not work yet" warning; names trimmed; duplicate names get the department or created date added.
-4. Gate-passed only ON with 0 reviewed: message "The Quality Gate has not checked any question of this test yet."
-
-## B. Content safety (no AI, each rule tested)
-
-The screen shows "Excluded: 12 — same options 3, doubtful explanation 5, duplicate 3, wrong maths answer 1". Questions are never edited or deleted.
-
-5. Options: exclude if not 4 different options (ignoring case/spaces) or an option repeats the whole question.
-6. Doubtful/copied explanation: exclude if it contains any phrase on your list (wait, let me, re-evaluate, re-reading, recheck, recalculate, contradicts, question is flawed, assuming the intent, options are not/incorrect, none of the options, not among the options, closest option, the document states, according to the document/passage/text, it states that). "According to the passage" is allowed only when the question itself contains a passage.
-7. "Unknown" topic: hidden in the explanations header.
-8. Duplicates in one set: same normalised question, or same correct answer + very similar question (word overlap ≥ 80%). Pick and Swap both skip these.
-9. Maths check (conservative): only for maths-type questions whose explanation ends with a plain number (like "= 4.25" or "answer is 50"). If that number is not in any option, exclude. Fractions, units and text answers are not judged. This catches Q42 and Q39. It cannot catch Q24 (spreadsheet formula), Q16 (logic puzzle) or Q47 (false fact) — those need the AI Gate or a human.
-10. Option letters in explanations ("option C", "(C)"): **remap** to the shuffled letter in the PDF only. If the letter is unclear (for example two letters mentioned), exclude.
-11. Rules 5, 6, 8, 9 and 10's "unclear" case also go into the Quality Gate no-AI checks as "needs_review" (checker version 2). Mock tests are not filtered by this yet (mode stays "report").
-
-## D. Unchanged
-
-PDF design/branding, browser-only, lazy loading (public bundle unchanged), no AI in the builder, questions read-only, no title/meta/sitemap changes, NTHP/STHP/STS naming rules.
-
-## Expected result if you regenerate the same JOA set
-
-- Hub empty until you pick one; title "Junior Office Associate (BPS-13) Free Practice Set – 50 Questions"; QR opens the JOA mock test page; no AIR-UNIVERSITY anywhere. The JOA test is draft, so you will see the draft warning.
-- Removed automatically: Q10, Q16, Q45, Q46 (explanation phrases), Q39, Q42 (maths), duplicates Q28, Q29, Q31, and Q24 for its identical options A/D. Replaced from the pool.
-- Still possible: false facts like Q47 — rule-based checks cannot know facts. The Gate's AI review is the only automatic guard; until it has run, check fact questions by eye.
+## Fixes
+1. **Exam identity**: find the linked `job_tests` row and use the shared site rule on organization + title (the same check the public page uses). That sets the disclaimer, the default hub (sts/nthp/sthp) and the announcement site (sts.net.pk, iba.edu.pk, iba-suk.edu.pk). The title is the fallback. NTHP never mentions STS.
+2. **Draft warning**: show it only when no `job_tests` row exists for the test, so no public page exists.
+3. **Footer**: shorten the title with "…" so "· mcqsai.com" and the page number always fit. Join section names with " · " instead of " & ".
+4. **All/None of the above**: if any option is "all/none of the above", "both A and B", "A and C" and so on, the options keep their original order. Those fixed questions count first. The other questions are shuffled to balance the A–D letters.
+5. **Repeats in one set**: at most 2 questions per known topic in a set. Two questions also count as duplicates if they have the same correct-answer text and share a key word (a word of 5+ letters that isn't a common word). Spare questions fill the gaps. The screen shows "Excluded: topic cap X, duplicates Y". No AI.
+6. **AI check (Quality Gate)**: the prompt now asks, for each question:
+   - how many options are correct
+   - your answer
+   - does the key match?
+   - does the explanation agree with the key?
+   The result is **needs_review** if more than one option is correct, the key differs, or the explanation disagrees. The reason is saved (`multiple_correct`, `key_mismatch`, `explanation_disagrees`). Free keys only, existing budget, mode stays "report".
+   **Check on the 40-question calibration set**: compare old and new verdicts. Your examples (Q1, Q3, Q9, Q10, Q13, Q35) should come back needs_review, and questions that passed before should mostly still pass. I report both counts before anything turns on.
+7. **QR starts the test**: `/mock-tests/{slug}?start=1&utm_…`. A real visitor goes straight into the test. If sign-in is needed, they sign in and come back to the same test. Bots and prerendered pages never auto-start. The canonical link stays without the extra part, and the page title, text and indexing don't change. PDF link 1 and the QR use it.
+8. **Phone picker**: reproduce at 390px first and report what I find. Then: a search box that filters the test list as you type, a short "Loading…" after you pick, and hub/title/link filled in at once with nothing left over from the last test. Changing the hub changes only the hub-based links.
+9. **Crash safety (public site)**:
+   - (a) Cookie banner, ads, notifications, WhatsApp and floating widgets are skipped silently if their file fails to load.
+   - (b) Key page parts reload once (with a guard so it can't loop) before any error screen. The error screen also gets one guarded reload for "Failed to fetch dynamically imported module".
+   - (c) Right after the next publish, I request an old file name and the homepage HTML headers, then report whether old files stay available and how long HTML is cached. If HTML can point to removed files, I explain the Cloudflare setting you can change yourself. No changes I can't verify.
 
 ## Tests to add
+- Exam identity from organization: STS, NTHP, STHP, generic. Admission & Examination Officer → sts.
+- Draft warning shows only when there is no public test.
+- "All of the above", "both A and B" and so on keep their order. Letters stay balanced.
+- Topic cap of 2 per set, and the answer-text + key-word duplicate rule.
+- AI verdict: multiple correct, key mismatch or explanation disagrees → needs_review.
+- `?start=1`: no auto-start for bots, and the canonical has no extra part.
+- A widget whose file fails to load renders nothing and doesn't crash.
 
-- Hub: no confident match = empty; NTHP/STHP/STS defaults.
-- Clean name: 3 real test names, incl. " FIA Assistant".
-- Next set number; mock-test link + utm.
-- Each safety rule 5, 6, 8, 9, 10 (pass case and fail case), using your JOA examples.
-- Gate: same rules give needs_review; a run with no free key still saves no-AI results; stalled after 6 hours.
+## If you regenerate the same 200-question set
+STS disclaimer, hub = sts, announcement site sts.net.pk, no draft warning, full footer, " · " joins, Q24-type questions in their original order, at most 2 per topic, and the extra excluded counts shown. The AI problems only drop out after the Gate re-checks those questions.
+
+## Unchanged
+PDF design, builder runs in the browser, questions read-only, titles/meta/sitemaps unchanged, NTHP/STHP/STS naming rules, mode "report", hide switch locked, no new libraries, public bundle about the same size.
 
 ## Technical details
-
-- Files: `src/lib/pdfBuilder/rules.js` (+ .d.ts, tests), `src/lib/pdfBuilder/render.ts` (letter remap, hide Unknown, primary/secondary link), `src/pages/admin/PdfBuilder.tsx`, `supabase/functions/_shared/qualityChecks.ts` (+ tests, CHECKER_VERSION 2), `supabase/functions/quality-gate/index.ts`, `src/components/admin/job-test/QualityGatePanel.tsx`.
-- Shared rule text lives in one plain JS module copied into the edge helper (tests guard both copies stay equal).
-- Migration: add `last_success_at`, `last_error`, `last_error_at` to `quality_job_runs`; allow `ai_verdict = 'pending'` rows to be stored. No change to questions or student tables.
-- Mock-test link uses the existing `mock_test_slug` database function; verify it during build against 3 live URLs.
-- Risk: rule 6 may drop some fine questions (~154 of 24,669); counts are visible on screen.
-- Rollback: Gate stays in report mode; builder rules are local to the admin page.
+- Files: `src/lib/pdfBuilder/rules.js` (+d.ts, tests), `src/lib/pdfBuilder/render.ts`, `src/pages/admin/PdfBuilder.tsx`, `src/lib/contentSafety.js` + byte-identical `_shared` copy, `supabase/functions/quality-gate/index.ts`, `_shared/qualityChecks.ts` (+tests), `src/pages/MockTestDetail.tsx` (start param), `src/components/DeferredGlobals.tsx` (a `safeLazy` that falls back to a null component), `src/routes/lazyWithReload.ts`, `src/components/GlobalErrorBoundary.tsx`.
+- Bump CHECKER_VERSION so old AI verdicts are re-checked under the new prompt. Carry-over is skipped for that version, which costs free calls from the quality_gate budget only.
+- No database migration expected.
