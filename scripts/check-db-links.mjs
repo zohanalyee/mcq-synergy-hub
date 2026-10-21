@@ -33,7 +33,7 @@ try {
   }
   const sources = [
     ['featured_cards', 'id,title,href'],
-    ['exam_pages', 'slug,data'],
+    ['exam_pages', '*'],
     ['blog_posts', 'slug,content'],
   ];
   const found = [];
