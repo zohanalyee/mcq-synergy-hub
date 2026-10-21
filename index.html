@@ -2,6 +2,32 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Boot recovery: if a main /assets/ script or stylesheet fails to load
+         (old cached page after a publish), reload once with a fresh URL.
+         No timer watchdog; never for bots or prerender. -->
+    <script id="boot-recovery">
+      (function (w) {
+        var K = 'mcqsai:boot-reload-at';
+        var BOT = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegram|lighthouse|headless|prerender|google-inspectiontool|mediapartners/i;
+        function mainAsset(t) {
+          if (!t || !t.tagName) return false;
+          var n = String(t.tagName).toLowerCase();
+          var u = n === 'script' ? t.src : (n === 'link' && /stylesheet/i.test(t.rel || '') ? t.href : '');
+          return !!u && String(u).indexOf(w.location.origin + '/assets/') === 0;
+        }
+        w.addEventListener('error', function (e) {
+          if (w.__PRERENDER__ || BOT.test(w.navigator.userAgent || '') || !mainAsset(e && e.target)) return;
+          try {
+            if (w.sessionStorage.getItem(K)) return;
+            w.sessionStorage.setItem(K, String(Date.now()));
+          } catch (x) { return; }
+          var p = new URLSearchParams(w.location.search);
+          p.set('v', String(Date.now()));
+          w.location.replace(w.location.pathname + '?' + p.toString() + (w.location.hash || ''));
+        }, true);
+      })(window);
+    </script>
+
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="shortcut icon" type="image/png" href="/favicon.png" />
