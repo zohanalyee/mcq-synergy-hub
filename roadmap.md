@@ -25,3 +25,6 @@
 - [ ] Plan only: batched AI Gate (5–10 per call) after calibration (awaiting free quota + approval)
 - [x] Batch 8.2: PDF Builder identity/draft/footer/shuffle/dupes, Gate one-correct prompt, ?start=1, mobile picker, chunk-crash safety
 - [ ] Batch 8.2 follow-ups: after next publish check old asset files + HTML cache (9c); calibration-40 under v3 prompt when free quota allows; owner 390px picker check
+- [x] Blank-page fix A: inline one-shot boot recovery on failed main JS/CSS, HTML no-cache in _headers
+- [ ] Owner: Cloudflare Response Header Transform Rule (Cache-Control: no-cache on HTML), then verify live headers
+- [ ] Queued mega audit

@@ -19,3 +19,10 @@
 
 /sitemap.xml
   Cache-Control: public, max-age=3600
+
+# HTML pages: always revalidate (hashed /assets/ stay immutable above).
+/
+  Cache-Control: no-cache
+
+/*.html
+  Cache-Control: no-cache
