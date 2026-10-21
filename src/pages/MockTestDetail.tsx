@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
@@ -43,6 +43,8 @@ import {
 } from "@/lib/mockTestNetwork";
 
 const BASE = "https://mcqsai.com";
+import { shouldAutoStart, withoutStartParam } from "@/lib/autoStart";
+const NOOP_START = () => {};
 
 const MockTestDetail = () => {
   const { slug = "" } = useParams();
@@ -50,9 +52,10 @@ const MockTestDetail = () => {
     start: (settings?: { difficulty?: "easy" | "medium" | "hard"; questionCount?: number }) => void;
     isGenerating: boolean;
   }>({
-    start: () => {},
+    start: NOOP_START,
     isGenerating: false,
   });
+  const autoStarted = useRef(false);
   const [difficulty, setDifficulty] = useState<"easy" | "medium" | "hard">("easy");
   const [questionCount, setQuestionCount] = useState<number>(20);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -67,6 +70,17 @@ const MockTestDetail = () => {
     : initialJobTests.map((t) => ({ ...t, id: String(t.id) }));
 
   const test = useMemo(() => resolveJobTestBySlug(slug, allTests), [slug, allTests]);
+
+  // PDF QR / link 1 (?start=1): start the test straight away for real visitors only.
+  // Bots and prerender see the normal intro page; canonical never carries the flag.
+  useEffect(() => {
+    if (autoStarted.current || !test || topStart.start === NOOP_START || topStart.isGenerating) return;
+    if (typeof window === "undefined" || (globalThis as any).__PRERENDER__) return;
+    if (!shouldAutoStart(window.location.search, navigator.userAgent, false)) return;
+    autoStarted.current = true;
+    window.history.replaceState(window.history.state, "", withoutStartParam(window.location.pathname, window.location.search, window.location.hash));
+    topStart.start({ difficulty, questionCount });
+  }, [test, topStart, difficulty, questionCount]);
 
   if (isLoading) {
     return (
