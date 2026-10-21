@@ -3,6 +3,7 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import BrandMark from '@/components/BrandMark';
+import { isChunkLoadError, reloadOnce } from '@/lib/chunkErrors';
 
 interface Props {
   children: ReactNode;
