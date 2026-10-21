@@ -196,8 +196,23 @@ export function pickSet(poolsBySubject, split, seed) {
 export function balanceOptions(questions, seed) {
   const rand = rng(seed ^ 0x5bd1e995);
   const n = questions.length;
-  const targets = shuffle(Array.from({ length: n }, (_, i) => LETTERS[i % 4]), rand);
+  const locked = questions.map(isOrderLocked);
+  let targets;
+  if (!locked.some(Boolean)) targets = shuffle(Array.from({ length: n }, (_, i) => LETTERS[i % 4]), rand);
+  else {
+    // Locked questions keep their letter; the rest fill each letter up to an even share.
+    const have = { A: 0, B: 0, C: 0, D: 0 };
+    questions.forEach((q, i) => { if (locked[i]) have[correctLetter(q)]++; });
+    const free = [];
+    for (let k = 0; free.length < n - locked.filter(Boolean).length; k++) {
+      const l = [...LETTERS].sort((a, b) => have[a] - have[b] || LETTERS.indexOf(a) - LETTERS.indexOf(b))[0];
+      free.push(l); have[l]++;
+    }
+    const pool = shuffle(free, rand);
+    targets = questions.map((q, i) => (locked[i] ? null : pool.pop()));
+  }
   return questions.map((q, i) => {
+    if (locked[i]) return [...LETTERS];
     const orig = correctLetter(q);
     const others = shuffle(LETTERS.filter((l) => l !== orig), rand);
     const pos = LETTERS.indexOf(targets[i]);
