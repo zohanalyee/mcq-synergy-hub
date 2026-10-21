@@ -95,7 +95,7 @@ export function remapExplanation(explanation, perm) {
     const orig = (a || b).toUpperCase();
     const shown = SAFETY_LETTERS[perm.indexOf(orig)];
     if (!shown) return all;
-    return all.replace(/[A-D](?=\)?$|\)$)/, shown).replace(new RegExp(`\\b${orig}\\b`), shown);
+    return all.replace(/[A-D](\)?)$/, `${shown}$1`);
   });
 }
 
