@@ -23,31 +23,58 @@ export function shuffle(arr, rand) {
 }
 export const newSeed = () => Math.floor(Math.random() * 2 ** 31);
 
-/** Exam identity — STHP is checked before STS (STHP titles say "Sukkur IBA"). */
-export function examKind(title, hubSlug) {
-  const t = `${title || ''}`;
-  if (hubSlug === 'nthp' || isNthpTest('', t)) return 'nthp';
-  if (hubSlug === 'sthp' || /\bsthp\b|sindh talent hunt/i.test(t)) return 'sthp';
-  if (hubSlug === 'sts' || isStsTest('', t)) return 'sts';
+/**
+ * Exam identity from the public test's organization + title (same rule the
+ * public mock-test page uses), STHP checked before STS (STHP says "Sukkur IBA").
+ */
+export function examKind(title, hubSlug, organization = '') {
+  const t = `${title || ''}`, o = `${organization || ''}`;
+  if (hubSlug === 'nthp' || isNthpTest(o, t)) return 'nthp';
+  if (hubSlug === 'sthp' || /\bsthp\b|sindh talent hunt/i.test(`${o} ${t}`)) return 'sthp';
+  if (hubSlug === 'sts' || isStsTest(o, t)) return 'sts';
   return 'generic';
 }
-
-const ORIGINAL = 'Questions are original and were not copied from any official document.';
-export function disclaimerFor(kind) {
-  switch (kind) {
-    case 'nthp': return `MCQsAI is an independent practice platform, not affiliated with IBA Karachi. ${ORIGINAL}`;
-    case 'sthp': return `MCQsAI is an independent practice platform, not affiliated with Sukkur IBA University. ${ORIGINAL}`;
-    case 'sts': return `MCQsAI is an independent practice platform, not affiliated with SIBA Testing Service (STS). ${ORIGINAL}`;
-    default: return `MCQsAI is an independent practice platform and is not affiliated with any examining body. ${ORIGINAL}`;
-  }
+/** Announcement website named in "Please read first". */
+export function announcementSite(kind) {
+  return { nthp: 'nthp.iba.edu.pk', sthp: 'iba-suk.edu.pk', sts: 'sts.net.pk' }[kind] || '';
 }
-export function programLine(kind) {
-  return { nthp: 'IBA Karachi National Talent Hunt Program', sthp: 'Sukkur IBA Sindh Talent Hunt Program', sts: 'SIBA Testing Service (STS)' }[kind] || '';
+/** Section names joined for cover/readFirst (names may contain "/" and "&"). */
+export const joinSections = (names) => names.filter(Boolean).join(' · ');
+/** Draft warning only when no public mock-test page exists (site publishes every job_tests row). */
+export const hasPublicPage = (defId, jobTests) => !!defId && (jobTests || []).some((t) => t.definition_id === defId);
+/** Footer line that always keeps the suffix (site name): title is shortened with "…". */
+export function fitFooter(prefix, title, suffix, measure, max) {
+  const full = `${prefix}${title}${suffix}`;
+  if (measure(full) <= max) return full;
+  let t = String(title);
+  while (t.length > 1 && measure(`${prefix}${t}…${suffix}`) > max) t = t.slice(0, -1);
+  return `${prefix}${t.trimEnd()}…${suffix}`;
+}
+/** Options that refer to other options: keep original order (never shuffle). */
+const LOCK_RE = /\b(all|none|both|neither)\s+of\s+(the\s+)?(above|these|them)\b|\b(both|either|neither|only)\s+\(?[a-d]\)?\s+(and|or|&|nor)\s+\(?[a-d]\)?(?![a-z])|\b[a-d]\s*(,|&|and)\s*[a-d]\s*(both|only)?\s*$/i;
+export function isOrderLocked(q) {
+  return optionTexts(q.options).some((o) => LOCK_RE.test(String(o).trim()));
+}
+const STOP = new Set('which what where when following about their there these those would could should between other under after before during'.split(' '));
+const keyTerms = (s) => new Set(String(s || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter((w) => w.length >= 5 && !STOP.has(w)));
+/** Same correct-answer text + at least one shared key term = duplicate inside one set. */
+export function sameAnswerAndTerm(a, b) {
+  const ans = (q) => { const l = correctLetter(q); return l ? String(optionTexts(q.options)[LETTERS.indexOf(l)] || '').trim().toLowerCase() : ''; };
+  const x = ans(a);
+  if (!x || x.length < 3 || x !== ans(b)) return false;
+  const B = keyTerms(b.question);
+  return [...keyTerms(a.question)].some((w) => B.has(w));
+}
+const topicKey = (t) => { const s = String(t || '').trim().toLowerCase(); return s && !/^(unknown|general|n\/?a|none|-)$/.test(s) ? s : ''; };
+/** True when adding q would exceed `cap` questions of the same known topic. */
+export function overTopicCap(chosen, q, cap = 2) {
+  const k = topicKey(q.topic);
+  return !!k && chosen.filter((c) => topicKey(c.topic) === k).length >= cap;
 }
 
 /** Default hub slug from the test identity, only if that slug exists. */
-export function defaultHubSlug(title, slugs) {
-  const kind = examKind(title, '');
+export function defaultHubSlug(title, slugs, organization = '') {
+  const kind = examKind(title, '', organization);
   if (kind !== 'generic' && slugs.includes(kind)) return kind;
   const t = (title || '').toLowerCase();
   const hit = slugs.find((s) => s.length >= 3 && new RegExp(`\\b${s.replace(/-/g, '[ -]')}\\b`).test(t));
