@@ -1,4 +1,5 @@
 import { lazy, Suspense, useEffect, useState } from "react";
+import { safeImport } from "@/lib/chunkErrors";
 
 /**
  * Performance-only wrapper (no visual change).
@@ -9,16 +10,16 @@ import { lazy, Suspense, useEffect, useState } from "react";
  * (~478ms on throttled mobile). Here they are code-split and mounted in two
  * later, separate macrotasks so the main thread can yield between them.
  */
-const Sonner = lazy(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster })));
-const AIWelcome = lazy(() => import("./AIWelcome"));
-const LibraryWelcome = lazy(() => import("./LibraryWelcome"));
-const CampaignTracker = lazy(() => import("./CampaignTracker"));
-const EmailPrefSync = lazy(() => import("./EmailPrefSync"));
-const FloatingToolsRenderer = lazy(() => import("./tools/FloatingToolsRenderer"));
-const GlobalCreditExhaustedListener = lazy(() => import("./credits/GlobalCreditExhaustedListener"));
-const GuestResultCarryForward = lazy(() => import("./GuestResultCarryForward"));
-const CookieConsent = lazy(() => import("./CookieConsent"));
-const WhatsAppFloatingButton = lazy(() => import("./WhatsAppFloatingButton"));
+const Sonner = lazy(() => safeImport(() => import("@/components/ui/sonner").then(m => ({ default: m.Toaster }))));
+const AIWelcome = lazy(() => safeImport(() => import("./AIWelcome")));
+const LibraryWelcome = lazy(() => safeImport(() => import("./LibraryWelcome")));
+const CampaignTracker = lazy(() => safeImport(() => import("./CampaignTracker")));
+const EmailPrefSync = lazy(() => safeImport(() => import("./EmailPrefSync")));
+const FloatingToolsRenderer = lazy(() => safeImport(() => import("./tools/FloatingToolsRenderer")));
+const GlobalCreditExhaustedListener = lazy(() => safeImport(() => import("./credits/GlobalCreditExhaustedListener")));
+const GuestResultCarryForward = lazy(() => safeImport(() => import("./GuestResultCarryForward")));
+const CookieConsent = lazy(() => safeImport(() => import("./CookieConsent")));
+const WhatsAppFloatingButton = lazy(() => safeImport(() => import("./WhatsAppFloatingButton")));
 
 const isPrerender = typeof window === "undefined" || (globalThis as any).__PRERENDER__;
 

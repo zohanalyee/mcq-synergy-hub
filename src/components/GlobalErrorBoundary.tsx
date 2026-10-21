@@ -37,6 +37,10 @@ class GlobalErrorBoundary extends Component<Props, State> {
       error,
       info?.componentStack,
     );
+    // A file from an older/newer deploy is missing: one guarded reload before showing this screen.
+    if (typeof window !== 'undefined' && isChunkLoadError(error)) {
+      try { reloadOnce(sessionStorage, () => window.location.reload()); } catch { /* ignore */ }
+    }
   }
 
   componentDidUpdate(prevProps: Props) {
