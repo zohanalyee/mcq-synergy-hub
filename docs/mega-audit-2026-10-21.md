@@ -55,7 +55,7 @@ Search positions come from your own 20 Oct Search Console notes; I did not re-ch
 Keep visible on every page: a real timed test, instant score, explanations, the correct names (SIBA Testing Service, not "Sindh Testing Service") and our own branded PDFs. Never ask for recalled exam questions, and never link to other sites' PDFs or books.
 
 ## Recommended batch order
-- **Batch 9, crawl safety (S1):** being planned separately.
+- **Batch 9, crawl safety (S1):** built 21 Oct, waiting for publish and live checks.
 - **Batch 10, mock-test titles for clicks (S2) + NTHP/STHP linking (S3):** small change, quick traffic test.
 - **Batch 11, test fairness, data and quota:**
   - Shuffle answer options when a test is shown. "All/None/Both of the above" options keep their position (the 8.2 rule).
