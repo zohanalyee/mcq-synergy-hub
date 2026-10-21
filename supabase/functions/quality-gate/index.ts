@@ -1,13 +1,14 @@
-// Mock-test Question Quality Gate (Batch 4B).
+// Mock-test Question Quality Gate (Batch 4B, checker v2 in Batch 8.1).
 // Writes ONLY to question_quality_reviews / quality_job_runs. Never edits or
-// deletes live questions. No-op when system_settings.quality_mode = 'off'.
-// AI: free Gemini keys only (allowPaidFallback: false), capped per day.
+// deletes live questions. AI: free Gemini keys only (allowPaidFallback: false).
+//
+// Two actions:
+//  - { action: 'sweep' }  one test per call, no AI: saves the v2 no-AI checks.
+//  - default (cron/admin) small AI run: no-AI checks are saved FIRST, then at most
+//    10 questions / 2 AI calls / ~60 s, rotating across Wave tests.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
-import {
-  CHECKER_VERSION, LETTERS, correctLetter, deterministicCheck, findDuplicates,
-  normalizeOptions, isNumericSubject, combineVerdict,
-} from '../_shared/qualityChecks.ts';
+import { CHECKER_VERSION, LETTERS, correctLetter, normalizeOptions, isNumericSubject, combineVerdict, noAiReview } from '../_shared/qualityChecks.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,8 +17,10 @@ const corsHeaders = {
 const json = (b: unknown, status = 200) =>
   new Response(JSON.stringify(b), { status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
-const PER_RUN = 30;
-const AI_BATCH = 10;
+const PER_RUN = 10;
+const MAX_AI_CALLS = 2;
+const TIME_BUDGET_MS = 60_000;
+const LEASE_MS = 5 * 60_000;
 
 const SYSTEM = `You are an independent exam-question solver for Pakistani competitive and admission tests.
 For each numbered MCQ, solve it yourself and choose the single best option letter.
@@ -30,19 +33,54 @@ async function getSetting(admin: any, key: string, fallback: any) {
   const { data } = await admin.from('system_settings').select('value').eq('key', key).maybeSingle();
   return data?.value ?? fallback;
 }
-
 function parseArray(text: string): any[] {
   const c = text.replace(/```json/gi, '').replace(/```/g, '');
   const s = c.indexOf('['), e = c.lastIndexOf(']');
   if (s < 0 || e < 0) return [];
   try { const p = JSON.parse(c.slice(s, e + 1)); return Array.isArray(p) ? p : []; } catch { return []; }
 }
+async function pageAll(build: (f: number, t: number) => any) {
+  const out: any[] = [];
+  for (let f = 0; ; f += 1000) {
+    const { data, error } = await build(f, f + 999);
+    if (error) throw new Error(error.message);
+    out.push(...(data ?? []));
+    if (!data || data.length < 1000) return out;
+  }
+}
+
+/** Save v2 no-AI rows for every question of a test that has none yet. Idempotent. */
+async function ensureNoAi(admin: any, def: string) {
+  const [qs, v2, v1, topics] = await Promise.all([
+    pageAll((f, t) => admin.from('job_test_questions').select('id, question, options, correct_answer, explanation, subject, topic').eq('job_test_id', def).order('created_at').order('id').range(f, t)),
+    pageAll((f, t) => admin.from('question_quality_reviews').select('question_id').eq('definition_id', def).eq('checker_version', CHECKER_VERSION).range(f, t)),
+    pageAll((f, t) => admin.from('question_quality_reviews').select('question_id, ai_verdict, ai_answers, ai_topic, ai_topic_tier, ai_difficulty, relevant').eq('definition_id', def).lt('checker_version', CHECKER_VERSION).range(f, t)),
+    admin.from('quality_syllabus_topics').select('topic, is_banned').eq('definition_id', def).then((r: any) => r.data ?? []),
+  ]);
+  const have = new Set(v2.map((r: any) => r.question_id));
+  const old = new Map(v1.map((r: any) => [r.question_id, r]));
+  const banned = topics.filter((x: any) => x.is_banned).map((x: any) => x.topic);
+  const now = new Date().toISOString();
+  const rows = noAiReview(qs, banned).filter((r) => !have.has(r.question_id)).map((r) => {
+    const row: any = { ...r, definition_id: def, checker_version: CHECKER_VERSION, signal_flags: [], checked_at: now };
+    const o: any = old.get(r.question_id);
+    // Carry an earlier AI verdict over so quota is never spent twice on the same question.
+    if (r.ai_verdict === 'pending' && o && ['pass', 'needs_review', 'fail'].includes(o.ai_verdict) && o.ai_answers) {
+      Object.assign(row, { ai_verdict: o.ai_verdict, ai_answers: o.ai_answers, ai_topic: o.ai_topic, ai_topic_tier: o.ai_topic_tier, ai_difficulty: o.ai_difficulty, relevant: o.relevant });
+    }
+    return row;
+  });
+  for (let i = 0; i < rows.length; i += 500) {
+    const { error } = await admin.from('question_quality_reviews').upsert(rows.slice(i, i + 500), { onConflict: 'question_id,checker_version', ignoreDuplicates: true });
+    if (error) throw new Error(`save failed: ${error.message}`);
+  }
+  return { total: qs.length, added: rows.length, questions: qs };
+}
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
   const url = Deno.env.get('SUPABASE_URL')!;
-  const service = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-  const admin = createClient(url, service);
+  const admin = createClient(url, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!);
 
   // ---- auth: cron token or admin user ----
   let ok = false;
@@ -60,135 +98,122 @@ Deno.serve(async (req) => {
     if (!u?.user) return json({ success: false, error: 'Invalid token' }, 401);
     const { data: r } = await admin.from('user_roles').select('role').eq('user_id', u.user.id).eq('role', 'admin').maybeSingle();
     if (!r) return json({ success: false, error: 'Admin required' }, 403);
-    ok = true;
+  }
+  const body = await req.json().catch(() => ({}));
+
+  // ================= One-test-per-call no-AI sweep =================
+  if (body?.action === 'sweep') {
+    const { data: defs } = await admin.from('job_test_definitions').select('id, job_title').order('id');
+    const list = defs ?? [];
+    const { data: st } = await admin.from('quality_job_runs').select('cursor').eq('id', 'det-sweep').maybeSingle();
+    let index = body.restart ? 0 : Number(st?.cursor?.index ?? 0);
+    if (index >= list.length) return json({ success: true, done: true, index, total: list.length });
+    const d = list[index];
+    try {
+      const r = await ensureNoAi(admin, d.id);
+      index++;
+      await admin.from('quality_job_runs').update({
+        status: index >= list.length ? 'idle' : 'running', cursor: { index, total: list.length, last_test: d.job_title },
+        last_run_at: new Date().toISOString(), last_success_at: new Date().toISOString(), last_error: null,
+      }).eq('id', 'det-sweep');
+      return json({ success: true, done: index >= list.length, index, total: list.length, test: d.job_title, checked: r.total, added: r.added });
+    } catch (e: any) {
+      const msg = String(e?.message ?? e).slice(0, 200);
+      await admin.from('quality_job_runs').update({ status: 'error', last_error: msg, last_error_at: new Date().toISOString() }).eq('id', 'det-sweep');
+      return json({ success: false, error: msg, index, total: list.length }, 500);
+    }
   }
 
+  // ================= Small AI run =================
   const mode = String(await getSetting(admin, 'quality_mode', 'off'));
   const wave = Number(await getSetting(admin, 'quality_wave', 0));
   const cap = Number(await getSetting(admin, 'quality_daily_ai_cap', 300));
   if (mode === 'off' || !wave) return json({ success: true, skipped: true, reason: 'quality_mode off or wave 0', ai_calls: 0 });
 
-  // ---- lease (single flight) + daily counter ----
+  const started = Date.now();
   const today = new Date().toISOString().slice(0, 10);
   const { data: run } = await admin.from('quality_job_runs').select('*').eq('id', 'quality-gate').maybeSingle();
-  const now = new Date();
-  if (run?.lease_until && new Date(run.lease_until) > now) return json({ success: true, skipped: true, reason: 'another run in progress' });
-  let calls = run?.day === today ? run.calls_today : 0;
+  if (run?.lease_until && new Date(run.lease_until) > new Date()) return json({ success: true, skipped: true, reason: 'another run in progress' });
+  const calls = run?.day === today ? run.calls_today : 0;
   if (calls >= cap) {
-    await admin.from('quality_job_runs').update({ status: 'paused', pause_reason: `daily cap ${cap} reached`, day: today, calls_today: calls }).eq('id', 'quality-gate');
+    await admin.from('quality_job_runs').update({ status: 'paused', pause_reason: `daily cap ${cap} reached`, day: today, calls_today: calls, lease_until: null }).eq('id', 'quality-gate');
     return json({ success: true, skipped: true, reason: 'daily cap reached', ai_calls: 0 });
   }
   await admin.from('quality_job_runs').update({
-    status: 'running', pause_reason: null, day: today, calls_today: calls,
-    lease_until: new Date(now.getTime() + 10 * 60_000).toISOString(),
+    status: 'running', day: today, calls_today: calls, lease_until: new Date(Date.now() + LEASE_MS).toISOString(),
   }).eq('id', 'quality-gate');
 
-  let reviewed = 0, aiCalls = 0, stop = 'completed', pauseReason: string | null = null;
+  let reviewed = 0, aiCalls = 0, noAiSaved = 0, waiting: string | null = null, error: string | null = null, testLabel: string | null = null;
+  let rot = Number(run?.cursor?.rot ?? 0);
   try {
-    const { data: tests } = await admin.from('quality_wave_tests').select('definition_id, label').eq('wave', wave);
-    let budget = PER_RUN;
-    for (const t of tests ?? []) {
-      if (budget <= 0 || pauseReason) break;
-      const def = t.definition_id;
-      const [{ data: qs }, { data: done }, { data: topics }] = await Promise.all([
-        admin.from('job_test_questions').select('id, question, options, correct_answer, explanation, subject, topic').eq('job_test_id', def).order('created_at').limit(1000),
-        admin.from('question_quality_reviews').select('question_id').eq('definition_id', def).eq('checker_version', CHECKER_VERSION).limit(1000),
-        admin.from('quality_syllabus_topics').select('topic, source_tier, is_banned').eq('definition_id', def),
-      ]);
-      const doneSet = new Set((done ?? []).map((d: any) => d.question_id));
-      const pending = (qs ?? []).filter((q: any) => !doneSet.has(q.id)).slice(0, budget);
-      if (!pending.length) continue;
-      budget -= pending.length;
-
-      const banned = [...(topics ?? []).filter((x: any) => x.is_banned).map((x: any) => x.topic)]; // per-test bans only
+    const { data: tests } = await admin.from('quality_wave_tests').select('definition_id, label').eq('wave', wave).order('label');
+    const list = tests ?? [];
+    for (let k = 0; k < list.length && Date.now() - started < TIME_BUDGET_MS; k++) {
+      const t = list[(rot + k) % list.length];
+      const ensured = await ensureNoAi(admin, t.definition_id);
+      noAiSaved += ensured.added;
+      const { data: pend } = await admin.from('question_quality_reviews').select('id, question_id')
+        .eq('definition_id', t.definition_id).eq('checker_version', CHECKER_VERSION).eq('deterministic_ok', true).eq('ai_verdict', 'pending').limit(200);
+      if (!pend?.length) continue;
+      rot = (rot + k + 1) % list.length; // next run starts with the following test
+      testLabel = t.label;
+      const qById = new Map(ensured.questions.map((q: any) => [q.id, q]));
+      const items = pend.map((p: any) => ({ p, q: qById.get(p.question_id) })).filter((x: any) => x.q);
+      const numeric = items.filter((x: any) => isNumericSubject(x.q.subject, x.q.topic));
+      const factual = items.filter((x: any) => !isNumericSubject(x.q.subject, x.q.topic));
+      const group = (numeric.length ? numeric : factual).slice(0, PER_RUN);
+      const passes = numeric.length ? 1 : 2;
+      const { data: topics } = await admin.from('quality_syllabus_topics').select('topic, source_tier, is_banned').eq('definition_id', t.definition_id);
       const topicList = (topics ?? []).filter((x: any) => !x.is_banned);
       const tierOf = (name?: string) => topicList.find((x: any) => x.topic === name)?.source_tier ?? null;
-      const dups = findDuplicates(qs ?? []);
-
-      // Student signal (no AI): % correct once 20+ attempts.
-      const ids = pending.map((q: any) => q.id);
-      const { data: hist } = await admin.from('user_attempt_history').select('question_id, is_correct').in('question_id', ids).limit(5000);
-      const { data: reps } = await admin.from('question_reports').select('question_id').in('question_id', ids);
-      const sig = (id: string) => {
-        const f: string[] = [];
-        const h = (hist ?? []).filter((x: any) => x.question_id === id);
-        if (h.length >= 20 && h.filter((x: any) => x.is_correct).length / h.length < 0.15) f.push('low_correct_rate');
-        if ((reps ?? []).filter((x: any) => x.question_id === id).length >= 3) f.push('reported_3plus');
-        return f;
-      };
-
-      const rows: any[] = [];
-      const aiQueue: any[] = [];
-      for (const q of pending) {
-        const d = deterministicCheck(q, banned);
-        if (dups.has(q.id)) { d.ok = false; d.reasons.push('duplicate_in_test'); }
-        const row = {
-          question_id: q.id, definition_id: def, checker_version: CHECKER_VERSION,
-          deterministic_ok: d.ok, reasons: d.reasons, ai_verdict: d.ok ? 'pending' : 'fail',
-          signal_flags: sig(q.id), checked_at: new Date().toISOString(),
-        } as any;
-        rows.push(row);
-        if (d.ok) aiQueue.push({ q, row });
-      }
-
-      // AI review in batches of 10.
-      for (let i = 0; i < aiQueue.length && !pauseReason; i += AI_BATCH) {
-        const chunk = aiQueue.slice(i, i + AI_BATCH);
-        const numeric = chunk.filter((c) => isNumericSubject(c.q.subject, c.q.topic));
-        const factual = chunk.filter((c) => !isNumericSubject(c.q.subject, c.q.topic));
-        const groups: [any[], number][] = [[numeric, 1], [factual, 2]];
-        for (const [g, passes] of groups) {
-          if (!g.length) continue;
-          const prompt = `Test: ${t.label}\nTopic list: ${topicList.map((x: any) => x.topic).join(' | ') || '(none)'}\n\n` +
-            g.map((c, k) => `#${k + 1}\nQ: ${c.q.question}\n${normalizeOptions(c.q.options).map((o, j) => `${LETTERS[j]}) ${o}`).join('\n')}`).join('\n\n');
-          const answers: any[][] = [];
-          for (let p = 0; p < passes; p++) {
-            if (calls + aiCalls >= cap) { pauseReason = `daily cap ${cap} reached`; break; }
-            try {
-              const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 2048 },
-                { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' });
-              aiCalls++;
-              answers.push(parseArray(r.text));
-            } catch (e: any) {
-              aiCalls++;
-              pauseReason = String(e?.message ?? e).slice(0, 160);
-              break;
-            }
-          }
-          if (answers.length < passes) continue; // leave pending; resume next run
-          g.forEach((c, k) => {
-            const per = answers.map((a) => a.find((x: any) => Number(x?.index) === k + 1) ?? null);
-            const key = correctLetter(c.q)!;
-            const verdict = combineVerdict(key, per.map((x) => x?.answer ?? null), passes === 1);
-            const first = per[0] ?? {};
-            c.row.ai_verdict = first.relevant === false && verdict === 'pass' ? 'needs_review' : verdict;
-            if (first.relevant === false) c.row.reasons = [...c.row.reasons, 'not_relevant_to_syllabus'];
-            c.row.ai_answers = per.map((x) => x?.answer ?? null);
-            c.row.ai_topic = first.topic ?? null;
-            c.row.ai_topic_tier = tierOf(first.topic);
-            c.row.ai_difficulty = ['easy', 'medium', 'hard'].includes(String(first.difficulty)) ? first.difficulty : null;
-            c.row.relevant = typeof first.relevant === 'boolean' ? first.relevant : null;
-          });
+      const prompt = `Test: ${t.label}\nTopic list: ${topicList.map((x: any) => x.topic).join(' | ') || '(none)'}\n\n` +
+        group.map((c: any, i: number) => `#${i + 1}\nQ: ${c.q.question}\n${normalizeOptions(c.q.options).map((o, j) => `${LETTERS[j]}) ${o}`).join('\n')}`).join('\n\n');
+      const answers: any[][] = [];
+      for (let p = 0; p < passes && aiCalls < MAX_AI_CALLS; p++) {
+        if (calls + aiCalls >= cap) { waiting = `daily cap ${cap} reached`; break; }
+        try {
+          const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 2048 },
+            { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' });
+          aiCalls++;
+          answers.push(parseArray(r.text));
+        } catch (e: any) {
+          const m = String(e?.message ?? e);
+          if (/FREE_ONLY_EXHAUSTED|429|quota|budget/i.test(m)) waiting = 'Waiting for free AI quota (no-AI checks were still saved)';
+          else { aiCalls++; error = m.slice(0, 200); }
+          break;
         }
       }
-
-      // Only persist completed rows (deterministic fails or AI-finished) so resumes stay exact.
-      const ready = rows.filter((r) => r.ai_verdict !== 'pending');
-      if (ready.length) {
-        const { error } = await admin.from('question_quality_reviews').upsert(ready, { onConflict: 'question_id,checker_version' });
-        if (error) { pauseReason = `save failed: ${error.message}`; break; }
-        reviewed += ready.length;
+      if (answers.length === passes) {
+        const now = new Date().toISOString();
+        for (let i = 0; i < group.length; i++) {
+          const c: any = group[i];
+          const per = answers.map((a) => a.find((x: any) => Number(x?.index) === i + 1) ?? null);
+          const verdict = combineVerdict(correctLetter(c.q)!, per.map((x) => x?.answer ?? null), passes === 1);
+          const first = per[0] ?? {};
+          const { error: ue } = await admin.from('question_quality_reviews').update({
+            ai_verdict: first.relevant === false && verdict === 'pass' ? 'needs_review' : verdict,
+            ai_answers: per.map((x) => x?.answer ?? null), ai_topic: first.topic ?? null, ai_topic_tier: tierOf(first.topic),
+            ai_difficulty: ['easy', 'medium', 'hard'].includes(String(first.difficulty)) ? first.difficulty : null,
+            relevant: typeof first.relevant === 'boolean' ? first.relevant : null,
+            reasons: first.relevant === false ? ['not_relevant_to_syllabus'] : [], checked_at: now,
+          }).eq('id', c.p.id);
+          if (ue) { error = `save failed: ${ue.message}`; break; }
+          reviewed++;
+        }
       }
+      break; // one test per run keeps every run small
     }
-    if (pauseReason) stop = 'paused';
   } catch (e: any) {
-    stop = 'error'; pauseReason = String(e?.message ?? e).slice(0, 160);
+    error = String(e?.message ?? e).slice(0, 200);
   }
 
-  const summary = { reviewed, ai_calls: aiCalls, stop, pause_reason: pauseReason };
+  const nowIso = new Date().toISOString();
+  const summary = { reviewed, ai_calls: aiCalls, no_ai_saved: noAiSaved, test: testLabel, waiting, error };
   await admin.from('quality_job_runs').update({
-    status: pauseReason ? 'paused' : 'idle', pause_reason: pauseReason, lease_until: null,
-    calls_today: calls + aiCalls, last_run_at: new Date().toISOString(), last_summary: summary,
+    status: error ? 'error' : waiting ? 'waiting' : 'idle', pause_reason: error ?? waiting, lease_until: null,
+    calls_today: calls + aiCalls, last_run_at: nowIso, last_summary: summary, cursor: { rot },
+    ...(reviewed > 0 ? { last_success_at: nowIso } : {}),
+    ...(error ? { last_error: error, last_error_at: nowIso } : {}),
   }).eq('id', 'quality-gate');
-  return json({ success: true, ...summary });
+  return json({ success: !error, ...summary });
 });
