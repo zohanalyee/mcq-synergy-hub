@@ -25,9 +25,12 @@ const TOP = H - 66, BOTTOM = 48;
 function lerp(a: number[], b: number[], t: number) { return a.map((v, i) => v + (b[i] - v) * t); }
 const P = [147, 51, 234], M = [217, 70, 239], Cy = [34, 211, 238];
 
+/** Display-only clean-up of LaTeX tokens that leak into bank text (questions are not edited). */
+export const tidy = (t: string) => String(t ?? '').replace(/\\times/g, '×').replace(/\\div/g, '÷').replace(/\\cdot/g, '·').replace(/\\le(q)?\b/g, '≤').replace(/\\ge(q)?\b/g, '≥').replace(/\$/g, '');
+
 function wrap(text: string, font: PDFFont, size: number, max: number): string[] {
   const out: string[] = [];
-  for (const para of String(text).replace(/\r/g, '').split('\n')) {
+  for (const para of tidy(text).replace(/\r/g, '').split('\n')) {
     const words = para.split(/\s+/).filter(Boolean);
     let line = '';
     for (const w of words) {
@@ -97,7 +100,7 @@ export async function renderPracticePdf(input: PdfInput): Promise<Uint8Array> {
   const bullets = input.readFirst.flatMap((b, i) => wrap(`• ${b}`, F, 8.6, innerW).map((l, j) => ({ l, gap: j === 0 && i > 0 })));
   const boxH = Math.max(qrS + 16, 26 + bullets.length * 11.6);
   const boxTop = y;
-  page.drawRectangle({ x: L, y: boxTop - boxH, width: R - L + 10, height: boxH, color: C.box, borderColor: C.purple, borderWidth: 0.9 });
+  page.drawRectangle({ x: L, y: boxTop - boxH, width: R - L + 5, height: boxH, color: C.box, borderColor: C.purple, borderWidth: 0.9 });
   y = boxTop - 15; text('Please read first', L + 9, 8.8, B);
   y -= 13;
   bullets.forEach(({ l }) => { text(l, L + 9, 8.6, F); y -= 11.6; });
@@ -168,7 +171,7 @@ export async function renderPracticePdf(input: PdfInput): Promise<Uint8Array> {
   const nsH = Math.max(qrS + 18, 30 + lines.reduce((s, x) => s + x.l.length, 0) * 13);
   ensure(nsH + 4);
   const nTop = y;
-  page.drawRectangle({ x: L, y: nTop - nsH, width: R - L + 10, height: nsH, color: C.box, borderColor: C.purple, borderWidth: 0.9 });
+  page.drawRectangle({ x: L, y: nTop - nsH, width: R - L + 5, height: nsH, color: C.box, borderColor: C.purple, borderWidth: 0.9 });
   y = nTop - 17; text('Next step', L + 11, 9, B); y -= 15;
   lines.forEach(({ n, l }) => {
     l.forEach((ln, i) => {
