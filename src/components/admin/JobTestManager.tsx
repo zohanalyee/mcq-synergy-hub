@@ -6,7 +6,8 @@ import JobTestTable from "./job-test/JobTestTable";
 import { BulkJobTestImportDialog } from "./job-test/BulkJobTestImportDialog";
 import QualityGatePanel from "./job-test/QualityGatePanel";
 import { Button } from "@/components/ui/button";
-import { FileJson, Plus, Sparkles, Loader2 } from "lucide-react";
+import { FileJson, Plus, Sparkles, Loader2, FileDown } from "lucide-react";
+import { Link } from "react-router-dom";
 import { JobTest } from "@/services/jobTestService";
 
 const JobTestManager = () => {
@@ -93,6 +94,9 @@ const JobTestManager = () => {
         />
       </section>
       <QualityGatePanel />
+      <Button asChild variant="outline" className="w-full gap-2">
+        <Link to="/admin/pdf-builder"><FileDown className="h-4 w-4 text-primary" />PDF Builder — branded practice-set PDFs</Link>
+      </Button>
     </div>
   );
 };

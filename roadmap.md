@@ -16,3 +16,4 @@
 - [x] Batch 5: privacy-safe GA4 lifecycle/conversion events and revised idle delays
 - [x] Batch 5: admin-controlled static join links and WhatsApp result sharing (URL intentionally empty until owner sets it)
 - [x] Batch 5: read-only question-report/session SEO audit and verification (no publish)
+- [x] Batch 8 Phase 1: admin PDF Builder (owner side-by-side check pending)
