@@ -7,6 +7,7 @@ import { safeMarkdownComponents } from "@/components/SafeMarkdownLink";
 import { Clock, BookOpen, Building, ListChecks, Loader2, ShieldCheck, Play, Gauge } from "lucide-react";
 
 import Header from "@/components/Header";
+import NotFound from "@/pages/NotFound";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -113,18 +114,7 @@ const MockTestDetail = () => {
   }
 
   if (!test) {
-    return (
-      <Header>
-        <SEOHead title="Mock Test Not Found" noindex description="This mock test could not be found." />
-        <div className="max-w-3xl mx-auto px-4 py-16 text-center space-y-3">
-          <h1 className="text-2xl font-bold text-foreground">Mock test not found</h1>
-          <p className="text-muted-foreground">The test you are looking for may have moved.</p>
-          <Link to="/mock-tests" className="text-primary font-medium">
-            Browse all mock tests →
-          </Link>
-        </div>
-      </Header>
-    );
+    return <NotFound title="Mock test not found" />;
   }
 
   const canonicalSlug = toJobTestSlug(test, allTests);
