@@ -30,7 +30,7 @@ async function pageAll(build: (from: number, to: number) => any) {
 }
 
 function deliver(bytes: Uint8Array, name: string) {
-  const blob = new Blob([bytes], { type: 'application/pdf' });
+  const blob = new Blob([bytes.slice().buffer as ArrayBuffer], { type: 'application/pdf' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
