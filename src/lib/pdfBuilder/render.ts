@@ -4,7 +4,7 @@ import fontkit from '@pdf-lib/fontkit';
 import QRCode from 'qrcode';
 import regularUrl from '@/assets/fonts/DejaVuSans.ttf?url';
 import boldUrl from '@/assets/fonts/DejaVuSans-Bold.ttf?url';
-import logoUrl from '@/assets/logo.png?url';
+import logoUrl from '@/assets/pdf-logo.png?url';
 
 export type PdfQuestion = { num: number; question: string; options: string[]; answer: string; explanation?: string | null; topic?: string | null; difficulty?: string | null };
 export type PdfInput = {
