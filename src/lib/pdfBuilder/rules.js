@@ -50,9 +50,40 @@ export function defaultHubSlug(title, slugs) {
   const kind = examKind(title, '');
   if (kind !== 'generic' && slugs.includes(kind)) return kind;
   const t = (title || '').toLowerCase();
-  const hit = slugs.find((s) => new RegExp(`\\b${s.replace(/-/g, '[ -]')}\\b`).test(t));
-  return hit || slugs[0] || '';
+  const hit = slugs.find((s) => s.length >= 3 && new RegExp(`\\b${s.replace(/-/g, '[ -]')}\\b`).test(t));
+  return hit || ''; // no confident match: leave empty, admin must choose
 }
+
+/** Value meaning "no hub page — use the mock test link only". */
+export const NO_HUB = '__none__';
+
+/** Clean, human test name for title/file/footer (never the hub slug). */
+export function cleanTestName(name) {
+  let t = String(name || '').replace(/\s+/g, ' ').trim();
+  t = t.replace(/\bofficial\b/gi, '');
+  t = t.replace(/\s*[–—-]?\s*syllabus\s*&.*?(entry\s*)?test\s*pattern\b/gi, '');
+  t = t.replace(/\s*[–—-]?\s*mock\s*test(\s*\d{4}(-\d{2,4})?)?(\s*[–—-].*)?$/i, '');
+  t = t.replace(/\s+([,)])/g, '$1').replace(/\(\s+/g, '(').replace(/\s+/g, ' ').replace(/^[\s–—-]+|[\s–—-]+$/g, '').trim();
+  return t || String(name || '').trim();
+}
+export const setTitle = (clean, n) => `${clean} Free Practice Set – ${n} Questions`;
+export function nextSetNumber(saved) {
+  return (saved || []).reduce((m, r) => Math.max(m, Number(r.set_number) || 0), 0) + 1;
+}
+export const mockTestUrl = (slug, n, campaign) => `${SITE}/mock-tests/${slug}?utm_source=pdf&utm_medium=free_pdf&utm_campaign=${campaign}_${n}q`;
+export const campaignOf = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '').slice(0, 40) || 'pdf';
+/** Test list label + duplicate disambiguation. */
+export function testLabels(defs) {
+  const counts = {};
+  defs.forEach((d) => { const k = cleanName(d.job_title); counts[k] = (counts[k] || 0) + 1; });
+  return defs.map((d) => {
+    const base = cleanName(d.job_title);
+    const extra = counts[base] > 1 ? ` (${(d.department || '').trim() || String(d.created_at || '').slice(0, 10)})` : '';
+    return `${base}${extra} · ${d.status || 'draft'} · ${d.n ?? 0} Q`;
+  });
+}
+const cleanName = (s) => String(s || '').replace(/\s+/g, ' ').trim();
+
 
 const BANNED = /\bofficial\b|past\s*papers?/i;
 export const hasBannedWording = (text) => BANNED.test(text || '');
@@ -71,7 +102,19 @@ export const suggestedMinutes = (n) => Math.max(10, Math.round(n * 1.2));
 /** Latest-review status. "passed" = deterministic OK + AI pass; any other review = blocked. */
 export function reviewStatus(review) {
   if (!review) return 'unreviewed';
-  return review.deterministic_ok && review.ai_verdict === 'pass' ? 'passed' : 'blocked';
+  if (review.deterministic_ok === false) return 'blocked';
+  if (review.ai_verdict === 'pass') return 'passed';
+  if (review.ai_verdict === 'pending' || review.ai_verdict == null) return 'unreviewed'; // no-AI checks OK, AI not yet
+  return 'blocked'; // needs_review, fail
+}
+/** Latest review per question: highest checker version, then newest. */
+export function latestReviews(rows) {
+  const out = {};
+  for (const r of rows || []) {
+    const p = out[r.question_id];
+    if (!p || (r.checker_version ?? 0) > (p.checker_version ?? 0) || ((r.checker_version ?? 0) === (p.checker_version ?? 0) && String(r.checked_at) > String(p.checked_at))) out[r.question_id] = r;
+  }
+  return out;
 }
 export function isEligible(q, review, { gateOnly = false, requireExplanation = false } = {}) {
   const st = reviewStatus(review);
