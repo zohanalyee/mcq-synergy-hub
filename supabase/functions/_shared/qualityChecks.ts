@@ -3,7 +3,7 @@
 
 import { safetyReasons, nearDuplicateIds } from './contentSafety.js';
 
-export const CHECKER_VERSION = 2;
+export const CHECKER_VERSION = 3; // v3: AI asked for exactly-one-correct, key match and explanation agreement
 export const LETTERS = ['A', 'B', 'C', 'D'] as const;
 
 export interface QuestionLike {
@@ -103,6 +103,25 @@ export function combineVerdict(key: string, answers: (string | null)[], numeric:
   if (clean.length === 0 || clean.some((a) => !a || !LETTERS.includes(a as any))) return 'needs_review';
   if (numeric) return clean[0] === key ? 'pass' : 'fail';
   return clean.every((a) => a === key) ? 'pass' : 'needs_review';
+}
+
+/** v3 AI fields per question. */
+export interface AiCheck { answer?: string | null; correct_options?: unknown; key_matches?: unknown; explanation_agrees?: unknown }
+
+/**
+ * v3 verdict: combineVerdict, then needs_review when the AI reports more than one
+ * correct option, says the stated key is wrong, or says the explanation disagrees.
+ * A numeric "fail" stays "fail".
+ */
+export function strictVerdict(key: string, per: (AiCheck | null)[], numeric: boolean): { verdict: Verdict; reasons: string[] } {
+  const base = combineVerdict(key, per.map((x) => x?.answer ?? null), numeric);
+  const reasons: string[] = [];
+  const multi = per.some((x) => Array.isArray(x?.correct_options) && new Set((x!.correct_options as unknown[]).map((l) => String(l).trim().toUpperCase()).filter((l) => (LETTERS as readonly string[]).includes(l))).size > 1);
+  if (multi) reasons.push('multiple_correct');
+  if (per.some((x) => x?.key_matches === false)) reasons.push('key_mismatch');
+  if (per.some((x) => x?.explanation_agrees === false)) reasons.push('explanation_disagrees');
+  if (base === 'fail') return { verdict: 'fail', reasons };
+  return { verdict: reasons.length ? 'needs_review' : base, reasons };
 }
 
 /**

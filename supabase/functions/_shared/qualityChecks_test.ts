@@ -24,3 +24,9 @@ Deno.test('v2: second copy marked near_duplicate', () => assertEquals(noAiReview
 Deno.test('v2: clean question stays pending for AI', () => assertEquals(noAiReview([base])[0], { question_id: '1', deterministic_ok: true, reasons: [], ai_verdict: 'pending' }));
 Deno.test('v2: missing explanation noted but not blocking', () => assertEquals(noAiReview([{ ...base, explanation: '' }])[0].deterministic_ok, true));
 Deno.test('v2: key not in options -> fail', () => assertEquals(noAiReview([{ ...base, correct_answer: 'seven' }])[0].ai_verdict, 'fail'));
+import { strictVerdict } from './qualityChecks.ts';
+Deno.test('v3: more than one correct option -> needs_review', () => assertEquals(strictVerdict('B', [{ answer: 'B', correct_options: ['B', 'C', 'D'] }, { answer: 'B', correct_options: ['B'] }], false), { verdict: 'needs_review', reasons: ['multiple_correct'] }));
+Deno.test('v3: key mismatch -> needs_review', () => assertEquals(strictVerdict('D', [{ answer: 'D', correct_options: ['D'], key_matches: false }, { answer: 'D' }], false).verdict, 'needs_review'));
+Deno.test('v3: explanation disagrees -> needs_review', () => assertEquals(strictVerdict('B', [{ answer: 'B', explanation_agrees: false }, { answer: 'B' }], false).reasons, ['explanation_disagrees']));
+Deno.test('v3: clean agreement still passes', () => assertEquals(strictVerdict('B', [{ answer: 'B', correct_options: ['B'], key_matches: true, explanation_agrees: true }, { answer: 'B', correct_options: ['B'] }], false), { verdict: 'pass', reasons: [] }));
+Deno.test('v3: numeric wrong stays fail', () => assertEquals(strictVerdict('B', [{ answer: 'C', key_matches: false }], true).verdict, 'fail'));
