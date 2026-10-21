@@ -1,63 +1,94 @@
-
-import { useLocation, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useLocation, useNavigate, Link } from "react-router-dom";
+import { useEffect, useState, type FormEvent } from "react";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { Input } from "@/components/ui/input";
+import Header from "@/components/Header";
 import SEOHead from "@/components/SEOHead";
+import { NOT_FOUND_POPULAR_TESTS } from "@/lib/legacyRedirects";
 
-const NotFound = () => {
+const HUBS: Array<[string, string]> = [
+  ["/exams/sts", "STS Test Preparation"],
+  ["/exams/sthp", "Sukkur IBA STHP Guide"],
+  ["/exams/nthp", "IBA Karachi NTHP Guide"],
+  ["/exams", "All Exam Guides"],
+];
+
+/** Noindex "not found" page with next steps (search, popular tests, hubs). */
+const NotFound = ({ title = "Page not found" }: { title?: string }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [q, setQ] = useState("");
 
   useEffect(() => {
-    console.error(
-      "404 Error: User attempted to access non-existent route:",
-      location.pathname
-    );
+    console.warn("404: non-existent route:", location.pathname);
   }, [location.pathname]);
 
+  const onSearch = (e: FormEvent) => {
+    e.preventDefault();
+    const term = q.trim();
+    navigate(term ? `/mock-tests?q=${encodeURIComponent(term)}` : "/mock-tests");
+  };
+
   return (
-    <div className="min-h-dvh flex items-center justify-center bg-background">
+    <Header>
       <SEOHead
         title="Page Not Found | MCQsAI"
         description="The page you are looking for does not exist. Explore MCQsAI for free MCQ practice for NTS, FPSC, PPSC, Matric, FSc exams."
         keywords=""
         noindex={true}
       />
-      <div className="container px-4 text-center">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="max-w-md mx-auto"
-        >
-          <div className="relative mb-8">
-            <div className="text-[150px] font-bold text-primary/10">404</div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <h1 className="text-4xl font-bold text-primary">Page Not Found</h1>
-            </div>
-          </div>
-          
-          <p className="text-xl text-muted-foreground mb-8">
-            Oops! The page you're looking for doesn't exist or has been moved.
-          </p>
-          
-          <Button size="lg" onClick={() => navigate("/")}>
-            Return to Home
-          </Button>
+      <div className="max-w-2xl mx-auto px-4 py-10 space-y-6">
+        <div className="text-center space-y-2">
+          <h1 className="text-2xl font-bold text-foreground">{title}</h1>
+          <p className="text-muted-foreground">This page may have moved. Find your test below.</p>
+          <p className="text-sm text-muted-foreground" dir="rtl">یہ صفحہ موجود نہیں — نیچے اپنا ٹیسٹ تلاش کریں</p>
+        </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-muted-foreground mb-4">Explore popular sections:</p>
-            <div className="flex flex-wrap gap-3 justify-center">
-              <a href="/boards" className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm hover:bg-purple-200">Browse Boards</a>
-              <a href="/exams" className="px-4 py-2 bg-blue-100 text-blue-700 rounded-full text-sm hover:bg-blue-200">Exam Prep</a>
-              <a href="/subjects" className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm hover:bg-green-200">Subjects</a>
-              <a href="/blog" className="px-4 py-2 bg-orange-100 text-orange-700 rounded-full text-sm hover:bg-orange-200">Blog</a>
-            </div>
+        <form onSubmit={onSearch} className="flex gap-2" role="search">
+          <Input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search mock tests, e.g. Junior Clerk"
+            aria-label="Search mock tests"
+            className="min-h-[44px]"
+          />
+          <Button type="submit" className="min-h-[44px]">
+            <Search className="h-4 w-4 mr-1" aria-hidden="true" /> Search
+          </Button>
+        </form>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold text-foreground">Popular mock tests</h2>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {NOT_FOUND_POPULAR_TESTS.map(([slug, label]) => (
+              <Link
+                key={slug}
+                to={`/mock-tests/${slug}`}
+                className="block rounded-xl border border-border bg-card p-3 min-h-[44px] text-sm font-medium text-foreground hover:border-primary/50 transition-colors"
+              >
+                {label} →
+              </Link>
+            ))}
           </div>
-        </motion.div>
+        </section>
+
+        <section className="space-y-2">
+          <h2 className="text-base font-semibold text-foreground">Exam guides</h2>
+          <div className="flex flex-wrap gap-2">
+            {HUBS.map(([to, label]) => (
+              <Link key={to} to={to} className="rounded-full border border-border px-3 py-2 text-sm text-primary hover:bg-primary/10">
+                {label}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        <div className="text-center">
+          <Button variant="outline" onClick={() => navigate("/")} className="min-h-[44px]">Back to home</Button>
+        </div>
       </div>
-    </div>
+    </Header>
   );
 };
 

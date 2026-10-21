@@ -28,3 +28,5 @@
 - [x] Blank-page fix A: inline one-shot boot recovery on failed main JS/CSS, HTML no-cache in _headers
 - [ ] Owner: Cloudflare Response Header Transform Rule (Cache-Control: no-cache on HTML), then verify live headers
 - [ ] Queued mega audit
+- [x] Batch 9: not-found page, legacy redirects, sitemap route test, DB link report
+- [ ] Batch 9 post-publish live checks (waits on owner publish + purge)

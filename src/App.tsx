@@ -49,6 +49,7 @@ const Auth = lazyWithReload(() => import("./pages/Auth"));
 const GetStarted = lazyWithReload(() => import("./pages/GetStarted"));
 
 // Lazy: large feature pages (code-split for mobile performance)
+import LegacyMockRedirect from "./routes/LegacyMockRedirect";
 const MockTestDetail = lazyWithReload(() => import("./pages/MockTestDetail"));
 const Analytics = lazyWithReload(() => import("./pages/Analytics"));
 const SubjectContent = lazyWithReload(() => import("./pages/SubjectContent"));
@@ -256,7 +257,7 @@ const App = ({ pages = lazyPages }: { pages?: PageMap }) => {
                       <Route path="/ai-coach" element={<InstantAuthGuard title="AI Coach Dashboard" description="Sign in to view your personalized AI coach insights" actionName="AI Coach"><Analytics /></InstantAuthGuard>} />
                       {/* Job/recruitment tests are public — guests use DB-only approved questions; no AI generation, no auth gate. */}
                       <Route path="/mock-tests" element={<P.MockTests />} />
-                      <Route path="/mock-tests/:slug" element={<Suspense fallback={<TopProgressBar />}><MockTestDetail /></Suspense>} />
+                      <Route path="/mock-tests/:slug" element={<LegacyMockRedirect><Suspense fallback={<TopProgressBar />}><MockTestDetail /></Suspense></LegacyMockRedirect>} />
                       <Route path="/custom-quizzes" element={<CustomQuizzes />} />
                       <Route path="/custom-syllabus" element={<P.CustomSyllabus />} />
                       <Route path="/leaderboard" element={<P.Leaderboard />} />
