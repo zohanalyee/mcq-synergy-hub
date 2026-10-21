@@ -51,7 +51,7 @@ export function fitFooter(prefix, title, suffix, measure, max) {
   return `${prefix}${t.trimEnd()}…${suffix}`;
 }
 /** Options that refer to other options: keep original order (never shuffle). */
-const LOCK_RE = /\b(all|none|both|neither)\s+of\s+(the\s+)?(above|these|them)\b|\b(both|either|neither|only)\s+\(?[a-d]\)?\s+(and|or|&|nor)\s+\(?[a-d]\)?(?![a-z])|\b[a-d]\s*(,|&|and)\s*[a-d]\s*(both|only)?\s*$/i;
+const LOCK_RE = /\b(all|none|both|neither)\s+of\s+(the\s+)?(above|these|them)\b|\b(both|either|neither|only)\s+\(?[a-d]\)?\s+(and|or|&|nor)\s+\(?[a-d]\)?(?![a-z])|^\(?[a-d]\)?\s*(,|&|and)\s*\(?[a-d]\)?(\s*(both|only))?$/i;
 export function isOrderLocked(q) {
   return optionTexts(q.options).some((o) => LOCK_RE.test(String(o).trim()));
 }
