@@ -56,6 +56,7 @@ const CustomQuizzes = lazyWithReload(() => import("./pages/CustomQuizzes"));
 const AdminPanel = lazyWithReload(() => import("./pages/AdminPanel"));
 const ExternalCuration = lazyWithReload(() => import("./pages/admin/ExternalCuration"));
 const ReviewsManagement = lazyWithReload(() => import("./pages/admin/ReviewsManagement"));
+const PdfBuilder = lazyWithReload(() => import("./pages/admin/PdfBuilder"));
 
 
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -246,6 +247,7 @@ const App = ({ pages = lazyPages }: { pages?: PageMap }) => {
                       <Route path="/admin" element={<AdminPanel />} />
                       <Route path="/admin/curation" element={<ExternalCuration />} />
                       <Route path="/admin/reviews" element={<Suspense fallback={<TopProgressBar />}><ReviewsManagement /></Suspense>} />
+                      <Route path="/admin/pdf-builder" element={<Suspense fallback={<TopProgressBar />}><PdfBuilder /></Suspense>} />
                       <Route path="/subjects" element={<P.Subjects />} />
                       <Route path="/dashboard" element={<InstantAuthGuard title="Analytics Dashboard" description="Sign in to view your detailed analytics" actionName="Analytics"><Analytics /></InstantAuthGuard>} />
                       <Route path="/profile" element={<InstantAuthGuard title="Your Profile" description="Sign in to access your profile" actionName="Profile"><Profile /></InstantAuthGuard>} />
