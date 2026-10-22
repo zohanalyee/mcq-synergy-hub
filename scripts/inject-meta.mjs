@@ -17,6 +17,7 @@
  * Safe + idempotent. Never fails the build over a transient DB issue.
  */
 import { createClient } from "@supabase/supabase-js";
+import { buildMockTestTitle } from "../src/lib/mockTestTitle.js";
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
 import { resolve, dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -362,7 +363,7 @@ async function injectMockTests() {
           `Official syllabus, subject weightage, and ${t.questions} practice MCQs in simple Pakistani exam English.`;
     patch({
       path: `/mock-tests/${slug}`,
-      title: `${metaTitle} | MCQsAI`,
+      title: !isSthp && !isIba && t.seo_title?.trim() ? buildMockTestTitle(metaTitle) : `${metaTitle} | MCQsAI`,
       description: metaDescription,
       keywords: isIba
         ? buildIbaKeywords(t.title, Array.isArray(t.keywords) ? t.keywords : []).join(", ")
