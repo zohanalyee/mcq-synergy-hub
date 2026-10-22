@@ -19,6 +19,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import SEOHead from "@/components/SEOHead";
+import { buildMockTestTitle } from "@/lib/mockTestTitle";
 import PageBreadcrumb from "@/components/PageBreadcrumb";
 import { Badge } from "@/components/ui/badge";
 import { ExamPageSchema } from "@/components/StructuredData";
@@ -143,6 +144,9 @@ const MockTestDetail = () => {
     : test.seo_title?.trim()
       ? test.seo_title.trim()
       : `${test.title} Mock Test — Free Online Preparation`;
+  // DB seo_title path: brand suffix only when the result stays ≤65 chars.
+  const usesDbTitle = !isSthp && !isIbaNetwork && !!test.seo_title?.trim();
+  const pageTitle = usesDbTitle ? buildMockTestTitle(metaTitle) : metaTitle;
   const metaDescription = isSthp
     ? `Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. ${sthpMetaSentence(examSnapshot)}`.trim()
     : isIbaNetwork
@@ -196,7 +200,8 @@ const MockTestDetail = () => {
     <Header>
       <CustomSyllabusGuideModal />
       <SEOHead
-        title={metaTitle}
+        title={pageTitle}
+        rawTitle={usesDbTitle}
         description={metaDescription}
         keywords={metaKeywords}
         url={url}

@@ -19,6 +19,8 @@ interface SEOHeadProps {
   url?: string;
   type?: 'website' | 'article';
   noindex?: boolean;
+  /** Use title exactly as given (caller already applied the brand rule). */
+  rawTitle?: boolean;
 }
 
 const SEOHead = ({
@@ -29,6 +31,7 @@ const SEOHead = ({
   url,
   type = 'website',
   noindex = false,
+  rawTitle = false,
 }: SEOHeadProps) => {
   const { language } = useLanguage();
   const { pathname } = useLocation();
@@ -44,7 +47,7 @@ const SEOHead = ({
   const brandStripped = title
     ? title.replace(/\s*[|\-–—]\s*MCQ?s?AI\s*$/i, '').trim()
     : '';
-  const finalTitle = brandStripped ? `${brandStripped} | MCQsAI` : defaultTitle;
+  const finalTitle = rawTitle && title ? title.trim() : brandStripped ? `${brandStripped} | MCQsAI` : defaultTitle;
   const finalDescription = description || defaultDescription;
   const finalKeywords = keywords || defaultKeywords;
 
