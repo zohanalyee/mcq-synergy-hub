@@ -176,6 +176,7 @@ const DailyQualityReport = () => {
                 <p>Last saved review: <b>{pkt(r.lastReview)}</b> PKT</p>
                 <p>Reviews saved: <W w={r.reviews} /></p>
                 <p>AI-reviewed: <W w={r.aiReviews} /></p>
+                <GateToday />
                 <div className="grid grid-cols-4 gap-1 pt-1">
                   {VERDICTS.map((v) => <div key={v} className="rounded-md border border-border p-1.5 text-center"><div className="text-xs text-muted-foreground">{v}</div><b>{r.verdicts[v]}</b></div>)}
                 </div>
@@ -214,3 +215,32 @@ const DailyQualityReport = () => {
 };
 
 export default DailyQualityReport;
+
+/** "Gate AI calls today: X / max" from quality_job_runs + ai_free_budget (UTC day, as the Gate counts it). */
+function GateToday() {
+  const [g, setG] = useState<{ calls: number | null; max: number | null; checked: number | null; copied: number | null } | null>(null);
+  useEffect(() => {
+    (async () => {
+      const [run, bud] = await Promise.all([
+        (supabase as any).from("quality_job_runs").select("day, calls_today, cursor").eq("id", "quality-gate").maybeSingle(),
+        (supabase as any).from("system_settings").select("value").eq("key", "ai_free_budget").maybeSingle(),
+      ]);
+      const today = new Date().toISOString().slice(0, 10);
+      const d = run.data; const isToday = d?.day === today;
+      const max = bud.data?.value?.groups?.quality_gate?.max;
+      setG({
+        calls: d ? (isToday ? Number(d.calls_today ?? 0) : 0) : null,
+        max: typeof max === "number" ? max : null,
+        checked: d?.cursor?.checked_today == null ? null : isToday ? Number(d.cursor.checked_today) : 0,
+        copied: d?.cursor?.copied_today == null ? null : isToday ? Number(d.cursor.copied_today) : 0,
+      });
+    })();
+  }, []);
+  const v = (n: number | null) => (n == null ? "not logged" : n);
+  return (
+    <>
+      <p>Gate AI calls today: <b>{v(g?.calls ?? null)} / {v(g?.max ?? null)}</b></p>
+      <p>Questions checked today: <b>{v(g?.checked ?? null)}</b>{g?.copied ? ` (${g.copied} copied from exact duplicates)` : ""}</p>
+    </>
+  );
+}
