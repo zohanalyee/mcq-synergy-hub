@@ -221,7 +221,7 @@ Deno.serve(async (req) => {
           const { error: ue } = await admin.from('question_quality_reviews').update(patch).eq('id', c.p.id);
           if (ue) { error = `save failed: ${ue.message}`; break outer; }
           reviewed++;
-          copied += await copyToExactDuplicates(admin, c.q, patch, items, done);
+          if (Date.now() - started < TIME_BUDGET_MS) copied += await copyToExactDuplicates(admin, c.q, patch, items, done);
         }
       }
     }
