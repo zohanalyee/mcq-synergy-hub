@@ -139,17 +139,17 @@ const MockTestDetail = () => {
   const isSthp = /talent hunt program \(sthp\)/i.test(test.title);
   const metaTitle = isSthp
     ? "Sukkur IBA STHP Past Papers & Online Mock Test 2027 (Solved MCQs)"
-    : isIbaNetwork
+    : isIbaNetwork && !test.seo_title?.trim()
     ? buildIbaMetaTitle(test.title)
     : test.seo_title?.trim()
       ? test.seo_title.trim()
       : `${test.title} Mock Test — Free Online Preparation`;
   // DB seo_title path: brand suffix only when the result stays ≤65 chars.
-  const usesDbTitle = !isSthp && !isIbaNetwork && !!test.seo_title?.trim();
+  const usesDbTitle = !isSthp && !!test.seo_title?.trim();
   const pageTitle = usesDbTitle ? buildMockTestTitle(metaTitle) : metaTitle;
   const metaDescription = isSthp
     ? `Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. ${sthpMetaSentence(examSnapshot)}`.trim()
-    : isIbaNetwork
+    : isIbaNetwork && !test.meta_description?.trim()
     ? buildIbaMetaDescription(test.title, test.questions, subjects)
     : test.meta_description?.trim()
       ? test.meta_description.trim()

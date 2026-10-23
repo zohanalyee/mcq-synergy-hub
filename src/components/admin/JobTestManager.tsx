@@ -97,6 +97,9 @@ const JobTestManager = () => {
       <Button asChild variant="outline" className="w-full gap-2">
         <Link to="/admin/pdf-builder"><FileDown className="h-4 w-4 text-primary" />PDF Builder — branded practice-set PDFs</Link>
       </Button>
+      <Button asChild variant="outline" className="w-full gap-2">
+        <Link to="/admin/quality-report"><Sparkles className="h-4 w-4 text-primary" />Daily Quality Report</Link>
+      </Button>
     </div>
   );
 };

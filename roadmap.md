@@ -30,3 +30,5 @@
 - [ ] Queued mega audit
 - [x] Batch 9: not-found page, legacy redirects, sitemap route test, DB link report
 - [ ] Batch 9 post-publish live checks (waits on owner publish + purge)
+- [x] Batch 10b: IBA Community Colleges pages use Batch 10 DB titles/descriptions
+- [x] Batch 10c: admin Daily Quality Report page
