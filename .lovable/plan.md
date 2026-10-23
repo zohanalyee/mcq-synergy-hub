@@ -1,103 +1,40 @@
-# Batch 10b (title switch) + Batch 10c (Daily Quality Report)
+# Batch "Gate speed-up" (plan only)
 
-## Part A — Batch 10b: switch IBA Community Colleges & Schools titles
+## What changes (plain language)
+1. **More work per run, more runs.** Each run may make up to 8 AI calls of 10 questions each (80 questions), but stops at about 45 seconds whatever happens. Runs every 15 minutes instead of every 1-2 hours. The 5-minute lock stays, so two runs never overlap. Progress is saved after every AI call, so a killed run loses at most one call.
+2. **Stops for the day by itself** when: all free keys are cooling down (existing cooldown memory), or the Gate's own budget (quality_gate.max = 300) is used, or the existing daily Gate cap is reached. Never paid; the learner reserve (150) is untouched.
+3. **Priority order:** Sukkur IBA STS / IBA Community Colleges tests, then NTHP, STHP, Sindh Teaching License; after that the other live tests, the ones checked longest ago first.
+4. **Exact duplicates share one verdict.** Questions with the same cleaned question text + same 4 options (as a set) + same correct answer text are grouped. One is sent to AI; the verdict is copied to the rest and marked "copied from <question>". Only exact matches. Questions themselves are never edited or deleted.
+5. **Model (advice only, no switch):** Gemini Flash-Lite has a higher free daily limit, and is fine for spotting broken format, but weaker at maths and tricky English. Recommendation: keep the current model for the blind-solve check until a 20-question side-by-side comparison agrees on at least 19 of 20 (this test is still waiting on free quota). Owner decides afterwards.
+6. **Daily Quality Report** gets a line: "Gate AI calls today: X / 300" and "Questions checked today: Y".
+7. Unchanged: mode stays "report", hide switch stays locked, students' tests unchanged, no SEO/sitemap change.
 
-Today, 38 IBA Community Colleges & Schools mock-test pages build their title and description from the advert wording ("... — IBA Community Colleges | MCQsAI"). They will switch to the Batch 10 database title and description, with the same rule: no extra "| MCQsAI" if the title already ends with it, otherwise add it only if the total stays at 65 characters or less.
+## Expected speed (estimate, not measured)
+- Up to 300 AI calls a day × 10 questions = about **3,000 questions a day**, plus copied verdicts. Recent sweeps found about 13,000 questions in exact or near-exact groups, so copies could add roughly 20-40% more (unmeasured until it runs).
+- Around 22,000-24,700 questions still pending: about **6-9 days** if keys stay healthy. If Google limits each key to fewer requests, it goes slower; the report will show the real count.
+- Today: about 25-50 calls a day (250-500 questions).
 
-Stays the same:
-- STHP 2027 page: title and description unchanged, keeps "Past Papers".
-- The 3 HOLD tests (Admission & Examination Officer, Administrative Officer, Administrative & Accounts Officer) are **not** in the IBA advert-wording group. They already use the database title, and their old description stays because Batch 10 left it alone. No change is needed for them; this will be confirmed in the build report.
-- Headings, page text, addresses, organisation names, keywords, sitemaps and questions do not change.
+## Risks
+- **546 / time-out:** the 45-second stop and a check before every AI call keep runs under 60 s; the lock expires after 5 minutes if a run dies.
+- **Quota:** free keys may run out early each day. Then the Gate stops until the next Google day (about 1 pm Pakistan time); learners keep their 150 reserve.
+- **Wrong copied verdict:** only exact text + options + answer get copied, so a copy is exactly as right as the original. A copied verdict is never stronger than "pass" from report mode, and copies can be undone in one step (they are tagged).
+- **Every-15-minute runs** cost a little database work when nothing is left; the run exits at once if there is nothing pending or the day is closed.
 
-### Table (38 pages)
-
-| Page | Current live title | New title |
-|---|---|---|
-| Physical Training Instructor | Physical Training Instructor Syllabus — IBA Community Colleges \| MCQsAI | STS Physical Training Instructor Mock Test & MCQs \| MCQsAI |
-| EST - Physics | Elementary School Teacher - Physics — IBA Community Colleges \| MCQsAI | STS EST Physics Mock Test, MCQs & Past Papers \| MCQsAI |
-| EST - Islamiat | Elementary School Teacher - Islamiat — IBA Community Colleges \| MCQsAI | STS EST Islamiat Mock Test, MCQs & Past Papers \| MCQsAI |
-| SS - General Science | Subject Specialist - General Science — IBA Community Colleges \| MCQsAI | STS Subject Specialist General Science Mock Test & MCQs \| MCQsAI |
-| Office Assistant (P.A Cum Computer Operator) | Office Assistant — IBA Community Colleges \| MCQsAI | STS Office Assistant (P.A cum Computer Operator) Mock Test |
-| EST - Sindhi | Elementary School Teacher - Sindhi — IBA Community Colleges \| MCQsAI | STS EST Sindhi Mock Test, MCQs & Past Papers \| MCQsAI |
-| ECE (Female) | ECE Teacher (Female) Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS ECE (Female) Mock Test, MCQs & Past Papers \| MCQsAI |
-| SS - Urdu | Subject Specialist - Urdu Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS Subject Specialist Urdu Mock Test, MCQs & Past Papers |
-| Lab Assistant - Electrical / Electronics | Lab Assistant - Electrical / Electronics — IBA Community Colleges \| MCQsAI | STS Lab Assistant Electrical/Electronics Mock Test & MCQs |
-| HST - Chemistry | HST - Chemistry Teacher Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS HST Chemistry Mock Test, MCQs & Past Papers \| MCQsAI |
-| Library Assistant | Library Assistant Syllabus & Past Papers — IBA Community Colleges \| MCQsAI | STS Library Assistant Mock Test, MCQs & Past Papers \| MCQsAI |
-| HST - English | HST - English Teacher Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS HST English Mock Test, MCQs & Past Papers \| MCQsAI |
-| HST - Biology | HST - Biology Teacher Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS HST Biology Mock Test, MCQs & Past Papers \| MCQsAI |
-| HST - Computer | HST - Computer Teacher Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS HST Computer Mock Test, MCQs & Past Papers \| MCQsAI |
-| EST - Chemistry | Elementary School Teacher - Chemistry — IBA Community Colleges \| MCQsAI | STS EST Chemistry Mock Test, MCQs & Past Papers \| MCQsAI |
-| EST - Computer | Elementary School Teacher - Computer — IBA Community Colleges \| MCQsAI | STS EST Computer Mock Test, MCQs & Past Papers \| MCQsAI |
-| SS - Mathematics | Subject Specialist - Mathematics — IBA Community Colleges \| MCQsAI | STS Subject Specialist Mathematics Mock Test & MCQs \| MCQsAI |
-| EST - Science | Elementary School Teacher - Science — IBA Community Colleges \| MCQsAI | STS EST Science Mock Test, MCQs & Past Papers \| MCQsAI |
-| SS - Chemistry | Subject Specialist - Chemistry Syllabus — IBA Community Colleges \| MCQsAI | STS Subject Specialist Chemistry Mock Test & MCQs \| MCQsAI |
-| EST - Urdu | Elementary School Teacher - Urdu — IBA Community Colleges \| MCQsAI | STS EST Urdu Mock Test, MCQs & Past Papers \| MCQsAI |
-| EST - Mathematics | Elementary School Teacher - Mathematics — IBA Community Colleges \| MCQsAI | STS EST Mathematics Mock Test, MCQs & Past Papers \| MCQsAI |
-| School Manager | School Manager Syllabus & Past Papers — IBA Community Colleges \| MCQsAI | STS School Manager Mock Test, MCQs & Past Papers \| MCQsAI |
-| Lab Assistant - Physics | Lab Assistant - Physics Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS Lab Assistant Physics Mock Test, MCQs & Past Papers \| MCQsAI |
-| SS - Pakistan Studies | Subject Specialist - Pakistan Studies — IBA Community Colleges \| MCQsAI | STS Subject Specialist Pakistan Studies Mock Test & MCQs \| MCQsAI |
-| SS - Business Administration | Subject Specialist - Business — IBA Community Colleges \| MCQsAI | STS Subject Specialist Business Admin Mock Test & MCQs \| MCQsAI |
-| SS - Islamiat | Subject Specialist - Islamiat Syllabus — IBA Community Colleges \| MCQsAI | STS Subject Specialist Islamiat Mock Test & MCQs \| MCQsAI |
-| SS - Biology | Subject Specialist - Biology Syllabus — IBA Community Colleges \| MCQsAI | STS Subject Specialist Biology Mock Test & MCQs \| MCQsAI |
-| EST - English | Elementary School Teacher - English — IBA Community Colleges \| MCQsAI | STS EST English Mock Test, MCQs & Past Papers \| MCQsAI |
-| SS - Physics | Subject Specialist - Physics Syllabus — IBA Community Colleges \| MCQsAI | STS Subject Specialist Physics Mock Test & MCQs \| MCQsAI |
-| SS - Computer | Subject Specialist - Computer Syllabus — IBA Community Colleges \| MCQsAI | STS Subject Specialist Computer Mock Test & MCQs \| MCQsAI |
-| SS - Sindhi | Subject Specialist - Sindhi Syllabus — IBA Community Colleges \| MCQsAI | STS Subject Specialist Sindhi Mock Test, MCQs & Past Papers |
-| Lab Assistant - Chemistry | Lab Assistant - Chemistry Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS Lab Assistant Chemistry Mock Test, MCQs & Past Papers |
-| Lab Assistant - Biology | Lab Assistant - Biology Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS Lab Assistant Biology Mock Test, MCQs & Past Papers \| MCQsAI |
-| HST - Physics | HST - Physics Teacher Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS HST Physics Mock Test, MCQs & Past Papers \| MCQsAI |
-| EST - Biology | Elementary School Teacher - Biology — IBA Community Colleges \| MCQsAI | STS EST Biology Mock Test, MCQs & Past Papers \| MCQsAI |
-| Lab Assistant - Computer | Lab Assistant - Computer Syllabus — IBA Community Colleges (STS) \| MCQsAI | STS Lab Assistant Computer Mock Test, MCQs & Past Papers \| MCQsAI |
-| EST - Social Studies | Elementary School Teacher - Social — IBA Community Colleges \| MCQsAI | STS EST Social Studies Mock Test, MCQs & Past Papers \| MCQsAI |
-| SS - English | Subject Specialist - English Syllabus — IBA Community Colleges \| MCQsAI | STS Subject Specialist English Mock Test & MCQs \| MCQsAI |
-
-(EST = Elementary School Teacher, SS = Subject Specialist, short names in the first column only.)
-
-**Count: 38 pages switch. STHP: 0. HOLD tests: 0 (already correct).**
-
-Note: the phrase "IBA Community Colleges" will leave these titles. It stays in headings, page text and keywords.
-
-### Part A risks
-- Searches for the exact advert wording may match less well. Mitigation: wording stays in headings and text; can roll back.
-- Browser and prerender could disagree. Mitigation: both use the same rule, and a test checks that.
-
-## Part B — Batch 10c: Daily Quality Report (admin only, read-only, no AI)
-
-New admin page at `/admin/quality-report`, loaded only when an admin opens it, plus a link from the admin panel. It shows **Today** and **Yesterday** in Pakistan time, as stacked cards for phones:
-
-1. **Quality Gate**: last saved review time; reviews in the last 24h; AI-reviewed in the last 24h; red "Stalled" if no review for 6+ hours; latest verdict counts (pending / pass / needs_review / fail).
-2. **Priority tests** (STS / Sukkur IBA, NTHP, STHP): total questions, AI-passed, needs_review, pending.
-3. **New problem questions (24h)** by reason.
-4. **AI quota (24h)**: calls by source; free vs paid, red warning if any background job used paid; count of 429 / FREE_ONLY_EXHAUSTED.
-5. **PDF Builder sets (24h)**.
-6. **One-line verdict**: "All OK", or the single most important issue. Priority order: background paid use, Gate stalled, many 429s, new fails, otherwise All OK.
-
-No new tables, no database changes, no AI calls, no cron jobs. Public pages and bundle do not change.
-
-### Queries (existing tables; admin access already allowed)
-- Gate times/counts: `question_quality_reviews` → `max(checked_at)`, count where `checked_at` ≥ now−24h, and the subset with `ai_verdict` not null.
-- Verdicts: `question_quality_reviews` grouped by status (verdict field used by the Gate panel; pending = questions in wave tests with no review).
-- Priority tests: `job_test_questions` (by `job_test_id`) joined to reviews via `question_id`; test groups by `job_tests.title/organization` using the existing STS/NTHP/STHP checks from `src/lib/programStatus.js`.
-- Problem questions: `question_quality_reviews.reasons` where `created_at` ≥ now−24h, counted per reason.
-- AI quota: `ai_usage_logs` (`source_type`, `ai_provider`, `metadata`, `created_at`) for the last 24h, plus the existing `get_ai_quota_today` result for paid-background and key status.
-- 429 / exhausted: from `ai_usage_logs.metadata` and `quality_job_runs` error text.
-- PDF sets: `pdf_practice_sets` count where `created_at` ≥ now−24h.
-
-### Columns not found as dedicated fields
-- No single "verdict/status" column was confirmed on `question_quality_reviews` (fields seen: `deterministic_ok`, `ai_verdict`, `owner_decision`, `checked_at`). The build will reuse the same verdict logic the Gate report panel already uses.
-- No dedicated "free vs paid" or "429" column in `ai_usage_logs`. These come from `ai_provider` and `metadata`. If a call was never logged, it cannot be counted; the page will say "not logged" rather than guess.
-- `quality_job_runs` column names were not checked in this audit; read before building.
-
-### Part B risks
-- Large counts could be slow on phones. Mitigation: count-only queries, page through any row reads (1,000-row limit).
-- Numbers depend on logging that already exists; gaps are shown as "not logged".
+## Tests to add
+- Run stops before 45 s and before the daily cap / Gate budget.
+- Priority order: STS/IBA, NTHP, STHP, Teaching License before others; then oldest-checked first.
+- Duplicate key: same text/options/answer groups; different answer or one different option does not group; option order doesn't matter.
+- Copied verdict carries the "copied" tag and source id.
+- No paid call ever (existing free-only guard test kept).
 
 ## Rollback
-- Part A: restore the previous Lovable version (titles return to the advert wording). The Batch 10 backup of all 95 old titles and descriptions stays and is not touched.
-- Part B: remove the page and its admin link, or restore the previous version. No data to undo.
+- Set quality_mode = off (instant stop, no code).
+- Copied verdicts: delete review rows tagged "copied" (questions untouched).
+- Schedule back to 2-hourly; restore previous version for code.
 
 ## Technical details
-- Part A files: `src/pages/MockTestDetail.tsx` and `scripts/inject-meta.mjs` — IBA network title/description use DB `seo_title`/`meta_description` via `buildMockTestTitle`, falling back to the advert builders only when the DB value is empty. STHP branch untouched. Keywords unchanged. Test in `src/lib/mockTestTitle.test.mjs` (or a new small test) for one IBA example and STHP being unchanged.
-- Part B files: new `src/pages/admin/DailyQualityReport.tsx`, lazy route in `src/App.tsx` via `lazyWithReload` (same as PdfBuilder), link in admin panel; small pure `src/lib/qualityReportVerdict.js` + test for the verdict order and the 6-hour stalled rule.
-- Verify: build passes, prerendered `<title>` for 3 IBA pages and STHP, public entry chunk size unchanged.
+- `supabase/functions/quality-gate/index.ts`: PER_RUN 10, MAX_AI_CALLS 8, TIME_BUDGET_MS 45_000 checked before each call; persist reviews per call; early-exit when `free_key_health` shows all keys cooling or `checkFreeBudget(admin,'quality_gate')` refuses; ordering by a priority tier (org/label match) then `max(checked_at)` asc instead of label rotation.
+- Exact-duplicate key in `_shared/qualityChecks.ts`: `normText(question) | sorted normText(options) | normText(correct option text)`; pure helper `exactDupKey` + test. Copies written to `question_quality_reviews` with `signal_flags: ['copied_verdict']` and `ai_answers.copied_from`. Exact column for the tag confirmed before build (uses existing jsonb fields; no new table).
+- Cron: change the existing quality-gate job to `*/15 * * * *` via cron.alter_job (no new job).
+- `src/pages/admin/DailyQualityReport.tsx`: read `quality_job_runs.calls_today` (day = today) and the Gate budget max; show "not logged" if missing.
+- Tests: `qualityChecks_test.ts` additions plus a small pure test for priority order and stop rules.
