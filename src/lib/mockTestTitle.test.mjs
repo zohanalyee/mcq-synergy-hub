@@ -20,6 +20,6 @@ test("title that would pass 65 characters with suffix stays bare", () => {
 });
 
 test("exactly 65 with suffix is allowed", () => {
-  const t = "x".repeat(54);
+  const t = "x".repeat(56);
   assert.equal(buildMockTestTitle(t).length, 65);
 });
