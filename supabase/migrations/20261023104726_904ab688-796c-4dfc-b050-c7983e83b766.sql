@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS job_test_questions_question_hash_idx ON public.job_test_questions USING hash (question);

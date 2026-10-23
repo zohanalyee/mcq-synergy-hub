@@ -32,3 +32,4 @@
 - [ ] Batch 9 post-publish live checks (waits on owner publish + purge)
 - [x] Batch 10b: IBA Community Colleges pages use Batch 10 DB titles/descriptions
 - [x] Batch 10c: admin Daily Quality Report page
+- [x] Gate speed-up: 8 calls/run, every 15 min, priority order, exact-duplicate verdict copy, report line

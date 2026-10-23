@@ -156,3 +156,38 @@ export function noAiReview(qs: QuestionLike[], bannedTopics: string[] = []) {
     return { question_id: q.id, deterministic_ok: ok, reasons: uniq, ai_verdict: verdict };
   });
 }
+
+// ---- Gate speed-up helpers ----
+
+/** Priority tier: 0 = Sukkur IBA STS / IBA Community Colleges, 1 = NTHP, 2 = STHP, 3 = Sindh Teaching License, 9 = other. */
+export function priorityTier(title?: string | null, department?: string | null): number {
+  const s = `${title ?? ''} ${department ?? ''}`;
+  if (/\bNTHP\b/i.test(s)) return 1;
+  if (/\bSTHP\b/i.test(s)) return 2;
+  if (/teaching licen[cs]e/i.test(s)) return 3;
+  if (/\bSIBA\b|sukkur iba|\bSTS\b.*(siba|sukkur)|community colleges?/i.test(s) && !/sindh testing service/i.test(s)) return 0;
+  return 9;
+}
+
+/** Order tests: priority tier, then oldest last-checked first (never checked = oldest). */
+export function orderTests<T extends { id: string; tier: number }>(tests: T[], lastChecked: Record<string, string | undefined>): T[] {
+  return [...tests].sort((a, b) => a.tier - b.tier
+    || String(lastChecked[a.id] ?? '').localeCompare(String(lastChecked[b.id] ?? ''))
+    || a.id.localeCompare(b.id));
+}
+
+/** Exact-duplicate key: normalised stem + options as a set + correct option text. null when the key is unknown. */
+export function exactDupKey(q: QuestionLike): string | null {
+  const opts = normalizeOptions(q.options);
+  const l = correctLetter(q);
+  if (!l || opts.length !== 4) return null;
+  return `${normText(q.question)}|${opts.map(normText).sort().join('|')}|${normText(opts[LETTERS.indexOf(l as any)])}`;
+}
+
+/** Whether another AI call may start: time left, run call limit, daily cap. */
+export function canStartCall(elapsedMs: number, runCalls: number, callsToday: number, opts: { budgetMs: number; perCallMs: number; maxRunCalls: number; dailyCap: number }) {
+  if (callsToday >= opts.dailyCap) return { ok: false, reason: `daily cap ${opts.dailyCap} reached` };
+  if (runCalls >= opts.maxRunCalls) return { ok: false, reason: 'run call limit' };
+  if (elapsedMs + opts.perCallMs > opts.budgetMs) return { ok: false, reason: 'time budget' };
+  return { ok: true as const };
+}
