@@ -20,3 +20,4 @@
 - Quality Gate saves no-AI results before any AI call and caps each run (10 questions, 2 AI calls, 60 s, 5-min lease) — so an exhausted free quota or a killed worker can never stall progress or leave a fake "running" status.
 - Optional widgets load via safeImport (src/lib/chunkErrors.js) and render nothing on failure; routes use lazyWithReload; GlobalErrorBoundary reloads once (sessionStorage guard) on missing chunks — so a publish never crashes a page.
 - `?start=1` mock-test auto-start comes only from src/lib/autoStart.js (no bots/prerender) — so the intro page stays indexable.
+- Mock-test page titles from job_tests.seo_title go through src/lib/mockTestTitle.js (keep a trailing "| MCQsAI", else add it only if ≤65 chars), used by MockTestDetail and inject-meta — so browser and prerendered titles never differ.
