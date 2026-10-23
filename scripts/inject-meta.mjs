@@ -348,14 +348,14 @@ async function injectMockTests() {
     const isSthp = /talent hunt program \(sthp\)/i.test(t.title || "");
     const metaTitle = isSthp
       ? "Sukkur IBA STHP Past Papers & Online Mock Test 2027 (Solved MCQs)"
-      : isIba
+      : isIba && !t.seo_title?.trim()
       ? buildIbaMetaTitle(t.title)
       : t.seo_title?.trim()
         ? t.seo_title.trim()
         : `${t.title} Mock Test — Free Online Preparation`;
     const metaDescription = isSthp
       ? `Sukkur IBA STHP 2027 past papers style sample paper and free online mock test. Solved English, Mathematics and ICT MCQs. ${sthpMetaSentence(EXAM_SNAPSHOT)}`.trim()
-      : isIba
+      : isIba && !t.meta_description?.trim()
       ? buildIbaMetaDescription(t.title, t.questions, subjects)
       : t.meta_description?.trim()
         ? t.meta_description.trim()
@@ -363,7 +363,7 @@ async function injectMockTests() {
           `Official syllabus, subject weightage, and ${t.questions} practice MCQs in simple Pakistani exam English.`;
     patch({
       path: `/mock-tests/${slug}`,
-      title: !isSthp && !isIba && t.seo_title?.trim() ? buildMockTestTitle(metaTitle) : `${metaTitle} | MCQsAI`,
+      title: !isSthp && t.seo_title?.trim() ? buildMockTestTitle(metaTitle) : `${metaTitle} | MCQsAI`,
       description: metaDescription,
       keywords: isIba
         ? buildIbaKeywords(t.title, Array.isArray(t.keywords) ? t.keywords : []).join(", ")
