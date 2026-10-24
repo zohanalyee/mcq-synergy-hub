@@ -17,7 +17,16 @@ export function whatsappResultUrl(testName, percentage, path) {
   return `https://wa.me/?text=${encodeURIComponent(text)}`;
 }
 
-/** One abandonment per inactive episode; resume is not a second start. */
+/** Score band for analytics: 0-39 / 40-59 / 60-79 / 80-100. */
+export function scoreBand(percentage) {
+  const p = Math.max(0, Math.min(100, Math.round(Number(percentage) || 0)));
+  return p >= 80 ? '80-100' : p >= 60 ? '60-79' : p >= 40 ? '40-59' : '0-39';
+}
+
+/**
+ * One start, at most one abandon, at most one complete per attempt.
+ * Abandon is only for really leaving (pagehide / in-app route change), never after complete.
+ */
 export function createAttemptTracker(params, emit) {
   let started = false;
   let finished = false;
@@ -25,12 +34,16 @@ export function createAttemptTracker(params, emit) {
   return {
     start() { if (started) return; started = true; emit('test_start', params); },
     finish() { finished = true; },
+    complete(extra) {
+      if (!started || finished || abandoned) { finished = true; return; }
+      finished = true;
+      emit('test_complete', { ...params, ...extra });
+    },
     abandon() {
       if (!started || finished || abandoned) return;
       abandoned = true;
       emit('test_abandon', params);
     },
-    resume() { abandoned = false; },
   };
 }
 /** GA4 page path: collapse session IDs so they never create unique pages. */

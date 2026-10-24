@@ -35,6 +35,8 @@ const UserRetentionMetrics = () => {
   const [stats, setStats] = useState<RetentionStats | null>(null);
   const [powerUsers, setPowerUsers] = useState<PowerUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  // Mock tests finished (job_test_progress rows with a best score), guests vs signed-in. null = not loaded.
+  const [mockDone, setMockDone] = useState<{ guests: number; signedIn: number } | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -57,6 +59,12 @@ const UserRetentionMetrics = () => {
           totalTests: Number(row.total_tests),
         });
       }
+
+      const [g, u] = await Promise.all([
+        supabase.from('job_test_progress').select('id', { count: 'exact', head: true }).is('user_id', null).gt('best_score', 0),
+        supabase.from('job_test_progress').select('id', { count: 'exact', head: true }).not('user_id', 'is', null).gt('best_score', 0),
+      ]);
+      if (!g.error && !u.error) setMockDone({ guests: g.count ?? 0, signedIn: u.count ?? 0 });
 
       // Fetch power users
       const { data: powerUsersData, error: powerUsersError } = await supabase.rpc('get_power_users', { limit_count: 10 });
@@ -211,6 +219,9 @@ const UserRetentionMetrics = () => {
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               Across {stats?.totalTests || 0} total tests
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Mock tests completed: {mockDone ? `Guests ${mockDone.guests} / Signed-in ${mockDone.signedIn}` : 'not logged'}
             </p>
           </CardContent>
         </Card>
