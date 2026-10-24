@@ -45,6 +45,7 @@ const _origInvoke = supabase.functions.invoke.bind(supabase.functions);
 
 // Turns off the pre-app loading bar and content reveal in index.html.
 document.documentElement.classList.add('app-ready');
+document.getElementById('boot-net')?.remove();
 
 createRoot(document.getElementById("root")!).render(
   <HelmetProvider>

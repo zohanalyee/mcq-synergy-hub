@@ -194,6 +194,53 @@
 
   <body>
     <div id="root"></div>
+    <!-- Shown only if the app has not started after 8s (or 1.5s when the phone
+         reports no network). Full screen when the page is empty, a bottom bar
+         when prerendered content is already readable. Never for bots. -->
+    <div id="boot-net" hidden role="alert">
+      <div class="bn-box">
+        <div class="bn-logo"><span class="bn-mark">M</span><span class="bn-name"><b>MCQS</b>AI</span></div>
+        <p class="bn-title">Slow or no internet connection</p>
+        <p class="bn-text">MCQsAI is taking longer than usual to load. Please check your internet and try again.</p>
+        <button type="button" onclick="location.reload()">Try again</button>
+      </div>
+    </div>
+    <style>
+      #boot-net[hidden]{display:none}
+      #boot-net{position:fixed;z-index:10000;font-family:Inter,system-ui,sans-serif;color:#0f172a}
+      #boot-net.full{inset:0;display:flex;align-items:center;justify-content:center;background:#f8fafc;padding:16px}
+      #boot-net.bar{left:12px;right:12px;bottom:12px}
+      #boot-net .bn-box{max-width:360px;margin:0 auto;background:#fff;border:1px solid #e2e8f0;border-radius:16px;padding:20px;text-align:center;box-shadow:0 10px 30px rgba(15,23,42,.12)}
+      #boot-net.bar .bn-box{padding:12px 14px}
+      #boot-net.bar .bn-text{display:none}
+      #boot-net.bar .bn-logo{margin-bottom:6px}
+      #boot-net.bar .bn-mark{width:28px;height:28px;border-radius:8px;font-size:14px}
+      #boot-net.bar .bn-name{font-size:16px}
+      #boot-net .bn-logo{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:12px}
+      #boot-net .bn-mark{width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-weight:800;background:linear-gradient(135deg,#8b5cf6,#d946ef,#06b6d4)}
+      #boot-net .bn-name{font-size:20px;letter-spacing:.5px}
+      #boot-net .bn-name b{color:#8b5cf6}
+      #boot-net .bn-title{font-weight:700;margin:0 0 6px;font-size:16px}
+      #boot-net .bn-text{margin:0 0 12px;font-size:14px;color:#475569;line-height:1.5}
+      #boot-net button{border:0;border-radius:999px;padding:10px 20px;font-weight:600;color:#fff;background:linear-gradient(90deg,#8b5cf6,#d946ef);cursor:pointer}
+      #boot-net.bar button{margin-top:8px;padding:8px 16px}
+      @media (prefers-color-scheme:dark){#boot-net.full{background:#0b1020}#boot-net .bn-box{background:#111827;border-color:#1f2937;color:#f1f5f9}#boot-net .bn-text{color:#94a3b8}}
+    </style>
+    <script>
+      (function (w, d) {
+        var BOT = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|whatsapp|telegram|lighthouse|headless|prerender|google-inspectiontool|mediapartners/i;
+        if (w.__PRERENDER__ || BOT.test(w.navigator.userAgent || '')) return;
+        function show() {
+          if (d.documentElement.classList.contains('app-ready')) return;
+          var el = d.getElementById('boot-net'), root = d.getElementById('root');
+          if (!el) return;
+          el.className = root && root.textContent.trim().length > 200 ? 'bar' : 'full';
+          el.hidden = false;
+        }
+        w.setTimeout(show, w.navigator.onLine === false ? 1500 : 8000);
+        w.addEventListener('offline', show);
+      })(window, document);
+    </script>
     <noscript>
       <div style="max-width:760px;margin:48px auto;padding:24px;font-family:system-ui,sans-serif;color:#0f172a">
         <h1 style="font-size:28px;margin:0 0 12px">MCQsAI — Free MCQs, Tools & Exam Prep for Pakistan</h1>

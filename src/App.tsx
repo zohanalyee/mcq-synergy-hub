@@ -19,6 +19,7 @@ import type { PageMap } from "./routes/pageMap";
 import lazyPages from "./routes/lazyPages";
 
 import DeferredGlobals from "./components/DeferredGlobals";
+import OfflineBanner from "./components/OfflineBanner";
 import GlobalErrorBoundary from "./components/GlobalErrorBoundary";
 import RouteErrorBoundary from "./components/RouteErrorBoundary";
 
@@ -209,6 +210,7 @@ const App = ({ pages = lazyPages }: { pages?: PageMap }) => {
                         cookie banner — mounted just after first paint in split
                         tasks (see DeferredGlobals). No visual difference. */}
                     <DeferredGlobals />
+                    <OfflineBanner />
 
 
                     <ProfileCompletionGuard>
