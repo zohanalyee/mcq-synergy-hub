@@ -4,15 +4,23 @@ import { jobTests as fallbackTests } from '@/data/jobTestsData';
 import { toJobTestSlug } from '@/lib/jobTestSlug';
 import { isNthpTest, isStsTest } from '@/lib/programStatus';
 import { markGuestAttempt } from '@/lib/growthEvents';
-import { createAttemptTracker } from '@/lib/growthRules';
+import { createAttemptTracker, scoreBand } from '@/lib/growthRules';
 import { trackEvent } from '@/utils/analytics';
 
 type Identity = { name: string; path: string | null; test_slug: string; exam_category: string };
 
 /** Resolve public metadata, never send the session ID or user-supplied session name. */
-export function useTestGrowth({ ready, finished, guest, sessionName, returnPath, kind }: {
+export function useTestGrowth({ ready, finished, guest, sessionName, returnPath, kind, questions, percentage }: {
   ready: boolean; finished: boolean; guest: boolean; sessionName?: string; returnPath?: string; kind: 'quiz' | 'practice';
+  /** Result-screen data for test_complete. */
+  questions?: number; percentage?: number;
 }) {
+  const resultRef = useRef({ questions, percentage, guest });
+  resultRef.current = { questions, percentage, guest };
+  const complete = () => {
+    const r = resultRef.current;
+    trackerRef.current?.complete({ questions: Number(r.questions) || 0, score_band: scoreBand(r.percentage ?? 0), is_guest: !!r.guest });
+  };
   const [identity, setIdentity] = useState<Identity | null>(null);
   const trackerRef = useRef<ReturnType<typeof createAttemptTracker> | null>(null);
   const finishedRef = useRef(finished);
@@ -44,23 +52,21 @@ export function useTestGrowth({ ready, finished, guest, sessionName, returnPath,
         trackerRef.current.start();
         if (guest) markGuestAttempt();
       }
-      if (finishedRef.current) trackerRef.current.finish();
-      else if (document.hidden) trackerRef.current.abandon();
+      if (finishedRef.current) complete();
     };
     void resolve();
     return () => { cancelled = true; };
   }, [ready, guest, sessionName, returnPath, kind]);
 
-  useEffect(() => { if (finished) trackerRef.current?.finish(); }, [finished]);
+  // Result screen shown: one test_complete per attempt.
+  useEffect(() => { if (finished) complete(); }, [finished]); // eslint-disable-line react-hooks/exhaustive-deps
+  // Really leaving only: pagehide or in-app route change (unmount). Phone lock / app switch is not an abandon.
   useEffect(() => {
     const abandon = () => { if (!finishedRef.current) trackerRef.current?.abandon(); };
-    const visibility = () => document.hidden ? abandon() : trackerRef.current?.resume();
     window.addEventListener('pagehide', abandon);
-    document.addEventListener('visibilitychange', visibility);
     return () => {
       abandon(); // SPA navigation does not emit pagehide.
       window.removeEventListener('pagehide', abandon);
-      document.removeEventListener('visibilitychange', visibility);
     };
   }, []);
   return identity;

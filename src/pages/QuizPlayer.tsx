@@ -70,7 +70,8 @@ const QuizPlayer = () => {
   const currentQ = questions[currentIdx];
   const subjectName = testData?.subjects?.[0] || "";
   const growth = useTestGrowth({ ready: !isLoading && total > 0, finished: isFinished, guest: !user,
-    sessionName: testData?.session_name, returnPath: locationState?.returnPath, kind: 'quiz' });
+    sessionName: testData?.session_name, returnPath: locationState?.returnPath, kind: 'quiz',
+    questions: total, percentage: total > 0 ? Math.round((correctCount / total) * 100) : 0 });
 
   // Fetch session
   useEffect(() => {

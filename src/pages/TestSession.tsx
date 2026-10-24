@@ -110,7 +110,10 @@ const TestSession = () => {
   const questions = testData?.questions || [];
   const displayTotal = questions.length;
   const growth = useTestGrowth({ ready: !isLoading && displayTotal > 0, finished: isSubmitted, guest: !user,
-    sessionName: testData?.session_name, returnPath: locationState?.returnPath, kind: 'practice' });
+    sessionName: testData?.session_name, returnPath: locationState?.returnPath, kind: 'practice',
+    questions: displayTotal,
+    percentage: isSubmitted && displayTotal > 0
+      ? Math.round((questions.filter((q: any, i: number) => checkUserAnswer(q, answers[i])).length / displayTotal) * 100) : 0 });
 
   // Hooks
   const { onAnswer, markQuestionArrival, resetMotivation } = useExamMotivation({
