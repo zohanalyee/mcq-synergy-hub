@@ -49,6 +49,11 @@ export interface GeminiConfig {
   temperature?: number;
   maxOutputTokens?: number;
   model?: string;
+  /**
+   * Optional hard deadline (epoch ms). When set, the Gemini request is aborted
+   * at this time and no further key is tried after it. Unset = no change.
+   */
+  deadlineAt?: number;
 }
 
 export interface AutoSwitchResult {
@@ -558,6 +563,7 @@ async function callGeminiTextOnce(
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(requestBody),
+    ...(config.deadlineAt ? { signal: AbortSignal.timeout(Math.max(1, config.deadlineAt - Date.now())) } : {}),
   });
 
   if (!response.ok) {
