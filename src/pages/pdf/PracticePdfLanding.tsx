@@ -20,7 +20,6 @@ const PracticePdfLanding = () => {
   const pdf = getPracticePdf(slug);
   const { data: channel } = useWhatsAppChannel();
   if (!pdf) return <NotFound />;
-  const total = pdf.sections.reduce((n, s) => n + s.count, 0);
   const channelUrl = channel || CHANNEL_FALLBACK;
 
   return (
@@ -60,7 +59,7 @@ const PracticePdfLanding = () => {
 
         <section className="flex flex-wrap gap-3">
           <Button asChild size="lg">
-            <a href={pdf.file} download onClick={() => trackPdfDownload(pdf.exam, 'landing')}><FileDown className="w-4 h-4 mr-2" />Download free PDF</a>
+            <a href="#sets"><FileDown className="w-4 h-4 mr-2" />Download free PDFs ({pdf.sets.length} sets)</a>
           </Button>
           <Button asChild variant="outline" size="lg">
             <Link to={pdf.mockTest.to}><PlayCircle className="w-4 h-4 mr-2" />Take the full online practice test</Link>
@@ -73,16 +72,36 @@ const PracticePdfLanding = () => {
           </Button>
         </section>
 
+        <section id="sets" className="scroll-mt-20">
+          <H2>Download the free {pdf.examLabel} practice sets</H2>
+          <p className="text-sm text-muted-foreground mb-3">Each set has 50 different questions with an answer key and short explanations. Try one set, then check your score with the online mock test.</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {pdf.sets.map((s) => (
+              <div key={s.key} className="rounded-lg border p-4 flex flex-col gap-2">
+                <p className="font-semibold text-foreground">{pdf.examLabel} {s.label}</p>
+                <p className="text-sm text-muted-foreground flex-1">{s.sections.map((x) => `${x.count} ${x.section}`).join(' · ')}</p>
+                <Button asChild size="sm">
+                  <a href={s.file} download onClick={() => trackPdfDownload(pdf.exam, 'landing', s.key)}><FileDown className="w-4 h-4 mr-2" />Download {s.label}</a>
+                </Button>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section>
-          <H2>What is in the {pdf.examLabel} practice set</H2>
+          <H2>What is in each {pdf.examLabel} practice set</H2>
           <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left"><tr><th className="p-3">Section</th><th className="p-3">Questions</th></tr></thead>
+              <thead className="bg-muted/50 text-left"><tr><th className="p-3">Section</th>{pdf.sets.map((s) => <th key={s.key} className="p-3">{s.label}</th>)}</tr></thead>
               <tbody>
-                {pdf.sections.map((s) => <tr key={s.section} className="border-t"><td className="p-3">{s.section}</td><td className="p-3">{s.count}</td></tr>)}
-                <tr className="border-t font-medium"><td className="p-3">Total</td><td className="p-3">{total}</td></tr>
-                <tr className="border-t"><td className="p-3">Answer key</td><td className="p-3">Included, with explanations</td></tr>
-                <tr className="border-t"><td className="p-3">Suggested time</td><td className="p-3">About 60 minutes</td></tr>
+                {pdf.sections.map((sec) => (
+                  <tr key={sec.section} className="border-t"><td className="p-3">{sec.section}</td>
+                    {pdf.sets.map((s) => <td key={s.key} className="p-3">{s.sections.find((x) => x.section === sec.section)?.count ?? 0}</td>)}
+                  </tr>
+                ))}
+                <tr className="border-t font-medium"><td className="p-3">Total</td>{pdf.sets.map((s) => <td key={s.key} className="p-3">{s.sections.reduce((n, x) => n + x.count, 0)}</td>)}</tr>
+                <tr className="border-t"><td className="p-3">Answer key</td><td className="p-3" colSpan={pdf.sets.length}>Included, with explanations</td></tr>
+                <tr className="border-t"><td className="p-3">Suggested time</td><td className="p-3" colSpan={pdf.sets.length}>About 60 minutes per set</td></tr>
               </tbody>
             </table>
           </div>

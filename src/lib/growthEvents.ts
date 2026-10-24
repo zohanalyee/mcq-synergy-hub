@@ -28,7 +28,7 @@ export function trackGuestOAuthSignup(createdAt: string, provider?: string) {
 
 export const trackWhatsAppJoin = (placement: string) => trackEvent('whatsapp_join_click', { placement });
 export const trackResultShare = (method: string) => trackEvent('result_share', { method });
-export const trackPdfDownload = (exam: string, placement: string) => trackEvent('pdf_download', { exam, placement });
+export const trackPdfDownload = (exam: string, placement: string, set = 'set_1') => trackEvent('pdf_download', { exam, placement, set });
 export const trackPdfShare = (exam: string, placement: string) => trackEvent('pdf_share', { exam, placement });
 export const trackChannelJoin = (placement: string) => trackEvent('channel_join_click', { placement });export const trackFeaturedClick = (slot: string, label: string, badge: string) => trackEvent('featured_click', { slot, label, badge });
 export const trackFeaturedWhatsApp = (slot: string) => trackEvent('featured_whatsapp_click', { slot });

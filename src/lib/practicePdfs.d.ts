@@ -1,6 +1,7 @@
 export interface PracticePdf {
   slug: string; exam: 'nthp' | 'sthp'; examLabel: string; title: string; description: string; h1: string;
   hub: { label: string; to: string }; mockTest: { label: string; to: string }; file: string;
+  sets: { key: string; label: string; file: string; sections: { section: string; count: number }[] }[];
   intro: string[]; sections: { section: string; count: number }[];
   preview: { q: string; options: string[]; answer: string; why: string }[];
   faqs: { question: string; answer: string }[]; official: { label: string; url: string }[]; disclaimer: string;

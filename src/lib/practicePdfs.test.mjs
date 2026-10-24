@@ -28,3 +28,14 @@ test('share links the apex landing page with pdf_share UTM, never the PDF', () =
   assert.match(text, /https:\/\/mcqsai\.com\/pdf\/nthp-practice-questions\?utm_source=whatsapp&utm_medium=pdf_share/);
   assert.doesNotMatch(text, /\.pdf/);
 });
+
+test('each exam has 3 sets, 50 questions each, files under /downloads', () => {
+  for (const p of PRACTICE_PDFS) {
+    assert.equal(p.sets.length, 3);
+    for (const s of p.sets) {
+      assert.equal(s.sections.reduce((n, x) => n + x.count, 0), 50, s.file);
+      assert.match(s.file, /^\/downloads\/.+\.pdf$/);
+    }
+    assert.equal(new Set(p.sets.map(s => s.file)).size, 3);
+  }
+});
