@@ -718,15 +718,24 @@ export async function callAIWithAutoSwitch(
 
   // Try every Gemini key once. Returns a result on success, or null if all failed.
   const tryGeminiKeys = async (): Promise<AutoSwitchResult | null> => {
+    const pastDeadline = () => !!config.deadlineAt && Date.now() >= config.deadlineAt - 2000;
     for (const { key, index } of geminiKeys) {
+      if (pastDeadline()) throw createCodedError('DEADLINE: AI time limit reached before the next key.', 408, 'DEADLINE');
       try {
         console.log(`[AI-Switch] Attempting Gemini (key #${index + 1})...`);
         await waitForRateLimit();
+        if (pastDeadline()) throw createCodedError('DEADLINE: AI time limit reached before the request.', 408, 'DEADLINE');
         const text = await callGeminiText(key, systemPrompt, userPrompt, config);
         console.log(`[AI-Switch] ✅ Gemini success via key #${index + 1} (cost: $0)`);
         await record('gemini', index, 'success', 200);
         return { text, provider: 'gemini', cost: 0, keyIndex: index };
       } catch (error: any) {
+        if (error?.code === 'DEADLINE') throw error;
+        if (config.deadlineAt && (error?.name === 'TimeoutError' || error?.name === 'AbortError')) {
+          console.warn(`[AI-Switch] ⏱️ Gemini key #${index + 1} aborted at the caller's deadline`);
+          await record('gemini', index, 'timeout', 408);
+          throw createCodedError('DEADLINE: AI request aborted at the time limit.', 408, 'DEADLINE');
+        }
         if (isQuotaError(error)) {
           anyGeminiRateLimited = true;
           console.warn(`[AI-Switch] ⚠️ Gemini key #${index + 1} rate limited (429), trying next...`);
