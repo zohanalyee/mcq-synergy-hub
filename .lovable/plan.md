@@ -1,40 +1,80 @@
-# Batch "Gate speed-up" (plan only)
+# Plan: 3 phases (each phase built only after your separate approval)
 
-## What changes (plain language)
-1. **More work per run, more runs.** Each run may make up to 8 AI calls of 10 questions each (80 questions), but stops at about 45 seconds whatever happens. Runs every 15 minutes instead of every 1-2 hours. The 5-minute lock stays, so two runs never overlap. Progress is saved after every AI call, so a killed run loses at most one call.
-2. **Stops for the day by itself** when: all free keys are cooling down (existing cooldown memory), or the Gate's own budget (quality_gate.max = 300) is used, or the existing daily Gate cap is reached. Never paid; the learner reserve (150) is untouched.
-3. **Priority order:** Sukkur IBA STS / IBA Community Colleges tests, then NTHP, STHP, Sindh Teaching License; after that the other live tests, the ones checked longest ago first.
-4. **Exact duplicates share one verdict.** Questions with the same cleaned question text + same 4 options (as a set) + same correct answer text are grouped. One is sent to AI; the verdict is copied to the rest and marked "copied from <question>". Only exact matches. Questions themselves are never edited or deleted.
-5. **Model (advice only, no switch):** Gemini Flash-Lite has a higher free daily limit, and is fine for spotting broken format, but weaker at maths and tricky English. Recommendation: keep the current model for the blind-solve check until a 20-question side-by-side comparison agrees on at least 19 of 20 (this test is still waiting on free quota). Owner decides afterwards.
-6. **Daily Quality Report** gets a line: "Gate AI calls today: X / 300" and "Questions checked today: Y".
-7. Unchanged: mode stays "report", hide switch stays locked, students' tests unchanged, no SEO/sitemap change.
+Rules for every phase: no edits or deletes to questions or reviews; never use "official" or "past paper" in new UI or PDFs; no STS mention on NTHP; no paid AI; hide switch stays locked; all tests run after each build, with an exact change report.
 
-## Expected speed (estimate, not measured)
-- Up to 300 AI calls a day × 10 questions = about **3,000 questions a day**, plus copied verdicts. Recent sweeps found about 13,000 questions in exact or near-exact groups, so copies could add roughly 20-40% more (unmeasured until it runs).
-- Around 22,000-24,700 questions still pending: about **6-9 days** if keys stay healthy. If Google limits each key to fewer requests, it goes slower; the report will show the real count.
-- Today: about 25-50 calls a day (250-500 questions).
+Credit estimates are rough (S = small, M = medium, L = large).
 
-## Risks
-- **546 / time-out:** the 45-second stop and a check before every AI call keep runs under 60 s; the lock expires after 5 minutes if a run dies.
-- **Quota:** free keys may run out early each day. Then the Gate stops until the next Google day (about 1 pm Pakistan time); learners keep their 150 reserve.
-- **Wrong copied verdict:** only exact text + options + answer get copied, so a copy is exactly as right as the original. A copied verdict is never stronger than "pass" from report mode, and copies can be undone in one step (they are tagged).
-- **Every-15-minute runs** cost a little database work when nothing is left; the run exits at once if there is nothing pending or the day is closed.
+## Phase 1 (urgent)
 
-## Tests to add
-- Run stops before 45 s and before the daily cap / Gate budget.
-- Priority order: STS/IBA, NTHP, STHP, Teaching License before others; then oldest-checked first.
-- Duplicate key: same text/options/answer groups; different answer or one different option does not group; option order doesn't matter.
-- Copied verdict carries the "copied" tag and source id.
-- No paid call ever (existing free-only guard test kept).
+**1. Quality Gate fix: deploy and watch**
+- Files: supabase/functions/quality-gate/index.ts, _shared/gemini.ts, _shared/qualityChecks.ts, _shared/gateSpeed_test.ts (already written).
+- Steps: code check, run the Gate tests, deploy, then after 13:00 PKT read 2-3 cron runs. Per run I report: time taken, status code, questions AI-checked, copies made, real 429s, 546/504.
+- Model: the code uses "gemini-flash-latest" (with backup names gemini-2.0-flash, gemini-2.5-flash). I'll confirm which model actually answers from the logs. Google's free daily limit per key isn't stored in the project, so I'll quote Google's published limit for that model and mark it unverified.
+- Risk: medium. Runs may still be slow if Google answers slowly. Rollback: restore the previous version.
+- Credits: S-M (the watching takes several checks).
+- Test: the Gate tests plus the real run logs.
 
-## Rollback
-- Set quality_mode = off (instant stop, no code).
-- Copied verdicts: delete review rows tagged "copied" (questions untouched).
-- Schedule back to 2-hourly; restore previous version for code.
+**2. GA4 mock-test tracking**
+- Files: src/lib/growthRules.js (+ .d.ts), src/lib/growthRules.test.mjs, src/hooks/useTestGrowth.ts, the result screen that calls the hook, and the admin stats ("Tests Completed": src/lib/aiCoach.ts / home stats, confirmed before the build).
+- a) test_abandon fires at most once per attempt, only on pagehide or an in-app page change. Locking the phone or switching apps no longer counts. resume() is removed.
+- b) A new test_complete event fires once when the result screen shows, with: test_slug, exam_category, questions, score_band (0-39 / 40-59 / 60-79 / 80-100), is_guest.
+- c) Admin "Tests Completed" adds guest attempts (job_test_progress rows that have best_score), shown as "Guests / Signed-in". Read-only query; how guest rows are identified is checked first.
+- Risk: low. No public change other than analytics events.
+- Credits: S.
+- Test: new tests for one-abandon-only, no abandon on hide, complete fires once, and score-band edges (39/40/59/60/79/80/100).
 
-## Technical details
-- `supabase/functions/quality-gate/index.ts`: PER_RUN 10, MAX_AI_CALLS 8, TIME_BUDGET_MS 45_000 checked before each call; persist reviews per call; early-exit when `free_key_health` shows all keys cooling or `checkFreeBudget(admin,'quality_gate')` refuses; ordering by a priority tier (org/label match) then `max(checked_at)` asc instead of label rotation.
-- Exact-duplicate key in `_shared/qualityChecks.ts`: `normText(question) | sorted normText(options) | normText(correct option text)`; pure helper `exactDupKey` + test. Copies written to `question_quality_reviews` with `signal_flags: ['copied_verdict']` and `ai_answers.copied_from`. Exact column for the tag confirmed before build (uses existing jsonb fields; no new table).
-- Cron: change the existing quality-gate job to `*/15 * * * *` via cron.alter_job (no new job).
-- `src/pages/admin/DailyQualityReport.tsx`: read `quality_job_runs.calls_today` (day = today) and the Gate budget max; show "not logged" if missing.
-- Tests: `qualityChecks_test.ts` additions plus a small pure test for priority order and stop rules.
+## Phase 2 (PDF system)
+
+**3. Storage and publishing**
+- New public bucket "practice-pdfs" (made with the storage tool). Upload and delete are admin-only via is_admin(); anyone can read.
+- Migration: add file_url, set_label, short_description, is_published (default false) to pdf_practice_sets.
+- src/pages/admin/PdfBuilder.tsx: a "Publish PDF" button uploads to {hub_slug}/{file_name}, and "Upload existing PDF" lets you pick a file, a test and a set label (A/B/C...).
+- Risk: medium. Your workspace may block public buckets; if so I stop and tell you.
+- Credits: M.
+
+**4. "Free Practice PDFs" section**
+- Files: src/pages/MockTestDetail.tsx, the exam hub page, a new small read-only list component, scripts/inject-meta.mjs (prerendered text), plus a build snapshot script like the featured-cards one.
+- Shows the published sets for that test: title, one-line section split, and a Download button with utm_source=site_pdf, tracked as pdf_download.
+- The PDF files stay noindex and out of the sitemap. The _headers rule for /practice-pdfs is not possible on Supabase, so the bucket files are kept out of every sitemap and not linked as a page to index.
+- Risk: medium (build-time read). Sitemaps unchanged.
+- Credits: M.
+
+**5. PDF Builder fixes** (src/lib/pdfBuilder/rules.js, PdfBuilder.tsx, rules.test.mjs)
+- a) Topic cap = max(2, ceil(section wanted / distinct topics in pool) + 1).
+- b) The title, file name and campaign use the final picked count.
+- c) A toggle, on by default: "Exclude questions used in earlier sets of this test" (uses saved question_ids).
+- d) The preview shows "Requested X · Final Y", plus eligible / picked / skipped per section (topic cap, duplicate, used before).
+- e) announcementSite('sts') becomes iba-suk.edu.pk/sts.
+- The sameAnswerAndTerm check is unchanged.
+- Risk: low. Credits: S-M. Tests: new cases for a-e.
+
+## Phase 3 (smaller items)
+
+**6. NTHP and STHP cross-links.** "Also preparing for…" boxes link NTHP to STHP and STHP to NTHP, with no STS wording on NTHP. Files: the mock-test related box and the hub pages (confirmed at build). Risk: low. Credits: S.
+
+**7. Report only:** correct-answer letter counts (A/B/C/D) per test from the database, and whether the mock-test player shuffles options on screen (read from the code). I'll propose a fix but not apply it. Credits: S.
+
+**8. Report only:** security warnings grouped by type, with count and risk level. Credits: S.
+
+**9. IBACC&S hub page (Batch 12)**
+- Shows "Applications closed", the syllabus per position from src/generated/stsSyllabus.json, and links to each IBACC&S mock test.
+- Test date line, exactly: "Test date will be announced by SIBA Testing Services — check iba-suk.edu.pk/sts". No date or countdown.
+- Wording, exactly: "IBACC&S is managed by Sukkur IBA; tests are conducted by SIBA Testing Services."
+- Prerendered, added to exams.xml (+1, sitemap diff shown first), and linked from the STS and Sukkur IBA pages.
+- Files: a new hub page and route, the prerender route list, generate-sitemaps, and the STS/Sukkur IBA link boxes.
+- Risk: medium (new indexable page). Credits: M.
+
+**10. Syllabus fix for the 3 HOLD tests (two steps)**
+- Step 1: show you before/after of the syllabus sections in job_tests and job_test_definitions. No write.
+- Step 2, after your approval:
+  - Admission & Examination Officer: Academic 20 / Office 10 / Assessment 30
+  - Administrative Officer: Office 10 / General Admin 30 / HR 20
+  - Administrative & Accounts Officer: Office 10 / HR 20 / Accounting 30
+- Then release the 3 Batch 10 HOLD descriptions. Their current values are already in the Batch 10 backup.
+- The totals are 60%, not 100%. I'll confirm with you whether that's intended (for example, other sections stay as they are) before writing anything.
+- Risk: low; questions untouched. Credits: S.
+
+## Can't do, or not fully
+- True HTTP 404s and header rules for PDF files in the Supabase bucket aren't possible on the current hosting.
+- Google's exact per-key free limit can't be read from the project; it will be marked unverified.
+- Gate run results depend on the free quota resetting; if keys stay limited, I'll report that instead of numbers.
