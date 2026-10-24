@@ -1,5 +1,19 @@
 import { assertEquals } from 'https://deno.land/std@0.224.0/assert/mod.ts';
-import { priorityTier, orderTests, exactDupKey, canStartCall } from './qualityChecks.ts';
+import { priorityTier, orderTests, exactDupKey, canStartCall, hasTimeFor, usableKeyIndexes } from './qualityChecks.ts';
+
+Deno.test('hard time check before slow steps (45 s budget)', () => {
+  assertEquals(hasTimeFor(40000, 4000, 45000), true);
+  assertEquals(hasTimeFor(42000, 4000, 45000), false);
+  assertEquals(hasTimeFor(45001, 0, 45000), false);
+});
+
+Deno.test('keys in daily cooldown are not used again; none usable stops the run', () => {
+  const now = 1_000_000;
+  const health = { '0': { ok: false, cooldown_until: now + 3600_000 }, '1': { ok: false, cooldown_until: now - 1 }, '2': { ok: true } };
+  assertEquals(usableKeyIndexes([0, 1, 2], health, now), [1, 2]);
+  const allParked = { '0': { ok: false, cooldown_until: now + 1 }, '1': { ok: false, cooldown_until: now + 1 }, '2': { ok: false, cooldown_until: now + 1 } };
+  assertEquals(usableKeyIndexes([0, 1, 2], allParked, now), []);
+});
 
 Deno.test('priority tiers', () => {
   assertEquals(priorityTier('Junior Clerk (BPS-11) - SIBA Testing Services (STS)'), 0);
