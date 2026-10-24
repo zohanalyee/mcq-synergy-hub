@@ -9,10 +9,17 @@ const HIDDEN_PREFIXES = ['/test-session', '/quiz-player', '/admin', '/auth', '/s
 const DISMISS_KEY = 'mcqsai_wa_fab_dismissed';
 const HEADLINES = [
   '📢 Daily Govt Jobs & Alerts',
-  '🎓 Sukkur IBA STHP & Scholarships',
-  '⚡ MDCAT & Past Paper Mock Tests',
+  '🎓 Admission Tests & Scholarships',
+  '⚡ MDCAT & Free Mock Tests',
   '📝 Daily Solved MCQs & Answer Keys',
 ];
+/** Program pages get their own headline so NTHP (IBA Karachi) and STHP (Sukkur IBA) never mix. */
+function headlinesFor(pathname: string): string[] {
+  const p = pathname.toLowerCase();
+  if (/nthp/.test(p)) return ['🎓 IBA Karachi NTHP Updates', HEADLINES[0], HEADLINES[3]];
+  if (/sthp/.test(p)) return ['🎓 Sukkur IBA STHP Updates', HEADLINES[0], HEADLINES[3]];
+  return HEADLINES;
+}
 
 /** Floating "Join WhatsApp Channel" button with rotating headlines; hidden during tests and admin. */
 const WhatsAppFloatingButton = () => {
@@ -24,9 +31,10 @@ const WhatsAppFloatingButton = () => {
   });
   useEffect(() => {
     if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % HEADLINES.length), 3500);
+    const t = setInterval(() => setIdx((i) => i + 1), 3500);
     return () => clearInterval(t);
   }, []);
+  const lines = headlinesFor(pathname);
   const url = data?.whatsapp;
   if (!url || dismissed || HIDDEN_PREFIXES.some((p) => pathname.startsWith(p))) return null;
 
@@ -50,7 +58,7 @@ const WhatsAppFloatingButton = () => {
           <WhatsAppIcon className="relative h-5 w-5" />
         </span>
         <span className="text-xs font-semibold leading-tight min-w-[150px] sm:min-w-[190px]" aria-live="off">
-          <span key={idx} className="block animate-fade-in whitespace-nowrap">{HEADLINES[idx]}</span>
+          <span key={idx} className="block animate-fade-in whitespace-nowrap">{lines[idx % lines.length]}</span>
           <span className="block text-[10px] font-normal opacity-90">Join WhatsApp</span>
         </span>
       </a>
