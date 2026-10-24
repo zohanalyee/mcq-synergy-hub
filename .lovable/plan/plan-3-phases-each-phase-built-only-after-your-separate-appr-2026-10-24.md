@@ -7,6 +7,7 @@ Credit estimates are rough (S = small, M = medium, L = large).
 ## Phase 1 (urgent)
 
 **1. Quality Gate fix: deploy and watch**
+
 - Files: supabase/functions/quality-gate/index.ts, _shared/gemini.ts, _shared/qualityChecks.ts, _shared/gateSpeed_test.ts (already written).
 - Steps: code check, run the Gate tests, deploy, then after 13:00 PKT read 2-3 cron runs. Per run I report: time taken, status code, questions AI-checked, copies made, real 429s, 546/504.
 - Model: the code uses "gemini-flash-latest" (with backup names gemini-2.0-flash, gemini-2.5-flash). I'll confirm which model actually answers from the logs. Google's free daily limit per key isn't stored in the project, so I'll quote Google's published limit for that model and mark it unverified.
@@ -15,6 +16,7 @@ Credit estimates are rough (S = small, M = medium, L = large).
 - Test: the Gate tests plus the real run logs.
 
 **2. GA4 mock-test tracking**
+
 - Files: src/lib/growthRules.js (+ .d.ts), src/lib/growthRules.test.mjs, src/hooks/useTestGrowth.ts, the result screen that calls the hook, and the admin stats ("Tests Completed": src/lib/aiCoach.ts / home stats, confirmed before the build).
 - a) test_abandon fires at most once per attempt, only on pagehide or an in-app page change. Locking the phone or switching apps no longer counts. resume() is removed.
 - b) A new test_complete event fires once when the result screen shows, with: test_slug, exam_category, questions, score_band (0-39 / 40-59 / 60-79 / 80-100), is_guest.
@@ -26,6 +28,7 @@ Credit estimates are rough (S = small, M = medium, L = large).
 ## Phase 2 (PDF system)
 
 **3. Storage and publishing**
+
 - New public bucket "practice-pdfs" (made with the storage tool). Upload and delete are admin-only via is_admin(); anyone can read.
 - Migration: add file_url, set_label, short_description, is_published (default false) to pdf_practice_sets.
 - src/pages/admin/PdfBuilder.tsx: a "Publish PDF" button uploads to {hub_slug}/{file_name}, and "Upload existing PDF" lets you pick a file, a test and a set label (A/B/C...).
@@ -33,6 +36,7 @@ Credit estimates are rough (S = small, M = medium, L = large).
 - Credits: M.
 
 **4. "Free Practice PDFs" section**
+
 - Files: src/pages/MockTestDetail.tsx, the exam hub page, a new small read-only list component, scripts/inject-meta.mjs (prerendered text), plus a build snapshot script like the featured-cards one.
 - Shows the published sets for that test: title, one-line section split, and a Download button with utm_source=site_pdf, tracked as pdf_download.
 - The PDF files stay noindex and out of the sitemap. The _headers rule for /practice-pdfs is not possible on Supabase, so the bucket files are kept out of every sitemap and not linked as a page to index.
@@ -40,6 +44,7 @@ Credit estimates are rough (S = small, M = medium, L = large).
 - Credits: M.
 
 **5. PDF Builder fixes** (src/lib/pdfBuilder/rules.js, PdfBuilder.tsx, rules.test.mjs)
+
 - a) Topic cap = max(2, ceil(section wanted / distinct topics in pool) + 1).
 - b) The title, file name and campaign use the final picked count.
 - c) A toggle, on by default: "Exclude questions used in earlier sets of this test" (uses saved question_ids).
@@ -57,6 +62,7 @@ Credit estimates are rough (S = small, M = medium, L = large).
 **8. Report only:** security warnings grouped by type, with count and risk level. Credits: S.
 
 **9. IBACC&S hub page (Batch 12)**
+
 - Shows "Applications closed", the syllabus per position from src/generated/stsSyllabus.json, and links to each IBACC&S mock test.
 - Test date line, exactly: "Test date will be announced by SIBA Testing Services — check iba-suk.edu.pk/sts". No date or countdown.
 - Wording, exactly: "IBACC&S is managed by Sukkur IBA; tests are conducted by SIBA Testing Services."
@@ -65,6 +71,7 @@ Credit estimates are rough (S = small, M = medium, L = large).
 - Risk: medium (new indexable page). Credits: M.
 
 **10. Syllabus fix for the 3 HOLD tests (two steps)**
+
 - Step 1: show you before/after of the syllabus sections in job_tests and job_test_definitions. No write.
 - Step 2, after your approval:
   - Admission & Examination Officer: Academic 20 / Office 10 / Assessment 30
@@ -75,6 +82,25 @@ Credit estimates are rough (S = small, M = medium, L = large).
 - Risk: low; questions untouched. Credits: S.
 
 ## Can't do, or not fully
+
 - True HTTP 404s and header rules for PDF files in the Supabase bucket aren't possible on the current hosting.
 - Google's exact per-key free limit can't be read from the project; it will be marked unverified.
 - Gate run results depend on the free quota resetting; if keys stay limited, I'll report that instead of numbers.
+
+&nbsp;
+
+Approved: build PHASE 1 only (items 1 and 2). Notes:
+
+- Item 1: try the backup Gemini model only if the first model returns an error, never both for the same batch.
+
+  After 13:00 PKT report 2–3 runs as planned.
+
+- Item 2c: change ONLY the admin dashboard count (Guests / Signed-in). Do NOT change the personal
+
+  "Tests Completed" stat that users see on the homepage.
+
+For later (Phase 3, item 10): the numbers 20/10/30 are QUESTION COUNTS for a 60-question test, not percentages.
+
+Store question_count as given and percentage = count/60 (33/17/50). Do not wait for this now.
+
+Do not start Phase 2 or 3 until I approve.
