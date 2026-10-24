@@ -7,8 +7,8 @@
 //  - default (cron/admin) small AI run: no-AI checks are saved FIRST, then at most
 //    10 questions / 2 AI calls / ~60 s, rotating across Wave tests.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { callAIWithAutoSwitch } from '../_shared/gemini.ts';
-import { CHECKER_VERSION, LETTERS, correctLetter, normalizeOptions, isNumericSubject, strictVerdict, noAiReview, priorityTier, orderTests, exactDupKey, canStartCall } from '../_shared/qualityChecks.ts';
+import { callAIWithAutoSwitch, getFreeGeminiKeys } from '../_shared/gemini.ts';
+import { CHECKER_VERSION, LETTERS, correctLetter, normalizeOptions, isNumericSubject, strictVerdict, noAiReview, priorityTier, orderTests, exactDupKey, canStartCall, hasTimeFor, usableKeyIndexes } from '../_shared/qualityChecks.ts';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -21,6 +21,9 @@ const PER_CALL = 10; // questions per AI call — unchanged from before the spee
 const MAX_AI_CALLS = 8;
 const TIME_BUDGET_MS = 45_000;
 const PER_CALL_MS = 15_000; // no new AI call starts unless this much time is left
+const AI_DEADLINE_MS = 42_000; // AI requests are aborted at this point of the run
+const SLOW_STEP_MS = 4_000; // time that must be left before any slow DB step
+const COPY_MAX_SOURCES = 10; // duplicate-copy lookups per run (after saving)
 const LEASE_MS = 5 * 60_000;
 
 const SYSTEM = `You are an independent exam-question solver for Pakistani competitive and admission tests.
@@ -130,52 +133,95 @@ Deno.serve(async (req) => {
     }
   }
 
-  // ================= AI run (Gate speed-up) =================
-  const mode = String(await getSetting(admin, 'quality_mode', 'off'));
-  const wave = Number(await getSetting(admin, 'quality_wave', 0));
-  const settingCap = Number(await getSetting(admin, 'quality_daily_ai_cap', 300));
-  const budgetCfg: any = await getSetting(admin, 'ai_free_budget', null);
-  const gateMax = Number(budgetCfg?.groups?.quality_gate?.max ?? settingCap);
+  // ================= AI run (Gate speed-up, time-boxed) =================
+  // Every slow step is timed (saved in quality_job_runs.last_summary.steps) and
+  // checked against the 45 s budget first. AI requests are aborted at AI_DEADLINE_MS.
+  // AI reviews are saved right after each AI call; duplicate copying runs last, capped.
+  const started = Date.now();
+  const steps: { step: string; at: number; ms: number }[] = [];
+  const elapsed = () => Date.now() - started;
+  async function timed<T>(step: string, fn: () => Promise<T>): Promise<T> {
+    const t = Date.now();
+    try { return await fn(); } finally { if (steps.length < 60) steps.push({ step, at: t - started, ms: Date.now() - t }); }
+  }
+  const fits = (needMs: number) => hasTimeFor(elapsed(), needMs, TIME_BUDGET_MS);
+
+  const [modeV, waveV, capV, budgetCfg, healthV, runRes] = await timed('startup', () => Promise.all([
+    getSetting(admin, 'quality_mode', 'off'),
+    getSetting(admin, 'quality_wave', 0),
+    getSetting(admin, 'quality_daily_ai_cap', 300),
+    getSetting(admin, 'ai_free_budget', null),
+    getSetting(admin, 'free_key_health', null),
+    admin.from('quality_job_runs').select('*').eq('id', 'quality-gate').maybeSingle(),
+  ]));
+  const mode = String(modeV);
+  const wave = Number(waveV);
+  const settingCap = Number(capV);
+  const gateMax = Number((budgetCfg as any)?.groups?.quality_gate?.max ?? settingCap);
   const cap = Math.min(settingCap, gateMax);
   if (mode === 'off' || !wave) return json({ success: true, skipped: true, reason: 'quality_mode off or wave 0', ai_calls: 0 });
 
-  const started = Date.now();
   const today = new Date().toISOString().slice(0, 10);
-  const { data: run } = await admin.from('quality_job_runs').select('*').eq('id', 'quality-gate').maybeSingle();
+  const run: any = (runRes as any)?.data;
   if (run?.lease_until && new Date(run.lease_until) > new Date()) return json({ success: true, skipped: true, reason: 'another run in progress' });
   const calls = run?.day === today ? run.calls_today : 0;
   const checkedToday = run?.day === today ? Number(run?.cursor?.checked_today ?? 0) : 0;
   const copiedToday = run?.day === today ? Number(run?.cursor?.copied_today ?? 0) : 0;
   const lastChecked: Record<string, string> = { ...(run?.cursor?.last_checked ?? {}) };
-  // Stop for the day: the Gate budget is used, or free keys failed recently (cooldown kept in free_key_health).
-  if (calls >= cap) {
-    await admin.from('quality_job_runs').update({ status: 'paused', pause_reason: `daily cap ${cap} reached`, day: today, calls_today: calls, lease_until: null }).eq('id', 'quality-gate');
-    return json({ success: true, skipped: true, reason: 'daily cap reached', ai_calls: 0 });
-  }
-  await admin.from('quality_job_runs').update({
-    status: 'running', day: today, calls_today: calls, lease_until: new Date(Date.now() + LEASE_MS).toISOString(),
-  }).eq('id', 'quality-gate');
+  const recentRuns: any[] = Array.isArray(run?.cursor?.recent_runs) ? run.cursor.recent_runs : [];
 
-  let reviewed = 0, copied = 0, aiCalls = 0, noAiSaved = 0, waiting: string | null = null, error: string | null = null;
+  const finish = async (status: string, reason: string | null, extra: Record<string, unknown>, counters: { reviewed: number; copied: number; aiCalls: number; rateLimited: number }) => {
+    const nowIso = new Date().toISOString();
+    const summary = { ...extra, reviewed: counters.reviewed, copied: counters.copied, ai_calls: counters.aiCalls, rate_limited: counters.rateLimited, per_call: PER_CALL, seconds: Math.round(elapsed() / 1000), ms: elapsed(), steps, at: nowIso };
+    const brief = { at: nowIso, ms: summary.ms, status, reviewed: counters.reviewed, copied: counters.copied, ai_calls: counters.aiCalls, rate_limited: counters.rateLimited, reason };
+    await admin.from('quality_job_runs').update({
+      status, pause_reason: reason, lease_until: null, day: today,
+      calls_today: calls + counters.aiCalls, last_run_at: nowIso, last_summary: summary,
+      cursor: { last_checked: lastChecked, checked_today: checkedToday + counters.reviewed + counters.copied, copied_today: copiedToday + counters.copied, recent_runs: [brief, ...recentRuns].slice(0, 12) },
+      ...(counters.reviewed > 0 ? { last_success_at: nowIso } : {}),
+      ...(status === 'error' ? { last_error: reason, last_error_at: nowIso } : {}),
+    }).eq('id', 'quality-gate');
+    return json({ success: status !== 'error', status, ...summary });
+  };
+  const zero = { reviewed: 0, copied: 0, aiCalls: 0, rateLimited: 0 };
+
+  if (calls >= cap) return finish('paused', `daily cap ${cap} reached`, {}, zero);
+  // No usable free key (all parked in free_key_health) → stop before any AI request.
+  const usable = usableKeyIndexes(getFreeGeminiKeys().map((k) => k.index), (healthV as any)?.keys ?? {});
+  if (!usable.length) return finish('waiting', 'Waiting for free AI quota: every free key is in cooldown', {}, zero);
+
+  await timed('lease', () => admin.from('quality_job_runs').update({
+    status: 'running', day: today, calls_today: calls, lease_until: new Date(Date.now() + LEASE_MS).toISOString(),
+  }).eq('id', 'quality-gate'));
+
+  const c = { ...zero };
+  let noAiSaved = 0, waiting: string | null = null, error: string | null = null, timeStop: string | null = null;
   const testsDone: string[] = [];
+  const saved: { q: any; patch: any }[] = []; // sources for duplicate copying, after the main loop
   const stop = () => {
-    const c = canStartCall(Date.now() - started, aiCalls, calls + aiCalls, { budgetMs: TIME_BUDGET_MS, perCallMs: PER_CALL_MS, maxRunCalls: MAX_AI_CALLS, dailyCap: cap });
-    return c.ok ? null : c.reason;
+    const r = canStartCall(elapsed(), c.aiCalls, calls + c.aiCalls, { budgetMs: TIME_BUDGET_MS, perCallMs: PER_CALL_MS, maxRunCalls: MAX_AI_CALLS, dailyCap: cap });
+    return r.ok ? null : r.reason;
   };
   try {
-    const { data: defs } = await admin.from('job_test_definitions').select('id, job_title, department');
+    const { data: defs } = await timed('definitions', () => admin.from('job_test_definitions').select('id, job_title, department'));
     const list = orderTests((defs ?? []).map((d: any) => ({ id: d.id, label: d.job_title, tier: priorityTier(d.job_title, d.department) })), lastChecked);
     outer: for (const t of list) {
-      if (stop() || waiting || error) break;
-      const ensured = await ensureNoAi(admin, t.id);
+      if (waiting || error) break;
+      const s0 = stop();
+      if (s0) { if (s0.startsWith('daily cap')) waiting = s0; else timeStop = s0; break; }
+      if (!fits(PER_CALL_MS + SLOW_STEP_MS)) { timeStop = 'time budget (before test setup)'; break; }
+      const ensured = await timed(`no_ai_checks:${t.label}`, () => ensureNoAi(admin, t.id));
       noAiSaved += ensured.added;
-      const { data: pend } = await admin.from('question_quality_reviews').select('id, question_id')
-        .eq('definition_id', t.id).eq('checker_version', CHECKER_VERSION).eq('deterministic_ok', true).eq('ai_verdict', 'pending').limit(400);
+      if (!fits(PER_CALL_MS)) { timeStop = 'time budget (after no-AI checks)'; break; }
+      const [{ data: pend }, { data: topics }] = await timed('select_questions', () => Promise.all([
+        admin.from('question_quality_reviews').select('id, question_id')
+          .eq('definition_id', t.id).eq('checker_version', CHECKER_VERSION).eq('deterministic_ok', true).eq('ai_verdict', 'pending').limit(400),
+        admin.from('quality_syllabus_topics').select('topic, source_tier, is_banned').eq('definition_id', t.id),
+      ]));
       if (!pend?.length) { lastChecked[t.id] = new Date().toISOString(); continue; }
       const qById = new Map(ensured.questions.map((q: any) => [q.id, q]));
       const items = pend.map((p: any) => ({ p, q: qById.get(p.question_id) })).filter((x: any) => x.q);
       const done = new Set<string>();
-      const { data: topics } = await admin.from('quality_syllabus_topics').select('topic, source_tier, is_banned').eq('definition_id', t.id);
       const topicList = (topics ?? []).filter((x: any) => !x.is_banned);
       const tierOf = (name?: string) => topicList.find((x: any) => x.topic === name)?.source_tier ?? null;
       testsDone.push(t.label);
@@ -186,59 +232,64 @@ Deno.serve(async (req) => {
         const factual = left.filter((x: any) => !isNumericSubject(x.q.subject, x.q.topic));
         const group = (numeric.length ? numeric : factual).slice(0, PER_CALL);
         const passes = numeric.length ? 1 : 2;
+        // Both passes must fit; they run side by side so a group costs ~one call of wall time.
+        const s = stop() ?? (c.aiCalls + passes > MAX_AI_CALLS ? 'run call limit' : null) ?? (calls + c.aiCalls + passes > cap ? `daily cap ${cap} reached` : null);
+        if (s) { if (s.startsWith('daily cap')) waiting = s; else timeStop = s; break outer; }
         const prompt = `Test: ${t.label}\nTopic list: ${topicList.map((x: any) => x.topic).join(' | ') || '(none)'}\n\n` +
-          group.map((c: any, i: number) => `#${i + 1}\nQ: ${c.q.question}\n${normalizeOptions(c.q.options).map((o, j) => `${LETTERS[j]}) ${o}`).join('\n')}\nStated key: ${correctLetter(c.q) ?? '?'}\nExplanation: ${String(c.q.explanation ?? '').slice(0, 600) || '(none)'}`).join('\n\n');
+          group.map((g: any, i: number) => `#${i + 1}\nQ: ${g.q.question}\n${normalizeOptions(g.q.options).map((o, j) => `${LETTERS[j]}) ${o}`).join('\n')}\nStated key: ${correctLetter(g.q) ?? '?'}\nExplanation: ${String(g.q.explanation ?? '').slice(0, 600) || '(none)'}`).join('\n\n');
+        const deadlineAt = started + AI_DEADLINE_MS;
+        const results = await timed(`ai_call x${passes}`, () => Promise.allSettled(Array.from({ length: passes }, (_, p) =>
+          callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 3072, deadlineAt },
+            { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' }))));
         const answers: any[][] = [];
-        for (let p = 0; p < passes; p++) {
-          const s = stop();
-          if (s) { if (s.startsWith('daily cap')) waiting = s; break outer; }
-          try {
-            const r = await callAIWithAutoSwitch(SYSTEM, prompt, { temperature: p === 0 ? 0.1 : 0.5, maxOutputTokens: 3072 },
-              { sourceType: 'mock_quality_gate', supabaseClient: admin, allowPaidFallback: false, group: 'quality_gate' });
-            aiCalls++;
-            answers.push(parseArray(r.text));
-          } catch (e: any) {
-            const m = String(e?.message ?? e);
-            if (/FREE_ONLY_EXHAUSTED|429|quota|budget/i.test(m)) waiting = 'Waiting for free AI quota (no-AI checks were still saved)';
-            else { aiCalls++; error = m.slice(0, 200); }
-            break outer;
-          }
+        for (const r of results) {
+          if (r.status === 'fulfilled') { c.aiCalls++; answers.push(parseArray(r.value.text)); continue; }
+          const m = String((r.reason as any)?.message ?? r.reason);
+          if (/^DEADLINE/.test(m)) { c.aiCalls++; timeStop = 'AI request hit the 45 s limit'; }
+          else if (/FREE_ONLY_EXHAUSTED|429|quota|budget/i.test(m)) { c.rateLimited++; waiting = 'Waiting for free AI quota (no-AI checks were still saved)'; }
+          else { c.aiCalls++; error = m.slice(0, 200); }
         }
+        if (answers.length < passes) break outer; // incomplete verdict → leave these pending
+        // Save this call's reviews immediately (before any copying).
         const now = new Date().toISOString();
-        for (let i = 0; i < group.length; i++) {
-          const c: any = group[i];
-          done.add(c.p.id);
+        const patches = group.map((g: any, i: number) => {
           const per = answers.map((a) => a.find((x: any) => Number(x?.index) === i + 1) ?? null);
-          const { verdict, reasons: aiReasons } = strictVerdict(correctLetter(c.q)!, per, passes === 1);
+          const { verdict, reasons: aiReasons } = strictVerdict(correctLetter(g.q)!, per, passes === 1);
           const first = per[0] ?? {};
-          const patch = {
+          return {
             ai_verdict: first.relevant === false && verdict === 'pass' ? 'needs_review' : verdict,
             ai_answers: per.map((x) => x?.answer ?? null), ai_topic: first.topic ?? null, ai_topic_tier: tierOf(first.topic),
             ai_difficulty: ['easy', 'medium', 'hard'].includes(String(first.difficulty)) ? first.difficulty : null,
             relevant: typeof first.relevant === 'boolean' ? first.relevant : null,
             reasons: [...aiReasons, ...(first.relevant === false ? ['not_relevant_to_syllabus'] : [])], checked_at: now,
           };
-          const { error: ue } = await admin.from('question_quality_reviews').update(patch).eq('id', c.p.id);
-          if (ue) { error = `save failed: ${ue.message}`; break outer; }
-          reviewed++;
-          if (Date.now() - started < TIME_BUDGET_MS) copied += await copyToExactDuplicates(admin, c.q, patch, items, done);
+        });
+        const saves = await timed('save_reviews', () => Promise.all(group.map((g: any, i: number) =>
+          admin.from('question_quality_reviews').update(patches[i]).eq('id', g.p.id))));
+        for (let i = 0; i < group.length; i++) {
+          done.add(group[i].p.id);
+          if (saves[i]?.error) { error = `save failed: ${saves[i].error.message}`; continue; }
+          c.reviewed++;
+          saved.push({ q: group[i].q, patch: patches[i] });
         }
+        if (error) break outer;
       }
     }
   } catch (e: any) {
     error = String(e?.message ?? e).slice(0, 200);
   }
 
-  const nowIso = new Date().toISOString();
-  const summary = { reviewed, copied, ai_calls: aiCalls, no_ai_saved: noAiSaved, tests: testsDone, per_call: PER_CALL, seconds: Math.round((Date.now() - started) / 1000), waiting, error };
-  await admin.from('quality_job_runs').update({
-    status: error ? 'error' : waiting ? 'waiting' : 'idle', pause_reason: error ?? waiting, lease_until: null,
-    calls_today: calls + aiCalls, last_run_at: nowIso, last_summary: summary,
-    cursor: { last_checked: lastChecked, checked_today: checkedToday + reviewed + copied, copied_today: copiedToday + copied },
-    ...(reviewed > 0 ? { last_success_at: nowIso } : {}),
-    ...(error ? { last_error: error, last_error_at: nowIso } : {}),
-  }).eq('id', 'quality-gate');
-  return json({ success: !error, ...summary });
+  // Exact-duplicate copying: separate light step after all AI results are saved, capped per run.
+  let copySkipped = 0;
+  for (const src of saved.slice(0, COPY_MAX_SOURCES)) {
+    if (!fits(SLOW_STEP_MS)) { copySkipped = saved.length - saved.indexOf(src); break; }
+    try { c.copied += await timed('copy_duplicates', () => copyToExactDuplicates(admin, src.q, src.patch)); }
+    catch (_e) { /* copying never blocks the run */ }
+  }
+  if (saved.length > COPY_MAX_SOURCES) copySkipped += saved.length - COPY_MAX_SOURCES;
+
+  const status = error ? 'error' : waiting ? 'waiting' : 'idle';
+  return finish(status, error ?? waiting ?? timeStop, { no_ai_saved: noAiSaved, tests: testsDone, waiting, error, time_stop: timeStop, copy_skipped: copySkipped }, c);
 });
 
 /**
@@ -246,23 +297,18 @@ Deno.serve(async (req) => {
  * (same normalised stem, same options as a set, same correct option text), in any test.
  * Tagged signal_flags 'copied_verdict' + reason 'copied_from:<id>'. Never edits questions.
  */
-async function copyToExactDuplicates(admin: any, src: any, patch: any, items: any[], done: Set<string>): Promise<number> {
+async function copyToExactDuplicates(admin: any, src: any, patch: any): Promise<number> {
   const key = exactDupKey(src);
   if (!key) return 0;
   const { data: twins } = await admin.from('job_test_questions')
     .select('id, question, options, correct_answer').eq('question', src.question).neq('id', src.id).limit(50);
   const ids = (twins ?? []).filter((q: any) => exactDupKey(q) === key).map((q: any) => q.id);
   if (!ids.length) return 0;
-  const { data: rows } = await admin.from('question_quality_reviews').select('id, question_id')
+  const { data: rows } = await admin.from('question_quality_reviews').select('id')
     .in('question_id', ids).eq('checker_version', CHECKER_VERSION).eq('deterministic_ok', true).eq('ai_verdict', 'pending');
   if (!rows?.length) return 0;
   const { error } = await admin.from('question_quality_reviews').update({
     ...patch, reasons: [...patch.reasons, `copied_from:${src.id}`], signal_flags: ['copied_verdict'],
   }).in('id', rows.map((r: any) => r.id));
-  if (error) return 0;
-  for (const r of rows) {
-    const it = items.find((x: any) => x.p.id === r.id);
-    if (it) done.add(it.p.id);
-  }
-  return rows.length;
+  return error ? 0 : rows.length;
 }

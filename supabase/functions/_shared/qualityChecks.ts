@@ -191,3 +191,16 @@ export function canStartCall(elapsedMs: number, runCalls: number, callsToday: nu
   if (elapsedMs + opts.perCallMs > opts.budgetMs) return { ok: false, reason: 'time budget' };
   return { ok: true as const };
 }
+
+/** Hard time check before any slow step: true only when `needMs` still fits inside the budget. */
+export function hasTimeFor(elapsedMs: number, needMs: number, budgetMs: number): boolean {
+  return elapsedMs + needMs <= budgetMs;
+}
+
+/** Key indexes that are not parked in free_key_health cooldown right now. */
+export function usableKeyIndexes(indexes: number[], health: Record<string, { ok?: boolean; cooldown_until?: number }>, now = Date.now()): number[] {
+  return indexes.filter((i) => {
+    const h = health?.[String(i)];
+    return !(h && h.ok === false && h.cooldown_until && h.cooldown_until > now);
+  });
+}
