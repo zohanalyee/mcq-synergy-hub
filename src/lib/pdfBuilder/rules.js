@@ -36,7 +36,7 @@ export function examKind(title, hubSlug, organization = '') {
 }
 /** Announcement website named in "Please read first". */
 export function announcementSite(kind) {
-  return { nthp: 'nthp.iba.edu.pk', sthp: 'iba-suk.edu.pk', sts: 'sts.net.pk' }[kind] || '';
+  return { nthp: 'nthp.iba.edu.pk', sthp: 'iba-suk.edu.pk', sts: 'iba-suk.edu.pk/sts' }[kind] || '';
 }
 /** Section names joined for cover/readFirst (names may contain "/" and "&"). */
 export const joinSections = (names) => names.filter(Boolean).join(' · ');

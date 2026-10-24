@@ -118,7 +118,7 @@ test('identity from organization: Admission & Examination Officer is STS', () =>
   const org = 'SIBA Testing Services (STS) / Sukkur IBA University';
   assert.equal(R.examKind('Admission & Examination Officer', '', org), 'sts');
   assert.equal(R.defaultHubSlug('Admission & Examination Officer', ['air-university', 'sts'], org), 'sts');
-  assert.equal(R.announcementSite('sts'), 'sts.net.pk');
+  assert.equal(R.announcementSite('sts'), 'iba-suk.edu.pk/sts');
   assert.match(R.disclaimerFor(R.examKind('Admission & Examination Officer', '', org)), /SIBA Testing Service/);
 });
 test('identity: NTHP from organization never STS; STHP; generic', () => {
