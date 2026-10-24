@@ -46,6 +46,7 @@ export type PageKey =
   | "StsHub"
   | "NthpGuide"
   | "PracticePdfLanding"
+  | "TalentHuntPastPapers"
   | "LatLawAdmissionTest"
   | "KarachiUniversityEntryTest"
   | "SindhUniversityEntryTest"

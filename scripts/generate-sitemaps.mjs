@@ -2,6 +2,7 @@
 import { PROG_SEO_SLUGS } from "./prog-seo-gate.mjs";
 import { examPassesGate } from "../src/lib/examQualityGate.js";
 import { PRACTICE_PDF_PATHS } from "../src/lib/practicePdfs.js";
+import { PAST_PAPER_PATHS } from "../src/lib/pastPapers.js";
 import { isListingExpired, EXPIRED_GRACE_DAYS, NO_DEADLINE_MAX_AGE_DAYS } from "../src/lib/opportunityExpiry.js";
 // Build-time sitemap generator.
 // Writes same-origin (mcqsai.com) static XML files into public/sitemaps/
@@ -158,6 +159,7 @@ function writeExams() {
       : { loc: `${BASE_URL}/exams/${r.slug}`, lastmod: r.verified_on || today, freq: "monthly", priority: "0.7" }),
     // Free practice PDF landing pages: no page-specific date exists, so no lastmod.
     ...PRACTICE_PDF_PATHS.map(p => ({ loc: `${BASE_URL}${p}`, lastmod: null, freq: "monthly", priority: "0.7" })),
+    ...PAST_PAPER_PATHS.map(p => ({ loc: `${BASE_URL}${p}`, lastmod: null, freq: "monthly", priority: "0.7" })),
   ]));
 }
 function writeProgSeo() {

@@ -15,6 +15,7 @@ export default function PracticePdfBox({ exam, placement }: { exam: 'nthp' | 'st
         <p className="text-muted-foreground">Unofficial MCQsAI practice set based on the published syllabus.</p>
       </div>
       <div className="flex flex-wrap gap-3 text-sm">
+        <Link to={`/${pdf.exam}-past-papers`} className="font-medium text-primary hover:underline">{pdf.examLabel} past papers guide</Link>
         <Link to={`/pdf/${pdf.slug}#sets`} className="font-medium text-primary hover:underline">All {pdf.sets.length} {pdf.examLabel} PDF sets</Link>
         <a href={pdf.sets[0].file} download className="font-medium text-primary hover:underline" onClick={() => trackPdfDownload(exam, placement, pdf.sets[0].key)}>Download {pdf.sets[0].label}</a>
       </div>

@@ -145,6 +145,7 @@ const PracticePdfLanding = () => {
           <p className="mt-4 text-sm flex flex-wrap gap-4">
             <Link to={pdf.hub.to} className="text-primary hover:underline">{pdf.hub.label}</Link>
             <Link to={pdf.mockTest.to} className="text-primary hover:underline">{pdf.mockTest.label}</Link>
+            <Link to={`/${pdf.exam}-past-papers`} className="text-primary hover:underline">{pdf.examLabel} past papers guide</Link>
             <Link to="/exams" className="text-primary hover:underline">All admission tests</Link>
           </p>
         </section>
